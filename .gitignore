@@ -1,0 +1,55 @@
+﻿# RimWorld Mod - Git Ignore
+
+## Build Results
+Source/**/bin/
+Source/**/obj/
+Source/**/Release/
+Source/**/Debug/
+
+## Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+## RimWorld Specific
+*.log
+Player.log
+Player-prev.log
+
+## OS Files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+## Temporary Files
+*.tmp
+*.bak
+*.swp
+*~
+
+## NuGet
+packages/
+*.nupkg
+*.snupkg
+
+## Test Results
+TestResults/
+
+## PowerShell
+*.ps1.bak
+
+## Editor
+*.code-workspace
+.vscode/
+.idea/
+
+## Large Binary Files (可选)
+# Textures/**/*.psd
+# Textures/**/*.xcf
+
+## Personal Files
+*.personal.xml
+*_BACKUP_*.xml

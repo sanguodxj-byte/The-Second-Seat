@@ -1,0 +1,70 @@
+# 表情包元数据文件
+# 格式说明：
+# [表情包ID]  - 必须与文件名（不含扩展名）一致
+# name = 显示名称
+# tags = 标签1, 标签2, 标签3  - 用逗号分隔
+# description = 描述文字
+
+# 可用标签：
+# happy, joy, excited - 开心、喜悦
+# sad, disappointed, crying - 难过、失望
+# angry, frustrated - 生气、沮丧
+# surprised, shocked - 惊讶、震惊
+# confused, thinking - 困惑、思考
+# love, affection - 爱、亲昵
+# neutral, calm - 中性、平静
+# smug, proud - 得意、自豪
+# embarrassed, shy - 尴尬、害羞
+# tired, sleepy - 疲惫、困倦
+
+# 示例配置（请根据实际文件名修改）：
+
+[smile]
+name = 微笑
+tags = happy, joy
+description = 开心的微笑
+
+[cry]
+name = 哭泣
+tags = sad, crying
+description = 伤心地哭泣
+
+[think]
+name = 思考
+tags = thinking, confused
+description = 陷入思考
+
+[angry]
+name = 生气
+tags = angry, frustrated
+description = 愤怒的表情
+
+[love]
+name = 爱心
+tags = love, affection, happy
+description = 表达爱意
+
+# [surprised]
+# name = 惊讶
+# tags = surprised, shocked
+# description = 非常惊讶
+
+[neutral]
+name = 平静
+tags = neutral, calm
+# description = 保持冷静
+
+[tired]
+name = 疲惫
+tags = tired, sleepy
+description = 感到疲倦
+
+[embarrassed]
+name = 尴尬
+tags = embarrassed, shy
+description = 感到尴尬
+
+[proud]
+name = 得意
+tags = smug, proud, happy
+description = 自豪得意

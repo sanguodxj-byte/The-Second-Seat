@@ -1,0 +1,562 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using Verse;
+using RimWorld;
+
+namespace TheSecondSeat.PersonaGeneration
+{
+    /// <summary>
+    /// 表情类型枚举
+    /// </summary>
+    public enum ExpressionType
+    {
+        Neutral,      // 中性
+        Happy,        // 开心
+        Happy2,       // 开心（强烈）- 预留
+        Happy3,       // 开心（极强）- 预留
+        Sad,          // 悲伤
+        Angry,        // 愤怒
+        Surprised,    // 惊讶
+        Worried,      // 担忧
+        Smug,         // 得意
+        Disappointed, // 失望
+        Thoughtful,   // 沉思
+        Annoyed,      // 烦躁
+        Playful,      // 调皮
+        Shy           // ? 新增：害羞
+    }
+
+    /// <summary>
+    /// 表情变化触发器
+    /// </summary>
+    public enum ExpressionTrigger
+    {
+        Manual,           // 手动指定
+        Affinity,         // 好感度变化
+        DialogueTone,     // 对话语气
+        GameEvent,        // 游戏事件
+        RandomVariation,  // 随机变化
+        Processing        // ? 新增：AI处理中
+    }
+
+    /// <summary>
+    /// 表情状态数据
+    /// </summary>
+    public class ExpressionState
+    {
+        public ExpressionType CurrentExpression { get; set; } = ExpressionType.Neutral;
+        public ExpressionType PreviousExpression { get; set; } = ExpressionType.Neutral;
+        public float TransitionProgress { get; set; } = 1f; // 1=完成，0=开始
+        public int TransitionTicks { get; set; } = 0;
+        public ExpressionTrigger LastTrigger { get; set; } = ExpressionTrigger.Manual;
+        
+        // 表情持续时间（秒）
+        public float ExpressionDuration { get; set; } = 3f;
+        public int ExpressionStartTick { get; set; } = 0;
+        
+        // 是否锁定表情（某些重要场景）
+        public bool IsLocked { get; set; } = false;
+    }
+
+    /// <summary>
+    /// 立绘表情系统
+    /// ? 根据好感度、对话内容、游戏事件动态切换表情
+    /// </summary>
+    public static class ExpressionSystem
+    {
+        private static Dictionary<string, ExpressionState> expressionStates = new Dictionary<string, ExpressionState>();
+        
+        // 表情过渡持续时间（游戏tick）
+        private const int TRANSITION_DURATION_TICKS = 30; // 约0.5秒
+        
+        // ? 表情持续时间（游戏tick）- 30秒
+        private const int EXPRESSION_DURATION_TICKS = 1800;
+        
+        /// <summary>
+        /// 获取人格的当前表情状态
+        /// </summary>
+        public static ExpressionState GetExpressionState(string personaDefName)
+        {
+            if (!expressionStates.ContainsKey(personaDefName))
+            {
+                expressionStates[personaDefName] = new ExpressionState();
+            }
+            return expressionStates[personaDefName];
+        }
+        
+        /// <summary>
+        /// 设置表情（带平滑过渡）
+        /// </summary>
+        public static void SetExpression(string personaDefName, ExpressionType expression, ExpressionTrigger trigger = ExpressionTrigger.Manual)
+        {
+            var state = GetExpressionState(personaDefName);
+            
+            // 如果表情被锁定，不允许切换
+            if (state.IsLocked)
+            {
+                Log.Message($"[ExpressionSystem] 表情被锁定，跳过切换: {personaDefName}");
+                return;
+            }
+            
+            // 如果表情相同，跳过
+            if (state.CurrentExpression == expression)
+            {
+                return;
+            }
+            
+            // ? 清除旧表情的缓存（立绘和头像）
+            PortraitLoader.ClearPortraitCache(personaDefName, state.CurrentExpression);
+            AvatarLoader.ClearAvatarCache(personaDefName, state.CurrentExpression);
+            
+            // ? 清除新表情的缓存，确保重新加载
+            PortraitLoader.ClearPortraitCache(personaDefName, expression);
+            AvatarLoader.ClearAvatarCache(personaDefName, expression);
+            
+            // 开始过渡
+            state.PreviousExpression = state.CurrentExpression;
+            state.CurrentExpression = expression;
+            state.TransitionProgress = 0f;
+            state.TransitionTicks = 0;
+            state.LastTrigger = trigger;
+            state.ExpressionStartTick = Find.TickManager.TicksGame;
+            
+            Log.Message($"[ExpressionSystem] ? {personaDefName} 表情切换: {state.PreviousExpression} → {expression} (触发: {trigger})");
+        }
+        
+        /// <summary>
+        /// ? 设置为思考表情（AI处理中）
+        /// </summary>
+        public static void SetThinkingExpression(string personaDefName)
+        {
+            SetExpression(personaDefName, ExpressionType.Thoughtful, ExpressionTrigger.Processing);
+        }
+        
+        /// <summary>
+        /// ? 根据好感度自动设置表情（修改：30以上为Happy）
+        /// </summary>
+        public static void UpdateExpressionByAffinity(string personaDefName, float affinity)
+        {
+            ExpressionType expression;
+            
+            // ? 修改：30以上好感度默认为Happy
+            if (affinity >= 80f)
+            {
+                expression = ExpressionType.Happy; // 未来可以用 Happy2 或 Happy3
+            }
+            else if (affinity >= 60f)
+            {
+                expression = ExpressionType.Happy;
+            }
+            else if (affinity >= 30f)
+            {
+                expression = ExpressionType.Happy; // ? 30以上也是Happy
+            }
+            else if (affinity >= 0f)
+            {
+                expression = ExpressionType.Neutral;
+            }
+            else if (affinity >= -30f)
+            {
+                expression = ExpressionType.Annoyed;
+            }
+            else if (affinity >= -60f)
+            {
+                expression = ExpressionType.Disappointed;
+            }
+            else
+            {
+                expression = ExpressionType.Angry;
+            }
+            
+            SetExpression(personaDefName, expression, ExpressionTrigger.Affinity);
+        }
+        
+        /// <summary>
+        /// ? 根据对话语气设置表情（扩展关键词）
+        /// </summary>
+        public static void UpdateExpressionByDialogueTone(string personaDefName, string dialogueText)
+        {
+            if (string.IsNullOrEmpty(dialogueText))
+            {
+                return;
+            }
+            
+            // 分析对话文本中的情感关键词
+            ExpressionType expression = ExpressionType.Neutral;
+            
+            // ? 开心关键词（大幅扩展）
+            if (ContainsKeywords(dialogueText, new[] { 
+                // 中文
+                "哈哈", "嘻嘻", "哈", "真好", "太棒", "开心", "高兴", "喜欢", "不错", "很好", 
+                "好的", "可以", "当然", "没问题", "乐意", "愉快", "快乐", "欢迎", "恭喜", 
+                "祝贺", "赞", "厉害", "优秀", "完美", "太好了", "好极了", "妙", "绝", 
+                "棒", "美", "酷", "帅", "爱", "喜", "乐", "笑", "嗯嗯", "好哒", "么么",
+                "嘿嘿", "呵呵", "hiahia", "2333", "233", "666", "nice",
+                // 英文
+                "fantastic", "great", "wonderful", "happy", "haha", "good", "nice", 
+                "excellent", "amazing", "awesome", "perfect", "love", "like", "enjoy",
+                "glad", "pleased", "delighted", "cheerful", "joyful", "yay", "yeah",
+                "cool", "brilliant", "superb", "terrific", "marvelous", "splendid"
+            }))
+            {
+                expression = ExpressionType.Happy;
+            }
+            // ? 愤怒关键词（扩展）
+            else if (ContainsKeywords(dialogueText, new[] { 
+                // 中文
+                "可恶", "该死", "混蛋", "愤怒", "生气", "讨厌", "烦", "滚", "闭嘴", 
+                "废物", "蠢", "笨", "傻", "白痴", "可恨", "恼火", "火大", "气死",
+                "不行", "绝对不", "休想", "别想", "不可能", "拒绝",
+                // 英文
+                "damn", "angry", "furious", "irritated", "hate", "stupid", "idiot",
+                "shut up", "annoying", "rage", "mad", "pissed", "disgusting"
+            }))
+            {
+                expression = ExpressionType.Angry;
+            }
+            // ? 悲伤关键词（扩展）
+            else if (ContainsKeywords(dialogueText, new[] { 
+                // 中文
+                "悲伤", "难过", "可怜", "遗憾", "伤心", "哭", "泪", "悲", "惨", 
+                "不幸", "可惜", "唉", "呜", "哎", "伤感", "凄凉", "心痛", "痛苦",
+                "抱歉", "对不起", "失去", "离开", "死", "逝",
+                // 英文
+                "sad", "unfortunate", "regret", "pity", "cry", "tears", "sorrow",
+                "sorry", "miss", "loss", "grief", "mourn", "tragic", "painful"
+            }))
+            {
+                expression = ExpressionType.Sad;
+            }
+            // ? 惊讶关键词（扩展）
+            else if (ContainsKeywords(dialogueText, new[] { 
+                // 中文
+                "什么", "不会吧", "真的", "天啊", "哇", "啊", "呀", "哦", "咦", 
+                "居然", "竟然", "怎么", "为什么", "惊", "震惊", "意外", "没想到",
+                "不敢相信", "吓", "我的天", "天哪", "我去", "卧槽", "woc",
+                // 英文  
+                "what", "really", "wow", "omg", "surprising", "shocked", "amazing",
+                "unbelievable", "incredible", "unexpected", "seriously", "no way"
+            }))
+            {
+                expression = ExpressionType.Surprised;
+            }
+            // ? 担忧关键词（扩展）
+            else if (ContainsKeywords(dialogueText, new[] { 
+                // 中文
+                "担心", "忧虑", "危险", "小心", "注意", "警惕", "害怕", "恐惧", 
+                "紧张", "焦虑", "不安", "可能会", "也许", "风险", "威胁", "问题",
+                "糟糕", "不妙", "麻烦", "困难", "棘手",
+                // 英文
+                "worried", "concerned", "careful", "beware", "afraid", "fear",
+                "nervous", "anxious", "danger", "risk", "threat", "trouble", "problem"
+            }))
+            {
+                expression = ExpressionType.Worried;
+            }
+            // ? 调皮关键词（扩展）
+            else if (ContainsKeywords(dialogueText, new[] { 
+                // 中文
+                "嘿嘿", "嘻嘻", "逗你", "开玩笑", "捉弄", "调皮", "坏笑", "偷笑",
+                "嘿", "哼哼", "呵呵", "略略略", "嘻", "皮", "骗你的", "逗你玩",
+                // 英文
+                "playful", "teasing", "mischievous", "hehe", "hihi", "kidding",
+                "joking", "prank", "naughty", "trick"
+            }))
+            {
+                expression = ExpressionType.Playful;
+            }
+            // ? 得意关键词（扩展）
+            else if (ContainsKeywords(dialogueText, new[] { 
+                // 中文
+                "看吧", "我说", "果然", "不出所料", "就知道", "当然", "必然", 
+                "轻松", "简单", "小意思", "不在话下", "一般般", "还行吧", "哼",
+                "本大人", "本小姐", "本尊", "朕",
+                // 英文
+                "told you", "as expected", "obviously", "of course", "naturally",
+                "easy", "simple", "knew it", "predicted"
+            }))
+            {
+                expression = ExpressionType.Smug;
+            }
+            // ? 失望关键词（扩展）
+            else if (ContainsKeywords(dialogueText, new[] { 
+                // 中文
+                "失望", "算了", "唉", "无奈", "放弃", "没办法", "没用", "无语",
+                "无力", "疲惫", "累", "烦", "懒得", "不想", "随便", "whatever",
+                // 英文
+                "disappointed", "sigh", "alas", "whatever", "give up", "useless",
+                "hopeless", "tired", "exhausted", "boring"
+            }))
+            {
+                expression = ExpressionType.Disappointed;
+            }
+            // ? 沉思关键词（扩展）
+            else if (ContainsKeywords(dialogueText, new[] { 
+                // 中文
+                "嗯", "让我想想", "或许", "也许", "可能", "思考", "考虑", "分析",
+                "研究", "琢磨", "推测", "判断", "认为", "觉得", "我想", "应该",
+                "大概", "估计", "看来", "似乎", "好像", "...", "……",
+                // 英文
+                "hmm", "perhaps", "maybe", "consider", "think", "analyze", "ponder",
+                "suppose", "guess", "probably", "seems", "apparently", "let me see"
+            }))
+            {
+                expression = ExpressionType.Thoughtful;
+            }
+            // ? 烦躁关键词（扩展）
+            else if (ContainsKeywords(dialogueText, new[] { 
+                // 中文
+                "烦", "吵", "够了", "行了", "知道了", "好了好了", "别说了", 
+                "闭嘴", "安静", "不要", "停", "等等", "慢着", "打扰",
+                // 英文
+                "annoyed", "bothered", "enough", "stop", "quiet", "shut", "leave me"
+            }))
+            {
+                expression = ExpressionType.Annoyed;
+            }
+            // ? 新增：害羞关键词
+            else if (ContainsKeywords(dialogueText, new[] { 
+                // 中文
+                "害羞", "不好意思", "羞", "脸红", "羞涩", "难为情", "不敢", 
+                "...", "……", "那个", "嗯嗯", "唔", "诶", "啊这", "emmm",
+                "尴尬", "不太好", "有点", "感谢", "谢谢你", "太客气了",
+                "不用", "没什么", "别这样", "不要这样", "你真是",
+                // 英文
+                "shy", "embarrassed", "blush", "awkward", "umm", "uh", "er",
+                "thank you", "thanks", "appreciate", "grateful", "sorry"
+            }))
+            {
+                expression = ExpressionType.Shy;
+            }
+            
+            if (expression != ExpressionType.Neutral)
+            {
+                SetExpression(personaDefName, expression, ExpressionTrigger.DialogueTone);
+            }
+        }
+        
+        /// <summary>
+        /// 根据游戏事件设置表情
+        /// </summary>
+        public static void UpdateExpressionByEvent(string personaDefName, string eventType, bool isPositive)
+        {
+            ExpressionType expression;
+            
+            switch (eventType.ToLower())
+            {
+                case "colonist_death":
+                    expression = ExpressionType.Sad;
+                    break;
+                    
+                case "raid_victory":
+                    expression = ExpressionType.Happy;
+                    break;
+                    
+                case "raid_incoming":
+                    expression = ExpressionType.Worried;
+                    break;
+                    
+                case "major_loss":
+                    expression = ExpressionType.Disappointed;
+                    break;
+                    
+                case "great_success":
+                    expression = ExpressionType.Smug;
+                    break;
+                    
+                case "unexpected_event":
+                    expression = ExpressionType.Surprised;
+                    break;
+                    
+                default:
+                    expression = isPositive ? ExpressionType.Happy : ExpressionType.Sad;
+                    break;
+            }
+            
+            SetExpression(personaDefName, expression, ExpressionTrigger.GameEvent);
+        }
+        
+        /// <summary>
+        /// 更新表情过渡动画
+        /// </summary>
+        public static void UpdateTransition(string personaDefName)
+        {
+            var state = GetExpressionState(personaDefName);
+            
+            // 如果过渡未完成
+            if (state.TransitionProgress < 1f)
+            {
+                state.TransitionTicks++;
+                state.TransitionProgress = Mathf.Clamp01((float)state.TransitionTicks / TRANSITION_DURATION_TICKS);
+            }
+            
+            // 检查表情是否过期（自动恢复到中性）
+            // ? Processing 触发器不会自动过期（等待AI响应完成）
+            if (!state.IsLocked && state.TransitionProgress >= 1f && state.LastTrigger != ExpressionTrigger.Processing)
+            {
+                int elapsedTicks = Find.TickManager.TicksGame - state.ExpressionStartTick;
+                
+                if (elapsedTicks > EXPRESSION_DURATION_TICKS && state.CurrentExpression != ExpressionType.Neutral)
+                {
+                    // 表情过期，恢复到中性
+                    SetExpression(personaDefName, ExpressionType.Neutral, ExpressionTrigger.RandomVariation);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 锁定/解锁表情
+        /// </summary>
+        public static void LockExpression(string personaDefName, bool locked)
+        {
+            var state = GetExpressionState(personaDefName);
+            state.IsLocked = locked;
+            Log.Message($"[ExpressionSystem] {personaDefName} 表情锁定状态: {locked}");
+        }
+        
+        /// <summary>
+        /// 获取表情立绘文件名后缀
+        /// ? 支持随机变体（表情、表情1、表情2...）
+        /// </summary>
+        public static string GetExpressionSuffix(ExpressionType expression)
+        {
+            // 基础后缀
+            string baseSuffix = expression switch
+            {
+                ExpressionType.Neutral => "",
+                ExpressionType.Happy => "_happy",
+                ExpressionType.Happy2 => "_happy2",
+                ExpressionType.Happy3 => "_happy3",
+                ExpressionType.Sad => "_sad",
+                ExpressionType.Angry => "_angry",
+                ExpressionType.Surprised => "_surprised",
+                ExpressionType.Worried => "_worried",
+                ExpressionType.Smug => "_smug",
+                ExpressionType.Disappointed => "_disappointed",
+                ExpressionType.Thoughtful => "_thoughtful",
+                ExpressionType.Annoyed => "_annoyed",
+                ExpressionType.Playful => "_playful",
+                ExpressionType.Shy => "_shy",  // ? 新增
+                _ => ""
+            };
+
+            // ? 随机选择变体（如果存在）
+            // 例如：_happy、_happy1、_happy2 中随机选一个
+            return GetRandomVariant(baseSuffix);
+        }
+
+        /// <summary>
+        /// ? 获取随机表情变体
+        /// 尝试查找 表情、表情1、表情2... 并随机选择一个
+        /// </summary>
+        private static string GetRandomVariant(string baseSuffix)
+        {
+            if (string.IsNullOrEmpty(baseSuffix))
+            {
+                return baseSuffix; // 中性表情无变体
+            }
+
+            // ? 修复：检查 baseSuffix 是否已经包含数字（避免重复添加）
+            // 例如：_happy2 不应该再变成 _happy21
+            if (System.Text.RegularExpressions.Regex.IsMatch(baseSuffix, @"\d+$"))
+            {
+                // 已经包含数字，直接返回
+                return baseSuffix;
+            }
+
+            // 收集所有可用的变体
+            var availableVariants = new System.Collections.Generic.List<string>();
+            availableVariants.Add(baseSuffix); // 基础版本（无数字）
+
+            // 尝试查找变体（最多支持 5 个变体：表情1-表情5）
+            for (int i = 1; i <= 5; i++)
+            {
+                string variantSuffix = $"{baseSuffix}{i}";
+                availableVariants.Add(variantSuffix);
+            }
+
+            // ? 随机选择一个变体
+            int randomIndex = UnityEngine.Random.Range(0, availableVariants.Count);
+            string selectedVariant = availableVariants[randomIndex];
+            
+            Log.Message($"[ExpressionSystem] 随机表情变体: {baseSuffix} → {selectedVariant} (从 {availableVariants.Count} 个中选择)");
+            
+            return selectedVariant;
+        }
+        
+        /// <summary>
+        /// 重置所有表情状态
+        /// </summary>
+        public static void ResetAllExpressions()
+        {
+            expressionStates.Clear();
+            Log.Message("[ExpressionSystem] 所有表情状态已重置");
+        }
+        
+        // 辅助方法：检查文本是否包含关键词
+        private static bool ContainsKeywords(string text, string[] keywords)
+        {
+            text = text.ToLowerInvariant();
+            foreach (var keyword in keywords)
+            {
+                if (text.Contains(keyword.ToLowerInvariant()))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        /// <summary>
+        /// 获取调试信息
+        /// </summary>
+        public static string GetDebugInfo()
+        {
+            var info = $"[ExpressionSystem] 表情状态数量: {expressionStates.Count}\n";
+            
+            foreach (var kvp in expressionStates)
+            {
+                var state = kvp.Value;
+                info += $"  {kvp.Key}:\n";
+                info += $"    当前表情: {state.CurrentExpression}\n";
+                info += $"    过渡进度: {state.TransitionProgress:P0}\n";
+                info += $"    锁定状态: {state.IsLocked}\n";
+                info += $"    触发器: {state.LastTrigger}\n";
+            }
+            
+            return info;
+        }
+        
+        /// <summary>
+        /// ? 测试方法：手动触发表情切换（用于调试）
+        /// </summary>
+        public static void TestExpressionChange(string personaDefName)
+        {
+            var allExpressions = new[]
+            {
+                ExpressionType.Neutral,
+                ExpressionType.Happy,
+                ExpressionType.Sad,
+                ExpressionType.Angry,
+                ExpressionType.Surprised,
+                ExpressionType.Worried,
+                ExpressionType.Smug,
+                ExpressionType.Disappointed,
+                ExpressionType.Thoughtful,
+                ExpressionType.Annoyed,
+                ExpressionType.Playful,
+                ExpressionType.Shy  // ? 新增
+            };
+            
+            var state = GetExpressionState(personaDefName);
+            int currentIndex = Array.IndexOf(allExpressions, state.CurrentExpression);
+            int nextIndex = (currentIndex + 1) % allExpressions.Length;
+            
+            ExpressionType nextExpression = allExpressions[nextIndex];
+            SetExpression(personaDefName, nextExpression, ExpressionTrigger.Manual);
+            
+            Messages.Message($"[测试] 表情切换: {state.CurrentExpression} → {nextExpression}", MessageTypeDefOf.NeutralEvent);
+        }
+    }
+}

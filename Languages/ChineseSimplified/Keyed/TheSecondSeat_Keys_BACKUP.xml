@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <TSS_NarratorWindowTitle>AI 叙事者助手</TSS_NarratorWindowTitle>
+  <TSS_NarratorButton>AI 旁白</TSS_NarratorButton>
+  <TSS_Settings_LLM_Title>LLM 设置</TSS_Settings_LLM_Title>
+  <TSS_Settings_LLMProvider>LLM 提供者</TSS_Settings_LLMProvider>
+  <TSS_Settings_LLMProvider_Local>本地模型</TSS_Settings_LLMProvider_Local>
+  <TSS_Settings_LLMProvider_OpenAI>OpenAI</TSS_Settings_LLMProvider_OpenAI>
+  <TSS_Settings_LLMProvider_DeepSeek>DeepSeek</TSS_Settings_LLMProvider_DeepSeek>
+  <TSS_Settings_LLMProvider_Gemini>Gemini</TSS_Settings_LLMProvider_Gemini>
+  <TSS_Settings_APIEndpoint>API 端点</TSS_Settings_APIEndpoint>
+  <TSS_Settings_APIKey>API 密钥</TSS_Settings_APIKey>
+  <TSS_Settings_ModelName>模型名称</TSS_Settings_ModelName>
+  <TSS_Settings_Temperature>温度</TSS_Settings_Temperature>
+  <TSS_Settings_MaxTokens>最大 Token 数</TSS_Settings_MaxTokens>
+  <TSS_Settings_Apply>应用设置</TSS_Settings_Apply>
+  <TSS_Settings_TestConnection>测试连接</TSS_Settings_TestConnection>
+  <TSS_Settings_Testing>正在测试连接...</TSS_Settings_Testing>
+  <TSS_Settings_TestSuccess>连接测试成功！</TSS_Settings_TestSuccess>
+  <TSS_Settings_TestFailed>连接测试失败</TSS_Settings_TestFailed>
+  <TSS_Settings_Applied>设置已应用</TSS_Settings_Applied>
+  <TSS_Settings_EnableWebSearch>启用网络搜索</TSS_Settings_EnableWebSearch>
+  <TSS_Settings_SearchEngine>搜索引擎</TSS_Settings_SearchEngine>
+  <TSS_Settings_SearchEngine_DuckDuckGo>DuckDuckGo（免费）</TSS_Settings_SearchEngine_DuckDuckGo>
+  <TSS_Settings_SearchEngine_Bing>Bing（需要 API Key）</TSS_Settings_SearchEngine_Bing>
+  <TSS_Settings_SearchEngine_Google>Google（需要 API Key）</TSS_Settings_SearchEngine_Google>
+  <TSS_Settings_EnableMultimodal>启用多模态分析</TSS_Settings_EnableMultimodal>
+  <TSS_Settings_MultimodalProvider>多模态提供者</TSS_Settings_MultimodalProvider>
+  <TSS_Settings_MultimodalProvider_OpenAI>OpenAI</TSS_Settings_MultimodalProvider_OpenAI>
+  <TSS_Settings_MultimodalProvider_DeepSeek>DeepSeek</TSS_Settings_MultimodalProvider_DeepSeek>
+  <TSS_Settings_MultimodalProvider_Gemini>Gemini</TSS_Settings_MultimodalProvider_Gemini>
+  <TSS_Settings_DebugMode>调试模式</TSS_Settings_DebugMode>
+</LanguageData>

@@ -1,0 +1,354 @@
+# ?? 立绘表情文件放置说明
+
+## ?? 文件放置位置
+
+将所有表情立绘文件放在此目录：
+```
+Textures/UI/Narrators/
+```
+
+---
+
+## ?? 文件命名规范
+
+### 完整立绘替换模式（推荐新手）
+
+```
+基础立绘：{人格名称}.png
+表情立绘：{人格名称}_{表情名称}.png
+
+示例：
+Cassandra.png                    # 基础立绘（中性表情）
+Cassandra_happy.png              # 开心表情
+Cassandra_sad.png                # 悲伤表情
+Cassandra_angry.png              # 愤怒表情
+Cassandra_surprised.png          # 惊讶表情
+Cassandra_worried.png            # 担忧表情
+```
+
+### 面部区域叠加模式（高级用户）
+
+```
+基础立绘：{人格名称}.png
+面部表情：{人格名称}_{表情名称}_face.png
+
+示例：
+Cassandra.png                    # 完整立绘
+Cassandra_happy_face.png         # 笑脸（仅面部，透明背景）
+Cassandra_sad_face.png           # 哭脸（仅面部，透明背景）
+Cassandra_angry_face.png         # 怒脸（仅面部，透明背景）
+```
+
+**关键区别**：面部叠加模式的文件名包含 `_face` 后缀！
+
+---
+
+## ?? 支持的表情类型
+
+### 基础表情（8种）
+
+| 文件名后缀 | 中文名称 | 触发场景 |
+|-----------|---------|---------|
+| `_happy` | 开心 | 殖民地繁荣、好事件 |
+| `_sad` | 悲伤 | 殖民者死亡、灾难 |
+| `_angry` | 愤怒 | 被攻击、损失惨重 |
+| `_surprised` | 惊讶 | 意外事件 |
+| `_worried` | 担忧 | 危险预警 |
+| `_smug` | 得意 | 完美防御、大胜 |
+| `_disappointed` | 失望 | 任务失败 |
+| `_thoughtful` | 沉思 | 战略决策时 |
+
+### 高级表情（可选）
+
+| 文件名后缀 | 中文名称 | 触发场景 |
+|-----------|---------|---------|
+| `_annoyed` | 烦躁 | 多次请求同一件事 |
+| `_curious` | 好奇 | 探索新事物 |
+| `_determined` | 坚定 | 关键战斗前 |
+| `_mischievous` | 调皮 | 恶作剧事件 |
+
+---
+
+## ?? 文件规格要求
+
+### 完整立绘替换模式
+
+```
+尺寸：512×512 或 1024×1024（推荐）
+格式：PNG（支持透明通道）
+背景：可以不透明（与基础立绘相同）
+颜色：RGB/RGBA
+分辨率：72-300 DPI
+文件大小：< 1MB（推荐）
+```
+
+### 面部区域叠加模式
+
+```
+尺寸：256×256（面部区域）
+格式：PNG（必须支持透明通道）
+背景：必须透明（Alpha = 0）
+内容：仅包含面部（眼睛、鼻子、嘴巴）
+边缘：羽化处理，避免硬边
+文件大小：< 500KB（推荐）
+```
+
+---
+
+## ?? 完整示例
+
+### 示例1：Cassandra Classic（完整替换模式）
+
+```
+Textures/UI/Narrators/
+├── Cassandra.png                # 512×512, 基础立绘
+├── Cassandra_happy.png          # 512×512, 完整开心立绘
+├── Cassandra_sad.png            # 512×512, 完整悲伤立绘
+├── Cassandra_angry.png          # 512×512, 完整愤怒立绘
+├── Cassandra_surprised.png      # 512×512, 完整惊讶立绘
+└── Cassandra_worried.png        # 512×512, 完整担忧立绘
+
+总计：6个文件，约1.2MB
+```
+
+### 示例2：Phoebe Chillax（面部叠加模式）
+
+```
+Textures/UI/Narrators/
+├── Phoebe.png                   # 512×512, 完整立绘
+├── Phoebe_happy_face.png        # 256×256, 笑脸（透明背景）
+├── Phoebe_sad_face.png          # 256×256, 哭脸（透明背景）
+├── Phoebe_angry_face.png        # 256×256, 怒脸（透明背景）
+├── Phoebe_surprised_face.png    # 256×256, 惊讶脸（透明背景）
+└── Phoebe_worried_face.png      # 256×256, 担忧脸（透明背景）
+
+总计：6个文件，约350KB
+节省：约70%空间
+```
+
+---
+
+## ?? 制作建议
+
+### Photoshop工作流程
+
+#### 完整立绘替换模式
+
+```
+1. 打开基础立绘 (Cassandra.png)
+2. 复制图层
+3. 修改面部表情（眼睛、嘴巴、眉毛）
+4. 另存为 Cassandra_happy.png
+5. 重复步骤2-4制作其他表情
+```
+
+#### 面部叠加模式
+
+```
+1. 打开基础立绘 (Phoebe.png)
+2. 选择面部区域（矩形选框工具）
+3. 复制面部到新图层
+4. 修改表情
+5. 删除背景层（保持透明）
+6. 导出为 Phoebe_happy_face.png（勾选透明度）
+7. 重复步骤2-6制作其他表情
+```
+
+### 关键要点
+
+```
+? 完整替换模式：
+   - 可以不透明背景
+   - 简单易制作
+   - 文件较大
+
+? 面部叠加模式：
+   - 必须透明背景
+   - 需要图层管理
+   - 文件较小
+   - 更专业
+```
+
+---
+
+## ?? 验证清单
+
+### 完整立绘替换模式
+
+- [ ] 文件命名正确（无 `_face` 后缀）
+- [ ] 尺寸为512×512或1024×1024
+- [ ] PNG格式
+- [ ] 每个表情都是完整的立绘
+- [ ] 文件能在Windows图片查看器中打开
+
+### 面部叠加模式
+
+- [ ] 文件命名包含 `_face` 后缀
+- [ ] 尺寸为256×256
+- [ ] PNG格式，支持透明通道
+- [ ] 背景完全透明（在Windows预览中看到棋盘格）
+- [ ] 仅包含面部区域
+- [ ] 边缘有适当羽化
+
+---
+
+## ?? 常见问题
+
+### Q1：表情不显示？
+
+**检查**：
+```
+1. 文件命名是否正确
+2. 文件是否放在 Textures/UI/Narrators/ 目录
+3. 是否是PNG格式
+4. 文件大小是否合理（< 10MB）
+```
+
+### Q2：面部叠加出现矩形框？
+
+**原因**：背景不透明
+
+**解决**：
+```
+1. 在Photoshop中删除背景层
+2. 确保导出时勾选"透明度"
+3. 验证：在Windows预览中应该看到棋盘格背景
+```
+
+### Q3：边缘有硬边？
+
+**原因**：缺少羽化
+
+**解决**：
+```
+1. 在Photoshop中：
+   - 选中面部图层
+   - 添加图层蒙版
+   - 使用渐变工具羽化边缘
+2. 或使用"羽化"功能（Shift+F6）
+```
+
+### Q4：文件太大？
+
+**解决**：
+```
+1. 使用"导出为Web所用格式"
+2. 降低质量到80-90%
+3. 缩小尺寸到512×512
+4. 使用压缩工具（如TinyPNG）
+```
+
+---
+
+## ?? 相关文档
+
+- [立绘动态表情系统-完整指南.md](../../../立绘动态表情系统-完整指南.md) - 详细说明
+- [面部区域覆盖表情制作指南.md](../../../面部区域覆盖表情制作指南.md) - 制作教程
+- [ExpressionSystem.cs](../../../Source/TheSecondSeat/PersonaGeneration/ExpressionSystem.cs) - 源代码
+
+---
+
+## ?? 快速开始
+
+### 最简单的方法（3个文件）
+
+```
+1. 准备基础立绘：
+   Cassandra.png (512×512)
+
+2. 制作2个表情：
+   Cassandra_happy.png (512×512, 笑脸)
+   Cassandra_sad.png (512×512, 哭脸)
+
+3. 放入此目录，重启游戏测试
+```
+
+### 推荐配置（6个文件）
+
+```
+基础 + 5个常用表情：
+- Cassandra.png (中性)
+- Cassandra_happy.png (开心)
+- Cassandra_sad.png (悲伤)
+- Cassandra_angry.png (愤怒)
+- Cassandra_surprised.png (惊讶)
+- Cassandra_worried.png (担忧)
+```
+
+---
+
+## ?? 重要提示
+
+### 文件命名必须精确
+
+```
+? 正确：
+Cassandra_happy.png
+Phoebe_sad_face.png
+
+? 错误：
+Cassandra-happy.png      # 不要用连字符
+cassandra_happy.png      # 首字母必须大写
+Cassandra_Happy.png      # 表情名小写
+Cassandra happy.png      # 不要有空格
+```
+
+### 两种模式不能混用
+
+```
+? 错误：
+Cassandra.png
+Cassandra_happy.png          # 完整替换
+Cassandra_sad_face.png       # 面部叠加 ← 混用！
+
+? 正确：统一使用一种模式
+方案A（完整替换）：
+Cassandra.png
+Cassandra_happy.png
+Cassandra_sad.png
+
+方案B（面部叠加）：
+Cassandra.png
+Cassandra_happy_face.png
+Cassandra_sad_face.png
+```
+
+---
+
+## ?? 文件大小参考
+
+| 模式 | 文件数量 | 单个文件 | 总大小 |
+|-----|---------|---------|--------|
+| **完整替换** | 6 | ~200KB | ~1.2MB |
+| **面部叠加** | 6 | ~30-50KB | ~300KB |
+
+---
+
+## ?? 推荐工具
+
+### 图片编辑
+
+- **Photoshop** - 专业级（推荐）
+- **GIMP** - 免费开源
+- **Krita** - 免费绘画软件
+- **Paint.NET** - 免费轻量级
+
+### 图片压缩
+
+- **TinyPNG** - 在线压缩（https://tinypng.com/）
+- **ImageOptim** - Mac专用
+- **FileOptimizer** - Windows批量压缩
+
+### 透明度检查
+
+- **Windows照片查看器** - 透明显示为白色
+- **Paint.NET** - 透明显示为棋盘格
+- **Photoshop** - 透明显示为棋盘格
+
+---
+
+**版本**：v1.0.0  
+**最后更新**：2025-01-XX  
+**适用系统**：立绘动态表情系统
+
+需要帮助？查看完整指南或在Issues中提问！

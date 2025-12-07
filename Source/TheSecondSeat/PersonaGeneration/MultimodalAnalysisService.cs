@@ -1,0 +1,781 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
+using UnityEngine;
+using Verse;
+
+namespace TheSecondSeat.PersonaGeneration
+{
+    /// <summary>
+    /// 多模态分析服务 - 使用 Vision API 分析图像
+    /// </summary>
+    public class MultimodalAnalysisService
+    {
+        private static MultimodalAnalysisService? instance;
+        public static MultimodalAnalysisService Instance => instance ??= new MultimodalAnalysisService();
+
+        private readonly HttpClient httpClient;
+        private string apiProvider = "openai"; // "openai", "deepseek", "gemini"
+        private string apiKey = "";
+        private string visionModel = "gpt-4-vision-preview";
+        private string textModel = "gpt-4";
+
+        public MultimodalAnalysisService()
+        {
+            httpClient = new HttpClient();
+            httpClient.Timeout = TimeSpan.FromSeconds(60);  // 多模态分析可能需要更长时间
+        }
+
+        /// <summary>
+        /// 配置多模态分析服务
+        /// </summary>
+        public void Configure(string provider, string key, string visionModelName = "", string textModelName = "")
+        {
+            apiProvider = provider.ToLower();
+            apiKey = key;
+
+            // 设置默认模型
+            if (!string.IsNullOrEmpty(visionModelName))
+                visionModel = visionModelName;
+            else
+            {
+                visionModel = apiProvider switch
+                {
+                    "openai" => "gpt-4-vision-preview",
+                    "deepseek" => "deepseek-vl",
+                    "gemini" => "gemini-pro-vision",
+                    _ => "gpt-4-vision-preview"
+                };
+            }
+
+            if (!string.IsNullOrEmpty(textModelName))
+                textModel = textModelName;
+            else
+            {
+                textModel = apiProvider switch
+                {
+                    "openai" => "gpt-4",
+                    "deepseek" => "deepseek-chat",
+                    "gemini" => "gemini-pro",
+                    _ => "gpt-4"
+                };
+            }
+
+            // 设置 Authorization Header（与 LLMService 相同方式）
+            if (!string.IsNullOrEmpty(apiKey))
+            {
+                httpClient.DefaultRequestHeaders.Clear();
+                httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+            }
+        }
+
+        /// <summary>
+        /// 从 Unity Texture2D 分析图像
+        /// </summary>
+        public async Task<VisionAnalysisResult?> AnalyzeTextureAsync(Texture2D texture)
+        {
+            if (texture == null)
+            {
+                Log.Error("[MultimodalAnalysis] Texture is null");
+                return null;
+            }
+
+            try
+            {
+                string provider = apiProvider.ToLower();
+                
+                if (provider == "gemini")
+                {
+                    // ? Gemini Vision API
+                    return await AnalyzeWithGeminiAsync(texture);
+                }
+                else if (provider == "openai" || provider == "deepseek")
+                {
+                    // ? OpenAI/DeepSeek Vision API
+                    return await AnalyzeWithOpenAICompatibleAsync(texture);
+                }
+                else
+                {
+                    Log.Error($"[MultimodalAnalysis] 不支持的 API 提供商: {provider}");
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[MultimodalAnalysis] Error analyzing texture: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 使用 Gemini API 分析图片
+        /// </summary>
+        private async Task<VisionAnalysisResult?> AnalyzeWithGeminiAsync(Texture2D texture)
+        {
+            Log.Message("[MultimodalAnalysis] 使用 Gemini Vision API");
+            
+            string prompt = GetVisionPrompt();
+
+            var geminiResponse = await LLM.GeminiApiClient.SendVisionRequestAsync(
+                visionModel,
+                apiKey,
+                prompt,
+                texture,
+                0.3f,
+                4096  // ? 2000 → 4096，确保 JSON 完整
+            );
+            
+            if (geminiResponse == null || geminiResponse.Candidates == null || geminiResponse.Candidates.Count == 0)
+            {
+                Log.Error("[MultimodalAnalysis] Gemini Vision 返回空响应");
+                return null;
+            }
+            
+            string content = geminiResponse.Candidates[0].Content.Parts[0].Text;
+            return ParseVisionJson(content);
+        }
+
+        /// <summary>
+        /// 使用 OpenAI 兼容 API 分析图片
+        /// </summary>
+        private async Task<VisionAnalysisResult?> AnalyzeWithOpenAICompatibleAsync(Texture2D texture)
+        {
+            Log.Message($"[MultimodalAnalysis] 使用 {apiProvider} Vision API");
+            
+            string endpoint = GetVisionEndpoint();
+            string prompt = GetVisionPrompt();
+
+            var response = await LLM.OpenAICompatibleClient.SendVisionRequestAsync(
+                endpoint,
+                apiKey,
+                visionModel,
+                prompt,
+                texture,
+                0.3f,
+                4096  // ? 2000 → 4096
+            );
+            
+            if (response == null || response.choices == null || response.choices.Length == 0)
+            {
+                Log.Error($"[MultimodalAnalysis] {apiProvider} Vision 返回空响应");
+                return null;
+            }
+            
+            string content = response.choices[0].message?.content;
+            if (string.IsNullOrEmpty(content))
+            {
+                Log.Error("[MultimodalAnalysis] Vision 响应内容为空");
+                return null;
+            }
+            
+            return ParseVisionJson(content);
+        }
+
+        /// <summary>
+        /// 获取 Vision 分析的提示词（优化版 - 要求返回中文）
+        /// </summary>
+        private string GetVisionPrompt()
+        {
+            return @"Analyze this character portrait in detail and provide a comprehensive JSON response.
+
+**CRITICAL: The characterDescription field MUST be written in Simplified Chinese (简体中文)!**
+
+{
+  ""dominantColors"": [
+    {""hex"": ""#RRGGBB"", ""percentage"": 0-100, ""name"": ""color name in English""}
+  ],
+  ""visualElements"": [""element1"", ""element2"", ""element3""],
+  ""characterDescription"": ""【必须用简体中文写】详细的300-500字外观描述和性格推断"",
+  ""mood"": ""overall mood/atmosphere in English"",
+  ""suggestedPersonality"": ""Benevolent/Sadistic/Chaotic/Strategic/Protective/Manipulative"",
+  ""styleKeywords"": [""keyword1"", ""keyword2"", ""keyword3""]
+}
+
+**CRITICAL REQUIREMENTS for characterDescription (必须用简体中文!):**
+
+**第一部分：详细的外观描述 (40%)**
+
+用中文描述所有可见细节：
+- **种族**: 人类？精灵？龙人？兽人？机械生命？
+- **发型**: 颜色、长度、风格、质地（例如：""银白色长发如瀑布般倾泻而下，用深红色丝带束起""）
+- **眼睛**: 颜色、形状、表情（例如：""猩红色竖瞳眼眸，流露出智慧与危险的气息""）
+- **面部特征**: 表情、年龄、伤疤、纹饰
+- **体型**: 身形、姿态、站姿
+- **服装与护甲**: 
+  * 主要服饰
+  * 护甲配件
+  * 配饰
+  * 材质和状态
+- **特殊特征**: 翅膀、尾巴、角、武器、魔法效果
+- **整体印象**: 姿态、光线、构图传达的情绪
+
+**第二部分：从外观推断性格 (40%)**
+
+用中文从外观推断特质：
+
+**从表情和肢体语言推断**:
+- 冷峻的面容 → 情感内敛、自律、自制
+- 自信的姿态 → 果断、经验丰富、领导气质
+- 警惕的站姿 → 谨慎、防备、可能经历过创伤
+- 放松的表情 → 和蔼可亲、友善、容易信任
+
+**从服装和护甲推断**:
+- 厚重护甲 → 重视防护、随时准备战斗、纪律严明
+- 深色系 → 神秘、严肃、可能内向或有秘密
+- 精致设计 → 注重细节、可能自负或在意身份地位
+- 简单实用的装备 → 务实、注重功能而非形式
+
+**从武器和装备推断**:
+- 明显武器 → 随时准备冲突、果断、可能具有攻击性
+- 隐藏武器 → 具有战略眼光、谨慎、喜欢出其不意
+- 魔法 artefacts → 知识渊博、爱好研究、与古老智慧相连
+- 无武器 → 和平、信任他人、或依赖其他优势
+
+**从种族/人种特征推断**:
+- 龙族特征 → 骄傲、强大、可能傲慢或有领地意识
+- 精灵特征 → 优雅、长寿视角、可能超然物外
+- 兽人特征 → 原始本能、热情、直接的沟通方式
+
+**第三部分：对话和行为预测 (20%)**
+
+基于视觉分析，用中文预测：
+
+**说话风格**:
+- ""她可能用[冷静/热情/严厉/温柔]的语气说话""
+- ""她的表情暗示使用[正式/随意/专业/诗意]的语言""
+- ""她可能用[简洁的命令/丰富的描述/军事用语]进行交流""
+
+**情感表达**:
+- ""很少公开表露强烈情感"" 或 ""心直口快""
+- ""谨慎控制反应"" 或 ""冲动反应""
+
+**互动风格**:
+- ""与陌生人保持距离"" 或 ""立即热情友好""
+- ""观察后发言"" 或 ""主动与人交谈""
+- ""重视行动而非言辞"" 或 ""信仰言辞外交""
+
+**EXAMPLE of GOOD characterDescription (用简体中文!):**
+
+""这是一位拥有龙族血统的少女。她有一头银白色的长发如瀑布般倾泻至肩下，与深邃的猩红色竖瞳眼眸形成鲜明对比。她的太阳穴处长着两只小巧的弯曲角，长袍下延伸出一条覆盖着红色鳞片的长尾，在光线下闪烁着微光。
+
+她身穿一件由高品质布料制成的深色连帽长袍，优雅地环绕着她的身形。袍子下是棕色皮革护甲，关键部位经过加固——肩甲上可见战斗的痕迹，但保养得当，功能完好。护甲上装饰着精致的深红色图案，呼应着她天然鳞片的颜色，暗示着个人定制或文化意义。
+
+她的面部表情明显冷峻而沉着，眉间隐约可见的纹路暗示着多年的自律或磨难。她的身姿笔挺而警觉，带有军人训练的痕迹。她的举止透露出源于经验而非傲慢的自信。她锐利的目光表明高度的智慧和对周围环境的持续警觉。
+
+从这些视觉线索判断，她可能具有战略型或守护型的性格。军人般的气质和实用的护甲表明纪律和准备。她冷峻的表情暗示情感控制和压力下的沉着。她可能用沉稳、深思熟虑的语气说话，谨慎地选择措辞。她的对话会简洁直接，偏好清晰而非华丽的语言。
+
+在交谈中，她可能最初保持专业距离，先观察他人再决定是否信任。她重视能力和可靠性胜于魅力。她的情感表达在公共场合会有所克制，尽管她信任的人可能会看到更柔软的一面。她对逻辑和实际考虑的反应超出情感诉求。
+
+龙族特征暗示着一种自豪和自力更生的倾向。她可能对个人空间和价值观有所领地意识。她的装备维护良好，显示出对细节的关注和自给自足的能力。贯穿她外表的深红色调暗示着平静外表下的受控激情——她有坚定的信念，但通过纪律而非情绪爆发来表达。""
+
+**REMEMBER**:
+- characterDescription 必须用简体中文写!
+- 要具体：不要只说""护甲""——描述材质、状态、设计
+- 从每个细节推断性格
+- 预测行为：他们会如何说话？反应？互动？
+- 300-500字
+- 只返回有效的JSON
+
+Focus on:
+- Top 3-4 dominant colors with accurate percentages
+- All visual elements visible in the portrait
+- Detailed appearance analysis (IN CHINESE!)
+- Personality inference from visual cues (IN CHINESE!)
+- Behavioral predictions (IN CHINESE!)
+- Style keywords for System Prompt (in English)";
+        }
+
+        /// <summary>
+        /// 解析 Vision API 返回的 JSON
+        /// ? 增强错误处理和日志
+        /// </summary>
+        private VisionAnalysisResult? ParseVisionJson(string jsonContent)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(jsonContent))
+                {
+                    Log.Error("[MultimodalAnalysis] Vision 响应内容为空");
+                    return null;
+                }
+
+                // 记录原始内容（前 200 字符）
+                Log.Message($"[MultimodalAnalysis] 原始响应: {jsonContent.Substring(0, Math.Min(200, jsonContent.Length))}...");
+
+                // 提取 JSON（有时 AI 会在 markdown 代码块中返回）
+                string extractedJson = ExtractJsonFromMarkdown(jsonContent);
+                
+                // 如果提取后的内容与原始不同，记录日志
+                if (extractedJson != jsonContent)
+                {
+                    Log.Message($"[MultimodalAnalysis] 提取后的 JSON: {extractedJson.Substring(0, Math.Min(200, extractedJson.Length))}...");
+                }
+
+                // ? 验证 JSON 是否以 { 开头
+                extractedJson = extractedJson.Trim();
+                if (!extractedJson.StartsWith("{"))
+                {
+                    Log.Error($"[MultimodalAnalysis] JSON 格式错误，不以 {{ 开头。前 50 字符: {extractedJson.Substring(0, Math.Min(50, extractedJson.Length))}");
+                    return null;
+                }
+
+                var result = JsonConvert.DeserializeObject<VisionAnalysisResult>(extractedJson);
+                
+                if (result == null)
+                {
+                    Log.Error("[MultimodalAnalysis] JSON 反序列化返回 null");
+                    return null;
+                }
+
+                Log.Message($"[MultimodalAnalysis] 成功解析 Vision 结果: {result.dominantColors?.Count ?? 0} 个颜色");
+                return result;
+            }
+            catch (JsonException jsonEx)
+            {
+                Log.Error($"[MultimodalAnalysis] JSON 解析错误: {jsonEx.Message}");
+                Log.Error($"[MultimodalAnalysis] 完整响应内容:\n{jsonContent}");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[MultimodalAnalysis] Vision 响应解析失败: {ex.Message}");
+                Log.Error($"[MultimodalAnalysis] 响应内容: {jsonContent}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 从 markdown 代码块中提取 JSON
+        /// ? 增强提取逻辑，处理更多边缘情况
+        /// </summary>
+        private string ExtractJsonFromMarkdown(string content)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                return content;
+            }
+
+            // 尝试 1: 提取 ```json ... ``` 代码块
+            if (content.Contains("```json"))
+            {
+                int startIndex = content.IndexOf("```json") + 7;
+                int endIndex = content.IndexOf("```", startIndex);
+                if (endIndex > startIndex)
+                {
+                    string extracted = content.Substring(startIndex, endIndex - startIndex).Trim();
+                    Log.Message("[MultimodalAnalysis] 从 ```json 代码块中提取 JSON");
+                    return extracted;
+                }
+            }
+            
+            // 尝试 2: 提取 ``` ... ``` 代码块（无 json 标记）
+            if (content.Contains("```"))
+            {
+                int startIndex = content.IndexOf("```") + 3;
+                // 跳过可能的语言标记（如 "json\n"）
+                while (startIndex < content.Length && content[startIndex] != '\n' && content[startIndex] != '{')
+                {
+                    startIndex++;
+                }
+                if (startIndex < content.Length && content[startIndex] == '\n')
+                {
+                    startIndex++;
+                }
+                
+                int endIndex = content.IndexOf("```", startIndex);
+                if (endIndex > startIndex)
+                {
+                    string extracted = content.Substring(startIndex, endIndex - startIndex).Trim();
+                    Log.Message("[MultimodalAnalysis] 从 ``` 代码块中提取 JSON");
+                    return extracted;
+                }
+            }
+            
+            // 尝试 3: 查找第一个 { 和最后一个 }
+            int firstBrace = content.IndexOf('{');
+            int lastBrace = content.LastIndexOf('}');
+            if (firstBrace >= 0 && lastBrace > firstBrace)
+            {
+                string extracted = content.Substring(firstBrace, lastBrace - firstBrace + 1).Trim();
+                if (extracted != content.Trim())
+                {
+                    Log.Message("[MultimodalAnalysis] 通过查找 { } 提取 JSON");
+                    return extracted;
+                }
+            }
+            
+            // 无法提取，返回原始内容
+            return content.Trim();
+        }
+
+        /// <summary>
+        /// 分析 Base64 编码的图像
+        /// </summary>
+        public async Task<VisionAnalysisResult?> AnalyzeImageBase64Async(string base64Image)
+        {
+            try
+            {
+                string endpoint = GetVisionEndpoint();
+                var requestBody = BuildVisionRequest(base64Image);
+
+                var jsonContent = JsonConvert.SerializeObject(requestBody);
+                var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+                var response = await httpClient.PostAsync(endpoint, content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Log.Error($"[MultimodalAnalysis] Vision API error: {response.StatusCode} - {errorContent}");
+                    return null;
+                }
+
+                var responseJson = await response.Content.ReadAsStringAsync();
+                return ParseVisionResponse(responseJson);
+            }
+            catch (TaskCanceledException)
+            {
+                Log.Warning("[MultimodalAnalysis] Vision API request timeout");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[MultimodalAnalysis] Error: {ex.Message}\n{ex.StackTrace}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 深度分析文本（使用 GPT-4）
+        /// </summary>
+        public async Task<TextAnalysisResult?> AnalyzeTextDeepAsync(string text)
+        {
+            try
+            {
+                string endpoint = GetTextEndpoint();
+                var requestBody = BuildTextRequest(text);
+
+                var jsonContent = JsonConvert.SerializeObject(requestBody);
+                var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+                var response = await httpClient.PostAsync(endpoint, content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Log.Error($"[MultimodalAnalysis] Text API error: {response.StatusCode} - {errorContent}");
+                    return null;
+                }
+
+                var responseJson = await response.Content.ReadAsStringAsync();
+                return ParseTextResponse(responseJson);
+            }
+            catch (TaskCanceledException)
+            {
+                Log.Warning("[MultimodalAnalysis] Text API request timeout");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[MultimodalAnalysis] Error: {ex.Message}\n{ex.StackTrace}");
+                return null;
+            }
+        }
+
+        // ========== Private Helper Methods ==========
+
+        private string GetVisionEndpoint()
+        {
+            return apiProvider switch
+            {
+                "openai" => "https://api.openai.com/v1/chat/completions",
+                "deepseek" => "https://api.deepseek.com/v1/chat/completions",
+                "gemini" => "https://generativelanguage.googleapis.com/v1/models/gemini-pro-vision:generateContent",
+                _ => "https://api.openai.com/v1/chat/completions"
+            };
+        }
+
+        private string GetTextEndpoint()
+        {
+            return apiProvider switch
+            {
+                "openai" => "https://api.openai.com/v1/chat/completions",
+                "deepseek" => "https://api.deepseek.com/v1/chat/completions",
+                "gemini" => "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent",
+                _ => "https://api.openai.com/v1/chat/completions"
+            };
+        }
+
+        private object BuildVisionRequest(string base64Image)
+        {
+            string prompt = @"Analyze this character portrait and provide a JSON response (no extra text):
+{
+  ""dominantColors"": [
+    {""hex"": ""#RRGGBB"", ""percentage"": 0-100, ""name"": ""color name""}
+  ],
+  ""visualElements"": [""element1"", ""element2""],
+  ""characterDescription"": ""Brief description (max 200 chars)"",
+  ""mood"": ""overall mood"",
+  ""suggestedPersonality"": ""Benevolent/Sadistic/Chaotic/Strategic/Protective/Manipulative"",
+  ""styleKeywords"": [""keyword1"", ""keyword2"", ""keyword3""]
+}
+
+Focus on:
+- Top 3-4 dominant colors with percentages
+- Key visual elements (armor, weapons, creatures)
+- Brief character appearance
+- Overall mood/atmosphere
+- Personality suggestion based on visual cues
+
+Keep characterDescription under 200 characters. Return ONLY valid JSON.";
+
+            if (apiProvider == "openai")
+            {
+                return new
+                {
+                    model = visionModel,
+                    messages = new[]
+                    {
+                        new
+                        {
+                            role = "user",
+                            content = new object[]
+                            {
+                                new { type = "text", text = prompt },
+                                new
+                                {
+                                    type = "image_url",
+                                    image_url = new
+                                    {
+                                        url = $"data:image/png;base64,{base64Image}"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    max_tokens = 1000,
+                    temperature = 0.3f
+                };
+            }
+            else
+            {
+                // DeepSeek / Gemini 类似结构
+                return new
+                {
+                    model = visionModel,
+                    messages = new[]
+                    {
+                        new { role = "user", content = prompt },
+                        new { role = "user", content = $"Image: data:image/png;base64,{base64Image}" }
+                    },
+                    max_tokens = 1000
+                };
+            }
+        }
+
+        private object BuildTextRequest(string text)
+        {
+            string prompt = $@"Analyze this character biography and provide deep personality insights in JSON format:
+{{
+  ""personality_traits"": [""trait1"", ""trait2"", ...],
+  ""dialogue_style"": {{
+    ""formality"": 0.0-1.0,
+    ""emotional_expression"": 0.0-1.0,
+    ""verbosity"": 0.0-1.0,
+    ""humor"": 0.0-1.0,
+    ""sarcasm"": 0.0-1.0
+  }},
+  ""tone_tags"": [""tag1"", ""tag2"", ...],
+  ""event_preferences"": {{
+    ""positive_bias"": -1.0 to 1.0,
+    ""negative_bias"": -1.0 to 1.0,
+    ""chaos_level"": 0.0-1.0,
+    ""intervention_frequency"": 0.0-1.0
+  }},
+  ""forbidden_words"": [""word1"", ""word2"", ...]
+}}
+
+Biography:
+{text}";
+            return new
+            {
+                model = textModel,
+                messages = new[]
+                {
+                    new
+                    {
+                        role = "system",
+                        content = "You are an expert in character personality analysis and narrative design."
+                    },
+                    new { role = "user", content = prompt }
+                },
+                max_tokens = 800,
+                temperature = 0.5f,
+                response_format = new { type = "json_object" }
+            };
+        }
+
+        private VisionAnalysisResult? ParseVisionResponse(string responseJson)
+        {
+            try
+            {
+                var response = JsonConvert.DeserializeObject<OpenAIResponse>(responseJson);
+                var content = response?.choices?[0]?.message?.content;
+
+                if (string.IsNullOrEmpty(content))
+                {
+                    Log.Error("[MultimodalAnalysis] Empty vision response");
+                    return null;
+                }
+
+                // 尝试解析 JSON 内容
+                var result = JsonConvert.DeserializeObject<VisionAnalysisResult>(content);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[MultimodalAnalysis] Error parsing vision response: {ex.Message}");
+                return null;
+            }
+        }
+
+        private TextAnalysisResult? ParseTextResponse(string responseJson)
+        {
+            try
+            {
+                var response = JsonConvert.DeserializeObject<OpenAIResponse>(responseJson);
+                var content = response?.choices?[0]?.message?.content;
+
+                if (string.IsNullOrEmpty(content))
+                {
+                    Log.Error("[MultimodalAnalysis] Empty text response");
+                    return null;
+                }
+
+                var result = JsonConvert.DeserializeObject<TextAnalysisResult>(content);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[MultimodalAnalysis] Error parsing text response: {ex.Message}");
+                return null;
+            }
+        }
+
+        // OpenAI Response Structure
+        private class OpenAIResponse
+        {
+            public Choice[]? choices { get; set; }
+
+            public class Choice
+            {
+                public Message? message { get; set; }
+            }
+
+            public class Message
+            {
+                public string? content { get; set; }
+            }
+        }
+    }
+
+    // ========== Data Structures ==========
+
+    /// <summary>
+    /// Vision 分析结果
+    /// </summary>
+    public class VisionAnalysisResult
+    {
+        public List<ColorInfo> dominantColors { get; set; } = new List<ColorInfo>();
+        public List<string> visualElements { get; set; } = new List<string>();
+        public string characterDescription { get; set; } = "";
+        public string mood { get; set; } = "";
+        public string suggestedPersonality { get; set; } = "";
+        public List<string> styleKeywords { get; set; } = new List<string>();
+
+        /// <summary>
+        /// 获取主色调（占比最高的颜色）
+        /// </summary>
+        public Color GetPrimaryColor()
+        {
+            if (dominantColors == null || dominantColors.Count == 0)
+                return Color.white;
+
+            var primary = dominantColors.OrderByDescending(c => c.percentage).First();
+            return HexToColor(primary.hex);
+        }
+
+        /// <summary>
+        /// 获取重音色（占比第二的颜色）
+        /// </summary>
+        public Color GetAccentColor()
+        {
+            if (dominantColors == null || dominantColors.Count < 2)
+                return Color.gray;
+
+            var accent = dominantColors.OrderByDescending(c => c.percentage).Skip(1).First();
+            return HexToColor(accent.hex);
+        }
+
+        private Color HexToColor(string hex)
+        {
+            hex = hex.Replace("#", "");
+
+            if (hex.Length != 6)
+                return Color.white;
+
+            try
+            {
+                byte r = Convert.ToByte(hex.Substring(0, 2), 16);
+                byte g = Convert.ToByte(hex.Substring(2, 2), 16);
+                byte b = Convert.ToByte(hex.Substring(4, 2), 16);
+
+                return new Color(r / 255f, g / 255f, b / 255f);
+            }
+            catch
+            {
+                return Color.white;
+            }
+        }
+    }
+
+    public class ColorInfo
+    {
+        public string hex { get; set; } = "";
+        public int percentage { get; set; } = 0;
+        public string name { get; set; } = "";
+    }
+
+    /// <summary>
+    /// 文本深度分析结果
+    /// </summary>
+    public class TextAnalysisResult
+    {
+        public List<string> personality_traits { get; set; } = new List<string>();
+        public DialogueStyleAnalysis dialogue_style { get; set; } = new DialogueStyleAnalysis();
+        public List<string> tone_tags { get; set; } = new List<string>();
+        public EventPreferencesAnalysis event_preferences { get; set; } = new EventPreferencesAnalysis();
+        public List<string> forbidden_words { get; set; } = new List<string>();
+    }
+
+    public class DialogueStyleAnalysis
+    {
+        public float formality { get; set; } = 0.5f;
+        public float emotional_expression { get; set; } = 0.5f;
+        public float verbosity { get; set; } = 0.5f;
+        public float humor { get; set; } = 0.3f;
+        public float sarcasm { get; set; } = 0.2f;
+    }
+
+    public class EventPreferencesAnalysis
+    {
+        public float positive_bias { get; set; } = 0f;
+        public float negative_bias { get; set; } = 0f;
+        public float chaos_level { get; set; } = 0f;
+        public float intervention_frequency { get; set; } = 0.5f;
+    }
+}

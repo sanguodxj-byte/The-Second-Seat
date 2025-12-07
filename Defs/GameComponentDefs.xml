@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <!-- Game Component Definitions for The Second Seat -->
+  
+  <!-- These components are automatically added to the game -->
+  <!-- No DefNames needed - they are registered via [StaticConstructorOnStartup] -->
+  
+  <!-- Registered Components:
+       - NarratorManager (好感度系统)
+       - NarratorController (AI控制器)
+       - ColonyStateMonitor (殖民地监控)
+       - PlayerInteractionMonitor (玩家互动监控)
+       - StorytellerAgent (叙事者代理)
+       - NarratorButtonManager (MapComponent - 按钮管理器)
+  -->
+</Defs>

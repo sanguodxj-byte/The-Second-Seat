@@ -1,0 +1,223 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <!-- UI Elements -->
+  <TSS_NarratorWindowTitle>AI Narrator Assistant</TSS_NarratorWindowTitle>
+  <TSS_NarratorButton>AI Narrator</TSS_NarratorButton>
+  <TSS_NarratorButton_Desc>Talk to the AI Narrator</TSS_NarratorButton_Desc>
+  <TSS_SendButton>Talk to Narrator</TSS_SendButton>
+  <TSS_InputPlaceholder>Type your message here...</TSS_InputPlaceholder>
+  <TSS_Favorability>Favorability</TSS_Favorability>
+  <TSS_CurrentTier>Current Tier</TSS_CurrentTier>
+  <TSS_SwitchPersona>Switch Persona</TSS_SwitchPersona>
+  <TSS_TestConnection>Test Connection</TSS_TestConnection>
+
+  <!-- Settings Sections -->
+  <TSS_Settings_Title>The Second Seat Settings</TSS_Settings_Title>
+  <TSS_Settings_LLM_Title>?? LLM Settings</TSS_Settings_LLM_Title>
+  <TSS_Settings_WebSearch_Title>?? Web Search Settings</TSS_Settings_WebSearch_Title>
+  <TSS_Settings_Multimodal_Title>?? Multimodal Analysis Settings</TSS_Settings_Multimodal_Title>
+  <TSS_Settings_Debug_Title>?? Debug Settings</TSS_Settings_Debug_Title>
+  <TSS_Settings_Affinity_Title>Affinity System</TSS_Settings_Affinity_Title>
+
+  <!-- LLM Settings -->
+  <TSS_Settings_LLMProvider>LLM Provider</TSS_Settings_LLMProvider>
+  <TSS_Settings_LLMProvider_Local>Local Model (LM Studio / Ollama)</TSS_Settings_LLMProvider_Local>
+  <TSS_Settings_LLMProvider_OpenAI>OpenAI (GPT-4 / GPT-3.5)</TSS_Settings_LLMProvider_OpenAI>
+  <TSS_Settings_LLMProvider_DeepSeek>DeepSeek (Chinese Optimized)</TSS_Settings_LLMProvider_DeepSeek>
+  <TSS_Settings_LLMProvider_Gemini>Google Gemini</TSS_Settings_LLMProvider_Gemini>
+  
+  <TSS_Settings_UseOpenAI>Use OpenAI API</TSS_Settings_UseOpenAI>
+  <TSS_Settings_UseOpenAI_Desc>Use OpenAI cloud API (requires API Key)</TSS_Settings_UseOpenAI_Desc>
+  <TSS_Settings_APIEndpoint>API Endpoint</TSS_Settings_APIEndpoint>
+  <TSS_Settings_APIEndpoint_Desc>The endpoint URL for the LLM API (e.g., http://localhost:1234/v1/chat/completions)</TSS_Settings_APIEndpoint_Desc>
+  <TSS_Settings_APIKey>API Key</TSS_Settings_APIKey>
+  <TSS_Settings_APIKey_Desc>API key for authentication (can be empty for local models)</TSS_Settings_APIKey_Desc>
+  <TSS_Settings_ModelName>Model Name</TSS_Settings_ModelName>
+  <TSS_Settings_ModelName_Desc>The name of the model to use (e.g., local-model)</TSS_Settings_ModelName_Desc>
+  <TSS_Settings_Temperature>Temperature</TSS_Settings_Temperature>
+  <TSS_Settings_Temperature_Desc>Controls randomness of output (0.0 = deterministic, 1.0 = highly random)</TSS_Settings_Temperature_Desc>
+  <TSS_Settings_MaxTokens>Max Tokens</TSS_Settings_MaxTokens>
+  <TSS_Settings_MaxTokens_Desc>Maximum number of tokens per response</TSS_Settings_MaxTokens_Desc>
+  
+  <!-- Web Search Settings -->
+  <TSS_Settings_WebSearch_Title>Web Search</TSS_Settings_WebSearch_Title>
+  <TSS_Settings_EnableWebSearch>Enable Web Search</TSS_Settings_EnableWebSearch>
+  <TSS_Settings_SearchEngine>Search Engine</TSS_Settings_SearchEngine>
+  <TSS_Settings_SearchEngine_DuckDuckGo>DuckDuckGo (Recommended, Free)</TSS_Settings_SearchEngine_DuckDuckGo>
+  <TSS_Settings_SearchEngine_Bing>Bing (Requires API Key)</TSS_Settings_SearchEngine_Bing>
+  <TSS_Settings_SearchEngine_Google>Google (Requires API Key)</TSS_Settings_SearchEngine_Google>
+  <TSS_Settings_BingAPIKey>Bing API Key</TSS_Settings_BingAPIKey>
+  <TSS_Settings_GoogleAPIKey>Google API Key</TSS_Settings_GoogleAPIKey>
+  <TSS_Settings_GoogleSearchEngineID>Google Search Engine ID</TSS_Settings_GoogleSearchEngineID>
+  <TSS_Settings_GetAPIKey_Bing>Get Bing API Key: https://www.microsoft.com/en-us/bing/apis/bing-web-search-api</TSS_Settings_GetAPIKey_Bing>
+  <TSS_Settings_GetAPIKey_Google>Get Google API Key: https://developers.google.com/custom-search/v1/overview</TSS_Settings_GetAPIKey_Google>
+  <TSS_Settings_ClearSearchCache>Clear Search Cache</TSS_Settings_ClearSearchCache>
+  <TSS_Settings_CacheCleared>Search cache cleared</TSS_Settings_CacheCleared>
+  <TSS_Settings_SearchDelay>Search Delay (Rate Limiting)</TSS_Settings_SearchDelay>
+  
+  <TSS_Settings_BingAPIKey_Desc>Bing Search API key (only needed for Bing)</TSS_Settings_BingAPIKey_Desc>
+  <TSS_Settings_GoogleAPIKey_Desc>Google Custom Search API key (only needed for Google)</TSS_Settings_GoogleAPIKey_Desc>
+  <TSS_Settings_GoogleSearchEngineID_Desc>Google Custom Search Engine ID (only needed for Google)</TSS_Settings_GoogleSearchEngineID_Desc>
+  
+  <!-- Multimodal Analysis Settings -->
+  <TSS_Settings_EnableMultimodal>Enable Multimodal Analysis</TSS_Settings_EnableMultimodal>
+  <TSS_Settings_EnableMultimodal_Desc>Use AI Vision API to analyze persona portraits</TSS_Settings_EnableMultimodal_Desc>
+  <TSS_Settings_MultimodalProvider>Multimodal Provider</TSS_Settings_MultimodalProvider>
+  <TSS_Settings_MultimodalProvider_Desc>Choose AI Vision API provider (OpenAI, DeepSeek, Gemini)</TSS_Settings_MultimodalProvider_Desc>
+  <TSS_Settings_MultimodalProvider_OpenAI>OpenAI (gpt-4-vision-preview)</TSS_Settings_MultimodalProvider_OpenAI>
+  <TSS_Settings_MultimodalProvider_DeepSeek>DeepSeek (deepseek-vl)</TSS_Settings_MultimodalProvider_DeepSeek>
+  <TSS_Settings_MultimodalProvider_Gemini>Gemini (gemini-pro-vision)</TSS_Settings_MultimodalProvider_Gemini>
+  
+  <TSS_Settings_MultimodalAPIKey>Multimodal API Key</TSS_Settings_MultimodalAPIKey>
+  <TSS_Settings_MultimodalAPIKey_Desc>Vision API key (may differ from main API key)</TSS_Settings_MultimodalAPIKey_Desc>
+  <TSS_Settings_VisionModel>Vision Model</TSS_Settings_VisionModel>
+  <TSS_Settings_VisionModel_Desc>Model to use for image analysis (e.g., gpt-4-vision-preview)</TSS_Settings_VisionModel_Desc>
+  <TSS_Settings_TextAnalysisModel>Text Analysis Model</TSS_Settings_TextAnalysisModel>
+  <TSS_Settings_TextAnalysisModel_Desc>Model to use for deep text analysis (e.g., gpt-4)</TSS_Settings_TextAnalysisModel_Desc>
+  
+  <!-- Debug Settings -->
+  <TSS_Settings_DebugMode>Debug Mode</TSS_Settings_DebugMode>
+  <TSS_Settings_DebugMode_Desc>Enable verbose logging for troubleshooting</TSS_Settings_DebugMode_Desc>
+
+  <!-- Affinity System Settings -->
+  <TSS_Settings_EnableAffinity>Enable Affinity System</TSS_Settings_EnableAffinity>
+  <TSS_Settings_AffinityDisabled_Warning>⚠️ When disabled, the narrator will not have emotional reactions to your actions</TSS_Settings_AffinityDisabled_Warning>
+  
+  <!-- ✅ Global Prompt -->
+  <TSS_Settings_GlobalPrompt_Title>Global Prompt</TSS_Settings_GlobalPrompt_Title>
+  <TSS_Settings_GlobalPrompt_Description>Enter global instructions here. These will be added to the beginning of all AI conversations.\nYou can use this to set AI's language style, behavior guidelines, etc. Leave empty to disable global prompt.</TSS_Settings_GlobalPrompt_Description>
+  <TSS_Settings_GlobalPrompt_LoadExample>Load Example</TSS_Settings_GlobalPrompt_LoadExample>
+  
+  <!-- ✅ Dialogue-Driven Events -->
+  <TSS_Event_Reminder_Title>Narrator's Greeting</TSS_Event_Reminder_Title>
+  <TSS_Event_Reward_Title>Narrator's Reward</TSS_Event_Reward_Title>
+  <TSS_Event_Support_Title>Narrator's Support</TSS_Event_Support_Title>
+  <TSS_Event_Celebration_Title>Narrator's Celebration</TSS_Event_Celebration_Title>
+
+  <!-- Buttons -->
+  <TSS_Settings_Apply>Apply Settings</TSS_Settings_Apply>
+  <TSS_Settings_TestConnection>Test Connection</TSS_Settings_TestConnection>
+  <TSS_Settings_ClearSearchCache>Clear Search Cache</TSS_Settings_ClearSearchCache>
+  <TSS_Settings_CacheCleared>Search cache cleared</TSS_Settings_CacheCleared>
+  <TSS_Settings_Testing>Testing connection...</TSS_Settings_Testing>
+  <TSS_Settings_TestSuccess>Connection test successful!</TSS_Settings_TestSuccess>
+  <TSS_Settings_TestFailed>Connection test failed</TSS_Settings_TestFailed>
+  <TSS_Settings_Applied>Settings applied</TSS_Settings_Applied>
+
+  <!-- Favorability Tiers -->
+  <TSS_Tier_Hostile>Hostile</TSS_Tier_Hostile>
+  <TSS_Tier_Cold>Cold</TSS_Tier_Cold>
+  <TSS_Tier_Neutral>Neutral</TSS_Tier_Neutral>
+  <TSS_Tier_Warm>Warm</TSS_Tier_Warm>
+  <TSS_Tier_Devoted>Devoted</TSS_Tier_Devoted>
+  <TSS_Tier_Infatuated>Infatuated</TSS_Tier_Infatuated>
+
+  <!-- Messages -->
+  <TSS_Message_CommandSuccess>AI Narrator: Command executed successfully</TSS_Message_CommandSuccess>
+  <TSS_Message_CommandFailed>AI Narrator: Command execution failed</TSS_Message_CommandFailed>
+  <TSS_Message_NoValidAction>AI Narrator: No valid action</TSS_Message_NoValidAction>
+  <TSS_Message_PersonaSwitched>Narrator switched to: {0}</TSS_Message_PersonaSwitched>
+
+  <!-- Personality Traits -->
+  <TSS_Trait_Benevolent>Benevolent</TSS_Trait_Benevolent>
+  <TSS_Trait_Sadistic>Sadistic</TSS_Trait_Sadistic>
+  <TSS_Trait_Chaotic>Chaotic</TSS_Trait_Chaotic>
+  <TSS_Trait_Strategic>Strategic</TSS_Trait_Strategic>
+  <TSS_Trait_Protective>Protective</TSS_Trait_Protective>
+  <TSS_Trait_Manipulative>Manipulative</TSS_Trait_Manipulative>
+
+  <!-- Commands -->
+  <TSS_Command_BatchHarvest>Batch Harvest</TSS_Command_BatchHarvest>
+  <TSS_Command_BatchHarvest_Desc>Harvest all mature crops on the map</TSS_Command_BatchHarvest_Desc>
+  <TSS_Command_BatchSow>Batch Sow</TSS_Command_BatchSow>
+  <TSS_Command_BatchSow_Desc>Sow crops in designated areas</TSS_Command_BatchSow_Desc>
+  <TSS_Command_BatchEquip>Batch Equip</TSS_Command_BatchEquip>
+  <TSS_Command_BatchEquip_Desc>Equip colonists with weapons and armor</TSS_Command_BatchEquip_Desc>
+  <TSS_Command_EmergencyRetreat>Emergency Retreat</TSS_Command_EmergencyRetreat>
+  <TSS_Command_EmergencyRetreat_Desc>Retreat all colonists to safety</TSS_Command_EmergencyRetreat_Desc>
+  <TSS_Command_PriorityRepair>Priority Repair</TSS_Command_PriorityRepair>
+  <TSS_Command_PriorityRepair_Desc>Prioritize repairs for damaged buildings and facilities</TSS_Command_PriorityRepair_Desc>
+  <TSS_Command_BatchLogging>Designated {0} mature trees for logging</TSS_Command_BatchLogging>
+  <TSS_Command_BatchLogging_None>No mature trees found for logging</TSS_Command_BatchLogging_None>
+  <TSS_Command_DesignatePlantCut>Designated {0} plants for cutting (type: {1})</TSS_Command_DesignatePlantCut>
+  <TSS_Command_DesignatePlantCut_None>No plants found for cutting (type: {0})</TSS_Command_DesignatePlantCut_None>
+
+  <!-- Error Messages -->
+  <TSS_Error_NoAPIKey>Error: API key not set</TSS_Error_NoAPIKey>
+  <TSS_Error_InvalidEndpoint>Error: Invalid API endpoint</TSS_Error_InvalidEndpoint>
+  <TSS_Error_NetworkError>Network error: {0}</TSS_Error_NetworkError>
+  <TSS_Error_APIError>API error: {0}</TSS_Error_APIError>
+  <TSS_Error_Timeout>Request timed out</TSS_Error_Timeout>
+  <TSS_Error_UnexpectedResponse>Unexpected response format</TSS_Error_UnexpectedResponse>
+  
+  <!-- Status Panel -->
+  <TSS_StatusPanel_Title>NARRATOR.OS</TSS_StatusPanel_Title>
+  <TSS_StatusPanel_Online>ONLINE</TSS_StatusPanel_Online>
+  <TSS_StatusPanel_Offline>OFFLINE</TSS_StatusPanel_Offline>
+  <TSS_StatusPanel_Sync>SYNC</TSS_StatusPanel_Sync>
+  <TSS_StatusPanel_Link>LINK</TSS_StatusPanel_Link>
+  <TSS_StatusPanel_Error>ERROR</TSS_StatusPanel_Error>
+  <TSS_StatusPanel_Timeout>TIMEOUT</TSS_StatusPanel_Timeout>
+  <TSS_StatusPanel_Favorability>FAVORABILITY</TSS_StatusPanel_Favorability>
+  
+  <!-- Main Window -->
+  <TSS_Relationship>Relationship</TSS_Relationship>
+  <TSS_LastResponse>Last Response</TSS_LastResponse>
+  <TSS_NoMessages>No messages yet</TSS_NoMessages>
+  <TSS_SendMessage>Send Message</TSS_SendMessage>
+  <TSS_TalkToNarrator>Talk to Narrator</TSS_TalkToNarrator>
+  <TSS_RequestStatusUpdate>Request Status Update</TSS_RequestStatusUpdate>
+  <TSS_Processing>Processing...</TSS_Processing>
+  <TSS_OpenNarratorLabel>AI Narrator</TSS_OpenNarratorLabel>
+  <TSS_OpenNarratorDesc>Open AI Narrator window</TSS_OpenNarratorDesc>
+  
+  <!-- Button States -->
+  <TSS_ButtonState_Ready>[AI Narrator Assistant]: Connection ready, waiting for events.</TSS_ButtonState_Ready>
+  <TSS_ButtonState_Processing>[AI Narrator Assistant]: Analyzing/Generating narrative content...</TSS_ButtonState_Processing>
+  <TSS_ButtonState_Error>[AI Narrator Assistant]: Error! Please check API key or network.</TSS_ButtonState_Error>
+  <TSS_ButtonState_Disabled>[AI Narrator Assistant]: Mod is disabled.</TSS_ButtonState_Disabled>
+  
+  <TSS_NarratorButton_Tooltip>Open AI Narrator Window
+Click to talk with the AI Narrator</TSS_NarratorButton_Tooltip>
+
+  <!-- Persona Selection -->
+  <TSS_SelectPersona>Select Persona</TSS_SelectPersona>
+  <TSS_PersonaSelection_Title>Persona Selection</TSS_PersonaSelection_Title>
+  <TSS_PersonaSelection_CurrentPersona>Current Persona</TSS_PersonaSelection_CurrentPersona>
+  <TSS_PersonaSelection_AvailablePersonas>Available Personas</TSS_PersonaSelection_AvailablePersonas>
+  <TSS_PersonaSelection_SelectButton>Select This Persona</TSS_PersonaSelection_SelectButton>
+  <TSS_PersonaSelection_ConfirmButton>Confirm</TSS_PersonaSelection_ConfirmButton>
+  <TSS_PersonaSelection_CancelButton>Cancel</TSS_PersonaSelection_CancelButton>
+  <TSS_PersonaSelection_NoPortrait>No Portrait</TSS_PersonaSelection_NoPortrait>
+  <TSS_PersonaSelection_Description>Description</TSS_PersonaSelection_Description>
+  <TSS_PersonaSelection_Personality>Personality Traits</TSS_PersonaSelection_Personality>
+  
+  <!-- Error Messages -->
+  <TSS_APICallFailed>API call failed! Please check:
+1. Is LLM service running (e.g. LM Studio)?
+2. Is API endpoint correct?
+3. Does model name match?
+4. Check logs for details</TSS_APICallFailed>
+  <TSS_AlreadyProcessing>AI is processing, please wait...</TSS_AlreadyProcessing>
+  <TSS_NarratorSays>[AI Narrator] {0}</TSS_NarratorSays>
+
+  <!-- Affinity Tiers - Refactored (-1000 ~ 1000) -->
+  <TSS_Tier_Hatred>Hatred</TSS_Tier_Hatred>
+  <TSS_Tier_Hostile>Hostile</TSS_Tier_Hostile>
+  <TSS_Tier_Cold>Cold</TSS_Tier_Cold>
+  <TSS_Tier_Indifferent>Indifferent</TSS_Tier_Indifferent>
+  <TSS_Tier_Warm>Warm</TSS_Tier_Warm>
+  <TSS_Tier_Devoted>Devoted</TSS_Tier_Devoted>
+  <TSS_Tier_Adoration>Adoration</TSS_Tier_Adoration>
+  <TSS_Tier_SoulBound>Soul Bound</TSS_Tier_SoulBound>
+  
+  <!-- Affinity Tier Descriptions -->
+  <TSS_Tier_Hatred_Desc>The narrator harbors deep hatred toward you, and may refuse help or create obstacles.</TSS_Tier_Hatred_Desc>
+  <TSS_Tier_Hostile_Desc>The narrator is hostile toward you, unwilling to provide assistance.</TSS_Tier_Hostile_Desc>
+  <TSS_Tier_Cold_Desc>The narrator keeps their distance, cold and aloof.</TSS_Tier_Cold_Desc>
+  <TSS_Tier_Indifferent_Desc>The narrator maintains neutrality, neither warm nor cold toward you.</TSS_Tier_Indifferent_Desc>
+  <TSS_Tier_Warm_Desc>The narrator is friendly and willing to offer basic help.</TSS_Tier_Warm_Desc>
+  <TSS_Tier_Devoted_Desc>The narrator is loyal to you, actively caring about your colony.</TSS_Tier_Devoted_Desc>
+  <TSS_Tier_Adoration_Desc>The narrator deeply adores you, striving to help and protect you.</TSS_Tier_Adoration_Desc>
+  <TSS_Tier_SoulBound_Desc>The narrator is soul-bound to you, a true and eternal companion.</TSS_Tier_SoulBound_Desc>
+</LanguageData>

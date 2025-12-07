@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <!-- UI Elements -->
+  <TSS_NarratorWindowTitle>AI 叙事者助手</TSS_NarratorWindowTitle>
+  <TSS_NarratorButton>AI 叙事者</TSS_NarratorButton>
+  <TSS_SendButton>发送消息</TSS_SendButton>
+  <TSS_InputPlaceholder>在这里输入消息...</TSS_InputPlaceholder>
+  <TSS_Favorability>好感度</TSS_Favorability>
+  <TSS_SwitchPersona>切换人格</TSS_SwitchPersona>
+
+  <!-- Settings -->
+  <TSS_Settings_Title>The Second Seat 设置</TSS_Settings_Title>
+  <TSS_Settings_Basic_Title>基础设置</TSS_Settings_Basic_Title>
+  <TSS_Settings_LLM_Title>LLM 设置</TSS_Settings_LLM_Title>
+  <TSS_Settings_WebSearch_Title>网络搜索设置</TSS_Settings_WebSearch_Title>
+  <TSS_Settings_Multimodal_Title>多模态分析设置</TSS_Settings_Multimodal_Title>
+  <TSS_Settings_TTS_Title>语音合成（TTS）设置</TSS_Settings_TTS_Title>
+  <TSS_Settings_Debug_Title>调试设置</TSS_Settings_Debug_Title>
+
+  <!-- LLM Settings -->
+  <TSS_Settings_LLMProvider>LLM 提供者</TSS_Settings_LLMProvider>
+  <TSS_Settings_LLMProvider_Local>本地模型 (LM Studio / Ollama)</TSS_Settings_LLMProvider_Local>
+  <TSS_Settings_LLMProvider_OpenAI>OpenAI (GPT-4 / GPT-3.5)</TSS_Settings_LLMProvider_OpenAI>
+  <TSS_Settings_LLMProvider_DeepSeek>DeepSeek (中文优化)</TSS_Settings_LLMProvider_DeepSeek>
+  <TSS_Settings_LLMProvider_Gemini>Google Gemini</TSS_Settings_LLMProvider_Gemini>
+  <TSS_Settings_APIEndpoint>API 端点</TSS_Settings_APIEndpoint>
+  <TSS_Settings_APIKey>API 密钥</TSS_Settings_APIKey>
+  <TSS_Settings_ModelName>模型名称</TSS_Settings_ModelName>
+  <TSS_Settings_Temperature>温度</TSS_Settings_Temperature>
+  <TSS_Settings_MaxTokens>最大 Token 数</TSS_Settings_MaxTokens>
+
+  <!-- Web Search -->
+  <TSS_Settings_EnableWebSearch>启用网络搜索</TSS_Settings_EnableWebSearch>
+  <TSS_Settings_SearchEngine>搜索引擎</TSS_Settings_SearchEngine>
+  <TSS_Settings_SearchEngine_DuckDuckGo>DuckDuckGo（推荐，免费）</TSS_Settings_SearchEngine_DuckDuckGo>
+  <TSS_Settings_SearchEngine_Bing>Bing（需要 API Key）</TSS_Settings_SearchEngine_Bing>
+  <TSS_Settings_SearchEngine_Google>Google（需要 API Key）</TSS_Settings_SearchEngine_Google>
+  <TSS_Settings_BingAPIKey>Bing API 密钥</TSS_Settings_BingAPIKey>
+  <TSS_Settings_GetAPIKey_Bing>获取 Bing API Key: https://www.microsoft.com/en-us/bing/apis/bing-web-search-api</TSS_Settings_GetAPIKey_Bing>
+  <TSS_Settings_GoogleAPIKey>Google API 密钥</TSS_Settings_GoogleAPIKey>
+  <TSS_Settings_GoogleSearchEngineID>Google 搜索引擎 ID</TSS_Settings_GoogleSearchEngineID>
+  <TSS_Settings_GetAPIKey_Google>获取 Google API Key: https://developers.google.com/custom-search/v1/overview</TSS_Settings_GetAPIKey_Google>
+  <TSS_Settings_ClearSearchCache>清空搜索缓存</TSS_Settings_ClearSearchCache>
+  <TSS_Settings_CacheCleared>搜索缓存已清空</TSS_Settings_CacheCleared>
+  <TSS_Settings_SearchDelay>搜索延时（防止限流）</TSS_Settings_SearchDelay>
+
+  <!-- Multimodal -->
+  <TSS_Settings_EnableMultimodal>启用多模态分析</TSS_Settings_EnableMultimodal>
+  <TSS_Settings_MultimodalProvider>多模态提供者</TSS_Settings_MultimodalProvider>
+  <TSS_Settings_MultimodalProvider_OpenAI>OpenAI (gpt-4-vision-preview)</TSS_Settings_MultimodalProvider_OpenAI>
+  <TSS_Settings_MultimodalProvider_DeepSeek>DeepSeek (deepseek-vl)</TSS_Settings_MultimodalProvider_DeepSeek>
+  <TSS_Settings_MultimodalProvider_Gemini>Gemini (gemini-pro-vision)</TSS_Settings_MultimodalProvider_Gemini>
+  <TSS_Settings_MultimodalAPIKey>多模态 API 密钥</TSS_Settings_MultimodalAPIKey>
+  <TSS_Settings_VisionModel>视觉模型</TSS_Settings_VisionModel>
+  <TSS_Settings_TextAnalysisModel>文本分析模型</TSS_Settings_TextAnalysisModel>
+
+  <!-- TTS Settings -->
+  <TSS_Settings_EnableTTS>启用语音合成（TTS）</TSS_Settings_EnableTTS>
+  <TSS_Settings_TTSProvider>TTS 提供商</TSS_Settings_TTSProvider>
+  <TSS_Settings_TTSProvider_Azure>Azure TTS（付费，高质量）</TSS_Settings_TTSProvider_Azure>
+  <TSS_Settings_TTSProvider_Edge>Edge TTS</TSS_Settings_TTSProvider_Edge>
+  <TSS_Settings_TTSProvider_Local>本地 TTS</TSS_Settings_TTSProvider_Local>
+  <TSS_Settings_TTSAPIKey>TTS API 密钥</TSS_Settings_TTSAPIKey>
+  <TSS_Settings_TTSRegion>Azure 区域</TSS_Settings_TTSRegion>
+  <TSS_Settings_TTSVoice>语音选择</TSS_Settings_TTSVoice>
+  <TSS_Settings_TTSSpeechRate>语速</TSS_Settings_TTSSpeechRate>
+  <TSS_Settings_TTSVolume>音量</TSS_Settings_TTSVolume>
+  <TSS_Settings_TestTTS>测试 TTS</TSS_Settings_TestTTS>
+  <TSS_Settings_TestingTTS>正在测试 TTS...</TSS_Settings_TestingTTS>
+  <TSS_Settings_TTSTestSuccess>TTS 测试成功！音频文件已保存。</TSS_Settings_TTSTestSuccess>
+  <TSS_Settings_TTSTestFailed>TTS 测试失败</TSS_Settings_TTSTestFailed>
+
+  <!-- Buttons -->
+  <TSS_Settings_Apply>应用设置</TSS_Settings_Apply>
+  <TSS_Settings_TestConnection>测试连接</TSS_Settings_TestConnection>
+  <TSS_Settings_ClearSearchCache>清空搜索缓存</TSS_Settings_ClearSearchCache>
+  <TSS_Settings_CacheCleared>搜索缓存已清空</TSS_Settings_CacheCleared>
+  <TSS_Settings_Testing>正在测试连接...</TSS_Settings_Testing>
+  <TSS_Settings_TestSuccess>连接测试成功！</TSS_Settings_TestSuccess>
+  <TSS_Settings_TestFailed>连接测试失败</TSS_Settings_TestFailed>
+  <TSS_Settings_Applied>设置已应用</TSS_Settings_Applied>
+  <TSS_Settings_DebugMode>调试模式</TSS_Settings_DebugMode>
+
+  <!-- Favorability -->
+  <TSS_Tier_Hatred>憎恨</TSS_Tier_Hatred>
+  <TSS_Tier_Hostile>敌意</TSS_Tier_Hostile>
+  <TSS_Tier_Cold>疏远</TSS_Tier_Cold>
+  <TSS_Tier_Indifferent>冷淡</TSS_Tier_Indifferent>
+  <TSS_Tier_Warm>温暖</TSS_Tier_Warm>
+  <TSS_Tier_Devoted>倾心</TSS_Tier_Devoted>
+  <TSS_Tier_Adoration>爱慕</TSS_Tier_Adoration>
+  <TSS_Tier_SoulBound>魂之友</TSS_Tier_SoulBound>
+
+  <!-- Messages -->
+  <TSS_Message_CommandSuccess>AI 叙事者：命令执行成功</TSS_Message_CommandSuccess>
+  <TSS_Message_CommandFailed>AI 叙事者：命令执行失败</TSS_Message_CommandFailed>
+
+  <!-- 状态面板 -->
+  <TSS_StatusPanel_Title>NARRATOR.OS</TSS_StatusPanel_Title>
+  <TSS_StatusPanel_Online>在线</TSS_StatusPanel_Online>
+  <TSS_StatusPanel_Offline>离线</TSS_StatusPanel_Offline>
+  <TSS_StatusPanel_Sync>同步</TSS_StatusPanel_Sync>
+  <TSS_StatusPanel_Link>连接</TSS_StatusPanel_Link>
+  <TSS_StatusPanel_Error>错误</TSS_StatusPanel_Error>
+  <TSS_StatusPanel_Timeout>超时</TSS_StatusPanel_Timeout>
+  <TSS_StatusPanel_Favorability>好感度</TSS_StatusPanel_Favorability>
+  
+  <!-- 主窗口 -->
+  <TSS_Relationship>关系</TSS_Relationship>
+  <TSS_LastResponse>最近回复</TSS_LastResponse>
+  <TSS_NoMessages>暂无消息</TSS_NoMessages>
+  <TSS_SendMessage>发送消息</TSS_SendMessage>
+  <TSS_TalkToNarrator>与叙事者交谈</TSS_TalkToNarrator>
+  <TSS_RequestStatusUpdate>请求状态更新</TSS_RequestStatusUpdate>
+  <TSS_Processing>处理中...</TSS_Processing>
+  <TSS_OpenNarratorLabel>AI 叙事者</TSS_OpenNarratorLabel>
+  <TSS_OpenNarratorDesc>打开 AI 叙事者窗口</TSS_OpenNarratorDesc>
+  
+  <!-- Button States -->
+  <TSS_ButtonState_Ready>[AI 叙事者助手]: 连接就绪，等待事件。</TSS_ButtonState_Ready>
+  <TSS_ButtonState_Processing>[AI 叙事者助手]: 正在分析/生成叙事内容...</TSS_ButtonState_Processing>
+  <TSS_ButtonState_Error>[AI 叙事者助手]: 错误！请检查 API 密钥或网络。</TSS_ButtonState_Error>
+  <TSS_ButtonState_Disabled>[AI 叙事者助手]: Mod 已禁用。</TSS_ButtonState_Disabled>
+
+  <TSS_NarratorButton_Tooltip>打开 AI 叙事者窗口
+点击与 AI 叙事者对话</TSS_NarratorButton_Tooltip>
+
+  <!-- 人格选择 -->
+  <TSS_SelectPersona>选择人格</TSS_SelectPersona>
+  <TSS_PersonaSelection_Title>人格选择</TSS_PersonaSelection_Title>
+  <TSS_PersonaSelection_CurrentPersona>当前人格</TSS_PersonaSelection_CurrentPersona>
+  <TSS_PersonaSelection_AvailablePersonas>可用人格</TSS_PersonaSelection_AvailablePersonas>
+  <TSS_PersonaSelection_SelectButton>选择此人格</TSS_PersonaSelection_SelectButton>
+  <TSS_PersonaSelection_ConfirmButton>确定</TSS_PersonaSelection_ConfirmButton>
+  <TSS_PersonaSelection_CancelButton>取消</TSS_PersonaSelection_CancelButton>
+  <TSS_PersonaSelection_NoPortrait>无立绘</TSS_PersonaSelection_NoPortrait>
+  <TSS_PersonaSelection_Description>描述</TSS_PersonaSelection_Description>
+  <TSS_PersonaSelection_Personality>性格特点</TSS_PersonaSelection_Personality>
+  
+  <!-- 错误消息 -->
+  <TSS_APICallFailed>API 调用失败！请检查：
+1. LLM 服务是否运行（如 LM Studio）
+2. API 端点是否正确
+3. 模型名称是否匹配
+4. 查看日志了解详情</TSS_APICallFailed>
+  <TSS_AlreadyProcessing>AI 正在处理中，请稍候...</TSS_AlreadyProcessing>
+  <TSS_NarratorSays>【AI 叙事者】{0}</TSS_NarratorSays>
+
+  <!-- 好感度等级描述 -->
+  <TSS_Tier_Hatred_Desc>叙事者对你充满憎恨，可能会拒绝帮助或故意制造困难。</TSS_Tier_Hatred_Desc>
+  <TSS_Tier_Hostile_Desc>叙事者对你怀有敌意，不愿意提供帮助。</TSS_Tier_Hostile_Desc>
+  <TSS_Tier_Cold_Desc>叙事者与你保持距离，态度疏远冷淡。</TSS_Tier_Cold_Desc>
+  <TSS_Tier_Indifferent_Desc>叙事者对你不冷不热，保持中立态度。</TSS_Tier_Indifferent_Desc>
+  <TSS_Tier_Warm_Desc>叙事者对你友善，愿意提供基本帮助。</TSS_Tier_Warm_Desc>
+  <TSS_Tier_Devoted_Desc>叙事者对你忠诚，主动关心你的殖民地。</TSS_Tier_Devoted_Desc>
+  <TSS_Tier_Adoration_Desc>叙事者深深爱慕你，会尽力帮助和保护你。</TSS_Tier_Adoration_Desc>
+  <TSS_Tier_SoulBound_Desc>叙事者与你灵魂相连，你们是真正的挚友。</TSS_Tier_SoulBound_Desc>
+
+  <!-- 好感度系统设置 -->
+  <TSS_Settings_Affinity_Title>好感度系统</TSS_Settings_Affinity_Title>
+  <TSS_Settings_EnableAffinity>启用好感度系统</TSS_Settings_EnableAffinity>
+  <TSS_Settings_AffinityDisabled_Warning>⚠️ 禁用后，叙事者将不会对你的行为产生情感反应</TSS_Settings_AffinityDisabled_Warning>
+  
+  <!-- ✅ 全局提示词 -->
+  <TSS_Settings_GlobalPrompt_Title>全局提示词</TSS_Settings_GlobalPrompt_Title>
+  <TSS_Settings_GlobalPrompt_Description>在此输入全局指令，这些指令会被添加到所有 AI 对话的开头。
+可用于设置 AI 的语言风格、行为准则等。留空则不使用全局提示词。</TSS_Settings_GlobalPrompt_Description>
+  <TSS_Settings_GlobalPrompt_LoadExample>加载示例</TSS_Settings_GlobalPrompt_LoadExample>
+  
+  <!-- ✅ 对话驱动事件 -->
+  <TSS_Event_Reminder_Title>叙事者的问候</TSS_Event_Reminder_Title>
+  <TSS_Event_Reward_Title>叙事者的奖励</TSS_Event_Reward_Title>
+  <TSS_Event_Support_Title>叙事者的支持</TSS_Event_Support_Title>
+  <TSS_Event_Celebration_Title>叙事者的庆祝</TSS_Event_Celebration_Title>
+
+  <!-- Tier 等级名称 -->
+
+</LanguageData>

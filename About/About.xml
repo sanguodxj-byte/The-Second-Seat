@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ModMetaData>
+  <name>The Second Seat - AI Narrator Assistant</name>
+  <author>Your Name</author>
+  <supportedVersions>
+    <li>1.4</li>
+    <li>1.5</li>
+    <li>1.6</li>
+  </supportedVersions>
+  <packageId>yourname.thesecondseat</packageId>
+  <description>An AI-powered narrator assistant with favorability mechanics that can observe your colony, provide commentary, and execute batch commands based on your relationship.</description>
+  <modDependencies>
+  </modDependencies>
+  <loadAfter>
+    <li>Ludeon.RimWorld</li>
+    <li>Ludeon.RimWorld.Royalty</li>
+  </loadAfter>
+</ModMetaData>
