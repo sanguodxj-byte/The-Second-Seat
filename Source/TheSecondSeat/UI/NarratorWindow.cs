@@ -579,6 +579,7 @@ namespace TheSecondSeat.UI
 
         /// <summary>
         /// 发送消息
+        /// ? 添加：分析对话内容并更新表情
         /// </summary>
         private void SendMessage(string message)
         {
@@ -589,6 +590,16 @@ namespace TheSecondSeat.UI
                 content = message,
                 timestamp = System.DateTime.Now
             });
+            
+            // ? 新增：分析用户消息的情感并更新表情
+            if (manager != null)
+            {
+                var persona = manager.GetCurrentPersona();
+                if (persona != null)
+                {
+                    ExpressionSystem.UpdateExpressionByDialogueTone(persona.defName, message);
+                }
+            }
             
             // 触发 AI 响应
             controller?.TriggerNarratorUpdate(message);

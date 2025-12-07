@@ -45,6 +45,7 @@ namespace TheSecondSeat.LLM
 
         /// <summary>
         /// 发送包含图片的 Vision 请求到 OpenAI 兼容 API
+        /// ? 支持 DeepSeek 特殊格式（不使用 image_url）
         /// </summary>
         public static async Task<OpenAIResponse?> SendVisionRequestAsync(
             string endpoint,
@@ -53,7 +54,8 @@ namespace TheSecondSeat.LLM
             string textPrompt,
             Texture2D imageTexture,
             float temperature = 0.7f,
-            int maxTokens = 1000)
+            int maxTokens = 1000,
+            string provider = "openai")  // ? 新增：provider 参数
         {
             if (imageTexture == null)
             {
@@ -73,37 +75,68 @@ namespace TheSecondSeat.LLM
 
                 Log.Message($"[OpenAICompatible] 图片已编码为 Base64 ({base64Image.Length} 字符)");
 
-                // 2?? 构建 Vision 请求体（OpenAI 格式）
-                var request = new
+                // 2?? 根据 provider 构建不同格式的请求
+                string jsonContent;
+                
+                if (provider.ToLower() == "deepseek")
                 {
-                    model = model,
-                    temperature = temperature,
-                    max_tokens = maxTokens,
-                    messages = new[]
+                    // ? DeepSeek 特殊格式：不使用 image_url，只发送文本提示
+                    Log.Message("[OpenAICompatible] 使用 DeepSeek 文本格式（不支持 Vision）");
+                    
+                    var request = new
                     {
-                        new
+                        model = model,
+                        temperature = temperature,
+                        max_tokens = maxTokens,
+                        messages = new[]
                         {
-                            role = "user",
-                            content = new object[]
+                            new
                             {
-                                new { type = "text", text = textPrompt },
-                                new
+                                role = "user",
+                                content = textPrompt + "\n\n[注意：DeepSeek 当前不支持图像分析，将仅基于文本提示返回通用结果]"
+                            }
+                        }
+                    };
+                    
+                    jsonContent = JsonConvert.SerializeObject(request, new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore
+                    });
+                }
+                else
+                {
+                    // OpenAI 标准格式（支持 image_url）
+                    var request = new
+                    {
+                        model = model,
+                        temperature = temperature,
+                        max_tokens = maxTokens,
+                        messages = new[]
+                        {
+                            new
+                            {
+                                role = "user",
+                                content = new object []
                                 {
-                                    type = "image_url",
-                                    image_url = new
+                                    new { type = "text", text = textPrompt },
+                                    new
                                     {
-                                        url = $"data:image/png;base64,{base64Image}"
+                                        type = "image_url",
+                                        image_url = new
+                                        {
+                                            url = $"data:image/png;base64,{base64Image}"
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                };
+                    };
 
-                string jsonContent = JsonConvert.SerializeObject(request, new JsonSerializerSettings
-                {
-                    NullValueHandling = NullValueHandling.Ignore
-                });
+                    jsonContent = JsonConvert.SerializeObject(request, new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore
+                    });
+                }
 
                 return await SendOpenAIRawRequestAsync(endpoint, apiKey, jsonContent);
             }

@@ -144,8 +144,13 @@ namespace TheSecondSeat.Core
                 // ? 在系统提示词中添加时间信息
                 systemPrompt = InjectTimeIntoSystemPrompt(systemPrompt, now);
 
-                // 3. 注入记忆上下文
+                // ? 修复：将记忆上下文添加到 System Prompt，而不是用户消息
                 var memoryContext = MemoryContextBuilder.BuildMemoryContext(userMessage);
+                if (!string.IsNullOrEmpty(memoryContext))
+                {
+                    systemPrompt += "\n\n" + memoryContext;
+                    Log.Message("[NarratorController] 已将记忆上下文添加到 System Prompt");
+                }
                 
                 // 4. 检查是否需要联网搜索
                 string searchContext = "";
@@ -171,18 +176,18 @@ namespace TheSecondSeat.Core
                     }
                 }
 
-                // ? 根据情况构建用户消息
+                // ? 根据情况构建用户消息（不再包含 memoryContext）
                 string enhancedUserMessage;
                 if (isGreeting || string.IsNullOrEmpty(userMessage))
                 {
                     // ? 首次加载问候 - 简单提示，不要强调"观察状态"
-                    enhancedUserMessage = timeContext + memoryContext + 
+                    enhancedUserMessage = timeContext + 
                         "玩家刚刚加载了游戏存档。请简短地打个招呼，不需要汇报殖民地状态。";
                 }
                 else
                 {
-                    // 玩家主动发送消息
-                    enhancedUserMessage = timeContext + searchContext + memoryContext + userMessage;
+                    // ? 玩家主动发送消息（不包含 memoryContext）
+                    enhancedUserMessage = timeContext + searchContext + userMessage;
                 }
 
                 // 5. Send to LLM

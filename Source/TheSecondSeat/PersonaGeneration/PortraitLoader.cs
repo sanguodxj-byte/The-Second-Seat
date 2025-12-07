@@ -22,12 +22,12 @@ namespace TheSecondSeat.PersonaGeneration
         private const string EXPRESSIONS_PATH = "UI/Narrators/9x16/Expressions/";
         
         /// <summary>
-        /// �������棨֧�� Mod��Դ���ⲿ�ļ���ռλ����
-        /// ? ֧�ֶ�̬�����л�
-        /// ? ֧�ֱ���ֲ�ϳ�ģʽ
-        /// ? ֧�ֱ����ļ��������
-        /// ? ֧�ַ�װ���ϵͳ
-        /// ? ֧���Զ��ָ����ϣ��Ӳ��ӷָ
+        /// 加载立绘（支持 Mod资源、外部文件、占位符）
+        /// ✅ 支持动态表情切换
+        /// ✅ 支持表情叠加合成模式
+        /// ✅ 支持表情文件夹新结构
+        /// ✅ 支持服装叠加系统
+        /// ✅ 支持自动裁剪合成（兼容性降级
         /// </summary>
         public static Texture2D LoadPortrait(NarratorPersonaDef def, ExpressionType? expression = null)
         {
@@ -41,7 +41,7 @@ namespace TheSecondSeat.PersonaGeneration
             string expressionSuffix = "";
             if (expression.HasValue && expression.Value != ExpressionType.Neutral)
             {
-                expressionSuffix = ExpressionSystem.GetExpressionSuffix(expression.Value);
+                expressionSuffix = ExpressionSystem.GetExpressionSuffix(def.defName, expression.Value);
             }
             
             // 1. 检查缓存（包含表情后缀）
@@ -78,7 +78,7 @@ namespace TheSecondSeat.PersonaGeneration
             // 1. 如果有表情需求，先尝试加载表情立绘
             if (expression.HasValue && expression.Value != ExpressionType.Neutral)
             {
-                string expressionSuffix = ExpressionSystem.GetExpressionSuffix(expression.Value);
+                string expressionSuffix = ExpressionSystem.GetExpressionSuffix(def.defName, expression.Value);
                 string expressionFileName = expressionSuffix.TrimStart('_').ToLower();
                 string expressionPath = $"{EXPRESSIONS_PATH}{personaName}/{expressionFileName}";
                 
@@ -206,23 +206,23 @@ namespace TheSecondSeat.PersonaGeneration
         {
             try
             {
-                // 1. ���ػ�������
+                // 1. 加载基础立绘
                 Texture2D baseTexture = LoadBasePortrait(def);
                 if (baseTexture == null)
                 {
                     return null;
                 }
                 
-                // 2. ? �� Expressions �ļ��м����沿������ļ�����׺ _face��
-                string faceSuffix = ExpressionSystem.GetExpressionSuffix(expression) + "_face";
+                // 2. ✅ 从 Expressions 文件夹加载面部叠加层（文件后缀 _face）
+                string faceSuffix = ExpressionSystem.GetExpressionSuffix(def.defName, expression) + "_face";
                 
-                // ? �޸���ʹ����ȷ���˸��ļ�������
+                // ✅ 修复：使用正确的人格文件夹名称
                 string personaName = GetPersonaFolderName(def);
                 string facePath = $"{EXPRESSIONS_PATH}{personaName}/{faceSuffix}";
                 
                 Texture2D faceTexture = ContentFinder<Texture2D>.Get(facePath, false);
                 
-                // ? ���������Ծ�·��
+                // ✅ 尝试旧的直接路径
                 if (faceTexture == null && !string.IsNullOrEmpty(def.portraitPath))
                 {
                     string oldFacePath = def.portraitPath + faceSuffix;
@@ -230,27 +230,27 @@ namespace TheSecondSeat.PersonaGeneration
                     
                     if (faceTexture != null)
                     {
-                        Log.Warning($"[PortraitLoader] ?? �Ӿ�·�������沿����: {oldFacePath}");
+                        Log.Warning($"[PortraitLoader] ✅ 从旧路径加载面部叠加: {oldFacePath}");
                     }
                 }
                 
-                // ? �����������Զ���·��
+                // ✅ 尝试自定义路径
                 if (faceTexture == null && def.useCustomPortrait && !string.IsNullOrEmpty(def.customPortraitPath))
                 {
                     string customFacePath = GetExpressionPath(def.customPortraitPath, faceSuffix);
                     faceTexture = LoadFromExternalFile(customFacePath);
                 }
                 
-                // ���û���沿���������null
+                // 如果没有面部叠加层，返回null
                 if (faceTexture == null)
                 {
                     return null;
                 }
                 
-                // 3. ��ȡ�沿��������
+                // 3. 获取面部区域坐标
                 var faceRegion = PersonaFaceRegions.GetFaceRegion(def.defName);
                 
-                // 4. �ϳɱ���
+                // 4. 合成表情
                 string cacheKey = def.defName + faceSuffix + "_composite";
                 var composite = ExpressionCompositor.CompositeExpression(
                     baseTexture, 
@@ -259,12 +259,12 @@ namespace TheSecondSeat.PersonaGeneration
                     cacheKey
                 );
                 
-                Log.Message($"[PortraitLoader] ? ʹ���沿����ģʽ: {personaName} + {faceSuffix}");
+                Log.Message($"[PortraitLoader] ✅ 使用面部叠加模式: {personaName} + {faceSuffix}");
                 return composite;
             }
             catch (Exception ex)
             {
-                Log.Error($"[PortraitLoader] �沿�ϳ�ʧ��: {ex}");
+                Log.Error($"[PortraitLoader] 面部叠合成失败: {ex}");
                 return null;
             }
         }
@@ -615,7 +615,7 @@ namespace TheSecondSeat.PersonaGeneration
         /// </summary>
         public static void ClearPortraitCache(string personaDefName, ExpressionType expression)
         {
-            string expressionSuffix = ExpressionSystem.GetExpressionSuffix(expression);
+            string expressionSuffix = ExpressionSystem.GetExpressionSuffix(personaDefName, expression);  // ✅ 添加 personaDefName 参数
             string cacheKey = personaDefName + expressionSuffix;
             
             if (cache.ContainsKey(cacheKey))
@@ -782,7 +782,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ��ȡ���п��õ������ļ��б�
+        /// ��ȡ���פ��õ������ļ��б�
         /// ? ����������ԭ������������ + Mod���� + �û�����
         /// </summary>
         public static List<PortraitFileInfo> GetAllAvailablePortraits()

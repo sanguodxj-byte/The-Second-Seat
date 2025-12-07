@@ -36,11 +36,11 @@ namespace TheSecondSeat.PersonaGeneration
             string expressionSuffix = "";
             if (expression.HasValue && expression.Value != ExpressionType.Neutral)
             {
-                // ? 使用 ExpressionSystem 的随机变体选择
-                expressionSuffix = ExpressionSystem.GetExpressionSuffix(expression.Value);
+                // ? 使用 ExpressionSystem 的缓存变体编号
+                expressionSuffix = ExpressionSystem.GetExpressionSuffix(def.defName, expression.Value);
             }
             
-            // 检查缓存（注意：随机变体不缓存，每次重新选择）
+            // 检查缓存
             string cacheKey = def.defName + "_avatar" + expressionSuffix;
             if (cache.TryGetValue(cacheKey, out Texture2D cached))
             {
@@ -52,14 +52,11 @@ namespace TheSecondSeat.PersonaGeneration
             // 1. 尝试加载头像文件
             string personaName = GetPersonaName(def);
             
-            // 格式：UI/Narrators/Avatars/{PersonaName}/{expression}.png
-            // 支持变体：happy.png, happy1.png, happy2.png...
             if (expression.HasValue && expression.Value != ExpressionType.Neutral)
             {
-                // ? 从后缀提取文件名（可能包含数字变体）
+                // ? 从后缀提取文件名（已经包含变体编号）
                 string expressionFileName = expressionSuffix.TrimStart('_').ToLower();
                 
-                // 直接尝试加载这个文件名（已经包含变体编号）
                 string avatarPath = $"{AVATARS_PATH}{personaName}/{expressionFileName}";
                 texture = ContentFinder<Texture2D>.Get(avatarPath, false);
                 
@@ -68,16 +65,11 @@ namespace TheSecondSeat.PersonaGeneration
                     Log.Message($"[AvatarLoader] ? 加载表情头像成功: {avatarPath}");
                     SetTextureQualitySafe(texture);
                 }
-                else
-                {
-                    Log.Message($"[AvatarLoader] 未找到表情头像: {avatarPath}，尝试使用基础头像");
-                }
             }
             
             // 2. 如果没有表情头像，尝试加载基础头像
             if (texture == null)
             {
-                // ? 尝试多种基础头像文件名
                 string[] baseFileNames = new[] { "base", "neutral", "Base", "Neutral", "default", "Default" };
                 
                 foreach (var baseName in baseFileNames)
@@ -92,14 +84,9 @@ namespace TheSecondSeat.PersonaGeneration
                         break;
                     }
                 }
-                
-                if (texture == null)
-                {
-                    Log.Message($"[AvatarLoader] 未找到基础头像: {AVATARS_PATH}{personaName}/*，降级使用立绘");
-                }
             }
             
-            // 3. 如果头像文件夹不存在，降级使用立绘（裁剪头部）
+            // 3. 降级使用立绘裁剪
             if (texture == null)
             {
                 var portrait = PortraitLoader.LoadPortrait(def, expression);
@@ -294,7 +281,7 @@ namespace TheSecondSeat.PersonaGeneration
             string expressionSuffix = "";
             if (expression != ExpressionType.Neutral)
             {
-                expressionSuffix = ExpressionSystem.GetExpressionSuffix(expression);
+                expressionSuffix = ExpressionSystem.GetExpressionSuffix(personaDefName, expression);
             }
             
             string cacheKey = personaDefName + "_avatar" + expressionSuffix;

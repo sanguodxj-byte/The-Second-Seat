@@ -32,6 +32,7 @@ namespace TheSecondSeat.PersonaGeneration
 
         /// <summary>
         /// 配置多模态分析服务
+        /// ? 添加日志输出确认配置
         /// </summary>
         public void Configure(string provider, string key, string visionModelName = "", string textModelName = "")
         {
@@ -71,6 +72,9 @@ namespace TheSecondSeat.PersonaGeneration
                 httpClient.DefaultRequestHeaders.Clear();
                 httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
             }
+            
+            // ? 新增：日志输出确认配置
+            Log.Message($"[MultimodalAnalysis] 配置完成: provider={apiProvider}, vision={visionModel}, text={textModel}");
         }
 
         /// <summary>
@@ -141,6 +145,7 @@ namespace TheSecondSeat.PersonaGeneration
 
         /// <summary>
         /// 使用 OpenAI 兼容 API 分析图片
+        /// ? 传递 provider 参数以支持 DeepSeek 特殊格式
         /// </summary>
         private async Task<VisionAnalysisResult?> AnalyzeWithOpenAICompatibleAsync(Texture2D texture)
         {
@@ -156,7 +161,8 @@ namespace TheSecondSeat.PersonaGeneration
                 prompt,
                 texture,
                 0.3f,
-                4096  // ? 2000 → 4096
+                4096,  // max_tokens
+                apiProvider  // ? 新增：传递 provider 参数
             );
             
             if (response == null || response.choices == null || response.choices.Length == 0)

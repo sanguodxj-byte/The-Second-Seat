@@ -21,6 +21,7 @@ namespace TheSecondSeat.LLM
         private string apiEndpoint = "https://api.openai.com/v1/chat/completions";
         private string apiKey = "";
         private string modelName = "gpt-4";
+        private string provider = "openai"; // ? 新增：记录 provider 类型
 
         public LLMService()
         {
@@ -29,19 +30,21 @@ namespace TheSecondSeat.LLM
 
         /// <summary>
         /// Configure the LLM endpoint and API key
+        /// ? 新增：providerType 参数
         /// </summary>
-        public void Configure(string endpoint, string key, string model = "gpt-4")
+        public void Configure(string endpoint, string key, string model = "gpt-4", string providerType = "openai")
         {
             apiEndpoint = endpoint;
             apiKey = key;
             modelName = model;
+            provider = providerType.ToLower(); // ? 新增：记录 provider
             
-            Log.Message($"[The Second Seat] LLM configured: endpoint={endpoint}, model={model}");
+            Log.Message($"[The Second Seat] LLM configured: provider={provider}, endpoint={endpoint}, model={model}");
         }
 
         /// <summary>
         /// Send game state to LLM and receive AI response asynchronously
-        /// 自动检测 API 类型并使用对应格式
+        /// ? 修改：使用 provider 字段判断，而不是 URL 检测
         /// </summary>
         public async Task<LLMResponse?> SendStateAndGetActionAsync(
             string systemPrompt, 
@@ -50,17 +53,15 @@ namespace TheSecondSeat.LLM
         {
             try
             {
-                // ? 检测 API 类型
-                bool isGemini = apiEndpoint.Contains("generativelanguage.googleapis.com");
-                
-                if (isGemini)
+                // ? 使用 provider 字段判断
+                if (provider == "gemini")
                 {
-                    // Gemini API 专用处理
+                    Log.Message("[The Second Seat] 使用 Gemini API");
                     return await SendToGeminiAsync(systemPrompt, gameStateJson, userMessage);
                 }
                 else
                 {
-                    // OpenAI 兼容格式（OpenAI、DeepSeek、本地 LLM）
+                    Log.Message($"[The Second Seat] 使用 {provider} (OpenAI 兼容格式)");
                     return await SendToOpenAICompatibleAsync(systemPrompt, gameStateJson, userMessage);
                 }
             }
@@ -254,15 +255,14 @@ namespace TheSecondSeat.LLM
 
         /// <summary>
         /// Test connection to the LLM endpoint
+        /// ? 修改：使用 provider 字段判断
         /// </summary>
         public async Task<bool> TestConnectionAsync()
         {
             try
             {
-                // ? 检测 API 类型
-                bool isGemini = apiEndpoint.Contains("generativelanguage.googleapis.com");
-                
-                if (isGemini)
+                // ? 使用 provider 字段判断
+                if (provider == "gemini")
                 {
                     // Gemini API 测试
                     return await TestGeminiConnectionAsync();

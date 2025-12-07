@@ -151,7 +151,8 @@ namespace TheSecondSeat.Settings
             LLM.LLMService.Instance.Configure(
                 settings.apiEndpoint,
                 settings.apiKey,
-                settings.modelName
+                settings.modelName,
+                settings.llmProvider  // ✅ 新增：传递 provider
             );
 
             // ��ʼ����������
@@ -787,13 +788,14 @@ namespace TheSecondSeat.Settings
             // === ������ť ===
             listingStandard.GapLine();
             
-            // Ӧ�ð�ť
+            // 应用按钮
             if (listingStandard.ButtonText("TSS_Settings_Apply".Translate()))
             {
                 LLM.LLMService.Instance.Configure(
                     settings.apiEndpoint,
                     settings.apiKey,
-                    settings.modelName
+                    settings.modelName,
+                    settings.llmProvider  // ✅ 新增：传递 provider
                 );
 
                 if (settings.enableWebSearch)

@@ -57,6 +57,9 @@ namespace TheSecondSeat.PersonaGeneration
         
         // 是否锁定表情（某些重要场景）
         public bool IsLocked { get; set; } = false;
+        
+        // ? 新增：当前选择的变体编号（0=基础版本，1-5=变体）
+        public int CurrentVariant { get; set; } = 0;
     }
 
     /// <summary>
@@ -113,6 +116,9 @@ namespace TheSecondSeat.PersonaGeneration
             PortraitLoader.ClearPortraitCache(personaDefName, expression);
             AvatarLoader.ClearAvatarCache(personaDefName, expression);
             
+            // ? 随机选择新变体编号（0-5）
+            state.CurrentVariant = UnityEngine.Random.Range(0, 6);
+            
             // 开始过渡
             state.PreviousExpression = state.CurrentExpression;
             state.CurrentExpression = expression;
@@ -121,7 +127,7 @@ namespace TheSecondSeat.PersonaGeneration
             state.LastTrigger = trigger;
             state.ExpressionStartTick = Find.TickManager.TicksGame;
             
-            Log.Message($"[ExpressionSystem] ? {personaDefName} 表情切换: {state.PreviousExpression} → {expression} (触发: {trigger})");
+            Log.Message($"[ExpressionSystem] ? {personaDefName} 表情切换: {state.PreviousExpression} → {expression} (触发: {trigger}, 变体: {state.CurrentVariant})");
         }
         
         /// <summary>
@@ -417,9 +423,9 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// 获取表情立绘文件名后缀
-        /// ? 支持随机变体（表情、表情1、表情2...）
+        /// ? 使用缓存的变体编号，避免一直切换
         /// </summary>
-        public static string GetExpressionSuffix(ExpressionType expression)
+        public static string GetExpressionSuffix(string personaDefName, ExpressionType expression)
         {
             // 基础后缀
             string baseSuffix = expression switch
@@ -437,54 +443,26 @@ namespace TheSecondSeat.PersonaGeneration
                 ExpressionType.Thoughtful => "_thoughtful",
                 ExpressionType.Annoyed => "_annoyed",
                 ExpressionType.Playful => "_playful",
-                ExpressionType.Shy => "_shy",  // ? 新增
+                ExpressionType.Shy => "_shy",
                 _ => ""
             };
 
-            // ? 随机选择变体（如果存在）
-            // 例如：_happy、_happy1、_happy2 中随机选一个
-            return GetRandomVariant(baseSuffix);
-        }
-
-        /// <summary>
-        /// ? 获取随机表情变体
-        /// 尝试查找 表情、表情1、表情2... 并随机选择一个
-        /// </summary>
-        private static string GetRandomVariant(string baseSuffix)
-        {
-            if (string.IsNullOrEmpty(baseSuffix))
+            // ? 使用缓存的变体编号
+            var state = GetExpressionState(personaDefName);
+            int variant = state.CurrentVariant;
+            
+            // 如果是变体 0（基础版本），直接返回基础后缀
+            if (variant == 0 || string.IsNullOrEmpty(baseSuffix))
             {
-                return baseSuffix; // 中性表情无变体
-            }
-
-            // ? 修复：检查 baseSuffix 是否已经包含数字（避免重复添加）
-            // 例如：_happy2 不应该再变成 _happy21
-            if (System.Text.RegularExpressions.Regex.IsMatch(baseSuffix, @"\d+$"))
-            {
-                // 已经包含数字，直接返回
                 return baseSuffix;
             }
-
-            // 收集所有可用的变体
-            var availableVariants = new System.Collections.Generic.List<string>();
-            availableVariants.Add(baseSuffix); // 基础版本（无数字）
-
-            // 尝试查找变体（最多支持 5 个变体：表情1-表情5）
-            for (int i = 1; i <= 5; i++)
-            {
-                string variantSuffix = $"{baseSuffix}{i}";
-                availableVariants.Add(variantSuffix);
-            }
-
-            // ? 随机选择一个变体
-            int randomIndex = UnityEngine.Random.Range(0, availableVariants.Count);
-            string selectedVariant = availableVariants[randomIndex];
             
-            Log.Message($"[ExpressionSystem] 随机表情变体: {baseSuffix} → {selectedVariant} (从 {availableVariants.Count} 个中选择)");
-            
-            return selectedVariant;
+            // 返回带变体编号的后缀（如 _happy1, _happy2...）
+            string result = $"{baseSuffix}{variant}";
+            Log.Message($"[ExpressionSystem] 使用缓存变体: {personaDefName} - {expression} → {result}");
+            return result;
         }
-        
+
         /// <summary>
         /// 重置所有表情状态
         /// </summary>
