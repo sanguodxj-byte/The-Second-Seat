@@ -61,6 +61,9 @@ namespace TheSecondSeat.Execution
                     "TriggerEvent" => ExecuteTriggerEvent(command.parameters),
                     "ScheduleEvent" => ExecuteScheduleEvent(command.parameters),
                     
+                    // === ? 新增：政策修改命令 ===
+                    "ChangePolicy" => ExecuteChangePolicy(command.parameters),
+                    
                     // === 暂不支持 ===
                     "DesignateConstruction" => ExecutionResult.Failed("建造操作需要更多的建筑数据，暂不支持"),
                     "AssignWork" => ExecutionResult.Failed("工作分配需要更多的工作类型，暂不支持"),
@@ -824,6 +827,39 @@ namespace TheSecondSeat.Execution
             eventController.ScheduleEvent(eventType, delayTicks, comment);
 
             return ExecutionResult.Success($"已安排事件 '{eventType}' 将在 {delayMinutes} 分钟后触发");
+        }
+
+        /// <summary>
+        /// 修改政策（通知型占位符实现）
+        /// ? 当前作为通知实现，未来可扩展为实际政策修改
+        /// </summary>
+        private static ExecutionResult ExecuteChangePolicy(AdvancedCommandParams parameters)
+        {
+            // 1. 从 parameters 中获取政策名称
+            string policyName = parameters.target ?? "";
+            if (string.IsNullOrEmpty(policyName))
+            {
+                return ExecutionResult.Failed("未指定政策名称");
+            }
+
+            // 2. 获取可选的详细说明（从 scope 参数）
+            string description = parameters.scope ?? "";
+
+            // 3. 构建通知消息
+            string message = $"收到政策修改请求: {policyName}";
+            if (!string.IsNullOrEmpty(description))
+            {
+                message += $" ({description})";
+            }
+
+            // 4. 显示游戏内消息通知
+            Messages.Message(message, MessageTypeDefOf.NeutralEvent);
+
+            // 5. 记录日志
+            Log.Message($"[GameActionExecutor] 政策修改请求: {policyName}");
+
+            // 6. 返回成功结果
+            return ExecutionResult.Success($"已记录政策修改请求: {policyName}");
         }
 
         #endregion
