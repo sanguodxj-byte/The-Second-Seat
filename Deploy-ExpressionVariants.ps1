@@ -1,11 +1,11 @@
-# 表情变体系统 - 源文件部署脚本
-# 直接复制源文件到RimWorld，让游戏自动编译
+# 表情变体系统 - 完整部署脚本（含材质文件夹）
+# 直接复制源文件和材质到RimWorld，让游戏自动编译
 
 $SourceDir = "C:\Users\Administrator\Desktop\rim mod\The Second Seat"
 $TargetDir = "D:\steam\steamapps\common\RimWorld\Mods\TheSecondSeat"
 
 Write-Host "====================================" -ForegroundColor Cyan
-Write-Host "  表情变体系统 - 源文件部署工具" -ForegroundColor Cyan
+Write-Host "  表情变体系统 - 完整部署工具 v1.6" -ForegroundColor Cyan
 Write-Host "====================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -20,8 +20,11 @@ if (!(Test-Path $TargetDir)) {
     exit 1
 }
 
-# 复制关键文件
-$files = @(
+# ==================== 第一部分：源文件部署 ====================
+Write-Host "?? 第一部分：部署源代码文件" -ForegroundColor Yellow
+Write-Host ""
+
+$sourceFiles = @(
     @{
         Source = "Source\TheSecondSeat\PersonaGeneration\ExpressionSystem.cs"
         Target = "Source\TheSecondSeat\PersonaGeneration\ExpressionSystem.cs"
@@ -47,7 +50,7 @@ $files = @(
 $successCount = 0
 $errorCount = 0
 
-foreach ($file in $files) {
+foreach ($file in $sourceFiles) {
     $sourcePath = Join-Path $SourceDir $file.Source
     $targetPath = Join-Path $TargetDir $file.Target
     
@@ -75,27 +78,107 @@ foreach ($file in $files) {
 }
 
 Write-Host ""
+Write-Host "───────────────────────────────────" -ForegroundColor Gray
+Write-Host "源文件部署完成: $successCount 成功, $errorCount 失败" -ForegroundColor $(if ($errorCount -gt 0) { "Yellow" } else { "Green" })
+Write-Host ""
+
+# ==================== 第二部分：材质文件部署 ====================
+Write-Host "?? 第二部分：部署材质文件夹（Textures）" -ForegroundColor Yellow
+Write-Host ""
+
+$textureSourceDir = Join-Path $SourceDir "Textures"
+$textureTargetDir = Join-Path $TargetDir "Textures"
+
+if (!(Test-Path $textureSourceDir)) {
+    Write-Host "?? 材质源目录不存在，跳过材质部署" -ForegroundColor Yellow
+    Write-Host "   路径: $textureSourceDir" -ForegroundColor Gray
+}
+else {
+    try {
+        # 确保目标目录存在
+        if (!(Test-Path $textureTargetDir)) {
+            New-Item -Path $textureTargetDir -ItemType Directory -Force | Out-Null
+        }
+        
+        # 复制整个 Textures 文件夹（递归）
+        Write-Host "?? 正在复制材质文件夹..." -ForegroundColor Cyan
+        
+        # 使用 robocopy 进行高效复制（保留目录结构）
+        $robocopyResult = robocopy $textureSourceDir $textureTargetDir /E /XO /NFL /NDL /NJH /NJS
+        
+        if ($LASTEXITCODE -le 7) {
+            Write-Host "? 材质文件夹部署成功" -ForegroundColor Green
+            
+            # 统计文件数量
+            $textureCount = (Get-ChildItem $textureTargetDir -Recurse -File).Count
+            Write-Host "   共部署 $textureCount 个材质文件" -ForegroundColor Gray
+            
+            # 列出关键文件夹
+            $keyFolders = @(
+                "UI\Narrators\9x16",
+                "UI\Narrators\Avatars",
+                "UI\StatusIcons"
+            )
+            
+            foreach ($folder in $keyFolders) {
+                $folderPath = Join-Path $textureTargetDir $folder
+                if (Test-Path $folderPath) {
+                    $fileCount = (Get-ChildItem $folderPath -Recurse -File -Filter "*.png").Count
+                    Write-Host "   ?? $folder : $fileCount 个文件" -ForegroundColor Cyan
+                }
+            }
+        }
+        else {
+            Write-Host "?? 材质文件夹复制可能不完整（退出码: $LASTEXITCODE）" -ForegroundColor Yellow
+        }
+    }
+    catch {
+        Write-Host "? 材质文件夹部署失败: $_" -ForegroundColor Red
+        $errorCount++
+    }
+}
+
+Write-Host ""
 Write-Host "====================================" -ForegroundColor Cyan
 Write-Host "部署完成" -ForegroundColor Cyan
-Write-Host "  成功: $successCount 个文件" -ForegroundColor Green
-Write-Host "  失败: $errorCount 个文件" -ForegroundColor $(if ($errorCount -gt 0) { "Red" } else { "Green" })
+Write-Host "  源文件: $successCount 成功, $errorCount 失败" -ForegroundColor $(if ($errorCount -gt 0) { "Yellow" } else { "Green" })
+Write-Host "  材质文件: 已部署" -ForegroundColor Green
 Write-Host "====================================" -ForegroundColor Cyan
 Write-Host ""
 
 if ($successCount -gt 0) {
-    Write-Host "? 源文件已部署到RimWorld模组目录" -ForegroundColor Green
+    Write-Host "? 文件已部署到RimWorld模组目录" -ForegroundColor Green
     Write-Host "?? 下一步操作：" -ForegroundColor Yellow
     Write-Host "   1. 启动RimWorld" -ForegroundColor White
     Write-Host "   2. 游戏会自动编译源文件" -ForegroundColor White
     Write-Host "   3. 测试表情变体功能" -ForegroundColor White
     Write-Host ""
-    Write-Host "?? 表情变体说明：" -ForegroundColor Yellow
+    Write-Host "?? 材质文件说明：" -ForegroundColor Yellow
+    Write-Host "   - 9x16 文件夹: 全身立绘（1080x1920）" -ForegroundColor White
+    Write-Host "   - Avatars 文件夹: UI按钮头像（512x512）" -ForegroundColor White
     Write-Host "   - 每个表情支持 1-5 个变体" -ForegroundColor White
     Write-Host "   - 文件命名: {Persona}_happy1.png, _happy2.png..." -ForegroundColor White
-    Write-Host "   - 变体不存在时自动回退到基础版本" -ForegroundColor White
+    Write-Host ""
+    Write-Host "?? 材质文件结构：" -ForegroundColor Yellow
+    Write-Host "   Textures/UI/Narrators/9x16/{PersonaName}/" -ForegroundColor Cyan
+    Write-Host "   ├── base.png                    (基础立绘)" -ForegroundColor Gray
+    Write-Host "   └── Expressions/" -ForegroundColor Gray
+    Write-Host "       ├── happy.png               (基础版本)" -ForegroundColor Gray
+    Write-Host "       ├── happy1.png ~ happy5.png (变体)" -ForegroundColor Gray
+    Write-Host "       ├── sad.png ~ sad5.png" -ForegroundColor Gray
+    Write-Host "       └── ..." -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "   Textures/UI/Narrators/Avatars/{PersonaName}/" -ForegroundColor Cyan
+    Write-Host "   ├── base.png" -ForegroundColor Gray
+    Write-Host "   ├── happy.png ~ happy5.png" -ForegroundColor Gray
+    Write-Host "   └── ..." -ForegroundColor Gray
 }
 
 if ($errorCount -gt 0) {
     Write-Host ""
     Write-Host "?? 部分文件部署失败，请检查错误信息" -ForegroundColor Yellow
 }
+
+Write-Host ""
+Write-Host "按任意键退出..." -ForegroundColor Gray
+$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
