@@ -6,7 +6,7 @@ using RimWorld;
 namespace TheSecondSeat.Integration
 {
     /// <summary>
-    /// ? WorldComponent: 持久化叙事者虚拟 Pawn（随存档保存）
+    /// ? WorldComponent: 持久化存储虚拟 Pawn（跨存档保存）
     /// </summary>
     public class NarratorVirtualPawnManager : WorldComponent
     {
@@ -16,7 +16,8 @@ namespace TheSecondSeat.Integration
         // ? 运行时缓存：叙事者 DefName → 实际 Pawn 实例
         private Dictionary<string, Pawn> narratorPawnCache = new Dictionary<string, Pawn>();
 
-        public NarratorVirtualPawnManager(World world) : base(world)
+        // ? 修复：WorldComponent 构造函数需要 Verse.World 类型
+        public NarratorVirtualPawnManager(Verse.World world) : base(world)
         {
         }
 
