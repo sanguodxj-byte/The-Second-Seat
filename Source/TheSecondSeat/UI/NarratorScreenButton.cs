@@ -279,7 +279,7 @@ namespace TheSecondSeat.UI
             touchCount = 0;
             lastMousePosition = Event.current.mousePosition;
             
-            // ✅ 触发"疑惑"表情
+            // ✅ 触发"疑惑"表情（使用Confused类型）
             TriggerExpression(ExpressionType.Confused, duration: 2f);
             
             // ✅ 播放激活音效

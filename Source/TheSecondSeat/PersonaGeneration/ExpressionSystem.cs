@@ -8,23 +8,23 @@ namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
     /// 表情类型枚举
+    /// ? 每个表情支持1-5个变体（通过运行时随机选择）
     /// </summary>
     public enum ExpressionType
     {
-        Neutral,      // 中性
-        Happy,        // 开心
-        Happy2,       // 开心（强烈）- 预留
-        Happy3,       // 开心（极强）- 预留
-        Sad,          // 悲伤
-        Angry,        // 愤怒
-        Surprised,    // 惊讶
-        Worried,      // 担忧
-        Smug,         // 得意
-        Disappointed, // 失望
-        Thoughtful,   // 沉思
-        Annoyed,      // 烦躁
-        Playful,      // 调皮
-        Shy           // ? 新增：害羞
+        Neutral,      // 中立
+        Happy,        // 开心（支持 happy1-happy5）
+        Sad,          // 悲伤（支持 sad1-sad5）
+        Angry,        // 愤怒（支持 angry1-angry5）
+        Surprised,    // 惊讶（支持 surprised1-surprised5）
+        Worried,      // 担忧（支持 worried1-worried5）
+        Smug,         // 得意（支持 smug1-smug5）
+        Disappointed, // 失望（支持 disappointed1-disappointed5）
+        Thoughtful,   // 沉思（支持 thoughtful1-thoughtful5）
+        Annoyed,      // 恼怒（支持 annoyed1-annoyed5）
+        Playful,      // 调皮（支持 playful1-playful5）
+        Shy,          // 害羞（支持 shy1-shy5）
+        Confused      // 疑惑（支持 confused1-confused5）- 触摸模式专用
     }
 
     /// <summary>
@@ -90,15 +90,19 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// 设置表情（带平滑过渡）
+        /// ? 自动为所有表情类型随机选择变体（1-5）
         /// </summary>
-        public static void SetExpression(string personaDefName, ExpressionType expression, ExpressionTrigger trigger = ExpressionTrigger.Manual)
+        public static void SetExpression(string personaDefName, ExpressionType expression, int durationTicks = EXPRESSION_DURATION_TICKS, string reason = "")
         {
             var state = GetExpressionState(personaDefName);
             
-            // 如果表情被锁定，不允许切换
+            // 如果表情被锁定，跳过切换
             if (state.IsLocked)
             {
-                Log.Message($"[ExpressionSystem] 表情被锁定，跳过切换: {personaDefName}");
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[ExpressionSystem] 表情被锁定，跳过切换: {personaDefName}");
+                }
                 return;
             }
             
@@ -108,7 +112,7 @@ namespace TheSecondSeat.PersonaGeneration
                 return;
             }
             
-            // ? 清除旧表情的缓存（立绘和头像）
+            // ? 清除旧表情的缓存（立即释放）
             PortraitLoader.ClearPortraitCache(personaDefName, state.CurrentExpression);
             AvatarLoader.ClearAvatarCache(personaDefName, state.CurrentExpression);
             
@@ -116,18 +120,29 @@ namespace TheSecondSeat.PersonaGeneration
             PortraitLoader.ClearPortraitCache(personaDefName, expression);
             AvatarLoader.ClearAvatarCache(personaDefName, expression);
             
-            // ? 随机选择新变体编号（0-5）
-            state.CurrentVariant = UnityEngine.Random.Range(0, 6);
+            // ? 随机选择变体编号（1-5）
+            // Neutral 表情不使用变体（variant = 0）
+            if (expression == ExpressionType.Neutral)
+            {
+                state.CurrentVariant = 0;
+            }
+            else
+            {
+                state.CurrentVariant = UnityEngine.Random.Range(1, 6); // 1-5
+            }
             
             // 开始过渡
             state.PreviousExpression = state.CurrentExpression;
             state.CurrentExpression = expression;
             state.TransitionProgress = 0f;
             state.TransitionTicks = 0;
-            state.LastTrigger = trigger;
             state.ExpressionStartTick = Find.TickManager.TicksGame;
             
-            Log.Message($"[ExpressionSystem] ? {personaDefName} 表情切换: {state.PreviousExpression} → {expression} (触发: {trigger}, 变体: {state.CurrentVariant})");
+            if (Prefs.DevMode)
+            {
+                string reasonText = string.IsNullOrEmpty(reason) ? "未指定" : reason;
+                Log.Message($"[ExpressionSystem] ? {personaDefName} 表情切换: {state.PreviousExpression} → {expression} (变体: {state.CurrentVariant}, 原因: {reasonText})");
+            }
         }
         
         /// <summary>
@@ -335,6 +350,22 @@ namespace TheSecondSeat.PersonaGeneration
             {
                 expression = ExpressionType.Shy;
             }
+            // ? 疑惑关键词（触摸模式专用）
+            else if (ContainsKeywords(dialogueText, new[] {
+                // 中文
+                "啊", "什么", "怎么", "为何", "这是", "那是", "你是", "我是", "他是",
+                "她是", "它是", "谁是", "在哪里", "什么时候", "为什么", "怎么样",
+                "有什么", "没什么", "只不过", "难道", "岂不是", "莫非",
+                // 英文
+                "ah", "what", "how", "why", "this is", "that is", "you are", "i am",
+                "he is", "she is", "it is", "who is", "where is", "when", "why",
+                "what is", "nothing", "just", "did", "could", "couldn't",
+                "would", "wouldn't", "might", "might not", "must", "mustn't",
+                "can't", "cannot", "do", "don't", "does", "doesn't"
+            }))
+            {
+                expression = ExpressionType.Confused;
+            }
             
             if (expression != ExpressionType.Neutral)
             {
@@ -422,18 +453,17 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// 获取表情立绘文件名后缀
-        /// ? 使用缓存的变体编号，避免一直切换
+        /// 获取表情对应的文件名后缀
+        /// ? 支持所有表情类型的变体（1-5）
+        /// ? 根据缓存的变体编号返回一致的后缀
         /// </summary>
         public static string GetExpressionSuffix(string personaDefName, ExpressionType expression)
         {
-            // 基础后缀
+            // 基础后缀映射
             string baseSuffix = expression switch
             {
                 ExpressionType.Neutral => "",
                 ExpressionType.Happy => "_happy",
-                ExpressionType.Happy2 => "_happy2",
-                ExpressionType.Happy3 => "_happy3",
                 ExpressionType.Sad => "_sad",
                 ExpressionType.Angry => "_angry",
                 ExpressionType.Surprised => "_surprised",
@@ -444,6 +474,7 @@ namespace TheSecondSeat.PersonaGeneration
                 ExpressionType.Annoyed => "_annoyed",
                 ExpressionType.Playful => "_playful",
                 ExpressionType.Shy => "_shy",
+                ExpressionType.Confused => "_confused",
                 _ => ""
             };
 
@@ -457,9 +488,14 @@ namespace TheSecondSeat.PersonaGeneration
                 return baseSuffix;
             }
             
-            // 返回带变体编号的后缀（如 _happy1, _happy2...）
+            // 返回带变体编号的后缀（如 _happy1, _happy2, _sad3...）
             string result = $"{baseSuffix}{variant}";
-            Log.Message($"[ExpressionSystem] 使用缓存变体: {personaDefName} - {expression} → {result}");
+            
+            if (Prefs.DevMode)
+            {
+                Log.Message($"[ExpressionSystem] ? 使用表情变体: {personaDefName} - {expression} → {result}");
+            }
+            
             return result;
         }
 
@@ -524,7 +560,8 @@ namespace TheSecondSeat.PersonaGeneration
                 ExpressionType.Thoughtful,
                 ExpressionType.Annoyed,
                 ExpressionType.Playful,
-                ExpressionType.Shy  // ? 新增
+                ExpressionType.Shy,          // ? 新增
+                ExpressionType.Confused      // ? 疑惑
             };
             
             var state = GetExpressionState(personaDefName);
