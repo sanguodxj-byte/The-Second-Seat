@@ -35,7 +35,9 @@ Builds/
 *_BACKUP_*.xml
 *_backup_*.xml
 *~
-
+.vs
+.git
+Textures/
 ## 可选：如果你根本不用 Git LFS 又不想让人误提交超大文件
 # *.png filter=lfs diff=lfs merge=lfs -text
 # *.jpg filter=lfs diff=lfs merge=lfs -text
