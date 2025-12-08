@@ -1,15 +1,25 @@
-# 材质文件验证脚本
-# 检查材质文件夹是否正确部署到 RimWorld
+# 材质文件验证脚本（修复版）
+# 检查 1.6 文件夹中的材质文件是否正确部署
 
-$TargetDir = "D:\steam\steamapps\common\RimWorld\Mods\TheSecondSeat"
+$TargetDir = "D:\steam\steamapps\common\RimWorld\Mods\TheSecondSeat\1.6"
 $TextureDir = Join-Path $TargetDir "Textures"
 
 Write-Host "====================================" -ForegroundColor Cyan
-Write-Host "  材质文件验证工具" -ForegroundColor Cyan
+Write-Host "  材质文件验证工具（1.6版本）" -ForegroundColor Cyan
 Write-Host "====================================" -ForegroundColor Cyan
 Write-Host ""
 
-# 检查根目录
+# 检查 1.6 目录
+if (!(Test-Path $TargetDir)) {
+    Write-Host "? 1.6 版本目录不存在: $TargetDir" -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "? 1.6 版本目录存在" -ForegroundColor Green
+Write-Host "   路径: $TargetDir" -ForegroundColor Cyan
+Write-Host ""
+
+# 检查材质根目录
 if (!(Test-Path $TextureDir)) {
     Write-Host "? 材质目录不存在: $TextureDir" -ForegroundColor Red
     exit 1
@@ -46,6 +56,40 @@ foreach ($folder in $keyFolders) {
         Write-Host "   路径: $($folder.Path)" -ForegroundColor Gray
         Write-Host ""
     }
+}
+
+# 检查源文件
+Write-Host "?? 源代码文件检查：" -ForegroundColor Yellow
+Write-Host ""
+
+$sourceDir = Join-Path $TargetDir "Source\TheSecondSeat"
+if (Test-Path $sourceDir) {
+    $csFiles = Get-ChildItem $sourceDir -Recurse -File -Filter "*.cs" -ErrorAction SilentlyContinue
+    Write-Host "? 源代码文件夹存在" -ForegroundColor Green
+    Write-Host "   C# 文件: $($csFiles.Count) 个" -ForegroundColor Cyan
+    Write-Host ""
+    
+    $importantFiles = @(
+        "PersonaGeneration\ExpressionSystem.cs",
+        "UI\NarratorScreenButton.cs",
+        "PersonaGeneration\PortraitLoader.cs",
+        "PersonaGeneration\AvatarLoader.cs"
+    )
+    
+    foreach ($file in $importantFiles) {
+        $filePath = Join-Path $sourceDir $file
+        if (Test-Path $filePath) {
+            Write-Host "   ? $file" -ForegroundColor Green
+        }
+        else {
+            Write-Host "   ? $file 缺失" -ForegroundColor Red
+        }
+    }
+    Write-Host ""
+}
+else {
+    Write-Host "? 源代码文件夹不存在" -ForegroundColor Red
+    Write-Host ""
 }
 
 # 检查人格立绘文件夹
@@ -150,10 +194,13 @@ Write-Host ""
 
 $totalPng = (Get-ChildItem $TextureDir -Recurse -File -Filter "*.png" -ErrorAction SilentlyContinue).Count
 $totalFolders = (Get-ChildItem $TextureDir -Recurse -Directory -ErrorAction SilentlyContinue).Count
+$totalCsFiles = (Get-ChildItem $sourceDir -Recurse -File -Filter "*.cs" -ErrorAction SilentlyContinue).Count
 
-Write-Host "?? 材质文件统计：" -ForegroundColor Yellow
-Write-Host "   PNG文件总数: $totalPng" -ForegroundColor Cyan
-Write-Host "   文件夹总数: $totalFolders" -ForegroundColor Cyan
+Write-Host "?? 部署统计（1.6 文件夹）：" -ForegroundColor Yellow
+Write-Host "   部署路径: $TargetDir" -ForegroundColor Cyan
+Write-Host "   PNG文件: $totalPng 个" -ForegroundColor Cyan
+Write-Host "   材质文件夹: $totalFolders 个" -ForegroundColor Cyan
+Write-Host "   C#源文件: $totalCsFiles 个" -ForegroundColor Cyan
 Write-Host ""
 
 Write-Host "? 验证完成" -ForegroundColor Green
