@@ -6,7 +6,8 @@
     <RootNamespace>TheSecondSeat</RootNamespace>
     <AssemblyName>TheSecondSeat</AssemblyName>
     <DebugType>None</DebugType>
-    <Nullable>enable</Nullable>
+    <Nullable>disable</Nullable>
+    <NoWarn>CS8603;CS8604;CS8600;CS8601;CS8625;CS8602;CS8632;CS0414</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup>
