@@ -36,7 +36,7 @@ namespace TheSecondSeat.Execution
             {
                 return command.action switch
                 {
-                    // === 批量操作 ===
+                    // === 批量命令 ===
                     "BatchHarvest" => ExecuteBatchHarvest(command.parameters),
                     "BatchEquip" => ExecuteBatchEquip(command.parameters),
                     "BatchCapture" => ExecuteBatchCapture(command.parameters),
@@ -46,7 +46,7 @@ namespace TheSecondSeat.Execution
                     "EmergencyRetreat" => ExecuteEmergencyRetreat(command.parameters),
                     "DesignatePlantCut" => ExecuteDesignatePlantCut(command.parameters),
                     
-                    // === 殖民者管理 ===
+                    // === 殖民者个体控制 ===
                     "DraftPawn" => ExecuteDraftPawn(command.parameters),
                     "MovePawn" => ExecuteMovePawn(command.parameters),
                     "HealPawn" => ExecuteHealPawn(command.parameters),
@@ -57,9 +57,13 @@ namespace TheSecondSeat.Execution
                     "ForbidItems" => ExecuteForbidItems(command.parameters),
                     "AllowItems" => ExecuteAllowItems(command.parameters),
                     
+                    // === ? 新增：事件触发命令 ===
+                    "TriggerEvent" => ExecuteTriggerEvent(command.parameters),
+                    "ScheduleEvent" => ExecuteScheduleEvent(command.parameters),
+                    
                     // === 暂不支持 ===
-                    "DesignateConstruction" => ExecutionResult.Failed("建造功能需要复杂的建筑蓝图，暂不支持"),
-                    "AssignWork" => ExecutionResult.Failed("分配工作功能需要复杂的工作类型，暂不支持"),
+                    "DesignateConstruction" => ExecutionResult.Failed("建造操作需要更多的建筑数据，暂不支持"),
+                    "AssignWork" => ExecutionResult.Failed("工作分配需要更多的工作类型，暂不支持"),
                     
                     _ => ExecutionResult.Failed($"未知命令: {command.action}")
                 };
@@ -745,7 +749,86 @@ namespace TheSecondSeat.Execution
 
         #endregion
 
-        #region 资源管理命令
+        #region 事件触发命令
+
+        /// <summary>
+        /// 触发事件（立即执行）
+        /// ? 使用 OpponentEventController 触发事件
+        /// </summary>
+        private static ExecutionResult ExecuteTriggerEvent(AdvancedCommandParams parameters)
+        {
+            // 1. 获取 OpponentEventController 实例
+            var eventController = TheSecondSeat.Events.OpponentEventController.Instance;
+            
+            if (eventController == null || !eventController.IsActive)
+            {
+                return ExecutionResult.Failed("对手模式未激活，无法触发事件");
+            }
+
+            // 2. 从 parameters 中获取事件类型
+            string eventType = parameters.target ?? "";
+            if (string.IsNullOrEmpty(eventType))
+            {
+                return ExecutionResult.Failed("未指定事件类型");
+            }
+
+            // 3. 获取 AI 注释（从 scope 参数）
+            string comment = parameters.scope ?? "";
+
+            // 4. 调用 OpponentEventController 触发事件
+            bool success = eventController.TriggerEventByAI(eventType, comment);
+
+            return success 
+                ? ExecutionResult.Success($"已触发事件: {eventType}")
+                : ExecutionResult.Failed($"触发事件失败: {eventType}");
+        }
+
+        /// <summary>
+        /// 安排延迟事件
+        /// ? 使用 OpponentEventController 安排未来事件
+        /// </summary>
+        private static ExecutionResult ExecuteScheduleEvent(AdvancedCommandParams parameters)
+        {
+            // 1. 获取 OpponentEventController 实例
+            var eventController = TheSecondSeat.Events.OpponentEventController.Instance;
+            
+            if (eventController == null || !eventController.IsActive)
+            {
+                return ExecutionResult.Failed("对手模式未激活，无法安排事件");
+            }
+
+            // 2. 从 parameters 中获取事件类型
+            string eventType = parameters.target ?? "";
+            if (string.IsNullOrEmpty(eventType))
+            {
+                return ExecutionResult.Failed("未指定事件类型");
+            }
+
+            // 3. 从 filters 中获取延迟时间（分钟）
+            int delayMinutes = 10; // 默认 10 分钟
+            if (parameters.filters != null && parameters.filters.TryGetValue("delay", out var delayObj))
+            {
+                if (delayObj != null && int.TryParse(delayObj.ToString(), out int parsedDelay))
+                {
+                    delayMinutes = parsedDelay;
+                }
+            }
+
+            // 4. 转换为游戏 ticks（1 分钟 = 2500 ticks）
+            int delayTicks = delayMinutes * 2500;
+
+            // 5. 获取 AI 注释（从 scope 参数）
+            string comment = parameters.scope ?? "";
+
+            // 6. 调用 OpponentEventController 安排事件
+            eventController.ScheduleEvent(eventType, delayTicks, comment);
+
+            return ExecutionResult.Success($"已安排事件 '{eventType}' 将在 {delayMinutes} 分钟后触发");
+        }
+
+        #endregion
+
+        #region 资源操作命令
 
         /// <summary>
         /// 禁止物品
@@ -774,7 +857,7 @@ namespace TheSecondSeat.Execution
         }
 
         /// <summary>
-        /// 解禁物品
+        /// 允许物品
         /// </summary>
         private static ExecutionResult ExecuteAllowItems(AdvancedCommandParams parameters)
         {
@@ -795,7 +878,7 @@ namespace TheSecondSeat.Execution
             }
 
             return count > 0 
-                ? ExecutionResult.Success($"已解禁 {count} 个物品")
+                ? ExecutionResult.Success($"已解除 {count} 个物品")
                 : ExecutionResult.Failed("未找到被禁止的物品");
         }
 
