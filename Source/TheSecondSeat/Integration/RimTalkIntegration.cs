@@ -340,25 +340,34 @@ namespace TheSecondSeat.Integration
     public static class MemoryContextBuilder
     {
         /// <summary>
-        /// 构建包含记忆的上下文
+        /// ? 构建记忆上下文（增强版 - 支持叙事者模式和 Pawn 模式）
         /// </summary>
         public static string BuildMemoryContext(string currentQuery, int maxTokens = 1000)
         {
-            var memories = RimTalkMemoryAdapter.Instance.GetRelevantMemories(currentQuery, maxTokens);
+            // ? 使用新的 SimpleRimTalkIntegration（叙事者模式）
+            return SimpleRimTalkIntegration.GetMemoryPrompt(
+                basePrompt: "",
+                pawn: null,  // 叙事者模式：只有共通知识 + 全局状态
+                maxKnowledgeEntries: maxTokens / 100  // 估算：每条 ~100 tokens
+            );
+        }
 
-            if (memories.Count == 0)
+        /// <summary>
+        /// ? 新增：为特定 Pawn 构建记忆上下文
+        /// </summary>
+        public static string BuildMemoryContextForPawn(Pawn pawn, string currentQuery, int maxTokens = 1000)
+        {
+            if (pawn == null)
             {
-                return "";
+                return BuildMemoryContext(currentQuery, maxTokens);
             }
 
-            var context = "=== 相关记忆 ===\n";
-            foreach (var memory in memories)
-            {
-                context += $"- {memory.content}\n";
-            }
-            context += "=================\n\n";
-
-            return context;
+            return SimpleRimTalkIntegration.GetMemoryPrompt(
+                basePrompt: "",
+                pawn: pawn,  // Pawn 模式：个人记忆 + 共通知识
+                maxPersonalMemories: 5,
+                maxKnowledgeEntries: 3
+            );
         }
 
         /// <summary>

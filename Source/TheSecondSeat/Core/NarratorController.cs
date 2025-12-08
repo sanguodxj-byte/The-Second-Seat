@@ -144,14 +144,16 @@ namespace TheSecondSeat.Core
                 // ? 在系统提示词中添加时间信息
                 systemPrompt = InjectTimeIntoSystemPrompt(systemPrompt, now);
 
-                // ? 修复：将记忆上下文添加到 System Prompt，而不是用户消息
-                var memoryContext = MemoryContextBuilder.BuildMemoryContext(userMessage);
-                if (!string.IsNullOrEmpty(memoryContext))
-                {
-                    systemPrompt += "\n\n" + memoryContext;
-                    Log.Message("[NarratorController] 已将记忆上下文添加到 System Prompt");
-                }
+                // ? 使用新的 SimpleRimTalkIntegration.GetMemoryPrompt（叙事者模式 pawn = null）
+                systemPrompt = SimpleRimTalkIntegration.GetMemoryPrompt(
+                    basePrompt: systemPrompt,
+                    pawn: null,  // ? 叙事者 AI 模式
+                    maxPersonalMemories: 5,  // 无效（pawn == null）
+                    maxKnowledgeEntries: 3   // 自动 +5 = 8 条共通知识 + 全局状态
+                );
                 
+                Log.Message("[NarratorController] 已注入记忆上下文和全局游戏状态到 System Prompt");
+
                 // 4. 检查是否需要联网搜索
                 string searchContext = "";
                 var modSettings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
