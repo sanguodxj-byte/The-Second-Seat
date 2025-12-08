@@ -9,16 +9,14 @@ namespace TheSecondSeat.Integration
     /// <summary>
     /// RimTalk 记忆扩展集成
     /// 功能：
-    /// 1. 将叙事者与玩家的对话自动记录到记忆系统
+    /// 1. 自动记录叙事者和玩家的对话到记忆系统
     /// 2. 为叙事者创建虚拟 Pawn 用于存储记忆
-    /// 3. 支持记忆扩展的 UI 显示
-    /// 4. 自动分类和打标签
+    /// 3. 支持集成扩展的 UI 显示
+    /// 4. 自动标签和标签
+    /// ? 修复：使用 WorldComponent 持久化虚拟 Pawn
     /// </summary>
     public static class RimTalkMemoryIntegration
     {
-        // 叙事者虚拟 Pawn 缓存
-        private static Dictionary<string, Pawn> narratorVirtualPawns = new Dictionary<string, Pawn>();
-        
         // RimTalk 记忆系统是否可用
         private static bool? isRimTalkAvailable = null;
         
@@ -38,11 +36,11 @@ namespace TheSecondSeat.Integration
                 
                 if (isRimTalkAvailable.Value)
                 {
-                    Log.Message("[TheSecondSeat] RimTalk 记忆扩展检测成功，启用集成功能");
+                    Log.Message("[TheSecondSeat] RimTalk 记忆扩展检测成功，集成功能已启用");
                 }
                 else
                 {
-                    Log.Warning("[TheSecondSeat] 未检测到 RimTalk 记忆扩展，记忆集成功能已禁用");
+                    Log.Warning("[TheSecondSeat] 未检测到 RimTalk 记忆扩展，对话记忆功能已禁用");
                 }
                 
                 return isRimTalkAvailable.Value;
@@ -56,44 +54,74 @@ namespace TheSecondSeat.Integration
         }
         
         /// <summary>
-        /// 获取或创建叙事者的虚拟 Pawn（用于存储记忆）
+        /// ? 获取或创建叙事者的虚拟 Pawn（用于存储记忆）
+        /// ? 修复：使用 WorldComponent 确保持久化
         /// </summary>
         public static Pawn GetOrCreateNarratorPawn(string narratorDefName, string narratorName)
         {
             if (!IsRimTalkMemoryAvailable())
                 return null;
             
-            // 检查缓存
-            if (narratorVirtualPawns.TryGetValue(narratorDefName, out Pawn cached))
-            {
-                return cached;
-            }
-            
             try
             {
-                // 创建虚拟 Pawn
-                PawnKindDef kind = PawnKindDefOf.Colonist;
-                Faction faction = Faction.OfPlayer;
+                // ? 从 WorldComponent 获取管理器
+                var manager = Find.World?.GetComponent<NarratorVirtualPawnManager>();
+                if (manager == null)
+                {
+                    Log.Error("[RimTalkMemoryIntegration] NarratorVirtualPawnManager 未找到！请检查 WorldComponent 注册。");
+                    return null;
+                }
                 
-                Pawn narratorPawn = PawnGenerator.GeneratePawn(kind, faction);
-                
-                // 设置名称
-                narratorPawn.Name = new NameSingle(narratorName);
-                
-                // 添加 RimTalk 记忆组件
-                AddMemoryComponent(narratorPawn);
-                
-                // 缓存
-                narratorVirtualPawns[narratorDefName] = narratorPawn;
-                
-                Log.Message($"[TheSecondSeat] 已为叙事者 {narratorName} 创建虚拟 Pawn（用于记忆存储）");
-                
-                return narratorPawn;
+                // ? 使用管理器获取或创建 Pawn（自动持久化）
+                return manager.GetOrCreateNarratorPawn(narratorDefName, narratorName);
             }
             catch (Exception ex)
             {
-                Log.Error($"[TheSecondSeat] 创建叙事者虚拟 Pawn 失败: {ex.Message}");
+                Log.Error($"[RimTalkMemoryIntegration] 获取叙事者虚拟 Pawn 失败: {ex.Message}");
                 return null;
+            }
+        }
+        
+        /// <summary>
+        /// ? 新增：为 Pawn 添加记忆组件（供外部调用）
+        /// </summary>
+        public static void AddMemoryComponentToPawn(Pawn pawn)
+        {
+            if (pawn == null)
+                return;
+            
+            try
+            {
+                // 使用反射添加 FourLayerMemoryComp
+                var compType = Type.GetType("RimTalk.Memory.FourLayerMemoryComp, RimTalk-ExpandMemory");
+                if (compType == null)
+                {
+                    Log.Warning("[RimTalkMemoryIntegration] 未找到 FourLayerMemoryComp 类型");
+                    return;
+                }
+                
+                // 检查是否已存在
+                var existingComp = pawn.AllComps.FirstOrDefault(c => c.GetType() == compType);
+                if (existingComp != null)
+                {
+                    Log.Message($"[RimTalkMemoryIntegration] Pawn {pawn.LabelShort} 已有记忆组件");
+                    return;
+                }
+                
+                // 创建组件实例
+                var comp = (ThingComp)Activator.CreateInstance(compType);
+                comp.parent = pawn;
+                pawn.AllComps.Add(comp);
+                
+                // 初始化组件
+                var initMethod = compType.GetMethod("Initialize");
+                initMethod?.Invoke(comp, new object[] { new CompProperties() });
+                
+                Log.Message($"[RimTalkMemoryIntegration] 为 {pawn.LabelShort} 添加记忆组件成功");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[RimTalkMemoryIntegration] 添加记忆组件失败: {ex.Message}\n{ex.StackTrace}");
             }
         }
         

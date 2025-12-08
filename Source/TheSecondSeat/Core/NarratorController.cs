@@ -380,6 +380,7 @@ namespace TheSecondSeat.Core
         
         /// <summary>
         /// ? 自动播放 TTS（叙事者发言时）
+        /// ? 优化：添加加载状态提示
         /// </summary>
         private void AutoPlayTTS(string text)
         {
@@ -401,6 +402,9 @@ namespace TheSecondSeat.Core
                     return; // 没有实际文本，跳过
                 }
                 
+                // ? 显示"语音生成中"提示
+                Messages.Message("?? 语音生成中...", MessageTypeDefOf.SilentInput);
+                
                 // ? 异步生成并保存 TTS 音频
                 Task.Run(async () => 
                 {
@@ -415,13 +419,27 @@ namespace TheSecondSeat.Core
                             // ? 在主线程显示成功消息
                             Verse.LongEventHandler.ExecuteWhenFinished(() => 
                             {
-                                Messages.Message($"语音已生成: {System.IO.Path.GetFileName(audioPath)}", MessageTypeDefOf.TaskCompletion);
+                                Messages.Message($"? 语音已生成: {System.IO.Path.GetFileName(audioPath)}", MessageTypeDefOf.TaskCompletion);
+                            });
+                        }
+                        else
+                        {
+                            // ? 生成失败提示
+                            Verse.LongEventHandler.ExecuteWhenFinished(() => 
+                            {
+                                Messages.Message("? 语音生成失败（请检查网络连接）", MessageTypeDefOf.RejectInput);
                             });
                         }
                     }
                     catch (Exception ex)
                     {
                         Log.Warning($"[NarratorController] TTS 自动播放失败: {ex.Message}");
+                        
+                        // ? 显示错误提示
+                        Verse.LongEventHandler.ExecuteWhenFinished(() => 
+                        {
+                            Messages.Message($"? 语音生成错误: {ex.Message}", MessageTypeDefOf.RejectInput);
+                        });
                     }
                 });
             }
