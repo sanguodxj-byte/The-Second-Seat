@@ -1,0 +1,472 @@
+{
+  "conflict_groups": {
+    "mood": [
+      "Kind",
+      "Bloodlust",
+      "Psychopath"
+    ],
+    "work": [
+      "Industrious",
+      "HardWorker",
+      "Lazy",
+      "Slothful"
+    ],
+    "social": [
+      "Sociable",
+      "Annoying",
+      "AnnoyingVoice"
+    ],
+    "combat": [
+      "Brawler",
+      "Tough",
+      "Wimp",
+      "Careful"
+    ],
+    "mental": [
+      "Steadfast",
+      "Nervous",
+      "NervousBreakdown",
+      "IronWilled"
+    ],
+    "beauty": [
+      "Beautiful",
+      "Pretty",
+      "Ugly",
+      "Staggeringly Ugly"
+    ]
+  },
+  "tag_rules": [
+    {
+      "tag": "angry",
+      "description": "Angry expression implies violent tendencies",
+      "traits": [
+        {
+          "traitDef": "Bloodlust",
+          "degree": 0,
+          "priority": 60,
+          "category": "mood",
+          "conflictsWith": []
+        },
+        {
+          "traitDef": "Volatile",
+          "degree": 0,
+          "priority": 50,
+          "category": "mental",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {
+          "skillName": "Melee",
+          "bonus": 3,
+          "passion": 1
+        }
+      ]
+    },
+    {
+      "tag": "kind",
+      "description": "Friendly and compassionate demeanor",
+      "traits": [
+        {
+          "traitDef": "Kind",
+          "degree": 0,
+          "priority": 70,
+          "category": "mood",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {
+          "skillName": "Social",
+          "bonus": 2,
+          "passion": 1
+        }
+      ]
+    },
+    {
+      "tag": "cold",
+      "description": "Cold expression implies lack of empathy",
+      "traits": [
+        {
+          "traitDef": "Psychopath",
+          "degree": 0,
+          "priority": 55,
+          "category": "mood",
+          "conflictsWith": []
+        }
+      ],
+      "skills": []
+    },
+    {
+      "tag": "sad",
+      "description": "Sadness, possibly linked to trauma",
+      "traits": [
+        {
+          "traitDef": "DepressiveMood",
+          "degree": 0,
+          "priority": 50,
+          "category": "mental",
+          "conflictsWith": []
+        }
+      ],
+      "skills": []
+    },
+    {
+      "tag": "confident",
+      "description": "Confidence, possibly a leader or experienced individual",
+      "traits": [
+        {
+          "traitDef": "Steadfast",
+          "degree": 0,
+          "priority": 60,
+          "category": "mental",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {
+          "skillName": "Social",
+          "bonus": 2,
+          "passion": 0
+        }
+      ]
+    },
+    {
+      "tag": "scar",
+      "description": "Scar suggests experience in combat or dangerous situations",
+      "traits": [
+        {
+          "traitDef": "Tough",
+          "degree": 0,
+          "priority": 55,
+          "category": "physical",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {
+          "skillName": "Melee",
+          "bonus": 2,
+          "passion": 0
+        },
+        {
+          "skillName": "Shooting",
+          "bonus": 1,
+          "passion": 0
+        }
+      ]
+    },
+    {
+      "tag": "bionic_eye",
+      "description": "Bionic eye suggests proficiency with technology",
+      "traits": [
+        {
+          "traitDef": "Transhumanist",
+          "degree": 0,
+          "priority": 65,
+          "category": "uncategorized",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {
+          "skillName": "Shooting",
+          "bonus": 4,
+          "passion": 1
+        },
+        {
+          "skillName": "Intellectual",
+          "bonus": 2,
+          "passion": 0
+        }
+      ]
+    },
+    {
+      "tag": "cybernetic",
+      "description": "Cybernetic parts suggest enhancement and technology affinity",
+      "traits": [
+        {
+          "traitDef": "Transhumanist",
+          "degree": 0,
+          "priority": 70,
+          "category": "uncategorized",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {
+          "skillName": "Intellectual",
+          "bonus": 3,
+          "passion": 1
+        }
+      ]
+    },
+    {
+      "tag": "muscular",
+      "description": "Well-developed muscles indicate strength and physical labor capabilities",
+      "traits": [
+        {
+          "traitDef": "Tough",
+          "degree": 0,
+          "priority": 50,
+          "category": "physical",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {
+          "skillName": "Melee",
+          "bonus": 3,
+          "passion": 1
+        },
+        {
+          "skillName": "Construction",
+          "bonus": 2,
+          "passion": 0
+        }
+      ]
+    },
+    {
+      "tag": "red_jacket",
+      "description": "Red jacket implies a combative or rebellious nature",
+      "traits": [
+        {
+          "traitDef": "Brawler",
+          "degree": 0,
+          "priority": 45,
+          "category": "combat",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {
+          "skillName": "Melee",
+          "bonus": 2,
+          "passion": 0
+        }
+      ]
+    },
+    {
+      "tag": "military_uniform",
+      "description": "Military uniform suggests a military background",
+      "traits": [
+        {
+          "traitDef": "Tough",
+          "degree": 0,
+          "priority": 60,
+          "category": "physical",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {
+          "skillName": "Shooting",
+          "bonus": 4,
+          "passion": 2
+        },
+        {
+          "skillName": "Melee",
+          "bonus": 2,
+          "passion": 1
+        }
+      ]
+    },
+    {
+      "tag": "lab_coat",
+      "description": "Lab coat suggests a scientific or medical background",
+      "traits": [
+        {
+          "traitDef": "Ascetic",
+          "degree": 0,
+          "priority": 40,
+          "category": "uncategorized",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {
+          "skillName": "Intellectual",
+          "bonus": 5,
+          "passion": 2
+        },
+        {
+          "skillName": "Medicine",
+          "bonus": 3,
+          "passion": 1
+        }
+      ]
+    },
+    {
+      "tag": "crown",
+      "description": "Crown suggests nobility or leadership qualities",
+      "traits": [
+        {
+          "traitDef": "Greedy",
+          "degree": 0,
+          "priority": 50,
+          "category": "uncategorized",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {
+          "skillName": "Social",
+          "bonus": 4,
+          "passion": 2
+        }
+      ]
+    },
+    {
+      "tag": "hood",
+      "description": "Hood implies stealth and caution",
+      "traits": [
+        {
+          "traitDef": "Careful",
+          "degree": 0,
+          "priority": 45,
+          "category": "combat",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {
+          "skillName": "Shooting",
+          "bonus": 2,
+          "passion": 0
+        }
+      ]
+    },
+    {
+      "tag": "horns",
+      "description": "Horns imply aggression and a combative nature",
+      "traits": [
+        {
+          "traitDef": "Aggressive",
+          "degree": 0,
+          "priority": 50,
+          "category": "mood",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {
+          "skillName": "Melee",
+          "bonus": 2,
+          "passion": 1
+        }
+      ]
+    },
+    {
+      "tag": "wings",
+      "description": "Wings suggest agility and swift movement",
+      "traits": [
+        {
+          "traitDef": "Fast",
+          "degree": 0,
+          "priority": 55,
+          "category": "physical",
+          "conflictsWith": []
+        }
+      ],
+      "skills": []
+    },
+    {
+      "tag": "halo",
+      "description": "Halo implies a benevolent and kind nature",
+      "traits": [
+        {
+          "traitDef": "Kind",
+          "degree": 0,
+          "priority": 65,
+          "category": "mood",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {
+          "skillName": "Social",
+          "bonus": 3,
+          "passion": 1
+        }
+      ]
+    },
+    {
+      "tag": "tail",
+      "description": "Tail (Orc characteristic)",
+      "traits": [
+        {
+          "traitDef": "NightOwl",
+          "degree": 0,
+          "priority": 40,
+          "category": "uncategorized",
+          "conflictsWith": []
+        }
+      ],
+      "skills": []
+    },
+    {
+      "tag": "fire_background",
+      "description": "Fire background suggests arsonist tendencies",
+      "traits": [
+        {
+          "traitDef": "Pyromaniac",
+          "degree": 0,
+          "priority": 55,
+          "category": "mental",
+          "conflictsWith": []
+        }
+      ],
+      "skills": []
+    },
+    {
+      "tag": "nature_background",
+      "description": "Nature background suggests a connection to the natural world",
+      "traits": [
+        {
+          "traitDef": "Ascetic",
+          "degree": 0,
+          "priority": 45,
+          "category": "uncategorized",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {
+          "skillName": "Plants",
+          "bonus": 3,
+          "passion": 1
+        },
+        {
+          "skillName": "Animals",
+          "bonus": 2,
+          "passion": 1
+        }
+      ]
+    },
+    {
+      "tag": "tech_background",
+      "description": "Technology background suggests a propensity for technology and innovation",
+      "traits": [
+        {
+          "traitDef": "Transhumanist",
+          "degree": 0,
+          "priority": 50,
+          "category": "uncategorized",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {
+          "skillName": "Intellectual",
+          "bonus": 3,
+          "passion": 1
+        },
+        {
+          "skillName": "Crafting",
+          "bonus": 2,
+          "passion": 0
+        }
+      ]
+    }
+  ]
+}

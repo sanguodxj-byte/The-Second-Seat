@@ -69,7 +69,12 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ✅ 统一的表情/基础立绘加载方法（避免重复加载）
+        /// ✅ 统一的表情/基础立绘加载方法（带3层回退机制）
+        /// 回退顺序：
+        /// 1. 尝试具体变体（如 _happy3）
+        /// 2. 回退到通用表情（如 _happy）
+        /// 3. 回退到面部覆盖模式（同样支持变体回退）
+        /// 4. 加载基础立绘
         /// </summary>
         private static Texture2D LoadExpressionOrBase(NarratorPersonaDef def, ExpressionType? expression)
         {
@@ -79,22 +84,30 @@ namespace TheSecondSeat.PersonaGeneration
             if (expression.HasValue && expression.Value != ExpressionType.Neutral)
             {
                 string expressionSuffix = ExpressionSystem.GetExpressionSuffix(def.defName, expression.Value);
-                string expressionFileName = expressionSuffix.TrimStart('_').ToLower();
-                string expressionPath = $"{EXPRESSIONS_PATH}{personaName}/{expressionFileName}";
                 
-                var expressionTexture = ContentFinder<Texture2D>.Get(expressionPath, false);
+                // ✅ 使用带回退的加载方法
+                var expressionTexture = TryLoadTextureWithFallback(personaName, expressionSuffix);
                 
                 if (expressionTexture != null)
                 {
                     SetTextureQuality(expressionTexture);
+                    if (Prefs.DevMode)
+                    {
+                        Log.Message($"[PortraitLoader] ✅ 表情加载成功: {personaName}/{expressionSuffix}");
+                    }
                     return expressionTexture;
                 }
                 
-                // 尝试面部覆盖模式
-                var overlayTexture = LoadWithFaceOverlay(def, expression.Value);
+                // ✅ 尝试面部覆盖模式（同样支持回退）
+                var overlayTexture = LoadWithFaceOverlayAndFallback(def, expression.Value);
                 if (overlayTexture != null)
                 {
                     return overlayTexture;
+                }
+                
+                if (Prefs.DevMode)
+                {
+                    Log.Warning($"[PortraitLoader] ⚠️ 表情文件未找到，回退到基础立绘: {personaName}/{expressionSuffix}");
                 }
             }
             
@@ -103,106 +116,97 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ? �������� defName ��ȡ�˸��ļ�������
-        /// ���磺Sideria_Default �� Sideria
+        /// ✅ 带回退机制的纹理加载方法
+        /// 回退顺序：具体变体 → 通用表情
+        /// 例如：_happy3 → _happy
         /// </summary>
-        private static string GetPersonaFolderName(NarratorPersonaDef def)
+        /// <param name="personaName">人格文件夹名称</param>
+        /// <param name="suffix">表情后缀（可能包含变体编号，如 _happy3）</param>
+        /// <returns>加载的纹理，如果全部失败则返回 null</returns>
+        private static Texture2D TryLoadTextureWithFallback(string personaName, string suffix)
         {
-            // 1. 如果 narratorName 存在且不为空，使用它（去除空格和特殊字符）
-            if (!string.IsNullOrEmpty(def.narratorName))
-            {
-                // 取第一个单词（如 "Cassandra Classic" → "Cassandra"）
-                string name = def.narratorName.Split(' ')[0].Trim();
-                if (!string.IsNullOrEmpty(name))
-                {
-                    return name;
-                }
-            }
-            
-            // 2. 否则从 defName 解析（去掉常见后缀）
-            string defName = def.defName;
-            
-            // 去掉常见后缀
-            string[] suffixesToRemove = new[] { "_Default", "_Classic", "_Custom", "_Persona", "_Chillax", "_Random", "_Invader", "_Protector" };
-            foreach (var suffix in suffixesToRemove)
-            {
-                if (defName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
-                {
-                    return defName.Substring(0, defName.Length - suffix.Length);
-                }
-            }
-            
-            // 3. 如果没有后缀，尝试用下划线分割取第一部分
-            if (defName.Contains("_"))
-            {
-                return defName.Split('_')[0];
-            }
-            
-            // 4. 直接返回 defName
-            return defName;
-        }
-        
-        /// <summary>
-        /// ? ��������δ��棨�� Expressions �ļ��У�
-        /// </summary>
-        private static Texture2D LoadFullExpressionPortrait(NarratorPersonaDef def, string expressionSuffix)
-        {
-            if (string.IsNullOrEmpty(expressionSuffix))
+            if (string.IsNullOrEmpty(suffix))
             {
                 return null;
             }
             
-            // ? �޸�������ȷ���ļ��нṹ���ر���
-            // ��ʽ��UI/Narrators/9x16/Expressions/{PersonaName}/{expression}.png
-            string expressionFileName = expressionSuffix.TrimStart('_').ToLower(); // �Ƴ�ǰ׺ "_" ��تСд
+            // 转换后缀为文件名（去掉前缀 _，转小写）
+            string fileName = suffix.TrimStart('_').ToLower();
             
-            // ? �޸����� defName ��ȡ�˸�����
-            string personaName = GetPersonaFolderName(def);
-            string expressionPath = $"{EXPRESSIONS_PATH}{personaName}/{expressionFileName}";
-            
-            var texture = ContentFinder<Texture2D>.Get(expressionPath, false);
+            // ✅ 第1层：尝试加载具体变体（如 happy3）
+            string specificPath = $"{EXPRESSIONS_PATH}{personaName}/{fileName}";
+            var texture = ContentFinder<Texture2D>.Get(specificPath, false);
             
             if (texture != null)
             {
-                Log.Message($"[PortraitLoader] ? �� Expressions ������ͼ����: {expressionPath}");
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[PortraitLoader] ✅ 第1层成功（具体变体）: {specificPath}");
+                }
                 return texture;
             }
             
-            // ? ���������Ծ�·���������ԣ�- ��ʽ��UI/Narrators/9x16/Sideria_Happy
-            if (!string.IsNullOrEmpty(def.portraitPath))
+            // ✅ 第2层：回退到通用表情（去掉变体编号）
+            string genericFileName = StripVariantNumber(fileName);
+            
+            if (genericFileName != fileName)  // 确实有变体编号被去掉了
             {
-                string oldPath = def.portraitPath + expressionSuffix;
-                texture = ContentFinder<Texture2D>.Get(oldPath, false);
+                string genericPath = $"{EXPRESSIONS_PATH}{personaName}/{genericFileName}";
+                texture = ContentFinder<Texture2D>.Get(genericPath, false);
                 
                 if (texture != null)
                 {
-                    Log.Warning($"[PortraitLoader] ?? �Ӿ�·�����ر��飨��Ǩ�Ƶ� Expressions �ļ��У�: {oldPath}");
+                    if (Prefs.DevMode)
+                    {
+                        Log.Message($"[PortraitLoader] ✅ 第2层成功（通用表情）: {genericPath}");
+                    }
                     return texture;
                 }
             }
             
-            // ? �����������Զ���·��
-            if (def.useCustomPortrait && !string.IsNullOrEmpty(def.customPortraitPath))
+            // 两层都失败
+            if (Prefs.DevMode)
             {
-                string customPath = GetExpressionPath(def.customPortraitPath, expressionSuffix);
-                texture = LoadFromExternalFile(customPath);
-                
-                if (texture != null)
-                {
-                    Log.Message($"[PortraitLoader] ���Զ���·�����ر���: {customPath}");
-                    return texture;
-                }
+                Log.Warning($"[PortraitLoader] ✖ 表情文件未找到: {specificPath}" + 
+                           (genericFileName != fileName ? $" 和 {EXPRESSIONS_PATH}{personaName}/{genericFileName}" : ""));
             }
             
-            Log.Warning($"[PortraitLoader] ? δ�ҵ������ļ�: {expressionPath}");
             return null;
         }
         
         /// <summary>
-        /// ? �����沿���ӱ��飨�� Expressions �ļ��У�
-        /// ? ����֧���沿���ǲ�ģʽ
+        /// ✅ 去掉表情文件名末尾的变体编号
+        /// 例如：happy3 → happy, sad1 → sad, angry → angry
         /// </summary>
-        private static Texture2D LoadWithFaceOverlay(NarratorPersonaDef def, ExpressionType expression)
+        private static string StripVariantNumber(string fileName)
+        {
+            if (string.IsNullOrEmpty(fileName))
+            {
+                return fileName;
+            }
+            
+            // 从末尾查找数字并去掉
+            int lastIndex = fileName.Length - 1;
+            
+            while (lastIndex >= 0 && char.IsDigit(fileName[lastIndex]))
+            {
+                lastIndex--;
+            }
+            
+            // 如果整个字符串都是数字，或者没有数字，返回原字符串
+            if (lastIndex < 0 || lastIndex == fileName.Length - 1)
+            {
+                return fileName;
+            }
+            
+            return fileName.Substring(0, lastIndex + 1);
+        }
+        
+        /// <summary>
+        /// ✅ 带回退机制的面部覆盖加载（支持变体回退）
+        /// 回退顺序：_happy3_face → _happy_face
+        /// </summary>
+        private static Texture2D LoadWithFaceOverlayAndFallback(NarratorPersonaDef def, ExpressionType expression)
         {
             try
             {
@@ -213,32 +217,33 @@ namespace TheSecondSeat.PersonaGeneration
                     return null;
                 }
                 
-                // 2. ✅ 从 Expressions 文件夹加载面部叠加层（文件后缀 _face）
-                string faceSuffix = ExpressionSystem.GetExpressionSuffix(def.defName, expression) + "_face";
-                
-                // ✅ 修复：使用正确的人格文件夹名称
+                // 2. 获取面部后缀
+                string expressionSuffix = ExpressionSystem.GetExpressionSuffix(def.defName, expression);
                 string personaName = GetPersonaFolderName(def);
-                string facePath = $"{EXPRESSIONS_PATH}{personaName}/{faceSuffix}";
                 
-                Texture2D faceTexture = ContentFinder<Texture2D>.Get(facePath, false);
+                // ✅ 构建面部覆盖后缀（带变体）
+                string faceSuffix = expressionSuffix + "_face";
+                string faceFileName = faceSuffix.TrimStart('_').ToLower();
                 
-                // ✅ 尝试旧的直接路径
-                if (faceTexture == null && !string.IsNullOrEmpty(def.portraitPath))
+                // ✅ 第1层：尝试具体变体面部（如 happy3_face）
+                string specificFacePath = $"{EXPRESSIONS_PATH}{personaName}/{faceFileName}";
+                Texture2D faceTexture = ContentFinder<Texture2D>.Get(specificFacePath, false);
+                
+                // ✅ 第2层：回退到通用面部（如 happy_face）
+                if (faceTexture == null)
                 {
-                    string oldFacePath = def.portraitPath + faceSuffix;
-                    faceTexture = ContentFinder<Texture2D>.Get(oldFacePath, false);
+                    string genericFaceFileName = StripVariantNumber(faceFileName.Replace("_face", "")) + "_face";
                     
-                    if (faceTexture != null)
+                    if (genericFaceFileName != faceFileName)
                     {
-                        Log.Warning($"[PortraitLoader] ✅ 从旧路径加载面部叠加: {oldFacePath}");
+                        string genericFacePath = $"{EXPRESSIONS_PATH}{personaName}/{genericFaceFileName}";
+                        faceTexture = ContentFinder<Texture2D>.Get(genericFacePath, false);
+                        
+                        if (faceTexture != null && Prefs.DevMode)
+                        {
+                            Log.Message($"[PortraitLoader] ✅ 面部覆盖回退成功: {genericFacePath}");
+                        }
                     }
-                }
-                
-                // ✅ 尝试自定义路径
-                if (faceTexture == null && def.useCustomPortrait && !string.IsNullOrEmpty(def.customPortraitPath))
-                {
-                    string customFacePath = GetExpressionPath(def.customPortraitPath, faceSuffix);
-                    faceTexture = LoadFromExternalFile(customFacePath);
                 }
                 
                 // 如果没有面部叠加层，返回null
@@ -259,7 +264,10 @@ namespace TheSecondSeat.PersonaGeneration
                     cacheKey
                 );
                 
-                Log.Message($"[PortraitLoader] ✅ 使用面部叠加模式: {personaName} + {faceSuffix}");
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[PortraitLoader] ✅ 使用面部叠加模式: {personaName} + {faceFileName}");
+                }
                 return composite;
             }
             catch (Exception ex)
@@ -272,92 +280,87 @@ namespace TheSecondSeat.PersonaGeneration
         /// <summary>
         /// 加载基础立绘（无表情）
         /// ✅ 从人格文件夹的 base.png 加载
-        /// ✅ 优化：设置高质量纹理过滤
+        /// ✅ 优化：只在 DevMode 下显示详细日志
         /// </summary>
         private static Texture2D LoadBasePortrait(NarratorPersonaDef def)
         {
             string personaName = GetPersonaFolderName(def);
             
-            // ✅ 添加详细诊断日志
-            Log.Message($"[PortraitLoader] ========== 立绘加载诊断 ==========");
-            Log.Message($"[PortraitLoader] defName: {def.defName}");
-            Log.Message($"[PortraitLoader] narratorName: {def.narratorName}");
-            Log.Message($"[PortraitLoader] portraitPath: {def.portraitPath}");
-            Log.Message($"[PortraitLoader] 解析的文件夹名: {personaName}");
+            // ✅ 只在 DevMode 下显示详细诊断日志
+            if (Prefs.DevMode)
+            {
+                Log.Message($"[PortraitLoader] ========== 立绘加载诊断 ==========");
+                Log.Message($"[PortraitLoader] defName: {def.defName}");
+                Log.Message($"[PortraitLoader] narratorName: {def.narratorName}");
+                Log.Message($"[PortraitLoader] portraitPath: {def.portraitPath}");
+                Log.Message($"[PortraitLoader] 解析的文件夹名: {personaName}");
+            }
             
             // ✅ 尝试路径1：9x16文件夹的 base.png
             string basePath = $"{BASE_PATH_9x16}{personaName}/base";
-            Log.Message($"[PortraitLoader] 尝试路径1: {basePath}");
-            
             var texture = ContentFinder<Texture2D>.Get(basePath, false);
             
             if (texture != null)
             {
-                Log.Message($"[PortraitLoader] ✓ 路径1成功: {basePath}");
+                if (Prefs.DevMode) Log.Message($"[PortraitLoader] ✓ 路径1成功: {basePath}");
                 SetTextureQuality(texture);
                 return texture;
             }
-            Log.Message($"[PortraitLoader] ✗ 路径1失败");
             
             // ✅ 尝试路径2：直接用 personaName（不加 /base）
             string path2 = $"{BASE_PATH_9x16}{personaName}";
-            Log.Message($"[PortraitLoader] 尝试路径2: {path2}");
-            
             texture = ContentFinder<Texture2D>.Get(path2, false);
             if (texture != null)
             {
-                Log.Message($"[PortraitLoader] ✓ 路径2成功: {path2}");
+                if (Prefs.DevMode) Log.Message($"[PortraitLoader] ✓ 路径2成功: {path2}");
                 SetTextureQuality(texture);
                 return texture;
             }
-            Log.Message($"[PortraitLoader] ✗ 路径2失败");
             
             // ✅ 尝试路径3：使用 portraitPath
             if (!string.IsNullOrEmpty(def.portraitPath))
             {
-                Log.Message($"[PortraitLoader] 尝试路径3 (portraitPath): {def.portraitPath}");
                 texture = ContentFinder<Texture2D>.Get(def.portraitPath, false);
                 if (texture != null)
                 {
-                    Log.Message($"[PortraitLoader] ✓ 路径3成功: {def.portraitPath}");
+                    if (Prefs.DevMode) Log.Message($"[PortraitLoader] ✓ 路径3成功: {def.portraitPath}");
                     SetTextureQuality(texture);
                     return texture;
                 }
-                Log.Message($"[PortraitLoader] ✗ 路径3失败");
             }
             
             // ✅ 尝试路径4：自定义路径
             if (def.useCustomPortrait && !string.IsNullOrEmpty(def.customPortraitPath))
             {
-                Log.Message($"[PortraitLoader] 尝试路径4 (customPortraitPath): {def.customPortraitPath}");
                 texture = LoadFromExternalFile(def.customPortraitPath);
                 if (texture != null)
                 {
-                    Log.Message($"[PortraitLoader] ✓ 路径4成功");
+                    if (Prefs.DevMode) Log.Message($"[PortraitLoader] ✓ 路径4成功 (customPortraitPath)");
                     return texture;
                 }
-                Log.Message($"[PortraitLoader] ✗ 路径4失败");
             }
             
             // ✅ 尝试路径5：原版叙事者路径 UI/HeroArt/{Name}
             string heroArtPath = $"UI/HeroArt/{personaName}";
-            Log.Message($"[PortraitLoader] 尝试路径5 (HeroArt): {heroArtPath}");
             texture = ContentFinder<Texture2D>.Get(heroArtPath, false);
             if (texture != null)
             {
-                Log.Message($"[PortraitLoader] ✓ 路径5成功: {heroArtPath}");
+                if (Prefs.DevMode) Log.Message($"[PortraitLoader] ✓ 路径5成功: {heroArtPath}");
                 SetTextureQuality(texture);
                 return texture;
             }
-            Log.Message($"[PortraitLoader] ✗ 路径5失败");
             
-            Log.Warning($"[PortraitLoader] ========== 所有路径都失败 ==========");
-            Log.Warning($"[PortraitLoader] 请确保以下路径之一存在纹理文件:");
-            Log.Warning($"[PortraitLoader]   - Textures/{basePath}.png");
-            Log.Warning($"[PortraitLoader]   - Textures/{path2}.png");
-            if (!string.IsNullOrEmpty(def.portraitPath))
-                Log.Warning($"[PortraitLoader]   - Textures/{def.portraitPath}.png");
-            Log.Warning($"[PortraitLoader]   - Textures/{heroArtPath}.png");
+            // 所有路径都失败（始终输出警告，帮助用户诊断问题）
+            Log.Warning($"[PortraitLoader] 立绘加载失败: {personaName}");
+            if (Prefs.DevMode)
+            {
+                Log.Warning($"[PortraitLoader] 请确保以下路径之一存在纹理文件:");
+                Log.Warning($"[PortraitLoader]   - Textures/{basePath}.png");
+                Log.Warning($"[PortraitLoader]   - Textures/{path2}.png");
+                if (!string.IsNullOrEmpty(def.portraitPath))
+                    Log.Warning($"[PortraitLoader]   - Textures/{def.portraitPath}.png");
+                Log.Warning($"[PortraitLoader]   - Textures/{heroArtPath}.png");
+            }
             
             return null;
         }
@@ -782,7 +785,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ��ȡ���פ��õ������ļ��б�
+        /// ��ȡ���פ��õ������ľ���
         /// ? ����������ԭ������������ + Mod���� + �û�����
         /// </summary>
         public static List<PortraitFileInfo> GetAllAvailablePortraits()
@@ -1113,11 +1116,76 @@ namespace TheSecondSeat.PersonaGeneration
             
             return readable;
         }
+        
+        /// <summary>
+        /// ����ϵͳ
+        /// ? �����ؿͻ��˼Ǹù����Բ�ͬ���˷������������ͻ����
+        /// </summary>
+        public static class OutfitSystem
+        {
+            /// <summary>
+            /// ��ȡ��ǰ�˻ᷢ��·��
+            /// </summary>
+            public static string GetCurrentOutfitPath(string personaDefName)
+            {
+                try
+                {
+                    // TODO: 实现服装系统逻辑
+                    // 这里简单返回一个示例路径，实际上应该根据角色和状态动态生成
+                    return $"UI/Narrators/9x16/Outfits/{personaDefName}/outfit_example";
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"[OutfitSystem] 获取服装路径失败: {ex}");
+                    return null;
+                }
+            }
+        }
+        
+        /// <summary>
+        /// ✅ 根据 defName 获取人格文件夹名称
+        /// 例如：Sideria_Default → Sideria
+        /// </summary>
+        private static string GetPersonaFolderName(NarratorPersonaDef def)
+        {
+            // 1. 如果 narratorName 存在且不为空，使用它（去除空格和特殊字符）
+            if (!string.IsNullOrEmpty(def.narratorName))
+            {
+                // 取第一个单词（如 "Cassandra Classic" → "Cassandra"）
+                string name = def.narratorName.Split(' ')[0].Trim();
+                if (!string.IsNullOrEmpty(name))
+                {
+                    return name;
+                }
+            }
+            
+            // 2. 否则从 defName 解析（去掉常见后缀）
+            string defName = def.defName;
+            
+            // 去掉常见后缀
+            string[] suffixesToRemove = new[] { "_Default", "_Classic", "_Custom", "_Persona", "_Chillax", "_Random", "_Invader", "_Protector" };
+            foreach (var suffix in suffixesToRemove)
+            {
+                if (defName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+                {
+                    return defName.Substring(0, defName.Length - suffix.Length);
+                }
+            }
+            
+            // 3. 如果没有后缀，尝试用下划线分割取第一部分
+            if (defName.Contains("_"))
+            {
+                return defName.Split('_')[0];
+            }
+            
+            // 4. 直接返回 defName
+            return defName;
+        }
     }
     
     /// <summary>
     /// �����ļ���Ϣ
-    /// ? ������������Դ�����ơ�·������ϸ��Ϣ
+    /// ? ������������Դ�����Ơ�·������ϸ��Ϣ
     /// </summary>
     public class PortraitFileInfo
     {

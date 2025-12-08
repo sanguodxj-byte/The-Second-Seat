@@ -1,0 +1,37 @@
+<Defs>
+  <PawnKindDef>
+    <!-- Generated from tags: angry, bionic_eye, scar -->
+    <defName>Test_Sideria</defName>
+    <label>Test Sideria</label>
+    <race>Human</race>
+    <forcedTraits>
+      <li>
+        <def>Bloodlust</def>
+      </li>
+      <li>
+        <def>Volatile</def>
+      </li>
+      <li>
+        <def>Transhumanist</def>
+      </li>
+      <li>
+        <def>Tough</def>
+      </li>
+    </forcedTraits>
+  </PawnKindDef>
+  <BackstoryDef>
+    <defName>Test_Sideria_Backstory</defName>
+    <slot>Adulthood</slot>
+    <title>The Awakened One</title>
+    <titleShort>The</titleShort>
+    <baseDesc>A mysterious being who emerged from the void, bearing scars of countless battles.</baseDesc>
+    <skillGains>
+      <Melee>5</Melee>
+      <Shooting>5</Shooting>
+      <Intellectual>2</Intellectual>
+    </skillGains>
+    <spawnCategories>
+      <li>Offworld</li>
+    </spawnCategories>
+  </BackstoryDef>
+</Defs>

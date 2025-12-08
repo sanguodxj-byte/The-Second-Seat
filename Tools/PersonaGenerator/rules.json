@@ -1,0 +1,543 @@
+{
+  "conflict_groups": {
+    "mood": ["Kind", "Bloodlust", "Psychopath", "Cannibal"],
+    "work": ["Industrious", "HardWorker", "Lazy", "Slothful"],
+    "social": ["Sociable", "Annoying", "AnnoyingVoice", "Abrasive"],
+    "combat": ["Brawler", "Tough", "Wimp", "Careful", "Nimble"],
+    "mental": ["Steadfast", "Nervous", "Volatile", "IronWilled"],
+    "beauty": ["Beautiful", "Pretty", "Ugly", "StaggeringlyUgly"],
+    "temperature": ["GreatMemory", "SlowLearner"],
+    "speed": ["Fast", "Slowpoke", "Jogger"]
+  },
+  "tag_rules": [
+    {
+      "tag": "angry",
+      "description": "愤怒的表情暗示暴力倾向和好斗性格",
+      "traits": [
+        {
+          "traitDef": "Bloodlust",
+          "degree": 0,
+          "priority": 60,
+          "category": "mood",
+          "conflictsWith": ["Kind", "Psychopath"]
+        },
+        {
+          "traitDef": "Volatile",
+          "degree": 0,
+          "priority": 50,
+          "category": "mental",
+          "conflictsWith": ["Steadfast"]
+        }
+      ],
+      "skills": [
+        {"skillName": "Melee", "bonus": 3, "passion": 1}
+      ]
+    },
+    {
+      "tag": "kind",
+      "description": "善良温和的表情",
+      "traits": [
+        {
+          "traitDef": "Kind",
+          "degree": 0,
+          "priority": 70,
+          "category": "mood",
+          "conflictsWith": ["Bloodlust", "Psychopath"]
+        }
+      ],
+      "skills": [
+        {"skillName": "Social", "bonus": 2, "passion": 1}
+      ]
+    },
+    {
+      "tag": "cold",
+      "description": "冷漠的表情暗示缺乏同理心",
+      "traits": [
+        {
+          "traitDef": "Psychopath",
+          "degree": 0,
+          "priority": 55,
+          "category": "mood",
+          "conflictsWith": ["Kind"]
+        }
+      ],
+      "skills": []
+    },
+    {
+      "tag": "sad",
+      "description": "悲伤的表情暗示抑郁倾向",
+      "traits": [
+        {
+          "traitDef": "DepressiveMood",
+          "degree": 0,
+          "priority": 50,
+          "category": "mental",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {"skillName": "Artistic", "bonus": 2, "passion": 1}
+      ]
+    },
+    {
+      "tag": "confident",
+      "description": "自信的表情暗示坚定的意志",
+      "traits": [
+        {
+          "traitDef": "Steadfast",
+          "degree": 0,
+          "priority": 60,
+          "category": "mental",
+          "conflictsWith": ["Nervous", "Volatile"]
+        }
+      ],
+      "skills": [
+        {"skillName": "Social", "bonus": 2, "passion": 0}
+      ]
+    },
+    {
+      "tag": "smug",
+      "description": "得意的表情暗示自信和傲慢",
+      "traits": [
+        {
+          "traitDef": "Greedy",
+          "degree": 0,
+          "priority": 45,
+          "category": "uncategorized",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {"skillName": "Social", "bonus": 3, "passion": 1}
+      ]
+    },
+    {
+      "tag": "shy",
+      "description": "害羞的表情暗示内向性格",
+      "traits": [
+        {
+          "traitDef": "Nervous",
+          "degree": 0,
+          "priority": 50,
+          "category": "mental",
+          "conflictsWith": ["Steadfast"]
+        }
+      ],
+      "skills": [
+        {"skillName": "Artistic", "bonus": 2, "passion": 1},
+        {"skillName": "Intellectual", "bonus": 1, "passion": 0}
+      ]
+    },
+    {
+      "tag": "scar",
+      "description": "伤疤暗示战斗经验和坚韧",
+      "traits": [
+        {
+          "traitDef": "Tough",
+          "degree": 0,
+          "priority": 55,
+          "category": "physical",
+          "conflictsWith": ["Wimp"]
+        }
+      ],
+      "skills": [
+        {"skillName": "Melee", "bonus": 2, "passion": 0},
+        {"skillName": "Shooting", "bonus": 1, "passion": 0}
+      ]
+    },
+    {
+      "tag": "bionic_eye",
+      "description": "仿生眼暗示对科技的亲和和精准射击能力",
+      "traits": [
+        {
+          "traitDef": "Transhumanist",
+          "degree": 0,
+          "priority": 65,
+          "category": "uncategorized",
+          "conflictsWith": ["BodyPurist"]
+        }
+      ],
+      "skills": [
+        {"skillName": "Shooting", "bonus": 4, "passion": 1},
+        {"skillName": "Intellectual", "bonus": 2, "passion": 0}
+      ]
+    },
+    {
+      "tag": "cybernetic",
+      "description": "机械部件暗示超人类主义倾向",
+      "traits": [
+        {
+          "traitDef": "Transhumanist",
+          "degree": 0,
+          "priority": 70,
+          "category": "uncategorized",
+          "conflictsWith": ["BodyPurist"]
+        }
+      ],
+      "skills": [
+        {"skillName": "Intellectual", "bonus": 3, "passion": 1}
+      ]
+    },
+    {
+      "tag": "muscular",
+      "description": "肌肉发达暗示体力工作能力",
+      "traits": [
+        {
+          "traitDef": "Tough",
+          "degree": 0,
+          "priority": 50,
+          "category": "physical",
+          "conflictsWith": ["Wimp"]
+        }
+      ],
+      "skills": [
+        {"skillName": "Melee", "bonus": 3, "passion": 1},
+        {"skillName": "Construction", "bonus": 2, "passion": 0}
+      ]
+    },
+    {
+      "tag": "red_jacket",
+      "description": "红色夹克暗示好斗性格",
+      "traits": [
+        {
+          "traitDef": "Brawler",
+          "degree": 0,
+          "priority": 45,
+          "category": "combat",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {"skillName": "Melee", "bonus": 2, "passion": 0}
+      ]
+    },
+    {
+      "tag": "military_uniform",
+      "description": "军装暗示军事背景",
+      "traits": [
+        {
+          "traitDef": "Tough",
+          "degree": 0,
+          "priority": 60,
+          "category": "physical",
+          "conflictsWith": ["Wimp"]
+        }
+      ],
+      "skills": [
+        {"skillName": "Shooting", "bonus": 4, "passion": 2},
+        {"skillName": "Melee", "bonus": 2, "passion": 1}
+      ]
+    },
+    {
+      "tag": "lab_coat",
+      "description": "白大褂暗示科研/医疗背景",
+      "traits": [
+        {
+          "traitDef": "Ascetic",
+          "degree": 0,
+          "priority": 40,
+          "category": "uncategorized",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {"skillName": "Intellectual", "bonus": 5, "passion": 2},
+        {"skillName": "Medicine", "bonus": 3, "passion": 1}
+      ]
+    },
+    {
+      "tag": "crown",
+      "description": "王冠暗示贵族/领导气质",
+      "traits": [
+        {
+          "traitDef": "Greedy",
+          "degree": 0,
+          "priority": 50,
+          "category": "uncategorized",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {"skillName": "Social", "bonus": 4, "passion": 2}
+      ]
+    },
+    {
+      "tag": "hood",
+      "description": "兜帽暗示隐蔽/谨慎",
+      "traits": [
+        {
+          "traitDef": "Careful",
+          "degree": 0,
+          "priority": 45,
+          "category": "combat",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {"skillName": "Shooting", "bonus": 2, "passion": 0}
+      ]
+    },
+    {
+      "tag": "horns",
+      "description": "角暗示攻击性和神秘气质",
+      "traits": [
+        {
+          "traitDef": "Aggressive",
+          "degree": 0,
+          "priority": 50,
+          "category": "mood",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {"skillName": "Melee", "bonus": 2, "passion": 1}
+      ]
+    },
+    {
+      "tag": "wings",
+      "description": "翅膀暗示敏捷和自由精神",
+      "traits": [
+        {
+          "traitDef": "Fast",
+          "degree": 0,
+          "priority": 55,
+          "category": "speed",
+          "conflictsWith": ["Slowpoke"]
+        }
+      ],
+      "skills": []
+    },
+    {
+      "tag": "halo",
+      "description": "光环暗示善良本性和神圣气质",
+      "traits": [
+        {
+          "traitDef": "Kind",
+          "degree": 0,
+          "priority": 65,
+          "category": "mood",
+          "conflictsWith": ["Bloodlust", "Psychopath"]
+        }
+      ],
+      "skills": [
+        {"skillName": "Social", "bonus": 3, "passion": 1}
+      ]
+    },
+    {
+      "tag": "tail",
+      "description": "尾巴（兽人特征）暗示夜行性",
+      "traits": [
+        {
+          "traitDef": "NightOwl",
+          "degree": 0,
+          "priority": 40,
+          "category": "uncategorized",
+          "conflictsWith": []
+        }
+      ],
+      "skills": []
+    },
+    {
+      "tag": "fire_background",
+      "description": "火焰背景暗示纵火倾向或热情",
+      "traits": [
+        {
+          "traitDef": "Pyromaniac",
+          "degree": 0,
+          "priority": 55,
+          "category": "mental",
+          "conflictsWith": []
+        }
+      ],
+      "skills": []
+    },
+    {
+      "tag": "nature_background",
+      "description": "自然背景暗示对自然的亲和",
+      "traits": [
+        {
+          "traitDef": "Ascetic",
+          "degree": 0,
+          "priority": 45,
+          "category": "uncategorized",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {"skillName": "Plants", "bonus": 3, "passion": 1},
+        {"skillName": "Animals", "bonus": 2, "passion": 1}
+      ]
+    },
+    {
+      "tag": "tech_background",
+      "description": "科技背景暗示科技倾向",
+      "traits": [
+        {
+          "traitDef": "Transhumanist",
+          "degree": 0,
+          "priority": 50,
+          "category": "uncategorized",
+          "conflictsWith": ["BodyPurist"]
+        }
+      ],
+      "skills": [
+        {"skillName": "Intellectual", "bonus": 3, "passion": 1},
+        {"skillName": "Crafting", "bonus": 2, "passion": 0}
+      ]
+    },
+    {
+      "tag": "silver_hair",
+      "description": "银发暗示神秘或年长智慧",
+      "traits": [
+        {
+          "traitDef": "GreatMemory",
+          "degree": 0,
+          "priority": 45,
+          "category": "uncategorized",
+          "conflictsWith": ["SlowLearner"]
+        }
+      ],
+      "skills": [
+        {"skillName": "Intellectual", "bonus": 2, "passion": 0}
+      ]
+    },
+    {
+      "tag": "red_eyes",
+      "description": "红色眼睛暗示神秘或危险气质",
+      "traits": [
+        {
+          "traitDef": "Bloodlust",
+          "degree": 0,
+          "priority": 50,
+          "category": "mood",
+          "conflictsWith": ["Kind"]
+        }
+      ],
+      "skills": [
+        {"skillName": "Shooting", "bonus": 2, "passion": 0}
+      ]
+    },
+    {
+      "tag": "blue_eyes",
+      "description": "蓝色眼睛暗示冷静和智慧",
+      "traits": [
+        {
+          "traitDef": "Steadfast",
+          "degree": 0,
+          "priority": 45,
+          "category": "mental",
+          "conflictsWith": ["Nervous", "Volatile"]
+        }
+      ],
+      "skills": [
+        {"skillName": "Intellectual", "bonus": 1, "passion": 0}
+      ]
+    },
+    {
+      "tag": "glasses",
+      "description": "眼镜暗示学者气质",
+      "traits": [],
+      "skills": [
+        {"skillName": "Intellectual", "bonus": 3, "passion": 1},
+        {"skillName": "Medicine", "bonus": 1, "passion": 0}
+      ]
+    },
+    {
+      "tag": "book",
+      "description": "书籍暗示学者或求知欲",
+      "traits": [
+        {
+          "traitDef": "GreatMemory",
+          "degree": 0,
+          "priority": 50,
+          "category": "uncategorized",
+          "conflictsWith": ["SlowLearner"]
+        }
+      ],
+      "skills": [
+        {"skillName": "Intellectual", "bonus": 4, "passion": 2}
+      ]
+    },
+    {
+      "tag": "weapon",
+      "description": "武器暗示战斗能力",
+      "traits": [
+        {
+          "traitDef": "Brawler",
+          "degree": 0,
+          "priority": 50,
+          "category": "combat",
+          "conflictsWith": []
+        }
+      ],
+      "skills": [
+        {"skillName": "Melee", "bonus": 3, "passion": 1},
+        {"skillName": "Shooting", "bonus": 2, "passion": 0}
+      ]
+    },
+    {
+      "tag": "armor",
+      "description": "盔甲暗示战士身份",
+      "traits": [
+        {
+          "traitDef": "Tough",
+          "degree": 0,
+          "priority": 55,
+          "category": "physical",
+          "conflictsWith": ["Wimp"]
+        }
+      ],
+      "skills": [
+        {"skillName": "Melee", "bonus": 3, "passion": 1}
+      ]
+    },
+    {
+      "tag": "elegant",
+      "description": "优雅的外表",
+      "traits": [
+        {
+          "traitDef": "Beautiful",
+          "degree": 0,
+          "priority": 50,
+          "category": "beauty",
+          "conflictsWith": ["Ugly", "StaggeringlyUgly"]
+        }
+      ],
+      "skills": [
+        {"skillName": "Social", "bonus": 2, "passion": 0}
+      ]
+    },
+    {
+      "tag": "dark_aura",
+      "description": "黑暗气场暗示邪恶或神秘",
+      "traits": [
+        {
+          "traitDef": "Psychopath",
+          "degree": 0,
+          "priority": 55,
+          "category": "mood",
+          "conflictsWith": ["Kind"]
+        }
+      ],
+      "skills": [
+        {"skillName": "Melee", "bonus": 2, "passion": 0}
+      ]
+    },
+    {
+      "tag": "light_aura",
+      "description": "光明气场暗示善良",
+      "traits": [
+        {
+          "traitDef": "Kind",
+          "degree": 0,
+          "priority": 55,
+          "category": "mood",
+          "conflictsWith": ["Bloodlust", "Psychopath"]
+        }
+      ],
+      "skills": [
+        {"skillName": "Social", "bonus": 2, "passion": 1}
+      ]
+    }
+  ]
+}
