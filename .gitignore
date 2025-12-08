@@ -1,44 +1,4 @@
-﻿# RimWorld Mod - Git Ignore
-
-## Build Results
-Source/**/bin/
-Source/**/obj/
-Source/**/Release/
-Source/**/Debug/
-
-## Visual Studio
-.vs/
-*.suo
-*.user
-*.userosscache
-*.sln.docstates
-*.userprefs
-
-## RimWorld Specific
-*.log
-Player.log
-Player-prev.log
-
-## OS Files
-.DS_Store
-Thumbs.db
-Desktop.ini
-
-## Temporary Files
-*.tmp
-*.bak
-*.swp
-*~
-
-## NuGet
-packages/
-*.nupkg
-*.snupkg
-
-## Test Results
-TestResults/
-
-## PowerShell
+﻿## PowerShell
 *.ps1.bak
 
 ## Editor
@@ -46,12 +6,37 @@ TestResults/
 .vscode/
 .idea/
 
-## Large Binary Files (可选)
-# Textures/**/*.psd
-# Textures/**/*.xcf
+## RimWorld Mod 常用大文件夹（重点）
+Textures/
+textures/
+Texture/
+texture/
+*/Textures/
+*/textures/
 
-## Personal Files
+# 超肥的二进制源文件（强烈建议一起忽略，省几百MB）
+Textures/**/*.psd/
+Textures/*.psd
+Textures/*.xcf
+Textures/**/*.psd
+Textures/**/*.xcf
+
+## RimWorld 本地缓存/生成文件夹
+Saved/
+Intermediate/
+DerivedDataCache/
+Binaries/
+Build/
+Builds/
+*.pdb
+
+## 个人/备份文件
 *.personal.xml
 *_BACKUP_*.xml
+*_backup_*.xml
+*~
 
-Textures/
+## 可选：如果你根本不用 Git LFS 又不想让人误提交超大文件
+# *.png filter=lfs diff=lfs merge=lfs -text
+# *.jpg filter=lfs diff=lfs merge=lfs -text
+# *.tga filter=lfs diff=lfs merge=lfs -text
