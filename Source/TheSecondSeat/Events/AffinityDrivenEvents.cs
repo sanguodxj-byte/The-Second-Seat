@@ -88,19 +88,19 @@ namespace TheSecondSeat.Events
                 }
                 else if (severity >= 0.5f)
                 {
-                    // 中等严重：火灾/疾病
+                    // 中等严重：疾病/事故
                     var possibleIncidents = new[]
                     {
-                        IncidentDefOf.Disease_Plague,
+                        DefDatabase<IncidentDef>.GetNamed("Disease_Plague", errorOnFail: false),
                         DefDatabase<IncidentDef>.GetNamed("ShortCircuit", errorOnFail: false)
                     }.Where(i => i != null).ToList();
 
-                    incident = possibleIncidents.RandomElement();
+                    incident = possibleIncidents.Any() ? possibleIncidents.RandomElement() : IncidentDefOf.RaidEnemy;
                 }
                 else
                 {
-                    // 轻度：心情惩罚
-                    incident = IncidentDefOf.PsychicDrone;
+                    // 轻度：心灵头痛
+                    incident = DefDatabase<IncidentDef>.GetNamed("PsychicDrone", errorOnFail: false) ?? IncidentDefOf.RaidEnemy;
                 }
 
                 if (incident == null)
@@ -146,7 +146,7 @@ namespace TheSecondSeat.Events
                 var possibleIncidents = new[]
                 {
                     IncidentDefOf.TraderCaravanArrival,
-                    IncidentDefOf.ResourcePodCrash,
+                    DefDatabase<IncidentDef>.GetNamed("ResourcePodCrash", errorOnFail: false),
                     DefDatabase<IncidentDef>.GetNamed("WandererJoin", errorOnFail: false)
                 }.Where(i => i != null).ToList();
 
@@ -173,6 +173,37 @@ namespace TheSecondSeat.Events
             catch (Exception ex)
             {
                 Log.Error($"[AffinityDrivenEvents] 触发正面事件失败: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// ? 获取所有可用事件（用于UI显示）
+        /// </summary>
+        public List<string> GetAllEvents()
+        {
+            return new List<string>
+            {
+                "NegativeEvent",
+                "PositiveEvent"
+            };
+        }
+        
+        /// <summary>
+        /// ? 触发指定事件（通用方法）
+        /// </summary>
+        public void TriggerEvent(Map map, string eventType, float severity = 0.5f)
+        {
+            if (eventType == "NegativeEvent")
+            {
+                TriggerNegativeEvent(map, severity);
+            }
+            else if (eventType == "PositiveEvent")
+            {
+                TriggerPositiveEvent(map);
+            }
+            else
+            {
+                Log.Warning($"[AffinityDrivenEvents] 未知事件类型: {eventType}");
             }
         }
 

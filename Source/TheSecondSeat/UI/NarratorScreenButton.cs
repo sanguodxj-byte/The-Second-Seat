@@ -67,6 +67,13 @@ namespace TheSecondSeat.UI
             ExpressionType.Smug
         };
 
+        // ✅ 边框闪烁动画相关
+        private float borderFlashStartTime = 0f;
+        private int borderFlashCount = 0;
+        private const float SLOW_FLASH_DURATION = 1.0f;  // 慢速闪烁持续时间
+        private const float FAST_FLASH_DURATION = 0.15f;  // 快速闪烁单次持续时间
+        private const float FAST_FLASH_INTERVAL = 0.05f;  // 快速闪烁间隔
+
         public NarratorScreenButton()
         {
             this.doCloseX = false;
@@ -131,79 +138,6 @@ namespace TheSecondSeat.UI
             base.PreOpen();
             this.doWindowBackground = false;
             this.drawShadow = false;
-        }
-
-        public override void DoWindowContents(Rect inRect)
-        {
-            HandleDragging(inRect);
-            HandleHoverAndTouch(inRect); // ✅ 新增：处理悬停和触摸
-            
-            NarratorButtonAnimator.UpdateAnimation();
-            UpdateButtonState();
-            
-            // ✅ 更新动态头像
-            UpdatePortrait();
-            
-            // ✅ 优先显示人格头像，否则显示状态图标
-            Texture2D currentIcon = currentPortrait ?? GetCurrentIcon();
-            
-            if (currentIcon != null)
-            {
-                GUI.DrawTexture(inRect, currentIcon, ScaleMode.ScaleToFit);
-            }
-            
-            // 绘制指示灯
-            Rect indicatorRect = new Rect(
-                inRect.xMax - IndicatorSize - IndicatorOffset,
-                inRect.y + IndicatorOffset,
-                IndicatorSize,
-                IndicatorSize
-            );
-            NarratorButtonAnimator.DrawIndicatorLight(indicatorRect, currentState);
-            
-            // ✅ 悬停效果（增强版：显示触摸模式提示）
-            if (Mouse.IsOver(inRect) && !isDragging)
-            {
-                GUI.color = new Color(1f, 1f, 1f, 0.3f);
-                Widgets.DrawBox(inRect, 2);
-                GUI.color = Color.white;
-                
-                string tooltip = GetStateTooltip();
-                
-                // ✅ 根据触摸模式状态显示不同提示
-                if (isTouchModeActive)
-                {
-                    tooltip += "\n\n✨ 触摸模式激活！移动鼠标进行互动";
-                }
-                else
-                {
-                    tooltip += "\n\nShift+左键拖动 | 左键打开窗口 | 右键快速对话";
-                    tooltip += "\n💡 悬停1秒激活触摸模式";
-                }
-                
-                TooltipHandler.TipRegion(inRect, tooltip);
-            }
-            
-            // 拖动状态提示
-            if (isDragging)
-            {
-                GUI.color = new Color(0.2f, 0.8f, 1f, 0.6f);
-                Widgets.DrawBox(inRect, 3);
-                GUI.color = Color.white;
-            }
-            
-            // ✅ 绘制悬停进度条
-            if (isHovering && !isTouchModeActive && !isDragging)
-            {
-                float progress = (Time.realtimeSinceStartup - hoverStartTime) / HOVER_ACTIVATION_TIME;
-                DrawHoverProgress(inRect, progress);
-            }
-            
-            // ✅ 触摸模式指示器
-            if (isTouchModeActive)
-            {
-                DrawTouchModeIndicator(inRect);
-            }
         }
 
         /// <summary>
@@ -282,8 +216,8 @@ namespace TheSecondSeat.UI
             // ✅ 触发"疑惑"表情（使用Confused类型）
             TriggerExpression(ExpressionType.Confused, duration: 2f);
             
-            // ✅ 播放激活音效
-            SoundDefOf.Quest_Accepted.PlayOneShotOnCamera(null);
+            // ✅ 触发单次缓慢白色边框闪烁（不播放音效）
+            StartBorderFlash(1);  // 闪烁1次
             
             // ✅ 显示浮动提示
             ShowFloatingText("(・ω・)?", new Color(0.8f, 0.9f, 1f));
@@ -320,7 +254,7 @@ namespace TheSecondSeat.UI
                 // 害羞表情
                 TriggerExpression(ExpressionType.Shy, duration: 1.5f);
                 ShowFloatingText("(/ω＼)", new Color(1f, 0.6f, 0.6f));
-                SoundDefOf.Click.PlayOneShotOnCamera(null);
+                // ✅ 移除音效
             }
             else if (touchCount % 3 == 0) // 每3次移动触发一次
             {
@@ -330,7 +264,7 @@ namespace TheSecondSeat.UI
                 
                 string[] emojis = { "(´▽｀)", "(๑˃ᴗ˂)✧", "(≧▽≦)", "ヾ(◍°∇°◍)ﾉ" };
                 ShowFloatingText(emojis[Random.Range(0, emojis.Length)], new Color(1f, 0.8f, 0.9f));
-                SoundDefOf.Click.PlayOneShotOnCamera(null);
+                // ✅ 移除音效
             }
             
             // ✅ 连续触摸奖励
@@ -353,13 +287,319 @@ namespace TheSecondSeat.UI
             TriggerExpression(isHappy ? ExpressionType.Happy : ExpressionType.Smug, duration: 3f);
             
             ShowFloatingText(isHappy ? "(*^▽^*)" : "(￣︶￣)↗", new Color(1f, 0.7f, 0.3f));
-            SoundDefOf.Quest_Concluded.PlayOneShotOnCamera(null);
+            
+            // ✅ 触发快速闪烁3次（不播放音效）
+            StartBorderFlash(3);
             
             // ✅ 增加好感度
             ModifyAffinity(3f, "触摸互动");
             
             // ✅ 显示好感度提示
             Messages.Message($"好感度 +3（触摸互动）", MessageTypeDefOf.PositiveEvent);
+        }
+
+        /// <summary>
+        /// ✅ 启动边框闪烁动画
+        /// </summary>
+        /// <param name="count">闪烁次数（1=慢速单次，3=快速三次）</param>
+        private void StartBorderFlash(int count)
+        {
+            borderFlashStartTime = Time.realtimeSinceStartup;
+            borderFlashCount = count;
+        }
+
+        /// <summary>
+        /// ✅ 绘制边框闪烁效果
+        /// </summary>
+        private void DrawBorderFlash(Rect inRect)
+        {
+            if (borderFlashCount <= 0) return;
+            
+            float elapsed = Time.realtimeSinceStartup - borderFlashStartTime;
+            float alpha = 0f;
+            
+            if (borderFlashCount == 1)
+            {
+                // 慢速单次闪烁：1秒内从0→1→0
+                if (elapsed < SLOW_FLASH_DURATION)
+                {
+                    float progress = elapsed / SLOW_FLASH_DURATION;
+                    alpha = Mathf.Sin(progress * Mathf.PI);  // 平滑的sin曲线
+                }
+                else
+                {
+                    borderFlashCount = 0;  // 闪烁结束
+                }
+            }
+            else if (borderFlashCount == 3)
+            {
+                // 快速三次闪烁：每次0.15秒，间隔0.05秒
+                float cycleDuration = FAST_FLASH_DURATION + FAST_FLASH_INTERVAL;
+                int currentCycle = Mathf.FloorToInt(elapsed / cycleDuration);
+                
+                if (currentCycle < 3)
+                {
+                    float cycleProgress = (elapsed % cycleDuration) / FAST_FLASH_DURATION;
+                    
+                    if (cycleProgress < 1.0f)
+                    {
+                        alpha = Mathf.Sin(cycleProgress * Mathf.PI);
+                    }
+                }
+                else
+                {
+                    borderFlashCount = 0;  // 闪烁结束
+                }
+            }
+            
+            // 绘制白色边框（✅ 透明度从0.8降低到0.4，更低调）
+            if (alpha > 0f)
+            {
+                GUI.color = new Color(1f, 1f, 1f, alpha * 0.4f);  // ✅ 从0.8f改为0.4f
+                Widgets.DrawBox(inRect, 3);
+                GUI.color = Color.white;
+            }
+        }
+
+        public override void DoWindowContents(Rect inRect)
+        {
+            HandleDragging(inRect);
+            HandleHoverAndTouch(inRect);
+            
+            NarratorButtonAnimator.UpdateAnimation();
+            UpdateButtonState();
+            
+            // ✅ 更新动态头像
+            UpdatePortrait();
+            
+            // ✅ 优先显示人格头像，否则显示状态图标
+            Texture2D currentIcon = currentPortrait ?? GetCurrentIcon();
+            
+            if (currentIcon != null)
+            {
+                GUI.DrawTexture(inRect, currentIcon, ScaleMode.ScaleToFit);
+            }
+            
+            // 绘制指示灯
+            Rect indicatorRect = new Rect(
+                inRect.xMax - IndicatorSize - IndicatorOffset,
+                inRect.y + IndicatorOffset,
+                IndicatorSize,
+                IndicatorSize
+            );
+            NarratorButtonAnimator.DrawIndicatorLight(indicatorRect, currentState);
+            
+            // ✅ 悬停效果（增强版：显示触摸模式提示）
+            if (Mouse.IsOver(inRect) && !isDragging)
+            {
+                GUI.color = new Color(1f, 1f, 1f, 0.3f);
+                Widgets.DrawBox(inRect, 2);
+                GUI.color = Color.white;
+                
+                string tooltip = GetStateTooltip();
+                
+                // ✅ 根据触摸模式状态显示不同提示
+                if (isTouchModeActive)
+                {
+                    tooltip += "\n\n✨ 触摸模式激活！移动鼠标进行互动";
+                }
+                else
+                {
+                    tooltip += "\n\nShift+左键拖动 | 左键打开窗口 | 右键快速对话";
+                    tooltip += "\n💡 悬停1秒激活触摸模式";
+                }
+                
+                TooltipHandler.TipRegion(inRect, tooltip);
+            }
+            
+            // 拖动状态提示
+            if (isDragging)
+            {
+                GUI.color = new Color(0.2f, 0.8f, 1f, 0.6f);
+                Widgets.DrawBox(inRect, 3);
+                GUI.color = Color.white;
+            }
+            
+            // ✅ 绘制悬停进度条
+            if (isHovering && !isTouchModeActive && !isDragging)
+            {
+                float progress = (Time.realtimeSinceStartup - hoverStartTime) / HOVER_ACTIVATION_TIME;
+                DrawHoverProgress(inRect, progress);
+            }
+            
+            // ✅ 触摸模式指示器
+            if (isTouchModeActive)
+            {
+                DrawTouchModeIndicator(inRect);
+            }
+            
+            // ✅ 绘制边框闪烁效果（最后绘制，覆盖在最上层）
+            DrawBorderFlash(inRect);
+        }
+
+        private void HandleDragging(Rect inRect)
+        {
+            Event currentEvent = Event.current;
+            
+            if (currentEvent.type == EventType.MouseDown && currentEvent.button == 0 && Mouse.IsOver(inRect))
+            {
+                // Shift + 左键 = 拖动
+                if (currentEvent.shift)
+                {
+                    isDragging = true;
+                    dragOffset = Event.current.mousePosition;
+                    DeactivateTouchMode(); // 拖动时取消触摸模式
+                    currentEvent.Use();
+                }
+                // 普通左键 = 打开窗口（只在非触摸模式下）
+                else if (!isDragging && !isTouchModeActive)
+                {
+                    ToggleNarratorWindow();
+                    currentEvent.Use();
+                }
+            }
+            // ✅ 右键 = 快速对话
+            else if (currentEvent.type == EventType.MouseDown && currentEvent.button == 1 && Mouse.IsOver(inRect))
+            {
+                OpenQuickDialogue();
+                DeactivateTouchMode(); // 右键时取消触摸模式
+                currentEvent.Use();
+            }
+            else if (currentEvent.type == EventType.MouseUp && isDragging)
+            {
+                isDragging = false;
+                SavePosition();
+                currentEvent.Use();
+            }
+            else if (currentEvent.type == EventType.MouseDrag && isDragging)
+            {
+                Vector2 mousePos = GUIUtility.GUIToScreenPoint(Event.current.mousePosition);
+                Vector2 newPos = mousePos - dragOffset;
+                
+                newPos.x = Mathf.Clamp(newPos.x, 0, Verse.UI.screenWidth - ButtonSize);
+                newPos.y = Mathf.Clamp(newPos.y, 0, Verse.UI.screenHeight - ButtonSize);
+                
+                windowRect.x = newPos.x;
+                windowRect.y = newPos.y;
+                
+                currentEvent.Use();
+            }
+        }
+
+        private void OpenQuickDialogue()
+        {
+            if (currentState == NarratorButtonState.Disabled) return;
+            
+            var quickWindow = new QuickDialogueWindow();
+            Find.WindowStack.Add(quickWindow);
+            SoundStarter.PlayOneShotOnCamera(SoundDefOf.Tick_High, null);
+        }
+
+        private void SavePosition()
+        {
+            savedPosition = new Vector2(windowRect.x, windowRect.y);
+            
+            PlayerPrefs.SetFloat("TheSecondSeat_ButtonX", windowRect.x);
+            PlayerPrefs.SetFloat("TheSecondSeat_ButtonY", windowRect.y);
+            PlayerPrefs.Save();
+            
+            Log.Message($"[The Second Seat] Button position saved: ({windowRect.x:F0}, {windowRect.y:F0})");
+        }
+
+        private void LoadSavedPosition()
+        {
+            if (hasLoadedPosition) return;
+            
+            if (PlayerPrefs.HasKey("TheSecondSeat_ButtonX") && PlayerPrefs.HasKey("TheSecondSeat_ButtonY"))
+            {
+                float x = PlayerPrefs.GetFloat("TheSecondSeat_ButtonX");
+                float y = PlayerPrefs.GetFloat("TheSecondSeat_ButtonY");
+                
+                if (x > 0 && y > 0)
+                {
+                    savedPosition = new Vector2(x, y);
+                    hasLoadedPosition = true;
+                    Log.Message($"[The Second Seat] Button position loaded: ({savedPosition.x:F0}, {savedPosition.y:F0})");
+                }
+            }
+        }
+
+        private void UpdateButtonState()
+        {
+            var controller = Current.Game?.GetComponent<NarratorController>();
+            
+            if (controller != null && !string.IsNullOrEmpty(controller.LastError))
+            {
+                currentState = NarratorButtonState.Error;
+                return;
+            }
+            
+            if (controller?.IsProcessing ?? false)
+            {
+                currentState = NarratorButtonState.Processing;
+                return;
+            }
+            
+            currentState = NarratorButtonState.Ready;
+        }
+
+        private Texture2D GetCurrentIcon()
+        {
+            return currentState switch
+            {
+                NarratorButtonState.Ready => iconReady ?? TexButton.Info,
+                NarratorButtonState.Processing => iconProcessing ?? iconReady ?? TexButton.Info,
+                NarratorButtonState.Error => iconError ?? iconReady ?? TexButton.Info,
+                NarratorButtonState.Disabled => iconDisabled ?? iconReady ?? TexButton.Info,
+                _ => iconReady ?? TexButton.Info
+            };
+        }
+
+        private string GetStateTooltip()
+        {
+            string baseTooltip = currentState switch
+            {
+                NarratorButtonState.Ready => "TSS_ButtonState_Ready".Translate(),
+                NarratorButtonState.Processing => "TSS_ButtonState_Processing".Translate(),
+                NarratorButtonState.Error => "TSS_ButtonState_Error".Translate(),
+                NarratorButtonState.Disabled => "TSS_ButtonState_Disabled".Translate(),
+                _ => "TSS_NarratorButton_Tooltip".Translate()
+            };
+            
+            if (currentPersona != null)
+            {
+                baseTooltip = $"{currentPersona.narratorName} ({lastExpression})\n{baseTooltip}";
+            }
+            
+            return baseTooltip;
+        }
+
+        private void ToggleNarratorWindow()
+        {
+            if (currentState == NarratorButtonState.Disabled) return;
+            
+            if (narratorWindow == null || !Find.WindowStack.IsOpen(narratorWindow))
+            {
+                narratorWindow = new NarratorWindow();
+                Find.WindowStack.Add(narratorWindow);
+                SoundStarter.PlayOneShotOnCamera(SoundDefOf.Click, null);
+            }
+            else
+            {
+                Find.WindowStack.TryRemove(narratorWindow);
+                narratorWindow = null;
+                SoundStarter.PlayOneShotOnCamera(SoundDefOf.Click, null);
+            }
+        }
+
+        public override void WindowUpdate()
+        {
+            base.WindowUpdate();
+            
+            if (Current.ProgramState != ProgramState.Playing)
+            {
+                this.Close();
+            }
         }
 
         /// <summary>
@@ -525,171 +765,6 @@ namespace TheSecondSeat.UI
             {
                 Log.Warning($"[NarratorScreenButton] 更新头像失败: {ex.Message}");
                 currentPortrait = null;
-            }
-        }
-
-        private void HandleDragging(Rect inRect)
-        {
-            Event currentEvent = Event.current;
-            
-            if (currentEvent.type == EventType.MouseDown && currentEvent.button == 0 && Mouse.IsOver(inRect))
-            {
-                // Shift + 左键 = 拖动
-                if (currentEvent.shift)
-                {
-                    isDragging = true;
-                    dragOffset = Event.current.mousePosition;
-                    DeactivateTouchMode(); // 拖动时取消触摸模式
-                    currentEvent.Use();
-                }
-                // 普通左键 = 打开窗口（只在非触摸模式下）
-                else if (!isDragging && !isTouchModeActive)
-                {
-                    ToggleNarratorWindow();
-                    currentEvent.Use();
-                }
-            }
-            // ✅ 右键 = 快速对话
-            else if (currentEvent.type == EventType.MouseDown && currentEvent.button == 1 && Mouse.IsOver(inRect))
-            {
-                OpenQuickDialogue();
-                DeactivateTouchMode(); // 右键时取消触摸模式
-                currentEvent.Use();
-            }
-            else if (currentEvent.type == EventType.MouseUp && isDragging)
-            {
-                isDragging = false;
-                SavePosition();
-                currentEvent.Use();
-            }
-            else if (currentEvent.type == EventType.MouseDrag && isDragging)
-            {
-                Vector2 mousePos = GUIUtility.GUIToScreenPoint(Event.current.mousePosition);
-                Vector2 newPos = mousePos - dragOffset;
-                
-                newPos.x = Mathf.Clamp(newPos.x, 0, Verse.UI.screenWidth - ButtonSize);
-                newPos.y = Mathf.Clamp(newPos.y, 0, Verse.UI.screenHeight - ButtonSize);
-                
-                windowRect.x = newPos.x;
-                windowRect.y = newPos.y;
-                
-                currentEvent.Use();
-            }
-        }
-
-        private void OpenQuickDialogue()
-        {
-            if (currentState == NarratorButtonState.Disabled) return;
-            
-            var quickWindow = new QuickDialogueWindow();
-            Find.WindowStack.Add(quickWindow);
-            SoundStarter.PlayOneShotOnCamera(SoundDefOf.Tick_High, null);
-        }
-
-        private void SavePosition()
-        {
-            savedPosition = new Vector2(windowRect.x, windowRect.y);
-            
-            PlayerPrefs.SetFloat("TheSecondSeat_ButtonX", windowRect.x);
-            PlayerPrefs.SetFloat("TheSecondSeat_ButtonY", windowRect.y);
-            PlayerPrefs.Save();
-            
-            Log.Message($"[The Second Seat] Button position saved: ({windowRect.x:F0}, {windowRect.y:F0})");
-        }
-
-        private void LoadSavedPosition()
-        {
-            if (hasLoadedPosition) return;
-            
-            if (PlayerPrefs.HasKey("TheSecondSeat_ButtonX") && PlayerPrefs.HasKey("TheSecondSeat_ButtonY"))
-            {
-                float x = PlayerPrefs.GetFloat("TheSecondSeat_ButtonX");
-                float y = PlayerPrefs.GetFloat("TheSecondSeat_ButtonY");
-                
-                if (x > 0 && y > 0)
-                {
-                    savedPosition = new Vector2(x, y);
-                    hasLoadedPosition = true;
-                    Log.Message($"[The Second Seat] Button position loaded: ({savedPosition.x:F0}, {savedPosition.y:F0})");
-                }
-            }
-        }
-
-        private void UpdateButtonState()
-        {
-            var controller = Current.Game?.GetComponent<NarratorController>();
-            
-            if (controller != null && !string.IsNullOrEmpty(controller.LastError))
-            {
-                currentState = NarratorButtonState.Error;
-                return;
-            }
-            
-            if (controller?.IsProcessing ?? false)
-            {
-                currentState = NarratorButtonState.Processing;
-                return;
-            }
-            
-            currentState = NarratorButtonState.Ready;
-        }
-
-        private Texture2D GetCurrentIcon()
-        {
-            return currentState switch
-            {
-                NarratorButtonState.Ready => iconReady ?? TexButton.Info,
-                NarratorButtonState.Processing => iconProcessing ?? iconReady ?? TexButton.Info,
-                NarratorButtonState.Error => iconError ?? iconReady ?? TexButton.Info,
-                NarratorButtonState.Disabled => iconDisabled ?? iconReady ?? TexButton.Info,
-                _ => iconReady ?? TexButton.Info
-            };
-        }
-
-        private string GetStateTooltip()
-        {
-            string baseTooltip = currentState switch
-            {
-                NarratorButtonState.Ready => "TSS_ButtonState_Ready".Translate(),
-                NarratorButtonState.Processing => "TSS_ButtonState_Processing".Translate(),
-                NarratorButtonState.Error => "TSS_ButtonState_Error".Translate(),
-                NarratorButtonState.Disabled => "TSS_ButtonState_Disabled".Translate(),
-                _ => "TSS_NarratorButton_Tooltip".Translate()
-            };
-            
-            if (currentPersona != null)
-            {
-                baseTooltip = $"{currentPersona.narratorName} ({lastExpression})\n{baseTooltip}";
-            }
-            
-            return baseTooltip;
-        }
-
-        private void ToggleNarratorWindow()
-        {
-            if (currentState == NarratorButtonState.Disabled) return;
-            
-            if (narratorWindow == null || !Find.WindowStack.IsOpen(narratorWindow))
-            {
-                narratorWindow = new NarratorWindow();
-                Find.WindowStack.Add(narratorWindow);
-                SoundStarter.PlayOneShotOnCamera(SoundDefOf.Click, null);
-            }
-            else
-            {
-                Find.WindowStack.TryRemove(narratorWindow);
-                narratorWindow = null;
-                SoundStarter.PlayOneShotOnCamera(SoundDefOf.Click, null);
-            }
-        }
-
-        public override void WindowUpdate()
-        {
-            base.WindowUpdate();
-            
-            if (Current.ProgramState != ProgramState.Playing)
-            {
-                this.Close();
             }
         }
     }

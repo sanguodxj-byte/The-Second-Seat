@@ -57,13 +57,17 @@
 
   <ItemGroup>
     <PackageReference Include="Lib.Harmony" Version="2.3.3" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <!-- 修复：使用 Newtonsoft.Json 13.0.1，但不复制到输出 -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1">
+      <PrivateAssets>all</PrivateAssets>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <ItemGroup>
-      <ModAssemblies Include="$(TargetDir)*.dll" />
+      <ModAssemblies Include="$(TargetDir)*.dll" Exclude="$(TargetDir)Newtonsoft.Json.dll" />
     </ItemGroup>
     <Copy SourceFiles="@(ModAssemblies)" DestinationFolder="..\..\Assemblies\" SkipUnchangedFiles="true" />
   </Target>

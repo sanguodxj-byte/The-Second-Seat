@@ -146,6 +146,17 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
+        /// ? SetExpression重载 - 接受ExpressionTrigger参数
+        /// </summary>
+        public static void SetExpression(string personaDefName, ExpressionType expression, ExpressionTrigger trigger, int durationTicks = EXPRESSION_DURATION_TICKS)
+        {
+            var state = GetExpressionState(personaDefName);
+            state.LastTrigger = trigger;  // 设置触发器类型
+            
+            SetExpression(personaDefName, expression, durationTicks, trigger.ToString());
+        }
+        
+        /// <summary>
         /// ? 设置为思考表情（AI处理中）
         /// </summary>
         public static void SetThinkingExpression(string personaDefName)
@@ -489,14 +500,7 @@ namespace TheSecondSeat.PersonaGeneration
             }
             
             // 返回带变体编号的后缀（如 _happy1, _happy2, _sad3...）
-            string result = $"{baseSuffix}{variant}";
-            
-            if (Prefs.DevMode)
-            {
-                Log.Message($"[ExpressionSystem] ? 使用表情变体: {personaDefName} - {expression} → {result}");
-            }
-            
-            return result;
+            return $"{baseSuffix}{variant}";
         }
 
         /// <summary>

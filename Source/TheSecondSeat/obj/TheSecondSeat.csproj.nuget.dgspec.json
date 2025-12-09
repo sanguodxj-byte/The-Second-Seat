@@ -50,8 +50,10 @@
               "version": "[2.3.3, )"
             },
             "Newtonsoft.Json": {
+              "include": "Compile, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
               "target": "Package",
-              "version": "[13.0.3, )"
+              "version": "[13.0.1, )"
             },
             "System.Net.Http": {
               "target": "Package",

@@ -234,30 +234,22 @@ namespace TheSecondSeat.Events
             var agent = GetStorytellerAgent();
             if (agent == null) return;
 
-            var eventGenerator = AffinityDrivenEventGenerator.Instance;
-            var eventDef = eventGenerator.GetAllEvents().FirstOrDefault(e => e.defName == evt.eventDefName);
+            var eventGenerator = AffinityDrivenEvents.Instance;
             
-            if (eventDef != null)
+            // ? 简化：直接使用TriggerEvent方法
+            eventGenerator.TriggerEvent(map, evt.eventDefName, 0.5f);
+            
+            Log.Message($"[OpponentEventController] 触发预定事件: {evt.eventDefName}");
+            RecordRecentEvent(evt.eventDefName);
+            
+            if (!string.IsNullOrEmpty(evt.aiComment))
             {
-                string comment;
-                bool success = eventGenerator.TriggerEvent(eventDef, map, agent, out comment);
-                
-                if (success)
-                {
-                    Log.Message($"[OpponentEventController] 触发预定事件: {evt.eventDefName}");
-                    RecordRecentEvent(evt.eventDefName);
-                    UpdateEventStats(eventDef);
-                    
-                    if (!string.IsNullOrEmpty(evt.aiComment))
-                    {
-                        Messages.Message($"【奕者】{evt.aiComment}", MessageTypeDefOf.NeutralEvent);
-                    }
-                }
+                Messages.Message($"叙事者：{evt.aiComment}", MessageTypeDefOf.NeutralEvent);
             }
         }
 
         /// <summary>
-        /// ? 考虑生成事件（核心逻辑）
+        /// ? 考虑生成事件（主逻辑）
         /// </summary>
         private void ConsiderGeneratingEvent()
         {
@@ -270,36 +262,37 @@ namespace TheSecondSeat.Events
             // ? 根据好感度选择事件策略
             EventStrategy strategy = DetermineEventStrategy(agent.affinity);
             
-            var eventGenerator = AffinityDrivenEventGenerator.Instance;
-            var allEvents = eventGenerator.GetAllEvents();
+            var eventGenerator = AffinityDrivenEvents.Instance;
             
-            // ? 根据策略筛选事件
-            var eligibleEvents = FilterEventsByStrategy(allEvents, strategy, agent, map);
+            // ? 简化：根据策略直接触发正面/负面事件
+            bool triggerPositive = strategy == EventStrategy.Dramatic && Rand.Chance(0.6f) ||
+                                  strategy == EventStrategy.Balanced && Rand.Chance(0.5f) ||
+                                  strategy == EventStrategy.Competitive && Rand.Chance(0.3f);
             
-            if (eligibleEvents.Count == 0) return;
-
-            // 选择事件
-            var selectedEvent = SelectEventWithStrategy(eligibleEvents, strategy, agent);
-
-            if (selectedEvent != null && !recentEvents.Contains(selectedEvent.defName))
+            if (triggerPositive)
             {
-                // ? 根据好感度调整事件强度
-                float intensityMultiplier = GetIntensityMultiplier(agent.affinity, selectedEvent.category);
-                
-                string comment;
-                bool success = TriggerEventWithIntensity(selectedEvent, map, agent, intensityMultiplier, out comment);
-                
-                if (success)
-                {
-                    RecordRecentEvent(selectedEvent.defName);
-                    UpdateEventStats(selectedEvent);
-                    
-                    string aiComment = GenerateStrategyComment(selectedEvent, strategy, agent);
-                    Messages.Message($"【奕者】{aiComment}", MessageTypeDefOf.NeutralEvent);
-                    
-                    Log.Message($"[OpponentEventController] 策略事件: {selectedEvent.defName} ({strategy}) 强度x{intensityMultiplier:F2}");
-                }
+                eventGenerator.TriggerPositiveEvent(map);
+                positiveEventsTriggered++;
+                string aiComment = GenerateStrategyComment(null, strategy, agent);
+                Messages.Message($"叙事者：{aiComment}", MessageTypeDefOf.PositiveEvent);
             }
+            else
+            {
+                float severity = strategy switch
+                {
+                    EventStrategy.Ruthless => 0.8f,
+                    EventStrategy.Tactical => 0.6f,
+                    EventStrategy.Competitive => 0.5f,
+                    _ => 0.4f
+                };
+                
+                eventGenerator.TriggerNegativeEvent(map, severity);
+                negativeEventsTriggered++;
+                string aiComment = GenerateStrategyComment(null, strategy, agent);
+                Messages.Message($"叙事者：{aiComment}", MessageTypeDefOf.NegativeEvent);
+            }
+            
+            Log.Message($"[OpponentEventController] 生成事件 ({strategy})");
         }
 
         /// <summary>
@@ -560,40 +553,40 @@ namespace TheSecondSeat.Events
         /// <summary>
         /// ? 生成策略评论
         /// </summary>
-        private string GenerateStrategyComment(StorytellerEventDef evt, EventStrategy strategy, StorytellerAgent agent)
+        private string GenerateStrategyComment(StorytellerEventDef? evt, EventStrategy strategy, StorytellerAgent agent)
         {
-            bool isPositive = evt.category == EventCategory.Positive;
-            bool isNegative = evt.category == EventCategory.Negative;
+            bool isPositive = evt?.category == EventCategory.Positive;
+            bool isNegative = evt?.category == EventCategory.Negative;
 
             switch (strategy)
             {
                 case EventStrategy.Dramatic:
                     return isPositive 
-                        ? "故事需要转折...这会让事情变得有趣。" 
-                        : "每个好故事都需要挑战...展现你的能力吧！";
+                        ? "看来你需要转机...给你点有趣的" 
+                        : "每个伟大的故事都需要挑战...展现你的韧性吧！";
                         
                 case EventStrategy.Balanced:
                     return isPositive 
-                        ? "作为公平的对手，我给你一些机会。" 
+                        ? "作为公平的对手，我给你一些帮助。" 
                         : "挑战是游戏的一部分，准备好了吗？";
                         
                 case EventStrategy.Competitive:
                     return isPositive 
-                        ? "偶尔的休息...不要习惯。" 
-                        : "认真对弈的时候到了。";
+                        ? "偶尔的喘息...不要习惯。" 
+                        : "考验你的时候到了。";
                         
                 case EventStrategy.Tactical:
                     return isNegative 
-                        ? "我注意到你的弱点了..." 
-                        : "这次放过你，但下次可不一定。";
+                        ? "我注意到了你的弱点..." 
+                        : "暂时放过你，但下次可不一定。";
                         
                 case EventStrategy.Ruthless:
                     return isNegative 
-                        ? "不要指望我手下留情。" 
+                        ? "不要指望我会仁慈。" 
                         : "...这只是暴风雨前的平静。";
             }
 
-            return "让我们看看你如何应对。";
+            return "看你如何应对了。";
         }
 
         /// <summary>
@@ -619,30 +612,39 @@ namespace TheSecondSeat.Events
             var agent = GetStorytellerAgent();
             if (agent == null) return false;
 
-            var eventGenerator = AffinityDrivenEventGenerator.Instance;
-            var allEvents = eventGenerator.GetAllEvents();
+            var eventGenerator = AffinityDrivenEvents.Instance;
             
-            StorytellerEventDef? selectedEvent = MatchEventByType(allEvents, eventType);
-
-            if (selectedEvent == null)
+            // ? 简化：映射事件类型到正面/负面
+            bool isPositive = eventType.ToLower() switch
             {
-                Log.Warning($"[OpponentEventController] 未找到事件类型: {eventType}");
-                return false;
+                "trader" or "商队" or "贸易" => true,
+                "wanderer" or "流浪者" or "加入者" => true,
+                "resource" or "资源" or "空投" => true,
+                _ => false
+            };
+            
+            bool success;
+            if (isPositive)
+            {
+                eventGenerator.TriggerPositiveEvent(map);
+                positiveEventsTriggered++;
+                success = true;
             }
-
-            float intensityMultiplier = GetIntensityMultiplier(agent.affinity, selectedEvent.category);
-            string comment;
-            bool success = TriggerEventWithIntensity(selectedEvent, map, agent, intensityMultiplier, out comment);
+            else
+            {
+                eventGenerator.TriggerNegativeEvent(map, 0.5f);
+                negativeEventsTriggered++;
+                success = true;
+            }
 
             if (success)
             {
-                RecordRecentEvent(selectedEvent.defName);
-                UpdateEventStats(selectedEvent);
+                RecordRecentEvent(eventType);
                 
-                string finalComment = !string.IsNullOrEmpty(aiComment) ? aiComment : comment;
-                Messages.Message($"【奕者】{finalComment}", MessageTypeDefOf.NeutralEvent);
+                string finalComment = !string.IsNullOrEmpty(aiComment) ? aiComment : "看你如何应对。";
+                Messages.Message($"叙事者：{finalComment}", MessageTypeDefOf.NeutralEvent);
                 
-                Log.Message($"[OpponentEventController] AI触发事件: {selectedEvent.defName}");
+                Log.Message($"[OpponentEventController] AI触发事件: {eventType}");
             }
 
             return success;

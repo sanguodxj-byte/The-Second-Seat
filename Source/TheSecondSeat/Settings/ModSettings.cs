@@ -652,17 +652,40 @@ namespace TheSecondSeat.Settings
                 {
                     // ģ���ṩ��ѡ��
                     listingStandard.Label("TSS_Settings_MultimodalProvider".Translate());
+                    
+                    // ✅ 修复：每次更改提供商时立即重新配置
+                    bool providerChanged = false;
+                    
                     if (listingStandard.RadioButton("TSS_Settings_MultimodalProvider_OpenAI".Translate(), settings.multimodalProvider == "openai"))
                     {
-                        settings.multimodalProvider = "openai";
+                        if (settings.multimodalProvider != "openai")
+                        {
+                            settings.multimodalProvider = "openai";
+                            providerChanged = true;
+                        }
                     }
                     if (listingStandard.RadioButton("TSS_Settings_MultimodalProvider_DeepSeek".Translate(), settings.multimodalProvider == "deepseek"))
                     {
-                        settings.multimodalProvider = "deepseek";
+                        if (settings.multimodalProvider != "deepseek")
+                        {
+                            settings.multimodalProvider = "deepseek";
+                            providerChanged = true;
+                        }
                     }
                     if (listingStandard.RadioButton("TSS_Settings_MultimodalProvider_Gemini".Translate(), settings.multimodalProvider == "gemini"))
                     {
-                        settings.multimodalProvider = "gemini";
+                        if (settings.multimodalProvider != "gemini")
+                        {
+                            settings.multimodalProvider = "gemini";
+                            providerChanged = true;
+                        }
+                    }
+
+                    // ✅ 如果提供商改变，立即重新配置
+                    if (providerChanged)
+                    {
+                        ConfigureMultimodalAnalysis();
+                        Messages.Message($"多模态分析提供商已切换到: {settings.multimodalProvider}", MessageTypeDefOf.NeutralEvent);
                     }
 
                     listingStandard.Gap(12f);

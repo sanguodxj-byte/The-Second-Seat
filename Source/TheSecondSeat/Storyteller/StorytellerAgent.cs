@@ -36,7 +36,7 @@ namespace TheSecondSeat.Storyteller
     /// <summary>
     /// 叙事者代理 - 核心人格系统
     /// </summary>
-    public class StorytellerAgent : IExposable
+    public class StorytellerAgent : GameComponent
     {
         // === 核心属性 ===
         public string name = "Cassandra";
@@ -99,6 +99,11 @@ namespace TheSecondSeat.Storyteller
                 dialogueManipulation = 0.3f
             }}
         };
+
+        // ? 添加GameComponent必需的构造函数
+        public StorytellerAgent(Game game) : base()
+        {
+        }
 
         public StorytellerAgent()
         {
@@ -537,8 +542,10 @@ namespace TheSecondSeat.Storyteller
         /// <summary>
         /// 保存/加载数据
         /// </summary>
-        public void ExposeData()
+        public override void ExposeData()
         {
+            base.ExposeData();
+            
             Scribe_Values.Look(ref name, "name", "Cassandra");
             Scribe_Values.Look(ref affinity, "affinity", 0f);
             Scribe_Values.Look(ref currentMood, "currentMood", MoodState.Neutral);
@@ -562,6 +569,14 @@ namespace TheSecondSeat.Storyteller
             {
                 affinityHistory = new List<AffinityEvent>();
             }
+        }
+
+        /// <summary>
+        /// ? 获取当前好感度（用于其他组件调用）
+        /// </summary>
+        public float GetAffinity()
+        {
+            return affinity;
         }
     }
 

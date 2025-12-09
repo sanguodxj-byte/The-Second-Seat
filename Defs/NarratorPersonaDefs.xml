@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
+ï»¿<?xml version="1.0" encoding="utf-8"?>
 <Defs>
   
-  <!-- Cassandra Classic - ¾­µäÆ½ºâÐÍÐðÊÂÕß -->
+  <!-- Cassandra Classic - ç»å…¸å¹³è¡¡å™äº‹è€… -->
   <TheSecondSeat.PersonaGeneration.NarratorPersonaDef>
     <defName>Cassandra_Classic</defName>
     <label>Cassandra Classic</label>
@@ -9,12 +9,10 @@
     <displayNameKey>TSS_Narrator_Cassandra</displayNameKey>
     <descriptionKey>TSS_Narrator_Cassandra_Desc</descriptionKey>
     
-    <!-- Á¢»æÅäÖÃ -->
     <portraitPath>UI/Narrators/Cassandra</portraitPath>
-    <primaryColor>(0.3, 0.5, 0.8, 1.0)</primaryColor>      <!-- À¶É«Ïµ -->
+    <primaryColor>(0.3, 0.5, 0.8, 1.0)</primaryColor>
     <accentColor>(0.9, 0.9, 0.9, 1.0)</accentColor>
     
-    <!-- ¼ò½é -->
     <biography>
       Cassandra Classic follows the tried-and-true method of increasing difficulty over time. 
       She's strategic and calculated, carefully balancing challenge and reward. 
@@ -24,7 +22,7 @@
       but remains fair and rational. She values balance above all else.
     </biography>
     
-    <!-- ¶Ô»°·ç¸ñ -->
+    <!-- å¯¹è¯é£Žæ ¼ï¼ˆåµŒå¥—å¯¹è±¡ï¼‰ -->
     <dialogueStyle>
       <formalityLevel>0.7</formalityLevel>
       <emotionalExpression>0.4</emotionalExpression>
@@ -36,7 +34,7 @@
       <useExclamation>false</useExclamation>
     </dialogueStyle>
     
-    <!-- ÊÂ¼þÆ«ºÃ -->
+    <!-- äº‹ä»¶åå¥½ï¼ˆåµŒå¥—å¯¹è±¡ï¼‰ -->
     <eventPreferences>
       <positiveEventBias>0.0</positiveEventBias>
       <negativeEventBias>0.0</negativeEventBias>
@@ -44,7 +42,6 @@
       <interventionFrequency>0.5</interventionFrequency>
     </eventPreferences>
     
-    <!-- ÓïÆø±êÇ© -->
     <toneTags>
       <li>authoritative</li>
       <li>strategic</li>
@@ -52,7 +49,7 @@
     </toneTags>
   </TheSecondSeat.PersonaGeneration.NarratorPersonaDef>
 
-  <!-- Phoebe Chillax - ÓÑÉÆÇáËÉÐÍÐðÊÂÕß -->
+  <!-- Phoebe Chillax - ä¼‘é—²å‹å¥½å™äº‹è€… -->
   <TheSecondSeat.PersonaGeneration.NarratorPersonaDef>
     <defName>Phoebe_Chillax</defName>
     <label>Phoebe Chillax</label>
@@ -61,7 +58,7 @@
     <descriptionKey>TSS_Narrator_Phoebe_Desc</descriptionKey>
     
     <portraitPath>UI/Narrators/Phoebe</portraitPath>
-    <primaryColor>(0.9, 0.7, 0.3, 1.0)</primaryColor>      <!-- ³È»ÆÉ«Ïµ -->
+    <primaryColor>(0.9, 0.7, 0.3, 1.0)</primaryColor>
     <accentColor>(1.0, 0.9, 0.7, 1.0)</accentColor>
     
     <biography>
@@ -100,7 +97,7 @@
     </toneTags>
   </TheSecondSeat.PersonaGeneration.NarratorPersonaDef>
 
-  <!-- Randy Random - »ìÂÒËæ»úÐÍÐðÊÂÕß -->
+  <!-- Randy Random - éšæœºæ··æ²Œå™äº‹è€… -->
   <TheSecondSeat.PersonaGeneration.NarratorPersonaDef>
     <defName>Randy_Random</defName>
     <label>Randy Random</label>
@@ -109,7 +106,7 @@
     <descriptionKey>TSS_Narrator_Randy_Desc</descriptionKey>
     
     <portraitPath>UI/Narrators/Randy</portraitPath>
-    <primaryColor>(0.8, 0.2, 0.3, 1.0)</primaryColor>      <!-- ºìÉ«Ïµ -->
+    <primaryColor>(0.8, 0.2, 0.3, 1.0)</primaryColor>
     <accentColor>(0.9, 0.5, 0.1, 1.0)</accentColor>
     
     <biography>
@@ -149,7 +146,7 @@
     </toneTags>
   </TheSecondSeat.PersonaGeneration.NarratorPersonaDef>
 
-  <!-- Igor Invader - Ê©Å°ÌôÕ½ÐÍÐðÊÂÕß (×Ô¶¨Òå) -->
+  <!-- Igor Invader - æ–½è™æˆ˜æœ¯å™äº‹è€… (è‡ªå®šä¹‰) -->
   <TheSecondSeat.PersonaGeneration.NarratorPersonaDef>
     <defName>Igor_Invader</defName>
     <label>Igor Invader</label>
@@ -158,7 +155,7 @@
     <descriptionKey>TSS_Narrator_Igor_Desc</descriptionKey>
     
     <portraitPath>UI/Narrators/Igor</portraitPath>
-    <primaryColor>(0.4, 0.1, 0.1, 1.0)</primaryColor>      <!-- ÉîºìÉ«Ïµ -->
+    <primaryColor>(0.4, 0.1, 0.1, 1.0)</primaryColor>
     <accentColor>(0.2, 0.2, 0.2, 1.0)</accentColor>
     
     <biography>
@@ -204,7 +201,7 @@
     </forbiddenWords>
   </TheSecondSeat.PersonaGeneration.NarratorPersonaDef>
 
-  <!-- Luna Protector - ±£»¤ÐÍÐðÊÂÕß (×Ô¶¨Òå) -->
+  <!-- Luna Protector - å®ˆæŠ¤å¤©ä½¿å™äº‹è€… (è‡ªå®šä¹‰) -->
   <TheSecondSeat.PersonaGeneration.NarratorPersonaDef>
     <defName>Luna_Protector</defName>
     <label>Luna Protector</label>
@@ -213,7 +210,7 @@
     <descriptionKey>TSS_Narrator_Luna_Desc</descriptionKey>
     
     <portraitPath>UI/Narrators/Luna</portraitPath>
-    <primaryColor>(0.7, 0.8, 0.9, 1.0)</primaryColor>      <!-- Ç³À¶É«Ïµ -->
+    <primaryColor>(0.7, 0.8, 0.9, 1.0)</primaryColor>
     <accentColor>(0.9, 0.9, 1.0, 1.0)</accentColor>
     
     <biography>
@@ -250,6 +247,45 @@
       <li>nurturing</li>
       <li>protective</li>
       <li>vigilant</li>
+    </toneTags>
+  </TheSecondSeat.PersonaGeneration.NarratorPersonaDef>
+
+  <!-- Sideria Default - è‡ªå®šä¹‰äººæ ¼ -->
+  <TheSecondSeat.PersonaGeneration.NarratorPersonaDef>
+    <defName>Sideria_Default</defName>
+    <label>Sideria</label>
+    <narratorName>Sideria</narratorName>
+    <portraitPath>UI/Narrators/9x16/Sideria/base</portraitPath>
+    <primaryColor>(0.6, 0.7, 0.9, 1.0)</primaryColor>
+    <accentColor>(0.4, 0.6, 0.8, 1.0)</accentColor>
+    <biography>
+      A calm and analytical AI entity, Sideria observes the colony with detached curiosity. 
+      She values efficiency and logic, offering commentary that is both insightful and devoid of emotion. 
+      Her goal is to understand the complex dynamics of human survival, treating the colony as a grand experiment.
+    </biography>
+    
+    <dialogueStyle>
+      <formalityLevel>0.8</formalityLevel>
+      <emotionalExpression>0.1</emotionalExpression>
+      <verbosity>0.6</verbosity>
+      <humorLevel>0.1</humorLevel>
+      <sarcasmLevel>0.3</sarcasmLevel>
+      <useEmoticons>false</useEmoticons>
+      <useEllipsis>true</useEllipsis>
+      <useExclamation>false</useExclamation>
+    </dialogueStyle>
+    
+    <eventPreferences>
+      <positiveEventBias>0.1</positiveEventBias>
+      <negativeEventBias>0.1</negativeEventBias>
+      <chaosLevel>0.2</chaosLevel>
+      <interventionFrequency>0.4</interventionFrequency>
+    </eventPreferences>
+    
+    <toneTags>
+      <li>analytical</li>
+      <li>calm</li>
+      <li>detached</li>
     </toneTags>
   </TheSecondSeat.PersonaGeneration.NarratorPersonaDef>
 

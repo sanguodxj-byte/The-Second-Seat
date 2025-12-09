@@ -9,58 +9,12 @@ using TheSecondSeat.Storyteller;
 namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
-    /// 叙事者人格定义 - 包含立绘、简介、人格特质等
-    /// </summary>
-    public class NarratorPersonaDef : Def
-    {
-        // ? 必需字段（继承自Def）
-        // defName - 继承自 Def（必需）
-        // label - 继承自 Def（必需，添加下面这行）
-        
-        // ? 显示信息
-        public string narratorName = "Cassandra";  // 叙事者显示名称
-        public string displayNameKey = "TSS_Narrator_Cassandra";  // 翻译键（可选）
-        public string descriptionKey = "TSS_Narrator_Cassandra_Desc";  // 描述翻译键（可选）
-        
-        // 立绘资源
-        public string portraitPath = "UI/Narrators/Cassandra";
-        public string customPortraitPath = "";       // 用户自定义立绘路径（仅运行时使用）
-        public bool useCustomPortrait = false;      // 是否使用自定义立绘（仅运行时使用）
-        public Color primaryColor = Color.white;
-        public Color accentColor = Color.gray;
-        
-        // 简介文本
-        public string biography = "";
-        
-        // ? 【新增】Vision 分析结果（AI 对自身外观的理解）
-        public string visualDescription = "";        // 外观描述（来自 Vision API）
-        public List<string> visualElements = new List<string>();  // 视觉元素（如"armor", "sword", "dragon"）
-        public string visualMood = "";               // 视觉氛围（如"menacing", "gentle", "mysterious"）
-        
-        // 自动生成的人格独有字段（可选）
-        public string overridePersonality = null;
-        public float baseAffinityBias = 0f; // -1.0 ~ 1.0，影响初始好感度偏移
-        
-        // 对话风格定义
-        public DialogueStyleDef dialogueStyle = new DialogueStyleDef();
-        
-        // 事件偏好
-        public EventPreferencesDef eventPreferences = new EventPreferencesDef();
-        
-        // 语气标签（用于 LLM Prompt）
-        public List<string> toneTags = new List<string>();
-        
-        // 禁用词（防止 AI 使用不符合人设的词汇）
-        public List<string> forbiddenWords = new List<string>();
-    }
-
-    /// <summary>
-    /// 叙事者人格分析器 - 从立绘和简介生成人格
+    /// ?????????????? - ????????????????
     /// </summary>
     public static class PersonaAnalyzer
     {
         /// <summary>
-        /// 分析立绘颜色，推断人格特质
+        /// ???????????????????????
         /// </summary>
         public static PersonalityTrait AnalyzePortraitColor(Color primaryColor)
         {
@@ -448,13 +402,15 @@ namespace TheSecondSeat.PersonaGeneration
     }
 
     /// <summary>
-    /// 人格分析结果
+    /// ?????????
     /// </summary>
     public class PersonaAnalysisResult
     {
         public PersonalityTrait? SuggestedPersonality { get; set; }
         public DialogueStyleDef DialogueStyle { get; set; } = new DialogueStyleDef();
         public List<string> ToneTags { get; set; } = new List<string>();
+        public List<string> VisualTags { get; set; } = new List<string>();  // ? 添加缺失的字段
+        public float ConfidenceScore { get; set; } = 0.5f;  // ? 添加缺失的字段
         public EventPreferencesDef EventPreferences { get; set; } = new EventPreferencesDef();
     }
 }

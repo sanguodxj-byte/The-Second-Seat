@@ -130,7 +130,7 @@ namespace TheSecondSeat.PersonaGeneration
                 prompt,
                 texture,
                 0.3f,
-                4096  // ? 2000 → 4096，确保 JSON 完整
+                8192  // ? 从4096增加到8192，确保完整JSON返回
             );
             
             if (geminiResponse == null || geminiResponse.Candidates == null || geminiResponse.Candidates.Count == 0)
@@ -297,7 +297,7 @@ Focus on:
 
         /// <summary>
         /// 解析 Vision API 返回的 JSON
-        /// ? 增强错误处理和日志
+        /// ? 修复：完整输出JSON内容用于诊断
         /// </summary>
         private VisionAnalysisResult? ParseVisionJson(string jsonContent)
         {
@@ -309,16 +309,16 @@ Focus on:
                     return null;
                 }
 
-                // 记录原始内容（前 200 字符）
-                Log.Message($"[MultimodalAnalysis] 原始响应: {jsonContent.Substring(0, Math.Min(200, jsonContent.Length))}...");
+                // ? 先输出原始响应（前500字符）
+                Log.Message($"[MultimodalAnalysis] 原始响应: {jsonContent.Substring(0, Math.Min(500, jsonContent.Length))}...");
 
                 // 提取 JSON（有时 AI 会在 markdown 代码块中返回）
                 string extractedJson = ExtractJsonFromMarkdown(jsonContent);
                 
-                // 如果提取后的内容与原始不同，记录日志
+                // ? 输出提取后的JSON（前500字符）
                 if (extractedJson != jsonContent)
                 {
-                    Log.Message($"[MultimodalAnalysis] 提取后的 JSON: {extractedJson.Substring(0, Math.Min(200, extractedJson.Length))}...");
+                    Log.Message($"[MultimodalAnalysis] 提取后的 JSON: {extractedJson.Substring(0, Math.Min(500, extractedJson.Length))}...");
                 }
 
                 // ? 验证 JSON 是否以 { 开头
@@ -329,11 +329,14 @@ Focus on:
                     return null;
                 }
 
+                // ? 尝试解析JSON
                 var result = JsonConvert.DeserializeObject<VisionAnalysisResult>(extractedJson);
                 
                 if (result == null)
                 {
                     Log.Error("[MultimodalAnalysis] JSON 反序列化返回 null");
+                    // ? 输出完整JSON用于诊断
+                    Log.Error($"[MultimodalAnalysis] 完整JSON内容:\n{extractedJson}");
                     return null;
                 }
 
@@ -343,6 +346,7 @@ Focus on:
             catch (JsonException jsonEx)
             {
                 Log.Error($"[MultimodalAnalysis] JSON 解析错误: {jsonEx.Message}");
+                // ? 输出完整响应内容
                 Log.Error($"[MultimodalAnalysis] 完整响应内容:\n{jsonContent}");
                 return null;
             }
@@ -356,7 +360,7 @@ Focus on:
 
         /// <summary>
         /// 从 markdown 代码块中提取 JSON
-        /// ? 增强提取逻辑，处理更多边缘情况
+        /// ? 改进提取逻辑，确保提取完整JSON
         /// </summary>
         private string ExtractJsonFromMarkdown(string content)
         {
@@ -369,6 +373,13 @@ Focus on:
             if (content.Contains("```json"))
             {
                 int startIndex = content.IndexOf("```json") + 7;
+                
+                // 跳过换行符
+                while (startIndex < content.Length && (content[startIndex] == '\n' || content[startIndex] == '\r'))
+                {
+                    startIndex++;
+                }
+                
                 int endIndex = content.IndexOf("```", startIndex);
                 if (endIndex > startIndex)
                 {
@@ -382,12 +393,15 @@ Focus on:
             if (content.Contains("```"))
             {
                 int startIndex = content.IndexOf("```") + 3;
+                
                 // 跳过可能的语言标记（如 "json\n"）
-                while (startIndex < content.Length && content[startIndex] != '\n' && content[startIndex] != '{')
+                while (startIndex < content.Length && content[startIndex] != '\n' && content[startIndex] != '\r' && content[startIndex] != '{')
                 {
                     startIndex++;
                 }
-                if (startIndex < content.Length && content[startIndex] == '\n')
+                
+                // 跳过换行符
+                while (startIndex < content.Length && (content[startIndex] == '\n' || content[startIndex] == '\r'))
                 {
                     startIndex++;
                 }
