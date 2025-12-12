@@ -58,9 +58,9 @@ namespace TheSecondSeat.PersonaGeneration
         public int Priority { get; set; } = 0;
 
         /// <summary>
-        /// 纹理路径（相对于 Textures/ 目录）
-        /// 支持变量替换：{persona}, {expression}, {outfit}
-        /// 例如：UI/Narrators/9x16/Layers/{persona}/face_{expression}.png
+        /// 纹理路径模板
+        /// 可以使用占位符：{persona}, {expression}, {outfit}
+        /// 例如：UI/Narrators/9x16/Layered/{persona}/face_{expression}.png
         /// </summary>
         public string TexturePath { get; set; } = "";
 
@@ -265,7 +265,7 @@ namespace TheSecondSeat.PersonaGeneration
                 Type = LayerType.Background,
                 Name = "background",
                 Priority = 0,
-                TexturePath = "UI/Narrators/9x16/Layers/{persona}/background.png",
+                TexturePath = "UI/Narrators/9x16/Layered/{persona}/background.png",
                 Blend = BlendMode.Normal,
                 Opacity = 0.3f,
                 Required = false
@@ -277,7 +277,7 @@ namespace TheSecondSeat.PersonaGeneration
                 Type = LayerType.Body,
                 Name = "body",
                 Priority = 10,
-                TexturePath = "UI/Narrators/9x16/Layers/{persona}/body.png",
+                TexturePath = "UI/Narrators/9x16/Layered/{persona}/body.png",
                 Blend = BlendMode.Normal,
                 Opacity = 1.0f,
                 Required = true
@@ -289,7 +289,7 @@ namespace TheSecondSeat.PersonaGeneration
                 Type = LayerType.Outfit,
                 Name = "outfit",
                 Priority = 20,
-                TexturePath = "UI/Narrators/9x16/Layers/{persona}/outfit_{outfit}.png",
+                TexturePath = "UI/Narrators/9x16/Layered/{persona}/outfit_{outfit}.png",
                 Blend = BlendMode.Normal,
                 Opacity = 1.0f,
                 Required = false
@@ -301,7 +301,7 @@ namespace TheSecondSeat.PersonaGeneration
                 Type = LayerType.Face,
                 Name = "face",
                 Priority = 30,
-                TexturePath = "UI/Narrators/9x16/Layers/{persona}/face_{expression}.png",
+                TexturePath = "UI/Narrators/9x16/Layered/{persona}/face_{expression}.png",
                 Blend = BlendMode.Normal,
                 Opacity = 1.0f,
                 Required = true
@@ -313,7 +313,7 @@ namespace TheSecondSeat.PersonaGeneration
                 Type = LayerType.Hair,
                 Name = "hair",
                 Priority = 40,
-                TexturePath = "UI/Narrators/9x16/Layers/{persona}/hair.png",
+                TexturePath = "UI/Narrators/9x16/Layered/{persona}/hair.png",
                 Blend = BlendMode.Normal,
                 Opacity = 1.0f,
                 Required = false
@@ -325,7 +325,7 @@ namespace TheSecondSeat.PersonaGeneration
                 Type = LayerType.Accessories,
                 Name = "accessories",
                 Priority = 50,
-                TexturePath = "UI/Narrators/9x16/Layers/{persona}/accessories.png",
+                TexturePath = "UI/Narrators/9x16/Layered/{persona}/accessories.png",
                 Blend = BlendMode.Normal,
                 Opacity = 1.0f,
                 Required = false
@@ -337,7 +337,7 @@ namespace TheSecondSeat.PersonaGeneration
                 Type = LayerType.ForegroundFX,
                 Name = "fx",
                 Priority = 60,
-                TexturePath = "UI/Narrators/9x16/Layers/{persona}/fx.png",
+                TexturePath = "UI/Narrators/9x16/Layered/{persona}/fx.png",
                 Blend = BlendMode.Additive,
                 Opacity = 0.8f,
                 Required = false
