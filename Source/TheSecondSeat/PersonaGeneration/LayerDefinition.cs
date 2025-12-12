@@ -15,6 +15,8 @@ namespace TheSecondSeat.PersonaGeneration
         Body,           // 身体层（基础人物轮廓）
         Outfit,         // 服装层（可更换）
         Face,           // 面部层（表情专用）
+        Eyes,           // ? 新增：眼睛层（眨眼动画专用）
+        Mouth,          // ? 新增：嘴巴层（张嘴动画专用）
         Hair,           // 头发层
         Accessories,    // 配饰层（眼镜、帽子等）
         ForegroundFX,   // 前景特效层（如魔法光效）
