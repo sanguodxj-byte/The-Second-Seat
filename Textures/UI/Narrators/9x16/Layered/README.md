@@ -1,356 +1,286 @@
-# 分层立绘纹理资源说明 - Layered Folder
+# 分层立绘系统 - 纹理资源文件夹
 
-## ?? 文件夹用途
+## ? **v1.6.18 新特性：表情部件拆分**
 
-此文件夹用于存放 AI 人格的**分层立绘纹理**。支持眨眼动画、张嘴动画、换装系统等高级功能。
+本文件夹用于存放**分层立绘**的纹理资源。立绘由多个透明PNG图层叠加合成，支持动态切换表情、服装、配饰等。
 
----
-
-## ?? 文件结构
-
-```
-Textures/UI/Narrators/9x16/Layered/
-├── Sideria/                          ← 人格文件夹（每个人格一个）
-│   ├── base_body.png                 ← 身体层（必需）
-│   ├── face_neutral.png              ← 默认表情（必需）
-│   ├── face_happy.png                ← 开心表情
-│   ├── face_sad.png                  ← 悲伤表情
-│   ├── outfit_default.png            ← 默认服装（可选）
-│   │
-│   ├── eyes_open.png                 ← ? 睁眼层（眨眼动画）
-│   ├── eyes_half.png                 ← ? 半闭眼层（眨眼动画）
-│   ├── eyes_closed.png               ← ? 闭眼层（眨眼动画）
-│   │
-│   ├── mouth_closed.png              ← ? 闭嘴层（张嘴动画）
-│   ├── mouth_smile.png               ← ? 微笑层（张嘴动画）
-│   ├── mouth_open_small.png          ← ? 小张嘴层（张嘴动画）
-│   ├── mouth_open_wide.png           ← ? 大张嘴层（张嘴动画）
-│   ├── mouth_frown.png               ← ? 皱眉层（可选）
-│   │
-│   ├── hair.png                      ← 头发层（可选）
-│   ├── accessories.png               ← 配饰层（可选）
-│   └── background.png                ← 背景层（可选）
-│
-└── README.md                         ← 本文件
-```
+**新特性：** 表情不再是完整图片，而是拆分为 **eyes（眼睛）**、**mouth（嘴巴）**、**flush（脸红）** 三个独立部件进行拼接！
 
 ---
 
-## ?? 纹理规格要求
+## ?? **文件夹结构**
 
-### **统一尺寸标准**
-- **尺寸：** 1024×1574 像素（9:16 比例）
-- **格式：** PNG（支持透明通道）
-- **背景：** 完全透明（除背景层外）
-- **分辨率：** 300 DPI（推荐）
-
-### **质量要求**
-- **颜色模式：** RGBA（32位）
-- **压缩：** PNG-24（保留完整透明度）
-- **文件大小：** 建议 < 2MB
-
----
-
-## ?? 命名规范
-
-### **必需文件（每个人格）**
 ```
-base_body.png           ← 身体层（全身轮廓）
-face_neutral.png        ← 默认表情（面部）
-```
-
-### **表情层（可选）**
-```
-face_{expression}.png   ← 表情专用层
-```
-**示例：**
-- `face_happy.png` - 开心表情
-- `face_sad.png` - 悲伤表情
-- `face_angry.png` - 生气表情
-
-### **眨眼动画层（推荐）**
-```
-eyes_open.png           ← 睁眼层（默认）
-eyes_half.png           ← 半闭眼层（过渡帧）
-eyes_closed.png         ← 闭眼层（眨眼中间帧）
-```
-
-### **张嘴动画层（推荐）**
-```
-mouth_closed.png        ← 闭嘴层（默认）
-mouth_smile.png         ← 微笑层（Happy表情）
-mouth_open_small.png    ← 小张嘴层（说话轻声）
-mouth_open_wide.png     ← 大张嘴层（说话强调/惊讶）
-mouth_frown.png         ← 皱眉层（Sad/Angry表情，可选）
-```
-
-### **服装层（可选）**
-```
-outfit_{name}.png       ← 服装层（可更换）
-```
-**示例：**
-- `outfit_default.png` - 默认服装
-- `outfit_casual.png` - 休闲服装
-- `outfit_formal.png` - 正式服装
-
-### **其他层（可选）**
-```
-hair.png                ← 头发层
-accessories.png         ← 配饰层（眼镜、帽子等）
-background.png          ← 背景层（光晕、特效等）
+Layered/
+└── {PersonaName}/         ← 人格名称文件夹（如 Sideria）
+    ├── base_body.png      ← ? 底图（身体+默认表情）
+    ├── background.png     ← 背景（可选）
+    ├── outfit_default.png ← 默认服装
+    ├── hair.png           ← 头发层
+    ├── accessories.png    ← 配饰层
+    └── 表情部件（拆分）：
+        ├── neutral_eyes.png    ← 默认表情：眼睛
+        ├── neutral_mouth.png   ← 默认表情：嘴巴
+        ├── neutral_flush.png   ← 默认表情：脸红（可选）
+        ├── happy_eyes.png      ← 开心：眼睛
+        ├── happy_mouth.png     ← 开心：嘴巴
+        ├── happy_flush.png     ← 开心：脸红（可选）
+        ├── sad_eyes.png
+        ├── sad_mouth.png
+        ├── angry_eyes.png
+        ├── angry_mouth.png
+        └── ...
 ```
 
 ---
 
-## ?? 图层优先级
+## ?? **核心概念：base_body 作为底图**
 
-系统按以下顺序合成图层（从底到顶）：
+### **旧系统（v1.6.17）：**
+```
+完整立绘 = 身体层 + 完整表情层
+```
 
+### **新系统（v1.6.18）：**
 ```
-1. background.png       (优先级 0)
-2. base_body.png        (优先级 10)
-3. outfit_*.png         (优先级 20)
-4. face_*.png           (优先级 30)
-5. eyes_*.png           (优先级 35) ← ? 眨眼动画
-6. mouth_*.png          (优先级 36) ← ? 张嘴动画
-7. hair.png             (优先级 40)
-8. accessories.png      (优先级 50)
+完整立绘 = base_body（身体+默认表情） + 表情部件（eyes + mouth + flush）
 ```
+
+**优势：**
+- 只需要绘制1个底图（`base_body.png`）
+- 每个表情只需要2-3个小部件（眼睛、嘴巴、脸红）
+- 文件大小减少 ~50%
+- 支持独立的眨眼/张嘴动画
 
 ---
 
-## ??? 图层制作指南
+## ?? **图层叠加顺序（Priority）**
 
-### **1. 身体层（base_body.png）**
-**内容：** 完整的人物轮廓（不包含面部细节）
-
-**制作要点：**
-- 包含身体、四肢、基础轮廓
-- 不包含面部表情
-- 可包含身体基础阴影
-
-**示例：**
 ```
-? 正确：身体轮廓 + 基础阴影
-? 错误：包含完整面部表情
+Priority  图层ID        文件名                      说明
+--------  ----------   -------------------------  ------------------
+0         base_body    base_body.png              ? 底图（身体+默认表情）
+5         background   background.png             背景（可选）
+10        outfit       outfit_{outfit}.png        服装层
+20        flush        {expression}_flush.png     脸红层（可选）
+30        eyes         {expression}_eyes.png      眼睛层（必需）
+40        mouth        {expression}_mouth.png     嘴巴层（必需）
+50        hair         hair.png                   头发层
+60        accessories  accessories.png            配饰层
+70        fx           fx.png                     特效层（可选）
 ```
+
+**说明：**
+- Priority 数字越小，图层越靠下（底层）
+- `base_body` Priority=0，是最底层
+- 表情部件（flush/eyes/mouth）覆盖在 `base_body` 之上
 
 ---
 
-### **2. 表情层（face_*.png）**
-**内容：** 面部表情区域（眼睛、鼻子、嘴巴）
+## ?? **表情部件命名规则**
 
-**制作要点：**
-- **尺寸：** 1024×1574（与身体层相同）
-- **内容：** 只包含面部表情区域
-- **透明区域：** 除面部外的所有区域
-- **对齐：** 必须与 `base_body.png` 像素级对齐
+### **格式：`{expression}_{part}.png`**
 
-**关键原则：**
-> **所有表情层的面部位置必须完全一致！**
-
-**检查方法：**
-1. 在 Photoshop 中叠加多个表情层
-2. 切换图层可见性
-3. 确认眼睛、鼻子、嘴巴位置不偏移
+| 表情类型 | 眼睛部件 | 嘴巴部件 | 脸红部件（可选） |
+|---------|---------|---------|----------------|
+| Neutral | `neutral_eyes.png` | `neutral_mouth.png` | `neutral_flush.png` |
+| Happy   | `happy_eyes.png` | `happy_mouth.png` | `happy_flush.png` |
+| Sad     | `sad_eyes.png` | `sad_mouth.png` | `sad_flush.png` |
+| Angry   | `angry_eyes.png` | `angry_mouth.png` | `angry_flush.png` |
+| Surprised | `surprised_eyes.png` | `surprised_mouth.png` | `surprised_flush.png` |
+| Confused | `confused_eyes.png` | `confused_mouth.png` | - |
+| Smug    | `smug_eyes.png` | `smug_mouth.png` | - |
+| Shy     | `shy_eyes.png` | `shy_mouth.png` | `shy_flush.png` |
 
 ---
 
-### **3. 眨眼动画层（eyes_*.png）**
-**内容：** 只包含眼睛部分
+## ?? **图片尺寸规范**
 
-**制作要点：**
-- **尺寸：** 1024×1574（保持一致）
-- **内容：** 只包含眼睛（睫毛、眼睑）
-- **透明区域：** 除眼睛外的所有区域
-- **对齐：** 与 `face_neutral.png` 中的眼睛位置完全对齐
+### **标准分辨率：1024x1572（9:16比例）**
 
-**制作步骤：**
-```
-1. 从 face_neutral.png 复制眼睛区域
-2. 删除其他面部元素
-3. 创建三个变体：
-   - eyes_open.png    ← 完全睁开
-   - eyes_half.png    ← 半闭（上眼睑下垂 40%）
-   - eyes_closed.png  ← 完全闭合
-```
+| 图层类型 | 尺寸 | 格式 | 透明度 | 文件大小（参考） |
+|---------|------|------|-------|----------------|
+| base_body | 1024x1572 | PNG | 背景透明 | ~300KB |
+| background | 1024x1572 | PNG | 可不透明 | ~200KB |
+| outfit | 1024x1572 | PNG | 背景透明 | ~150KB |
+| eyes | 1024x1572 | PNG | **只有眼睛部分，其余透明** | ~50KB |
+| mouth | 1024x1572 | PNG | **只有嘴巴部分，其余透明** | ~30KB |
+| flush | 1024x1572 | PNG | **只有脸颊部分，其余透明** | ~20KB |
+| hair | 1024x1572 | PNG | 背景透明 | ~200KB |
+| accessories | 1024x1572 | PNG | 背景透明 | ~150KB |
 
-**参考尺寸：**
-- 单眼宽度：约 80-120 像素
-- 单眼高度：约 40-60 像素
-- 双眼间距：约 150-200 像素
-- 垂直位置：距顶部约 380-450 像素
+**重要：** 所有图层必须使用相同的画布尺寸（1024x1572），否则对齐会出错！
 
 ---
 
-### **4. 张嘴动画层（mouth_*.png）**
-**内容：** 只包含嘴巴部分
+## ?? **制作指南**
 
-**制作要点：**
-- **尺寸：** 1024×1574（保持一致）
-- **内容：** 只包含嘴巴（唇部、舌头、牙齿）
-- **透明区域：** 除嘴巴外的所有区域
-- **对齐：** 与 `face_neutral.png` 中的嘴巴位置完全对齐
+### **Step 1: 准备底图**
+1. 创建 **`base_body.png`**（1024x1572）
+   - 包含：完整身体 + 默认表情（眼睛+嘴巴）
+   - 背景：透明
+   - 用途：作为所有表情的基础
 
-**制作步骤：**
-```
-1. 从 face_neutral.png 复制嘴巴区域
-2. 删除其他面部元素
-3. 创建四个变体：
-   - mouth_closed.png      ← 闭嘴（默认）
-   - mouth_smile.png       ← 微笑（嘴角上扬）
-   - mouth_open_small.png  ← 小张嘴（开口 5-8px）
-   - mouth_open_wide.png   ← 大张嘴（开口 15-20px）
-```
+### **Step 2: 制作表情部件**
+对于每个表情（如 `happy`）：
 
-**参考尺寸：**
-- 嘴巴宽度：约 100-150 像素
-- 嘴巴高度：约 30-50 像素（闭合）
-- 嘴巴高度：约 50-80 像素（大张）
-- 垂直位置：距顶部约 650-750 像素
+#### **2.1 眼睛层 `happy_eyes.png`**
+- **只绘制眼睛部分**
+- 其余区域保持透明
+- 大小：1024x1572（与底图一致）
+- 位置：与 `base_body` 中的眼睛位置对齐
 
----
+#### **2.2 嘴巴层 `happy_mouth.png`**
+- **只绘制嘴巴部分**
+- 其余区域保持透明
+- 大小：1024x1572
+- 位置：与 `base_body` 中的嘴巴位置对齐
 
-### **5. 服装层（outfit_*.png）**
-**内容：** 服装、配饰（不包含身体）
-
-**制作要点：**
-- 只包含服装部分
-- 与 `base_body.png` 对齐
-- 支持多套服装（换装系统）
+#### **2.3 脸红层 `happy_flush.png`**（可选）
+- 绘制脸颊红晕
+- 使用柔和的粉色/红色
+- 建议使用 50-70% 不透明度
+- 大小：1024x1572
 
 ---
 
-## ?? 图层对齐技巧
+## ??? **Photoshop/GIMP 工作流程**
 
-### **Photoshop 对齐方法**
-1. 打开 `base_body.png` 作为底层
-2. 导入其他层（File → Place Embedded）
-3. 使用标尺（Ctrl+R）设置参考线
-4. 锁定图层位置（Lock Position）
-5. 导出前再次检查对齐
+### **推荐图层结构：**
+```
+Photoshop 项目：
+├── 底图组 (base_body)
+│   ├── 身体
+│   ├── 默认眼睛
+│   └── 默认嘴巴
+├── Happy 表情组
+│   ├── happy_flush (脸红)
+│   ├── happy_eyes (眼睛)
+│   └── happy_mouth (嘴巴)
+├── Sad 表情组
+│   ├── sad_eyes
+│   └── sad_mouth
+└── ...
+```
 
-### **GIMP 对齐方法**
-1. 打开 `base_body.png` 作为底层
-2. 添加其他层（Layer → Open as Layers）
-3. 使用对齐工具（Shift+Q）
-4. 开启"吸附到参考线"
-5. 导出前检查对齐
+### **导出步骤：**
+1. **导出底图：**
+   - 只显示"底图组"
+   - 文件 → 导出 → 存储为PNG → `base_body.png`
+
+2. **导出表情部件：**
+   - 对于每个表情（如 Happy）：
+     - 只显示 `happy_flush` 图层 → 导出 `happy_flush.png`
+     - 只显示 `happy_eyes` 图层 → 导出 `happy_eyes.png`
+     - 只显示 `happy_mouth` 图层 → 导出 `happy_mouth.png`
+
+3. **检查透明度：**
+   - 在导出设置中确保"透明度"已勾选
+   - 背景不应该是白色或其他颜色
 
 ---
 
-## ?? 导出设置
+## ?? **完整示例（Sideria）**
 
-### **Photoshop 导出**
 ```
-文件 → 导出 → 导出为...
-- 格式：PNG
-- 透明度：勾选
-- 尺寸：1024×1574
-- 质量：100%
-- 元数据：最少
+Layered/Sideria/
+├── base_body.png           (1024x1572, 300KB) ← 底图
+├── hair.png                (1024x1572, 200KB)
+├── accessories.png         (1024x1572, 150KB)
+└── 表情部件：
+    ├── neutral_eyes.png    (1024x1572, 50KB)
+    ├── neutral_mouth.png   (1024x1572, 30KB)
+    ├── happy_eyes.png      (1024x1572, 50KB)
+    ├── happy_mouth.png     (1024x1572, 30KB)
+    ├── happy_flush.png     (1024x1572, 20KB)
+    ├── sad_eyes.png        (1024x1572, 50KB)
+    ├── sad_mouth.png       (1024x1572, 30KB)
+    ├── angry_eyes.png      (1024x1572, 50KB)
+    ├── angry_mouth.png     (1024x1572, 30KB)
+    └── shy_eyes.png
+    └── shy_mouth.png
+    └── shy_flush.png
 ```
 
-### **GIMP 导出**
-```
-文件 → 导出为...
-- 格式：PNG
-- 压缩级别：9
-- 保存背景色：取消勾选
-- 保存 Gamma：取消勾选
-```
+**总大小：** ~1.5MB（8个表情）  
+**对比完整立绘：** ~3MB（8个表情）
 
 ---
 
-## ?? 动画效果预览
+## ?? **系统如何工作**
 
-### **眨眼动画**
-```
-eyes_open → eyes_half → eyes_closed → eyes_half → eyes_open
-   (睁眼)     (半闭)       (闭眼)       (半闭)     (睁眼)
-   0.05秒     0.05秒      0.05秒      0.05秒     停留3-6秒
+### **1. 加载底图**
+```csharp
+Texture2D baseBody = LoadTexture("UI/Narrators/9x16/Layered/Sideria/base_body.png");
 ```
 
-### **张嘴动画（TTS 播放时）**
+### **2. 加载表情部件**
+```csharp
+// 当前表情：Happy
+Texture2D happyFlush = LoadTexture("UI/Narrators/9x16/Layered/Sideria/happy_flush.png");
+Texture2D happyEyes = LoadTexture("UI/Narrators/9x16/Layered/Sideria/happy_eyes.png");
+Texture2D happyMouth = LoadTexture("UI/Narrators/9x16/Layered/Sideria/happy_mouth.png");
 ```
-说话轻声：mouth_closed ? mouth_open_small
-说话强调：mouth_closed ? mouth_open_wide
-表情微笑：mouth_smile（静态）
-表情皱眉：mouth_frown（静态）
+
+### **3. 合成最终立绘**
 ```
+最终立绘 = baseBody (底图)
+          + happyFlush (脸红，如果有)
+          + happyEyes (眼睛)
+          + happyMouth (嘴巴)
+          + hair (头发)
+          + accessories (配饰)
+```
+
+**结果：** 完整的 Sideria Happy 表情立绘！
 
 ---
 
-## ? 质量检查清单
+## ?? **动画支持**
 
-### **文件命名**
-- [ ] 全小写字母
-- [ ] 无空格、无特殊字符
-- [ ] PNG 格式后缀
+### **眨眼动画（BlinkAnimationSystem）**
+- 独立控制 `eyes` 图层
+- 不影响 `mouth` 和 `flush`
+- 眨眼时替换为 `{expression}_eyes_closed.png`
 
-### **纹理质量**
-- [ ] 尺寸精确 1024×1574
-- [ ] 透明背景（除背景层）
-- [ ] 无白边/黑边/毛边
-- [ ] 颜色与基础立绘一致
+### **张嘴动画（MouthAnimationSystem）**
+- 独立控制 `mouth` 图层
+- 不影响 `eyes` 和 `flush`
+- 说话时替换为 `{expression}_mouth_open.png`
 
-### **图层对齐**
-- [ ] 所有表情层面部位置一致
-- [ ] 眼睛层与 face_neutral.png 对齐
-- [ ] 嘴巴层与 face_neutral.png 对齐
-- [ ] 服装层与 base_body.png 对齐
-
-### **动画测试**
-- [ ] 眨眼序列流畅（open → half → closed）
-- [ ] 张嘴过渡自然（closed → small → wide）
-- [ ] 表情切换无跳变
-- [ ] 与呼吸动画配合正常
+### **表情切换**
+- 同时更新 `flush`、`eyes`、`mouth` 三个图层
+- 平滑过渡，无闪烁
 
 ---
 
-## ?? 常见问题
+## ?? **常见问题**
 
-### **Q1: 图层错位？**
-**A:** 
-1. 检查所有层尺寸是否一致（1024×1574）
-2. 使用图像编辑软件的对齐工具
-3. 参考 [眨眼和张嘴动画-纹理资源模板-v1.6.18.md](../../../眨眼和张嘴动画-纹理资源模板-v1.6.18.md)
+### **Q1: 部件图层对不齐怎么办？**
+**A:** 确保所有PNG文件尺寸一致（1024x1572），并在Photoshop中使用参考线标记眼睛和嘴巴位置。
 
-### **Q2: 眨眼动画不流畅？**
-**A:** 
-1. 确认三个眨眼层都存在（open/half/closed）
-2. 检查眼睛位置是否对齐
-3. 查看 DevMode 日志确认加载
+### **Q2: 脸红层不显示？**
+**A:** 检查文件名是否正确（`{expression}_flush.png`），并确保不透明度足够（建议50-70%）。
 
-### **Q3: 张嘴动画不生效？**
-**A:** 
-1. 确认 TTS 正在播放
-2. 检查嘴巴层是否存在（mouth_*.png）
-3. 确认嘴巴位置与 face_neutral.png 对齐
+### **Q3: 表情切换时闪烁？**
+**A:** 这是因为纹理加载延迟。系统会自动缓存纹理，第二次切换时不会闪烁。
 
-### **Q4: 文件太大？**
-**A:** 
-1. 使用 PNG 优化工具压缩
-2. 减少不必要的图层
-3. 合并静态图层
+### **Q4: 可以不使用脸红层吗？**
+**A:** 可以！脸红层是可选的。如果文件不存在，系统会跳过该图层。
+
+### **Q5: 可以混搭不同表情的部件吗？**
+**A:** 理论上可以！但需要修改代码逻辑。目前系统会加载同一表情的所有部件。
 
 ---
 
-## ?? 相关文档
+## ?? **相关文档**
 
-- [眨眼和张嘴动画-纹理资源模板-v1.6.18.md](../../../眨眼和张嘴动画-纹理资源模板-v1.6.18.md)
+- [分层立绘表情拆分系统-v1.6.18.md](../../../分层立绘表情拆分系统-v1.6.18.md) - 详细实现文档
 - [分层立绘系统-快速参考.md](../../../分层立绘系统-快速参考.md)
-- [呼吸动画与分层立绘-快速参考-v1.6.18.md](../../../呼吸动画与分层立绘-快速参考-v1.6.18.md)
+- [眨眼和张嘴动画-快速参考-v1.6.18.md](../../../眨眼和张嘴动画-快速参考-v1.6.18.md)
 
 ---
 
-## ?? 技术支持
-
-- **GitHub Issues:** https://github.com/sanguodxj-byte/The-Second-Seat/issues
-- **Wiki:** https://github.com/sanguodxj-byte/The-Second-Seat/wiki
-
----
-
-**更新日期：** 2025-01-XX  
 **版本：** v1.6.18  
-**维护者：** The Second Seat 开发团队
+**最后更新：** 2024  
+**路径：** `Textures/UI/Narrators/9x16/Layered/README.md`

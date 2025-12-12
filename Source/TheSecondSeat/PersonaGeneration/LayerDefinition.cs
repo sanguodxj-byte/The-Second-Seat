@@ -250,100 +250,126 @@ namespace TheSecondSeat.PersonaGeneration
         }
 
         /// <summary>
-        /// 创建默认配置（示例）
+        /// 创建默认分层配置
+        /// ? 新逻辑：base_body.png 作为底图（包含身体+默认表情）
+        /// ? 表情拆分为 eyes/mouth/flush 三个独立部件进行拼接
         /// </summary>
-        public static LayeredPortraitConfig CreateDefault(string personaDefName)
+        public static LayeredPortraitConfig CreateDefault(string personaName)
         {
-            var config = new LayeredPortraitConfig
+            return new LayeredPortraitConfig
             {
-                PersonaDefName = personaDefName
+                PersonaDefName = personaName,
+                Layers = new List<LayerDefinition>
+                {
+                    // ? 1. 底图层：base_body.png（包含身体+默认表情）
+                    new LayerDefinition
+                    {
+                        Name = "base_body",
+                        Type = LayerType.Body,
+                        Priority = 0,  // 最底层
+                        TexturePath = "UI/Narrators/9x16/Layered/{persona}/base_body.png",
+                        Blend = BlendMode.Normal,
+                        Opacity = 1.0f,
+                        Required = true
+                    },
+                    
+                    // 2. 背景层（可选）
+                    new LayerDefinition
+                    {
+                        Name = "background",
+                        Type = LayerType.Background,
+                        Priority = 5,
+                        TexturePath = "UI/Narrators/9x16/Layered/{persona}/background.png",
+                        Blend = BlendMode.Normal,
+                        Opacity = 0.3f,
+                        Required = false
+                    },
+                    
+                    // 3. 服装层（覆盖在身体上）
+                    new LayerDefinition
+                    {
+                        Name = "outfit",
+                        Type = LayerType.Outfit,
+                        Priority = 10,
+                        TexturePath = "UI/Narrators/9x16/Layered/{persona}/outfit_{outfit}.png",
+                        Blend = BlendMode.Normal,
+                        Opacity = 1.0f,
+                        Required = false
+                    },
+                    
+                    // ? 4. 脸红层（表情部件1 - 可选）
+                    new LayerDefinition
+                    {
+                        Name = "flush",
+                        Type = LayerType.Face,
+                        Priority = 20,
+                        TexturePath = "UI/Narrators/9x16/Layered/{persona}/{expression}_flush.png",
+                        Blend = BlendMode.Normal,
+                        Opacity = 1.0f,
+                        Required = false
+                    },
+                    
+                    // ? 5. 眼睛层（表情部件2 - 必需）
+                    new LayerDefinition
+                    {
+                        Name = "eyes",
+                        Type = LayerType.Face,
+                        Priority = 30,
+                        TexturePath = "UI/Narrators/9x16/Layered/{persona}/{expression}_eyes.png",
+                        Blend = BlendMode.Normal,
+                        Opacity = 1.0f,
+                        Required = true
+                    },
+                    
+                    // ? 6. 嘴巴层（表情部件3 - 必需）
+                    new LayerDefinition
+                    {
+                        Name = "mouth",
+                        Type = LayerType.Face,
+                        Priority = 40,
+                        TexturePath = "UI/Narrators/9x16/Layered/{persona}/{expression}_mouth.png",
+                        Blend = BlendMode.Normal,
+                        Opacity = 1.0f,
+                        Required = true
+                    },
+                    
+                    // 7. 头发层（覆盖在表情上）
+                    new LayerDefinition
+                    {
+                        Name = "hair",
+                        Type = LayerType.Hair,
+                        Priority = 50,
+                        TexturePath = "UI/Narrators/9x16/Layered/{persona}/hair.png",
+                        Blend = BlendMode.Normal,
+                        Opacity = 1.0f,
+                        Required = false
+                    },
+                    
+                    // 8. 配饰层
+                    new LayerDefinition
+                    {
+                        Name = "accessories",
+                        Type = LayerType.Accessories,
+                        Priority = 60,
+                        TexturePath = "UI/Narrators/9x16/Layered/{persona}/accessories.png",
+                        Blend = BlendMode.Normal,
+                        Opacity = 1.0f,
+                        Required = false
+                    },
+                    
+                    // 9. 特效层（可选）
+                    new LayerDefinition
+                    {
+                        Name = "fx",
+                        Type = LayerType.ForegroundFX,
+                        Priority = 70,
+                        TexturePath = "UI/Narrators/9x16/Layered/{persona}/fx.png",
+                        Blend = BlendMode.Additive,
+                        Opacity = 0.8f,
+                        Required = false
+                    }
+                }
             };
-
-            // 背景层（可选）
-            config.AddLayer(new LayerDefinition
-            {
-                Type = LayerType.Background,
-                Name = "background",
-                Priority = 0,
-                TexturePath = "UI/Narrators/9x16/Layered/{persona}/background.png",
-                Blend = BlendMode.Normal,
-                Opacity = 0.3f,
-                Required = false
-            });
-
-            // 身体层（必需）
-            config.AddLayer(new LayerDefinition
-            {
-                Type = LayerType.Body,
-                Name = "body",
-                Priority = 10,
-                TexturePath = "UI/Narrators/9x16/Layered/{persona}/body.png",
-                Blend = BlendMode.Normal,
-                Opacity = 1.0f,
-                Required = true
-            });
-
-            // 服装层（可更换）
-            config.AddLayer(new LayerDefinition
-            {
-                Type = LayerType.Outfit,
-                Name = "outfit",
-                Priority = 20,
-                TexturePath = "UI/Narrators/9x16/Layered/{persona}/outfit_{outfit}.png",
-                Blend = BlendMode.Normal,
-                Opacity = 1.0f,
-                Required = false
-            });
-
-            // 面部层（表情专用）
-            config.AddLayer(new LayerDefinition
-            {
-                Type = LayerType.Face,
-                Name = "face",
-                Priority = 30,
-                TexturePath = "UI/Narrators/9x16/Layered/{persona}/face_{expression}.png",
-                Blend = BlendMode.Normal,
-                Opacity = 1.0f,
-                Required = true
-            });
-
-            // 头发层
-            config.AddLayer(new LayerDefinition
-            {
-                Type = LayerType.Hair,
-                Name = "hair",
-                Priority = 40,
-                TexturePath = "UI/Narrators/9x16/Layered/{persona}/hair.png",
-                Blend = BlendMode.Normal,
-                Opacity = 1.0f,
-                Required = false
-            });
-
-            // 配饰层
-            config.AddLayer(new LayerDefinition
-            {
-                Type = LayerType.Accessories,
-                Name = "accessories",
-                Priority = 50,
-                TexturePath = "UI/Narrators/9x16/Layered/{persona}/accessories.png",
-                Blend = BlendMode.Normal,
-                Opacity = 1.0f,
-                Required = false
-            });
-
-            // 前景特效层
-            config.AddLayer(new LayerDefinition
-            {
-                Type = LayerType.ForegroundFX,
-                Name = "fx",
-                Priority = 60,
-                TexturePath = "UI/Narrators/9x16/Layered/{persona}/fx.png",
-                Blend = BlendMode.Additive,
-                Opacity = 0.8f,
-                Required = false
-            });
-
-            return config;
         }
 
         /// <summary>
