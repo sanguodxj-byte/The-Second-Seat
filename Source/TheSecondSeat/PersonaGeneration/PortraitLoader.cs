@@ -140,6 +140,7 @@ namespace TheSecondSeat.PersonaGeneration
         /// 2. 回退到通用表情（如 _happy）
         /// 3. 回退到面部覆盖模式（同样支持变体回退）
         /// 4. 加载基础立绘
+        /// ✅ 优化：静默回退，不刷屏日志
         /// </summary>
         private static Texture2D LoadExpressionOrBase(NarratorPersonaDef def, ExpressionType? expression)
         {
@@ -150,30 +151,24 @@ namespace TheSecondSeat.PersonaGeneration
             {
                 string expressionSuffix = ExpressionSystem.GetExpressionSuffix(def.defName, expression.Value);
                 
-                // ✅ 使用带回退的加载方法
+                // ✅ 使用带回退的加载方法（静默）
                 var expressionTexture = TryLoadTextureWithFallback(personaName, expressionSuffix);
                 
                 if (expressionTexture != null)
                 {
                     SetTextureQuality(expressionTexture);
-                    if (Prefs.DevMode)
-                    {
-                        Log.Message($"[PortraitLoader] ✅ 表情加载成功: {personaName}/{expressionSuffix}");
-                    }
+                    // ✅ 移除成功日志，静默返回
                     return expressionTexture;
                 }
                 
-                // ✅ 尝试面部覆盖模式（同样支持回退）
+                // ✅ 尝试面部覆盖模式（静默）
                 var overlayTexture = LoadWithFaceOverlayAndFallback(def, expression.Value);
                 if (overlayTexture != null)
                 {
                     return overlayTexture;
                 }
                 
-                if (Prefs.DevMode)
-                {
-                    Log.Warning($"[PortraitLoader] ⚠️ 表情文件未找到，回退到基础立绘: {personaName}/{expressionSuffix}");
-                }
+                // ✅ 移除回退警告，静默继续
             }
             
             // 2. 没有表情或表情文件不存在，加载基础立绘
@@ -184,6 +179,7 @@ namespace TheSecondSeat.PersonaGeneration
         /// ✅ 带回退机制的纹理加载方法
         /// 回退顺序：具体变体 → 通用表情
         /// 例如：_happy3 → _happy
+        /// ✅ 优化：静默回退，不输出中间日志
         /// </summary>
         /// <param name="personaName">人格文件夹名称</param>
         /// <param name="suffix">表情后缀（可能包含变体编号，如 _happy3）</param>
@@ -204,10 +200,7 @@ namespace TheSecondSeat.PersonaGeneration
             
             if (texture != null)
             {
-                if (Prefs.DevMode)
-                {
-                    Log.Message($"[PortraitLoader] ✅ 第1层成功（具体变体）: {specificPath}");
-                }
+                // ✅ 移除成功日志，静默返回
                 return texture;
             }
             
@@ -221,21 +214,12 @@ namespace TheSecondSeat.PersonaGeneration
                 
                 if (texture != null)
                 {
-                    if (Prefs.DevMode)
-                    {
-                        Log.Message($"[PortraitLoader] ✅ 第2层成功（通用表情）: {genericPath}");
-                    }
+                    // ✅ 移除回退成功日志，静默返回
                     return texture;
                 }
             }
             
-            // 两层都失败
-            if (Prefs.DevMode)
-            {
-                Log.Warning($"[PortraitLoader] ✖ 表情文件未找到: {specificPath}" + 
-                           (genericFileName != fileName ? $" 和 {EXPRESSIONS_PATH}{personaName}/{genericFileName}" : ""));
-            }
-            
+            // ✅ 两层都失败，静默返回 null（不输出警告，由上层统一处理）
             return null;
         }
         
@@ -270,6 +254,7 @@ namespace TheSecondSeat.PersonaGeneration
         /// <summary>
         /// ✅ 带回退机制的面部覆盖加载（支持变体回退）
         /// 回退顺序：_happy3_face → _happy_face
+        /// ✅ 优化：静默回退，不刷屏日志
         /// </summary>
         private static Texture2D LoadWithFaceOverlayAndFallback(NarratorPersonaDef def, ExpressionType expression)
         {
@@ -304,10 +289,7 @@ namespace TheSecondSeat.PersonaGeneration
                         string genericFacePath = $"{EXPRESSIONS_PATH}{personaName}/{genericFaceFileName}";
                         faceTexture = ContentFinder<Texture2D>.Get(genericFacePath, false);
                         
-                        if (faceTexture != null && Prefs.DevMode)
-                        {
-                            Log.Message($"[PortraitLoader] ✅ 面部覆盖回退成功: {genericFacePath}");
-                        }
+                        // ✅ 移除回退成功日志，静默返回
                     }
                 }
                 
@@ -329,15 +311,17 @@ namespace TheSecondSeat.PersonaGeneration
                     cacheKey
                 );
                 
-                if (Prefs.DevMode)
+                // ✅ 移除合成成功日志，只在DevMode下输出
+                if (composite != null && Prefs.DevMode)
                 {
-                    Log.Message($"[PortraitLoader] ✅ 使用面部叠加模式: {personaName} + {faceFileName}");
+                    Log.Message($"[PortraitLoader] ✓ 面部叠加合成: {personaName}");
                 }
                 return composite;
             }
             catch (Exception ex)
             {
-                Log.Error($"[PortraitLoader] 面部叠合成失败: {ex}");
+                // ✅ 保留异常日志（这是真正的错误）
+                Log.Error($"[PortraitLoader] 面部叠加合成失败: {ex}");
                 return null;
             }
         }
@@ -345,7 +329,7 @@ namespace TheSecondSeat.PersonaGeneration
         /// <summary>
         /// 加载基础立绘（无表情）
         /// ✅ 从人格文件夹的 base.png 加载
-        /// ✅ 优化：只在 DevMode 下显示详细日志
+        /// ✅ 优化：只在 DevMode 和完全失败时输出日志
         /// </summary>
         private static Texture2D LoadBasePortrait(NarratorPersonaDef def)
         {
@@ -415,8 +399,10 @@ namespace TheSecondSeat.PersonaGeneration
                 return texture;
             }
             
-            // 所有路径都失败（始终输出警告，帮助用户诊断问题）
-            Log.Warning($"[PortraitLoader] 立绘加载失败: {personaName}");
+            // ✅ 所有路径都失败，只在完全失败时输出简短警告
+            Log.Warning($"[PortraitLoader] 立绘加载失败: {personaName}（已尝试所有路径）");
+            
+            // ✅ 详细路径列表只在 DevMode 下输出
             if (Prefs.DevMode)
             {
                 Log.Warning($"[PortraitLoader] 请确保以下路径之一存在纹理文件:");
@@ -774,7 +760,7 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// ���û�����Ŀ¼
-        /// ? ����ԭ�й��ܣ���Ҹ��Ի�ʹ�ã�
+        /// ? ����ԭ�й��ܣ���Ҹ��İ�ʹ�ã�
         /// </summary>
         public static void OpenUserPortraitsDirectory()
         {
@@ -783,7 +769,7 @@ namespace TheSecondSeat.PersonaGeneration
             try
             {
                 Application.OpenURL("file://" + path);
-                Messages.Message($"�Ѵ��û�����Ŀ¼:\n{path}\n\n�뽫 PNG �� JPG �ļ����Ƶ���Ŀ¼", MessageTypeDefOf.NeutralEvent);
+                Messages.Message($"�Ѵ��û�����Ŀ¼:\n{path}\n\n�žؼ PNG �� JPG �ļ����Ƶ���Ŀ¼", MessageTypeDefOf.NeutralEvent);
             }
             catch (Exception ex)
             {
@@ -914,7 +900,7 @@ namespace TheSecondSeat.PersonaGeneration
                             Texture = texture  // ? Texture������ֵ
                         });
                         
-                        Log.Message($"[PortraitLoader] �ҵ�ԭ������: {storyteller}");
+                        Log.Message($"[PortraitLoader] �ڵ��Ǵ�ԭ������: {storyteller}");
                     }
                 }
             }

@@ -6,20 +6,21 @@ using Verse;
 namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
-    /// 头像加载器 - 专门用于UI按钮的小头像
-    /// 与 PortraitLoader（聊天界面全身立绘）分离
+    /// 头像加载器 - 专门用于UI按钮小头像
+    /// 与 PortraitLoader（全身立绘）区分开
+    /// ? 优化：静默回退机制，避免日志刷屏
     /// </summary>
     public static class AvatarLoader
     {
         private static Dictionary<string, Texture2D> cache = new Dictionary<string, Texture2D>();
         
-        // 头像文件路径（512x512 头部特写）
+        // 头像文件路径（512x512 头像资源）
         private const string AVATARS_PATH = "UI/Narrators/Avatars/";
         
         /// <summary>
         /// 加载头像（UI按钮专用）
-        /// ? 优化：设置高质量纹理过滤
-        /// ? 支持随机表情变体
+        /// ? 优化：静默回退，不刷屏日志
+        /// ? 支持表情变体系统
         /// </summary>
         /// <param name="def">人格定义</param>
         /// <param name="expression">表情类型</param>
@@ -28,19 +29,20 @@ namespace TheSecondSeat.PersonaGeneration
         {
             if (def == null)
             {
-                Log.Warning("[AvatarLoader] PersonaDef is null");
+                // 只在致命错误时输出
+                if (Prefs.DevMode) Log.Warning("[AvatarLoader] PersonaDef is null");
                 return GeneratePlaceholder(Color.gray);
             }
             
-            // ? 确定表情后缀（包含随机变体选择）
+            // ? 确定表情后缀（支持变体选择）
             string expressionSuffix = "";
             if (expression.HasValue && expression.Value != ExpressionType.Neutral)
             {
-                // ? 使用 ExpressionSystem 的缓存变体编号
+                // ? 使用 ExpressionSystem 的回退机制
                 expressionSuffix = ExpressionSystem.GetExpressionSuffix(def.defName, expression.Value);
             }
             
-            // 检查缓存
+            // 缓存检查
             string cacheKey = def.defName + "_avatar" + expressionSuffix;
             if (cache.TryGetValue(cacheKey, out Texture2D cached))
             {
@@ -49,21 +51,21 @@ namespace TheSecondSeat.PersonaGeneration
             
             Texture2D texture = null;
             
-            // 1. 尝试加载头像文件
+            // 1. 尝试加载表情头像文件
             string personaName = GetPersonaName(def);
             
             if (expression.HasValue && expression.Value != ExpressionType.Neutral)
             {
-                // ? 从后缀提取文件名（已经包含变体编号）
+                // ? 从后缀中获取文件名（已经包含变体号）
                 string expressionFileName = expressionSuffix.TrimStart('_').ToLower();
                 
                 string avatarPath = $"{AVATARS_PATH}{personaName}/{expressionFileName}";
                 texture = ContentFinder<Texture2D>.Get(avatarPath, false);
                 
-                if (texture != null)
+                // ? 移除成功日志，只在DevMode下输出
+                if (texture != null && Prefs.DevMode)
                 {
-                    Log.Message($"[AvatarLoader] ? 加载表情头像成功: {avatarPath}");
-                    SetTextureQualitySafe(texture);
+                    Log.Message($"[AvatarLoader] ? 加载表情头像: {avatarPath}");
                 }
             }
             
@@ -79,28 +81,33 @@ namespace TheSecondSeat.PersonaGeneration
                     
                     if (texture != null)
                     {
-                        Log.Message($"[AvatarLoader] ? 加载基础头像成功: {baseAvatarPath}");
+                        // ? 移除成功日志，只在DevMode下输出
+                        if (Prefs.DevMode)
+                        {
+                            Log.Message($"[AvatarLoader] ? 加载基础头像: {baseAvatarPath}");
+                        }
                         SetTextureQualitySafe(texture);
                         break;
                     }
                 }
             }
             
-            // 3. 降级使用立绘裁剪
+            // 3. 兜底：使用立绘裁剪
             if (texture == null)
             {
                 var portrait = PortraitLoader.LoadPortrait(def, expression);
                 if (portrait != null)
                 {
-                    Log.Message($"[AvatarLoader] 使用立绘降级裁剪头像: {def.defName}");
+                    // ? 移除日志，静默裁剪
                     texture = CropHeadFromPortraitSafe(portrait);
                 }
             }
             
-            // 4. 生成占位符
+            // 4. 最终占位符
             if (texture == null)
             {
-                Log.Warning($"[AvatarLoader] ? 所有加载方式失败，使用占位符: {def.defName}");
+                // ? 只在完全失败时输出警告
+                Log.Warning($"[AvatarLoader] ? 所有加载方式失败，使用占位符: {def.defName}{expressionSuffix}");
                 texture = GeneratePlaceholder(def.primaryColor);
             }
             
