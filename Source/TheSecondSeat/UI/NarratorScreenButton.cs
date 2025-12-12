@@ -43,6 +43,9 @@ namespace TheSecondSeat.UI
         private int portraitUpdateTick = 0;
         private const int PORTRAIT_UPDATE_INTERVAL = 30;
         
+        // ✅ v1.6.21: 上一次设置缓存（用于检测模式切换）
+        private bool lastUsePortraitMode = false;
+        
         // 拖动相关
         private bool isDragging = false;
         private Vector2 dragOffset = Vector2.zero;
@@ -727,6 +730,7 @@ namespace TheSecondSeat.UI
 
         /// <summary>
         /// ✅ 更新动态头像（支持表情系统和立绘模式）
+        /// ✅ v1.6.21: 检测设置变化，自动切换头像/立绘模式
         /// </summary>
         private void UpdatePortrait()
         {
@@ -736,6 +740,27 @@ namespace TheSecondSeat.UI
             }
             
             portraitUpdateTick = Find.TickManager.TicksGame;
+            
+            // ✅ v1.6.21: 获取设置并检测变化
+            var modSettings = LoadedModManager.GetMod<TheSecondSeatMod>()?.GetSettings<TheSecondSeatSettings>();
+            bool currentPortraitMode = modSettings?.usePortraitMode ?? false;
+            
+            // ✅ v1.6.21: 检测模式切换
+            if (currentPortraitMode != lastUsePortraitMode)
+            {
+                AvatarLoader.ClearAllCache();
+                PortraitLoader.ClearAllCache();
+                try { LayeredPortraitCompositor.ClearAllCache(); } catch { }
+                
+                lastUsePortraitMode = currentPortraitMode;
+                currentPortrait = null;
+                currentPersona = null;
+                
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[NarratorScreenButton] Portrait mode changed to: {(currentPortraitMode ? "立绘模式" : "头像模式")}");
+                }
+            }
             
             try
             {
@@ -768,15 +793,12 @@ namespace TheSecondSeat.UI
                     lastExpression = currentExpression;
                     
                     // ✅ 根据设置选择加载头像或立绘
-                    var modSettings = LoadedModManager.GetMod<TheSecondSeatMod>()?.GetSettings<TheSecondSeatSettings>();
                     if (modSettings != null && modSettings.usePortraitMode)
                     {
-                        // 立绘模式：使用 1024x1572 全身立绘
                         currentPortrait = PortraitLoader.LoadPortrait(persona, currentExpression);
                     }
                     else
                     {
-                        // 头像模式：使用 512x512 头像
                         currentPortrait = AvatarLoader.LoadAvatar(persona, currentExpression);
                     }
                 }

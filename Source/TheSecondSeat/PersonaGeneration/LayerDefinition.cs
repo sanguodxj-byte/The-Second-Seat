@@ -253,6 +253,7 @@ namespace TheSecondSeat.PersonaGeneration
         /// 创建默认分层配置
         /// ? 新逻辑：base_body.png 作为底图（包含身体+默认表情）
         /// ? 表情拆分为 eyes/mouth/flush 三个独立部件进行拼接
+        /// ? 眨眼和嘴巴动画使用通用部件，可与任何表情混搭
         /// </summary>
         public static LayeredPortraitConfig CreateDefault(string personaName)
         {
@@ -310,6 +311,7 @@ namespace TheSecondSeat.PersonaGeneration
                     },
                     
                     // ? 5. 眼睛层（表情部件2 - 必需）
+                    // 注意：眨眼动画会动态替换为 closed_eyes.png（通用部件）
                     new LayerDefinition
                     {
                         Name = "eyes",
@@ -322,6 +324,7 @@ namespace TheSecondSeat.PersonaGeneration
                     },
                     
                     // ? 6. 嘴巴层（表情部件3 - 必需）
+                    // 注意：张嘴动画会动态替换为 small_mouth.png / larger_mouth.png（通用部件）
                     new LayerDefinition
                     {
                         Name = "mouth",

@@ -281,13 +281,13 @@ namespace TheSecondSeat.Core
         {
             try
             {
-                // 记录对话（增加一次交互）
+                // 记录对话（作为一次交互）
                 var interactionMonitor = Current.Game?.GetComponent<Monitoring.PlayerInteractionMonitor>();
                 interactionMonitor?.RecordConversation(!string.IsNullOrEmpty(userMessage));
 
                 // 获取当前人格信息
                 string narratorDefName = "Cassandra_Classic";
-                string narratorName = "叙事者";
+                string narratorName = "卡桑德拉";
                 if (narratorManager != null)
                 {
                     var persona = narratorManager.GetCurrentPersona();
@@ -311,11 +311,11 @@ namespace TheSecondSeat.Core
                         "Player",
                         userMessage,
                         importance: 0.8f,
-                        tags: new List<string> { "玩家对话", "叙事者互动" }
+                        tags: new List<string> { "玩家对话", "叙述者互动" }
                     );
                 }
 
-                // 提取纯文本对话内容
+                // 获取干净的对话内容
                 string displayText = response.dialogue;
                 
                 if (string.IsNullOrEmpty(displayText))
@@ -323,13 +323,37 @@ namespace TheSecondSeat.Core
                     displayText = "[AI 正在思考...]";
                 }
                 
-                // 保存最新的对话（不含表情）
+                // 保存最新的对话（带动作）
                 lastDialogue = displayText;
                 
-                // ? 根据对话内容更新表情
+                // ? 新增：提取并应用 expression 字段
                 try
                 {
-                    PersonaGeneration.ExpressionSystem.UpdateExpressionByDialogueTone(narratorDefName, displayText);
+                    if (!string.IsNullOrEmpty(response.expression))
+                    {
+                        // 尝试解析表情类型
+                        if (System.Enum.TryParse<PersonaGeneration.ExpressionType>(response.expression, true, out var expressionType))
+                        {
+                            // 设置表情，持续 3 秒
+                            PersonaGeneration.ExpressionSystem.SetExpression(
+                                narratorDefName, 
+                                expressionType, 
+                                180,  // 3 秒 = 180 ticks
+                                "对话触发"
+                            );
+                            
+                            Log.Message($"[NarratorController] AI 表情切换: {response.expression}");
+                        }
+                        else
+                        {
+                            Log.Warning($"[NarratorController] 无效的表情类型: {response.expression}");
+                        }
+                    }
+                    else
+                    {
+                        // 如果 AI 没有提供 expression，根据对话内容自动推断
+                        PersonaGeneration.ExpressionSystem.UpdateExpressionByDialogueTone(narratorDefName, displayText);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -344,18 +368,18 @@ namespace TheSecondSeat.Core
                     "Narrator",
                     displayText,
                     importance: 0.7f,
-                    tags: new List<string> { "AI回复", "叙事者互动", narratorName }
+                    tags: new List<string> { "AI回复", "叙述者互动", narratorName }
                 );
                 
-                // 获取表情包ID（如果有）
+                // 获取表情ID（如果有）
                 string emoticonId = "";
                 if (!string.IsNullOrEmpty(response.emoticon))
                 {
                     emoticonId = response.emoticon;
-                    Log.Message($"[NarratorController] AI 使用表情包: {emoticonId}");
+                    Log.Message($"[NarratorController] AI 使用表情符: {emoticonId}");
                 }
                 
-                // 添加到聊天窗口（带表情包）
+                // 添加到聊天窗口（带表情符）
                 UI.NarratorWindow.AddAIMessage(displayText, emoticonId);
 
                 // ? 同时发送到系统消息
@@ -363,7 +387,7 @@ namespace TheSecondSeat.Core
 
                 Log.Message($"[NarratorController] AI says: {displayText}");
 
-                // ? 新增：自动播放 TTS（如果启用）
+                // ? 自动播放 TTS（根据设置）
                 AutoPlayTTS(displayText);
 
                 // 执行命令（默认执行）

@@ -10,10 +10,14 @@ namespace TheSecondSeat.LLM
     {
         public string thought { get; set; } = "";
         public string dialogue { get; set; } = "";
-        public LLMCommand? command { get; set; }
         
-        // ? 新增：表情包ID（可选）
+        // ? 新增：表情字段（推荐 AI 提供）
+        public string expression { get; set; } = "";
+        
+        // ? 表情符号ID（可选）
         public string emoticon { get; set; } = "";
+        
+        public LLMCommand? command { get; set; }
     }
 
     [Serializable]

@@ -262,6 +262,9 @@
     <portraitPathBlink>UI/Narrators/Avatars/Sideria/blink</portraitPathBlink>
     <portraitPathSpeaking>UI/Narrators/Avatars/Sideria/speaking</portraitPathSpeaking>
     
+    <!-- ✅ 启用分层立绘系统 -->
+    <useLayeredPortrait>true</useLayeredPortrait>
+    
     <primaryColor>(0.6, 0.7, 0.9, 1.0)</primaryColor>
     <accentColor>(0.4, 0.6, 0.8, 1.0)</accentColor>
     <biography>

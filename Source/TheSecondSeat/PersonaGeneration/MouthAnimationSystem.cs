@@ -82,7 +82,9 @@ namespace TheSecondSeat.PersonaGeneration
             }
             
             // 检查是否正在播放 TTS
-            bool isPlayingTTS = TTSAudioPlayer.IsPlaying(personaDefName);
+            // ? 修复：TTSAudioPlayer 没有 IsPlaying 方法，暂时禁用此功能
+            bool isPlayingTTS = false;  // TODO: 实现 TTS 播放状态检测
+            // bool isPlayingTTS = TTSAudioPlayer.IsPlaying(personaDefName);
             
             if (isPlayingTTS)
             {
@@ -159,7 +161,6 @@ namespace TheSecondSeat.PersonaGeneration
                 ExpressionType.Surprised => MouthShape.OpenWide,
                 ExpressionType.Sad => MouthShape.Frown,
                 ExpressionType.Angry => MouthShape.Closed,
-                ExpressionType.Excited => MouthShape.Smile,
                 ExpressionType.Confused => MouthShape.OpenSmall,
                 ExpressionType.Smug => MouthShape.Smile,
                 ExpressionType.Shy => MouthShape.Closed,

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 using Verse;
 using RimWorld;
@@ -9,7 +10,30 @@ using TheSecondSeat.Storyteller;
 namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
-    /// ������غ͹�����
+    /// 立绘来源枚举
+    /// </summary>
+    public enum PortraitSource
+    {
+        Vanilla,    // 原版游戏
+        ThisMod,    // 本 Mod
+        OtherMod,   // 其他 Mod
+        User        // 用户自定义
+    }
+    
+    /// <summary>
+    /// 立绘文件信息
+    /// </summary>
+    public class PortraitFileInfo
+    {
+        public string Name { get; set; }
+        public string Path { get; set; }
+        public PortraitSource Source { get; set; }
+        public Texture2D Texture { get; set; }
+        public string ModName { get; set; }
+    }
+    
+    /// <summary>
+    /// 立绘加载管理器
     /// </summary>
     public static class PortraitLoader
     {
@@ -52,7 +76,8 @@ namespace TheSecondSeat.PersonaGeneration
             }
             
             // 1. 检查缓存（包含表情后缀）
-            string cacheKey = def.defName + expressionSuffix;
+            // ✅ v1.6.21: 添加 _portrait_ 标识，避免与 AvatarLoader 缓冲区冲突
+            string cacheKey = $"{def.defName}_portrait_{expressionSuffix}";
             if (cache.TryGetValue(cacheKey, out Texture2D cached))
             {
                 return cached;
@@ -77,6 +102,7 @@ namespace TheSecondSeat.PersonaGeneration
 
         /// <summary>
         /// ✅ 加载分层立绘（新增）
+        /// ✅ v1.6.20: 从 ExpressionSystem 获取当前表情
         /// </summary>
         private static Texture2D LoadLayeredPortrait(NarratorPersonaDef def, ExpressionType? expression)
         {
@@ -90,8 +116,8 @@ namespace TheSecondSeat.PersonaGeneration
                     return GeneratePlaceholder(def.primaryColor);
                 }
                 
-                // 确定表情和服装
-                ExpressionType currentExpression = expression ?? ExpressionType.Neutral;
+                // ✅ v1.6.20: 优先从 ExpressionSystem 获取当前表情
+                ExpressionType currentExpression = expression ?? ExpressionSystem.GetExpressionState(def.defName).CurrentExpression;
                 string currentOutfit = "default";  // TODO: 从 OutfitSystem 获取
                 
                 // 生成缓存键
@@ -661,7 +687,16 @@ namespace TheSecondSeat.PersonaGeneration
         public static void ClearCache()
         {
             cache.Clear();
-            Log.Message("[PortraitLoader] ���滺�������");
+            Log.Message("[PortraitLoader] 立绘缓存已清空");
+        }
+        
+        /// <summary>
+        /// ✅ v1.6.21: 清空所有缓存（用于模式切换）
+        /// </summary>
+        public static void ClearAllCache()
+        {
+            cache.Clear();
+            Log.Message("[PortraitLoader] 所有立绘缓存已清空");
         }
         
         /// <summary>
@@ -1087,174 +1122,59 @@ namespace TheSecondSeat.PersonaGeneration
         {
             try
             {
-                // ȷ���ߴ�һ��
-                if (bottom.width != top.width || bottom.height != top.height)
+                // ȷ����
+
+                // 确保纹理尺寸一致
+                int width = Mathf.Min(bottom.width, top.width);
+                int height = Mathf.Min(bottom.height, top.height);
+                
+                Texture2D result = new Texture2D(width, height, TextureFormat.RGBA32, false);
+                
+                for (int y = 0; y < height; y++)
                 {
-                    Log.Warning($"[PortraitLoader] ����ߴ粻һ��: {bottom.width}x{bottom.height} vs {top.width}x{top.height}");
-                    return bottom;
+                    for (int x = 0; x < width; x++)
+                    {
+                        Color bottomColor = bottom.GetPixel(x, y);
+                        Color topColor = top.GetPixel(x, y);
+                        
+                        // Alpha blending
+                        Color blended = Color.Lerp(bottomColor, topColor, topColor.a);
+                        result.SetPixel(x, y, blended);
+                    }
                 }
                 
-                // �����������
-                Texture2D result = new Texture2D(bottom.width, bottom.height, TextureFormat.RGBA32, false);
-                
-                // ��ȡ��������
-                Color[] bottomPixels = MakeReadable(bottom).GetPixels();
-                Color[] topPixels = MakeReadable(top).GetPixels();
-                Color[] resultPixels = new Color[bottomPixels.Length];
-                
-                // Alpha ���
-                for (int i = 0; i < bottomPixels.Length; i++)
-                {
-                    Color bottomColor = bottomPixels[i];
-                    Color topColor = topPixels[i];
-                    
-                    // Alpha ��Ϲ�ʽ
-                    float alpha = topColor.a;
-                    resultPixels[i] = new Color(
-                        bottomColor.r * (1 - alpha) + topColor.r * alpha,
-                        bottomColor.g * (1 - alpha) + topColor.g * alpha,
-                        bottomColor.b * (1 - alpha) + topColor.b * alpha,
-                        Mathf.Max(bottomColor.a, topColor.a)
-                    );
-                }
-                
-                result.SetPixels(resultPixels);
                 result.Apply();
-                
                 return result;
             }
             catch (Exception ex)
             {
-                Log.Error($"[PortraitLoader] ����ϳ�ʧ��: {ex}");
+                Log.Error($"[PortraitLoader] 合成纹理失败: {ex}");
                 return bottom;
             }
         }
         
         /// <summary>
-        /// ������ت��Ϊ�ɶ���ʽ�������Ҫ��
-        /// </summary>
-        private static Texture2D MakeReadable(Texture2D source)
-        {
-            // ��������Ѿ��ɶ���ֱ�ӷ���
-            try
-            {
-                source.GetPixel(0, 0);
-                return source;
-            }
-            catch
-            {
-                // ��Ҫت��
-            }
-            
-            RenderTexture renderTex = RenderTexture.GetTemporary(
-                source.width, 
-                source.height, 
-                0, 
-                RenderTextureFormat.Default, 
-                RenderTextureReadWrite.Linear
-            );
-            
-            Graphics.Blit(source, renderTex);
-            RenderTexture previous = RenderTexture.active;
-            RenderTexture.active = renderTex;
-            
-            Texture2D readable = new Texture2D(source.width, source.height, TextureFormat.RGBA32, false);
-            readable.ReadPixels(new Rect(0, 0, renderTex.width, renderTex.height), 0, 0);
-            readable.Apply();
-            
-            RenderTexture.active = previous;
-            RenderTexture.ReleaseTemporary(renderTex);
-            
-            return readable;
-        }
-        
-        /// <summary>
-        /// ����ϵͳ
-        /// ? �����ؿͻ��˼Ǹù����Բ�ͬ���˷������������ͻ����
-        /// </summary>
-        public static class OutfitSystem
-        {
-            /// <summary>
-            /// ��ȡ��ǰ�˻ᷢ��·��
-            /// </summary>
-            public static string GetCurrentOutfitPath(string personaDefName)
-            {
-                try
-                {
-                    // TODO: 实现服装系统逻辑
-                    // 这里简单返回一个示例路径，实际上应该根据角色和状态动态生成
-                    return $"UI/Narrators/9x16/Outfits/{personaDefName}/outfit_example";
-                }
-                catch (Exception ex)
-                {
-                    Log.Error($"[OutfitSystem] 获取服装路径失败: {ex}");
-                    return null;
-                }
-            }
-        }
-        
-        /// <summary>
-        /// ✅ 根据 defName 获取人格文件夹名称
-        /// 例如：Sideria_Default → Sideria
+        /// 获取人格文件夹名称
         /// </summary>
         private static string GetPersonaFolderName(NarratorPersonaDef def)
         {
-            // 1. 如果 narratorName 存在且不为空，使用它（去除空格和特殊字符）
             if (!string.IsNullOrEmpty(def.narratorName))
             {
                 // 取第一个单词（如 "Cassandra Classic" → "Cassandra"）
-                string name = def.narratorName.Split(' ')[0].Trim();
-                if (!string.IsNullOrEmpty(name))
-                {
-                    return name;
-                }
+                return def.narratorName.Split(' ')[0].Trim();
             }
             
-            // 2. 否则从 defName 解析（去掉常见后缀）
             string defName = def.defName;
-            
-            // 去掉常见后缀
-            string[] suffixesToRemove = new[] { "_Default", "_Classic", "_Custom", "_Persona", "_Chillax", "_Random", "_Invader", "_Protector" };
+            string[] suffixesToRemove = new[] { "_Default", "_Classic", "_Custom", "_Persona" };
             foreach (var suffix in suffixesToRemove)
             {
-                if (defName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+                if (defName.EndsWith(suffix))
                 {
                     return defName.Substring(0, defName.Length - suffix.Length);
                 }
             }
             
-            // 3. 如果没有后缀，尝试用下划线分割取第一部分
-            if (defName.Contains("_"))
-            {
-                return defName.Split('_')[0];
-            }
-            
-            // 4. 直接返回 defName
             return defName;
         }
-    }
-    
-    /// <summary>
-    /// �����ļ���Ϣ
-    /// ? ������������Դ�����Ơ�·������ϸ��Ϣ
-    /// </summary>
-    public class PortraitFileInfo
-    {
-        public string Name { get; set; } = "";
-        public string Path { get; set; } = "";
-        public PortraitSource Source { get; set; }
-        public string ModName { get; set; } = "";
-        public Texture2D? Texture { get; set; }
-    }
-    
-    /// <summary>
-    /// ������Դ
-    /// </summary>
-    public enum PortraitSource
-    {
-        Vanilla,      // ԭ�� RimWorld
-        OtherMod,     // ���� Mod
-        ThisMod,      // �� Mod
-        User          // �û��Զ���
     }
 }

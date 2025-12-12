@@ -101,6 +101,7 @@ namespace TheSecondSeat.PersonaGeneration
         /// <summary>
         /// 设置表情（带平滑过渡）
         /// ? 自动为所有表情类型随机选择变体（1-5）
+        /// ? v1.6.20: 清除分层立绘缓存，强制重新合成
         /// </summary>
         public static void SetExpression(string personaDefName, ExpressionType expression, int durationTicks = EXPRESSION_DURATION_TICKS, string reason = "")
         {
@@ -125,6 +126,10 @@ namespace TheSecondSeat.PersonaGeneration
             // ? 清除旧表情的缓存（立即释放）
             PortraitLoader.ClearPortraitCache(personaDefName, state.CurrentExpression);
             AvatarLoader.ClearAvatarCache(personaDefName, state.CurrentExpression);
+            
+            // ? v1.6.20: 清除分层立绘缓存（强制重新合成新表情）
+            LayeredPortraitCompositor.ClearCache(personaDefName, state.CurrentExpression);
+            LayeredPortraitCompositor.ClearCache(personaDefName, expression);
             
             // ? 清除新表情的缓存，确保重新加载
             PortraitLoader.ClearPortraitCache(personaDefName, expression);

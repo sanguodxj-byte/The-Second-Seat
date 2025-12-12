@@ -43,7 +43,8 @@ namespace TheSecondSeat.PersonaGeneration
             }
             
             // 缓存检查
-            string cacheKey = def.defName + "_avatar" + expressionSuffix;
+            // ? v1.6.21: 添加 _avatar_ 标识，避免与 PortraitLoader 缓存冲突
+            string cacheKey = $"{def.defName}_avatar_{expressionSuffix}";
             if (cache.TryGetValue(cacheKey, out Texture2D cached))
             {
                 return cached;
@@ -278,6 +279,16 @@ namespace TheSecondSeat.PersonaGeneration
         public static void ClearCache()
         {
             cache.Clear();
+            Log.Message("[AvatarLoader] 头像缓存已清空");
+        }
+        
+        /// <summary>
+        /// ? v1.6.21: 清空所有缓存（用于模式切换）
+        /// </summary>
+        public static void ClearAllCache()
+        {
+            cache.Clear();
+            Log.Message("[AvatarLoader] 所有头像缓存已清空");
         }
 
         /// <summary>
