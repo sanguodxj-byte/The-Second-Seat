@@ -57,6 +57,9 @@ namespace TheSecondSeat.Settings
         // ✅ UI Button Position
         public float buttonPositionX = -1f; // -1 = use default position
         public float buttonPositionY = -1f;
+        
+        // ✅ 立绘模式设置
+        public bool usePortraitMode = false;  // 默认使用头像模式（512x512）
 
         // Debug
         public bool debugMode = false;
@@ -121,9 +124,12 @@ namespace TheSecondSeat.Settings
             Scribe_Values.Look(ref buttonPositionX, "buttonPositionX", -1f);
             Scribe_Values.Look(ref buttonPositionY, "buttonPositionY", -1f);
             
+            // ✅ 立绘模式设置
+            Scribe_Values.Look(ref usePortraitMode, "usePortraitMode", false);
+            
             // Debug
             Scribe_Values.Look(ref debugMode, "debugMode", false);
-            
+
             // ? �øж�ϵͳ
             Scribe_Values.Look(ref enableAffinitySystem, "enableAffinitySystem", true);
             
@@ -314,7 +320,7 @@ namespace TheSecondSeat.Settings
         }
 
         /// <summary>
-        /// ✅ 绘制难度模式卡片（大卡片样式）
+        /// 绘制难度模式卡片（大卡片样式）
         /// </summary>
         private void DrawDifficultyCard(Rect rect, Texture2D? icon, string title, string description, bool isSelected, Color accentColor)
         {
@@ -368,13 +374,13 @@ namespace TheSecondSeat.Settings
                 Text.Font = GameFont.Small;
             }
             
-            // 标题（图标下方居中）
+            // 标题（图标下方居中）- 修复：移除emoji
             float titleY = iconRect.yMax + 15f;
             Text.Font = GameFont.Medium;
             Text.Anchor = TextAnchor.UpperCenter;
             GUI.color = isSelected ? accentColor : Color.white;
             var titleRect = new Rect(innerRect.x, titleY, innerRect.width, 25f);
-            Widgets.Label(titleRect, title + (isSelected ? " ✓" : ""));
+            Widgets.Label(titleRect, title + (isSelected ? " [OK]" : ""));
             
             // 描述（标题下方居中）
             float descY = titleY + 28f;
@@ -390,15 +396,15 @@ namespace TheSecondSeat.Settings
             Text.Anchor = TextAnchor.UpperLeft;
         }
 
-        // ✅ 折叠区域辅助方法（已存在，保持不变）
+        // 折叠区域辅助方法（已存在，保持不变）
         private void DrawCollapsibleSection(Listing_Standard listing, string title, ref bool collapsed, Action drawContent)
         {
             var headerRect = listing.GetRect(30f);
             
-            // ���Ʊ��ⱳ��
+            // 绘制标题背景
             Widgets.DrawBoxSolid(headerRect, new Color(0.2f, 0.2f, 0.2f, 0.5f));
             
-            // ���Ƽ�ͷ�ͱ���
+            // 绘制箭头和标题
             var arrowRect = new Rect(headerRect.x + 5f, headerRect.y + 5f, 20f, 20f);
             var titleRect = new Rect(headerRect.x + 30f, headerRect.y, headerRect.width - 30f, headerRect.height);
             
@@ -406,17 +412,17 @@ namespace TheSecondSeat.Settings
             Widgets.Label(titleRect, title);
             Text.Font = GameFont.Small;
             
-            // ���Ƽ�ͷ
-            string arrow = collapsed ? "?" : "��";
+            // 绘制箭头 - 修复：使用ASCII字符
+            string arrow = collapsed ? ">" : "v";
             Widgets.Label(arrowRect, arrow);
             
-            // ����l��ί��
+            // 点击切换折叠
             if (Widgets.ButtonInvisible(headerRect))
             {
                 collapsed = !collapsed;
             }
             
-            // ���δ�５�����������
+            // 如果未折叠，绘制内容
             if (!collapsed)
             {
                 listing.Gap(8f);
@@ -472,6 +478,29 @@ namespace TheSecondSeat.Settings
                 Text.Font = GameFont.Tiny;
                 GUI.color = Color.yellow;
                 listingStandard.Label("TSS_Settings_AffinityDisabled_Warning".Translate());
+                GUI.color = Color.white;
+                Text.Font = oldFont;
+            }
+            
+            // ✅ 立绘模式设置
+            listingStandard.Gap(12f);
+            listingStandard.CheckboxLabeled("使用立绘模式（1024x1572 全身立绘）", ref settings.usePortraitMode);
+            if (settings.usePortraitMode)
+            {
+                var oldFont = Text.Font;
+                Text.Font = GameFont.Tiny;
+                GUI.color = new Color(0.6f, 0.8f, 1.0f);
+                listingStandard.Label("  启用后，AI 按钮将显示完整立绘而非头像");
+                listingStandard.Label("  立绘尺寸：1024x1572（全身）");
+                GUI.color = Color.white;
+                Text.Font = oldFont;
+            }
+            else
+            {
+                var oldFont = Text.Font;
+                Text.Font = GameFont.Tiny;
+                GUI.color = new Color(0.8f, 0.8f, 0.6f);
+                listingStandard.Label("  当前使用头像模式：512x512（脸部特写）");
                 GUI.color = Color.white;
                 Text.Font = oldFont;
             }
@@ -710,30 +739,64 @@ namespace TheSecondSeat.Settings
 
                 if (settings.enableTTS)
                 {
-                    // ✅ 只显示 Azure TTS（已移除 Edge TTS 和 Local TTS）
-                    listingStandard.Label("TTS 提供商: Azure TTS");
-                    settings.ttsProvider = "azure"; // ✅ 强制使用 Azure
+                    // ✅ 恢复所有 TTS 提供商选项
+                    listingStandard.Label("TTS 提供商");
+                    if (listingStandard.RadioButton("Azure TTS (高质量/需API Key)", settings.ttsProvider == "azure"))
+                    {
+                        settings.ttsProvider = "azure";
+                    }
+                    if (listingStandard.RadioButton("Edge TTS (免费/在线)", settings.ttsProvider == "edge"))
+                    {
+                        settings.ttsProvider = "edge";
+                    }
+                    if (listingStandard.RadioButton("本地 TTS (离线/系统语音)", settings.ttsProvider == "local"))
+                    {
+                        settings.ttsProvider = "local";
+                    }
 
                     listingStandard.Gap(12f);
 
-                    // Azure TTS 配置
-                    listingStandard.Label("Azure TTS API 密钥");
-                    settings.ttsApiKey = listingStandard.TextEntry(settings.ttsApiKey);
-                    
-                    if (string.IsNullOrEmpty(settings.ttsApiKey))
+                    if (settings.ttsProvider == "azure")
+                    {
+                        // Azure TTS 配置
+                        listingStandard.Label("Azure TTS API 密钥");
+                        settings.ttsApiKey = listingStandard.TextEntry(settings.ttsApiKey);
+                        
+                        if (string.IsNullOrEmpty(settings.ttsApiKey))
+                        {
+                            var oldFont = Text.Font;
+                            Text.Font = GameFont.Tiny;
+                            GUI.color = Color.yellow;
+                            listingStandard.Label("  请输入 Azure Speech Services API 密钥");
+                            listingStandard.Label("  获取地址: https://azure.microsoft.com/");
+                            GUI.color = Color.white;
+                            Text.Font = oldFont;
+                        }
+                        
+                        listingStandard.Gap(8f);
+                        listingStandard.Label("Azure 区域（如: eastus, westeurope）");
+                        settings.ttsRegion = listingStandard.TextEntry(settings.ttsRegion);
+                    }
+                    else if (settings.ttsProvider == "edge")
                     {
                         var oldFont = Text.Font;
                         Text.Font = GameFont.Tiny;
-                        GUI.color = Color.yellow;
-                        listingStandard.Label("  请输入 Azure Speech Services API 密钥");
-                        listingStandard.Label("  获取地址: https://azure.microsoft.com/");
+                        GUI.color = new Color(0.6f, 0.8f, 1.0f);
+                        listingStandard.Label("  Edge TTS 使用微软 Edge 浏览器的在线语音服务");
+                        listingStandard.Label("  无需 API Key，但需要网络连接");
                         GUI.color = Color.white;
                         Text.Font = oldFont;
                     }
-                    
-                    listingStandard.Gap(8f);
-                    listingStandard.Label("Azure 区域（如: eastus, westeurope）");
-                    settings.ttsRegion = listingStandard.TextEntry(settings.ttsRegion);
+                    else if (settings.ttsProvider == "local")
+                    {
+                        var oldFont = Text.Font;
+                        Text.Font = GameFont.Tiny;
+                        GUI.color = new Color(0.6f, 1.0f, 0.6f);
+                        listingStandard.Label("  使用 Windows 系统自带的 TTS 语音");
+                        listingStandard.Label("  无需网络，速度快，但音质取决于系统安装的语音包");
+                        GUI.color = Color.white;
+                        Text.Font = oldFont;
+                    }
 
                     // 语音选择
                     listingStandard.Gap(12f);
@@ -949,7 +1012,7 @@ namespace TheSecondSeat.Settings
 - ��Σ���������������
 
 ## �����ص�
-- �������Ƶ�ر�ProfessionaL����
+- �������Ƶ�ר�ProfessionaL����
 - ż��չ����Ĭ��
 - ����.enterprise ʾ����";
         }

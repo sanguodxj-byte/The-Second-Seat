@@ -255,7 +255,13 @@
     <defName>Sideria_Default</defName>
     <label>Sideria</label>
     <narratorName>Sideria</narratorName>
-    <portraitPath>UI/Narrators/9x16/Sideria/base</portraitPath>
+    
+    <!-- ✅ 立绘路径配置 - 使用现有的 Avatars 头像文件夹 -->
+    <!-- base.png = 中性表情 (512x512 头像裁剪) -->
+    <portraitPath>UI/Narrators/Avatars/Sideria/base</portraitPath>
+    <portraitPathBlink>UI/Narrators/Avatars/Sideria/blink</portraitPathBlink>
+    <portraitPathSpeaking>UI/Narrators/Avatars/Sideria/speaking</portraitPathSpeaking>
+    
     <primaryColor>(0.6, 0.7, 0.9, 1.0)</primaryColor>
     <accentColor>(0.4, 0.6, 0.8, 1.0)</accentColor>
     <biography>

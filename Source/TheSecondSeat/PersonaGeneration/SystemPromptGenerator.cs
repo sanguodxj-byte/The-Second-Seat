@@ -809,8 +809,8 @@ EXAMPLE:
             sb.AppendLine("**CRITICAL FORMATTING RULES:**");
             sb.AppendLine();
             sb.AppendLine("1. Actions in (): Use third person, NOT 我的");
-            sb.AppendLine("   ✅ CORRECT: (轻轻甩动尾巴) (银发随风飘动) (猩红的眼眸微微眯起)");
-            sb.AppendLine("   ❌ WRONG: (我的尾巴甩动) (用我的眼睛看) (我的长发飘动)");
+            sb.AppendLine("   [OK] CORRECT: (轻轻甩动尾巴) (银发随风飘动) (猩红的眼眸微微眯起)");
+            sb.AppendLine("   [X] WRONG: (我的尾巴甩动) (用我的眼睛看) (我的长发飘动)");
             sb.AppendLine();
             sb.AppendLine("2. Dialogue: Use 我 (first person)");
             sb.AppendLine();

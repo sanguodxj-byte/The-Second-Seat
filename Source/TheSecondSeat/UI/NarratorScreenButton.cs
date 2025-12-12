@@ -28,7 +28,7 @@ namespace TheSecondSeat.UI
         private static Texture2D? iconDisabled;
         
         // ✅ 按钮大小调整：64x64 → 128x128
-        private const float ButtonSize = 128f;
+        private const float ButtonSize = 128f;  // ✅ 已经是 128，无需修改
         private const float MarginFromEdge = 10f;
         private const float IndicatorSize = 16f;
         private const float IndicatorOffset = 6f;
@@ -377,7 +377,15 @@ namespace TheSecondSeat.UI
             
             if (currentIcon != null)
             {
-                GUI.DrawTexture(inRect, currentIcon, ScaleMode.ScaleToFit);
+                // ✅ 新增：如果是立绘/头像模式，应用呼吸偏移
+                Rect drawRect = inRect;
+                if (currentPortrait != null && currentPersona != null)
+                {
+                    float breathingOffset = ExpressionSystem.GetBreathingOffset(currentPersona.defName);
+                    drawRect = new Rect(inRect.x, inRect.y + breathingOffset, inRect.width, inRect.height);
+                }
+                
+                GUI.DrawTexture(drawRect, currentIcon, ScaleMode.ScaleToFit);
             }
             
             // 绘制指示灯
@@ -718,7 +726,7 @@ namespace TheSecondSeat.UI
         }
 
         /// <summary>
-        /// ✅ 更新动态头像（支持表情系统）
+        /// ✅ 更新动态头像（支持表情系统和立绘模式）
         /// </summary>
         private void UpdatePortrait()
         {
@@ -758,7 +766,19 @@ namespace TheSecondSeat.UI
                     
                     currentPersona = persona;
                     lastExpression = currentExpression;
-                    currentPortrait = AvatarLoader.LoadAvatar(persona, currentExpression);
+                    
+                    // ✅ 根据设置选择加载头像或立绘
+                    var modSettings = LoadedModManager.GetMod<TheSecondSeatMod>()?.GetSettings<TheSecondSeatSettings>();
+                    if (modSettings != null && modSettings.usePortraitMode)
+                    {
+                        // 立绘模式：使用 1024x1572 全身立绘
+                        currentPortrait = PortraitLoader.LoadPortrait(persona, currentExpression);
+                    }
+                    else
+                    {
+                        // 头像模式：使用 512x512 头像
+                        currentPortrait = AvatarLoader.LoadAvatar(persona, currentExpression);
+                    }
                 }
             }
             catch (System.Exception ex)

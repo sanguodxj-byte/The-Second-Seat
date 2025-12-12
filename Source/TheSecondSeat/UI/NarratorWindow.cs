@@ -18,6 +18,7 @@ namespace TheSecondSeat.UI
     public class NarratorWindow : Window
     {
         private string userInput = "";
+
         private Vector2 chatScrollPosition = Vector2.zero;
         private NarratorController? controller;
         private NarratorManager? manager;
@@ -260,6 +261,7 @@ namespace TheSecondSeat.UI
         /// 绘制紧凑版人格卡片
         /// ? 立绘占据全部空间，名字缩小到底部
         /// ? 新增：支持动态表情更新
+        /// ? 新增：支持呼吸动画效果
         /// </summary>
         private void DrawPersonaCardCompact(Listing_Standard listing, PersonaGeneration.NarratorPersonaDef persona, float height)
         {
@@ -276,6 +278,16 @@ namespace TheSecondSeat.UI
             // ? 立绘区域（占据几乎全部空间，底部留 20px 给名字）
             var portraitRect = new Rect(innerRect.x, innerRect.y, innerRect.width, innerRect.height - 22f);
             
+            // ? 应用呼吸动画偏移
+            // ? 使用 ExpressionSystem.GetBreathingOffset 获取偏移量
+            float breathingOffset = ExpressionSystem.GetBreathingOffset(persona.defName);
+            
+            // ? 更新高级呼吸动画过渡（如果使用了高级系统）
+            // 注意：这里我们假设每帧调用，deltaTime 约为 1/60 秒
+            ExpressionSystem_WithBreathing.UpdateBreathingTransition(persona.defName, 0.016f);
+            
+            portraitRect.y += breathingOffset;
+            
             // ? 使用缓存的头像或重新加载
             if (currentPortrait != null)
             {
@@ -287,7 +299,8 @@ namespace TheSecondSeat.UI
             }
             
             // ? 名字区域（底部，缩小字体）
-            var nameRect = new Rect(innerRect.x, portraitRect.yMax + 2f, innerRect.width, 18f);
+            // 注意：名字不应该随呼吸浮动，保持固定位置
+            var nameRect = new Rect(innerRect.x, innerRect.yMax - 20f, innerRect.width, 18f);
             
             Text.Font = GameFont.Tiny; // ? 缩小字体
             Text.Anchor = TextAnchor.MiddleCenter;

@@ -8,7 +8,7 @@ using Verse;
 namespace TheSecondSeat.TTS
 {
     /// <summary>
-    /// TTS 音频播放器（Unity AudioSource）
+    /// TTS 音频播放器（基于 Unity AudioSource）
     /// 使用 MonoBehaviour 在 Unity 内部播放音频
     /// </summary>
     public class TTSAudioPlayer : MonoBehaviour
@@ -16,7 +16,7 @@ namespace TheSecondSeat.TTS
         private static TTSAudioPlayer? instance;
         
         /// <summary>
-        /// 单例访问
+        /// 单例实例
         /// </summary>
         public static TTSAudioPlayer Instance
         {
@@ -24,7 +24,7 @@ namespace TheSecondSeat.TTS
             {
                 if (instance == null)
                 {
-                    // 在主线程创建 GameObject
+                    // 主线程创建 GameObject
                     var go = new GameObject("TTSAudioPlayer");
                     instance = go.AddComponent<TTSAudioPlayer>();
                     DontDestroyOnLoad(go); // 持久化
@@ -40,11 +40,14 @@ namespace TheSecondSeat.TTS
         /// 从字节数组播放音频
         /// 必须在主线程调用
         /// </summary>
-        public void PlayFromBytes(byte[] audioData)
+        /// <param name="audioData">音频数据</param>
+        /// <param name="onComplete">播放完成回调（可选）</param>
+        public void PlayFromBytes(byte[] audioData, Action? onComplete = null)
         {
             if (audioData == null || audioData.Length == 0)
             {
                 Log.Warning("[TTSAudioPlayer] Audio data is empty");
+                onComplete?.Invoke();  // ? 失败时也要调用回调
                 return;
             }
 
@@ -56,15 +59,17 @@ namespace TheSecondSeat.TTS
                 if (string.IsNullOrEmpty(tempFilePath))
                 {
                     Log.Error("[TTSAudioPlayer] Failed to save temp file");
+                    onComplete?.Invoke();  // ? 失败时也要调用回调
                     return;
                 }
 
                 // 2. 使用协程加载和播放
-                StartCoroutine(LoadAndPlayCoroutine(tempFilePath));
+                StartCoroutine(LoadAndPlayCoroutine(tempFilePath, onComplete));
             }
             catch (Exception ex)
             {
                 Log.Error($"[TTSAudioPlayer] Error: {ex.Message}");
+                onComplete?.Invoke();  // ? 异常时也要调用回调
             }
         }
 
@@ -90,10 +95,11 @@ namespace TheSecondSeat.TTS
         /// <summary>
         /// 协程：使用 UnityWebRequest 加载音频并播放
         /// </summary>
-        private IEnumerator LoadAndPlayCoroutine(string filePath)
+        private IEnumerator LoadAndPlayCoroutine(string filePath, Action? onComplete = null)
         {
             // 1. 使用 UnityWebRequestMultimedia 加载 WAV 文件
-            string fileUri = "file://" + filePath;
+            // ? 修复：确保路径使用正斜杠，避免 file:// 协议在某些平台上解析失败
+            string fileUri = "file://" + filePath.Replace("\\", "/");
             
             using (UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip(fileUri, AudioType.WAV))
             {
@@ -106,6 +112,7 @@ namespace TheSecondSeat.TTS
                 if (www.result != UnityWebRequest.Result.Success)
                 {
                     Log.Error($"[TTSAudioPlayer] Failed to load audio: {www.error}");
+                    onComplete?.Invoke();  // ? 失败时调用回调
                     yield break;
                 }
 
@@ -115,6 +122,7 @@ namespace TheSecondSeat.TTS
                 if (clip == null)
                 {
                     Log.Error("[TTSAudioPlayer] AudioClip is null");
+                    onComplete?.Invoke();  // ? 失败时调用回调
                     yield break;
                 }
 
@@ -141,6 +149,9 @@ namespace TheSecondSeat.TTS
                 currentAudioSource = null;
                 
                 Log.Message("[TTSAudioPlayer] Playback finished");
+
+                // ? 播放完成，调用回调
+                onComplete?.Invoke();
 
                 // 6. 删除临时文件
                 try
@@ -170,7 +181,7 @@ namespace TheSecondSeat.TTS
         }
 
         /// <summary>
-        /// 组件销毁时清理
+        /// 销毁时清理
         /// </summary>
         private void OnDestroy()
         {

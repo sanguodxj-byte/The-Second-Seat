@@ -23,6 +23,59 @@ namespace TheSecondSeat.PersonaGeneration
         public bool useCustomPortrait = false;
         public string customPortraitPath = "";
         
+        // ✅ 动画系统纹理路径
+        public string portraitPathBlink = "";      // 闭眼纹理路径
+        public string portraitPathSpeaking = "";   // 张嘴纹理路径
+        
+        // ✅ 分层立绘系统配置
+        public bool useLayeredPortrait = false;    // 是否使用分层立绘系统
+        public string layeredConfigPath = "";      // 分层配置文件路径（可选）
+        
+        // 运行时分层配置缓存（不从XML加载）
+        [Unsaved]
+        private LayeredPortraitConfig cachedLayeredConfig;
+        
+        /// <summary>
+        /// 获取或创建分层立绘配置
+        /// </summary>
+        public LayeredPortraitConfig GetLayeredConfig()
+        {
+            if (!useLayeredPortrait)
+            {
+                return null;
+            }
+            
+            if (cachedLayeredConfig == null)
+            {
+                // 如果指定了配置文件路径，尝试加载
+                if (!string.IsNullOrEmpty(layeredConfigPath))
+                {
+                    // TODO: 从文件加载配置（未来版本）
+                    Log.Warning($"[NarratorPersonaDef] Layered config loading from file not implemented yet: {layeredConfigPath}");
+                }
+                
+                // 否则创建默认配置
+                cachedLayeredConfig = LayeredPortraitConfig.CreateDefault(defName);
+                
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[NarratorPersonaDef] Created default layered config for {defName}");
+                    Log.Message(cachedLayeredConfig.GetDebugInfo());
+                }
+            }
+            
+            return cachedLayeredConfig;
+        }
+        
+        /// <summary>
+        /// 设置自定义分层配置
+        /// </summary>
+        public void SetLayeredConfig(LayeredPortraitConfig config)
+        {
+            cachedLayeredConfig = config;
+            useLayeredPortrait = true;
+        }
+        
         // === 颜色主题 ===
         public Color primaryColor = Color.white;
         public Color accentColor = Color.gray;

@@ -27,7 +27,8 @@ namespace TheSecondSeat.PersonaGeneration
         /// ✅ 支持表情叠加合成模式
         /// ✅ 支持表情文件夹新结构
         /// ✅ 支持服装叠加系统
-        /// ✅ 支持自动裁剪合成（兼容性降级
+        /// ✅ 支持自动裁剪合成（兼容性降级）
+        /// ✅ 新增：支持分层立绘系统
         /// </summary>
         public static Texture2D LoadPortrait(NarratorPersonaDef def, ExpressionType? expression = null)
         {
@@ -35,6 +36,12 @@ namespace TheSecondSeat.PersonaGeneration
             {
                 Log.Warning("[PortraitLoader] PersonaDef is null");
                 return GeneratePlaceholder(Color.gray);
+            }
+            
+            // ✅ 新增：如果启用了分层立绘系统，使用分层合成
+            if (def.useLayeredPortrait)
+            {
+                return LoadLayeredPortrait(def, expression);
             }
             
             // 确定表情后缀
@@ -66,6 +73,64 @@ namespace TheSecondSeat.PersonaGeneration
             // 缓存
             cache[cacheKey] = texture;
             return texture;
+        }
+
+        /// <summary>
+        /// ✅ 加载分层立绘（新增）
+        /// </summary>
+        private static Texture2D LoadLayeredPortrait(NarratorPersonaDef def, ExpressionType? expression)
+        {
+            try
+            {
+                // 获取分层配置
+                var config = def.GetLayeredConfig();
+                if (config == null)
+                {
+                    Log.Warning($"[PortraitLoader] Layered config is null for {def.defName}");
+                    return GeneratePlaceholder(def.primaryColor);
+                }
+                
+                // 确定表情和服装
+                ExpressionType currentExpression = expression ?? ExpressionType.Neutral;
+                string currentOutfit = "default";  // TODO: 从 OutfitSystem 获取
+                
+                // 生成缓存键
+                string cacheKey = $"{def.defName}_layered_{currentExpression}_{currentOutfit}";
+                
+                // 检查缓存
+                if (cache.TryGetValue(cacheKey, out Texture2D cached))
+                {
+                    return cached;
+                }
+                
+                // 使用 LayeredPortraitCompositor 合成
+                Texture2D composite = LayeredPortraitCompositor.CompositeLayers(
+                    config, 
+                    currentExpression, 
+                    currentOutfit
+                );
+                
+                if (composite == null)
+                {
+                    Log.Error($"[PortraitLoader] Layered composite failed for {def.defName}");
+                    return GeneratePlaceholder(def.primaryColor);
+                }
+                
+                // 缓存结果
+                cache[cacheKey] = composite;
+                
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[PortraitLoader] ✅ Layered portrait loaded: {def.defName} ({currentExpression}, {currentOutfit})");
+                }
+                
+                return composite;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[PortraitLoader] Layered portrait loading failed: {ex}");
+                return GeneratePlaceholder(def.primaryColor);
+            }
         }
         
         /// <summary>
@@ -467,7 +532,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ���ɸĽ���ռλ������ - ��������˸��ʶ
+        /// ���ɸĽ���ռλ����� - ��������˸��ʶ
         /// ? �ò�ͬ�˸��ռλ������������
         /// </summary>
         private static Texture2D GeneratePlaceholder(Color color)

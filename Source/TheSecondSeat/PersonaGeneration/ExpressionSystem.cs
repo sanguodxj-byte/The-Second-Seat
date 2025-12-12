@@ -69,12 +69,22 @@ namespace TheSecondSeat.PersonaGeneration
     public static class ExpressionSystem
     {
         private static Dictionary<string, ExpressionState> expressionStates = new Dictionary<string, ExpressionState>();
+        private static Dictionary<string, BreathingState> breathingStates = new Dictionary<string, BreathingState>(); // ? 新增：呼吸动画状态
         
         // 表情过渡持续时间（游戏tick）
         private const int TRANSITION_DURATION_TICKS = 30; // 约0.5秒
         
         // ? 表情持续时间（游戏tick）- 30秒
         private const int EXPRESSION_DURATION_TICKS = 1800;
+        
+        // ? 新增：呼吸动画状态类
+        private class BreathingState
+        {
+            public float phase;        // 当前相位（弧度）
+            public float speed;        // 呼吸速度
+            public float amplitude;    // 呼吸振幅（像素）
+            public long lastUpdateTime; // 上次更新时间（毫秒）
+        }
         
         /// <summary>
         /// 获取人格的当前表情状态
@@ -137,6 +147,9 @@ namespace TheSecondSeat.PersonaGeneration
             state.TransitionProgress = 0f;
             state.TransitionTicks = 0;
             state.ExpressionStartTick = Find.TickManager.TicksGame;
+            
+            // ? 新增：根据新表情调整呼吸速度
+            AdjustBreathingByEmotion(personaDefName, expression);
             
             if (Prefs.DevMode)
             {
@@ -564,8 +577,8 @@ namespace TheSecondSeat.PersonaGeneration
                 ExpressionType.Thoughtful,
                 ExpressionType.Annoyed,
                 ExpressionType.Playful,
-                ExpressionType.Shy,          // ? 新增
-                ExpressionType.Confused      // ? 疑惑
+                ExpressionType.Shy,          // 新增
+                ExpressionType.Confused      // 新增疑惑
             };
             
             var state = GetExpressionState(personaDefName);
@@ -576,6 +589,123 @@ namespace TheSecondSeat.PersonaGeneration
             SetExpression(personaDefName, nextExpression, ExpressionTrigger.Manual);
             
             Messages.Message($"[测试] 表情切换: {state.CurrentExpression} → {nextExpression}", MessageTypeDefOf.NeutralEvent);
+        }
+        
+        /// <summary>
+        /// ? 获取呼吸动画偏移（完整版本）
+        /// 基于正弦波实现平滑的呼吸动画效果
+        /// </summary>
+        public static float GetBreathingOffset(string personaDefName)
+        {
+            // 初始化呼吸状态
+            if (!breathingStates.ContainsKey(personaDefName))
+            {
+                breathingStates[personaDefName] = new BreathingState
+                {
+                    phase = UnityEngine.Random.Range(0f, Mathf.PI * 2f),     // 随机初始相位
+                    speed = UnityEngine.Random.Range(0.4f, 0.6f),            // 呼吸速度：0.4-0.6 秒/周期
+                    amplitude = UnityEngine.Random.Range(1.5f, 2.5f),        // 振幅：1.5-2.5 像素
+                    lastUpdateTime = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond
+                };
+            }
+            
+            var state = breathingStates[personaDefName];
+            
+            // 计算时间增量（秒）
+            long currentTime = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+            float deltaTime = (currentTime - state.lastUpdateTime) / 1000f;
+            state.lastUpdateTime = currentTime;
+            
+            // 更新相位
+            state.phase += deltaTime * state.speed;
+            
+            // 相位归一化（保持在0-2π范围内）
+            if (state.phase > Mathf.PI * 2f)
+            {
+                state.phase -= Mathf.PI * 2f;
+            }
+            
+            // 计算呼吸偏移（正弦波）
+            float offset = Mathf.Sin(state.phase) * state.amplitude;
+            
+            return offset;
+        }
+        
+        /// <summary>
+        /// ? 根据情绪调整呼吸速度
+        /// 不同情绪有不同的呼吸模式
+        /// </summary>
+        public static void AdjustBreathingByEmotion(string personaDefName, ExpressionType emotion)
+        {
+            if (!breathingStates.ContainsKey(personaDefName))
+            {
+                // 如果不存在，先调用一次 GetBreathingOffset 来初始化
+                GetBreathingOffset(personaDefName);
+            }
+            
+            var state = breathingStates[personaDefName];
+            
+            // 根据情绪设置不同的呼吸参数
+            switch (emotion)
+            {
+                case ExpressionType.Happy:
+                case ExpressionType.Playful:
+                    // 开心时呼吸轻快
+                    state.speed = UnityEngine.Random.Range(0.6f, 0.8f);
+                    state.amplitude = UnityEngine.Random.Range(2.0f, 3.0f);
+                    break;
+                    
+                case ExpressionType.Worried:
+                    // 担心时呼吸急促
+                    state.speed = UnityEngine.Random.Range(0.8f, 1.2f);
+                    state.amplitude = UnityEngine.Random.Range(2.5f, 3.5f);
+                    break;
+                    
+                case ExpressionType.Sad:
+                case ExpressionType.Disappointed:
+                    // 悲伤时呼吸缓慢
+                    state.speed = UnityEngine.Random.Range(0.3f, 0.4f);
+                    state.amplitude = UnityEngine.Random.Range(1.0f, 1.5f);
+                    break;
+                    
+                case ExpressionType.Angry:
+                case ExpressionType.Annoyed:
+                    // 生气时呼吸急促且剧烈
+                    state.speed = UnityEngine.Random.Range(1.0f, 1.5f);
+                    state.amplitude = UnityEngine.Random.Range(3.0f, 4.0f);
+                    break;
+                    
+                case ExpressionType.Thoughtful:
+                    // 思考时呼吸平稳
+                    state.speed = UnityEngine.Random.Range(0.4f, 0.5f);
+                    state.amplitude = UnityEngine.Random.Range(1.5f, 2.0f);
+                    break;
+                    
+                default:
+                    // 中性/其他情绪，恢复默认
+                    state.speed = UnityEngine.Random.Range(0.4f, 0.6f);
+                    state.amplitude = UnityEngine.Random.Range(1.5f, 2.5f);
+                    break;
+            }
+        }
+        
+        /// <summary>
+        /// ? 清除呼吸状态（用于重置或清理）
+        /// </summary>
+        public static void ClearBreathingState(string personaDefName)
+        {
+            if (breathingStates.ContainsKey(personaDefName))
+            {
+                breathingStates.Remove(personaDefName);
+            }
+        }
+        
+        /// <summary>
+        /// ? 清除所有呼吸状态
+        /// </summary>
+        public static void ClearAllBreathingStates()
+        {
+            breathingStates.Clear();
         }
     }
 }
