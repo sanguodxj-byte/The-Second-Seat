@@ -700,9 +700,10 @@ namespace TheSecondSeat.UI
                 }
             }
             
-            // ✅ v1.6.29: 眨眼和张嘴动画系统是基于查询的（query-based），
-            // 通过 LayeredPortraitCompositor 调用 GetBlinkLayerName() 和 GetMouthLayerName() 时自动更新
-            // 因此不需要在这里手动调用 Update()
+            // ✅ v1.6.36: 每帧更新张嘴动画系统（TTS口型同步）
+            // 注意：眨眼动画通过 GetBlinkLayerName() 自动工作，不需要Update()
+            float deltaTime = Time.deltaTime;
+            MouthAnimationSystem.Update(deltaTime);  // ✅ 关键修复：调用张嘴动画更新
             
             // ✅ v1.6.24: 管理全身立绘面板的显示/隐藏
             ManageFullBodyPortraitPanel();

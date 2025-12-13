@@ -598,6 +598,11 @@ namespace TheSecondSeat.UI
             {
                 this.Close();
             }
+            
+            // ? v1.6.36: 每帧更新张嘴动画系统（TTS口型同步）
+            // 注意：眨眼动画通过 GetBlinkLayerName() 自动工作，不需要Update()
+            float deltaTime = Time.deltaTime;
+            MouthAnimationSystem.Update(deltaTime);  // ? 关键修复：调用张嘴动画更新
         }
     }
 }
