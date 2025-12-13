@@ -10,32 +10,31 @@ namespace TheSecondSeat.PersonaGeneration
     /// 张嘴动画系统 - 为分层立绘提供说话时的嘴巴开合效果
     /// ? 支持 TTS 播放同步
     /// ? 支持表情关联（不同表情有不同嘴型）
-    /// ? v1.6.31: 三态随机切换（opened_mouth, medium_mouth, small_mouth）
+    /// ? v1.6.33: 修复口型命名 - 闭嘴状态不渲染嘴巴层（使用base_body）
     /// </summary>
     public static class MouthAnimationSystem
     {
         private static Dictionary<string, MouthState> mouthStates = new Dictionary<string, MouthState>();
         
         // 张嘴参数
-        private const float MOUTH_SWITCH_INTERVAL = 0.15f; // ? 缩短到0.15秒，更自然
+        private const float MOUTH_SWITCH_INTERVAL = 0.15f;
         
-        // ? v1.6.31: 三个说话嘴型
+        // ? v1.6.33: 三个说话嘴型（不包括闭嘴状态）
         private static readonly string[] SPEAKING_MOUTHS = new string[]
         {
-            "opened_mouth",   // 闭嘴/微张
-            "medium_mouth",   // 中等张开（新增）
-            "small_mouth"     // 小张嘴
+            "small_mouth",    // 小张嘴
+            "medium_mouth",   // 中等张嘴
+            "larger_mouth"    // 大张嘴
         };
         
         /// <summary>
         /// 嘴巴状态数据
-        /// ? v1.6.31: 支持三态随机切换
         /// </summary>
         private class MouthState
         {
-            public bool isSpeaking;                 // 是否正在说话
-            public float lastSwitchTime;            // 上次切换时间
-            public int currentMouthIndex;           // ? 当前嘴型索引（0-2）
+            public bool isSpeaking;
+            public float lastSwitchTime;
+            public int currentMouthIndex;
             public ExpressionType currentExpression;
         }
         
@@ -60,10 +59,10 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// 获取嘴巴层名称（根据表情和开合程度返回对应的嘴型）
-        /// ? v1.6.31: 三态随机切换 - 每0.15秒在3个嘴型之间随机切换
+        /// ? v1.6.33: 闭嘴状态返回null（使用base_body），说话时返回嘴型层
         /// </summary>
         /// <param name="personaDefName">人格 DefName</param>
-        /// <returns>嘴巴层名称（opened_mouth, medium_mouth, small_mouth, 或表情对应的嘴型）</returns>
+        /// <returns>嘴巴层名称（说话时），或null（闭嘴时）</returns>
         public static string GetMouthLayerName(string personaDefName)
         {
             var state = GetOrCreateState(personaDefName);
@@ -75,7 +74,7 @@ namespace TheSecondSeat.PersonaGeneration
                 state.currentExpression = expressionState.CurrentExpression;
             }
             
-            // ? v1.6.30: 检查是否正在播放 TTS（口型同步系统已集成）
+            // 检查是否正在播放 TTS
             bool isPlayingTTS = TTS.TTSAudioPlayer.IsSpeaking(personaDefName);
             
             if (isPlayingTTS)
@@ -86,10 +85,9 @@ namespace TheSecondSeat.PersonaGeneration
                 float currentTime = Time.realtimeSinceStartup;
                 float elapsed = currentTime - state.lastSwitchTime;
                 
-                // 每 0.15 秒切换
                 if (elapsed >= MOUTH_SWITCH_INTERVAL)
                 {
-                    // ? 随机选择下一个嘴型（避免连续重复）
+                    // 随机选择下一个嘴型（避免连续重复）
                     int nextIndex;
                     do
                     {
@@ -119,25 +117,25 @@ namespace TheSecondSeat.PersonaGeneration
                     state.currentMouthIndex = 0;
                 }
                 
-                // 根据表情返回对应的嘴型
+                // 根据表情返回对应的嘴型（或null表示闭嘴）
                 return GetMouthShapeForExpression(state.currentExpression);
             }
         }
         
         /// <summary>
         /// 根据表情获取嘴型层名称
-        /// ? v1.6.30: 简化版 - 直接返回 LayeredPortraitCompositor 使用的名称
+        /// ? v1.6.33: 闭嘴状态返回null，特殊表情返回对应嘴型
         /// </summary>
         private static string GetMouthShapeForExpression(ExpressionType expression)
         {
             return expression switch
             {
-                ExpressionType.Happy => "larger_mouth",      // 开心用大嘴
+                ExpressionType.Happy => "happy_mouth",       // 开心微笑
                 ExpressionType.Surprised => "larger_mouth",  // 惊讶张大嘴
-                ExpressionType.Sad => "sad_mouth",
-                ExpressionType.Angry => "angry_mouth",
-                ExpressionType.Smug => "small1_mouth",       // 得意用小嘴变体
-                _ => "opened_mouth"                          // 默认闭嘴
+                ExpressionType.Sad => "sad_mouth",           // 悲伤嘴型
+                ExpressionType.Angry => "angry_mouth",       // 愤怒嘴型
+                ExpressionType.Smug => null,                 // 得意微笑（使用base_body）
+                _ => null                                    // 默认闭嘴（使用base_body）
             };
         }
         
