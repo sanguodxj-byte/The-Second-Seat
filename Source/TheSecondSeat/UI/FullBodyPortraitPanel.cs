@@ -103,17 +103,17 @@ namespace TheSecondSeat.UI
             // ? v1.6.25: 处理触摸互动
             HandleHoverAndTouch(inRect);
             
-            // 更新立绘
+            // 更新人格信息
             UpdatePortrait();
             
-            if (currentPortrait != null && currentPersona != null)
+            if (currentPersona != null)
             {
                 // ? 应用呼吸动画偏移
                 float breathingOffset = ExpressionSystem.GetBreathingOffset(currentPersona.defName);
                 Rect drawRect = new Rect(inRect.x, inRect.y + breathingOffset, inRect.width, inRect.height);
                 
-                // 绘制立绘（保持纵横比，填充满）
-                GUI.DrawTexture(drawRect, currentPortrait, ScaleMode.ScaleToFit);
+                // ? v1.6.34: 运行时分层绘制（每帧重新组合）
+                DrawLayeredPortraitRuntime(drawRect, currentPersona);
             }
             else
             {
@@ -166,6 +166,75 @@ namespace TheSecondSeat.UI
             
             // ? 绘制边框闪烁效果
             DrawBorderFlash(inRect);
+        }
+        
+        /// <summary>
+        /// ? v1.6.34: 运行时分层绘制立绘（支持眨眼和张嘴动画）
+        /// </summary>
+        private void DrawLayeredPortraitRuntime(Rect rect, NarratorPersonaDef persona)
+        {
+            if (!persona.useLayeredPortrait)
+            {
+                // 非分层立绘模式，使用静态立绘
+                var staticPortrait = PortraitLoader.LoadPortrait(persona, ExpressionSystem.GetExpressionState(persona.defName).CurrentExpression);
+                if (staticPortrait != null)
+                {
+                    GUI.DrawTexture(rect, staticPortrait, ScaleMode.ScaleToFit);
+                }
+                else
+                {
+                    Widgets.DrawBoxSolid(rect, persona.primaryColor);
+                }
+                return;
+            }
+            
+            // ? 分层立绘模式：每帧获取当前应该显示的图层
+            
+            // 1. 绘制基础身体层（始终显示）
+            var baseBody = PortraitLoader.GetLayerTexture(persona, "base_body");
+            if (baseBody == null)
+            {
+                // 回退到占位符
+                Widgets.DrawBoxSolid(rect, persona.primaryColor);
+                return;
+            }
+            GUI.DrawTexture(rect, baseBody, ScaleMode.ScaleToFit);
+            
+            // 2. ? 获取当前眼睛层（调用眨眼动画系统）
+            string eyeLayerName = BlinkAnimationSystem.GetEyeLayerName(persona.defName);
+            if (!string.IsNullOrEmpty(eyeLayerName))
+            {
+                var eyeTexture = PortraitLoader.GetLayerTexture(persona, eyeLayerName);
+                if (eyeTexture != null)
+                {
+                    GUI.DrawTexture(rect, eyeTexture, ScaleMode.ScaleToFit);
+                }
+            }
+            
+            // 3. ? 获取当前嘴巴层（调用张嘴动画系统）
+            string mouthLayerName = MouthAnimationSystem.GetMouthLayerName(persona.defName);
+            if (!string.IsNullOrEmpty(mouthLayerName))
+            {
+                var mouthTexture = PortraitLoader.GetLayerTexture(persona, mouthLayerName);
+                if (mouthTexture != null)
+                {
+                    GUI.DrawTexture(rect, mouthTexture, ScaleMode.ScaleToFit);
+                }
+            }
+            
+            // 4. 可选：腮红/特效层
+            var expressionState = ExpressionSystem.GetExpressionState(persona.defName);
+            if (expressionState.CurrentExpression == ExpressionType.Shy || 
+                expressionState.CurrentExpression == ExpressionType.Angry)
+            {
+                string flushLayerName = expressionState.CurrentExpression == ExpressionType.Shy ? 
+                    "flush_shy" : "flush_angry";
+                var flushTexture = PortraitLoader.GetLayerTexture(persona, flushLayerName);
+                if (flushTexture != null)
+                {
+                    GUI.DrawTexture(rect, flushTexture, ScaleMode.ScaleToFit);
+                }
+            }
         }
 
         /// <summary>
@@ -480,132 +549,46 @@ namespace TheSecondSeat.UI
         }
 
         /// <summary>
-        /// ? 更新立绘（强制使用分层系统）
+        /// ? 更新立绘（运行时分层绘制）
         /// </summary>
         private void UpdatePortrait()
         {
-            if (Find.TickManager.TicksGame - portraitUpdateTick < PORTRAIT_UPDATE_INTERVAL)
-            {
-                return;
-            }
-            
-            portraitUpdateTick = Find.TickManager.TicksGame;
-            
+            // ? 不再缓存立绘纹理，改为每帧运行时绘制
+            // 只更新人格信息
             try
             {
                 var manager = Current.Game?.GetComponent<NarratorManager>();
                 if (manager == null)
                 {
-                    currentPortrait = null;
+                    currentPersona = null;
                     return;
                 }
                 
                 var persona = manager.GetCurrentPersona();
                 if (persona == null)
                 {
-                    currentPortrait = null;
+                    currentPersona = null;
                     return;
                 }
                 
-                var expressionState = ExpressionSystem.GetExpressionState(persona.defName);
-                ExpressionType currentExpression = expressionState.CurrentExpression;
+                currentPersona = persona;
                 
-                if (persona != currentPersona || currentExpression != lastExpression)
+                // ? 跟踪表情变化（用于DevMode日志）
+                var expressionState = ExpressionSystem.GetExpressionState(persona.defName);
+                if (expressionState.CurrentExpression != lastExpression)
                 {
-                    if (currentPersona != null && lastExpression != currentExpression)
+                    lastExpression = expressionState.CurrentExpression;
+                    if (Prefs.DevMode)
                     {
-                        LayeredPortraitCompositor.ClearCache(currentPersona.defName, lastExpression);
+                        Log.Message($"[FullBodyPortraitPanel] 表情变化: {lastExpression}");
                     }
-                    
-                    currentPersona = persona;
-                    lastExpression = currentExpression;
-                    
-                    currentPortrait = LoadLayeredPortrait(persona, currentExpression);
                 }
             }
             catch (System.Exception ex)
             {
                 Log.Warning($"[FullBodyPortraitPanel] 更新立绘失败: {ex.Message}");
-                currentPortrait = null;
+                currentPersona = null;
             }
-        }
-
-        /// <summary>
-        /// ? 加载分层立绘（强制使用分层系统）
-        /// </summary>
-        private Texture2D LoadLayeredPortrait(NarratorPersonaDef persona, ExpressionType expression)
-        {
-            try
-            {
-                if (!persona.useLayeredPortrait)
-                {
-                    persona.useLayeredPortrait = true;
-                    
-                    if (Prefs.DevMode)
-                    {
-                        Log.Message($"[FullBodyPortraitPanel] 强制启用分层立绘系统: {persona.defName}");
-                    }
-                }
-                
-                var config = persona.GetLayeredConfig();
-                if (config == null)
-                {
-                    Log.Warning($"[FullBodyPortraitPanel] Layered config is null for {persona.defName}");
-                    return GeneratePlaceholder(persona.primaryColor);
-                }
-                
-                Texture2D composite = LayeredPortraitCompositor.CompositeLayers(
-                    config, 
-                    expression, 
-                    "default"
-                );
-                
-                if (composite == null)
-                {
-                    Log.Error($"[FullBodyPortraitPanel] Layered composite failed for {persona.defName}");
-                    return GeneratePlaceholder(persona.primaryColor);
-                }
-                
-                if (Prefs.DevMode)
-                {
-                    Log.Message($"[FullBodyPortraitPanel] ? Layered portrait loaded: {persona.defName} ({expression})");
-                }
-                
-                return composite;
-            }
-            catch (System.Exception ex)
-            {
-                Log.Error($"[FullBodyPortraitPanel] Layered portrait loading failed: {ex}");
-                return GeneratePlaceholder(persona.primaryColor);
-            }
-        }
-
-        /// <summary>
-        /// ? 生成占位符纹理
-        /// </summary>
-        private Texture2D GeneratePlaceholder(Color color)
-        {
-            int width = (int)PORTRAIT_WIDTH;
-            int height = (int)PORTRAIT_HEIGHT;
-            
-            Texture2D texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
-            
-            Color darkColor = color * 0.3f;
-            Color lightColor = color * 0.8f;
-            
-            for (int y = 0; y < height; y++)
-            {
-                float t = y / (float)height;
-                Color gradientColor = Color.Lerp(darkColor, lightColor, t);
-                
-                for (int x = 0; x < width; x++)
-                {
-                    texture.SetPixel(x, y, gradientColor);
-                }
-            }
-            
-            texture.Apply();
-            return texture;
         }
 
         public override void WindowUpdate()

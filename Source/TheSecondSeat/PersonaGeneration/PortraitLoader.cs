@@ -40,11 +40,8 @@ namespace TheSecondSeat.PersonaGeneration
     {
         private static Dictionary<string, Texture2D> cache = new Dictionary<string, Texture2D>();
         
-        // ? ��������·��
-        private const string BASE_PATH_9x16 = "UI/Narrators/9x16/";
-        
-        // ? �����ļ�·����������
-        private const string EXPRESSIONS_PATH = "UI/Narrators/9x16/Expressions/";
+        private const string BASE_PATH_9x16 = "UI/Narrators/9x16";
+        private const string EXPRESSIONS_PATH = "UI/Narrators/9x16/Expressions";
         
         /// <summary>
         /// 加载立绘（支持 Mod资源、外部文件、占位符）
@@ -1171,6 +1168,89 @@ namespace TheSecondSeat.PersonaGeneration
             }
             
             return defName;
+        }
+        
+        /// <summary>
+        /// ✅ v1.6.34: 获取单个图层纹理（用于运行时分层绘制）
+        /// </summary>
+        /// <param name="def">人格定义</param>
+        /// <param name="layerName">图层名称（如 "base_body", "happy_eyes", "small_mouth"）</param>
+        /// <returns>图层纹理，如果未找到则返回null</returns>
+        public static Texture2D GetLayerTexture(NarratorPersonaDef def, string layerName)
+        {
+            if (def == null || string.IsNullOrEmpty(layerName))
+            {
+                return null;
+            }
+            
+            // 1. 生成缓存键
+            string personaName = GetPersonaFolderName(def);
+            string cacheKey = $"{personaName}_layer_{layerName}";
+            
+            // 2. 检查缓存
+            if (cache.TryGetValue(cacheKey, out Texture2D cachedTexture))
+            {
+                return cachedTexture;
+            }
+            
+            // 3. 构建图层路径
+            string layerPath = $"UI/Narrators/9x16/Layered/{personaName}/{layerName}";
+            
+            // 4. 加载纹理
+            Texture2D texture = ContentFinder<Texture2D>.Get(layerPath, false);
+            
+            if (texture != null)
+            {
+                // 设置纹理过滤模式为双线性（更平滑）
+                texture.filterMode = FilterMode.Bilinear;
+                texture.anisoLevel = 4; // 各向异性过滤（提升斜角质量）
+                
+                // 缓存纹理
+                cache[cacheKey] = texture;
+                
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[PortraitLoader] Loaded layer: {layerPath} ({texture.width}x{texture.height})");
+                }
+            }
+            else if (Prefs.DevMode)
+            {
+                Log.Warning($"[PortraitLoader] Layer not found: {layerPath}");
+            }
+            
+            return texture;
+        }
+        
+        /// <summary>
+        /// ✅ v1.6.34: 批量获取多个图层纹理
+        /// </summary>
+        /// <param name="def">人格定义</param>
+        /// <param name="layerNames">图层名称列表</param>
+        /// <returns>图层名称→纹理的字典</returns>
+        public static Dictionary<string, Texture2D> GetLayerTextures(NarratorPersonaDef def, params string[] layerNames)
+        {
+            var result = new Dictionary<string, Texture2D>();
+            
+            foreach (var layerName in layerNames)
+            {
+                var texture = GetLayerTexture(def, layerName);
+                if (texture != null)
+                {
+                    result[layerName] = texture;
+                }
+            }
+            
+            return result;
+        }
+        
+        /// <summary>
+        /// ✅ v1.6.34: 清除特定图层的缓存
+        /// </summary>
+        public static void ClearLayerCache(NarratorPersonaDef def, string layerName)
+        {
+            string personaName = GetPersonaFolderName(def);
+            string cacheKey = $"{personaName}_layer_{layerName}";
+            cache.Remove(cacheKey);
         }
     }
 }

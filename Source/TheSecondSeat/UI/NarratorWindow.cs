@@ -259,9 +259,7 @@ namespace TheSecondSeat.UI
 
         /// <summary>
         /// 绘制紧凑版人格卡片
-        /// ? 立绘占据全部空间，名字缩小到底部
-        /// ? 新增：支持动态表情更新
-        /// ? 新增：支持呼吸动画效果
+        /// ? v1.6.34: 使用运行时分层绘制，支持眨眼和张嘴动画
         /// </summary>
         private void DrawPersonaCardCompact(Listing_Standard listing, PersonaGeneration.NarratorPersonaDef persona, float height)
         {
@@ -272,37 +270,24 @@ namespace TheSecondSeat.UI
             
             var innerRect = cardRect.ContractedBy(6f);
             
-            // ? 更新动态头像
-            UpdatePortraitIfNeeded(persona);
-            
-            // ? 立绘区域（占据几乎全部空间，底部留 20px 给名字）
+            // ? v1.6.34: 立绘区域（占据几乎全部空间，底部留 20px 给名字）
             var portraitRect = new Rect(innerRect.x, innerRect.y, innerRect.width, innerRect.height - 22f);
             
             // ? 应用呼吸动画偏移
-            // ? 使用 ExpressionSystem.GetBreathingOffset 获取偏移量
             float breathingOffset = ExpressionSystem.GetBreathingOffset(persona.defName);
             
-            // ? 更新高级呼吸动画过渡（如果使用了高级系统）
-            // 注意：这里我们假设每帧调用，deltaTime 约为 1/60 秒
+            // ? 更新高级呼吸动画过渡
             ExpressionSystem_WithBreathing.UpdateBreathingTransition(persona.defName, 0.016f);
             
             portraitRect.y += breathingOffset;
             
-            // ? 使用缓存的头像或重新加载
-            if (currentPortrait != null)
-            {
-                GUI.DrawTexture(portraitRect, currentPortrait, ScaleMode.ScaleToFit);
-            }
-            else
-            {
-                Widgets.DrawBoxSolid(portraitRect, persona.primaryColor);
-            }
+            // ? v1.6.34: 运行时分层绘制（每帧重新组合）
+            DrawLayeredPortraitRuntime(portraitRect, persona);
             
-            // ? 名字区域（底部，缩小字体）
-            // 注意：名字不应该随呼吸浮动，保持固定位置
+            // 名字区域（底部，缩小字体）
             var nameRect = new Rect(innerRect.x, innerRect.yMax - 20f, innerRect.width, 18f);
             
-            Text.Font = GameFont.Tiny; // ? 缩小字体
+            Text.Font = GameFont.Tiny;
             Text.Anchor = TextAnchor.MiddleCenter;
             GUI.color = AccentCyan;
             Widgets.Label(nameRect, persona.narratorName);
@@ -312,45 +297,72 @@ namespace TheSecondSeat.UI
         }
         
         /// <summary>
-        /// ? 更新头像（如果表情变化）
+        /// ? v1.6.34: 运行时分层绘制立绘（支持眨眼和张嘴动画）
         /// </summary>
-        private void UpdatePortraitIfNeeded(PersonaGeneration.NarratorPersonaDef persona)
+        private void DrawLayeredPortraitRuntime(Rect rect, PersonaGeneration.NarratorPersonaDef persona)
         {
-            // 每 30 ticks 检查一次
-            if (Find.TickManager.TicksGame - portraitUpdateTick < PORTRAIT_UPDATE_INTERVAL)
+            if (!persona.useLayeredPortrait)
             {
+                // 非分层立绘模式，使用原来的缓存方式
+                // ? 回退：使用静态立绘加载
+                var staticPortrait = PortraitLoader.LoadPortrait(persona, ExpressionSystem.GetExpressionState(persona.defName).CurrentExpression);
+                if (staticPortrait != null)
+                {
+                    GUI.DrawTexture(rect, staticPortrait, ScaleMode.ScaleToFit);
+                }
+                else
+                {
+                    Widgets.DrawBoxSolid(rect, persona.primaryColor);
+                }
                 return;
             }
             
-            portraitUpdateTick = Find.TickManager.TicksGame;
+            // ? 分层立绘模式：每帧获取当前应该显示的图层
             
-            try
+            // 1. 绘制基础身体层（始终显示）
+            var baseBody = PortraitLoader.GetLayerTexture(persona, "base_body");
+            if (baseBody == null)
             {
-                // 获取当前表情
-                var expressionState = PersonaGeneration.ExpressionSystem.GetExpressionState(persona.defName);
-                ExpressionType currentExpression = expressionState.CurrentExpression;
-                
-                // 如果表情变化，重新加载
-                if (currentExpression != lastExpression)
+                // 回退到占位符
+                Widgets.DrawBoxSolid(rect, persona.primaryColor);
+                return;
+            }
+            GUI.DrawTexture(rect, baseBody, ScaleMode.ScaleToFit);
+            
+            // 2. ? 获取当前眼睛层（调用眨眼动画系统）
+            string eyeLayerName = BlinkAnimationSystem.GetEyeLayerName(persona.defName);
+            if (!string.IsNullOrEmpty(eyeLayerName))
+            {
+                var eyeTexture = PortraitLoader.GetLayerTexture(persona, eyeLayerName);
+                if (eyeTexture != null)
                 {
-                    Log.Message($"[NarratorWindow] 表情变化: {lastExpression} → {currentExpression}");
-                    
-                    // 清除缓存
-                    PersonaGeneration.PortraitLoader.ClearCache();
-                    
-                    // 重新加载
-                    currentPortrait = PersonaGeneration.PortraitLoader.LoadPortrait(persona, currentExpression);
-                    lastExpression = currentExpression;
-                    
-                    if (currentPortrait != null)
-                    {
-                        Log.Message($"[NarratorWindow] ? 头像已更新: {persona.narratorName} ({currentExpression}), 哈希: {currentPortrait.GetHashCode()}");
-                    }
+                    GUI.DrawTexture(rect, eyeTexture, ScaleMode.ScaleToFit);
                 }
             }
-            catch (System.Exception ex)
+            
+            // 3. ? 获取当前嘴巴层（调用张嘴动画系统）
+            string mouthLayerName = MouthAnimationSystem.GetMouthLayerName(persona.defName);
+            if (!string.IsNullOrEmpty(mouthLayerName))
             {
-                Log.Warning($"[NarratorWindow] 更新头像失败: {ex.Message}");
+                var mouthTexture = PortraitLoader.GetLayerTexture(persona, mouthLayerName);
+                if (mouthTexture != null)
+                {
+                    GUI.DrawTexture(rect, mouthTexture, ScaleMode.ScaleToFit);
+                }
+            }
+            
+            // 4. 可选：腮红/特效层
+            var expressionState = ExpressionSystem.GetExpressionState(persona.defName);
+            if (expressionState.CurrentExpression == ExpressionType.Shy || 
+                expressionState.CurrentExpression == ExpressionType.Angry)
+            {
+                string flushLayerName = expressionState.CurrentExpression == ExpressionType.Shy ? 
+                    "flush_shy" : "flush_angry";
+                var flushTexture = PortraitLoader.GetLayerTexture(persona, flushLayerName);
+                if (flushTexture != null)
+                {
+                    GUI.DrawTexture(rect, flushTexture, ScaleMode.ScaleToFit);
+                }
             }
         }
 
