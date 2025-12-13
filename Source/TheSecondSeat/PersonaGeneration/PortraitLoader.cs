@@ -528,6 +528,11 @@ namespace TheSecondSeat.PersonaGeneration
                 texture.filterMode = FilterMode.Bilinear;
                 texture.anisoLevel = 4;
                 
+                // ? [核心修复] 2. 循环模式设为 Clamp (钳制)
+                // 这行代码是消除边缘黑线/杂色的关键！
+                // 它告诉 GPU：不要去采样对面的像素，边缘是什么就是什么。
+                texture.wrapMode = TextureWrapMode.Clamp;
+                
                 // 注意：不调用 texture.Apply()，因为 ContentFinder 加载的纹理是只读的
                 // Apply 会触发 "Texture not readable" 错误
             }
@@ -1203,7 +1208,12 @@ namespace TheSecondSeat.PersonaGeneration
             {
                 // 设置纹理过滤模式为双线性（更平滑）
                 texture.filterMode = FilterMode.Bilinear;
-                texture.anisoLevel = 4; // 各向异性过滤（提升斜角质量）
+                texture.anisoLevel = 4;
+                
+                // ? [核心修复] 2. 循环模式设为 Clamp (钳制)
+                // 这行代码是消除边缘黑线/杂色的关键！
+                // 它告诉 GPU：不要去采样对面的像素，边缘是什么就是什么。
+                texture.wrapMode = TextureWrapMode.Clamp; // 各向异性过滤（提升斜角质量）
                 
                 // 缓存纹理
                 cache[cacheKey] = texture;
