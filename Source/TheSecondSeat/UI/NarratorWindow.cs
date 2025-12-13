@@ -298,32 +298,22 @@ namespace TheSecondSeat.UI
         
         /// <summary>
         /// ? v1.6.34: 运行时分层绘制立绘（支持眨眼和张嘴动画）
+        /// ? v1.6.35: 修复路径错误，确保使用分层立绘系统
         /// </summary>
         private void DrawLayeredPortraitRuntime(Rect rect, PersonaGeneration.NarratorPersonaDef persona)
         {
-            if (!persona.useLayeredPortrait)
-            {
-                // 非分层立绘模式，使用原来的缓存方式
-                // ? 回退：使用静态立绘加载
-                var staticPortrait = PortraitLoader.LoadPortrait(persona, ExpressionSystem.GetExpressionState(persona.defName).CurrentExpression);
-                if (staticPortrait != null)
-                {
-                    GUI.DrawTexture(rect, staticPortrait, ScaleMode.ScaleToFit);
-                }
-                else
-                {
-                    Widgets.DrawBoxSolid(rect, persona.primaryColor);
-                }
-                return;
-            }
-            
-            // ? 分层立绘模式：每帧获取当前应该显示的图层
+            // ? v1.6.35: 移除useLayeredPortrait检查，强制使用分层系统
+            // 原因：所有立绘文件已部署在 Layered/Sideria/ 文件夹下
             
             // 1. 绘制基础身体层（始终显示）
             var baseBody = PortraitLoader.GetLayerTexture(persona, "base_body");
             if (baseBody == null)
             {
                 // 回退到占位符
+                if (Prefs.DevMode)
+                {
+                    Log.Warning($"[NarratorWindow] base_body not found for {persona.defName}");
+                }
                 Widgets.DrawBoxSolid(rect, persona.primaryColor);
                 return;
             }
@@ -338,6 +328,10 @@ namespace TheSecondSeat.UI
                 {
                     GUI.DrawTexture(rect, eyeTexture, ScaleMode.ScaleToFit);
                 }
+                else if (Prefs.DevMode)
+                {
+                    Log.Warning($"[NarratorWindow] Eye layer '{eyeLayerName}' not found for {persona.defName}");
+                }
             }
             
             // 3. ? 获取当前嘴巴层（调用张嘴动画系统）
@@ -348,6 +342,10 @@ namespace TheSecondSeat.UI
                 if (mouthTexture != null)
                 {
                     GUI.DrawTexture(rect, mouthTexture, ScaleMode.ScaleToFit);
+                }
+                else if (Prefs.DevMode)
+                {
+                    Log.Warning($"[NarratorWindow] Mouth layer '{mouthLayerName}' not found for {persona.defName}");
                 }
             }
             
