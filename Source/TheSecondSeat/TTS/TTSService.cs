@@ -67,8 +67,12 @@ namespace TheSecondSeat.TTS
 
         /// <summary>
         /// 将文本转换为语音并保存为文件
+        /// ? v1.6.30: 添加 personaDefName 参数，用于口型同步追踪
         /// </summary>
-        public async Task<string?> SpeakAsync(string text)
+        /// <param name="text">要转换的文本</param>
+        /// <param name="personaDefName">人格 DefName（用于状态追踪，可选）</param>
+        /// <returns>生成的音频文件路径，失败则返回 null</returns>
+        public async Task<string?> SpeakAsync(string text, string personaDefName = "")
         {
             if (string.IsNullOrWhiteSpace(text))
             {
@@ -120,10 +124,11 @@ namespace TheSecondSeat.TTS
                 File.WriteAllBytes(filePath, audioData);
                 Log.Message($"[TTSService] Audio saved to: {filePath}");
 
-                // ? 在主线程自动打开音频播放器
+                // ? 在主线程自动打开音频播放器（传递 personaDefName）
+                string capturedPersonaDefName = personaDefName;  // 捕获变量用于闭包
                 Verse.LongEventHandler.ExecuteWhenFinished(() => 
                 {
-                    AutoPlayAudioFile(filePath);
+                    AutoPlayAudioFile(filePath, capturedPersonaDefName);
                 });
 
                 return filePath;
@@ -190,8 +195,9 @@ namespace TheSecondSeat.TTS
 
         /// <summary>
         /// 自动打开音频播放器播放文件
+        /// ? v1.6.30: 添加 personaDefName 参数，用于口型同步追踪
         /// </summary>
-        private void AutoPlayAudioFile(string filePath)
+        private void AutoPlayAudioFile(string filePath, string personaDefName = "")
         {
             try
             {
@@ -215,8 +221,8 @@ namespace TheSecondSeat.TTS
                 // ? 播放前：设置正在说话状态
                 IsSpeaking = true;
                 
-                // ? 使用 Unity AudioSource 播放
-                TTSAudioPlayer.Instance.PlayFromBytes(audioData, () => {
+                // ? v1.6.30: 使用 Unity AudioSource 播放，并传递 personaDefName
+                TTSAudioPlayer.Instance.PlayFromBytes(audioData, personaDefName, () => {
                     // ? 播放结束：清除正在说话状态
                     IsSpeaking = false;
                     Log.Message("[TTSService] Audio playback finished");

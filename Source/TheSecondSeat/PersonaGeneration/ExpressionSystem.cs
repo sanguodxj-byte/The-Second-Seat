@@ -102,6 +102,7 @@ namespace TheSecondSeat.PersonaGeneration
         /// 设置表情（带平滑过渡）
         /// ? 自动为所有表情类型随机选择变体（1-5）
         /// ? v1.6.20: 清除分层立绘缓存，强制重新合成
+        /// ? v1.6.30: 应用感情驱动动画
         /// </summary>
         public static void SetExpression(string personaDefName, ExpressionType expression, int durationTicks = EXPRESSION_DURATION_TICKS, string reason = "")
         {
@@ -153,8 +154,8 @@ namespace TheSecondSeat.PersonaGeneration
             state.TransitionTicks = 0;
             state.ExpressionStartTick = Find.TickManager.TicksGame;
             
-            // ? 新增：根据新表情调整呼吸速度
-            AdjustBreathingByEmotion(personaDefName, expression);
+            // ? v1.6.30: 应用感情驱动动画（自动调整眨眼、呼吸等）
+            ApplyEmotionDrivenAnimation(personaDefName);
             
             if (Prefs.DevMode)
             {
@@ -711,6 +712,124 @@ namespace TheSecondSeat.PersonaGeneration
         public static void ClearAllBreathingStates()
         {
             breathingStates.Clear();
+        }
+        
+        /// <summary>
+        /// ? v1.6.30: 感情动画参数
+        /// </summary>
+        public class EmotionAnimationParams
+        {
+            public float BlinkIntervalMin { get; }
+            public float BlinkIntervalMax { get; }
+            public float BreathingSpeed { get; }
+            public float BreathingAmplitude { get; }
+            public string DefaultMouthShape { get; }
+            
+            public EmotionAnimationParams(
+                float blinkIntervalMin, 
+                float blinkIntervalMax,
+                float breathingSpeed,
+                float breathingAmplitude,
+                string defaultMouthShape)
+            {
+                BlinkIntervalMin = blinkIntervalMin;
+                BlinkIntervalMax = blinkIntervalMax;
+                BreathingSpeed = breathingSpeed;
+                BreathingAmplitude = breathingAmplitude;
+                DefaultMouthShape = defaultMouthShape;
+            }
+        }
+        
+        // ? v1.6.30: 感情驱动动画参数配置
+        private static readonly Dictionary<ExpressionType, EmotionAnimationParams> emotionAnimationParams = new Dictionary<ExpressionType, EmotionAnimationParams>
+        {
+            // 中性：正常动画
+            { ExpressionType.Neutral, new EmotionAnimationParams(
+                blinkIntervalMin: 3.0f, blinkIntervalMax: 6.0f,
+                breathingSpeed: 1.0f, breathingAmplitude: 1.0f,
+                defaultMouthShape: "opened_mouth"
+            )},
+            
+            // 开心：眨眼正常，呼吸轻快，微笑
+            { ExpressionType.Happy, new EmotionAnimationParams(
+                blinkIntervalMin: 2.5f, blinkIntervalMax: 5.0f,
+                breathingSpeed: 1.2f, breathingAmplitude: 0.8f,
+                defaultMouthShape: "larger_mouth"
+            )},
+            
+            // 惊讶：眨眼频繁，呼吸加快，微张嘴
+            { ExpressionType.Surprised, new EmotionAnimationParams(
+                blinkIntervalMin: 1.5f, blinkIntervalMax: 3.0f,
+                breathingSpeed: 1.5f, breathingAmplitude: 1.2f,
+                defaultMouthShape: "larger_mouth"
+            )},
+            
+            // 悲伤：眨眼缓慢，呼吸深沉，嘴角下垂
+            { ExpressionType.Sad, new EmotionAnimationParams(
+                blinkIntervalMin: 4.0f, blinkIntervalMax: 7.0f,
+                breathingSpeed: 0.7f, breathingAmplitude: 1.3f,
+                defaultMouthShape: "sad_mouth"
+            )},
+            
+            // 愤怒：眨眼慢，呼吸急促，紧闭嘴巴
+            { ExpressionType.Angry, new EmotionAnimationParams(
+                blinkIntervalMin: 4.0f, blinkIntervalMax: 8.0f,
+                breathingSpeed: 1.3f, breathingAmplitude: 1.1f,
+                defaultMouthShape: "angry_mouth"
+            )},
+            
+            // 疑惑：眨眼正常，呼吸正常，微张嘴
+            { ExpressionType.Confused, new EmotionAnimationParams(
+                blinkIntervalMin: 2.0f, blinkIntervalMax: 4.0f,
+                breathingSpeed: 1.0f, breathingAmplitude: 1.0f,
+                defaultMouthShape: "small_mouth"
+            )},
+            
+            // 得意：眨眼慢，呼吸轻快，微笑
+            { ExpressionType.Smug, new EmotionAnimationParams(
+                blinkIntervalMin: 3.5f, blinkIntervalMax: 6.5f,
+                breathingSpeed: 0.9f, breathingAmplitude: 0.9f,
+                defaultMouthShape: "small1_mouth"
+            )},
+            
+            // 害羞：眨眼频繁，呼吸加快，闭嘴
+            { ExpressionType.Shy, new EmotionAnimationParams(
+                blinkIntervalMin: 2.0f, blinkIntervalMax: 4.0f,
+                breathingSpeed: 1.1f, breathingAmplitude: 0.9f,
+                defaultMouthShape: "opened_mouth"
+            )},
+        };
+        
+        /// <summary>
+        /// ? v1.6.30: 获取感情动画参数
+        /// </summary>
+        /// <param name="expression">表情类型</param>
+        /// <returns>动画参数</returns>
+        public static EmotionAnimationParams GetEmotionAnimationParams(ExpressionType expression)
+        {
+            if (emotionAnimationParams.TryGetValue(expression, out var params_))
+            {
+                return params_;
+            }
+            
+            // 默认参数（中性）
+            return emotionAnimationParams[ExpressionType.Neutral];
+        }
+        
+        /// <summary>
+        /// ? v1.6.30: 应用感情驱动动画（自动调整所有动画参数）
+        /// </summary>
+        /// <param name="personaDefName">人格 DefName</param>
+        public static void ApplyEmotionDrivenAnimation(string personaDefName)
+        {
+            var state = GetExpressionState(personaDefName);
+            var animParams = GetEmotionAnimationParams(state.CurrentExpression);
+            
+            // 1. 调整眨眼频率
+            BlinkAnimationSystem.SetBlinkInterval(personaDefName, animParams.BlinkIntervalMin, animParams.BlinkIntervalMax);
+            
+            // 2. 调整呼吸动画
+            AdjustBreathingByEmotion(personaDefName, state.CurrentExpression);
         }
     }
 }

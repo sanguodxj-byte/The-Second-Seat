@@ -34,6 +34,7 @@ namespace TheSecondSeat.PersonaGeneration
     
     /// <summary>
     /// 立绘加载管理器
+    /// ✅ v1.6.27: 消除未找到立绘时的报错日志
     /// </summary>
     public static class PortraitLoader
     {
@@ -47,22 +48,22 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// 加载立绘（支持 Mod资源、外部文件、占位符）
-        /// ✅ 支持动态表情切换
-        /// ✅ 支持表情叠加合成模式
-        /// ✅ 支持表情文件夹新结构
-        /// ✅ 支持服装叠加系统
-        /// ✅ 支持自动裁剪合成（兼容性降级）
-        /// ✅ 新增：支持分层立绘系统
+        /// ✅ 消除未找到立绘时的报错日志
+        /// ✅ v1.6.28: 分层立绘直接调用LayeredPortraitCompositor，不单独缓存
         /// </summary>
         public static Texture2D LoadPortrait(NarratorPersonaDef def, ExpressionType? expression = null)
         {
             if (def == null)
             {
-                Log.Warning("[PortraitLoader] PersonaDef is null");
+                if (Prefs.DevMode)
+                {
+                    Log.Warning("[PortraitLoader] PersonaDef is null");
+                }
                 return GeneratePlaceholder(Color.gray);
             }
             
-            // ✅ 新增：如果启用了分层立绘系统，使用分层合成
+            // ✅ 新增：如果启用了分层立绘系统，直接调用LayeredPortraitCompositor
+            // LayeredPortraitCompositor 内部有完整的预加载和缓存机制
             if (def.useLayeredPortrait)
             {
                 return LoadLayeredPortrait(def, expression);
@@ -76,7 +77,6 @@ namespace TheSecondSeat.PersonaGeneration
             }
             
             // 1. 检查缓存（包含表情后缀）
-            // ✅ v1.6.21: 添加 _portrait_ 标识，避免与 AvatarLoader 缓冲区冲突
             string cacheKey = $"{def.defName}_portrait_{expressionSuffix}";
             if (cache.TryGetValue(cacheKey, out Texture2D cached))
             {
@@ -85,13 +85,17 @@ namespace TheSecondSeat.PersonaGeneration
             
             Texture2D texture = null;
             
-            // 2. ✅ 修复：使用统一的加载方法，避免重复加载
+            // 2. ✅ 修复：使用统一的加载方法，静默处理失败
             texture = LoadExpressionOrBase(def, expression);
             
             // 3. 如果还是没有，生成占位符
             if (texture == null)
             {
-                Log.Warning($"[PortraitLoader] ✖ 所有加载方式失败，使用占位符: {def.defName}{expressionSuffix}");
+                // ✅ 只在DevMode下输出警告
+                if (Prefs.DevMode)
+                {
+                    Log.Warning($"[PortraitLoader] Portrait not found for {def.defName}{expressionSuffix}, using placeholder");
+                }
                 texture = GeneratePlaceholder(def.primaryColor);
             }
             
@@ -102,7 +106,8 @@ namespace TheSecondSeat.PersonaGeneration
 
         /// <summary>
         /// ✅ 加载分层立绘（新增）
-        /// ✅ v1.6.20: 从 ExpressionSystem 获取当前表情
+        /// ✅ v1.6.27: 静默处理失败，完全移除成功日志
+        /// ✅ v1.6.28: 修复缓存键不一致问题，复用LayeredPortraitCompositor的缓存
         /// </summary>
         private static Texture2D LoadLayeredPortrait(NarratorPersonaDef def, ExpressionType? expression)
         {
@@ -112,24 +117,19 @@ namespace TheSecondSeat.PersonaGeneration
                 var config = def.GetLayeredConfig();
                 if (config == null)
                 {
-                    Log.Warning($"[PortraitLoader] Layered config is null for {def.defName}");
+                    if (Prefs.DevMode)
+                    {
+                        Log.Warning($"[PortraitLoader] Layered config is null for {def.defName}");
+                    }
                     return GeneratePlaceholder(def.primaryColor);
                 }
                 
                 // ✅ v1.6.20: 优先从 ExpressionSystem 获取当前表情
                 ExpressionType currentExpression = expression ?? ExpressionSystem.GetExpressionState(def.defName).CurrentExpression;
-                string currentOutfit = "default";  // TODO: 从 OutfitSystem 获取
+                string currentOutfit = "default";
                 
-                // 生成缓存键
-                string cacheKey = $"{def.defName}_layered_{currentExpression}_{currentOutfit}";
-                
-                // 检查缓存
-                if (cache.TryGetValue(cacheKey, out Texture2D cached))
-                {
-                    return cached;
-                }
-                
-                // 使用 LayeredPortraitCompositor 合成
+                // ✅ v1.6.28: 不再在PortraitLoader中维护缓存，直接调用LayeredPortraitCompositor
+                // LayeredPortraitCompositor内部已经有完整的缓存机制
                 Texture2D composite = LayeredPortraitCompositor.CompositeLayers(
                     config, 
                     currentExpression, 
@@ -138,23 +138,25 @@ namespace TheSecondSeat.PersonaGeneration
                 
                 if (composite == null)
                 {
-                    Log.Error($"[PortraitLoader] Layered composite failed for {def.defName}");
+                    // ✅ 只在DevMode下输出错误
+                    if (Prefs.DevMode)
+                    {
+                        Log.Error($"[PortraitLoader] Layered composite failed for {def.defName}");
+                    }
                     return GeneratePlaceholder(def.primaryColor);
                 }
                 
-                // 缓存结果
-                cache[cacheKey] = composite;
-                
-                if (Prefs.DevMode)
-                {
-                    Log.Message($"[PortraitLoader] ✅ Layered portrait loaded: {def.defName} ({currentExpression}, {currentOutfit})");
-                }
+                // ✅ v1.6.27: 完全移除成功日志，避免连续输出
                 
                 return composite;
             }
             catch (Exception ex)
             {
-                Log.Error($"[PortraitLoader] Layered portrait loading failed: {ex}");
+                // ✅ 只在DevMode下输出异常
+                if (Prefs.DevMode)
+                {
+                    Log.Error($"[PortraitLoader] Layered portrait loading failed: {ex}");
+                }
                 return GeneratePlaceholder(def.primaryColor);
             }
         }
@@ -354,22 +356,11 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// 加载基础立绘（无表情）
-        /// ✅ 从人格文件夹的 base.png 加载
-        /// ✅ 优化：只在 DevMode 和完全失败时输出日志
+        /// ✅ v1.6.27: 静默处理失败，只在DevMode下输出
         /// </summary>
         private static Texture2D LoadBasePortrait(NarratorPersonaDef def)
         {
             string personaName = GetPersonaFolderName(def);
-            
-            // ✅ 只在 DevMode 下显示详细诊断日志
-            if (Prefs.DevMode)
-            {
-                Log.Message($"[PortraitLoader] ========== 立绘加载诊断 ==========");
-                Log.Message($"[PortraitLoader] defName: {def.defName}");
-                Log.Message($"[PortraitLoader] narratorName: {def.narratorName}");
-                Log.Message($"[PortraitLoader] portraitPath: {def.portraitPath}");
-                Log.Message($"[PortraitLoader] 解析的文件夹名: {personaName}");
-            }
             
             // ✅ 尝试路径1：9x16文件夹的 base.png
             string basePath = $"{BASE_PATH_9x16}{personaName}/base";
@@ -377,7 +368,6 @@ namespace TheSecondSeat.PersonaGeneration
             
             if (texture != null)
             {
-                if (Prefs.DevMode) Log.Message($"[PortraitLoader] ✓ 路径1成功: {basePath}");
                 SetTextureQuality(texture);
                 return texture;
             }
@@ -387,7 +377,6 @@ namespace TheSecondSeat.PersonaGeneration
             texture = ContentFinder<Texture2D>.Get(path2, false);
             if (texture != null)
             {
-                if (Prefs.DevMode) Log.Message($"[PortraitLoader] ✓ 路径2成功: {path2}");
                 SetTextureQuality(texture);
                 return texture;
             }
@@ -398,7 +387,6 @@ namespace TheSecondSeat.PersonaGeneration
                 texture = ContentFinder<Texture2D>.Get(def.portraitPath, false);
                 if (texture != null)
                 {
-                    if (Prefs.DevMode) Log.Message($"[PortraitLoader] ✓ 路径3成功: {def.portraitPath}");
                     SetTextureQuality(texture);
                     return texture;
                 }
@@ -410,7 +398,6 @@ namespace TheSecondSeat.PersonaGeneration
                 texture = LoadFromExternalFile(def.customPortraitPath);
                 if (texture != null)
                 {
-                    if (Prefs.DevMode) Log.Message($"[PortraitLoader] ✓ 路径4成功 (customPortraitPath)");
                     return texture;
                 }
             }
@@ -420,23 +407,20 @@ namespace TheSecondSeat.PersonaGeneration
             texture = ContentFinder<Texture2D>.Get(heroArtPath, false);
             if (texture != null)
             {
-                if (Prefs.DevMode) Log.Message($"[PortraitLoader] ✓ 路径5成功: {heroArtPath}");
                 SetTextureQuality(texture);
                 return texture;
             }
             
-            // ✅ 所有路径都失败，只在完全失败时输出简短警告
-            Log.Warning($"[PortraitLoader] 立绘加载失败: {personaName}（已尝试所有路径）");
-            
-            // ✅ 详细路径列表只在 DevMode 下输出
+            // ✅ 所有路径都失败，只在DevMode下输出警告
             if (Prefs.DevMode)
             {
-                Log.Warning($"[PortraitLoader] 请确保以下路径之一存在纹理文件:");
-                Log.Warning($"[PortraitLoader]   - Textures/{basePath}.png");
-                Log.Warning($"[PortraitLoader]   - Textures/{path2}.png");
+                Log.Warning($"[PortraitLoader] Portrait not found for {personaName}");
+                Log.Warning($"[PortraitLoader] Tried paths:");
+                Log.Warning($"  - Textures/{basePath}.png");
+                Log.Warning($"  - Textures/{path2}.png");
                 if (!string.IsNullOrEmpty(def.portraitPath))
-                    Log.Warning($"[PortraitLoader]   - Textures/{def.portraitPath}.png");
-                Log.Warning($"[PortraitLoader]   - Textures/{heroArtPath}.png");
+                    Log.Warning($"  - Textures/{def.portraitPath}.png");
+                Log.Warning($"  - Textures/{heroArtPath}.png");
             }
             
             return null;
@@ -471,6 +455,7 @@ namespace TheSecondSeat.PersonaGeneration
         /// <summary>
         /// ���ⲿ�ļ���������
         /// ? ֧���ļ�·����ContentFinder·��
+        /// ✅ v1.6.27: 静默处理文件不存在的情况
         /// </summary>
         public static Texture2D? LoadFromExternalFile(string filePath)
         {
@@ -496,7 +481,11 @@ namespace TheSecondSeat.PersonaGeneration
                 // 否则作为文件路径处理
                 if (!File.Exists(filePath))
                 {
-                    Log.Warning($"[PortraitLoader] 文件不存在: {filePath}");
+                    // ✅ 只在DevMode下输出警告
+                    if (Prefs.DevMode)
+                    {
+                        Log.Warning($"[PortraitLoader] 文件不存在: {filePath}");
+                    }
                     return null;
                 }
                 
@@ -505,7 +494,11 @@ namespace TheSecondSeat.PersonaGeneration
                 
                 if (!loadedTexture.LoadImage(fileData))
                 {
-                    Log.Error($"[PortraitLoader] 无法加载图片: {filePath}");
+                    // ✅ 只在DevMode下输出错误
+                    if (Prefs.DevMode)
+                    {
+                        Log.Error($"[PortraitLoader] 无法加载图片: {filePath}");
+                    }
                     return null;
                 }
                 
@@ -516,7 +509,11 @@ namespace TheSecondSeat.PersonaGeneration
             }
             catch (Exception ex)
             {
-                Log.Error($"[PortraitLoader] 加载失败: {filePath}\n{ex}");
+                // ✅ 只在DevMode下输出异常
+                if (Prefs.DevMode)
+                {
+                    Log.Error($"[PortraitLoader] 加载失败: {filePath}\n{ex}");
+                }
                 return null;
             }
         }
@@ -715,8 +712,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ��ȡ Mod ����Ŀ¼
-        /// ? ���������� Mod ��������Ŀ¼
+        /// ��ȡ�������׺��·��
         /// </summary>
         public static string GetModPortraitsDirectory()
         {

@@ -156,6 +156,25 @@ namespace TheSecondSeat.PersonaGeneration
                 _ => UnityEngine.Random.Range(BLINK_CYCLE_MIN, BLINK_CYCLE_MAX)   // 默认
             };
         }
+
+        /// <summary>
+        /// ? v1.6.30: 动态设置眨眼间隔（用于感情驱动动画）
+        /// </summary>
+        /// <param name="personaDefName">人格 DefName</param>
+        /// <param name="minInterval">最小间隔（秒）</param>
+        /// <param name="maxInterval">最大间隔（秒）</param>
+        public static void SetBlinkInterval(string personaDefName, float minInterval, float maxInterval)
+        {
+            var state = GetOrCreateState(personaDefName);
+            
+            // 更新下次眨眼间隔
+            state.nextBlinkInterval = UnityEngine.Random.Range(minInterval, maxInterval);
+            
+            if (Prefs.DevMode)
+            {
+                Log.Message($"[BlinkAnimationSystem] 眨眼间隔调整: {personaDefName} ({minInterval}-{maxInterval}秒)");
+            }
+        }
         
         /// <summary>
         /// 强制触发眨眼（用于特殊事件）

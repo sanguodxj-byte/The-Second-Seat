@@ -37,9 +37,23 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// 获取或创建分层立绘配置
+        /// ✅ v1.6.27: 强制禁用原版叙事者的分层立绘
+        /// ✅ v1.6.27: 传递 narratorName 作为路径名
         /// </summary>
         public LayeredPortraitConfig GetLayeredConfig()
         {
+            // ✅ v1.6.27: 双重保险 - 在这里也检查并强制禁用原版叙事者
+            if (defName == "Cassandra_Classic" || 
+                defName == "Phoebe_Chillax" || 
+                defName == "Randy_Random" ||
+                defName == "Igor_Invader" ||
+                defName == "Luna_Protector")
+            {
+                useLayeredPortrait = false;
+                cachedLayeredConfig = null;
+                return null;
+            }
+            
             if (!useLayeredPortrait)
             {
                 return null;
@@ -54,12 +68,15 @@ namespace TheSecondSeat.PersonaGeneration
                     Log.Warning($"[NarratorPersonaDef] Layered config loading from file not implemented yet: {layeredConfigPath}");
                 }
                 
+                // ✅ v1.6.27: 提取人格名称（如 "Sideria"）
+                string personaName = GetPersonaName();
+                
                 // 否则创建默认配置
-                cachedLayeredConfig = LayeredPortraitConfig.CreateDefault(defName);
+                cachedLayeredConfig = LayeredPortraitConfig.CreateDefault(defName, personaName);
                 
                 if (Prefs.DevMode)
                 {
-                    Log.Message($"[NarratorPersonaDef] Created default layered config for {defName}");
+                    Log.Message($"[NarratorPersonaDef] Created default layered config for {defName} (persona: {personaName})");
                     Log.Message(cachedLayeredConfig.GetDebugInfo());
                 }
             }
@@ -68,12 +85,33 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// 设置自定义分层配置
+        /// ✅ v1.6.27: 获取人格名称（用于纹理路径）
+        /// 优先使用 narratorName（用户指定的名称），如果为空则从 defName 提取
         /// </summary>
-        public void SetLayeredConfig(LayeredPortraitConfig config)
+        private string GetPersonaName()
         {
-            cachedLayeredConfig = config;
-            useLayeredPortrait = true;
+            // 1. 优先使用 narratorName（如 "Sideria"）
+            if (!string.IsNullOrEmpty(narratorName))
+            {
+                // 取第一个单词（如 "Cassandra Classic" → "Cassandra"）
+                return narratorName.Split(' ')[0].Trim();
+            }
+            
+            // 2. 否则从 defName 中提取
+            string[] suffixesToRemove = new[] { 
+                "_Default", "_Classic", "_Custom", "_Persona", 
+                "_Chillax", "_Random", "_Invader", "_Protector" 
+            };
+            
+            foreach (var suffix in suffixesToRemove)
+            {
+                if (defName.EndsWith(suffix))
+                {
+                    return defName.Substring(0, defName.Length - suffix.Length);
+                }
+            }
+            
+            return defName;
         }
         
         // === 颜色主题 ===
@@ -177,6 +215,106 @@ namespace TheSecondSeat.PersonaGeneration
                 return descriptionKey.Translate();
             }
             return biography;
+        }
+        
+        /// <summary>
+        /// ✅ v1.6.23: 存档兼容性处理，防止 NullReferenceException
+        /// ✅ v1.6.27: 强制禁用原版叙事者的分层立绘 + 预加载所有表情
+        /// </summary>
+        public override void ResolveReferences()
+        {
+            base.ResolveReferences();
+            
+            // ✅ v1.6.27: 强制禁用原版叙事者的分层立绘
+            // 原因：存档可能保存了错误的 useLayeredPortrait 值
+            if (defName == "Cassandra_Classic" || 
+                defName == "Phoebe_Chillax" || 
+                defName == "Randy_Random" ||
+                defName == "Igor_Invader" ||
+                defName == "Luna_Protector")
+            {
+                useLayeredPortrait = false;
+                cachedLayeredConfig = null;
+            }
+            
+            // ✅ v1.6.27: 如果启用分层立绘，预加载所有表情（避免运行时卡顿）
+            if (useLayeredPortrait)
+            {
+                var config = GetLayeredConfig();
+                if (config != null)
+                {
+                    // 在后台线程预加载（不阻塞加载）
+                    System.Threading.Tasks.Task.Run(() =>
+                    {
+                        try
+                        {
+                            LayeredPortraitCompositor.PreloadAllExpressions(config);
+                        }
+                        catch (Exception ex)
+                        {
+                            if (Prefs.DevMode)
+                            {
+                                Log.Warning($"[NarratorPersonaDef] 预加载表情失败: {ex.Message}");
+                            }
+                        }
+                    });
+                }
+            }
+            
+            // 确保所有集合字段都被初始化
+            if (visualElements == null)
+            {
+                visualElements = new List<string>();
+            }
+            
+            if (specialAbilities == null)
+            {
+                specialAbilities = new List<string>();
+            }
+            
+            if (toneTags == null)
+            {
+                toneTags = new List<string>();
+            }
+            
+            if (forbiddenWords == null)
+            {
+                forbiddenWords = new List<string>();
+            }
+            
+            // 确保嵌套对象被初始化
+            if (dialogueStyle == null)
+            {
+                dialogueStyle = new DialogueStyleDef();
+            }
+            
+            if (eventPreferences == null)
+            {
+                eventPreferences = new EventPreferencesDef();
+            }
+            
+            // 确保字符串字段不为 null
+            if (narratorName == null) narratorName = "Unknown";
+            if (displayNameKey == null) displayNameKey = "";
+            if (descriptionKey == null) descriptionKey = "";
+            if (biography == null) biography = "";
+            if (portraitPath == null) portraitPath = "";
+            if (customPortraitPath == null) customPortraitPath = "";
+            if (portraitPathBlink == null) portraitPathBlink = "";
+            if (portraitPathSpeaking == null) portraitPathSpeaking = "";
+            if (layeredConfigPath == null) layeredConfigPath = "";
+            if (visualDescription == null) visualDescription = "";
+            if (visualMood == null) visualMood = "";
+            if (personalityType == null) personalityType = "";
+            if (overridePersonality == null) overridePersonality = "";
+            if (defaultVoice == null) defaultVoice = "";
+            if (voicePitch == null) voicePitch = "+0Hz";
+            if (voiceRate == null) voiceRate = "+0%";
+            
+            if (Prefs.DevMode)
+            {
+                Log.Message($"[NarratorPersonaDef] ResolveReferences completed for {defName}, useLayeredPortrait={useLayeredPortrait}");
+            }
         }
     }
 }

@@ -701,6 +701,347 @@ Biography:
                 public string? content { get; set; }
             }
         }
+        
+        /// <summary>
+        /// ? v1.6.22: 分析人格图片（支持用户输入的简介）
+        /// </summary>
+        /// <param name="texture">立绘纹理</param>
+        /// <param name="personaName">人格名称</param>
+        /// <param name="userBio">用户输入的简介（可选）</param>
+        /// <returns>人格分析结果</returns>
+        public PersonaAnalysisResult AnalyzePersonaImage(
+            Texture2D texture,
+            string personaName,
+            string userBio = null)
+        {
+            try
+            {
+                // 1. 调用异步方法进行多模态分析
+                var visionTask = AnalyzeTextureAsync(texture, userBio);
+                visionTask.Wait();  // 同步等待（RimWorld 主线程）
+                
+                var visionResult = visionTask.Result;
+                
+                if (visionResult == null)
+                {
+                    Log.Warning($"[MultimodalAnalysis] Vision 分析失败，返回默认结果");
+                    return CreateDefaultAnalysisResult(userBio);
+                }
+                
+                // 2. 构建 PersonaAnalysisResult
+                var result = new PersonaAnalysisResult
+                {
+                    VisualTags = visionResult.visualElements ?? new List<string>(),
+                    ToneTags = visionResult.styleKeywords ?? new List<string>(),
+                    ConfidenceScore = 0.8f
+                };
+                
+                // 3. 解析人格类型
+                if (!string.IsNullOrEmpty(visionResult.suggestedPersonality))
+                {
+                    if (Enum.TryParse<Storyteller.PersonalityTrait>(visionResult.suggestedPersonality, true, out var trait))
+                    {
+                        result.SuggestedPersonality = trait;
+                    }
+                }
+                
+                // 4. ? 生成增强版 biography
+                if (!string.IsNullOrEmpty(userBio))
+                {
+                    // 用户简介 + AI 分析补充
+                    result.GeneratedBiography = visionResult.characterDescription;
+                    result.VisualDescription = visionResult.characterDescription;
+                }
+                else
+                {
+                    // 只有 AI 分析
+                    result.GeneratedBiography = visionResult.characterDescription;
+                    result.VisualDescription = visionResult.characterDescription;
+                }
+                
+                // 5. 设置视觉描述
+                result.VisualDescription = visionResult.characterDescription;
+                
+                // 6. ? 生成对话风格（基于用户描述 + 图片分析）
+                result.SuggestedDialogueStyle = GenerateDialogueStyleFromAnalysis(visionResult, userBio);
+                
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[MultimodalAnalysis] AnalyzePersonaImage 完成:");
+                    Log.Message($"  - Visual Tags: {result.VisualTags.Count}");
+                    Log.Message($"  - Tone Tags: {result.ToneTags.Count}");
+                    Log.Message($"  - Personality: {result.SuggestedPersonality}");
+                    Log.Message($"  - Biography Length: {result.GeneratedBiography?.Length ?? 0}");
+                }
+                
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[MultimodalAnalysis] AnalyzePersonaImage 失败: {ex.Message}");
+                return CreateDefaultAnalysisResult(userBio);
+            }
+        }
+        
+        /// <summary>
+        /// ? 增强版 AnalyzeTextureAsync（支持用户简介）
+        /// </summary>
+        private async Task<VisionAnalysisResult?> AnalyzeTextureAsync(Texture2D texture, string userBio = null)
+        {
+            if (texture == null)
+            {
+                Log.Error("[MultimodalAnalysis] Texture is null");
+                return null;
+            }
+
+            try
+            {
+                string provider = apiProvider.ToLower();
+                
+                if (provider == "gemini")
+                {
+                    return await AnalyzeWithGeminiAsync(texture, userBio);
+                }
+                else if (provider == "openai" || provider == "deepseek")
+                {
+                    return await AnalyzeWithOpenAICompatibleAsync(texture, userBio);
+                }
+                else
+                {
+                    Log.Error($"[MultimodalAnalysis] 不支持的 API 提供商: {provider}");
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[MultimodalAnalysis] Error analyzing texture: {ex.Message}");
+                return null;
+            }
+        }
+        
+        /// <summary>
+        /// ? 增强版 Gemini 分析（支持用户简介）
+        /// </summary>
+        private async Task<VisionAnalysisResult?> AnalyzeWithGeminiAsync(Texture2D texture, string userBio = null)
+        {
+            Log.Message("[MultimodalAnalysis] 使用 Gemini Vision API (with user bio)");
+            
+            string prompt = GetVisionPrompt(userBio);
+
+            var geminiResponse = await LLM.GeminiApiClient.SendVisionRequestAsync(
+                visionModel,
+                apiKey,
+                prompt,
+                texture,
+                0.3f,
+                8192
+            );
+            
+            if (geminiResponse == null || geminiResponse.Candidates == null || geminiResponse.Candidates.Count == 0)
+            {
+                Log.Error("[MultimodalAnalysis] Gemini Vision 返回空响应");
+                return null;
+            }
+            
+            string content = geminiResponse.Candidates[0].Content.Parts[0].Text;
+            return ParseVisionJson(content);
+        }
+        
+        /// <summary>
+        /// ? 增强版 OpenAI 兼容分析（支持用户简介）
+        /// </summary>
+        private async Task<VisionAnalysisResult?> AnalyzeWithOpenAICompatibleAsync(Texture2D texture, string userBio = null)
+        {
+            Log.Message($"[MultimodalAnalysis] 使用 {apiProvider} Vision API (with user bio)");
+            
+            string endpoint = GetVisionEndpoint();
+            string prompt = GetVisionPrompt(userBio);
+
+            var response = await LLM.OpenAICompatibleClient.SendVisionRequestAsync(
+                endpoint,
+                apiKey,
+                visionModel,
+                prompt,
+                texture,
+                0.3f,
+                4096,
+                apiProvider
+            );
+            
+            if (response == null || response.choices == null || response.choices.Length == 0)
+            {
+                Log.Error($"[MultimodalAnalysis] {apiProvider} Vision 返回空响应");
+                return null;
+            }
+            
+            string content = response.choices[0].message?.content;
+            if (string.IsNullOrEmpty(content))
+            {
+                Log.Error("[MultimodalAnalysis] Vision 响应内容为空");
+                return null;
+            }
+            
+            return ParseVisionJson(content);
+        }
+        
+        /// <summary>
+        /// ? 增强版 Vision Prompt（支持用户简介）
+        /// </summary>
+        private string GetVisionPrompt(string userBio = null)
+        {
+            var sb = new StringBuilder();
+            
+            sb.AppendLine("Analyze this character portrait in detail and provide a comprehensive JSON response.");
+            sb.AppendLine();
+            sb.AppendLine("**CRITICAL: The characterDescription field MUST be written in Simplified Chinese (简体中文)!**");
+            sb.AppendLine();
+            
+            // ? 如果有用户简介，添加到提示词中
+            if (!string.IsNullOrEmpty(userBio))
+            {
+                sb.AppendLine("**USER PROVIDED CONTEXT:**");
+                sb.AppendLine("---");
+                sb.AppendLine(userBio);
+                sb.AppendLine("---");
+                sb.AppendLine();
+                sb.AppendLine("**CRITICAL INSTRUCTIONS:**");
+                sb.AppendLine("1. The user description above provides the CHARACTER'S PERSONALITY and BEHAVIOR.");
+                sb.AppendLine("2. You MUST analyze the visual image to describe PHYSICAL APPEARANCE ONLY.");
+                sb.AppendLine("3. In your characterDescription, COMBINE:");
+                sb.AppendLine("   - Visual details (from image): hair color, eye color, clothing, posture, etc.");
+                sb.AppendLine("   - Personality traits (from user): use the user's description of their character");
+                sb.AppendLine("4. DO NOT contradict the user's personality description!");
+                sb.AppendLine("5. Your job is to ADD visual details to their personality, not replace it.");
+                sb.AppendLine();
+            }
+            
+            sb.AppendLine(@"{
+  ""dominantColors"": [
+    {""hex"": ""#RRGGBB"", ""percentage"": 0-100, ""name"": ""color name in English""}
+  ],
+  ""visualElements"": [""element1"", ""element2"", ""element3""],
+  ""characterDescription"": ""必须用简体中文书写的详细描述（300-500字），包含外貌和性格推断"",
+  ""mood"": ""overall mood/atmosphere in English"",
+  ""suggestedPersonality"": ""Benevolent/Sadistic/Chaotic/Strategic/Protective/Manipulative"",
+  ""styleKeywords"": [""keyword1"", ""keyword2"", ""keyword3""]
+}");
+            
+            sb.AppendLine();
+            sb.AppendLine("**REMEMBER**:");
+            sb.AppendLine("- characterDescription 必须用简体中文书写!");
+            if (!string.IsNullOrEmpty(userBio))
+            {
+                sb.AppendLine("- RESPECT the user's personality description - ADD visual details, don't replace!");
+            }
+            sb.AppendLine("- Focus on visual appearance first, then personality inference");
+            sb.AppendLine("- 300-500 characters in Chinese");
+            sb.AppendLine("- Return ONLY valid JSON");
+            
+            return sb.ToString();
+        }
+        
+        /// <summary>
+        /// ? 根据分析结果生成对话风格
+        /// </summary>
+        private DialogueStyleDef GenerateDialogueStyleFromAnalysis(VisionAnalysisResult visionResult, string userBio = null)
+        {
+            var style = new DialogueStyleDef();
+            
+            // 如果有用户简介，尝试从简介中提取对话风格
+            if (!string.IsNullOrEmpty(userBio))
+            {
+                var lowerBio = userBio.ToLower();
+                
+                // 检测正式程度
+                if (lowerBio.Contains("正式") || lowerBio.Contains("专业"))
+                    style.formalityLevel = 0.8f;
+                else if (lowerBio.Contains("随意") || lowerBio.Contains("轻松") || lowerBio.Contains("俏皮"))
+                    style.formalityLevel = 0.3f;
+                else
+                    style.formalityLevel = 0.5f;
+                
+                // 检测情感表达
+                if (lowerBio.Contains("情感") || lowerBio.Contains("热情") || lowerBio.Contains("温柔"))
+                    style.emotionalExpression = 0.8f;
+                else if (lowerBio.Contains("冷静") || lowerBio.Contains("理性"))
+                    style.emotionalExpression = 0.3f;
+                else
+                    style.emotionalExpression = 0.6f;
+                
+                // 检测话语量
+                if (lowerBio.Contains("简洁") || lowerBio.Contains("言简意赅"))
+                    style.verbosity = 0.3f;
+                else if (lowerBio.Contains("详细") || lowerBio.Contains("喜欢聊天"))
+                    style.verbosity = 0.7f;
+                else
+                    style.verbosity = 0.5f;
+                
+                // 检测幽默感
+                if (lowerBio.Contains("幽默") || lowerBio.Contains("有趣") || lowerBio.Contains("搞笑"))
+                    style.humorLevel = 0.7f;
+                else if (lowerBio.Contains("严肃") || lowerBio.Contains("认真"))
+                    style.humorLevel = 0.2f;
+                else
+                    style.humorLevel = 0.4f;
+            }
+            else
+            {
+                // 没有用户简介，使用默认值
+                style.formalityLevel = 0.5f;
+                style.emotionalExpression = 0.6f;
+                style.verbosity = 0.5f;
+                style.humorLevel = 0.4f;
+                style.sarcasmLevel = 0.3f;
+            }
+            
+            // 根据视觉风格调整
+            if (visionResult.styleKeywords != null)
+            {
+                foreach (var keyword in visionResult.styleKeywords)
+                {
+                    var lower = keyword.ToLower();
+                    if (lower.Contains("elegant") || lower.Contains("refined"))
+                        style.formalityLevel = Math.Max(style.formalityLevel, 0.7f);
+                    if (lower.Contains("playful") || lower.Contains("cheerful"))
+                        style.humorLevel = Math.Max(style.humorLevel, 0.6f);
+                    if (lower.Contains("serious") || lower.Contains("stern"))
+                        style.formalityLevel = Math.Max(style.formalityLevel, 0.6f);
+                }
+            }
+            
+            style.useEmoticons = true;
+            style.useEllipsis = true;
+            style.useExclamation = true;
+            
+            return style;
+        }
+        
+        /// <summary>
+        /// ? 创建默认分析结果（当 API 失败时）
+        /// </summary>
+        private PersonaAnalysisResult CreateDefaultAnalysisResult(string userBio = null)
+        {
+            return new PersonaAnalysisResult
+            {
+                VisualTags = new List<string>(),
+                ToneTags = new List<string>(),
+                SuggestedPersonality = Storyteller.PersonalityTrait.Strategic,
+                ConfidenceScore = 0.3f,
+                GeneratedBiography = userBio ?? "一个神秘的角色。",
+                VisualDescription = "未能分析图片，请确保立绘文件存在。",
+                SuggestedDialogueStyle = new DialogueStyleDef
+                {
+                    formalityLevel = 0.5f,
+                    emotionalExpression = 0.6f,
+                    verbosity = 0.5f,
+                    humorLevel = 0.4f,
+                    sarcasmLevel = 0.3f,
+                    useEmoticons = true,
+                    useEllipsis = true,
+                    useExclamation = true
+                }
+            };
+        }
     }
 
     // ========== Data Structures ==========

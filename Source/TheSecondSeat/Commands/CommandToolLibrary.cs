@@ -8,17 +8,17 @@ using RimWorld;
 namespace TheSecondSeat.Commands
 {
     /// <summary>
-    /// ?? AI 命令工具库
-    /// 提供标准化的命令定义和执行方法，供 LLM 检索与调用
+    /// AI 命令工具库（主文件）
+    /// 提供标准化命令定义和执行方法，供 LLM 调用和操作
     /// 
-    /// ? 使用方式：
-    /// 1. LLM 通过 GetAllCommands() 获取可用命令列表
-    /// 2. LLM 构造 JSON 格式的命令请求
-    /// 3. 系统通过 ExecuteCommand() 执行命令
+    /// ? 使用 partial 类拆分：
+    /// - CommandToolLibrary.cs (主文件)：核心结构、注册逻辑
+    /// - CommandToolLibrary_Batch.cs：批量命令注册
+    /// - CommandToolLibrary_Work.cs：工作命令注册
     /// </summary>
-    public static class CommandToolLibrary
+    public static partial class CommandToolLibrary
     {
-        #region 命令定义数据结构
+        #region 命令数据结构
         
         /// <summary>
         /// 命令定义
@@ -26,12 +26,12 @@ namespace TheSecondSeat.Commands
         public class CommandDefinition
         {
             public string commandId;           // 命令唯一标识
-            public string category;            // 分类
+            public string category;            // 类别
             public string displayName;         // 显示名称
             public string description;         // 描述
             public List<ParameterDef> parameters = new List<ParameterDef>();  // 参数列表
             public string example;             // 使用示例
-            public string notes;               // 备注
+            public string notes;               // 注解
         }
         
         /// <summary>
@@ -41,7 +41,7 @@ namespace TheSecondSeat.Commands
         {
             public string name;                // 参数名
             public string type;                // 类型 (string, int, float, bool, IntVec3, etc.)
-            public bool required;              // 是否必需
+            public bool required;              // 是否必须
             public string defaultValue;        // 默认值
             public string description;         // 描述
             public List<string> validValues;   // 有效值列表（枚举类型）
@@ -59,7 +59,7 @@ namespace TheSecondSeat.Commands
         
         #endregion
         
-        #region 命令注册表
+        #region 命令注册器
         
         private static Dictionary<string, CommandDefinition> commandRegistry = new Dictionary<string, CommandDefinition>();
         private static bool initialized = false;
@@ -82,31 +82,31 @@ namespace TheSecondSeat.Commands
         /// </summary>
         private static void RegisterAllCommands()
         {
-            // === 1. 殖民者与单位管理 ===
+            // === 1. 殖民者和单位操作 ===
             RegisterPawnManagementCommands();
             
-            // === 2. 资源与物品管理 ===
+            // === 2. 资源和物品管理 ===
             RegisterResourceCommands();
             
-            // === 3. 建筑与区域管理 ===
+            // === 3. 建筑和区域管理 ===
             RegisterBuildingCommands();
             
-            // === 4. 工作与任务管理 ===
-            RegisterWorkCommands();
+            // === 4. 工作指派命令 ===
+            RegisterWorkCommands();  // ? 在 CommandToolLibrary_Work.cs 中实现
             
-            // === 5. 事件与叙事控制 ===
+            // === 5. 事件触发与控制 ===
             RegisterEventCommands();
             
             // === 6. 批量操作命令 ===
-            RegisterBatchCommands();
+            RegisterBatchCommands();  // ? 在 CommandToolLibrary_Batch.cs 中实现
             
-            // === 7. 查询与信息获取 ===
+            // === 7. 查询和信息获取 ===
             RegisterQueryCommands();
         }
         
         #endregion
         
-        #region 1. 殖民者与单位管理命令
+        #region 1. 殖民者和单位操作命令
         
         private static void RegisterPawnManagementCommands()
         {
@@ -116,7 +116,7 @@ namespace TheSecondSeat.Commands
                 commandId = "DraftPawn",
                 category = "PawnManagement",
                 displayName = "征召殖民者",
-                description = "将指定殖民者设为征召状态，可进行手动战斗控制",
+                description = "将指定殖民者设为征召状态，可接受手动战斗命令",
                 parameters = new List<ParameterDef>
                 {
                     new ParameterDef { name = "pawnName", type = "string", required = false, description = "殖民者名字（为空则征召全部）" },
@@ -149,14 +149,14 @@ namespace TheSecondSeat.Commands
                 commandId = "HealPawn",
                 category = "PawnManagement",
                 displayName = "治疗殖民者",
-                description = "优先为指定殖民者安排医疗救治",
+                description = "安排为指定殖民者安排医疗救治",
                 parameters = new List<ParameterDef>
                 {
-                    new ParameterDef { name = "pawnName", type = "string", required = false, description = "殖民者名字（为空则处理所有伤员）" },
-                    new ParameterDef { name = "priority", type = "bool", required = false, defaultValue = "true", description = "是否设为紧急优先" }
+                    new ParameterDef { name = "pawnName", type = "string", required = false, description = "殖民者名字（为空则治疗所有伤员）" },
+                    new ParameterDef { name = "priority", type = "bool", required = false, defaultValue = "true", description = "是否设为最高优先" }
                 },
-                example = "{ \"action\": \"HealPawn\", \"pawnName\": \"李四\" }",
-                notes = "需要有可用的医生和医疗用品"
+                example = "{ \"action\": \"HealPawn\", \"pawnName\": \"张三\" }",
+                notes = "需要有可用的医生和医疗物品"
             });
             
             // 1.4 设置工作优先级
@@ -165,7 +165,7 @@ namespace TheSecondSeat.Commands
                 commandId = "SetWorkPriority",
                 category = "PawnManagement",
                 displayName = "设置工作优先级",
-                description = "调整殖民者特定工作类型的优先级",
+                description = "调整殖民者对特定工作类型的优先级",
                 parameters = new List<ParameterDef>
                 {
                     new ParameterDef { name = "pawnName", type = "string", required = true, description = "殖民者名字" },
@@ -193,27 +193,27 @@ namespace TheSecondSeat.Commands
                     new ParameterDef { name = "weaponDef", type = "string", required = false, description = "武器DefName（为空则自动选择最佳）" }
                 },
                 example = "{ \"action\": \"EquipWeapon\", \"pawnName\": \"张三\", \"weaponDef\": \"Gun_AssaultRifle\" }",
-                notes = "武器必须在殖民地内且未被禁止"
+                notes = "武器必须在殖民者可达范围且未被禁止"
             });
         }
         
         #endregion
         
-        #region 2. 资源与物品管理命令
+        #region 2. 资源和物品操作命令
         
         private static void RegisterResourceCommands()
         {
-            // 2.1 禁止/解禁物品
+            // 2.1 禁止/允许物品
             Register(new CommandDefinition
             {
                 commandId = "ForbidItem",
                 category = "ResourceManagement",
-                displayName = "禁止/解禁物品",
+                displayName = "禁止/允许物品",
                 description = "设置物品的禁止状态",
                 parameters = new List<ParameterDef>
                 {
                     new ParameterDef { name = "thingDef", type = "string", required = true, description = "物品DefName" },
-                    new ParameterDef { name = "forbidden", type = "bool", required = false, defaultValue = "true", description = "true=禁止, false=解禁" },
+                    new ParameterDef { name = "forbidden", type = "bool", required = false, defaultValue = "true", description = "true=禁止, false=允许" },
                     new ParameterDef { name = "scope", type = "string", required = false, defaultValue = "All", 
                         validValues = new List<string> { "All", "Selected", "Area" }, description = "范围" }
                 },
@@ -221,17 +221,17 @@ namespace TheSecondSeat.Commands
                 notes = "禁止的物品不会被搬运"
             });
             
-            // 2.2 搬运到储存区
+            // 2.2 搬运到仓库
             Register(new CommandDefinition
             {
                 commandId = "HaulToStorage",
                 category = "ResourceManagement",
-                displayName = "搬运到储存区",
-                description = "将物品搬运到指定储存区",
+                displayName = "搬运到仓库",
+                description = "将物品搬运到指定仓库区",
                 parameters = new List<ParameterDef>
                 {
                     new ParameterDef { name = "thingDef", type = "string", required = false, description = "物品DefName（为空则搬运所有可搬运物品）" },
-                    new ParameterDef { name = "storageZone", type = "string", required = false, description = "目标储存区名称" }
+                    new ParameterDef { name = "storageZone", type = "string", required = false, description = "目标仓库区名称" }
                 },
                 example = "{ \"action\": \"HaulToStorage\", \"thingDef\": \"MealSimple\" }",
                 notes = "需要有可用的搬运工"
@@ -243,7 +243,7 @@ namespace TheSecondSeat.Commands
                 commandId = "DropItem",
                 category = "ResourceManagement",
                 displayName = "丢弃物品",
-                description = "命令殖民者丢弃随身携带的物品",
+                description = "命令殖民者丢弃当前携带的物品",
                 parameters = new List<ParameterDef>
                 {
                     new ParameterDef { name = "pawnName", type = "string", required = true, description = "殖民者名字" },
@@ -256,17 +256,17 @@ namespace TheSecondSeat.Commands
         
         #endregion
         
-        #region 3. 建筑与区域管理命令
+        #region 3. 建筑和区域操作命令
         
         private static void RegisterBuildingCommands()
         {
-            // 3.1 指定建造
+            // 3.1 指派建造
             Register(new CommandDefinition
             {
                 commandId = "DesignateBuild",
                 category = "Building",
-                displayName = "指定建造",
-                description = "在指定位置规划建造建筑",
+                displayName = "指派建造",
+                description = "在指定位置规划新建筑",
                 parameters = new List<ParameterDef>
                 {
                     new ParameterDef { name = "buildingDef", type = "string", required = true, description = "建筑DefName" },
@@ -277,7 +277,7 @@ namespace TheSecondSeat.Commands
                     new ParameterDef { name = "stuffDef", type = "string", required = false, description = "材料DefName" }
                 },
                 example = "{ \"action\": \"DesignateBuild\", \"buildingDef\": \"Wall\", \"x\": 10, \"z\": 10, \"stuffDef\": \"BlocksGranite\" }",
-                notes = "需要有足够的材料和建造工人"
+                notes = "需要有足够的材料和建筑工人"
             });
             
             // 3.2 取消建造
@@ -302,7 +302,7 @@ namespace TheSecondSeat.Commands
                 commandId = "Deconstruct",
                 category = "Building",
                 displayName = "拆除建筑",
-                description = "指定拆除建筑物",
+                description = "指派拆除建筑",
                 parameters = new List<ParameterDef>
                 {
                     new ParameterDef { name = "x", type = "int", required = true, description = "X坐标" },
@@ -318,7 +318,7 @@ namespace TheSecondSeat.Commands
                 commandId = "CreateZone",
                 category = "Building",
                 displayName = "创建区域",
-                description = "创建储存区、种植区或其他区域",
+                description = "创建仓库区、种植区或倾倒区",
                 parameters = new List<ParameterDef>
                 {
                     new ParameterDef { name = "zoneType", type = "string", required = true, 
@@ -336,81 +336,7 @@ namespace TheSecondSeat.Commands
         
         #endregion
         
-        #region 4. 工作与任务管理命令
-        
-        private static void RegisterWorkCommands()
-        {
-            // 4.1 指定采矿
-            Register(new CommandDefinition
-            {
-                commandId = "DesignateMine",
-                category = "Work",
-                displayName = "指定采矿",
-                description = "指定矿物进行开采",
-                parameters = new List<ParameterDef>
-                {
-                    new ParameterDef { name = "target", type = "string", required = false, defaultValue = "all",
-                        validValues = new List<string> { "all", "metal", "stone", "components" }, description = "采矿目标类型" },
-                    new ParameterDef { name = "x", type = "int", required = false, description = "特定X坐标" },
-                    new ParameterDef { name = "z", type = "int", required = false, description = "特定Z坐标" }
-                },
-                example = "{ \"action\": \"DesignateMine\", \"target\": \"metal\" }",
-                notes = "metal=钢铁/金/银/铀等，stone=石料，components=组件矿"
-            });
-            
-            // 4.2 指定砍伐
-            Register(new CommandDefinition
-            {
-                commandId = "DesignateCut",
-                category = "Work",
-                displayName = "指定砍伐",
-                description = "指定植物进行砍伐",
-                parameters = new List<ParameterDef>
-                {
-                    new ParameterDef { name = "target", type = "string", required = false, defaultValue = "trees",
-                        validValues = new List<string> { "trees", "blighted", "wild", "all" }, description = "砍伐目标类型" }
-                },
-                example = "{ \"action\": \"DesignateCut\", \"target\": \"trees\" }",
-                notes = "trees=成熟树木，blighted=枯萎植物，wild=野生植物"
-            });
-            
-            // 4.3 指定收获
-            Register(new CommandDefinition
-            {
-                commandId = "DesignateHarvest",
-                category = "Work",
-                displayName = "指定收获",
-                description = "指定成熟作物进行收获",
-                parameters = new List<ParameterDef>
-                {
-                    new ParameterDef { name = "plantDef", type = "string", required = false, description = "特定植物DefName（为空则收获所有成熟作物）" }
-                },
-                example = "{ \"action\": \"DesignateHarvest\" }",
-                notes = "只会标记已成熟的作物"
-            });
-            
-            // 4.4 设置生产账单
-            Register(new CommandDefinition
-            {
-                commandId = "AddBill",
-                category = "Work",
-                displayName = "添加生产账单",
-                description = "在工作台添加生产任务",
-                parameters = new List<ParameterDef>
-                {
-                    new ParameterDef { name = "workbenchDef", type = "string", required = true, description = "工作台DefName" },
-                    new ParameterDef { name = "recipeDef", type = "string", required = true, description = "配方DefName" },
-                    new ParameterDef { name = "count", type = "int", required = false, defaultValue = "-1", description = "生产数量 (-1=无限)" },
-                    new ParameterDef { name = "targetCount", type = "int", required = false, description = "目标库存数量" }
-                },
-                example = "{ \"action\": \"AddBill\", \"workbenchDef\": \"ElectricStove\", \"recipeDef\": \"CookMealSimple\", \"count\": 10 }",
-                notes = ""
-            });
-        }
-        
-        #endregion
-        
-        #region 5. 事件与叙事控制命令
+        #region 5. 事件触发与控制命令
         
         private static void RegisterEventCommands()
         {
@@ -428,7 +354,7 @@ namespace TheSecondSeat.Commands
                         description = "事件类型" },
                     new ParameterDef { name = "comment", type = "string", required = false, description = "AI评论" }
                 },
-                example = "{ \"action\": \"TriggerEvent\", \"eventType\": \"raid\", \"comment\": \"来吧，展现你的能力\" }",
+                example = "{ \"action\": \"TriggerEvent\", \"eventType\": \"raid\", \"comment\": \"来袭！展现你们的力量！\" }",
                 notes = "仅在对弈者模式下可用"
             });
             
@@ -457,7 +383,7 @@ namespace TheSecondSeat.Commands
                 commandId = "ChangeWeather",
                 category = "Event",
                 displayName = "修改天气",
-                description = "改变当前地图的天气",
+                description = "改变当前地图天气",
                 parameters = new List<ParameterDef>
                 {
                     new ParameterDef { name = "weatherDef", type = "string", required = true,
@@ -471,102 +397,7 @@ namespace TheSecondSeat.Commands
         
         #endregion
         
-        #region 6. 批量操作命令
-        
-        private static void RegisterBatchCommands()
-        {
-            // 6.1 批量收获
-            Register(new CommandDefinition
-            {
-                commandId = "BatchHarvest",
-                category = "Batch",
-                displayName = "批量收获",
-                description = "指定所有成熟作物进行收获",
-                parameters = new List<ParameterDef>(),
-                example = "{ \"action\": \"BatchHarvest\" }",
-                notes = ""
-            });
-            
-            // 6.2 批量装备
-            Register(new CommandDefinition
-            {
-                commandId = "BatchEquip",
-                category = "Batch",
-                displayName = "批量装备",
-                description = "为所有无武器殖民者装备最佳武器",
-                parameters = new List<ParameterDef>(),
-                example = "{ \"action\": \"BatchEquip\" }",
-                notes = ""
-            });
-            
-            // 6.3 批量采矿
-            Register(new CommandDefinition
-            {
-                commandId = "BatchMine",
-                category = "Batch",
-                displayName = "批量采矿",
-                description = "指定所有可采矿资源",
-                parameters = new List<ParameterDef>
-                {
-                    new ParameterDef { name = "target", type = "string", required = false, defaultValue = "all",
-                        validValues = new List<string> { "all", "metal", "stone", "components" }, description = "采矿目标类型" }
-                },
-                example = "{ \"action\": \"BatchMine\", \"target\": \"metal\" }",
-                notes = ""
-            });
-            
-            // 6.4 批量伐木
-            Register(new CommandDefinition
-            {
-                commandId = "BatchLogging",
-                category = "Batch",
-                displayName = "批量伐木",
-                description = "指定所有成熟树木进行砍伐",
-                parameters = new List<ParameterDef>(),
-                example = "{ \"action\": \"BatchLogging\" }",
-                notes = "只砍伐90%以上成熟的树木"
-            });
-            
-            // 6.5 批量俘获
-            Register(new CommandDefinition
-            {
-                commandId = "BatchCapture",
-                category = "Batch",
-                displayName = "批量俘获",
-                description = "指定所有倒地敌人进行俘获",
-                parameters = new List<ParameterDef>(),
-                example = "{ \"action\": \"BatchCapture\" }",
-                notes = "需要有可用的看守者"
-            });
-            
-            // 6.6 紧急撤退
-            Register(new CommandDefinition
-            {
-                commandId = "EmergencyRetreat",
-                category = "Batch",
-                displayName = "紧急撤退",
-                description = "征召所有殖民者准备撤退",
-                parameters = new List<ParameterDef>(),
-                example = "{ \"action\": \"EmergencyRetreat\" }",
-                notes = "会将所有殖民者设为征召状态"
-            });
-            
-            // 6.7 优先修复
-            Register(new CommandDefinition
-            {
-                commandId = "PriorityRepair",
-                category = "Batch",
-                displayName = "优先修复",
-                description = "指定所有受损建筑进行修复",
-                parameters = new List<ParameterDef>(),
-                example = "{ \"action\": \"PriorityRepair\" }",
-                notes = ""
-            });
-        }
-        
-        #endregion
-        
-        #region 7. 查询与信息获取命令
+        #region 7. 查询和信息获取命令
         
         private static void RegisterQueryCommands()
         {
@@ -582,7 +413,7 @@ namespace TheSecondSeat.Commands
                     new ParameterDef { name = "includeDetails", type = "bool", required = false, defaultValue = "false", description = "是否包含详细信息" }
                 },
                 example = "{ \"action\": \"GetColonists\", \"includeDetails\": true }",
-                notes = "返回殖民者名单、健康状态、当前任务等"
+                notes = "返回殖民者名字、健康状态、当前工作等"
             });
             
             // 7.2 获取资源统计
@@ -591,7 +422,7 @@ namespace TheSecondSeat.Commands
                 commandId = "GetResources",
                 category = "Query",
                 displayName = "获取资源统计",
-                description = "获取殖民地资源库存",
+                description = "获取殖民地资源数量",
                 parameters = new List<ParameterDef>
                 {
                     new ParameterDef { name = "category", type = "string", required = false, 
@@ -602,12 +433,12 @@ namespace TheSecondSeat.Commands
                 notes = ""
             });
             
-            // 7.3 获取威胁评估
+            // 7.3 获取威胁信息
             Register(new CommandDefinition
             {
                 commandId = "GetThreats",
                 category = "Query",
-                displayName = "获取威胁评估",
+                displayName = "获取威胁信息",
                 description = "获取当前地图上的威胁信息",
                 parameters = new List<ParameterDef>(),
                 example = "{ \"action\": \"GetThreats\" }",
@@ -646,7 +477,7 @@ namespace TheSecondSeat.Commands
         }
         
         /// <summary>
-        /// 获取所有命令定义
+        /// 获取所有命令
         /// </summary>
         public static List<CommandDefinition> GetAllCommands()
         {
@@ -655,7 +486,7 @@ namespace TheSecondSeat.Commands
         }
         
         /// <summary>
-        /// 获取指定分类的命令
+        /// 获取指定类别的命令
         /// </summary>
         public static List<CommandDefinition> GetCommandsByCategory(string category)
         {
@@ -664,7 +495,7 @@ namespace TheSecondSeat.Commands
         }
         
         /// <summary>
-        /// 获取命令定义
+        /// 获取命令
         /// </summary>
         public static CommandDefinition? GetCommand(string commandId)
         {
@@ -673,7 +504,7 @@ namespace TheSecondSeat.Commands
         }
         
         /// <summary>
-        /// 获取所有分类
+        /// 获取所有类别
         /// </summary>
         public static List<string> GetCategories()
         {
@@ -682,7 +513,7 @@ namespace TheSecondSeat.Commands
         }
         
         /// <summary>
-        /// 生成 LLM 可用的命令文档（JSON 格式）
+        /// 生成供 LLM 调用的命令文档（JSON 格式）
         /// </summary>
         public static string GenerateCommandDocumentation()
         {
@@ -691,7 +522,7 @@ namespace TheSecondSeat.Commands
             var doc = new
             {
                 version = "1.0",
-                description = "The Second Seat 命令工具库 - 供 LLM 检索与调用",
+                description = "The Second Seat 命令工具库 - 供 LLM 调用和操作",
                 categories = GetCategories(),
                 commands = commandRegistry.Values.Select(c => new
                 {
@@ -717,7 +548,7 @@ namespace TheSecondSeat.Commands
         }
         
         /// <summary>
-        /// 生成精简版命令列表（供 LLM 快速参考）
+        /// 生成精简命令列表（供 LLM 快速参考）
         /// </summary>
         public static string GenerateCompactCommandList()
         {

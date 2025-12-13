@@ -17,6 +17,7 @@ namespace TheSecondSeat.UI
     /// - 右键快速对话输入框
     /// - 支持拖动改变位置
     /// - ✅ 多段式悬停触摸互动（悬停1秒激活，移动鼠标触发表情）
+    /// - ✅ v1.6.24: 立绘模式下管理全身立绘面板
     /// </summary>
     [StaticConstructorOnStartup]
     public class NarratorScreenButton : Window
@@ -26,6 +27,9 @@ namespace TheSecondSeat.UI
         private static Texture2D? iconProcessing;
         private static Texture2D? iconError;
         private static Texture2D? iconDisabled;
+        
+        // ✅ v1.6.24: 全身立绘面板管理
+        private static FullBodyPortraitPanel? fullBodyPortraitPanel;
         
         // ✅ 按钮大小调整：64x64 → 128x128
         private const float ButtonSize = 128f;  // ✅ 已经是 128，无需修改
@@ -603,6 +607,83 @@ namespace TheSecondSeat.UI
             }
         }
 
+        /// <summary>
+        /// ✅ 更新动态头像（支持表情系统和立绘模式）
+        /// ✅ v1.6.21: 检测设置变化，自动切换头像/立绘模式
+        /// ✅ v1.6.24: AI按钮始终显示头像（512x512），立绘由独立面板显示
+        /// </summary>
+        private void UpdatePortrait()
+        {
+            if (Find.TickManager.TicksGame - portraitUpdateTick < PORTRAIT_UPDATE_INTERVAL)
+            {
+                return;
+            }
+            
+            portraitUpdateTick = Find.TickManager.TicksGame;
+            
+            // ✅ v1.6.21: 获取设置并检测变化
+            var modSettings = LoadedModManager.GetMod<TheSecondSeatMod>()?.GetSettings<TheSecondSeatSettings>();
+            bool currentPortraitMode = modSettings?.usePortraitMode ?? false;
+            
+            // ✅ v1.6.21: 检测模式切换
+            if (currentPortraitMode != lastUsePortraitMode)
+            {
+                AvatarLoader.ClearAllCache();
+                PortraitLoader.ClearAllCache();
+                try { LayeredPortraitCompositor.ClearAllCache(); } catch { }
+                
+                lastUsePortraitMode = currentPortraitMode;
+                currentPortrait = null;
+                currentPersona = null;
+                
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[NarratorScreenButton] Portrait mode changed to: {(currentPortraitMode ? "立绘模式" : "头像模式")}");
+                }
+            }
+            
+            try
+            {
+                var manager = Current.Game?.GetComponent<NarratorManager>();
+                if (manager == null)
+                {
+                    currentPortrait = null;
+                    return;
+                }
+                
+                var persona = manager.GetCurrentPersona();
+                if (persona == null)
+                {
+                    currentPortrait = null;
+                    return;
+                }
+                
+                var expressionState = ExpressionSystem.GetExpressionState(persona.defName);
+                ExpressionType currentExpression = expressionState.CurrentExpression;
+                
+                if (persona != currentPersona || currentExpression != lastExpression)
+                {
+                    if (currentPersona != null && lastExpression != currentExpression)
+                    {
+                        AvatarLoader.ClearAvatarCache(currentPersona.defName, lastExpression);
+                        PortraitLoader.ClearPortraitCache(currentPersona.defName, lastExpression);
+                    }
+                    
+                    currentPersona = persona;
+                    lastExpression = currentExpression;
+                    
+                    // ✅ v1.6.24: AI按钮始终使用头像模式（512x512）
+                    // 立绘由 FullBodyPortraitPanel 独立显示
+                    currentPortrait = AvatarLoader.LoadAvatar(persona, currentExpression);
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Log.Warning($"[NarratorScreenButton] 更新头像失败: {ex.Message}");
+                currentPortrait = null;
+            }
+        }
+
         public override void WindowUpdate()
         {
             base.WindowUpdate();
@@ -610,6 +691,58 @@ namespace TheSecondSeat.UI
             if (Current.ProgramState != ProgramState.Playing)
             {
                 this.Close();
+                
+                // ✅ v1.6.24: 关闭全身立绘面板
+                if (fullBodyPortraitPanel != null && Find.WindowStack.IsOpen(fullBodyPortraitPanel))
+                {
+                    Find.WindowStack.TryRemove(fullBodyPortraitPanel);
+                    fullBodyPortraitPanel = null;
+                }
+            }
+            
+            // ✅ v1.6.29: 眨眼和张嘴动画系统是基于查询的（query-based），
+            // 通过 LayeredPortraitCompositor 调用 GetBlinkLayerName() 和 GetMouthLayerName() 时自动更新
+            // 因此不需要在这里手动调用 Update()
+            
+            // ✅ v1.6.24: 管理全身立绘面板的显示/隐藏
+            ManageFullBodyPortraitPanel();
+        }
+
+        /// <summary>
+        /// ✅ v1.6.24: 管理全身立绘面板的显示/隐藏
+        /// </summary>
+        private void ManageFullBodyPortraitPanel()
+        {
+            var modSettings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
+            bool shouldShowFullBodyPortrait = modSettings?.usePortraitMode ?? false;
+            
+            if (shouldShowFullBodyPortrait)
+            {
+                // 立绘模式：显示全身立绘面板
+                if (fullBodyPortraitPanel == null || !Find.WindowStack.IsOpen(fullBodyPortraitPanel))
+                {
+                    fullBodyPortraitPanel = new FullBodyPortraitPanel();
+                    Find.WindowStack.Add(fullBodyPortraitPanel);
+                    
+                    if (Prefs.DevMode)
+                    {
+                        Log.Message("[NarratorScreenButton] 全身立绘面板已打开");
+                    }
+                }
+            }
+            else
+            {
+                // 头像模式：关闭全身立绘面板
+                if (fullBodyPortraitPanel != null && Find.WindowStack.IsOpen(fullBodyPortraitPanel))
+                {
+                    Find.WindowStack.TryRemove(fullBodyPortraitPanel);
+                    fullBodyPortraitPanel = null;
+                    
+                    if (Prefs.DevMode)
+                    {
+                        Log.Message("[NarratorScreenButton] 全身立绘面板已关闭");
+                    }
+                }
             }
         }
 
@@ -725,88 +858,6 @@ namespace TheSecondSeat.UI
             if (agent != null)
             {
                 agent.ModifyAffinity(delta, reason);
-            }
-        }
-
-        /// <summary>
-        /// ✅ 更新动态头像（支持表情系统和立绘模式）
-        /// ✅ v1.6.21: 检测设置变化，自动切换头像/立绘模式
-        /// </summary>
-        private void UpdatePortrait()
-        {
-            if (Find.TickManager.TicksGame - portraitUpdateTick < PORTRAIT_UPDATE_INTERVAL)
-            {
-                return;
-            }
-            
-            portraitUpdateTick = Find.TickManager.TicksGame;
-            
-            // ✅ v1.6.21: 获取设置并检测变化
-            var modSettings = LoadedModManager.GetMod<TheSecondSeatMod>()?.GetSettings<TheSecondSeatSettings>();
-            bool currentPortraitMode = modSettings?.usePortraitMode ?? false;
-            
-            // ✅ v1.6.21: 检测模式切换
-            if (currentPortraitMode != lastUsePortraitMode)
-            {
-                AvatarLoader.ClearAllCache();
-                PortraitLoader.ClearAllCache();
-                try { LayeredPortraitCompositor.ClearAllCache(); } catch { }
-                
-                lastUsePortraitMode = currentPortraitMode;
-                currentPortrait = null;
-                currentPersona = null;
-                
-                if (Prefs.DevMode)
-                {
-                    Log.Message($"[NarratorScreenButton] Portrait mode changed to: {(currentPortraitMode ? "立绘模式" : "头像模式")}");
-                }
-            }
-            
-            try
-            {
-                var manager = Current.Game?.GetComponent<NarratorManager>();
-                if (manager == null)
-                {
-                    currentPortrait = null;
-                    return;
-                }
-                
-                var persona = manager.GetCurrentPersona();
-                if (persona == null)
-                {
-                    currentPortrait = null;
-                    return;
-                }
-                
-                var expressionState = ExpressionSystem.GetExpressionState(persona.defName);
-                ExpressionType currentExpression = expressionState.CurrentExpression;
-                
-                if (persona != currentPersona || currentExpression != lastExpression)
-                {
-                    if (currentPersona != null && lastExpression != currentExpression)
-                    {
-                        AvatarLoader.ClearAvatarCache(currentPersona.defName, lastExpression);
-                        PortraitLoader.ClearPortraitCache(currentPersona.defName, lastExpression);
-                    }
-                    
-                    currentPersona = persona;
-                    lastExpression = currentExpression;
-                    
-                    // ✅ 根据设置选择加载头像或立绘
-                    if (modSettings != null && modSettings.usePortraitMode)
-                    {
-                        currentPortrait = PortraitLoader.LoadPortrait(persona, currentExpression);
-                    }
-                    else
-                    {
-                        currentPortrait = AvatarLoader.LoadAvatar(persona, currentExpression);
-                    }
-                }
-            }
-            catch (System.Exception ex)
-            {
-                Log.Warning($"[NarratorScreenButton] 更新头像失败: {ex.Message}");
-                currentPortrait = null;
             }
         }
     }

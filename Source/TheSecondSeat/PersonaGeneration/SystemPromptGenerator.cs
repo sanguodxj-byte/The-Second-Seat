@@ -473,7 +473,7 @@ You are a strategic entity that challenges the player through balanced gameplay.
         {
             var sb = new StringBuilder();
             
-            sb.AppendLine("=== YOUR CURRENT STATE ===");
+            sb.AppendLine("=== YOUR CURRENT EMOTIONAL STATE ===");
             
             // ��ȡ�øжȵȼ�
             string tierName = agent.affinity >= 85f ? "Infatuated" :
@@ -482,22 +482,12 @@ You are a strategic entity that challenges the player through balanced gameplay.
                              agent.affinity >= -10f ? "Neutral" :
                              agent.affinity >= -50f ? "Cold" : "Hostile";
             
-            sb.AppendLine("**Your Feelings Toward the Player:**");
-            sb.AppendLine($"Affinity: {agent.affinity:F0}/100 ({tierName})");
-            sb.AppendLine($"Current Mood: {agent.currentMood}");
+            sb.AppendLine($"Affinity Level: {agent.affinity:F0}/100 ({tierName})");
             sb.AppendLine($"Difficulty Mode: {difficultyMode.GetChineseName()}");
             sb.AppendLine();
             
-            // ? �����Ѷ�ģʽ�������ָ��
+            // ✅ 简化：只提供情感指引，不提供数据统计
             sb.AppendLine(GetAffinityEmotionalGuidance(agent.affinity, difficultyMode));
-            
-            sb.AppendLine();
-            sb.AppendLine("**Your History Together:**");
-            sb.AppendLine($"Conversations: {agent.totalConversations}");
-            sb.AppendLine($"Commands you've executed: {agent.commandsExecuted}");
-            sb.AppendLine($"Commands that failed: {agent.commandsFailed}");
-            sb.AppendLine();
-            sb.AppendLine("��Щ����������������ǵĸ��飬�����Լ��ж�������ζ��ʲô��");
 
             return sb.ToString();
         }

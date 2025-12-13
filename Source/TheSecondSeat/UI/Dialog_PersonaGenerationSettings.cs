@@ -136,15 +136,17 @@ namespace TheSecondSeat.UI
             
             try
             {
+                // 1. ✅ 创建基础人格定义
                 NarratorPersonaDef newPersona = new NarratorPersonaDef();
                 newPersona.defName = $"UserGenerated_{personaName.Replace(" ", "_")}_{DateTime.Now.Ticks}";
                 newPersona.narratorName = personaName;
-                newPersona.biography = personaBio;
+                newPersona.biography = personaBio;  // 临时保存，后续会被多模态分析增强
                 newPersona.label = personaName;
                 newPersona.primaryColor = Color.white;
                 newPersona.accentColor = Color.gray;
                 newPersona.enabled = true;
                 
+                // 2. ✅ 默认对话风格（会被多模态分析覆盖）
                 newPersona.dialogueStyle = new DialogueStyleDef
                 {
                     formalityLevel = 0.5f,
@@ -157,7 +159,6 @@ namespace TheSecondSeat.UI
                     useExclamation = true
                 };
                 
-                // 修复：使用正确的字段名
                 newPersona.eventPreferences = new EventPreferencesDef
                 {
                     positiveEventBias = 0.0f,
@@ -166,19 +167,131 @@ namespace TheSecondSeat.UI
                     interventionFrequency = 0.5f
                 };
                 
-                // 修复：使用正确的方法名，传递所需参数
-                // 注意：ExportPersona 需要 3 个参数，但用户只输入了文字，没有图片
-                // 我们可以使用占位符或跳过导出
+                // 3. ✅ 多模态分析（如果启用）
+                var modSettings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
+                bool useMultimodalAnalysis = modSettings?.enableMultimodalAnalysis ?? false;
                 
-                // 直接注册到 DefDatabase
+                if (useMultimodalAnalysis)
+                {
+                    // ✅ 尝试从用户上传的立绘文件进行多模态分析
+                    // 注意：这里假设用户已经将立绘放置在正确的文件夹中
+                    // 路径：Textures/UI/Narrators/9x16/{人格名}/base.png
+                    
+                    string portraitPath = $"UI/Narrators/9x16/{personaName}/base";
+                    Texture2D portraitTexture = ContentFinder<Texture2D>.Get(portraitPath, false);
+                    
+                    if (portraitTexture != null)
+                    {
+                        try
+                        {
+                            // ✅ 调用多模态分析服务
+                            var analysisService = new MultimodalAnalysisService();
+                            
+                            // ✅ 将用户输入的简介作为额外提示传递给分析服务
+                            var analysisResult = analysisService.AnalyzePersonaImage(
+                                portraitTexture, 
+                                personaName,
+                                userBio: personaBio  // 传递用户输入的简介
+                            );
+                            
+                            if (analysisResult != null)
+                            {
+                                // ✅ 使用分析结果增强人格定义
+                                newPersona.SetAnalysis(analysisResult);
+                                
+                                // ✅ 更新 biography：结合 AI 分析和用户输入
+                                if (!string.IsNullOrEmpty(analysisResult.GeneratedBiography))
+                                {
+                                    newPersona.biography = $"{personaBio}\n\n[AI 分析补充]\n{analysisResult.GeneratedBiography}";
+                                }
+                                
+                                // ✅ 更新视觉描述
+                                newPersona.visualDescription = analysisResult.VisualDescription;
+                                newPersona.visualElements = analysisResult.VisualTags;
+                                
+                                // ✅ 更新对话风格（基于分析结果）
+                                if (analysisResult.SuggestedDialogueStyle != null)
+                                {
+                                    newPersona.dialogueStyle = analysisResult.SuggestedDialogueStyle;
+                                }
+                                
+                                statusMessage = "✅ 多模态分析完成！人格数据已生成";
+                                
+                                if (Prefs.DevMode)
+                                {
+                                    Log.Message($"[Dialog_PersonaGenerationSettings] 多模态分析成功：{analysisResult.VisualTags.Count} 个视觉标签");
+                                }
+                            }
+                            else
+                            {
+                                Log.Warning("[Dialog_PersonaGenerationSettings] 多模态分析返回 null，使用默认配置");
+                            }
+                        }
+                        catch (Exception analysisEx)
+                        {
+                            Log.Warning($"[Dialog_PersonaGenerationSettings] 多模态分析失败（使用默认配置）: {analysisEx.Message}");
+                            statusMessage = "⚠️ 多模态分析失败，使用默认配置";
+                        }
+                    }
+                    else
+                    {
+                        Log.Message($"[Dialog_PersonaGenerationSettings] 未找到立绘文件：{portraitPath}，跳过多模态分析");
+                        statusMessage = "⚠️ 未找到立绘文件，跳过多模态分析";
+                    }
+                }
+                else
+                {
+                    Log.Message("[Dialog_PersonaGenerationSettings] 多模态分析未启用，跳过");
+                }
+                
+                // 4. ✅ 注册到 DefDatabase（本次游戏会话立即可用）
                 if (!DefDatabase<NarratorPersonaDef>.AllDefs.Contains(newPersona))
                 {
                     DefDatabase<NarratorPersonaDef>.Add(newPersona);
                 }
                 
-                statusMessage = $"成功！人格 '{personaName}' 已创建";
-                Messages.Message($"人格 '{personaName}' 创建成功！\n注意：此人格仅在当前游戏会话中有效。\n如需永久保存，请重启游戏后在设置中选择该人格。", MessageTypeDefOf.PositiveEvent);
+                // 5. ✅ 永久保存到文件（使用 PersonaDefExporter）
+                bool exportSuccess = false;
+                try
+                {
+                    // 获取立绘纹理（如果存在）
+                    string portraitPath = $"UI/Narrators/9x16/{personaName}/base";
+                    Texture2D portraitForExport = ContentFinder<Texture2D>.Get(portraitPath, false);
+                    
+                    // ✅ 修复参数顺序
+                    // ExportPersona(NarratorPersonaDef persona, string sourcePortraitPath, Texture2D texture)
+                    exportSuccess = PersonaDefExporter.ExportPersona(
+                        newPersona,              // persona
+                        portraitPath,           // sourcePortraitPath (ContentFinder 路径)
+                        portraitForExport       // texture
+                    );
+                }
+                catch (Exception exportEx)
+                {
+                    Log.Warning($"[Dialog_PersonaGenerationSettings] 保存人格文件失败（但已加载到游戏中）: {exportEx.Message}");
+                }
                 
+                // 6. ✅ 显示成功消息
+                statusMessage = $"成功！人格 '{personaName}' 已创建";
+                
+                string successMsg = $"人格 '{personaName}' 创建成功！\n\n";
+                if (exportSuccess)
+                {
+                    successMsg += "✅ 人格已保存到 Defs 文件夹，重启游戏后永久生效。";
+                }
+                else
+                {
+                    successMsg += "⚠️ 人格已加载到当前会话，但未能保存到文件。\n重启游戏后将丢失，请手动备份。";
+                }
+                
+                if (useMultimodalAnalysis)
+                {
+                    successMsg += "\n\n💡 提示：AI 已根据你的描述和立绘生成了完整的人格数据。";
+                }
+                
+                Messages.Message(successMsg, MessageTypeDefOf.PositiveEvent);
+                
+                // 7. 延迟关闭窗口
                 System.Threading.Tasks.Task.Delay(2000).ContinueWith(_ => {
                     this.Close();
                 });

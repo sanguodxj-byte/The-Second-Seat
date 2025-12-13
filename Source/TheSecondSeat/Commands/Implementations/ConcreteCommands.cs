@@ -4,10 +4,41 @@ using System.Linq;
 using Verse;
 using Verse.AI;
 using RimWorld;
+using UnityEngine;
 using TheSecondSeat.NaturalLanguage;
 
 namespace TheSecondSeat.Commands.Implementations
 {
+    /// <summary>
+    /// 批量命令的辅助方法集合
+    /// </summary>
+    public static class BatchCommandHelpers
+    {
+        /// <summary>
+        /// 获取智能焦点，用于proximity-based operations.
+        /// 优先级: 鼠标位置 > 镜头位置 > 地图中心
+        /// </summary>
+        public static IntVec3 GetSmartFocusPoint(Map map)
+        {
+            // 1. 优先使用鼠标位置
+            IntVec3 mouseCell = Verse.UI.MouseCell();
+            if (mouseCell.IsValid && mouseCell.InBounds(map))
+            {
+                return mouseCell;
+            }
+
+            // 2. 回退到镜头位置
+            IntVec3 cameraCell = Find.CameraDriver.MapPosition;
+            if (cameraCell.IsValid && cameraCell.InBounds(map))
+            {
+                return cameraCell;
+            }
+
+            // 3. 最后使用地图中心
+            return map.Center;
+        }
+    }
+
     /// <summary>
     /// Designates all mature crops for harvest
     /// </summary>
@@ -17,7 +48,7 @@ namespace TheSecondSeat.Commands.Implementations
 
         public override string GetDescription()
         {
-            return "Designate all mature plants for harvest";
+            return "Designate all mature plants for harvest. Parameters: limit=<number>, nearFocus=<true/false>";
         }
 
         public override bool Execute(string? target = null, object? parameters = null)
@@ -29,24 +60,62 @@ namespace TheSecondSeat.Commands.Implementations
                 return false;
             }
 
-            int harvested = 0;
-            var plants = map.listerThings.ThingsInGroup(ThingRequestGroup.HarvestablePlant);
+            // Parse parameters
+            int limit = -1;
+            bool nearFocus = false;
 
-            foreach (var plant in plants)
+            if (parameters is Dictionary<string, object> paramsDict)
             {
-                if (plant is Plant p && p.HarvestableNow && p.Spawned)
+                if (paramsDict.TryGetValue("limit", out var limitObj))
                 {
-                    // Check if already designated
-                    if (map.designationManager.DesignationOn(p, DesignationDefOf.HarvestPlant) == null)
+                    if (int.TryParse(limitObj?.ToString(), out int parsedLimit))
                     {
-                        map.designationManager.AddDesignation(
-                            new Designation(p, DesignationDefOf.HarvestPlant));
-                        harvested++;
+                        limit = parsedLimit;
+                    }
+                }
+                if (paramsDict.TryGetValue("nearFocus", out var focusObj))
+                {
+                    if (bool.TryParse(focusObj?.ToString(), out bool parsedFocus))
+                    {
+                        nearFocus = parsedFocus;
                     }
                 }
             }
 
-            LogExecution($"Designated {harvested} plants for harvest");
+            int harvested = 0;
+            var plants = map.listerThings.ThingsInGroup(ThingRequestGroup.HarvestablePlant)
+                .OfType<Plant>()
+                .Where(p => p.HarvestableNow && p.Spawned)
+                .ToList();
+
+            // Sort by distance if nearFocus is enabled
+            if (nearFocus)
+            {
+                IntVec3 focusPoint = BatchCommandHelpers.GetSmartFocusPoint(map);
+                plants = plants.OrderBy(p => p.Position.DistanceTo(focusPoint)).ToList();
+            }
+
+            // Apply limit if specified
+            if (limit > 0)
+            {
+                plants = plants.Take(limit).ToList();
+            }
+
+            foreach (var plant in plants)
+            {
+                // Check if already designated
+                if (map.designationManager.DesignationOn(plant, DesignationDefOf.HarvestPlant) == null)
+                {
+                    map.designationManager.AddDesignation(
+                        new Designation(plant, DesignationDefOf.HarvestPlant));
+                    harvested++;
+
+                    // ? Visual feedback
+                    FleckMaker.ThrowMetaIcon(plant.Position, map, FleckDefOf.FeedbackGoto);
+                }
+            }
+
+            LogExecution($"Designated {harvested} plants for harvest (limit: {limit}, nearFocus: {nearFocus})");
             
             if (harvested > 0)
             {
@@ -362,7 +431,7 @@ namespace TheSecondSeat.Commands.Implementations
 
         public override string GetDescription()
         {
-            return "Designate all mineable resources for mining";
+            return "Designate all mineable resources for mining. Parameters: limit=<number>, nearFocus=<true/false>";
         }
 
         public override bool Execute(string? target = null, object? parameters = null)
@@ -374,23 +443,39 @@ namespace TheSecondSeat.Commands.Implementations
                 return false;
             }
 
-            int designated = 0;
-            
-            // 支持的目标类型
-            // "All" - 所有可采矿资源
-            // "Metal" - 金属矿（钢铁、金、银、铀等）
-            // "Stone" - 石料
-            // "Specific" - 特定资源（从 parameters 获取）
+            // Parse parameters
+            int limit = -1;
+            bool nearFocus = false;
 
+            if (parameters is Dictionary<string, object> paramsDict)
+            {
+                if (paramsDict.TryGetValue("limit", out var limitObj))
+                {
+                    if (int.TryParse(limitObj?.ToString(), out int parsedLimit))
+                    {
+                        limit = parsedLimit;
+                    }
+                }
+                if (paramsDict.TryGetValue("nearFocus", out var focusObj))
+                {
+                    if (bool.TryParse(focusObj?.ToString(), out bool parsedFocus))
+                    {
+                        nearFocus = parsedFocus;
+                    }
+                }
+            }
+
+            int designated = 0;
             string targetType = target?.ToLower() ?? "all";
             
             var mineableThings = map.listerThings.AllThings
                 .Where(t => t.def.mineable && t.Spawned)
                 .ToList();
 
+            // Filter by target type
+            var filteredThings = new List<Thing>();
             foreach (var thing in mineableThings)
             {
-                // 检查是否已经指定采矿
                 if (map.designationManager.DesignationOn(thing, DesignationDefOf.Mine) != null)
                     continue;
 
@@ -403,7 +488,6 @@ namespace TheSecondSeat.Commands.Implementations
                         break;
 
                     case "metal":
-                        // 金属矿物（钢铁、金、银、铀等）
                         shouldMine = thing.def.building?.mineableThing != null &&
                                    (thing.def.building.mineableThing.IsWithinCategory(ThingCategoryDefOf.ResourcesRaw) ||
                                     thing.def.building.mineableThing.defName.Contains("Steel") ||
@@ -415,20 +499,17 @@ namespace TheSecondSeat.Commands.Implementations
                         break;
 
                     case "stone":
-                        // 石料
                         shouldMine = thing.def.building?.mineableThing != null &&
                                    thing.def.building.mineableThing.IsWithinCategory(ThingCategoryDefOf.StoneBlocks);
                         break;
 
                     case "components":
                     case "component":
-                        // 组件
                         shouldMine = thing.def.building?.mineableThing != null &&
                                    thing.def.building.mineableThing.defName.Contains("Component");
                         break;
 
                     default:
-                        // 尝试匹配特定资源名称
                         shouldMine = thing.def.defName.ToLower().Contains(targetType) ||
                                    (thing.def.building?.mineableThing?.defName.ToLower().Contains(targetType) ?? false);
                         break;
@@ -436,12 +517,34 @@ namespace TheSecondSeat.Commands.Implementations
 
                 if (shouldMine)
                 {
-                    map.designationManager.AddDesignation(new Designation(thing, DesignationDefOf.Mine));
-                    designated++;
+                    filteredThings.Add(thing);
                 }
             }
 
-            LogExecution($"Designated {designated} mineable resources for mining (type: {targetType})");
+            // Sort by distance if nearFocus is enabled
+            if (nearFocus)
+            {
+                IntVec3 focusPoint = BatchCommandHelpers.GetSmartFocusPoint(map);
+                filteredThings = filteredThings.OrderBy(t => t.Position.DistanceTo(focusPoint)).ToList();
+            }
+
+            // Apply limit if specified
+            if (limit > 0)
+            {
+                filteredThings = filteredThings.Take(limit).ToList();
+            }
+
+            // Designate and provide visual feedback
+            foreach (var thing in filteredThings)
+            {
+                map.designationManager.AddDesignation(new Designation(thing, DesignationDefOf.Mine));
+                designated++;
+
+                // ? Visual feedback
+                FleckMaker.ThrowMetaIcon(thing.Position, map, FleckDefOf.FeedbackGoto);
+            }
+
+            LogExecution($"Designated {designated} mineable resources for mining (type: {targetType}, limit: {limit}, nearFocus: {nearFocus})");
             
             if (designated > 0)
             {
@@ -462,7 +565,6 @@ namespace TheSecondSeat.Commands.Implementations
 
     /// <summary>
     /// Designate mature trees for logging (correct logging, not cut all plants)
-    /// ? 正确的伐木指令：只砍伐成熟的树木
     /// </summary>
     public class BatchLoggingCommand : BaseAICommand
     {
@@ -470,7 +572,7 @@ namespace TheSecondSeat.Commands.Implementations
 
         public override string GetDescription()
         {
-            return "Designate mature trees for logging";
+            return "Designate mature trees for logging. Parameters: limit=<number>, nearFocus=<true/false>";
         }
 
         public override bool Execute(string? target = null, object? parameters = null)
@@ -482,31 +584,66 @@ namespace TheSecondSeat.Commands.Implementations
                 return false;
             }
 
-            int designated = 0;
-            var plants = map.listerThings.ThingsInGroup(ThingRequestGroup.Plant);
+            // Parse parameters
+            int limit = -1;
+            bool nearFocus = false;
 
-            foreach (var plant in plants)
+            if (parameters is Dictionary<string, object> paramsDict)
             {
-                if (plant is Plant p && p.Spawned)
+                if (paramsDict.TryGetValue("limit", out var limitObj))
                 {
-                    // ? 只选择树木（tree）且生长成熟的
-                    if (p.def.plant != null && 
-                        p.def.plant.IsTree && 
-                        p.Growth >= 0.9f &&  // 至少 90% 成长
-                        !p.IsForbidden(Faction.OfPlayer))
+                    if (int.TryParse(limitObj?.ToString(), out int parsedLimit))
                     {
-                        // 检查是否已经指定砍伐
-                        if (map.designationManager.DesignationOn(p, DesignationDefOf.CutPlant) == null)
-                        {
-                            map.designationManager.AddDesignation(
-                                new Designation(p, DesignationDefOf.CutPlant));
-                            designated++;
-                        }
+                        limit = parsedLimit;
+                    }
+                }
+                if (paramsDict.TryGetValue("nearFocus", out var focusObj))
+                {
+                    if (bool.TryParse(focusObj?.ToString(), out bool parsedFocus))
+                    {
+                        nearFocus = parsedFocus;
                     }
                 }
             }
 
-            LogExecution($"Designated {designated} mature trees for logging");
+            int designated = 0;
+            var plants = map.listerThings.ThingsInGroup(ThingRequestGroup.Plant)
+                .OfType<Plant>()
+                .Where(p => p.Spawned &&
+                           p.def.plant != null &&
+                           p.def.plant.IsTree &&
+                           p.Growth >= 0.9f &&
+                           !p.IsForbidden(Faction.OfPlayer))
+                .ToList();
+
+            // Sort by distance if nearFocus is enabled
+            if (nearFocus)
+            {
+                IntVec3 focusPoint = BatchCommandHelpers.GetSmartFocusPoint(map);
+                plants = plants.OrderBy(p => p.Position.DistanceTo(focusPoint)).ToList();
+            }
+
+            // Apply limit if specified
+            if (limit > 0)
+            {
+                plants = plants.Take(limit).ToList();
+            }
+
+            foreach (var plant in plants)
+            {
+                // Check if already designated
+                if (map.designationManager.DesignationOn(plant, DesignationDefOf.CutPlant) == null)
+                {
+                    map.designationManager.AddDesignation(
+                        new Designation(plant, DesignationDefOf.CutPlant));
+                    designated++;
+
+                    // ? Visual feedback
+                    FleckMaker.ThrowMetaIcon(plant.Position, map, FleckDefOf.FeedbackGoto);
+                }
+            }
+
+            LogExecution($"Designated {designated} mature trees for logging (limit: {limit}, nearFocus: {nearFocus})");
             
             if (designated > 0)
             {
@@ -526,7 +663,7 @@ namespace TheSecondSeat.Commands.Implementations
     }
 
     /// <summary>
-    /// Cut all designated plants (原"伐木"指令，现改为"清理植物"）
+    /// Cut all designated plants
     /// </summary>
     public class DesignatePlantCutCommand : BaseAICommand
     {
@@ -534,7 +671,7 @@ namespace TheSecondSeat.Commands.Implementations
 
         public override string GetDescription()
         {
-            return "Cut all plants in designated area";
+            return "Cut all plants in designated area. Parameters: limit=<number>, nearFocus=<true/false>";
         }
 
         public override bool Execute(string? target = null, object? parameters = null)
@@ -546,51 +683,93 @@ namespace TheSecondSeat.Commands.Implementations
                 return false;
             }
 
-            int designated = 0;
-            string targetType = target?.ToLower() ?? "all";
-            
-            var plants = map.listerThings.ThingsInGroup(ThingRequestGroup.Plant);
+            // Parse parameters
+            int limit = -1;
+            bool nearFocus = false;
 
-            foreach (var plant in plants)
+            if (parameters is Dictionary<string, object> paramsDict)
             {
-                if (plant is Plant p && p.Spawned && !p.IsForbidden(Faction.OfPlayer))
+                if (paramsDict.TryGetValue("limit", out var limitObj))
                 {
-                    bool shouldCut = false;
-
-                    switch (targetType)
+                    if (int.TryParse(limitObj?.ToString(), out int parsedLimit))
                     {
-                        case "blighted":
-                            // 只清理枯萎的植物
-                            shouldCut = p.Blighted;
-                            break;
-
-                        case "trees":
-                            // 清理所有树木
-                            shouldCut = p.def.plant?.IsTree ?? false;
-                            break;
-
-                        case "wild":
-                            // 清理野生植物
-                            shouldCut = !p.IsCrop;
-                            break;
-
-                        case "all":
-                        default:
-                            // 清理所有植物（包括作物）
-                            shouldCut = true;
-                            break;
+                        limit = parsedLimit;
                     }
-
-                    if (shouldCut && map.designationManager.DesignationOn(p, DesignationDefOf.CutPlant) == null)
+                }
+                if (paramsDict.TryGetValue("nearFocus", out var focusObj))
+                {
+                    if (bool.TryParse(focusObj?.ToString(), out bool parsedFocus))
                     {
-                        map.designationManager.AddDesignation(
-                            new Designation(p, DesignationDefOf.CutPlant));
-                        designated++;
+                        nearFocus = parsedFocus;
                     }
                 }
             }
 
-            LogExecution($"Designated {designated} plants for cutting (type: {targetType})");
+            int designated = 0;
+            string targetType = target?.ToLower() ?? "all";
+            
+            var plants = map.listerThings.ThingsInGroup(ThingRequestGroup.Plant)
+                .OfType<Plant>()
+                .Where(p => p.Spawned && !p.IsForbidden(Faction.OfPlayer))
+                .ToList();
+
+            // Filter by target type
+            var filteredPlants = new List<Plant>();
+            foreach (var plant in plants)
+            {
+                bool shouldCut = false;
+
+                switch (targetType)
+                {
+                    case "blighted":
+                        shouldCut = plant.Blighted;
+                        break;
+
+                    case "trees":
+                        shouldCut = plant.def.plant?.IsTree ?? false;
+                        break;
+
+                    case "wild":
+                        shouldCut = !plant.IsCrop;
+                        break;
+
+                    case "all":
+                    default:
+                        shouldCut = true;
+                        break;
+                }
+
+                if (shouldCut && map.designationManager.DesignationOn(plant, DesignationDefOf.CutPlant) == null)
+                {
+                    filteredPlants.Add(plant);
+                }
+            }
+
+            // Sort by distance if nearFocus is enabled
+            if (nearFocus)
+            {
+                IntVec3 focusPoint = BatchCommandHelpers.GetSmartFocusPoint(map);
+                filteredPlants = filteredPlants.OrderBy(p => p.Position.DistanceTo(focusPoint)).ToList();
+            }
+
+            // Apply limit if specified
+            if (limit > 0)
+            {
+                filteredPlants = filteredPlants.Take(limit).ToList();
+            }
+
+            // Designate and provide visual feedback
+            foreach (var plant in filteredPlants)
+            {
+                map.designationManager.AddDesignation(
+                    new Designation(plant, DesignationDefOf.CutPlant));
+                designated++;
+
+                // ? Visual feedback
+                FleckMaker.ThrowMetaIcon(plant.Position, map, FleckDefOf.FeedbackGoto);
+            }
+
+            LogExecution($"Designated {designated} plants for cutting (type: {targetType}, limit: {limit}, nearFocus: {nearFocus})");
             
             if (designated > 0)
             {

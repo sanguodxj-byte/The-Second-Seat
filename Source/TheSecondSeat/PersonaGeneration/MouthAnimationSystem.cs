@@ -35,13 +35,13 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// 嘴巴状态数据
+        /// ? v1.6.30: 简化版口型同步
         /// </summary>
         private class MouthState
         {
-            public float targetOpenness;      // 目标开合程度（0~1）
-            public float currentOpenness;     // 当前开合程度（0~1）
-            public bool isSpeaking;           // 是否正在说话
-            public float speakingTime;        // 说话持续时间
+            public bool isSpeaking;                 // 是否正在说话
+            public float lastSwitchTime;            // 上次切换时间
+            public bool isSmallMouth;               // 当前是否为small_mouth（false=opened_mouth）
             public ExpressionType currentExpression;
         }
         
@@ -54,10 +54,9 @@ namespace TheSecondSeat.PersonaGeneration
             {
                 state = new MouthState
                 {
-                    targetOpenness = 0f,
-                    currentOpenness = 0f,
                     isSpeaking = false,
-                    speakingTime = 0f,
+                    lastSwitchTime = Time.realtimeSinceStartup,
+                    isSmallMouth = false,
                     currentExpression = ExpressionType.Neutral
                 };
                 mouthStates[personaDefName] = state;
@@ -67,9 +66,10 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// 获取嘴巴层名称（根据表情和开合程度返回对应的嘴型）
+        /// ? v1.6.30: 简化版口型同步 - 每0.2秒在opened_mouth和small_mouth之间切换
         /// </summary>
         /// <param name="personaDefName">人格 DefName</param>
-        /// <returns>嘴巴层名称（mouth_closed, mouth_smile, mouth_open_small, mouth_open_wide）</returns>
+        /// <returns>嘴巴层名称（opened_mouth, small_mouth, 或表情对应的嘴型）</returns>
         public static string GetMouthLayerName(string personaDefName)
         {
             var state = GetOrCreateState(personaDefName);
@@ -81,132 +81,57 @@ namespace TheSecondSeat.PersonaGeneration
                 state.currentExpression = expressionState.CurrentExpression;
             }
             
-            // 检查是否正在播放 TTS
-            // ? 修复：TTSAudioPlayer 没有 IsPlaying 方法，暂时禁用此功能
-            bool isPlayingTTS = false;  // TODO: 实现 TTS 播放状态检测
-            // bool isPlayingTTS = TTSAudioPlayer.IsPlaying(personaDefName);
+            // ? v1.6.30: 检查是否正在播放 TTS（口型同步系统已集成）
+            bool isPlayingTTS = TTS.TTSAudioPlayer.IsSpeaking(personaDefName);
             
             if (isPlayingTTS)
             {
-                // 正在说话：模拟嘴巴开合
+                // ? 正在说话：每 0.2 秒切换一次嘴型
                 state.isSpeaking = true;
-                state.speakingTime += Time.deltaTime;
                 
-                // 使用正弦波模拟说话时的嘴巴开合
-                float wave = Mathf.Sin(state.speakingTime * SPEAKING_FREQUENCY * 2f * Mathf.PI);
-                state.targetOpenness = Mathf.Clamp01((wave + 1f) * 0.5f * 0.7f); // 0~0.7 范围
+                float currentTime = Time.realtimeSinceStartup;
+                float elapsed = currentTime - state.lastSwitchTime;
+                
+                // 每 0.2 秒切换
+                if (elapsed >= 0.2f)
+                {
+                    state.isSmallMouth = !state.isSmallMouth;
+                    state.lastSwitchTime = currentTime;
+                }
+                
+                // 返回对应的嘴型
+                return state.isSmallMouth ? "small_mouth" : "opened_mouth";
             }
             else
             {
-                // 不在说话：根据表情决定嘴型
+                // ? 不在说话：根据表情决定嘴型
                 if (state.isSpeaking)
                 {
+                    // 刚停止说话，重置状态
                     state.isSpeaking = false;
-                    state.speakingTime = 0f;
+                    state.isSmallMouth = false;
                 }
                 
-                state.targetOpenness = GetMouthOpennessForExpression(state.currentExpression);
+                // 根据表情返回对应的嘴型
+                return GetMouthShapeForExpression(state.currentExpression);
             }
-            
-            // 平滑过渡到目标开合程度
-            float speed = state.targetOpenness > state.currentOpenness ? MOUTH_OPEN_SPEED : MOUTH_CLOSE_SPEED;
-            state.currentOpenness = Mathf.Lerp(state.currentOpenness, state.targetOpenness, Time.deltaTime * speed);
-            
-            // 根据开合程度返回嘴型
-            return GetMouthShapeLayerName(state.currentExpression, state.currentOpenness);
         }
         
         /// <summary>
-        /// 根据表情和开合程度获取嘴型层名称
+        /// 根据表情获取嘴型层名称
+        /// ? v1.6.30: 简化版 - 直接返回 LayeredPortraitCompositor 使用的名称
         /// </summary>
-        private static string GetMouthShapeLayerName(ExpressionType expression, float openness)
-        {
-            // 根据表情决定基础嘴型
-            MouthShape baseShape = GetMouthShapeForExpression(expression);
-            
-            // 如果在说话，根据开合程度覆盖嘴型
-            if (openness > 0.4f)
-            {
-                return "mouth_open_wide";
-            }
-            else if (openness > 0.2f)
-            {
-                return "mouth_open_small";
-            }
-            else if (openness > 0.05f)
-            {
-                // 微微张嘴
-                return "mouth_open_small";
-            }
-            
-            // 根据表情返回对应的嘴型
-            return baseShape switch
-            {
-                MouthShape.Smile => "mouth_smile",
-                MouthShape.OpenSmall => "mouth_open_small",
-                MouthShape.OpenWide => "mouth_open_wide",
-                MouthShape.Frown => "mouth_frown",
-                _ => "mouth_closed"
-            };
-        }
-        
-        /// <summary>
-        /// 根据表情获取基础嘴型
-        /// </summary>
-        private static MouthShape GetMouthShapeForExpression(ExpressionType expression)
+        private static string GetMouthShapeForExpression(ExpressionType expression)
         {
             return expression switch
             {
-                ExpressionType.Happy => MouthShape.Smile,
-                ExpressionType.Surprised => MouthShape.OpenWide,
-                ExpressionType.Sad => MouthShape.Frown,
-                ExpressionType.Angry => MouthShape.Closed,
-                ExpressionType.Confused => MouthShape.OpenSmall,
-                ExpressionType.Smug => MouthShape.Smile,
-                ExpressionType.Shy => MouthShape.Closed,
-                _ => MouthShape.Closed
+                ExpressionType.Happy => "larger_mouth",      // 开心用大嘴
+                ExpressionType.Surprised => "larger_mouth",  // 惊讶张大嘴
+                ExpressionType.Sad => "sad_mouth",
+                ExpressionType.Angry => "angry_mouth",
+                ExpressionType.Smug => "small1_mouth",       // 得意用小嘴变体
+                _ => "opened_mouth"                          // 默认闭嘴
             };
-        }
-        
-        /// <summary>
-        /// 根据表情获取嘴巴开合程度（不在说话时）
-        /// </summary>
-        private static float GetMouthOpennessForExpression(ExpressionType expression)
-        {
-            return expression switch
-            {
-                ExpressionType.Surprised => 0.6f,  // 惊讶时嘴巴微张
-                ExpressionType.Confused => 0.2f,   // 疑惑时嘴巴微开
-                _ => 0f                             // 其他表情默认闭嘴
-            };
-        }
-        
-        /// <summary>
-        /// 获取嘴巴层透明度（用于更平滑的过渡）
-        /// </summary>
-        /// <param name="personaDefName">人格 DefName</param>
-        /// <returns>透明度（0~1）</returns>
-        public static float GetMouthLayerAlpha(string personaDefName)
-        {
-            var state = GetOrCreateState(personaDefName);
-            
-            // 如果在说话，透明度根据开合程度调整
-            if (state.isSpeaking)
-            {
-                return Mathf.Clamp01(state.currentOpenness * 1.2f);
-            }
-            
-            // 不在说话时，根据表情决定透明度
-            return state.currentOpenness > 0.05f ? 1f : 0f;
-        }
-        
-        /// <summary>
-        /// 强制设置嘴型（用于特殊事件）
-        /// </summary>
-        public static void SetMouthShape(string personaDefName, MouthShape shape, float openness)
-        {
-            var state = GetOrCreateState(personaDefName);
-            state.targetOpenness = openness;
         }
         
         /// <summary>

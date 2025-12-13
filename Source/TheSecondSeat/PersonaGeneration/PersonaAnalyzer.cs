@@ -248,6 +248,7 @@ namespace TheSecondSeat.PersonaGeneration
 
         /// <summary>
         /// 完整分析人格定义（支持多模态 AI）
+        /// ? v1.6.27: 静默处理日志，只在DevMode下输出
         /// </summary>
         public static async Task<PersonaAnalysisResult> AnalyzePersonaDefAsync(NarratorPersonaDef def, Texture2D? portraitTexture = null)
         {
@@ -266,7 +267,11 @@ namespace TheSecondSeat.PersonaGeneration
                         
                         if (visionResult != null)
                         {
-                            Log.Message($"[PersonaAnalyzer] 多模态分析成功: {visionResult.suggestedPersonality}");
+                            // ? 只在DevMode下输出
+                            if (Prefs.DevMode)
+                            {
+                                Log.Message($"[PersonaAnalyzer] 多模态分析成功: {visionResult.suggestedPersonality}");
+                            }
                             
                             // 使用 AI 提取的颜色
                             def.primaryColor = visionResult.GetPrimaryColor();
@@ -281,7 +286,11 @@ namespace TheSecondSeat.PersonaGeneration
                     }
                     catch (Exception ex)
                     {
-                        Log.Warning($"[PersonaAnalyzer] 多模态分析失败，回退到本地分析: {ex.Message}");
+                        // ? 只在DevMode下输出警告
+                        if (Prefs.DevMode)
+                        {
+                            Log.Warning($"[PersonaAnalyzer] 多模态分析失败，回退到本地分析: {ex.Message}");
+                        }
                     }
                 }
             }
@@ -402,15 +411,47 @@ namespace TheSecondSeat.PersonaGeneration
     }
 
     /// <summary>
-    /// ?????????
+    /// 人格分析结果
     /// </summary>
     public class PersonaAnalysisResult
     {
         public PersonalityTrait? SuggestedPersonality { get; set; }
         public DialogueStyleDef DialogueStyle { get; set; } = new DialogueStyleDef();
         public List<string> ToneTags { get; set; } = new List<string>();
-        public List<string> VisualTags { get; set; } = new List<string>();  // ? 添加缺失的字段
-        public float ConfidenceScore { get; set; } = 0.5f;  // ? 添加缺失的字段
+        public List<string> VisualTags { get; set; } = new List<string>();
+        public float ConfidenceScore { get; set; } = 0.5f;
         public EventPreferencesDef EventPreferences { get; set; } = new EventPreferencesDef();
+        
+        // ? v1.6.22: 新增字段，支持多模态分析
+        /// <summary>
+        /// AI 生成的传记（基于图片分析）
+        /// </summary>
+        public string GeneratedBiography { get; set; } = "";
+        
+        /// <summary>
+        /// 视觉描述（从图片提取）
+        /// </summary>
+        public string VisualDescription { get; set; } = "";
+        
+        /// <summary>
+        /// AI 建议的对话风格（基于用户描述 + 图片分析）
+        /// </summary>
+        public DialogueStyleDef SuggestedDialogueStyle { get; set; } = new DialogueStyleDef();
+        
+        /// <summary>
+        /// ? v1.6.23: 构造函数，确保所有对象都被正确初始化
+        /// </summary>
+        public PersonaAnalysisResult()
+        {
+            // 确保所有集合和对象字段都被初始化
+            ToneTags = new List<string>();
+            VisualTags = new List<string>();
+            DialogueStyle = new DialogueStyleDef();
+            EventPreferences = new EventPreferencesDef();
+            SuggestedDialogueStyle = new DialogueStyleDef();
+            GeneratedBiography = "";
+            VisualDescription = "";
+            ConfidenceScore = 0.5f;
+        }
     }
 }

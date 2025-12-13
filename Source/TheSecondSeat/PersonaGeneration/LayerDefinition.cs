@@ -186,9 +186,15 @@ namespace TheSecondSeat.PersonaGeneration
     public class LayeredPortraitConfig
     {
         /// <summary>
-        /// 人格 defName
+        /// 人格 defName（如 "Sideria_Default", "CustomPersona_7a8e00b9"）
         /// </summary>
         public string PersonaDefName { get; set; } = "";
+        
+        /// <summary>
+        /// ? v1.6.27: 人格名称（用户指定的名称，如 "Sideria"）
+        /// 用于构建纹理路径
+        /// </summary>
+        public string PersonaName { get; set; } = "";
 
         /// <summary>
         /// 图层列表（按优先级自动排序）
@@ -251,15 +257,23 @@ namespace TheSecondSeat.PersonaGeneration
 
         /// <summary>
         /// 创建默认分层配置
+        /// ? v1.6.27: 接收 NarratorPersonaDef 参数，使用 narratorName 作为路径
         /// ? 新逻辑：base_body.png 作为底图（包含身体+默认表情）
         /// ? 表情拆分为 eyes/mouth/flush 三个独立部件进行拼接
         /// ? 眨眼和嘴巴动画使用通用部件，可与任何表情混搭
         /// </summary>
-        public static LayeredPortraitConfig CreateDefault(string personaName)
+        public static LayeredPortraitConfig CreateDefault(string personaDefName, string personaName = null)
         {
+            // ? v1.6.27: 如果没有提供 personaName，从 defName 中提取
+            if (string.IsNullOrEmpty(personaName))
+            {
+                personaName = ExtractPersonaName(personaDefName);
+            }
+            
             return new LayeredPortraitConfig
             {
-                PersonaDefName = personaName,
+                PersonaDefName = personaDefName,
+                PersonaName = personaName,  // ? v1.6.27: 设置人格名称
                 Layers = new List<LayerDefinition>
                 {
                     // ? 1. 底图层：base_body.png（包含身体+默认表情）
@@ -373,6 +387,35 @@ namespace TheSecondSeat.PersonaGeneration
                     }
                 }
             };
+        }
+        
+        /// <summary>
+        /// ? v1.6.27: 从 defName 提取人格名称
+        /// Sideria_Default → Sideria
+        /// CustomPersona_7a8e00b9 → CustomPersona_7a8e00b9 (保持不变)
+        /// </summary>
+        private static string ExtractPersonaName(string defName)
+        {
+            if (string.IsNullOrEmpty(defName))
+            {
+                return defName;
+            }
+            
+            // 移除常见后缀
+            string[] suffixesToRemove = new[] { 
+                "_Default", "_Classic", "_Custom", "_Persona", 
+                "_Chillax", "_Random", "_Invader", "_Protector" 
+            };
+            
+            foreach (var suffix in suffixesToRemove)
+            {
+                if (defName.EndsWith(suffix))
+                {
+                    return defName.Substring(0, defName.Length - suffix.Length);
+                }
+            }
+            
+            return defName;
         }
 
         /// <summary>
