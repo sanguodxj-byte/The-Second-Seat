@@ -506,26 +506,99 @@ namespace TheSecondSeat.Core
         }
         
         /// <summary>
-        /// 执行高级命令（使用新的解析和执行引擎）
+        /// 执行高级命令（直接构造 ParsedCommand，不再重复解析）
+        /// ? v1.6.40: 优化命令执行流程，避免数据丢失
         /// </summary>
         private void ExecuteAdvancedCommand(LLMCommand llmCommand)
         {
             try
             {
-                // 1. 解析命令
-                var parsedCommand = NaturalLanguageParser.ParseFromLLMResponse(
-                    Newtonsoft.Json.JsonConvert.SerializeObject(new { command = llmCommand }));
-
-                if (parsedCommand == null)
+                // ? 1. 直接构造 ParsedCommand
+                var parsedCommand = new ParsedCommand
                 {
-                    Log.Warning($"[NarratorController] 无法解析命令: {llmCommand.action}");
-                    return;
+                    action = llmCommand.action,
+                    originalQuery = "",
+                    confidence = 1f, // LLM 输出的命令置信度默认为 1
+                    parameters = new AdvancedCommandParams
+                    {
+                        target = llmCommand.target,
+                        scope = "Map" // 默认作用域
+                    }
+                };
+
+                // ? 2. 处理 parameters 字段
+                if (llmCommand.parameters != null)
+                {
+                    // 尝试转换为 Dictionary<string, object>
+                    var paramsDict = new Dictionary<string, object>();
+                    
+                    // 处理 JObject 或 dynamic 类型
+                    if (llmCommand.parameters is Newtonsoft.Json.Linq.JObject jObj)
+                    {
+                        // 反序列化为 Dictionary
+                        paramsDict = jObj.ToObject<Dictionary<string, object>>() ?? new Dictionary<string, object>();
+                    }
+                    else if (llmCommand.parameters is Dictionary<string, object> dict)
+                    {
+                        paramsDict = dict;
+                    }
+                    else
+                    {
+                        // 尝试序列化再反序列化
+                        try
+                        {
+                            string json = Newtonsoft.Json.JsonConvert.SerializeObject(llmCommand.parameters);
+                            paramsDict = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, object>>(json) 
+                                ?? new Dictionary<string, object>();
+                        }
+                        catch
+                        {
+                            Log.Warning($"[NarratorController] 无法转换 parameters: {llmCommand.parameters}");
+                        }
+                    }
+                    
+                    // ? 3. 将 Dictionary 赋值给 filters
+                    parsedCommand.parameters.filters = paramsDict;
+                    
+                    // ? 4. 关键！检查 "limit" 并映射到 count
+                    if (paramsDict.TryGetValue("limit", out var limitObj))
+                    {
+                        if (limitObj is int limitInt)
+                        {
+                            parsedCommand.parameters.count = limitInt;
+                        }
+                        else if (int.TryParse(limitObj?.ToString(), out int parsedLimit))
+                        {
+                            parsedCommand.parameters.count = parsedLimit;
+                        }
+                    }
+                    
+                    // ? 5. 如果 parameters 包含 scope，覆盖默认值
+                    if (paramsDict.TryGetValue("scope", out var scopeObj))
+                    {
+                        parsedCommand.parameters.scope = scopeObj?.ToString() ?? "Map";
+                    }
+                    
+                    // ? 6. 处理 priority 标志
+                    if (paramsDict.TryGetValue("priority", out var priorityObj))
+                    {
+                        if (priorityObj is bool priorityBool)
+                        {
+                            parsedCommand.parameters.priority = priorityBool;
+                        }
+                        else if (bool.TryParse(priorityObj?.ToString(), out bool parsedPriority))
+                        {
+                            parsedCommand.parameters.priority = parsedPriority;
+                        }
+                    }
                 }
 
-                // 2. 执行命令
+                Log.Message($"[NarratorController] 构造 ParsedCommand: Action={parsedCommand.action}, Target={parsedCommand.parameters.target}, Count={parsedCommand.parameters.count}");
+
+                // ? 7. 执行命令
                 var result = GameActionExecutor.Execute(parsedCommand);
 
-                // 3. 更新好感度
+                // ? 8. 更新好感度
                 if (narratorManager != null)
                 {
                     float affinityChange = result.success ? 2f : -1f;
@@ -535,13 +608,13 @@ namespace TheSecondSeat.Core
                     );
                 }
 
-                // 4. 记录到记忆
+                // ? 9. 记录到记忆
                 MemoryContextBuilder.RecordEvent(
                     $"执行命令 {llmCommand.action}: {result.message}",
                     result.success ? MemoryImportance.High : MemoryImportance.Medium
                 );
 
-                // 5. 显示结果
+                // ? 10. 显示结果
                 if (!result.success)
                 {
                     Messages.Message($"命令失败: {result.message}", MessageTypeDefOf.RejectInput);
@@ -554,6 +627,7 @@ namespace TheSecondSeat.Core
             catch (Exception ex)
             {
                 Log.Error($"[NarratorController] 执行命令失败: {ex.Message}\n{ex.StackTrace}");
+                Messages.Message($"命令执行异常: {ex.Message}", MessageTypeDefOf.RejectInput);
             }
         }
 

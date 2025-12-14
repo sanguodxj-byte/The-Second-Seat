@@ -765,7 +765,16 @@ namespace TheSecondSeat.UI
         }
 
         /// <summary>
-        /// ✅ 恢复默认表情（根据好感度）
+        /// ✅ v1.6.40: 恢复默认表情（基于好感度的待机表情系统）
+        /// 根据 agent.affinity 决定待机表情：
+        /// - 高好感 (> 80): Shy（暗恋/脸红）
+        /// - 良好 (> 40): Happy（微笑）
+        /// - 中立 (-20 to 40): Neutral（平静）
+        /// - 不佳 (-60 to -20): Sad（失望/冷淡）
+        /// - 敌对 (< -60): Angry（憎恨）
+        /// 
+        /// ✅ 心情覆盖：如果 currentMood 是负面状态，强制使用 Sad 表情
+        /// ✅ 无限持续：duration = 99999f，表情保持到下次互动事件
         /// </summary>
         private void RestoreDefaultExpression()
         {
@@ -775,21 +784,41 @@ namespace TheSecondSeat.UI
             if (agent != null)
             {
                 float affinity = agent.GetAffinity();
+                var mood = agent.currentMood;
                 
-                ExpressionType defaultExpression = affinity switch
+                ExpressionType defaultExpression;
+                
+                // ✅ 心情覆盖：心情极差时强制显示悲伤表情
+                if (mood == Storyteller.MoodState.Melancholic || 
+                    mood == Storyteller.MoodState.Angry)
                 {
-                    >= 80 => ExpressionType.Happy,
-                    >= 60 => ExpressionType.Neutral,
-                    >= 40 => ExpressionType.Neutral,
-                    >= 20 => ExpressionType.Sad,
-                    _ => ExpressionType.Angry
-                };
+                    defaultExpression = ExpressionType.Sad;
+                }
+                else
+                {
+                    // ✅ 基于好感度的待机表情
+                    defaultExpression = affinity switch
+                    {
+                        > 80f => ExpressionType.Shy,      // 高好感：害羞/暗恋
+                        > 40f => ExpressionType.Happy,    // 良好：开心/微笑
+                        > -20f => ExpressionType.Neutral, // 中立：平静
+                        > -60f => ExpressionType.Sad,     // 不佳：失望/冷淡
+                        _ => ExpressionType.Angry         // 敌对：憎恨
+                    };
+                }
                 
-                TriggerExpression(defaultExpression, duration: 3f);
+                // ✅ 关键：无限持续时间 (99999f)，直到下次互动事件
+                TriggerExpression(defaultExpression, duration: 99999f);
+                
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[NarratorScreenButton] 恢复待机表情: {defaultExpression} (Affinity={affinity:F1}, Mood={mood})");
+                }
             }
             else
             {
-                TriggerExpression(ExpressionType.Neutral, duration: 3f);
+                // ✅ 无 agent 时，使用中立表情（无限持续）
+                TriggerExpression(ExpressionType.Neutral, duration: 99999f);
             }
         }
 

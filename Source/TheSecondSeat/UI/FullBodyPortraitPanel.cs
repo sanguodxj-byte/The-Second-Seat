@@ -10,12 +10,14 @@ namespace TheSecondSeat.UI
     /// <summary>
     /// ? v1.6.24: 全身立绘面板（画面左侧）
     /// ? v1.6.25: 新增触摸互动系统
+    /// ? v1.6.40: 新增区域交互系统（头部摸摸、身体戳戳）
     /// 功能：
     /// - 显示 1024x1574 全身立绘（使用分层系统）
     /// - 动态表情切换
     /// - 呼吸动画
     /// - 眨眼和张嘴动画
     /// - ? 触摸互动（悬停1秒激活，移动鼠标触发表情）
+    /// - ? 区域交互（头部摸摸、身体戳戳）
     /// </summary>
     [StaticConstructorOnStartup]
     public class FullBodyPortraitPanel : Window
@@ -59,6 +61,13 @@ namespace TheSecondSeat.UI
         private const float FAST_FLASH_DURATION = 0.15f;
         private const float FAST_FLASH_INTERVAL = 0.05f;
         
+        // ? v1.6.40: 区域交互系统相关
+        private float headRubProgress = 0f;
+        private const float HEAD_RUB_THRESHOLD = 60f;
+        private const float HEAD_RUB_DECAY_RATE = 20f;  // 每秒衰减速度
+        private float lastHeadPatTime = 0f;
+        private const float HEAD_PAT_COOLDOWN = 3.0f;
+        
         public FullBodyPortraitPanel()
         {
             this.doCloseX = false;
@@ -100,8 +109,31 @@ namespace TheSecondSeat.UI
 
         public override void DoWindowContents(Rect inRect)
         {
-            // ? v1.6.25: 处理触摸互动
-            HandleHoverAndTouch(inRect);
+            // ? v1.6.41: Shift 键激活系统 - 视觉"幽灵模式"
+            bool mouseOver = Mouse.IsOver(inRect);
+            bool shiftHeld = Event.current.shift;
+            
+            // ? 1. 视觉透明度控制
+            Color originalColor = GUI.color;
+            if (mouseOver && !shiftHeld)
+            {
+                // 鼠标悬停但未按 Shift：半透明（幽灵模式）
+                GUI.color = new Color(1f, 1f, 1f, 0.2f);
+            }
+            else
+            {
+                // 按住 Shift 或鼠标未悬停：完全不透明
+                GUI.color = new Color(1f, 1f, 1f, 1.0f);
+            }
+            
+            // ? v1.6.40: 处理区域交互（只在 Shift 按下时激活）
+            bool zoneInteractionHandled = HandleZoneInteraction(inRect);
+            
+            // ? v1.6.25: 处理触摸互动（如果区域交互未处理）
+            if (!zoneInteractionHandled)
+            {
+                HandleHoverAndTouch(inRect);
+            }
             
             // 更新人格信息
             UpdatePortrait();
@@ -128,44 +160,389 @@ namespace TheSecondSeat.UI
                 Text.Anchor = TextAnchor.UpperLeft;
             }
             
-            // ? 悬停提示
+            // ? 恢复原始颜色
+            GUI.color = originalColor;
+            
+            // ? 悬停提示（增强：显示 Shift 键提示）
             if (Mouse.IsOver(inRect) && currentPersona != null)
             {
                 string tooltip = $"{currentPersona.narratorName}\n表情: {lastExpression}";
                 
-                // ? 触摸模式提示
-                if (isTouchModeActive)
+                // ? v1.6.41: Shift 键提示
+                if (!shiftHeld)
                 {
-                    tooltip += "\n\n? 触摸模式激活！移动鼠标与她互动";
-                }
-                else if (isHovering)
-                {
-                    float progress = (Time.realtimeSinceStartup - hoverStartTime) / HOVER_ACTIVATION_TIME;
-                    tooltip += $"\n\n?? 悬停进度: {(progress * 100):F0}%";
+                    tooltip += "\n\n?? 按住 Shift 键激活互动模式";
                 }
                 else
                 {
-                    tooltip += "\n\n?? 悬停1秒激活触摸模式";
+                    tooltip += "\n\n? 互动模式已激活";
+                }
+                
+                // ? v1.6.40: 显示当前交互区域
+                if (shiftHeld)
+                {
+                    var zone = GetInteractionZone(inRect, Event.current.mousePosition);
+                    if (zone == InteractionPhrases.InteractionZone.Head)
+                    {
+                        tooltip += $"\n\n?? 头部区域 | 摸摸进度: {headRubProgress:F0}/{HEAD_RUB_THRESHOLD}";
+                    }
+                    else if (zone == InteractionPhrases.InteractionZone.Body)
+                    {
+                        tooltip += "\n\n?? 身体区域 | 单击戳戳";
+                    }
+                }
+                
+                // ? 触摸模式提示（仅在 Shift 按下时）
+                if (shiftHeld)
+                {
+                    if (isTouchModeActive)
+                    {
+                        tooltip += "\n\n? 触摸模式激活！移动鼠标与她互动";
+                    }
+                    else if (isHovering)
+                    {
+                        float progress = (Time.realtimeSinceStartup - hoverStartTime) / HOVER_ACTIVATION_TIME;
+                        tooltip += $"\n?? 悬停进度: {(progress * 100):F0}%";
+                    }
+                    else
+                    {
+                        tooltip += "\n?? 悬停1秒激活触摸模式";
+                    }
                 }
                 
                 TooltipHandler.TipRegion(inRect, tooltip);
             }
             
-            // ? 绘制悬停进度条
-            if (isHovering && !isTouchModeActive)
+            // ? 绘制悬停进度条（仅在 Shift 按下时）
+            if (shiftHeld && isHovering && !isTouchModeActive)
             {
                 float progress = (Time.realtimeSinceStartup - hoverStartTime) / HOVER_ACTIVATION_TIME;
                 DrawHoverProgress(inRect, progress);
             }
             
-            // ? 触摸模式指示器
-            if (isTouchModeActive)
+            // ? v1.6.40: 绘制头部摸摸进度条（仅在 Shift 按下时）
+            if (shiftHeld && headRubProgress > 0f)
+            {
+                DrawHeadRubProgress(inRect, headRubProgress / HEAD_RUB_THRESHOLD);
+            }
+            
+            // ? 触摸模式指示器（仅在 Shift 按下时）
+            if (shiftHeld && isTouchModeActive)
             {
                 DrawTouchModeIndicator(inRect);
             }
             
-            // ? 绘制边框闪烁效果
-            DrawBorderFlash(inRect);
+            // ? 绘制边框闪烁效果（仅在 Shift 按下时）
+            if (shiftHeld)
+            {
+                DrawBorderFlash(inRect);
+            }
+        }
+        
+        /// <summary>
+        /// ? v1.6.40: 处理区域交互系统
+        /// ? v1.6.41: 添加 Shift 键守卫 - 未按 Shift 时不拦截事件
+        /// 返回：是否处理了交互（用于阻止穿透点击）
+        /// </summary>
+        private bool HandleZoneInteraction(Rect inRect)
+        {
+            if (currentPersona == null) return false;
+            
+            // ? v1.6.41: Shift 键守卫 - 未按 Shift 时允许点击穿透
+            bool shiftHeld = Event.current.shift;
+            if (!shiftHeld)
+            {
+                // 衰减头部摸摸进度（即使未按 Shift）
+                if (headRubProgress > 0f)
+                {
+                    headRubProgress -= HEAD_RUB_DECAY_RATE * Time.deltaTime;
+                    if (headRubProgress < 0f) headRubProgress = 0f;
+                }
+                
+                // ? 不拦截事件，允许点击穿透到地图
+                return false;
+            }
+            
+            bool mouseOver = Mouse.IsOver(inRect);
+            if (!mouseOver)
+            {
+                // 衰减头部摸摸进度
+                if (headRubProgress > 0f)
+                {
+                    headRubProgress -= HEAD_RUB_DECAY_RATE * Time.deltaTime;
+                    if (headRubProgress < 0f) headRubProgress = 0f;
+                }
+                return false;
+            }
+            
+            Vector2 mousePos = Event.current.mousePosition;
+            var zone = GetInteractionZone(inRect, mousePos);
+            
+            // ? 1. 处理头部摸摸逻辑（摩擦累积）
+            if (zone == InteractionPhrases.InteractionZone.Head)
+            {
+                // ? 检测鼠标拖拽或移动（左键按下时）
+                bool isMouseDragging = (Event.current.type == EventType.MouseDrag) || 
+                                      (Event.current.type == EventType.MouseMove && Event.current.button == 0);
+                
+                if (isMouseDragging)
+                {
+                    // 鼠标在头部区域移动时累积进度
+                    float moveDistance = Vector2.Distance(mousePos, lastMousePosition);
+                    headRubProgress += moveDistance * 0.5f;  // 移动距离转换为进度
+                    
+                    if (headRubProgress >= HEAD_RUB_THRESHOLD)
+                    {
+                        float currentTime = Time.realtimeSinceStartup;
+                        if (currentTime - lastHeadPatTime >= HEAD_PAT_COOLDOWN)
+                        {
+                            DoHeadPatInteraction();
+                            headRubProgress = 0f;
+                            lastHeadPatTime = currentTime;
+                            
+                            Event.current.Use();  // ? 拦截事件，防止穿透
+                            return true;
+                        }
+                    }
+                    
+                    lastMousePosition = mousePos;
+                }
+                else if (Event.current.type == EventType.MouseDown)
+                {
+                    lastMousePosition = mousePos;
+                }
+            }
+            else
+            {
+                // 不在头部时衰减进度
+                if (headRubProgress > 0f)
+                {
+                    headRubProgress -= HEAD_RUB_DECAY_RATE * Time.deltaTime;
+                    if (headRubProgress < 0f) headRubProgress = 0f;
+                }
+            }
+            
+            // ? 2. 处理身体戳戳逻辑（单击检测）
+            if (zone == InteractionPhrases.InteractionZone.Body)
+            {
+                if (Event.current.type == EventType.MouseDown && Event.current.button == 0)
+                {
+                    DoPokeInteraction();
+                    Event.current.Use();  // ? 拦截事件，防止穿透
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+        
+        /// <summary>
+        /// ? v1.6.40: 获取交互区域
+        /// </summary>
+        private InteractionPhrases.InteractionZone GetInteractionZone(Rect rect, Vector2 mousePos)
+        {
+            if (!rect.Contains(mousePos))
+            {
+                return InteractionPhrases.InteractionZone.None;
+            }
+            
+            // 计算相对位置（0-1）
+            float relativeY = (mousePos.y - rect.y) / rect.height;
+            
+            // ? 头部区域：上方 25%
+            if (relativeY < 0.25f)
+            {
+                return InteractionPhrases.InteractionZone.Head;
+            }
+            
+            // ? 身体区域：其余部分，需要不透明像素检测
+            if (IsOpaquePixel(rect, mousePos))
+            {
+                return InteractionPhrases.InteractionZone.Body;
+            }
+            
+            return InteractionPhrases.InteractionZone.None;
+        }
+        
+        /// <summary>
+        /// ? v1.6.40: 检测像素是否不透明（简化版本）
+        /// 注意：完整实现需要访问纹理像素数据，这里使用简化判断
+        /// </summary>
+        private bool IsOpaquePixel(Rect rect, Vector2 mousePos)
+        {
+            // ? 简化实现：假设立绘中心80%区域都是不透明的
+            // 完整实现需要：baseBody.GetPixel(x, y).a > 0.1f
+            
+            float relativeX = (mousePos.x - rect.x) / rect.width;
+            float relativeY = (mousePos.y - rect.y) / rect.height;
+            
+            // 排除边缘10%区域（通常是透明的）
+            bool inCentralArea = relativeX > 0.1f && relativeX < 0.9f &&
+                                relativeY > 0.1f && relativeY < 0.9f;
+            
+            return inCentralArea;
+        }
+        
+        /// <summary>
+        /// ? v1.6.40: 头部摸摸互动
+        /// ? v1.6.41: 使用基于好感度的对话文本
+        /// </summary>
+        private void DoHeadPatInteraction()
+        {
+            if (currentPersona == null) return;
+            
+            if (Prefs.DevMode)
+            {
+                Log.Message("[FullBodyPortraitPanel] 头部摸摸触发！");
+            }
+            
+            // ? 获取当前好感度
+            var agent = Current.Game?.GetComponent<Storyteller.StorytellerAgent>();
+            float affinity = agent?.GetAffinity() ?? 0f;
+            
+            // ? 根据好感度选择表情
+            ExpressionType expression;
+            if (affinity >= 60f)
+            {
+                // 高好感：害羞或开心
+                expression = Random.value > 0.5f ? ExpressionType.Shy : ExpressionType.Happy;
+            }
+            else if (affinity >= -20f)
+            {
+                // 中立：困惑或平静
+                expression = Random.value > 0.5f ? ExpressionType.Confused : ExpressionType.Neutral;
+            }
+            else
+            {
+                // 低好感：生气或冷漠
+                expression = ExpressionType.Angry;
+            }
+            
+            TriggerExpression(expression, duration: 3f);
+            
+            // ? 显示基于好感度的对话文本
+            string phrase = InteractionPhrases.GetHeadPatPhrase(affinity);
+            ShowFloatingText(phrase, GetTextColorByAffinity(affinity));
+            
+            // ? 边框闪烁（只在高好感度时）
+            if (affinity >= 60f)
+            {
+                StartBorderFlash(1);
+            }
+            
+            // ? 好感度变化（只在高好感度时增加）
+            if (affinity >= 60f)
+            {
+                ModifyAffinity(3f, "头部摸摸互动");
+                Messages.Message("好感度 +3（头部摸摸）", MessageTypeDefOf.PositiveEvent);
+            }
+            else if (affinity < -20f)
+            {
+                // 低好感度：负面反馈
+                ModifyAffinity(-1f, "不受欢迎的触碰");
+            }
+        }
+        
+        /// <summary>
+        /// ? v1.6.40: 身体戳戳互动
+        /// ? v1.6.41: 使用基于好感度的对话文本
+        /// </summary>
+        private void DoPokeInteraction()
+        {
+            if (currentPersona == null) return;
+            
+            if (Prefs.DevMode)
+            {
+                Log.Message("[FullBodyPortraitPanel] 身体戳戳触发！");
+            }
+            
+            // ? 获取当前好感度
+            var agent = Current.Game?.GetComponent<Storyteller.StorytellerAgent>();
+            float affinity = agent?.GetAffinity() ?? 0f;
+            
+            // ? 根据好感度选择表情
+            ExpressionType expression;
+            if (affinity >= 60f)
+            {
+                // 高好感：惊讶或开心
+                expression = Random.value > 0.5f ? ExpressionType.Surprised : ExpressionType.Happy;
+            }
+            else if (affinity >= -20f)
+            {
+                // 中立：困惑或平静
+                expression = Random.value > 0.5f ? ExpressionType.Confused : ExpressionType.Neutral;
+            }
+            else
+            {
+                // 低好感：生气
+                expression = ExpressionType.Angry;
+            }
+            
+            TriggerExpression(expression, duration: 2f);
+            
+            // ? 显示基于好感度的对话文本
+            string phrase = InteractionPhrases.GetPokePhrase(affinity);
+            ShowFloatingText(phrase, GetTextColorByAffinity(affinity));
+            
+            // ? 好感度变化（只在高好感度时增加）
+            if (affinity >= 60f)
+            {
+                ModifyAffinity(1f, "身体戳戳互动");
+            }
+            else if (affinity < -20f)
+            {
+                // 低好感度：负面反馈
+                ModifyAffinity(-0.5f, "烦人的触碰");
+            }
+        }
+        
+        /// <summary>
+        /// ? v1.6.41: 根据好感度获取文本颜色
+        /// </summary>
+        private Color GetTextColorByAffinity(float affinity)
+        {
+            if (affinity >= 60f)
+            {
+                // 高好感：粉红/温暖色
+                return new Color(1f, 0.7f, 0.8f);
+            }
+            else if (affinity >= -20f)
+            {
+                // 中立：淡蓝/中性色
+                return new Color(0.8f, 0.9f, 1f);
+            }
+            else
+            {
+                // 低好感：灰白/冷色
+                return new Color(0.7f, 0.7f, 0.7f);
+            }
+        }
+        
+        /// <summary>
+        /// ? v1.6.40: 绘制头部摸摸进度条
+        /// </summary>
+        private void DrawHeadRubProgress(Rect inRect, float progress)
+        {
+            progress = Mathf.Clamp01(progress);
+            
+            // 在立绘上方显示进度条
+            var progressBarRect = new Rect(inRect.x, inRect.y - 12f, inRect.width, 8f);
+            Widgets.DrawBoxSolid(progressBarRect, new Color(0.2f, 0.2f, 0.2f, 0.6f));
+            
+            var fillRect = new Rect(progressBarRect.x, progressBarRect.y, progressBarRect.width * progress, progressBarRect.height);
+            Color fillColor = Color.Lerp(new Color(1f, 0.6f, 0.6f), new Color(1f, 0.3f, 0.3f), progress);
+            Widgets.DrawBoxSolid(fillRect, fillColor);
+            
+            // 显示文字提示
+            if (progress > 0.5f)
+            {
+                Text.Font = GameFont.Tiny;
+                Text.Anchor = TextAnchor.MiddleCenter;
+                GUI.color = new Color(1f, 1f, 1f, 0.8f);
+                Widgets.Label(progressBarRect, "继续摸摸...");
+                Text.Anchor = TextAnchor.UpperLeft;
+                GUI.color = Color.white;
+            }
         }
         
         /// <summary>
@@ -238,10 +615,24 @@ namespace TheSecondSeat.UI
 
         /// <summary>
         /// ? v1.6.25: 处理悬停和触摸互动
+        /// ? v1.6.41: 添加 Shift 键守卫
         /// </summary>
         private void HandleHoverAndTouch(Rect inRect)
         {
             if (currentPersona == null) return;
+            
+            // ? v1.6.41: Shift 键守卫
+            bool shiftHeld = Event.current.shift;
+            if (!shiftHeld)
+            {
+                // 未按 Shift 时，取消触摸模式
+                if (isHovering || isTouchModeActive)
+                {
+                    DeactivateTouchMode();
+                }
+                isHovering = false;
+                return;
+            }
             
             bool mouseOver = Mouse.IsOver(inRect);
             
@@ -395,7 +786,16 @@ namespace TheSecondSeat.UI
         }
 
         /// <summary>
-        /// ? 恢复默认表情
+        /// ? v1.6.40: 恢复默认表情（基于好感度的待机表情系统）
+        /// 根据 agent.affinity 决定待机表情：
+        /// - 高好感 (> 80): Shy（暗恋/脸红）
+        /// - 良好 (> 40): Happy（微笑）
+        /// - 中立 (-20 to 40): Neutral（平静）
+        /// - 不佳 (-60 to -20): Sad（失望/冷淡）
+        /// - 敌对 (< -60): Angry（憎恨）
+        /// 
+        /// ? 心情覆盖：如果 currentMood 是负面状态，强制使用 Sad 表情
+        /// ? 无限持续：duration = 99999f，表情保持到下次互动事件
         /// </summary>
         private void RestoreDefaultExpression()
         {
@@ -405,21 +805,41 @@ namespace TheSecondSeat.UI
             if (agent != null)
             {
                 float affinity = agent.GetAffinity();
+                var mood = agent.currentMood;
                 
-                ExpressionType defaultExpression = affinity switch
+                ExpressionType defaultExpression;
+                
+                // ? 心情覆盖：心情极差时强制显示悲伤表情
+                if (mood == Storyteller.MoodState.Melancholic || 
+                    mood == Storyteller.MoodState.Angry)
                 {
-                    >= 80 => ExpressionType.Happy,
-                    >= 60 => ExpressionType.Neutral,
-                    >= 40 => ExpressionType.Neutral,
-                    >= 20 => ExpressionType.Sad,
-                    _ => ExpressionType.Angry
-                };
+                    defaultExpression = ExpressionType.Sad;
+                }
+                else
+                {
+                    // ? 基于好感度的待机表情
+                    defaultExpression = affinity switch
+                    {
+                        > 80f => ExpressionType.Shy,      // 高好感：害羞/暗恋
+                        > 40f => ExpressionType.Happy,    // 良好：开心/微笑
+                        > -20f => ExpressionType.Neutral, // 中立：平静
+                        > -60f => ExpressionType.Sad,     // 不佳：失望/冷淡
+                        _ => ExpressionType.Angry         // 敌对：憎恨
+                    };
+                }
                 
-                TriggerExpression(defaultExpression, duration: 3f);
+                // ? 关键：无限持续时间 (99999f)，直到下次互动事件
+                TriggerExpression(defaultExpression, duration: 99999f);
+                
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[FullBodyPortraitPanel] 恢复待机表情: {defaultExpression} (Affinity={affinity:F1}, Mood={mood})");
+                }
             }
             else
             {
-                TriggerExpression(ExpressionType.Neutral, duration: 3f);
+                // ? 无 agent 时，使用中立表情（无限持续）
+                TriggerExpression(ExpressionType.Neutral, duration: 99999f);
             }
         }
 
