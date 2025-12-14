@@ -11,6 +11,7 @@ namespace TheSecondSeat.UI
     /// ? v1.6.24: 全身立绘面板（画面左侧）
     /// ? v1.6.25: 新增触摸互动系统
     /// ? v1.6.40: 新增区域交互系统（头部摸摸、身体戳戳）
+    /// ? v1.6.42: 新增 Draw() 方法，支持 Harmony OnGUI 直接绘制
     /// 功能：
     /// - 显示 1024x1574 全身立绘（使用分层系统）
     /// - 动态表情切换
@@ -18,6 +19,7 @@ namespace TheSecondSeat.UI
     /// - 眨眼和张嘴动画
     /// - ? 触摸互动（悬停1秒激活，移动鼠标触发表情）
     /// - ? 区域交互（头部摸摸、身体戳戳）
+    /// - ? Harmony OnGUI 支持（不阻挡地图点击）
     /// </summary>
     [StaticConstructorOnStartup]
     public class FullBodyPortraitPanel : Window
@@ -28,6 +30,7 @@ namespace TheSecondSeat.UI
         
         private float displayWidth;
         private float displayHeight;
+        private Rect cachedDrawRect;
         
         private Texture2D? currentPortrait = null;
         private NarratorPersonaDef? currentPersona = null;
@@ -87,6 +90,11 @@ namespace TheSecondSeat.UI
             // 计算缩放后的尺寸
             displayWidth = PORTRAIT_WIDTH * SCALE_FACTOR;
             displayHeight = PORTRAIT_HEIGHT * SCALE_FACTOR;
+            
+            // ? v1.6.42: 缓存绘制矩形（固定在屏幕左侧，垂直居中）
+            float x = 10f;
+            float y = (Verse.UI.screenHeight - displayHeight) / 2f;
+            cachedDrawRect = new Rect(x, y, displayWidth, displayHeight);
         }
 
         public override Vector2 InitialSize => new Vector2(displayWidth, displayHeight);
@@ -94,10 +102,7 @@ namespace TheSecondSeat.UI
         protected override void SetInitialSizeAndPosition()
         {
             // 固定在屏幕左侧，垂直居中
-            float x = 10f;
-            float y = (Verse.UI.screenHeight - displayHeight) / 2f;
-            
-            this.windowRect = new Rect(x, y, displayWidth, displayHeight);
+            this.windowRect = cachedDrawRect;
         }
 
         public override void PreOpen()
@@ -105,6 +110,20 @@ namespace TheSecondSeat.UI
             base.PreOpen();
             this.doWindowBackground = false;
             this.drawShadow = false;
+        }
+        
+        /// <summary>
+        /// ? v1.6.42: 新增 Draw() 方法用于 Harmony OnGUI 直接绘制
+        /// 这个方法不依赖 Window 系统，可以直接在 OnGUI 中调用
+        /// </summary>
+        public void Draw()
+        {
+            // ? 更新张嘴动画（每帧）
+            float deltaTime = Time.deltaTime;
+            MouthAnimationSystem.Update(deltaTime);
+            
+            // ? 调用核心绘制逻辑
+            DoWindowContents(cachedDrawRect);
         }
 
         public override void DoWindowContents(Rect inRect)

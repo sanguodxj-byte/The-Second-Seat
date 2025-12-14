@@ -711,38 +711,31 @@ namespace TheSecondSeat.UI
 
         /// <summary>
         /// ✅ v1.6.24: 管理全身立绘面板的显示/隐藏
+        /// ✅ v1.6.42: 迁移到 PortraitOverlaySystem（Harmony OnGUI 方案）
         /// </summary>
         private void ManageFullBodyPortraitPanel()
         {
             var modSettings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
             bool shouldShowFullBodyPortrait = modSettings?.usePortraitMode ?? false;
             
-            if (shouldShowFullBodyPortrait)
+            // ✅ v1.6.42: 使用 PortraitOverlaySystem 替代 Window.stack
+            // 优势：不阻挡地图点击，支持 Shift 键激活
+            PortraitOverlaySystem.Toggle(shouldShowFullBodyPortrait);
+            
+            if (Prefs.DevMode && shouldShowFullBodyPortrait != PortraitOverlaySystem.IsEnabled())
             {
-                // 立绘模式：显示全身立绘面板
-                if (fullBodyPortraitPanel == null || !Find.WindowStack.IsOpen(fullBodyPortraitPanel))
-                {
-                    fullBodyPortraitPanel = new FullBodyPortraitPanel();
-                    Find.WindowStack.Add(fullBodyPortraitPanel);
-                    
-                    if (Prefs.DevMode)
-                    {
-                        Log.Message("[NarratorScreenButton] 全身立绘面板已打开");
-                    }
-                }
+                Log.Message($"[NarratorScreenButton] PortraitOverlaySystem 状态更新: {(shouldShowFullBodyPortrait ? "开启" : "关闭")}");
             }
-            else
+            
+            // ✅ 清理旧的 Window 系统引用（如果存在）
+            if (fullBodyPortraitPanel != null && Find.WindowStack.IsOpen(fullBodyPortraitPanel))
             {
-                // 头像模式：关闭全身立绘面板
-                if (fullBodyPortraitPanel != null && Find.WindowStack.IsOpen(fullBodyPortraitPanel))
+                Find.WindowStack.TryRemove(fullBodyPortraitPanel);
+                fullBodyPortraitPanel = null;
+                
+                if (Prefs.DevMode)
                 {
-                    Find.WindowStack.TryRemove(fullBodyPortraitPanel);
-                    fullBodyPortraitPanel = null;
-                    
-                    if (Prefs.DevMode)
-                    {
-                        Log.Message("[NarratorScreenButton] 全身立绘面板已关闭");
-                    }
+                    Log.Message("[NarratorScreenButton] 旧 Window 系统已清理");
                 }
             }
         }
