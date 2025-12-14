@@ -1208,12 +1208,8 @@ namespace TheSecondSeat.PersonaGeneration
             {
                 // 设置纹理过滤模式为双线性（更平滑）
                 texture.filterMode = FilterMode.Bilinear;
-                texture.anisoLevel = 4;
-                
-                // ? [核心修复] 2. 循环模式设为 Clamp (钳制)
-                // 这行代码是消除边缘黑线/杂色的关键！
-                // 它告诉 GPU：不要去采样对面的像素，边缘是什么就是什么。
-                texture.wrapMode = TextureWrapMode.Clamp; // 各向异性过滤（提升斜角质量）
+                texture.anisoLevel = 4; // 各向异性过滤（提升斜角质量）
+                texture.wrapMode = TextureWrapMode.Clamp; // ? 消除边缘杂色
                 
                 // 缓存纹理
                 cache[cacheKey] = texture;
