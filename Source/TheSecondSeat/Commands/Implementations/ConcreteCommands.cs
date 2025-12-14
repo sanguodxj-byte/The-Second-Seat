@@ -920,4 +920,604 @@ namespace TheSecondSeat.Commands.Implementations
             return true;
         }
     }
+
+    #region ? v1.6.40: 殖民者管理命令（从 GameActionExecutor 迁移）
+
+    /// <summary>
+    /// ? 征召/解除征召殖民者
+    /// </summary>
+    public class DraftPawnCommand : BaseAICommand
+    {
+        public override string ActionName => "DraftPawn";
+
+        public override string GetDescription()
+        {
+            return "Draft or undraft colonists. Parameters: drafted=<true/false>, pawnName=<name>";
+        }
+
+        public override bool Execute(string? target = null, object? parameters = null)
+        {
+            var map = Find.CurrentMap;
+            if (map == null)
+            {
+                LogError("No active map");
+                return false;
+            }
+
+            // 解析参数
+            bool shouldDraft = target?.ToLower() != "false" && target?.ToLower() != "undraft";
+            string pawnName = "";
+
+            if (parameters is Dictionary<string, object> paramsDict)
+            {
+                if (paramsDict.TryGetValue("pawnName", out var nameObj))
+                    pawnName = nameObj?.ToString() ?? "";
+                if (paramsDict.TryGetValue("scope", out var scopeObj))
+                    pawnName = scopeObj?.ToString() ?? "";
+            }
+
+            int count = 0;
+            var colonists = map.mapPawns.FreeColonistsSpawned;
+
+            foreach (var colonist in colonists)
+            {
+                // 如果指定了名字，只处理匹配的殖民者
+                if (!string.IsNullOrEmpty(pawnName) && pawnName != "All")
+                {
+                    if (!colonist.Name.ToStringShort.Contains(pawnName) && 
+                        !colonist.LabelShort.Contains(pawnName))
+                        continue;
+                }
+
+                if (colonist.drafter != null)
+                {
+                    if (shouldDraft && !colonist.drafter.Drafted)
+                    {
+                        colonist.drafter.Drafted = true;
+                        count++;
+                    }
+                    else if (!shouldDraft && colonist.drafter.Drafted)
+                    {
+                        colonist.drafter.Drafted = false;
+                        count++;
+                    }
+                }
+            }
+
+            string action = shouldDraft ? "征召" : "解除征召";
+            LogExecution($"{action} {count} 名殖民者");
+
+            if (count > 0)
+            {
+                Messages.Message($"已{action} {count} 名殖民者", MessageTypeDefOf.NeutralEvent);
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// ? 移动殖民者到指定位置
+    /// </summary>
+    public class MovePawnCommand : BaseAICommand
+    {
+        public override string ActionName => "MovePawn";
+
+        public override string GetDescription()
+        {
+            return "Move a drafted colonist to a specific location. Parameters: x=<int>, z=<int>";
+        }
+
+        public override bool Execute(string? target = null, object? parameters = null)
+        {
+            var map = Find.CurrentMap;
+            if (map == null)
+            {
+                LogError("No active map");
+                return false;
+            }
+
+            string pawnName = target ?? "";
+            if (string.IsNullOrEmpty(pawnName))
+            {
+                LogError("未指定殖民者名称");
+                return false;
+            }
+
+            // 从 parameters 解析坐标
+            int x = 0, z = 0;
+            if (parameters is Dictionary<string, object> paramsDict)
+            {
+                if (paramsDict.TryGetValue("x", out var xObj))
+                    int.TryParse(xObj?.ToString(), out x);
+                if (paramsDict.TryGetValue("z", out var zObj))
+                    int.TryParse(zObj?.ToString(), out z);
+            }
+
+            if (x == 0 && z == 0)
+            {
+                LogError("未指定目标坐标（需要x和z参数）");
+                return false;
+            }
+
+            var targetPos = new IntVec3(x, 0, z);
+            if (!targetPos.InBounds(map) || !targetPos.Walkable(map))
+            {
+                LogError($"目标位置 ({x}, {z}) 不可到达");
+                return false;
+            }
+
+            // 查找殖民者
+            var colonist = map.mapPawns.FreeColonistsSpawned
+                .FirstOrDefault(p => p.Name.ToStringShort.Contains(pawnName) || 
+                                    p.LabelShort.Contains(pawnName));
+
+            if (colonist == null)
+            {
+                LogError($"找不到名为 '{pawnName}' 的殖民者");
+                return false;
+            }
+
+            // 确保已征召
+            if (colonist.drafter == null || !colonist.drafter.Drafted)
+            {
+                if (colonist.drafter != null)
+                    colonist.drafter.Drafted = true;
+                else
+                {
+                    LogError($"{pawnName} 无法被征召");
+                    return false;
+                }
+            }
+
+            // 下达移动命令
+            var job = JobMaker.MakeJob(JobDefOf.Goto, targetPos);
+            colonist.jobs?.TryTakeOrderedJob(job, JobTag.DraftedOrder);
+
+            LogExecution($"已命令 {colonist.LabelShort} 移动到 ({x}, {z})");
+            Messages.Message($"已命令 {colonist.LabelShort} 移动到 ({x}, {z})", MessageTypeDefOf.NeutralEvent);
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// ? 治疗殖民者
+    /// </summary>
+    public class HealPawnCommand : BaseAICommand
+    {
+        public override string ActionName => "HealPawn";
+
+        public override string GetDescription()
+        {
+            return "Tend to injured colonists. Parameters: pawnName=<name> (optional, 'All' for all injured)";
+        }
+
+        public override bool Execute(string? target = null, object? parameters = null)
+        {
+            var map = Find.CurrentMap;
+            if (map == null)
+            {
+                LogError("No active map");
+                return false;
+            }
+
+            string pawnName = target;
+            int count = 0;
+
+            // 获取所有需要治疗的殖民者
+            var injuredColonists = map.mapPawns.FreeColonistsSpawned
+                .Where(p => p.health.HasHediffsNeedingTend())
+                .ToList();
+
+            if (!string.IsNullOrEmpty(pawnName) && pawnName != "All")
+            {
+                injuredColonists = injuredColonists
+                    .Where(p => p.Name.ToStringShort.Contains(pawnName) || 
+                               p.LabelShort.Contains(pawnName))
+                    .ToList();
+            }
+
+            if (injuredColonists.Count == 0)
+            {
+                LogExecution("无需要治疗的殖民者");
+                Messages.Message("无需要治疗的殖民者", MessageTypeDefOf.RejectInput);
+                return false;
+            }
+
+            // 查找可用的医生
+            var doctors = map.mapPawns.FreeColonistsSpawned
+                .Where(p => !p.Downed && 
+                           !p.Dead && 
+                           p.workSettings?.WorkIsActive(WorkTypeDefOf.Doctor) == true)
+                .OrderByDescending(p => p.skills?.GetSkill(SkillDefOf.Medicine)?.Level ?? 0)
+                .ToList();
+
+            if (doctors.Count == 0)
+            {
+                LogError("无可用的医生");
+                Messages.Message("无可用的医生", MessageTypeDefOf.RejectInput);
+                return false;
+            }
+
+            foreach (var patient in injuredColonists)
+            {
+                // 找最近的医生
+                var doctor = doctors
+                    .Where(d => d != patient)
+                    .OrderBy(d => d.Position.DistanceTo(patient.Position))
+                    .FirstOrDefault();
+
+                if (doctor != null && doctor.CanReserveAndReach(patient, PathEndMode.ClosestTouch, Danger.Some))
+                {
+                    var job = JobMaker.MakeJob(JobDefOf.TendPatient, patient);
+                    doctor.jobs?.TryTakeOrderedJob(job);
+                    count++;
+                }
+            }
+
+            LogExecution($"已安排治疗 {count} 名伤员");
+
+            if (count > 0)
+            {
+                Messages.Message($"已安排治疗 {count} 名伤员", MessageTypeDefOf.PositiveEvent);
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// ? 设置工作优先级
+    /// </summary>
+    public class SetWorkPriorityCommand : BaseAICommand
+    {
+        public override string ActionName => "SetWorkPriority";
+
+        public override string GetDescription()
+        {
+            return "Set work priority for colonists. Parameters: workType=<type>, priority=<1-4>, pawnName=<name>";
+        }
+
+        public override bool Execute(string? target = null, object? parameters = null)
+        {
+            var map = Find.CurrentMap;
+            if (map == null)
+            {
+                LogError("No active map");
+                return false;
+            }
+
+            string pawnName = target ?? "";
+            if (string.IsNullOrEmpty(pawnName))
+            {
+                LogError("未指定殖民者名称");
+                return false;
+            }
+
+            // 从 parameters 解析工作类型和优先级
+            string workTypeName = "";
+            int priority = 1;
+            
+            if (parameters is Dictionary<string, object> paramsDict)
+            {
+                if (paramsDict.TryGetValue("workType", out var wtObj))
+                    workTypeName = wtObj?.ToString() ?? "";
+                if (paramsDict.TryGetValue("priority", out var pObj))
+                    int.TryParse(pObj?.ToString(), out priority);
+                if (paramsDict.TryGetValue("scope", out var scopeObj) && string.IsNullOrEmpty(workTypeName))
+                    workTypeName = scopeObj?.ToString() ?? "";
+            }
+
+            if (string.IsNullOrEmpty(workTypeName))
+            {
+                LogError("未指定工作类型（需要workType参数）");
+                return false;
+            }
+
+            // 查找工作类型
+            var workTypeDef = DefDatabase<WorkTypeDef>.AllDefs
+                .FirstOrDefault(w => w.defName.Equals(workTypeName, StringComparison.OrdinalIgnoreCase) ||
+                                    (w.labelShort != null && w.labelShort.Equals(workTypeName, StringComparison.OrdinalIgnoreCase)) ||
+                                    (w.label != null && w.label.ToLower().Contains(workTypeName.ToLower())));
+
+            if (workTypeDef == null)
+            {
+                LogError($"找不到工作类型: {workTypeName}");
+                return false;
+            }
+
+            // 查找殖民者
+            var colonists = map.mapPawns.FreeColonistsSpawned
+                .Where(p => pawnName == "All" || 
+                           p.Name.ToStringShort.Contains(pawnName) || 
+                           p.LabelShort.Contains(pawnName))
+                .ToList();
+
+            if (colonists.Count == 0)
+            {
+                LogError($"找不到名为 '{pawnName}' 的殖民者");
+                return false;
+            }
+
+            int count = 0;
+            foreach (var colonist in colonists)
+            {
+                if (colonist.workSettings != null && !colonist.WorkTypeIsDisabled(workTypeDef))
+                {
+                    colonist.workSettings.SetPriority(workTypeDef, priority);
+                    count++;
+                }
+            }
+
+            string priorityText = priority == 0 ? "禁用" : $"优先级{priority}";
+            LogExecution($"已将 {count} 名殖民者的 {workTypeDef.labelShort} 设为{priorityText}");
+
+            if (count > 0)
+            {
+                Messages.Message($"已将 {count} 名殖民者的 {workTypeDef.labelShort} 设为{priorityText}", 
+                    MessageTypeDefOf.NeutralEvent);
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// ? 装备武器（单个殖民者）
+    /// 注意：这个命令与 BatchEquipCommand 不同
+    /// - EquipWeaponCommand: 单个殖民者装备指定武器
+    /// - BatchEquipCommand: 所有殖民者自动装备最佳武器
+    /// </summary>
+    public class EquipWeaponCommand : BaseAICommand
+    {
+        public override string ActionName => "EquipWeapon";
+
+        public override string GetDescription()
+        {
+            return "Equip a specific weapon to a colonist. Parameters: weaponDef=<defName> (optional)";
+        }
+
+        public override bool Execute(string? target = null, object? parameters = null)
+        {
+            var map = Find.CurrentMap;
+            if (map == null)
+            {
+                LogError("No active map");
+                return false;
+            }
+
+            string pawnName = target ?? "";
+            if (string.IsNullOrEmpty(pawnName))
+            {
+                LogError("未指定殖民者名称");
+                return false;
+            }
+
+            // 查找殖民者
+            var colonist = map.mapPawns.FreeColonistsSpawned
+                .FirstOrDefault(p => p.Name.ToStringShort.Contains(pawnName) || 
+                                    p.LabelShort.Contains(pawnName));
+
+            if (colonist == null)
+            {
+                LogError($"找不到名为 '{pawnName}' 的殖民者");
+                return false;
+            }
+
+            // 从 parameters 获取武器DefName（如果指定）
+            string weaponDefName = "";
+            if (parameters is Dictionary<string, object> paramsDict)
+            {
+                if (paramsDict.TryGetValue("weaponDef", out var wdObj))
+                    weaponDefName = wdObj?.ToString() ?? "";
+                if (paramsDict.TryGetValue("scope", out var scopeObj) && string.IsNullOrEmpty(weaponDefName))
+                    weaponDefName = scopeObj?.ToString() ?? "";
+            }
+
+            // 查找武器
+            Thing? weapon = null;
+            var availableWeapons = map.listerThings.ThingsInGroup(ThingRequestGroup.Weapon)
+                .Where(w => !w.IsForbidden(Faction.OfPlayer) &&
+                           colonist.CanReserveAndReach(w, PathEndMode.ClosestTouch, Danger.None))
+                .ToList();
+
+            if (!string.IsNullOrEmpty(weaponDefName))
+            {
+                weapon = availableWeapons.FirstOrDefault(w => 
+                    w.def.defName.Equals(weaponDefName, StringComparison.OrdinalIgnoreCase) ||
+                    w.LabelShort.ToLower().Contains(weaponDefName.ToLower()));
+                
+                if (weapon == null)
+                {
+                    LogError($"找不到可用的武器: {weaponDefName}");
+                    return false;
+                }
+            }
+            else
+            {
+                // 自动选择最佳武器
+                weapon = availableWeapons
+                    .OrderByDescending(w => w.GetStatValue(StatDefOf.RangedWeapon_DamageMultiplier, true))
+                    .FirstOrDefault();
+                
+                if (weapon == null)
+                {
+                    LogError("无可用武器");
+                    return false;
+                }
+            }
+
+            // 下达装备命令
+            var job = JobMaker.MakeJob(JobDefOf.Equip, weapon);
+            colonist.jobs?.TryTakeOrderedJob(job);
+
+            LogExecution($"已命令 {colonist.LabelShort} 装备 {weapon.LabelShort}");
+            Messages.Message($"已命令 {colonist.LabelShort} 装备 {weapon.LabelShort}", MessageTypeDefOf.NeutralEvent);
+            return true;
+        }
+    }
+
+    #endregion
+
+    #region ? v1.6.40: 资源管理命令（从 GameActionExecutor 迁移）
+
+    /// <summary>
+    /// ? 禁止物品
+    /// </summary>
+    public class ForbidItemsCommand : BaseAICommand
+    {
+        public override string ActionName => "ForbidItems";
+
+        public override string GetDescription()
+        {
+            return "Forbid haulable items. Parameters: limit=<number> (optional)";
+        }
+
+        public override bool Execute(string? target = null, object? parameters = null)
+        {
+            var map = Find.CurrentMap;
+            if (map == null)
+            {
+                LogError("No active map");
+                return false;
+            }
+
+            // 解析 limit 参数
+            int limit = -1;
+            if (parameters is Dictionary<string, object> paramsDict)
+            {
+                if (paramsDict.TryGetValue("limit", out var limitObj))
+                    int.TryParse(limitObj?.ToString(), out limit);
+            }
+
+            int count = 0;
+            var items = map.listerThings.AllThings
+                .Where(t => !t.IsForbidden(Faction.OfPlayer) && t.def.EverHaulable);
+
+            foreach (var item in items)
+            {
+                item.SetForbidden(true, false);
+                count++;
+
+                if (limit > 0 && count >= limit)
+                    break;
+            }
+
+            LogExecution($"已禁止 {count} 个物品");
+
+            if (count > 0)
+            {
+                Messages.Message($"已禁止 {count} 个物品", MessageTypeDefOf.NeutralEvent);
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// ? 允许物品
+    /// </summary>
+    public class AllowItemsCommand : BaseAICommand
+    {
+        public override string ActionName => "AllowItems";
+
+        public override string GetDescription()
+        {
+            return "Allow forbidden items. Parameters: limit=<number> (optional)";
+        }
+
+        public override bool Execute(string? target = null, object? parameters = null)
+        {
+            var map = Find.CurrentMap;
+            if (map == null)
+            {
+                LogError("No active map");
+                return false;
+            }
+
+            // 解析 limit 参数
+            int limit = -1;
+            if (parameters is Dictionary<string, object> paramsDict)
+            {
+                if (paramsDict.TryGetValue("limit", out var limitObj))
+                    int.TryParse(limitObj?.ToString(), out limit);
+            }
+
+            int count = 0;
+            var items = map.listerThings.AllThings
+                .Where(t => t.IsForbidden(Faction.OfPlayer));
+
+            foreach (var item in items)
+            {
+                item.SetForbidden(false, false);
+                count++;
+
+                if (limit > 0 && count >= limit)
+                    break;
+            }
+
+            LogExecution($"已解除 {count} 个物品");
+
+            if (count > 0)
+            {
+                Messages.Message($"已解除 {count} 个物品", MessageTypeDefOf.NeutralEvent);
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    #endregion
+
+    #region ? v1.6.40: 政策修改命令（从 GameActionExecutor 迁移）
+
+    /// <summary>
+    /// ? 修改政策（目前为通知实现）
+    /// </summary>
+    public class ChangePolicyCommand_New : BaseAICommand
+    {
+        public override string ActionName => "ChangePolicy";
+
+        public override string GetDescription()
+        {
+            return "Change colony policy (currently notification only). Parameters: description=<text>";
+        }
+
+        public override bool Execute(string? target = null, object? parameters = null)
+        {
+            string policyName = target ?? "";
+            if (string.IsNullOrEmpty(policyName))
+            {
+                LogError("未指定政策名称");
+                return false;
+            }
+
+            string description = "";
+            if (parameters is Dictionary<string, object> paramsDict)
+            {
+                if (paramsDict.TryGetValue("description", out var descObj))
+                    description = descObj?.ToString() ?? "";
+                if (paramsDict.TryGetValue("scope", out var scopeObj) && string.IsNullOrEmpty(description))
+                    description = scopeObj?.ToString() ?? "";
+            }
+
+            string message = $"收到政策修改请求: {policyName}";
+            if (!string.IsNullOrEmpty(description))
+            {
+                message += $" ({description})";
+            }
+
+            Messages.Message(message, MessageTypeDefOf.NeutralEvent);
+            LogExecution($"政策修改请求: {policyName}");
+
+            return true;
+        }
+    }
+
+    #endregion
 }
