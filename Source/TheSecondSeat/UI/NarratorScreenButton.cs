@@ -28,9 +28,6 @@ namespace TheSecondSeat.UI
         private static Texture2D? iconError;
         private static Texture2D? iconDisabled;
         
-        // ✅ v1.6.24: 全身立绘面板管理
-        private static FullBodyPortraitPanel? fullBodyPortraitPanel;
-        
         // ✅ 按钮大小调整：64x64 → 128x128
         private const float ButtonSize = 128f;  // ✅ 已经是 128，无需修改
         private const float MarginFromEdge = 10f;
@@ -691,53 +688,26 @@ namespace TheSecondSeat.UI
             if (Current.ProgramState != ProgramState.Playing)
             {
                 this.Close();
-                
-                // ✅ v1.6.24: 关闭全身立绘面板
-                if (fullBodyPortraitPanel != null && Find.WindowStack.IsOpen(fullBodyPortraitPanel))
-                {
-                    Find.WindowStack.TryRemove(fullBodyPortraitPanel);
-                    fullBodyPortraitPanel = null;
-                }
             }
             
             // ✅ v1.6.36: 每帧更新张嘴动画系统（TTS口型同步）
-            // 注意：眨眼动画通过 GetBlinkLayerName() 自动工作，不需要Update()
             float deltaTime = Time.deltaTime;
-            MouthAnimationSystem.Update(deltaTime);  // ✅ 关键修复：调用张嘴动画更新
+            MouthAnimationSystem.Update(deltaTime);
             
-            // ✅ v1.6.24: 管理全身立绘面板的显示/隐藏
+            // ✅ v1.6.42: 管理全身立绘面板（通过 PortraitOverlaySystem）
             ManageFullBodyPortraitPanel();
         }
 
         /// <summary>
-        /// ✅ v1.6.24: 管理全身立绘面板的显示/隐藏
-        /// ✅ v1.6.42: 迁移到 PortraitOverlaySystem（Harmony OnGUI 方案）
+        /// ✅ v1.6.42: 管理全身立绘面板（通过 PortraitOverlaySystem）
         /// </summary>
         private void ManageFullBodyPortraitPanel()
         {
             var modSettings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
             bool shouldShowFullBodyPortrait = modSettings?.usePortraitMode ?? false;
             
-            // ✅ v1.6.42: 使用 PortraitOverlaySystem 替代 Window.stack
-            // 优势：不阻挡地图点击，支持 Shift 键激活
+            // ✅ 使用 PortraitOverlaySystem 控制立绘显示
             PortraitOverlaySystem.Toggle(shouldShowFullBodyPortrait);
-            
-            if (Prefs.DevMode && shouldShowFullBodyPortrait != PortraitOverlaySystem.IsEnabled())
-            {
-                Log.Message($"[NarratorScreenButton] PortraitOverlaySystem 状态更新: {(shouldShowFullBodyPortrait ? "开启" : "关闭")}");
-            }
-            
-            // ✅ 清理旧的 Window 系统引用（如果存在）
-            if (fullBodyPortraitPanel != null && Find.WindowStack.IsOpen(fullBodyPortraitPanel))
-            {
-                Find.WindowStack.TryRemove(fullBodyPortraitPanel);
-                fullBodyPortraitPanel = null;
-                
-                if (Prefs.DevMode)
-                {
-                    Log.Message("[NarratorScreenButton] 旧 Window 系统已清理");
-                }
-            }
         }
 
         /// <summary>
