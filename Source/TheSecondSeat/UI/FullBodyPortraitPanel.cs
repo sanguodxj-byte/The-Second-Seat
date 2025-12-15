@@ -9,12 +9,13 @@ using System.Collections.Generic;
 namespace TheSecondSeat.UI
 {
     /// <summary>
-    /// ? v1.6.42: 全身立绘面板（独立绘制，不继承 Window）
+    /// ? v1.6.44: 全身立绘面板（独立绘制，不继承 Window）
     /// 功能：
     /// - Shift 键幽灵模式（未按 Shift：半透明 + 点击穿透）
     /// - 自定义浮动文字系统（替代 MoteMaker）
     /// - 区域交互（头部摸摸、身体戳戳）
     /// - 分层立绘 + 动画系统（呼吸、眨眼、张嘴）
+    /// - ? Runtime Layering（修复透明度和动画问题）
     /// </summary>
     [StaticConstructorOnStartup]
     public class FullBodyPortraitPanel
@@ -46,6 +47,10 @@ namespace TheSecondSeat.UI
         private ExpressionType lastExpression = ExpressionType.Neutral;
         private int portraitUpdateTick = 0;
         private const int PORTRAIT_UPDATE_INTERVAL = 30;
+        
+        // ? v1.6.44: Runtime Layering 缓存
+        private Texture2D? cachedBodyBase = null;
+        private string? cachedPersonaDefName = null;
         
         // 触摸互动
         private float hoverStartTime = 0f;
@@ -108,44 +113,50 @@ namespace TheSecondSeat.UI
         }
         
         /// <summary>
-        /// ? 绘制立绘内容（核心逻辑）
+        /// ? v1.6.44: 绘制立绘内容（核心逻辑 - Runtime Layering 版本）
         /// </summary>
         private void DrawPortraitContents()
         {
             if (currentPersona == null) return;
             
+            // ? 更新身体层缓存（仅在人格变化时重新加载）
+            UpdateBodyBaseIfNeeded();
+            
             bool mouseOver = Mouse.IsOver(drawRect);
             bool shiftHeld = Event.current.shift;
             
-            // ==================== 1. 幽灵模式逻辑 ====================
+            // ==================== 1. 计算 Alpha 值 ====================
             
-            Color originalColor = GUI.color;
+            float alpha = 1.0f;
             bool shouldConsumeInput = false;
             
             if (mouseOver && !shiftHeld)
             {
                 // 未按 Shift：半透明 + 不拦截输入
-                GUI.color = new Color(1f, 1f, 1f, 0.2f);
+                alpha = 0.2f;
                 shouldConsumeInput = false;
             }
             else
             {
                 // 按住 Shift 或鼠标不在范围：完全不透明
-                GUI.color = new Color(1f, 1f, 1f, 1.0f);
+                alpha = 1.0f;
                 shouldConsumeInput = shiftHeld && mouseOver;
             }
             
-            // ==================== 2. 绘制立绘 ====================
+            // ==================== 2. 绘制立绘（关键：统一设置 GUI.color） ====================
             
             // 应用呼吸动画偏移
             float breathingOffset = ExpressionSystem.GetBreathingOffset(currentPersona.defName);
             Rect animatedRect = new Rect(drawRect.x, drawRect.y + breathingOffset, drawRect.width, drawRect.height);
             
-            // 运行时分层绘制
+            // ? 关键：在绘制任何图层前统一设置 GUI.color（修复透明度不一致问题）
+            GUI.color = new Color(1f, 1f, 1f, alpha);
+            
+            // 运行时分层绘制（所有图层继承相同的 alpha）
             DrawLayeredPortraitRuntime(animatedRect, currentPersona);
             
-            // 恢复颜色
-            GUI.color = originalColor;
+            // ? 绘制完成后恢复颜色
+            GUI.color = Color.white;
             
             // ==================== 3. 交互处理（仅在 Shift 模式下） ====================
             
@@ -193,8 +204,6 @@ namespace TheSecondSeat.UI
                 TooltipHandler.TipRegion(drawRect, tooltip);
             }
         }
-        
-        // ==================== 交互逻辑 ====================
         
         /// <summary>
         /// ? 处理区域交互（头部摸摸、身体戳戳）
@@ -668,42 +677,54 @@ namespace TheSecondSeat.UI
         }
         
         /// <summary>
-        /// ? 运行时分层绘制立绘
+        /// ? v1.6.44: 运行时分层绘制立绘（Runtime Layering）
+        /// 关键修复：
+        /// - 使用缓存的 cachedBodyBase（静态层）
+        /// - 每帧动态获取眼睛和嘴巴图层（动画层）
+        /// - 不设置 GUI.color（继承父级统一 alpha，修复透明度问题）
         /// </summary>
         private void DrawLayeredPortraitRuntime(Rect rect, NarratorPersonaDef persona)
         {
-            // 1. 基础身体层
-            var baseBody = PortraitLoader.GetLayerTexture(persona, "base_body");
-            if (baseBody == null)
+            // ==================== Layer 1: 身体基础层（缓存） ====================
+            
+            if (cachedBodyBase == null)
             {
+                // 如果没有缓存，绘制占位符
                 Widgets.DrawBoxSolid(rect, persona.primaryColor);
                 return;
             }
-            GUI.DrawTexture(rect, baseBody, ScaleMode.ScaleToFit);
             
-            // 2. 眼睛层（眨眼动画）
-            string eyeLayerName = BlinkAnimationSystem.GetEyeLayerName(persona.defName);
-            if (!string.IsNullOrEmpty(eyeLayerName))
-            {
-                var eyeTexture = PortraitLoader.GetLayerTexture(persona, eyeLayerName);
-                if (eyeTexture != null)
-                {
-                    GUI.DrawTexture(rect, eyeTexture, ScaleMode.ScaleToFit);
-                }
-            }
+            // 绘制身体基础层（继承父级 alpha）
+            GUI.DrawTexture(rect, cachedBodyBase, ScaleMode.ScaleToFit);
             
-            // 3. 嘴巴层（张嘴动画）
+            // ==================== Layer 2: 嘴巴层（动态加载，张嘴动画） ====================
+            
             string mouthLayerName = MouthAnimationSystem.GetMouthLayerName(persona.defName);
             if (!string.IsNullOrEmpty(mouthLayerName))
             {
                 var mouthTexture = PortraitLoader.GetLayerTexture(persona, mouthLayerName);
                 if (mouthTexture != null)
                 {
+                    // 绘制嘴巴层（继承父级 alpha）
                     GUI.DrawTexture(rect, mouthTexture, ScaleMode.ScaleToFit);
                 }
             }
             
-            // 4. 腮红/特效层
+            // ==================== Layer 3: 眼睛层（动态加载，眨眼动画） ====================
+            
+            string eyeLayerName = BlinkAnimationSystem.GetEyeLayerName(persona.defName);
+            if (!string.IsNullOrEmpty(eyeLayerName))
+            {
+                var eyeTexture = PortraitLoader.GetLayerTexture(persona, eyeLayerName);
+                if (eyeTexture != null)
+                {
+                    // 绘制眼睛层（继承父级 alpha）
+                    GUI.DrawTexture(rect, eyeTexture, ScaleMode.ScaleToFit);
+                }
+            }
+            
+            // ==================== Layer 4: 特效层（可选：腮红等） ====================
+            
             var expressionState = ExpressionSystem.GetExpressionState(persona.defName);
             if (expressionState.CurrentExpression == ExpressionType.Shy || 
                 expressionState.CurrentExpression == ExpressionType.Angry)
@@ -713,12 +734,52 @@ namespace TheSecondSeat.UI
                 var flushTexture = PortraitLoader.GetLayerTexture(persona, flushLayerName);
                 if (flushTexture != null)
                 {
+                    // 绘制特效层（继承父级 alpha）
                     GUI.DrawTexture(rect, flushTexture, ScaleMode.ScaleToFit);
                 }
             }
         }
         
         // ==================== 辅助方法 ====================
+        
+        /// <summary>
+        /// ? v1.6.44: 更新基础身体层缓存（仅在人格变化时重新加载）
+        /// </summary>
+        private void UpdateBodyBaseIfNeeded()
+        {
+            if (currentPersona == null)
+            {
+                cachedBodyBase = null;
+                cachedPersonaDefName = null;
+                return;
+            }
+            
+            // 检查是否需要更新缓存
+            if (cachedPersonaDefName == currentPersona.defName && cachedBodyBase != null)
+            {
+                return; // 缓存有效，无需更新
+            }
+            
+            // 加载基础身体层（静态层）
+            cachedBodyBase = PortraitLoader.GetLayerTexture(currentPersona, "base_body");
+            
+            // 如果找不到 base_body，尝试 body 或 base
+            if (cachedBodyBase == null)
+            {
+                cachedBodyBase = PortraitLoader.GetLayerTexture(currentPersona, "body");
+            }
+            if (cachedBodyBase == null)
+            {
+                cachedBodyBase = PortraitLoader.GetLayerTexture(currentPersona, "base");
+            }
+            
+            cachedPersonaDefName = currentPersona.defName;
+            
+            if (Prefs.DevMode && cachedBodyBase != null)
+            {
+                Log.Message($"[FullBodyPortraitPanel] 缓存身体层: {currentPersona.defName}");
+            }
+        }
         
         private InteractionPhrases.InteractionZone GetInteractionZone(Rect rect, Vector2 mousePos)
         {

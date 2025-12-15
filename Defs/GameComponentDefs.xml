@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+ï»¿<?xml version="1.0" encoding="utf-8"?>
 <Defs>
   <!-- Game Component Definitions for The Second Seat -->
   
@@ -6,11 +6,11 @@
   <!-- No DefNames needed - they are registered via [StaticConstructorOnStartup] -->
   
   <!-- Registered Components:
-       - NarratorManager (ºÃ¸Ð¶ÈÏµÍ³)
-       - NarratorController (AI¿ØÖÆÆ÷)
-       - ColonyStateMonitor (Ö³ÃñµØ¼à¿Ø)
-       - PlayerInteractionMonitor (Íæ¼Ò»¥¶¯¼à¿Ø)
-       - StorytellerAgent (ÐðÊÂÕß´úÀí)
-       - NarratorButtonManager (MapComponent - °´Å¥¹ÜÀíÆ÷)
+       - NarratorManager (å¥½æ„Ÿåº¦ç³»ç»Ÿ)
+       - NarratorController (AIæŽ§åˆ¶å™¨)
+       - ColonyStateMonitor (æ®–æ°‘åœ°ç›‘æŽ§)
+       - PlayerInteractionMonitor (çŽ©å®¶äº’åŠ¨ç›‘æŽ§)
+       - StorytellerAgent (å™äº‹è€…ä»£ç†)
+       - NarratorButtonManager (MapComponent - æŒ‰é’®ç®¡ç†å™¨)
   -->
 </Defs>

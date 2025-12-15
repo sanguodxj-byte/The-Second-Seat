@@ -148,6 +148,10 @@ namespace TheSecondSeat.Settings
     {
         private TheSecondSeatSettings settings;
         private Vector2 scrollPosition = Vector2.zero;
+        
+        // ✅ v1.6.45: 修复：将静态纹理改为实例变量（避免 StaticConstructorOnStartup 错误）
+        private Texture2D? assistantModeIcon;
+        private Texture2D? opponentModeIcon;
 
         public TheSecondSeatMod(ModContentPack content) : base(content)
         {
@@ -433,20 +437,15 @@ namespace TheSecondSeat.Settings
             listing.GapLine();
         }
 
-        // ✅ 静态纹理缓存（难度模式图标）
-        private static Texture2D? assistantModeIcon;
-        private static Texture2D? opponentModeIcon;
-        
-        private static void LoadDifficultyIcons()
+        // ✅ v1.6.45: 加载难度图标（实例方法，避免静态纹理错误）
+        private void LoadDifficultyIcons()
         {
             if (assistantModeIcon == null)
             {
-                // ✅ 使用 large 版本
                 assistantModeIcon = ContentFinder<Texture2D>.Get("UI/DifficultyMode/assistant_large", false);
             }
             if (opponentModeIcon == null)
             {
-                // ✅ 使用 large 版本
                 opponentModeIcon = ContentFinder<Texture2D>.Get("UI/DifficultyMode/opponent_large", false);
             }
         }
@@ -960,7 +959,7 @@ namespace TheSecondSeat.Settings
 
             foreach (var voice in voices)
             {
-                string voiceCopy = voice; // ����հ����`;
+                string voiceCopy = voice; // ����哈��`;
                 options.Add(new FloatMenuOption(voice, () => {
                     settings.ttsVoice = voiceCopy;
                 }));

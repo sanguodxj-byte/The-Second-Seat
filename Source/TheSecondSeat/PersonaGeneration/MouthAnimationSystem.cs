@@ -30,6 +30,12 @@ namespace TheSecondSeat.PersonaGeneration
             public string CurrentMouthLayer;             // 当前嘴型层名称
             public string LastMouthLayer;                // 上一次的嘴型层名称（避免重复）
             public float LastChangeTime;                 // 上次切换时间
+            
+            // ? v1.6.44: 新增字段
+            public ExpressionType currentExpression;     // 当前表情
+            public float currentOpenness;                // 当前嘴型开合度（0-1）
+            public float speakingTime;                   // 说话累计时间
+            public bool isSpeaking;                      // 是否正在说话（新状态标志）
         }
         
         // ===== 数据存储 =====
@@ -45,6 +51,7 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// ? v1.6.36: 每帧更新（检测TTS播放状态并触发张嘴动画）
+        /// ? v1.6.44: 简化为仅更新状态，实际嘴型由 GetMouthLayerName 计算
         /// </summary>
         /// <param name="deltaTime">增量时间</param>
         public static void Update(float deltaTime)
@@ -70,101 +77,38 @@ namespace TheSecondSeat.PersonaGeneration
                         IsSpeaking = false,
                         CurrentMouthLayer = null,
                         LastMouthLayer = null,
-                        LastChangeTime = 0f
+                        LastChangeTime = 0f,
+                        currentExpression = ExpressionType.Neutral,
+                        currentOpenness = 0f,
+                        speakingTime = 0f,
+                        isSpeaking = false
                     };
                     speakingStates[persona.defName] = state;
                 }
                 
-                // ? 状态变化检测
-                if (isCurrentlySpeaking && !state.IsSpeaking)
-                {
-                    // ? 开始说话 → 启动张嘴动画
-                    StartSpeaking(persona.defName);
-                }
-                else if (!isCurrentlySpeaking && state.IsSpeaking)
-                {
-                    // ? 停止说话 → 停止张嘴动画
-                    StopSpeaking(persona.defName);
-                }
-                else if (isCurrentlySpeaking)
-                {
-                    // ? 正在说话 → 更新嘴型动画
-                    UpdateMouthAnimation(persona.defName, deltaTime);
-                }
-            }
-        }
-        
-        /// <summary>
-        /// ? 启动说话状态（TTS播放开始时自动调用）
-        /// </summary>
-        private static void StartSpeaking(string defName)
-        {
-            if (!speakingStates.TryGetValue(defName, out var state))
-            {
-                state = new SpeakingState();
-                speakingStates[defName] = state;
-            }
-            
-            state.IsSpeaking = true;
-            state.CurrentMouthLayer = GetRandomMouthLayer(state.LastMouthLayer);
-            state.LastChangeTime = Time.realtimeSinceStartup;
-            
-            if (Prefs.DevMode)
-            {
-                Log.Message($"[MouthAnimationSystem] {defName} 开始说话: {state.CurrentMouthLayer}");
-            }
-        }
-        
-        /// <summary>
-        /// ? 停止说话状态（TTS播放结束时自动调用）
-        /// </summary>
-        private static void StopSpeaking(string defName)
-        {
-            if (speakingStates.TryGetValue(defName, out var state))
-            {
-                state.IsSpeaking = false;
-                state.CurrentMouthLayer = null;
-                state.LastMouthLayer = null;
+                // ? 更新状态（实际嘴型由 GetMouthLayerName 计算）
+                state.IsSpeaking = isCurrentlySpeaking;
                 
-                if (Prefs.DevMode)
+                if (Prefs.DevMode && isCurrentlySpeaking && !state.isSpeaking)
                 {
-                    Log.Message($"[MouthAnimationSystem] {defName} 停止说话");
+                    Log.Message($"[MouthAnimationSystem] {persona.defName} 开始说话");
+                }
+                else if (Prefs.DevMode && !isCurrentlySpeaking && state.isSpeaking)
+                {
+                    Log.Message($"[MouthAnimationSystem] {persona.defName} 停止说话");
                 }
             }
         }
         
         /// <summary>
-        /// ? 更新嘴型动画（说话过程中每帧调用）
-        /// </summary>
-        private static void UpdateMouthAnimation(string defName, float deltaTime)
-        {
-            if (!speakingStates.TryGetValue(defName, out var state))
-            {
-                return;
-            }
-            
-            float currentTime = Time.realtimeSinceStartup;
-            float elapsed = currentTime - state.LastChangeTime;
-            
-            // ? 每 MOUTH_CHANGE_INTERVAL 切换一次嘴型
-            if (elapsed >= MOUTH_CHANGE_INTERVAL)
-            {
-                state.LastMouthLayer = state.CurrentMouthLayer;
-                state.CurrentMouthLayer = GetRandomMouthLayer(state.LastMouthLayer);
-                state.LastChangeTime = currentTime;
-                
-                if (Prefs.DevMode)
-                {
-                    Log.Message($"[MouthAnimationSystem] {defName} 切换嘴型: {state.CurrentMouthLayer}");
-                }
-            }
-        }
-        
-        /// <summary>
-        /// ? 获取当前嘴巴图层名称（供 LayeredPortraitCompositor 调用）
+        /// ? v1.6.44: 获取当前嘴巴图层名称（供 LayeredPortraitCompositor 调用）
+        /// 修复：
+        /// - 同步 ExpressionSystem 当前表情
+        /// - TTS 播放时动态张嘴
+        /// - 沉默时根据表情使用对应的静态嘴型
         /// </summary>
         /// <param name="defName">人格 DefName</param>
-        /// <returns>嘴巴图层名称，如果不在说话则返回 null</returns>
+        /// <returns>嘴巴图层名称，如果闭嘴则返回 null</returns>
         public static string GetMouthLayerName(string defName)
         {
             if (string.IsNullOrEmpty(defName))
@@ -172,37 +116,111 @@ namespace TheSecondSeat.PersonaGeneration
                 return null;
             }
             
-            if (speakingStates.TryGetValue(defName, out var state) && state.IsSpeaking)
+            // ? 1. 获取或创建状态
+            if (!speakingStates.TryGetValue(defName, out var state))
             {
-                return state.CurrentMouthLayer;
+                state = new SpeakingState
+                {
+                    IsSpeaking = false,
+                    CurrentMouthLayer = null,
+                    LastMouthLayer = null,
+                    LastChangeTime = 0f,
+                    currentExpression = ExpressionType.Neutral,
+                    currentOpenness = 0f,
+                    speakingTime = 0f,
+                    isSpeaking = false
+                };
+                speakingStates[defName] = state;
             }
             
-            // ? 不在说话时返回 null（使用 base_body 的闭嘴）
-            return null;
+            // ? 2. 同步当前表情（从 ExpressionSystem）
+            var expressionState = ExpressionSystem.GetExpressionState(defName);
+            state.currentExpression = expressionState.CurrentExpression;
+            
+            // ? 3. 检测 TTS 播放状态（修复：使用静态方法）
+            bool isPlayingTTS = false;
+            try
+            {
+                isPlayingTTS = TTS.TTSAudioPlayer.IsSpeaking(defName);
+            }
+            catch
+            {
+                isPlayingTTS = false;
+            }
+            
+            // ? 4. 计算目标嘴型开合度
+            float targetOpenness = 0f;
+            
+            if (isPlayingTTS)
+            {
+                // ? TTS 播放中：动态张嘴（正弦波动画）
+                state.isSpeaking = true;
+                state.speakingTime += Time.deltaTime;
+                
+                // 使用正弦波生成 0 到 0.8 的开合度
+                float sineWave = Mathf.Sin(state.speakingTime * 10f); // 10Hz 频率
+                targetOpenness = Mathf.Lerp(0f, 0.8f, (sineWave + 1f) * 0.5f);
+            }
+            else
+            {
+                // ? 沉默状态：根据表情使用静态嘴型
+                state.isSpeaking = false;
+                state.speakingTime = 0f;
+                
+                // 关键修复：根据表情设置静态嘴型开合度
+                targetOpenness = GetMouthOpennessForExpression(state.currentExpression);
+            }
+            
+            // ? 5. 平滑过渡当前开合度
+            state.currentOpenness = Mathf.Lerp(state.currentOpenness, targetOpenness, Time.deltaTime * 5f);
+            
+            // ? 6. 根据开合度返回对应的嘴型图层
+            return GetMouthShapeLayerName(state.currentExpression, state.currentOpenness);
         }
         
         /// <summary>
-        /// ? 获取随机嘴型（避免连续重复）
+        /// ? v1.6.44: 根据表情获取静态嘴型开合度
         /// </summary>
-        private static string GetRandomMouthLayer(string lastLayer)
+        private static float GetMouthOpennessForExpression(ExpressionType expression)
         {
-            if (mouthLayers.Length == 1)
+            return expression switch
             {
-                return mouthLayers[0];
+                ExpressionType.Happy => 0.5f,      // 微笑：中等开合
+                ExpressionType.Surprised => 0.8f,  // 惊讶：大张
+                ExpressionType.Smug => 0.3f,       // 得意：略微上扬
+                ExpressionType.Angry => 0.4f,      // 生气：紧绷
+                ExpressionType.Sad => 0.2f,        // 悲伤：微微下撇
+                ExpressionType.Confused => 0.2f,   // 困惑：小开口
+                ExpressionType.Shy => 0.1f,        // 害羞：几乎闭嘴
+                ExpressionType.Neutral => 0f,      // 平静：闭嘴
+                _ => 0f
+            };
+        }
+        
+        /// <summary>
+        /// ? v1.6.44: 根据表情和开合度返回嘴型图层名称
+        /// </summary>
+        private static string GetMouthShapeLayerName(ExpressionType expression, float openness)
+        {
+            // 如果开合度接近 0，返回 null（使用 base_body 的闭嘴）
+            if (openness < 0.05f)
+            {
+                return null;
             }
             
-            string newLayer;
-            int attempts = 0;
-            const int maxAttempts = 10;
-            
-            do
+            // 根据开合度选择嘴型
+            if (openness < 0.3f)
             {
-                newLayer = mouthLayers[UnityEngine.Random.Range(0, mouthLayers.Length)];
-                attempts++;
+                return "small_mouth";
             }
-            while (newLayer == lastLayer && attempts < maxAttempts);
-            
-            return newLayer;
+            else if (openness < 0.6f)
+            {
+                return "medium_mouth";
+            }
+            else
+            {
+                return "larger_mouth";
+            }
         }
         
         /// <summary>

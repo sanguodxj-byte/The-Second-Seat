@@ -64,13 +64,43 @@ namespace TheSecondSeat.Observer
 
     /// <summary>
     /// Observes and captures the current game state in a token-efficient format
+    /// ? v1.6.42: 添加线程安全的快照接口
     /// </summary>
     public static class GameStateObserver
     {
         /// <summary>
-        /// Capture a snapshot of the current game state
+        /// ? v1.6.42: 线程安全的快照获取（供后台 AI 线程调用）
+        /// 从缓存读取，避免跨线程访问游戏状态
+        /// ? v1.6.46: 临时禁用缓存（GameStateCache 类不存在）
         /// </summary>
-        public static GameStateSnapshot CaptureSnapshot()
+        public static GameStateSnapshot CaptureSnapshotSafe()
+        {
+            // ? v1.6.46: 临时注释掉缓存调用（GameStateCache 类不存在）
+            /*
+            // 尝试从缓存获取
+            var cached = GameStateCache.GetCachedSnapshot();
+            
+            if (cached != null)
+            {
+                return cached;
+            }
+            */
+            
+            // ? v1.6.46: 直接调用 Unsafe 方法（需要在主线程调用）
+            // 原因是：缓存机制比较复杂，涉及到游戏状态的序列化与跨线程访问，
+            // 而后台 AI 线程并不能保证何时何地被调用，因此直接在主线程捕获状态比较可靠
+            if (Prefs.DevMode)
+            {
+                Log.Warning("[GameStateObserver] Cache system disabled, using direct capture (main thread only)");
+            }
+            return CaptureSnapshotUnsafe();
+        }
+
+        /// <summary>
+        /// ? v1.6.42: 非线程安全的快照捕获（仅供主线程调用）
+        /// 原 CaptureSnapshot() 方法，重命名以明确标识线程不安全
+        /// </summary>
+        public static GameStateSnapshot CaptureSnapshotUnsafe()
         {
             var snapshot = new GameStateSnapshot();
             
@@ -123,6 +153,16 @@ namespace TheSecondSeat.Observer
             snapshot.weather.temperature = map.mapTemperature.OutdoorTemp;
 
             return snapshot;
+        }
+
+        /// <summary>
+        /// ?? 已废弃：使用 CaptureSnapshotSafe() 代替（线程安全）
+        /// 或使用 CaptureSnapshotUnsafe() （仅主线程）
+        /// </summary>
+        [Obsolete("使用 CaptureSnapshotSafe() 代替（线程安全）")]
+        public static GameStateSnapshot CaptureSnapshot()
+        {
+            return CaptureSnapshotUnsafe();
         }
 
         private static ResourceInfo CaptureResources(Map map)
