@@ -20,12 +20,16 @@ namespace TheSecondSeat.TTS
         public static TTSService Instance => instance ??= new TTSService();
 
         private readonly HttpClient httpClient;
-        private string ttsProvider = "edge"; // "azure", "edge", "local"
+        private string ttsProvider = "edge"; // "azure", "edge", "local", "openai"
         private string apiKey = "";
         private string apiRegion = "eastus";
         private string voiceName = "zh-CN-XiaoxiaoNeural"; // 默认中文女声
         private float speechRate = 1.0f;
         private float volume = 1.0f;
+
+        // ? 新增：OpenAI 兼容接口配置
+        private string openAI_ApiUrl = "http://127.0.0.1:9880/v1/audio/speech"; // 默认本地 GPT-SoVITS
+        private string openAI_Model = "gpt-sovits"; // 模型名称
 
         private string audioOutputDir = "";
         
@@ -47,18 +51,57 @@ namespace TheSecondSeat.TTS
 
         /// <summary>
         /// 配置 TTS 服务
+        /// ? v2.0.1: 新增 apiUrl 和 modelName 参数，支持 OpenAI 兼容接口
         /// </summary>
-        public void Configure(string provider, string key = "", string region = "eastus", string voice = "zh-CN-XiaoxiaoNeural", float rate = 1.0f, float vol = 1.0f)
+        /// <param name="provider">TTS 提供商: "azure", "edge", "local", "openai"</param>
+        /// <param name="key">API 密钥（可选）</param>
+        /// <param name="region">区域（Azure 专用）</param>
+        /// <param name="voice">语音名称</param>
+        /// <param name="rate">语速（0.5-2.0）</param>
+        /// <param name="vol">音量（0.0-1.0）</param>
+        /// <param name="apiUrl">API 端点 URL（OpenAI 专用，可选）</param>
+        /// <param name="modelName">模型名称（OpenAI 专用，可选）</param>
+        public void Configure(
+            string provider, 
+            string key = "", 
+            string region = "eastus", 
+            string voice = "zh-CN-XiaoxiaoNeural", 
+            float rate = 1.0f, 
+            float vol = 1.0f,
+            string apiUrl = "",
+            string modelName = "")
         {
-            ttsProvider = provider; // ? 恢复：使用传入的 provider
+            ttsProvider = provider;
             apiKey = key;
             apiRegion = region;
             voiceName = voice;
             speechRate = UnityEngine.Mathf.Clamp(rate, 0.5f, 2.0f);
             volume = UnityEngine.Mathf.Clamp(vol, 0.0f, 1.0f);
 
-            // 设置 Azure TTS 的 Authorization Header
-            if (ttsProvider == "azure" && !string.IsNullOrEmpty(apiKey))
+            // ? 配置 OpenAI 兼容接口
+            if (ttsProvider == "openai")
+            {
+                if (!string.IsNullOrEmpty(apiUrl))
+                {
+                    openAI_ApiUrl = apiUrl;
+                }
+                
+                if (!string.IsNullOrEmpty(modelName))
+                {
+                    openAI_Model = modelName;
+                }
+                
+                // ? 如果有 API Key，准备 Authorization Header
+                httpClient.DefaultRequestHeaders.Clear();
+                if (!string.IsNullOrEmpty(apiKey))
+                {
+                    httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+                }
+                
+                Log.Message($"[TTSService] Configured OpenAI-compatible TTS: {openAI_ApiUrl}, model: {openAI_Model}");
+            }
+            // 配置 Azure TTS 的 Authorization Header
+            else if (ttsProvider == "azure" && !string.IsNullOrEmpty(apiKey))
             {
                 httpClient.DefaultRequestHeaders.Clear();
                 httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", apiKey);
@@ -108,6 +151,9 @@ namespace TheSecondSeat.TTS
                         break;
                     case "edge":
                         audioData = await GenerateEdgeTTSAsync(cleanText);
+                        break;
+                    case "openai":
+                        audioData = await GenerateOpenAITTSAsync(cleanText);
                         break;
                     default:
                         Log.Error($"[TTSService] Unknown provider: {ttsProvider}");
@@ -191,6 +237,66 @@ namespace TheSecondSeat.TTS
             Log.Warning("[TTSService] Edge TTS implementation requires WebSocket support which is complex to embed.");
             Log.Warning("[TTSService] Please use Azure TTS or Local TTS for now.");
             return Task.FromResult<byte[]?>(null);
+        }
+
+        /// <summary>
+        /// ? 生成 OpenAI 兼容的 TTS (如 GPT-SoVITS)
+        /// 使用 OpenAI Speech API 格式：
+        /// POST /v1/audio/speech
+        /// Body: { "model": "gpt-sovits", "input": "文本", "voice": "zh-CN-XiaoxiaoNeural", "response_format": "wav" }
+        /// </summary>
+        private async Task<byte[]?> GenerateOpenAITTSAsync(string text)
+        {
+            try
+            {
+                // ? 调试：记录请求信息
+                Log.Message($"[TTSService] Sending request to OpenAI TTS API: {openAI_ApiUrl}");
+                Log.Message($"[TTSService] Model: {openAI_Model}, Voice: {voiceName}");
+
+                // ? 构建 OpenAI Speech API 兼容的请求体
+                var requestBody = new
+                {
+                    model = openAI_Model,           // 模型名称（如 "gpt-sovits"）
+                    input = text,                   // 要合成的文本
+                    voice = voiceName,              // 语音名称
+                    response_format = "wav",        // 输出格式（WAV）
+                    speed = speechRate              // 语速（可选）
+                };
+
+                string jsonBody = JsonConvert.SerializeObject(requestBody);
+                
+                // ? 调试：记录请求体
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[TTSService] Request body: {jsonBody}");
+                }
+
+                // ? 发送 POST 请求
+                var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+                var response = await httpClient.PostAsync(openAI_ApiUrl, content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    Log.Error($"[TTSService] OpenAI TTS error: {response.StatusCode}");
+                    Log.Error($"[TTSService] Error details: {error}");
+                    Log.Error($"[TTSService] Request URL: {openAI_ApiUrl}");
+                    Log.Error($"[TTSService] Model: {openAI_Model}");
+                    return null;
+                }
+
+                // ? 读取音频数据（应该是 WAV 格式）
+                byte[] audioData = await response.Content.ReadAsByteArrayAsync();
+                Log.Message($"[TTSService] OpenAI TTS audio generated: {audioData.Length} bytes");
+                
+                return audioData;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[TTSService] OpenAI TTS exception: {ex.Message}");
+                Log.Error($"[TTSService] Stack trace: {ex.StackTrace}");
+                return null;
+            }
         }
 
         /// <summary>

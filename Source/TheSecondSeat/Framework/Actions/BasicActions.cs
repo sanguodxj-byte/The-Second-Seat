@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Verse;
 using RimWorld;
+using Verse.Sound; // ? 添加用于SoundStarter
 using TheSecondSeat.Storyteller;
 
 namespace TheSecondSeat.Framework.Actions
@@ -179,7 +180,6 @@ namespace TheSecondSeat.Framework.Actions
     
     /// <summary>
     /// 播放音效行动
-    /// TODO: 需要RimWorld正确的音效API
     /// </summary>
     public class PlaySoundAction : TSSAction
     {
@@ -190,14 +190,13 @@ namespace TheSecondSeat.Framework.Actions
         {
             if (sound != null)
             {
-                // ? 临时：仅记录日志，实际播放留待子Mod实现
+                // ? 使用正确的RimWorld音效播放API
+                SoundStarter.PlayOneShotOnCamera(sound, null);
+                
                 if (Prefs.DevMode)
                 {
-                    Log.Message($"[PlaySoundAction] Would play sound: {sound.defName} (not implemented)");
+                    Log.Message($"[PlaySoundAction] Played sound: {sound.defName}");
                 }
-                
-                // TODO: 实现音效播放
-                // 子Mod可以继承此类并重写Execute方法实现音效播放
             }
         }
         

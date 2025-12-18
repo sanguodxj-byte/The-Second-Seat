@@ -239,7 +239,13 @@
      - SetMoodAction: 设置心情
      - LogMessageAction: 输出日志（调试用）
   
-  3. 配置参数:
+  3. 高阶动作 (AdvancedActions):
+     ?? 权限很高，请谨慎使用
+     - StrikeLightningAction: 降下雷劈
+     - GiveHediffAction: 添加健康状态
+     - StartIncidentAction: 强制触发原版事件
+  
+  4. 配置参数:
      - chance: 触发概率 (0.0-1.0)
      - cooldownTicks: 冷却时间（Tick）
      - triggerOnce: 是否只触发一次
@@ -251,5 +257,264 @@
   - 创建新的Action: 继承TSSAction，实现Execute方法
   - 所有类必须在XML中用Class属性指定完整命名空间
   -->
+  
+  <!-- ========================================== -->
+  <!-- 高阶动作示例                                -->
+  <!-- ?? 权限很高，请谨慎使用                      -->
+  <!-- ========================================== -->
+  
+  <!-- 示例6: 天罚雷击 -->
+  <TheSecondSeat.Framework.NarratorEventDef>
+    <defName>DivinePunishment</defName>
+    <eventLabel>天罚降临</eventLabel>
+    <eventDescription>当好感度极低时，叙事者降下雷劈惩罚</eventDescription>
+    <category>Punishment</category>
+    <priority>70</priority>
+    
+    <chance>0.3</chance>
+    <cooldownTicks>108000</cooldownTicks> <!-- 30分钟冷却 -->
+    
+    <triggers>
+      <li Class="TheSecondSeat.Framework.Triggers.AffinityRangeTrigger">
+        <minAffinity>-100</minAffinity>
+        <maxAffinity>-70</maxAffinity>
+      </li>
+    </triggers>
+    
+    <actions>
+      <!-- ? 叙事者语音警告 -->
+      <li Class="TheSecondSeat.Framework.Actions.NarratorSpeakAction">
+        <textKey>TSS_Event_DivinePunishment</textKey>
+        <text>你的所作所为...让我不得不采取措施了。</text>
+        <showDialogue>true</showDialogue>
+      </li>
+      
+      <!-- 延迟3秒后降雷 -->
+      <li Class="TheSecondSeat.Framework.Actions.StrikeLightningAction">
+        <actionId>divine_lightning</actionId>
+        <delayTicks>180</delayTicks>
+        <strikeMode>Random</strikeMode>
+        <strikeCount>5</strikeCount>
+        <damageAmount>80</damageAmount>
+        <radius>4</radius>
+        <causesFire>true</causesFire>
+      </li>
+      
+      <li Class="TheSecondSeat.Framework.Actions.ModifyAffinityAction">
+        <delayTicks>180</delayTicks>
+        <delta>-10</delta>
+        <reason>天罚惩罚</reason>
+      </li>
+    </actions>
+    
+    <showNotification>true</showNotification>
+    <customNotificationText>? 天罚降临！</customNotificationText>
+  </TheSecondSeat.Framework.NarratorEventDef>
+  
+  <!-- 示例7: 瘟疫诅咒 -->
+  <TheSecondSeat.Framework.NarratorEventDef>
+    <defName>PlagueCurse</defName>
+    <eventLabel>瘟疫诅咒</eventLabel>
+    <eventDescription>低好感度时，叙事者让殖民者染病</eventDescription>
+    <category>Punishment</category>
+    <priority>40</priority>
+    
+    <chance>0.4</chance>
+    <cooldownTicks>72000</cooldownTicks> <!-- 20分钟冷却 -->
+    
+    <triggers>
+      <li Class="TheSecondSeat.Framework.Triggers.AffinityRangeTrigger">
+        <minAffinity>-80</minAffinity>
+        <maxAffinity>-40</maxAffinity>
+      </li>
+    </triggers>
+    
+    <actions>
+      <!-- ? 语音警告 -->
+      <li Class="TheSecondSeat.Framework.Actions.NarratorSpeakAction">
+        <text>也许一场小病能让你反思一下...</text>
+        <showDialogue>true</showDialogue>
+      </li>
+      
+      <!-- 给2个随机殖民者染上流感 -->
+      <li Class="TheSecondSeat.Framework.Actions.GiveHediffAction">
+        <actionId>plague_curse</actionId>
+        <delayTicks>120</delayTicks>
+        <hediffDef>Flu</hediffDef>
+        <targetMode>Random</targetMode>
+        <severity>0.3</severity>
+        <targetCount>2</targetCount>
+        <showNotification>true</showNotification>
+      </li>
+    </actions>
+    
+    <showNotification>true</showNotification>
+  </TheSecondSeat.Framework.NarratorEventDef>
+  
+  <!-- 示例8: 神秘商队 -->
+  <TheSecondSeat.Framework.NarratorEventDef>
+    <defName>MysteriousTrader</defName>
+    <eventLabel>神秘商队</eventLabel>
+    <eventDescription>高好感度时，叙事者召唤高级商队</eventDescription>
+    <category>Reward</category>
+    <priority>30</priority>
+    
+    <chance>0.6</chance>
+    <cooldownTicks>144000</cooldownTicks> <!-- 40分钟冷却 -->
+    
+    <triggers>
+      <li Class="TheSecondSeat.Framework.Triggers.AffinityRangeTrigger">
+        <minAffinity>70</minAffinity>
+      </li>
+    </triggers>
+    
+    <actions>
+      <!-- ? 语音通知 -->
+      <li Class="TheSecondSeat.Framework.Actions.NarratorSpeakAction">
+        <text>我叫了个朋友来看看你~希望你会喜欢他的货物。</text>
+        <showDialogue>true</showDialogue>
+      </li>
+      
+      <!-- 播放音效 -->
+      <li Class="TheSecondSeat.Framework.Actions.PlaySoundAction">
+        <delayTicks>60</delayTicks>
+        <sound>TradeShip_Ambience</sound>
+      </li>
+      
+      <!-- 延迟5秒后触发商队事件 -->
+      <li Class="TheSecondSeat.Framework.Actions.StartIncidentAction">
+        <actionId>summon_trader</actionId>
+        <delayTicks>300</delayTicks>
+        <incidentDef>TraderCaravanArrival</incidentDef>
+        <forced>true</forced>
+      </li>
+      
+      <li Class="TheSecondSeat.Framework.Actions.ModifyAffinityAction">
+        <delayTicks>300</delayTicks>
+        <delta>5</delta>
+        <reason>召唤商队</reason>
+      </li>
+    </actions>
+    
+    <showNotification>true</showNotification>
+    <customNotificationText>?? 神秘商队即将到达！</customNotificationText>
+  </TheSecondSeat.Framework.NarratorEventDef>
+  
+  <!-- 示例9: 天降福祉（超高好感度奖励） -->
+  <TheSecondSeat.Framework.NarratorEventDef>
+    <defName>DivineBlessingSupreme</defName>
+    <eventLabel>天降福祉</eventLabel>
+    <eventDescription>好感度90+时的终极奖励：资源+治疗</eventDescription>
+    <category>Reward</category>
+    <priority>80</priority>
+    
+    <chance>0.8</chance>
+    <cooldownTicks>216000</cooldownTicks> <!-- 1游戏日冷却 -->
+    
+    <triggers>
+      <li Class="TheSecondSeat.Framework.Triggers.AffinityRangeTrigger">
+        <minAffinity>90</minAffinity>
+      </li>
+    </triggers>
+    
+    <actions>
+      <li Class="TheSecondSeat.Framework.Actions.ShowDialogueAction">
+        <dialogueText>你真是我见过最棒的指挥官！让我全力帮助你吧！?</dialogueText>
+        <messageType>PositiveEvent</messageType>
+      </li>
+      
+      <!-- 生成大量资源 -->
+      <li Class="TheSecondSeat.Framework.Actions.SpawnResourceAction">
+        <delayTicks>120</delayTicks>
+        <resourceType>Steel</resourceType>
+        <amount>500</amount>
+      </li>
+      
+      <li Class="TheSecondSeat.Framework.Actions.SpawnResourceAction">
+        <delayTicks>60</delayTicks>
+        <resourceType>Plasteel</resourceType>
+        <amount>100</amount>
+      </li>
+      
+      <li Class="TheSecondSeat.Framework.Actions.SpawnResourceAction">
+        <delayTicks>60</delayTicks>
+        <resourceType>Gold</resourceType>
+        <amount>50</amount>
+      </li>
+      
+      <!-- 治疗最虚弱的殖民者（移除疾病） -->
+      <li Class="TheSecondSeat.Framework.Actions.GiveHediffAction">
+        <delayTicks>180</delayTicks>
+        <hediffDef>Luciferium</hediffDef>
+        <targetMode>Weakest</targetMode>
+        <severity>0.01</severity>
+        <targetCount>1</targetCount>
+        <showNotification>true</showNotification>
+      </li>
+      
+      <li Class="TheSecondSeat.Framework.Actions.ModifyAffinityAction">
+        <delayTicks>300</delayTicks>
+        <delta>5</delta>
+        <reason>天降福祉</reason>
+      </li>
+    </actions>
+    
+    <showNotification>true</showNotification>
+    <customNotificationText>?? 天降福祉！叙事者的终极馈赠！</customNotificationText>
+  </TheSecondSeat.Framework.NarratorEventDef>
+  
+  <!-- 示例10: 极度愤怒（终极惩罚） -->
+  <TheSecondSeat.Framework.NarratorEventDef>
+    <defName>UltimateWrath</defName>
+    <eventLabel>极度愤怒</eventLabel>
+    <eventDescription>好感度-90以下的终极惩罚：袭击+雷劈</eventDescription>
+    <category>Punishment</category>
+    <priority>90</priority>
+    
+    <chance>0.7</chance>
+    <cooldownTicks>180000</cooldownTicks> <!-- 50分钟冷却 -->
+    <triggerOnce>false</triggerOnce>
+    
+    <triggers>
+      <li Class="TheSecondSeat.Framework.Triggers.AffinityRangeTrigger">
+        <minAffinity>-100</minAffinity>
+        <maxAffinity>-90</maxAffinity>
+      </li>
+    </triggers>
+    
+    <actions>
+      <li Class="TheSecondSeat.Framework.Actions.ShowDialogueAction">
+        <dialogueText>你已经彻底激怒我了！承受我的怒火吧！！！</dialogueText>
+        <messageType>ThreatBig</messageType>
+      </li>
+      
+      <!-- 触发大规模袭击 -->
+      <li Class="TheSecondSeat.Framework.Actions.StartIncidentAction">
+        <delayTicks>120</delayTicks>
+        <incidentDef>RaidEnemy</incidentDef>
+        <points>1500</points>
+        <forced>true</forced>
+      </li>
+      
+      <!-- 同时降下多次雷劈 -->
+      <li Class="TheSecondSeat.Framework.Actions.StrikeLightningAction">
+        <delayTicks>240</delayTicks>
+        <strikeMode>Random</strikeMode>
+        <strikeCount>10</strikeCount>
+        <damageAmount>120</damageAmount>
+        <radius>5</radius>
+        <causesFire>true</causesFire>
+      </li>
+      
+      <li Class="TheSecondSeat.Framework.Actions.ModifyAffinityAction">
+        <delayTicks>300</delayTicks>
+        <delta>-15</delta>
+        <reason>极度愤怒惩罚</reason>
+      </li>
+    </actions>
+    
+    <showNotification>true</showNotification>
+    <customNotificationText>?? 叙事者的极度愤怒！！！</customNotificationText>
+  </TheSecondSeat.Framework.NarratorEventDef>
 
 </Defs>

@@ -121,6 +121,105 @@
 </li>
 ```
 
+### PlaySoundAction - 播放音效
+```xml
+<li Class="TheSecondSeat.Framework.Actions.PlaySoundAction">
+  <sound>ThunderOnMap</sound>
+  <volume>1.0</volume>
+</li>
+```
+
+### ? NarratorSpeakAction - 叙事者语音（核心联动）
+```xml
+<li Class="TheSecondSeat.Framework.Actions.NarratorSpeakAction">
+  <textKey>TSS_Event_DivinePunishment</textKey>  <!-- 翻译键（优先） -->
+  <text>你的所作所为让我不得不采取措施了...</text>  <!-- 直接文本（备用） -->
+  <personaDefName>Sideria_Default</personaDefName>  <!-- 可选：指定人格 -->
+  <showDialogue>true</showDialogue>  <!-- 是否显示对话框 -->
+</li>
+```
+
+**功能特性**:
+- ? **TTS语音合成** - 调用框架内置的TTSService
+- ? **多模式文本** - 支持翻译键或直接文本
+- ? **人格声线** - 自动使用对应人格的语音配置
+- ? **对话显示** - 可选在对话框显示
+- ? **异步播放** - 不阻塞游戏主线程
+
+**使用场景**:
+- 好感度事件的语音反馈
+- 降临模式的语音宣告
+- 教程引导的语音提示
+- 特殊事件的语音旁白
+
+---
+
+## ?? 高阶动作（上帝级）
+
+?? **警告：这些动作权限很高，请谨慎使用！**
+
+### StrikeLightningAction - 降下雷劈
+```xml
+<li Class="TheSecondSeat.Framework.Actions.StrikeLightningAction">
+  <strikeMode>Random</strikeMode>        <!-- Random/MapCenter/NearestEnemy/NearestColonist/Specific -->
+  <strikeCount>3</strikeCount>           <!-- 雷击次数 -->
+  <damageAmount>100</damageAmount>       <!-- 伤害量 -->
+  <radius>5</radius>                     <!-- AOE范围 -->
+  <causesFire>true</causesFire>          <!-- 是否造成火灾 -->
+  <playSound>true</playSound>            <!-- 是否播放音效 -->
+</li>
+```
+
+**雷击模式**:
+- `Random` - 随机位置
+- `MapCenter` - 地图中心
+- `NearestEnemy` - 最近的敌人
+- `NearestColonist` - 最近的殖民者（慎用！）
+- `Specific` - 指定坐标（需设置targetCell）
+
+### GiveHediffAction - 添加健康状态
+```xml
+<li Class="TheSecondSeat.Framework.Actions.GiveHediffAction">
+  <hediffDef>Flu</hediffDef>             <!-- 疾病/增益Def -->
+  <targetMode>Random</targetMode>         <!-- Random/AllColonists/Healthiest/Weakest/RandomEnemy -->
+  <severity>0.5</severity>                <!-- 严重程度 (0.0-1.0) -->
+  <targetCount>3</targetCount>            <!-- 目标数量 -->
+  <targetBodyPart>LeftLeg</targetBodyPart><!-- 身体部位（可选） -->
+  <showNotification>true</showNotification>
+</li>
+```
+
+**目标选择模式**:
+- `Random` - 随机殖民者
+- `AllColonists` - 所有殖民者
+- `Healthiest` - 最健康的殖民者
+- `Weakest` - 最虚弱的殖民者
+- `RandomEnemy` - 随机敌人
+
+**常用HediffDef**:
+- 疾病: `Flu`, `Plague`, `WoundInfection`
+- 增益: `PsychicHarmonizer`, `PsychicReader`
+- 义体: `BionicEye`, `BionicArm`
+- 特殊: `Luciferium` (魔鬼素依赖)
+
+### StartIncidentAction - 强制触发原版事件
+```xml
+<li Class="TheSecondSeat.Framework.Actions.StartIncidentAction">
+  <incidentDef>RaidEnemy</incidentDef>   <!-- 事件Def -->
+  <points>500</points>                    <!-- 事件点数（-1表示默认） -->
+  <forced>true</forced>                   <!-- 是否强制触发 -->
+  <targetFaction>Pirate</targetFaction>   <!-- 目标派系（可选） -->
+  <allowBigThreat>true</allowBigThreat>   <!-- 是否允许大规模事件 -->
+</li>
+```
+
+**常用IncidentDef**:
+- 袭击: `RaidEnemy`, `RaidFriendly`, `MechCluster`
+- 商队: `TraderCaravanArrival`, `OrbitalTraderArrival`
+- 自然: `Tornado`, `Flashstorm`, `Eclipse`
+- 动物: `ManhunterPack`, `FarmAnimalsWanderIn`
+- 特殊: `WandererJoin`, `RefugeeChased`, `QuestThreat`
+
 ---
 
 ## ?? 事件配置参数
