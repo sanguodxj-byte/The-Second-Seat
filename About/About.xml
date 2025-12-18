@@ -1,14 +1,80 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
-  <name>The Second Seat - AI Narrator Assistant</name>
-  <author>Your Name</author>
+  <name>The Second Seat - Narrator Personification Framework</name>
+  <author>The Second Seat Team</author>
   <supportedVersions>
     <li>1.4</li>
     <li>1.5</li>
     <li>1.6</li>
   </supportedVersions>
-  <packageId>yourname.thesecondseat</packageId>
-  <description>An AI-powered narrator assistant with favorability mechanics that can observe your colony, provide commentary, and execute batch commands based on your relationship.</description>
+  <packageId>TheSecondSeat.NarratorFramework</packageId>
+  <description>
+    [h1]The Second Seat - Narrator Personification Framework[/h1]
+    
+    A comprehensive framework for creating personified AI narrators in RimWorld.
+    
+    [h2]Core Features[/h2]
+    - AI-powered narrator with personality system
+    - Dynamic portrait and expression system
+    - Layered portrait support with multiple expressions
+    - Affinity system tracking player relationship
+    - Event-driven narrative generation
+    - Batch command execution via natural language
+    - Multi-modal analysis for custom personas
+    - Extensible API for custom narrator personas
+    
+    [h2]For Players[/h2]
+    This mod provides a framework with built-in vanilla narrators (Cassandra, Phoebe, Randy, etc.).
+    For custom narrator personas (like Sideria), install additional persona mods.
+    
+    [h2]For Mod Developers[/h2]
+    Create custom narrator personas by:
+    - Defining personas via XML (no coding required)
+    - Adding custom portraits and expressions
+    - Configuring dialogue styles and event preferences
+    - Leveraging the full framework API
+    
+    See example: "The Second Seat - Sideria Example" mod
+    
+    [h2]Technical Requirements[/h2]
+    - RimWorld 1.4+
+    - LLM API access (OpenAI, DeepSeek, Gemini, or local models)
+    - Optional: Azure TTS for voice synthesis
+    
+    ───────────────────────────────────────
+    
+    [h1]第二席位 - 叙事者人格化框架[/h1]
+    
+    为RimWorld打造的全面叙事者人格化框架。
+    
+    [h2]核心功能[/h2]
+    - AI驱动的人格化叙事者
+    - 动态头像和表情系统
+    - 分层立绘支持，多表情切换
+    - 好感度系统追踪玩家关系
+    - 事件驱动的叙事生成
+    - 自然语言批量命令执行
+    - 多模态分析生成自定义人格
+    - 可扩展API，支持自定义叙事者人格
+    
+    [h2]面向玩家[/h2]
+    此Mod提供框架和内置原版叙事者（Cassandra、Phoebe、Randy等）。
+    要使用自定义叙事者人格（如Sideria），请安装额外的人格Mod。
+    
+    [h2]面向Mod开发者[/h2]
+    创建自定义叙事者人格：
+    - 通过XML定义人格（无需编程）
+    - 添加自定义头像和表情
+    - 配置对话风格和事件偏好
+    - 利用完整的框架API
+    
+    示例参考："The Second Seat - Sideria Example" Mod
+    
+    [h2]技术要求[/h2]
+    - RimWorld 1.4+
+    - LLM API访问（OpenAI、DeepSeek、Gemini或本地模型）
+    - 可选：Azure TTS语音合成
+  </description>
   <modDependencies>
   </modDependencies>
   <loadAfter>

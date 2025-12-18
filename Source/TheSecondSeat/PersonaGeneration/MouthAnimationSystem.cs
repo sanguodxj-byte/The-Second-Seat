@@ -106,9 +106,10 @@ namespace TheSecondSeat.PersonaGeneration
         /// - 同步 ExpressionSystem 当前表情
         /// - TTS 播放时动态张嘴
         /// - 沉默时根据表情使用对应的静态嘴型
+        /// - 增加调试日志输出
         /// </summary>
         /// <param name="defName">人格 DefName</param>
-        /// <returns>嘴巴图层名称，如果闭嘴则返回 null</returns>
+        /// <returns>嘴部图层名称（如果不需要则返回 null）</returns>
         public static string GetMouthLayerName(string defName)
         {
             if (string.IsNullOrEmpty(defName))
@@ -137,45 +138,83 @@ namespace TheSecondSeat.PersonaGeneration
             var expressionState = ExpressionSystem.GetExpressionState(defName);
             state.currentExpression = expressionState.CurrentExpression;
             
-            // ? 3. 检测 TTS 播放状态（修复：使用静态方法）
+            // ? 3. 检查 TTS 播放状态（修改：使用 try-catch 避免崩溃）
             bool isPlayingTTS = false;
             try
             {
                 isPlayingTTS = TTS.TTSAudioPlayer.IsSpeaking(defName);
             }
-            catch
+            catch (System.Exception ex)
             {
+                if (Prefs.DevMode)
+                {
+                    Log.Warning($"[MouthAnimationSystem] 检测 TTS 状态失败: {ex.Message}");
+                }
                 isPlayingTTS = false;
             }
             
-            // ? 4. 计算目标嘴型开合度
+            // ? 4. 计算目标嘴部开合度
             float targetOpenness = 0f;
             
             if (isPlayingTTS)
             {
-                // ? TTS 播放中：动态张嘴（正弦波动画）
+                // ? TTS 播放中：动态张嘴（使用正弦波模拟说话）
                 state.isSpeaking = true;
                 state.speakingTime += Time.deltaTime;
                 
-                // 使用正弦波生成 0 到 0.8 的开合度
+                // 使用正弦波在 0 到 0.8 的开合度
                 float sineWave = Mathf.Sin(state.speakingTime * 10f); // 10Hz 频率
                 targetOpenness = Mathf.Lerp(0f, 0.8f, (sineWave + 1f) * 0.5f);
+                
+                // ? 调试日志：TTS 播放时输出
+                if (Prefs.DevMode && state.speakingTime % 1f < 0.1f) // 每秒输出一次
+                {
+                    Log.Message($"[MouthAnimationSystem] {defName} TTS播放中 - 开合度: {targetOpenness:F2}");
+                }
             }
             else
             {
-                // ? 沉默状态：根据表情使用静态嘴型
-                state.isSpeaking = false;
-                state.speakingTime = 0f;
+                // ? v1.6.54: TTS 停止后立即重置开合度（不使用平滑过渡）
+                if (state.isSpeaking)
+                {
+                    // 刚刚停止说话，立即重置
+                    state.isSpeaking = false;
+                    state.speakingTime = 0f;
+                    state.currentOpenness = 0f;  // ? 关键修复：立即重置为 0
+                    
+                    if (Prefs.DevMode)
+                    {
+                        Log.Message($"[MouthAnimationSystem] {defName} TTS停止 - 立即闭嘴");
+                    }
+                }
                 
-                // 关键修复：根据表情设置静态嘴型开合度
+                // 根据表情获取静态开合度
                 targetOpenness = GetMouthOpennessForExpression(state.currentExpression);
             }
             
-            // ? 5. 平滑过渡当前开合度
-            state.currentOpenness = Mathf.Lerp(state.currentOpenness, targetOpenness, Time.deltaTime * 5f);
+            // ? 5. 平滑过渡到目标开合度（仅在 TTS 播放时或表情变化时）
+            if (isPlayingTTS)
+            {
+                // TTS 播放中：平滑过渡（用于正弦波动画）
+                state.currentOpenness = Mathf.Lerp(state.currentOpenness, targetOpenness, Time.deltaTime * 10f);
+            }
+            else
+            {
+                // TTS 停止后：直接设置为目标值（避免延迟）
+                state.currentOpenness = targetOpenness;
+            }
             
-            // ? 6. 根据开合度返回对应的嘴型图层
-            return GetMouthShapeLayerName(state.currentExpression, state.currentOpenness);
+            // ? 6. 根据开合度返回对应的嘴部图层名称
+            string layerName = GetMouthShapeLayerName(state.currentExpression, state.currentOpenness);
+            
+            // ? 调试日志：每次返回图层时输出（帮助诊断问题）
+            if (Prefs.DevMode && layerName != state.CurrentMouthLayer)
+            {
+                Log.Message($"[MouthAnimationSystem] {defName} 嘴部图层: {layerName ?? "null"} (表情={state.currentExpression}, 开合度={state.currentOpenness:F2}, TTS={isPlayingTTS})");
+                state.CurrentMouthLayer = layerName;
+            }
+            
+            return layerName;
         }
         
         /// <summary>

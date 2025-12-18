@@ -7,8 +7,8 @@ using TheSecondSeat.UI;
 namespace TheSecondSeat.Core
 {
     /// <summary>
-    /// ? v1.6.42: 立绘覆盖层系统
-    /// 通过 Harmony 在 OnGUI 中直接绘制立绘，避免 Window 系统阻挡地图点击
+    /// ? v1.6.42: 立绘渲染叠层系统
+    /// 通过 Harmony 在 OnGUI 后直接绘制立绘，独立于 Window 系统（避免遮挡物、图层问题）
     /// </summary>
     [StaticConstructorOnStartup]
     public static class PortraitOverlaySystem
@@ -22,10 +22,11 @@ namespace TheSecondSeat.Core
             var harmony = new Harmony("TheSecondSeat.PortraitOverlay");
             harmony.PatchAll();
             
-            if (Prefs.DevMode)
-            {
-                Log.Message("[PortraitOverlaySystem] Harmony 补丁已应用");
-            }
+            // ? 移除日志输出
+            // if (Prefs.DevMode)
+            // {
+            //     Log.Message("[PortraitOverlaySystem] Harmony 补丁已应用");
+            // }
         }
         
         /// <summary>
@@ -37,10 +38,11 @@ namespace TheSecondSeat.Core
             {
                 portraitPanel = new FullBodyPortraitPanel();
                 
-                if (Prefs.DevMode)
-                {
-                    Log.Message("[PortraitOverlaySystem] 立绘面板已初始化");
-                }
+                // ? 移除日志输出
+                // if (Prefs.DevMode)
+                // {
+                //     Log.Message("[PortraitOverlaySystem] 立绘面板已初始化");
+                // }
             }
         }
         
@@ -56,10 +58,11 @@ namespace TheSecondSeat.Core
                 Initialize();
             }
             
-            if (Prefs.DevMode)
-            {
-                Log.Message($"[PortraitOverlaySystem] 立绘显示状态: {(isEnabled ? "开启" : "关闭")}");
-            }
+            // ? 移除日志输出
+            // if (Prefs.DevMode)
+            // {
+            //     Log.Message($"[PortraitOverlaySystem] 立绘显示状态: {(isEnabled ? "开启" : "关闭")}");
+            // }
         }
         
         /// <summary>
@@ -71,7 +74,7 @@ namespace TheSecondSeat.Core
         }
         
         /// <summary>
-        /// 获取立绘面板实例（用于外部访问）
+        /// 获取立绘面板实例（供外部调用）
         /// </summary>
         public static FullBodyPortraitPanel GetPanel()
         {
@@ -99,13 +102,13 @@ namespace TheSecondSeat.Core
                     return;
                 }
                 
-                // ? 3. 检查是否有全屏 UI 打开（例如主菜单、设置）
+                // ? 3. 检查是否有全屏 UI 打开（如主菜单、设置）
                 if (Find.WindowStack.IsOpen<Page>())
                 {
                     return;
                 }
                 
-                // ? 4. 检查是否有模态对话框打开
+                // ? 4. 检查是否有模态对话框
                 if (Find.WindowStack.IsOpen<Dialog_MessageBox>())
                 {
                     return;

@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <!-- ========================================== -->
+  <!-- The Second Seat - Narrator Event Examples -->
+  <!-- 叙事者事件系统示例                          -->
+  <!-- ========================================== -->
+  
+  <!-- 示例1: 高好感度奖励 -->
+  <TheSecondSeat.Framework.NarratorEventDef>
+    <defName>HighAffinityReward</defName>
+    <eventLabel>叙事者的奖励</eventLabel>
+    <eventDescription>当好感度达到80+时，叙事者提供额外帮助</eventDescription>
+    <category>Reward</category>
+    <priority>50</priority>
+    
+    <!-- 触发条件 -->
+    <chance>0.5</chance>
+    <cooldownTicks>36000</cooldownTicks> <!-- 10分钟冷却 -->
+    
+    <triggers>
+      <!-- 好感度必须在80-100之间 -->
+      <li Class="TheSecondSeat.Framework.Triggers.AffinityRangeTrigger">
+        <triggerId>affinity_check</triggerId>
+        <minAffinity>80</minAffinity>
+        <maxAffinity>100</maxAffinity>
+      </li>
+      
+      <!-- 殖民者数量至少3人 -->
+      <li Class="TheSecondSeat.Framework.Triggers.ColonistCountTrigger">
+        <triggerId>colonist_check</triggerId>
+        <minCount>3</minCount>
+      </li>
+    </triggers>
+    
+    <!-- 执行动作 -->
+    <actions>
+      <!-- 显示对话 -->
+      <li Class="TheSecondSeat.Framework.Actions.ShowDialogueAction">
+        <actionId>show_dialogue</actionId>
+        <dialogueText>看起来你做得不错！让我帮你一把~ (???)</dialogueText>
+        <messageType>PositiveEvent</messageType>
+      </li>
+      
+      <!-- 延迟2秒后生成资源 -->
+      <li Class="TheSecondSeat.Framework.Actions.SpawnResourceAction">
+        <actionId>spawn_steel</actionId>
+        <delayTicks>120</delayTicks>
+        <resourceType>Steel</resourceType>
+        <amount>100</amount>
+        <dropNearPlayer>true</dropNearPlayer>
+      </li>
+      
+      <!-- 再延迟1秒生成更多资源 -->
+      <li Class="TheSecondSeat.Framework.Actions.SpawnResourceAction">
+        <actionId>spawn_components</actionId>
+        <delayTicks>60</delayTicks>
+        <resourceType>ComponentIndustrial</resourceType>
+        <amount>10</amount>
+        <dropNearPlayer>true</dropNearPlayer>
+      </li>
+    </actions>
+    
+    <showNotification>true</showNotification>
+    <customNotificationText>? 叙事者赠送了礼物！</customNotificationText>
+  </TheSecondSeat.Framework.NarratorEventDef>
+  
+  <!-- 示例2: 低好感度惩罚 -->
+  <TheSecondSeat.Framework.NarratorEventDef>
+    <defName>LowAffinityWarning</defName>
+    <eventLabel>叙事者的警告</eventLabel>
+    <eventDescription>当好感度低于-50时，叙事者发出警告</eventDescription>
+    <category>Warning</category>
+    <priority>60</priority>
+    
+    <chance>0.8</chance>
+    <cooldownTicks>18000</cooldownTicks> <!-- 5分钟冷却 -->
+    
+    <triggers>
+      <li Class="TheSecondSeat.Framework.Triggers.AffinityRangeTrigger">
+        <minAffinity>-100</minAffinity>
+        <maxAffinity>-50</maxAffinity>
+      </li>
+    </triggers>
+    
+    <actions>
+      <li Class="TheSecondSeat.Framework.Actions.ShowDialogueAction">
+        <dialogueText>你的所作所为让我很失望...希望你能改变。</dialogueText>
+        <messageType>NegativeEvent</messageType>
+      </li>
+      
+      <li Class="TheSecondSeat.Framework.Actions.ModifyAffinityAction">
+        <delayTicks>300</delayTicks>
+        <delta>-5</delta>
+        <reason>持续低好感度警告</reason>
+      </li>
+    </actions>
+    
+    <showNotification>true</showNotification>
+  </TheSecondSeat.Framework.NarratorEventDef>
+  
+  <!-- 示例3: 季节性问候 -->
+  <TheSecondSeat.Framework.NarratorEventDef>
+    <defName>SpringGreeting</defName>
+    <eventLabel>春日问候</eventLabel>
+    <eventDescription>春季开始时叙事者的问候</eventDescription>
+    <category>Dialogue</category>
+    <priority>10</priority>
+    
+    <chance>1.0</chance>
+    <triggerOnce>false</triggerOnce>
+    <cooldownTicks>900000</cooldownTicks> <!-- 约4游戏日 -->
+    
+    <triggers>
+      <li Class="TheSecondSeat.Framework.Triggers.SeasonTrigger">
+        <allowedSeasons>
+          <li>Spring</li>
+        </allowedSeasons>
+      </li>
+      
+      <li Class="TheSecondSeat.Framework.Triggers.TimeRangeTrigger">
+        <minHour>6</minHour>
+        <maxHour>12</maxHour>
+      </li>
+    </triggers>
+    
+    <actions>
+      <li Class="TheSecondSeat.Framework.Actions.ShowDialogueAction">
+        <dialogueText>春天到了呢~希望你的殖民地也能欣欣向荣！</dialogueText>
+        <messageType>PositiveEvent</messageType>
+      </li>
+      
+      <li Class="TheSecondSeat.Framework.Actions.ModifyAffinityAction">
+        <delta>2</delta>
+        <reason>季节性互动</reason>
+      </li>
+    </actions>
+    
+    <showNotification>true</showNotification>
+  </TheSecondSeat.Framework.NarratorEventDef>
+  
+  <!-- 示例4: 财富达标奖励 -->
+  <TheSecondSeat.Framework.NarratorEventDef>
+    <defName>WealthMilestone</defName>
+    <eventLabel>财富里程碑</eventLabel>
+    <eventDescription>当殖民地财富达到一定水平时的奖励</eventDescription>
+    <category>Reward</category>
+    <priority>30</priority>
+    
+    <chance>1.0</chance>
+    <triggerOnce>true</triggerOnce>
+    
+    <triggers>
+      <li Class="TheSecondSeat.Framework.Triggers.WealthRangeTrigger">
+        <minWealth>50000</minWealth>
+        <checkTotal>true</checkTotal>
+      </li>
+      
+      <li Class="TheSecondSeat.Framework.Triggers.AffinityRangeTrigger">
+        <minAffinity>40</minAffinity>
+      </li>
+    </triggers>
+    
+    <actions>
+      <li Class="TheSecondSeat.Framework.Actions.ShowDialogueAction">
+        <dialogueText>哇！你的殖民地发展得真不错！这是我给你的庆祝礼物~</dialogueText>
+        <messageType>PositiveEvent</messageType>
+      </li>
+      
+      <li Class="TheSecondSeat.Framework.Actions.SpawnResourceAction">
+        <delayTicks>120</delayTicks>
+        <resourceType>Silver</resourceType>
+        <amount>500</amount>
+      </li>
+      
+      <li Class="TheSecondSeat.Framework.Actions.ModifyAffinityAction">
+        <delayTicks>120</delayTicks>
+        <delta>10</delta>
+        <reason>财富里程碑达成</reason>
+      </li>
+    </actions>
+    
+    <showNotification>true</showNotification>
+    <customNotificationText>?? 财富里程碑达成！</customNotificationText>
+  </TheSecondSeat.Framework.NarratorEventDef>
+  
+  <!-- 示例5: 链式事件触发 -->
+  <TheSecondSeat.Framework.NarratorEventDef>
+    <defName>EventChainStart</defName>
+    <eventLabel>事件链开始</eventLabel>
+    <eventDescription>触发后会链式触发另一个事件</eventDescription>
+    <category>Dialogue</category>
+    <priority>20</priority>
+    
+    <chance>0.3</chance>
+    <cooldownTicks>72000</cooldownTicks>
+    
+    <triggers>
+      <li Class="TheSecondSeat.Framework.Triggers.AffinityRangeTrigger">
+        <minAffinity>50</minAffinity>
+      </li>
+    </triggers>
+    
+    <actions>
+      <li Class="TheSecondSeat.Framework.Actions.ShowDialogueAction">
+        <dialogueText>让我给你看点有趣的东西...</dialogueText>
+      </li>
+      
+      <!-- 延迟5秒后触发另一个事件 -->
+      <li Class="TheSecondSeat.Framework.Actions.TriggerEventAction">
+        <delayTicks>300</delayTicks>
+        <targetEventDefName>HighAffinityReward</targetEventDefName>
+      </li>
+    </actions>
+    
+    <showNotification>false</showNotification>
+  </TheSecondSeat.Framework.NarratorEventDef>
+  
+  <!-- ========================================== -->
+  <!-- 使用说明                                    -->
+  <!-- ========================================== -->
+  <!-- 
+  创建自定义事件：
+  
+  1. 定义触发条件 (triggers):
+     - AffinityRangeTrigger: 好感度范围
+     - ColonistCountTrigger: 殖民者数量
+     - WealthRangeTrigger: 财富范围
+     - SeasonTrigger: 季节
+     - TimeRangeTrigger: 时间段
+     - RandomChanceTrigger: 随机概率
+     - MoodStateTrigger: 心情状态
+  
+  2. 定义执行动作 (actions):
+     - ModifyAffinityAction: 修改好感度
+     - ShowDialogueAction: 显示对话
+     - SpawnResourceAction: 生成资源
+     - TriggerEventAction: 触发其他事件
+     - PlaySoundAction: 播放音效
+     - SetMoodAction: 设置心情
+     - LogMessageAction: 输出日志（调试用）
+  
+  3. 配置参数:
+     - chance: 触发概率 (0.0-1.0)
+     - cooldownTicks: 冷却时间（Tick）
+     - triggerOnce: 是否只触发一次
+     - delayTicks: 动作延迟执行时间
+     - priority: 事件优先级（高优先级更频繁检查）
+  
+  扩展方法：
+  - 创建新的Trigger: 继承TSSTrigger，实现IsSatisfied方法
+  - 创建新的Action: 继承TSSAction，实现Execute方法
+  - 所有类必须在XML中用Class属性指定完整命名空间
+  -->
+
+</Defs>

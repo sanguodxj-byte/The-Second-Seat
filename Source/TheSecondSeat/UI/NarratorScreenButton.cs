@@ -401,25 +401,17 @@ namespace TheSecondSeat.UI
             );
             NarratorButtonAnimator.DrawIndicatorLight(indicatorRect, currentState);
             
-            // ✅ 悬停效果（增强版：显示触摸模式提示）
-            if (Mouse.IsOver(inRect) && !isDragging)
+            // ✅ 悬停效果（增强版：触摸模式下不显示提示框）
+            // ✅ v1.6.52: 修复 - 触摸模式激活后不显示悬停提示
+            if (Mouse.IsOver(inRect) && !isDragging && !isTouchModeActive)
             {
                 GUI.color = new Color(1f, 1f, 1f, 0.3f);
                 Widgets.DrawBox(inRect, 2);
                 GUI.color = Color.white;
                 
                 string tooltip = GetStateTooltip();
-                
-                // ✅ 根据触摸模式状态显示不同提示
-                if (isTouchModeActive)
-                {
-                    tooltip += "\n\n✨ 触摸模式激活！移动鼠标进行互动";
-                }
-                else
-                {
-                    tooltip += "\n\nShift+左键拖动 | 左键打开窗口 | 右键快速对话";
-                    tooltip += "\n💡 悬停1秒激活触摸模式";
-                }
+                tooltip += "\n\nShift+左键拖动 | 左键打开窗口 | 右键快速对话";
+                tooltip += "\n💡 悬停1秒激活触摸模式";
                 
                 TooltipHandler.TipRegion(inRect, tooltip);
             }
@@ -633,10 +625,11 @@ namespace TheSecondSeat.UI
                 currentPortrait = null;
                 currentPersona = null;
                 
-                if (Prefs.DevMode)
-                {
-                    Log.Message($"[NarratorScreenButton] Portrait mode changed to: {(currentPortraitMode ? "立绘模式" : "头像模式")}");
-                }
+                // ✅ 移除模式切换日志
+                // if (Prefs.DevMode)
+                // {
+                //     Log.Message($"[NarratorScreenButton] Portrait mode changed to: {(currentPortraitMode ? "立绘模式" : "头像模式")}");
+                // }
             }
             
             try

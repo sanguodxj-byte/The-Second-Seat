@@ -97,8 +97,9 @@ namespace TheSecondSeat.Observer
         }
 
         /// <summary>
-        /// ? v1.6.42: 非线程安全的快照捕获（仅供主线程调用）
-        /// 原 CaptureSnapshot() 方法，重命名以明确标识线程不安全
+        /// ? v1.6.42: 非线程安全的快照捕获（仅限主线程调用）
+        /// 原 CaptureSnapshot() 重命名，明确表示线程不安全
+        /// ? v1.6.46: 修复线程安全问题 - 避免访问 map.mapPawns
         /// </summary>
         public static GameStateSnapshot CaptureSnapshotUnsafe()
         {
@@ -115,31 +116,44 @@ namespace TheSecondSeat.Observer
             snapshot.colony.daysPassed = GenDate.DaysPassed;
             snapshot.colony.wealth = (int)map.wealthWatcher.WealthTotal;
 
-            // Colonists
-            var colonists = map.mapPawns.FreeColonistsSpawned;
-            foreach (var pawn in colonists.Take(10)) // Limit to 10 colonists to save tokens
+            // ? 修复：避免使用 map.mapPawns，改为安全的遍历方式
+            // 使用 map.listerThings.ThingsInGroup(ThingRequestGroup.Pawn) 代替
+            try
             {
-                var colonistInfo = new ColonistInfo
-                {
-                    name = pawn.Name?.ToStringShort ?? "Unknown",
-                    mood = pawn.needs?.mood?.CurLevelPercentage != null 
-                        ? (int)(pawn.needs.mood.CurLevelPercentage * 100) 
-                        : 50,
-                    currentJob = pawn.CurJob?.def?.reportString ?? "Idle",
-                    health = (int)(pawn.health.summaryHealth.SummaryHealthPercent * 100)
-                };
+                var allPawns = map.listerThings.ThingsInGroup(ThingRequestGroup.Pawn);
+                var colonists = allPawns
+                    .OfType<Pawn>()
+                    .Where(p => p.IsColonist && p.Spawned && !p.Dead)
+                    .Take(10); // Limit to 10 colonists to save tokens
 
-                // Major injuries
-                var hediffs = pawn.health.hediffSet.hediffs
-                    .Where(h => h.Visible && h.def.makesSickThought)
-                    .Take(3);
-                
-                foreach (var hediff in hediffs)
+                foreach (var pawn in colonists)
                 {
-                    colonistInfo.majorInjuries.Add(hediff.def.label);
+                    var colonistInfo = new ColonistInfo
+                    {
+                        name = pawn.Name?.ToStringShort ?? "Unknown",
+                        mood = pawn.needs?.mood?.CurLevelPercentage != null 
+                            ? (int)(pawn.needs.mood.CurLevelPercentage * 100) 
+                            : 50,
+                        currentJob = pawn.CurJob?.def?.reportString ?? "Idle",
+                        health = (int)(pawn.health.summaryHealth.SummaryHealthPercent * 100)
+                    };
+
+                    // Major injuries
+                    var hediffs = pawn.health.hediffSet.hediffs
+                        .Where(h => h.Visible && h.def.makesSickThought)
+                        .Take(3);
+                    
+                    foreach (var hediff in hediffs)
+                    {
+                        colonistInfo.majorInjuries.Add(hediff.def.label);
+                    }
+
+                    snapshot.colonists.Add(colonistInfo);
                 }
-
-                snapshot.colonists.Add(colonistInfo);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[GameStateObserver] Error capturing colonists: {ex.Message}");
             }
 
             // Resources
@@ -258,28 +272,31 @@ namespace TheSecondSeat.Observer
 
             try
             {
-                // Check for active raids
-                var hostilePawns = map.mapPawns.AllPawnsSpawned
-                    .Where(p => p.HostileTo(Faction.OfPlayer) && !p.Dead)
+                // ? 修复：避免使用 map.mapPawns.AllPawnsSpawned
+                // Check for active raids using safe method
+                var allPawns = map.listerThings.ThingsInGroup(ThingRequestGroup.Pawn);
+                var hostilePawns = allPawns
+                    .OfType<Pawn>()
+                    .Where(p => p.Spawned && !p.Dead && p.HostileTo(Faction.OfPlayer))
                     .ToList();
 
                 threats.raidActive = hostilePawns.Any();
                 threats.raidStrength = hostilePawns.Count;
 
-                // Check for active incidents - 修复：IncidentQueue 不支持 LINQ
-                // 简化处理：只检查队列中的第一个事件
+                // Check for active incidents - 修改：IncidentQueue 不支持 LINQ
+                // 简化处理，只检测排队中的第一个事件
                 var storyteller = Find.Storyteller;
                 if (storyteller?.incidentQueue != null)
                 {
                     try
                     {
-                        // 尝试通过反射或其他方式访问（如果不行就跳过）
-                        // incidentQueue 可能没有公共 API，所以我们简单忽略这个功能
-                        threats.currentEvent = null; // 暂时不支持
+                        // 由于没有公开 API，我们就简单检测即可
+                        // incidentQueue 内部没有公开 API，所以暂不检测了
+                        threats.currentEvent = null; // 暂不支持
                     }
                     catch
                     {
-                        // 访问失败时忽略
+                        // 读取失败时忽略
                         threats.currentEvent = null;
                     }
                 }

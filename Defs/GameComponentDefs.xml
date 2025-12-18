@@ -1,16 +1,99 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Defs>
-  <!-- Game Component Definitions for The Second Seat -->
+  <!-- ========================================== -->
+  <!-- The Second Seat - Framework Core Components -->
+  <!-- 叙事者人格化框架 - 核心组件注册            -->
+  <!-- ========================================== -->
   
-  <!-- These components are automatically added to the game -->
-  <!-- No DefNames needed - they are registered via [StaticConstructorOnStartup] -->
+  <!-- ==================== 核心系统 ==================== -->
   
-  <!-- Registered Components:
-       - NarratorManager (好感度系统)
-       - NarratorController (AI控制器)
-       - ColonyStateMonitor (殖民地监控)
-       - PlayerInteractionMonitor (玩家互动监控)
-       - StorytellerAgent (叙事者代理)
-       - NarratorButtonManager (MapComponent - 按钮管理器)
+  <!-- 叙事者控制器 - 总协调器 -->
+  <GameComponentDef>
+    <defName>TheSecondSeat_NarratorController</defName>
+    <componentClass>TheSecondSeat.Core.NarratorController</componentClass>
+  </GameComponentDef>
+
+  <!-- 叙事者管理器 - 人格和好感度管理 -->
+  <GameComponentDef>
+    <defName>TheSecondSeat_NarratorManager</defName>
+    <componentClass>TheSecondSeat.Narrator.NarratorManager</componentClass>
+  </GameComponentDef>
+
+  <!-- 叙事者代理 - AI对话和行为逻辑 -->
+  <GameComponentDef>
+    <defName>TheSecondSeat_StorytellerAgent</defName>
+    <componentClass>TheSecondSeat.Storyteller.StorytellerAgent</componentClass>
+  </GameComponentDef>
+  
+  <!-- ==================== 监控系统 ==================== -->
+  
+  <!-- 殖民地状态监控器 -->
+  <GameComponentDef>
+    <defName>TheSecondSeat_ColonyStateMonitor</defName>
+    <componentClass>TheSecondSeat.Monitoring.ColonyStateMonitor</componentClass>
+  </GameComponentDef>
+
+  <!-- 游戏状态观察器 -->
+  <GameComponentDef>
+    <defName>TheSecondSeat_GameStateObserver</defName>
+    <componentClass>TheSecondSeat.Observer.GameStateObserver</componentClass>
+  </GameComponentDef>
+  
+  <!-- ==================== 事件系统 ==================== -->
+  
+  <!-- TSS事件管理器 - 数据驱动事件系统 -->
+  <GameComponentDef>
+    <defName>TheSecondSeat_NarratorEventManager</defName>
+    <componentClass>TheSecondSeat.Framework.NarratorEventManager</componentClass>
+  </GameComponentDef>
+
+  <!-- 好感度驱动事件 -->
+  <GameComponentDef>
+    <defName>TheSecondSeat_AffinityDrivenEvents</defName>
+    <componentClass>TheSecondSeat.Events.AffinityDrivenEvents</componentClass>
+  </GameComponentDef>
+  
+  <!-- ==================== 自主行为系统 ==================== -->
+  
+  <!-- 自主行为系统 - AI主动交互 -->
+  <GameComponentDef>
+    <defName>TheSecondSeat_AutonomousBehaviorSystem</defName>
+    <componentClass>TheSecondSeat.Autonomous.AutonomousBehaviorSystem</componentClass>
+  </GameComponentDef>
+  
+  <!-- ==================== 降临系统 ==================== -->
+  
+  <!-- 叙事者降临系统 - 龙骑兵降临事件 -->
+  <GameComponentDef>
+    <defName>TheSecondSeat_NarratorDescentSystem</defName>
+    <componentClass>TheSecondSeat.Descent.NarratorDescentSystem</componentClass>
+  </GameComponentDef>
+  
+  <!-- ========================================== -->
+  <!-- 说明                                        -->
+  <!-- ========================================== -->
+  <!-- 
+  框架核心组件：
+  - NarratorController: 总协调器，管理所有子系统
+  - NarratorManager: 人格切换、好感度管理
+  - StorytellerAgent: AI对话、情绪状态
+  
+  监控系统：
+  - ColonyStateMonitor: 实时监控殖民地状态
+  - GameStateObserver: 游戏状态快照和变化检测
+  
+  事件系统：
+  - NarratorEventManager: 数据驱动的事件触发和管理
+  - AffinityDrivenEvents: 基于好感度的事件触发
+  
+  扩展系统：
+  - AutonomousBehaviorSystem: AI主动发起对话
+  - NarratorDescentSystem: 叙事者降临模式（龙骑兵）
+  
+  注意：
+  - 所有GameComponent会在游戏开始时自动加载
+  - 不需要[StaticConstructorOnStartup]属性
+  - 扩展Mod可以添加自己的GameComponent
   -->
+
 </Defs>

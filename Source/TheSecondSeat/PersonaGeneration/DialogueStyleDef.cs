@@ -2,18 +2,35 @@ using Verse;
 
 namespace TheSecondSeat.PersonaGeneration
 {
+    /// <summary>
+    /// 对话风格定义 - 控制叙事者的说话方式
+    /// API: 可在XML中配置所有字段
+    /// </summary>
     public class DialogueStyleDef : IExposable
     {
-        public float formalityLevel = 0.5f;      // 0..1
-        public float emotionalExpression = 0.5f; // 0..1
-        public float verbosity = 0.5f;           // 0..1
-        public float humorLevel = 0.3f;          // 0..1
-        public float sarcasmLevel = 0.2f;        // 0..1
+        /// <summary>API: 正式程度 (0=随意, 1=正式)</summary>
+        public float formalityLevel = 0.5f;
+        
+        /// <summary>API: 情感表达程度 (0=冷静, 1=热情)</summary>
+        public float emotionalExpression = 0.5f;
+        
+        /// <summary>API: 详细程度 (0=简洁, 1=详细)</summary>
+        public float verbosity = 0.5f;
+        
+        /// <summary>API: 幽默程度 (0=严肃, 1=幽默)</summary>
+        public float humorLevel = 0.3f;
+        
+        /// <summary>API: 讽刺程度 (0=直白, 1=讽刺)</summary>
+        public float sarcasmLevel = 0.2f;
 
-        // ? 补全缺失的属性
-        public bool useEmoticons = false;        // 是否使用表情符号
-        public bool useEllipsis = false;         // 是否使用省略号...
-        public bool useExclamation = true;       // 是否使用感叹号！
+        /// <summary>API: 是否使用表情符号（如 ~、?）</summary>
+        public bool useEmoticons = false;
+        
+        /// <summary>API: 是否使用省略号（...）</summary>
+        public bool useEllipsis = false;
+        
+        /// <summary>API: 是否使用感叹号（!）</summary>
+        public bool useExclamation = true;
 
         public DialogueStyleDef()
         {

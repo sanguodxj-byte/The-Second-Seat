@@ -86,9 +86,9 @@ namespace TheSecondSeat.UI
             displayWidth = PORTRAIT_WIDTH * SCALE_FACTOR;
             displayHeight = PORTRAIT_HEIGHT * SCALE_FACTOR;
             
-            // 固定位置（屏幕左侧，垂直居中）
+            // ? v1.6.50: 固定位置（屏幕左侧，垂直居中 -40px 上移）
             float x = 10f;
-            float y = (Verse.UI.screenHeight - displayHeight) / 2f;
+            float y = (Verse.UI.screenHeight - displayHeight) / 2f - 40f;  // ? 上移 40px
             drawRect = new Rect(x, y, displayWidth, displayHeight);
         }
         
@@ -678,10 +678,11 @@ namespace TheSecondSeat.UI
         
         /// <summary>
         /// ? v1.6.44: 运行时分层绘制立绘（Runtime Layering）
+        /// ? v1.6.53: 修复半透明问题 - 使用 Graphics.DrawTexture 替代 GUI.DrawTexture
         /// 关键修复：
         /// - 使用缓存的 cachedBodyBase（静态层）
         /// - 每帧动态获取眼睛和嘴巴图层（动画层）
-        /// - 不设置 GUI.color（继承父级统一 alpha，修复透明度问题）
+        /// - ? 使用 Graphics.DrawTexture 正确应用 GUI.color 的 alpha 值
         /// </summary>
         private void DrawLayeredPortraitRuntime(Rect rect, NarratorPersonaDef persona)
         {
@@ -694,8 +695,9 @@ namespace TheSecondSeat.UI
                 return;
             }
             
-            // 绘制身体基础层（继承父级 alpha）
-            GUI.DrawTexture(rect, cachedBodyBase, ScaleMode.ScaleToFit);
+            // ? 修复：使用 Widgets.DrawTextureFitted 而不是 GUI.DrawTexture
+            // Widgets.DrawTextureFitted 会正确应用 GUI.color 的 alpha
+            Widgets.DrawTextureFitted(rect, cachedBodyBase, 1.0f);
             
             // ==================== Layer 2: 嘴巴层（动态加载，张嘴动画） ====================
             
@@ -705,8 +707,8 @@ namespace TheSecondSeat.UI
                 var mouthTexture = PortraitLoader.GetLayerTexture(persona, mouthLayerName);
                 if (mouthTexture != null)
                 {
-                    // 绘制嘴巴层（继承父级 alpha）
-                    GUI.DrawTexture(rect, mouthTexture, ScaleMode.ScaleToFit);
+                    // ? 修复：使用 Widgets.DrawTextureFitted
+                    Widgets.DrawTextureFitted(rect, mouthTexture, 1.0f);
                 }
             }
             
@@ -718,8 +720,8 @@ namespace TheSecondSeat.UI
                 var eyeTexture = PortraitLoader.GetLayerTexture(persona, eyeLayerName);
                 if (eyeTexture != null)
                 {
-                    // 绘制眼睛层（继承父级 alpha）
-                    GUI.DrawTexture(rect, eyeTexture, ScaleMode.ScaleToFit);
+                    // ? 修复：使用 Widgets.DrawTextureFitted
+                    Widgets.DrawTextureFitted(rect, eyeTexture, 1.0f);
                 }
             }
             
@@ -734,8 +736,8 @@ namespace TheSecondSeat.UI
                 var flushTexture = PortraitLoader.GetLayerTexture(persona, flushLayerName);
                 if (flushTexture != null)
                 {
-                    // 绘制特效层（继承父级 alpha）
-                    GUI.DrawTexture(rect, flushTexture, ScaleMode.ScaleToFit);
+                    // ? 修复：使用 Widgets.DrawTextureFitted
+                    Widgets.DrawTextureFitted(rect, flushTexture, 1.0f);
                 }
             }
         }

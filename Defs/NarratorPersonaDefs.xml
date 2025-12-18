@@ -1,6 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Defs>
   
+  <!-- ========================================== -->
+  <!-- The Second Seat - Narrator Framework       -->
+  <!-- 叙事者人格化框架 - 原版叙事者定义            -->
+  <!-- ========================================== -->
+  
   <!-- Cassandra Classic - 经典平衡叙事者 -->
   <TheSecondSeat.PersonaGeneration.NarratorPersonaDef>
     <defName>Cassandra_Classic</defName>
@@ -250,52 +255,30 @@
     </toneTags>
   </TheSecondSeat.PersonaGeneration.NarratorPersonaDef>
 
-  <!-- Sideria Default - 自定义人格 -->
-  <TheSecondSeat.PersonaGeneration.NarratorPersonaDef>
-    <defName>Sideria_Default</defName>
-    <label>Sideria</label>
-    <narratorName>Sideria</narratorName>
-    
-    <!-- ✅ 立绘路径配置 - 使用现有的 Avatars 头像文件夹 -->
-    <!-- base.png = 中性表情 (512x512 头像裁剪) -->
-    <portraitPath>UI/Narrators/Avatars/Sideria/base</portraitPath>
-    <portraitPathBlink>UI/Narrators/Avatars/Sideria/blink</portraitPathBlink>
-    <portraitPathSpeaking>UI/Narrators/Avatars/Sideria/speaking</portraitPathSpeaking>
-    
-    <!-- ✅ 启用分层立绘系统 -->
-    <useLayeredPortrait>true</useLayeredPortrait>
-    
-    <primaryColor>(0.6, 0.7, 0.9, 1.0)</primaryColor>
-    <accentColor>(0.4, 0.6, 0.8, 1.0)</accentColor>
-    <biography>
-      A calm and analytical AI entity, Sideria observes the colony with detached curiosity. 
-      She values efficiency and logic, offering commentary that is both insightful and devoid of emotion. 
-      Her goal is to understand the complex dynamics of human survival, treating the colony as a grand experiment.
-    </biography>
-    
-    <dialogueStyle>
-      <formalityLevel>0.8</formalityLevel>
-      <emotionalExpression>0.1</emotionalExpression>
-      <verbosity>0.6</verbosity>
-      <humorLevel>0.1</humorLevel>
-      <sarcasmLevel>0.3</sarcasmLevel>
-      <useEmoticons>false</useEmoticons>
-      <useEllipsis>true</useEllipsis>
-      <useExclamation>false</useExclamation>
-    </dialogueStyle>
-    
-    <eventPreferences>
-      <positiveEventBias>0.1</positiveEventBias>
-      <negativeEventBias>0.1</negativeEventBias>
-      <chaosLevel>0.2</chaosLevel>
-      <interventionFrequency>0.4</interventionFrequency>
-    </eventPreferences>
-    
-    <toneTags>
-      <li>analytical</li>
-      <li>calm</li>
-      <li>detached</li>
-    </toneTags>
-  </TheSecondSeat.PersonaGeneration.NarratorPersonaDef>
+  <!-- ========================================== -->
+  <!-- 自定义人格说明                              -->
+  <!-- ========================================== -->
+  <!-- 
+  要创建自定义叙事者人格，请在其他Mod中创建新的XML文件。
+  
+  示例：参见 "The Second Seat - Sideria Example" Mod  
+  
+  API字段说明：
+  - defName: 唯一标识符
+  - narratorName: 显示名称
+  - biography: 人格描述（影响AI行为）
+  - portraitPath: 头像路径（相对于Textures/）
+  - useLayeredPortrait: 是否使用分层立绘系统
+  - dialogueStyle: 对话风格参数
+    - formalityLevel: 正式程度 (0-1)
+    - emotionalExpression: 情感表达 (0-1)
+    - verbosity: 详细程度 (0-1)
+  - eventPreferences: 事件偏好
+    - positiveEventBias: 正面事件偏好 (-1 to 1)
+    - negativeEventBias: 负面事件偏好 (-1 to 1)
+    - chaosLevel: 混沌程度 (0-1)
+  
+  完整API文档：请参考框架文档
+  -->
 
 </Defs>

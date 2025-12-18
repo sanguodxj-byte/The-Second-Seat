@@ -8,41 +8,164 @@ namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
     /// 叙事者人格定义 - RimWorld Def类型
-    /// 继承自 Verse.Def，确保可以被RimWorld的Def系统识别和加载
+    /// 继承自 Verse.Def，可通过XML加载
+    /// 
+    /// API扩展指南：
+    /// 1. 所有public字段都可以在XML中配置
+    /// 2. 创建新Mod时，只需创建XML文件定义新人格
+    /// 3. 纹理路径相对于Mod的Textures/文件夹
+    /// 4. 支持分层立绘系统（useLayeredPortrait=true）
+    /// 5. 对话风格和事件偏好通过嵌套对象配置
     /// </summary>
     public class NarratorPersonaDef : Def
     {
-        // === 基本信息 ===
+        // ============================================
+        // 基本信息 API
+        // ============================================
+        
+        /// <summary>API: 叙事者名称（显示用）</summary>
         public string narratorName = "Unknown";
+        
+        /// <summary>API: 本地化显示名称键</summary>
         public string displayNameKey = "";
+        
+        /// <summary>API: 本地化描述键</summary>
         public string descriptionKey = "";
+        
+        /// <summary>API: 人格传记/背景故事（影响AI行为）</summary>
         public string biography = "";
         
-        // === 立绘相关 ===
+        // ============================================
+        // 立绘系统 API
+        // ============================================
+        
+        /// <summary>API: 头像路径（512x512，相对于Textures/）</summary>
         public string portraitPath = "";
+        
+        /// <summary>API: 是否使用自定义头像（已废弃，使用portraitPath）</summary>
         public bool useCustomPortrait = false;
+        
+        /// <summary>API: 自定义头像路径（已废弃）</summary>
         public string customPortraitPath = "";
         
-        // ✅ 动画系统纹理路径
-        public string portraitPathBlink = "";      // 闭眼纹理路径
-        public string portraitPathSpeaking = "";   // 张嘴纹理路径
+        /// <summary>API: 闭眼纹理路径（用于眨眼动画）</summary>
+        public string portraitPathBlink = "";
         
-        // ✅ 分层立绘系统配置
-        public bool useLayeredPortrait = false;    // 是否使用分层立绘系统
-        public string layeredConfigPath = "";      // 分层配置文件路径（可选）
+        /// <summary>API: 张嘴纹理路径（用于说话动画）</summary>
+        public string portraitPathSpeaking = "";
+        
+        /// <summary>API: 是否启用分层立绘系统（支持多表情）</summary>
+        public bool useLayeredPortrait = false;
+        
+        /// <summary>API: 分层配置文件路径（可选，留空使用默认配置）</summary>
+        public string layeredConfigPath = "";
         
         // 运行时分层配置缓存（不从XML加载）
         [Unsaved]
         private LayeredPortraitConfig cachedLayeredConfig;
         
+        // ============================================
+        // 视觉主题 API
+        // ============================================
+        
+        /// <summary>API: 主题色（用于UI边框、按钮等）</summary>
+        public Color primaryColor = Color.white;
+        
+        /// <summary>API: 强调色（用于高亮、选中状态）</summary>
+        public Color accentColor = Color.gray;
+        
+        // ============================================
+        // 多模态分析 API
+        // ============================================
+        
+        /// <summary>API: 视觉描述（用于多模态AI分析）</summary>
+        public string visualDescription = "";
+        
+        /// <summary>API: 视觉元素标签列表</summary>
+        public List<string> visualElements = new List<string>();
+        
+        /// <summary>API: 视觉氛围描述</summary>
+        public string visualMood = "";
+        
+        // ============================================
+        // 人格类型 API
+        // ============================================
+        
+        /// <summary>API: 人格类型（自动推断）</summary>
+        public string personalityType = "";
+        
+        /// <summary>API: 强制指定人格类型（覆盖自动推断）</summary>
+        public string overridePersonality = "";
+        
+        // ============================================
+        // 语音系统 API
+        // ============================================
+        
+        /// <summary>API: 默认语音ID（TTS用）</summary>
+        public string defaultVoice = "";
+        
+        /// <summary>API: 语音音调调整（如"+5Hz"、"-3Hz"）</summary>
+        public string voicePitch = "+0Hz";
+        
+        /// <summary>API: 语音速度调整（如"+10%"、"-5%"）</summary>
+        public string voiceRate = "+0%";
+        
+        // ============================================
+        // 对话与事件配置 API
+        // ============================================
+        
+        /// <summary>API: 对话风格配置（嵌套对象，从XML加载）</summary>
+        public DialogueStyleDef dialogueStyle = new DialogueStyleDef();
+        
+        /// <summary>API: 事件偏好配置（嵌套对象，从XML加载）</summary>
+        public EventPreferencesDef eventPreferences = new EventPreferencesDef();
+        
+        // ============================================
+        // 好感度系统 API
+        // ============================================
+        
+        /// <summary>API: 初始好感度（-100到100）</summary>
+        public float initialAffinity = 0f;
+        
+        /// <summary>API: 基础好感度偏移（-1.0到1.0）</summary>
+        public float baseAffinityBias = 0f;
+        
+        // ============================================
+        // AI行为模式 API
+        // ============================================
+        
+        /// <summary>API: AI难度模式（Assistant=助手, Opponent=对手）</summary>
+        public AIDifficultyMode difficultyMode = AIDifficultyMode.Assistant;
+        
+        // ============================================
+        // 其他配置 API
+        // ============================================
+        
+        /// <summary>API: 是否启用此人格</summary>
+        public bool enabled = true;
+        
+        /// <summary>API: 特殊能力列表</summary>
+        public List<string> specialAbilities = new List<string>();
+        
+        /// <summary>API: 语气标签（用于LLM Prompt生成）</summary>
+        public List<string> toneTags = new List<string>();
+        
+        /// <summary>API: 禁用词列表（AI不会使用这些词）</summary>
+        public List<string> forbiddenWords = new List<string>();
+        
+        // ============================================
+        // 运行时数据（不从XML加载）
+        // ============================================
+        
+        [Unsaved]
+        private PersonaAnalysisResult cachedAnalysis;
+        
         /// <summary>
         /// 获取或创建分层立绘配置
-        /// ✅ v1.6.27: 强制禁用原版叙事者的分层立绘
-        /// ✅ v1.6.27: 传递 narratorName 作为路径名
         /// </summary>
         public LayeredPortraitConfig GetLayeredConfig()
         {
-            // ✅ v1.6.27: 双重保险 - 在这里也检查并强制禁用原版叙事者
+            // 强制禁用原版叙事者的分层立绘
             if (defName == "Cassandra_Classic" || 
                 defName == "Phoebe_Chillax" || 
                 defName == "Randy_Random" ||
@@ -61,17 +184,12 @@ namespace TheSecondSeat.PersonaGeneration
             
             if (cachedLayeredConfig == null)
             {
-                // 如果指定了配置文件路径，尝试加载
                 if (!string.IsNullOrEmpty(layeredConfigPath))
                 {
-                    // TODO: 从文件加载配置（未来版本）
                     Log.Warning($"[NarratorPersonaDef] Layered config loading from file not implemented yet: {layeredConfigPath}");
                 }
                 
-                // ✅ v1.6.27: 提取人格名称（如 "Sideria"）
                 string personaName = GetPersonaName();
-                
-                // 否则创建默认配置
                 cachedLayeredConfig = LayeredPortraitConfig.CreateDefault(defName, personaName);
                 
                 if (Prefs.DevMode)
@@ -85,19 +203,15 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ✅ v1.6.27: 获取人格名称（用于纹理路径）
-        /// 优先使用 narratorName（用户指定的名称），如果为空则从 defName 提取
+        /// 获取人格名称（用于纹理路径）
         /// </summary>
         private string GetPersonaName()
         {
-            // 1. 优先使用 narratorName（如 "Sideria"）
             if (!string.IsNullOrEmpty(narratorName))
             {
-                // 取第一个单词（如 "Cassandra Classic" → "Cassandra"）
                 return narratorName.Split(' ')[0].Trim();
             }
             
-            // 2. 否则从 defName 中提取
             string[] suffixesToRemove = new[] { 
                 "_Default", "_Classic", "_Custom", "_Persona", 
                 "_Chillax", "_Random", "_Invader", "_Protector" 
@@ -114,47 +228,6 @@ namespace TheSecondSeat.PersonaGeneration
             return defName;
         }
         
-        // === 颜色主题 ===
-        public Color primaryColor = Color.white;
-        public Color accentColor = Color.gray;
-        
-        // === 视觉特征（用于多模态分析）===
-        public string visualDescription = "";
-        public List<string> visualElements = new List<string>();
-        public string visualMood = "";
-        
-        // === 人格类型 ===
-        public string personalityType = "";
-        public string overridePersonality = "";  // 手动指定的人格类型
-        
-        // === 语音设置 ===
-        public string defaultVoice = "";  // 默认语音ID
-        public string voicePitch = "+0Hz";  // 语音音调调整
-        public string voiceRate = "+0%";   // 语音速度调整
-        
-        // === 对话风格（嵌套对象，直接从XML加载）===
-        public DialogueStyleDef dialogueStyle = new DialogueStyleDef();
-        
-        // === 事件偏好（嵌套对象，直接从XML加载）===
-        public EventPreferencesDef eventPreferences = new EventPreferencesDef();
-        
-        // === 初始好感度 ===
-        public float initialAffinity = 0f;
-        public float baseAffinityBias = 0f;  // -1.0 ~ 1.0，影响初始好感度偏移
-        
-        // === AI难度模式 ===
-        public AIDifficultyMode difficultyMode = AIDifficultyMode.Assistant;
-        
-        // === 其他 ===
-        public bool enabled = true;
-        public List<string> specialAbilities = new List<string>();
-        public List<string> toneTags = new List<string>();  // 语气标签（用于 LLM Prompt）
-        public List<string> forbiddenWords = new List<string>();  // 禁用词
-        
-        // === 运行时生成的对象（不从XML加载）===
-        [Unsaved]
-        private PersonaAnalysisResult cachedAnalysis;
-        
         /// <summary>
         /// 获取人格分析结果（懒加载）
         /// </summary>
@@ -162,7 +235,6 @@ namespace TheSecondSeat.PersonaGeneration
         {
             if (cachedAnalysis == null)
             {
-                // 尝试将字符串转换为PersonalityTrait枚举
                 Storyteller.PersonalityTrait? suggestedTrait = null;
                 string personalityStr = !string.IsNullOrEmpty(overridePersonality) ? overridePersonality : personalityType;
                 
@@ -218,15 +290,13 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ✅ v1.6.23: 存档兼容性处理，防止 NullReferenceException
-        /// ✅ v1.6.27: 强制禁用原版叙事者的分层立绘 + 预加载所有表情
+        /// 存档兼容性处理，防止 NullReferenceException
         /// </summary>
         public override void ResolveReferences()
         {
             base.ResolveReferences();
             
-            // ✅ v1.6.27: 强制禁用原版叙事者的分层立绘
-            // 原因：存档可能保存了错误的 useLayeredPortrait 值
+            // 强制禁用原版叙事者的分层立绘
             if (defName == "Cassandra_Classic" || 
                 defName == "Phoebe_Chillax" || 
                 defName == "Randy_Random" ||
@@ -237,13 +307,12 @@ namespace TheSecondSeat.PersonaGeneration
                 cachedLayeredConfig = null;
             }
             
-            // ✅ v1.6.27: 如果启用分层立绘，预加载所有表情（避免运行时卡顿）
+            // 如果启用分层立绘，预加载所有表情
             if (useLayeredPortrait)
             {
                 var config = GetLayeredConfig();
                 if (config != null)
                 {
-                    // 在后台线程预加载（不阻塞加载）
                     System.Threading.Tasks.Task.Run(() =>
                     {
                         try
@@ -262,36 +331,14 @@ namespace TheSecondSeat.PersonaGeneration
             }
             
             // 确保所有集合字段都被初始化
-            if (visualElements == null)
-            {
-                visualElements = new List<string>();
-            }
-            
-            if (specialAbilities == null)
-            {
-                specialAbilities = new List<string>();
-            }
-            
-            if (toneTags == null)
-            {
-                toneTags = new List<string>();
-            }
-            
-            if (forbiddenWords == null)
-            {
-                forbiddenWords = new List<string>();
-            }
+            if (visualElements == null) visualElements = new List<string>();
+            if (specialAbilities == null) specialAbilities = new List<string>();
+            if (toneTags == null) toneTags = new List<string>();
+            if (forbiddenWords == null) forbiddenWords = new List<string>();
             
             // 确保嵌套对象被初始化
-            if (dialogueStyle == null)
-            {
-                dialogueStyle = new DialogueStyleDef();
-            }
-            
-            if (eventPreferences == null)
-            {
-                eventPreferences = new EventPreferencesDef();
-            }
+            if (dialogueStyle == null) dialogueStyle = new DialogueStyleDef();
+            if (eventPreferences == null) eventPreferences = new EventPreferencesDef();
             
             // 确保字符串字段不为 null
             if (narratorName == null) narratorName = "Unknown";

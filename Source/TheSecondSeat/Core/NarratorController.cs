@@ -405,6 +405,7 @@ namespace TheSecondSeat.Core
         /// <summary>
         /// ? 自动播放 TTS（叙事者发言时）
         /// ? 优化：添加加载状态提示
+        /// ? v1.6.51: 修复嘴部动画 - 传递 personaDefName 参数
         /// </summary>
         private void AutoPlayTTS(string text)
         {
@@ -413,7 +414,7 @@ namespace TheSecondSeat.Core
                 // 检查是否启用 TTS
                 var modSettings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
                 
-                if (modSettings == null || !modSettings.enableTTS)
+                if (modSettings == null || !modSettings.enableTTS || !modSettings.autoPlayTTS)
                 {
                     return; // TTS 未启用，跳过
                 }
@@ -426,50 +427,71 @@ namespace TheSecondSeat.Core
                     return; // 没有实际文本，跳过
                 }
                 
-                // ? 显示"语音生成中"提示
-                Messages.Message("?? 语音生成中...", MessageTypeDefOf.SilentInput);
+                // ? v1.6.51: ????????? defName?????? TTS ?????????
+                string personaDefName = "Cassandra_Classic"; // ????
+                if (narratorManager != null)
+                {
+                    var persona = narratorManager.GetCurrentPersona();
+                    if (persona != null)
+                    {
+                        personaDefName = persona.defName;
+                    }
+                }
                 
-                // ? 异步生成并保存 TTS 音频
+                // ? ???"??????????"???
+                Messages.Message("?? ??????????...", MessageTypeDefOf.SilentInput);
+                
+                // ? ??????????? TTS ???
                 Task.Run(async () => 
                 {
                     try
                     {
-                        string? audioPath = await TTS.TTSService.Instance.SpeakAsync(cleanText);
+                        // ? v1.6.51: ?????? - ???? personaDefName ????
+                        string? audioPath = await TTS.TTSService.Instance.SpeakAsync(cleanText, personaDefName);
                         
                         if (!string.IsNullOrEmpty(audioPath))
                         {
-                            Log.Message($"[NarratorController] TTS 音频已生成: {audioPath}");
+                            Log.Message($"[NarratorController] TTS ?????????: {audioPath} (Persona: {personaDefName})");
                             
-                            // ? 在主线程显示成功消息
+                            // ? ?????? TTS ???????????????
                             Verse.LongEventHandler.ExecuteWhenFinished(() => 
                             {
-                                Messages.Message($"? 语音已生成: {System.IO.Path.GetFileName(audioPath)}", MessageTypeDefOf.TaskCompletion);
+                                try
+                                {
+                                    // ? v1.6.51: ?????? - ???? personaDefName ????
+                                    TTS.TTSAudioPlayer.Instance.PlayAndDelete(audioPath, personaDefName);
+                                    Messages.Message($"? ??????????: {System.IO.Path.GetFileName(audioPath)}", MessageTypeDefOf.TaskCompletion);
+                                }
+                                catch (Exception playEx)
+                                {
+                                    Log.Error($"[NarratorController] ??????????: {playEx.Message}");
+                                }
                             });
                         }
                         else
                         {
-                            // ? 生成失败提示
+                            // ? ??????????
                             Verse.LongEventHandler.ExecuteWhenFinished(() => 
                             {
-                                Messages.Message("? 语音生成失败（请检查网络连接）", MessageTypeDefOf.RejectInput);
+                                Messages.Message("? ?????????????????????????", MessageTypeDefOf.RejectInput);
                             });
                         }
                     }
                     catch (Exception ex)
                     {
-                        Log.Warning($"[NarratorController] TTS 自动播放失败: {ex.Message}");
+                        Log.Warning($"[NarratorController] TTS ??????????: {ex.Message}");
                         
-                        // ? 显示错误提示
+                        // ? ??????????
                         Verse.LongEventHandler.ExecuteWhenFinished(() => 
                         {
-                            Messages.Message($"? 语音生成错误: {ex.Message}", MessageTypeDefOf.RejectInput);
+                            Messages.Message($"? ???????????: {ex.Message}", MessageTypeDefOf.RejectInput);
                         });
                     }
                 });
             }
             catch (Exception ex)
             {
-                Log.Warning($"[NarratorController] AutoPlayTTS 失败: {ex.Message}");
+                Log.Warning($"[NarratorController] AutoPlayTTS ???: {ex.Message}");
             }
         }
         
