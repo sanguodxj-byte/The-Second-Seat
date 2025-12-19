@@ -354,10 +354,18 @@ namespace TheSecondSeat.PersonaGeneration
         /// <summary>
         /// 加载基础立绘（无表情）
         /// ✅ v1.6.27: 静默处理失败，只在DevMode下输出
+        /// ✅ v1.6.55: 增强缓存检查，避免重复加载
         /// </summary>
         private static Texture2D LoadBasePortrait(NarratorPersonaDef def)
         {
             string personaName = GetPersonaFolderName(def);
+            
+            // ✅ 在尝试加载前，先检查是否已在缓存中
+            string baseCacheKey = $"{personaName}_base";
+            if (cache.TryGetValue(baseCacheKey, out Texture2D cachedBase))
+            {
+                return cachedBase;
+            }
             
             // ✅ 尝试路径1：9x16文件夹的 base.png
             string basePath = $"{BASE_PATH_9x16}{personaName}/base";
@@ -366,6 +374,7 @@ namespace TheSecondSeat.PersonaGeneration
             if (texture != null)
             {
                 SetTextureQuality(texture);
+                cache[baseCacheKey] = texture; // ✅ 缓存基础纹理
                 return texture;
             }
             
@@ -375,6 +384,7 @@ namespace TheSecondSeat.PersonaGeneration
             if (texture != null)
             {
                 SetTextureQuality(texture);
+                cache[baseCacheKey] = texture;
                 return texture;
             }
             
@@ -385,6 +395,7 @@ namespace TheSecondSeat.PersonaGeneration
                 if (texture != null)
                 {
                     SetTextureQuality(texture);
+                    cache[baseCacheKey] = texture;
                     return texture;
                 }
             }
@@ -395,6 +406,7 @@ namespace TheSecondSeat.PersonaGeneration
                 texture = LoadFromExternalFile(def.customPortraitPath);
                 if (texture != null)
                 {
+                    cache[baseCacheKey] = texture;
                     return texture;
                 }
             }
@@ -405,6 +417,7 @@ namespace TheSecondSeat.PersonaGeneration
             if (texture != null)
             {
                 SetTextureQuality(texture);
+                cache[baseCacheKey] = texture;
                 return texture;
             }
             
@@ -424,7 +437,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ��ȡ�������׺��·��
+        /// 获取表情后缀的路径
         /// </summary>
         private static string GetExpressionPath(string basePath, string expressionSuffix)
         {
@@ -433,12 +446,12 @@ namespace TheSecondSeat.PersonaGeneration
                 return basePath;
             }
             
-            // �����ļ�������չ��
+            // 分离文件名和扩展名
             string directory = Path.GetDirectoryName(basePath) ?? "";
             string fileNameWithoutExt = Path.GetFileNameWithoutExtension(basePath);
             string extension = Path.GetExtension(basePath);
             
-            // �����������·��
+            // 拼接新的文件路径
             string newFileName = fileNameWithoutExt + expressionSuffix + extension;
             
             if (string.IsNullOrEmpty(directory))
@@ -450,8 +463,8 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ���ⲿ�ļ���������
-        /// ? ֧���ļ�·����ContentFinder·��
+        /// 从外部文件加载纹理
+        /// 支持文件路径和ContentFinder路径
         /// ✅ v1.6.27: 静默处理文件不存在的情况
         /// </summary>
         public static Texture2D? LoadFromExternalFile(string filePath)
@@ -543,15 +556,15 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ���ɸĽ���ռλ����� - ��������˸��ʶ
-        /// ? �ò�ͬ�˸��ռλ������������
+        /// 生成改良版占位符纹理 - 带不同颜色标识
+        /// 用不同颜色的占位符纹理来区分
         /// </summary>
         private static Texture2D GeneratePlaceholder(Color color)
         {
             int size = 512;
             Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
             
-            // 1. �������䱳��������ɫ����ɫ��
+            // 1. 绘制渐变背景（深色到浅色）
             Color darkColor = color * 0.3f;
             Color lightColor = color * 1.2f;
             
@@ -562,7 +575,7 @@ namespace TheSecondSeat.PersonaGeneration
                 
                 for (int x = 0; x < size; x++)
                 {
-                    // ��Ӿ��򽥱�Ч��
+                    // 添加径向渐变效果
                     float distFromCenter = Vector2.Distance(
                         new Vector2(x, y), 
                         new Vector2(size / 2f, size / 2f)
@@ -573,11 +586,11 @@ namespace TheSecondSeat.PersonaGeneration
                 }
             }
             
-            // 2. ��������Բ����װ�Σ�
+            // 2. 绘制两个圆形装饰
             DrawCircle(texture, size / 2, size / 2, size / 3, Color.white * 0.1f, 4);
             DrawCircle(texture, size / 2, size / 2, size / 4, Color.white * 0.15f, 3);
             
-            // 3. ���ƽ���װ�Σ��Ƽ��У�
+            // 3. 绘制角落装饰线（科技感）
             DrawCornerLines(texture, color * 1.5f);
             
             texture.Apply();
@@ -585,7 +598,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// �������ϻ���Բ��
+        /// 在纹理上画一个圆环
         /// </summary>
         private static void DrawCircle(Texture2D texture, int centerX, int centerY, int radius, Color color, int thickness)
         {
@@ -608,7 +621,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ���ƽ���װ���ߣ��Ƽ��У�
+        /// 绘制角落装饰线（科技感）
         /// </summary>
         private static void DrawCornerLines(Texture2D texture, Color color)
         {
@@ -616,28 +629,28 @@ namespace TheSecondSeat.PersonaGeneration
             int lineLength = size / 8;
             int thickness = 3;
             
-            // �ĸ�������� L ��װ��
+            // 四个角落的 L 形装饰
             Color lineColor = new Color(color.r, color.g, color.b, 0.3f);
             
-            // ���Ͻ�
+            // 左上角
             DrawLine(texture, 20, 20, 20 + lineLength, 20, lineColor, thickness);
             DrawLine(texture, 20, 20, 20, 20 + lineLength, lineColor, thickness);
             
-            // ���Ͻ�
+            // 右上角
             DrawLine(texture, size - 20, 20, size - 20 - lineLength, 20, lineColor, thickness);
             DrawLine(texture, size - 20, 20, size - 20, 20 + lineLength, lineColor, thickness);
             
-            // ���½�
+            // 左下角
             DrawLine(texture, 20, size - 20, 20 + lineLength, size - 20, lineColor, thickness);
             DrawLine(texture, 20, size - 20, 20, size - 20 - lineLength, lineColor, thickness);
             
-            // ���½�
+            // 右下角
             DrawLine(texture, size - 20, size - 20, size - 20 - lineLength, size - 20, lineColor, thickness);
             DrawLine(texture, size - 20, size - 20, size - 20, size - 20 - lineLength, lineColor, thickness);
         }
         
         /// <summary>
-        /// ����ֱ��
+        /// 绘制直线
         /// </summary>
         private static void DrawLine(Texture2D texture, int x1, int y1, int x2, int y2, Color color, int thickness)
         {
@@ -649,7 +662,7 @@ namespace TheSecondSeat.PersonaGeneration
             
             while (true)
             {
-                // ���ƴ���
+                // 绘制粗线
                 for (int tx = -thickness / 2; tx <= thickness / 2; tx++)
                 {
                     for (int ty = -thickness / 2; ty <= thickness / 2; ty++)
@@ -681,7 +694,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ��ջ���
+        /// 清空缓存
         /// </summary>
         public static void ClearCache()
         {
@@ -690,7 +703,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ✅ v1.6.21: 清空所有缓存（用于模式切换）
+        /// 清空所有缓存（用于模式切换）
         /// </summary>
         public static void ClearAllCache()
         {
@@ -699,26 +712,26 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ? ����ض��˸���ض����黺��
+        /// 清除特定人格特定表情的缓存
         /// </summary>
         public static void ClearPortraitCache(string personaDefName, ExpressionType expression)
         {
-            string expressionSuffix = ExpressionSystem.GetExpressionSuffix(personaDefName, expression);  // ✅ 添加 personaDefName 参数
+            string expressionSuffix = ExpressionSystem.GetExpressionSuffix(personaDefName, expression);
             string cacheKey = personaDefName + expressionSuffix;
             
             if (cache.ContainsKey(cacheKey))
             {
                 cache.Remove(cacheKey);
-                Log.Message($"[PortraitLoader] �������: {cacheKey}");
+                Log.Message($"[PortraitLoader] 清除缓存: {cacheKey}");
             }
         }
         
         /// <summary>
-        /// ��ȡ�������׺��·��
+        /// 获取Mod立绘目录路径
         /// </summary>
         public static string GetModPortraitsDirectory()
         {
-            // ��ȡ Mod ��Ŀ¼
+            // 获取 Mod 的目录
             var modContentPack = LoadedModManager.RunningModsListForReading
                 .FirstOrDefault(mod => mod.PackageId.ToLower().Contains("thesecondseat") || 
                                       mod.Name.Contains("Second Seat"));
@@ -732,24 +745,24 @@ namespace TheSecondSeat.PersonaGeneration
                     if (!Directory.Exists(path))
                     {
                         Directory.CreateDirectory(path);
-                        Log.Message($"[PortraitLoader] ���� Mod ����Ŀ¼: {path}");
+                        Log.Message($"[PortraitLoader] 创建 Mod 立绘目录: {path}");
                     }
                 }
                 catch (Exception ex)
                 {
-                    Log.Error($"[PortraitLoader] �޷����� Mod Ŀ¼: {path}\n{ex}");
+                    Log.Error($"[PortraitLoader] 无法创建 Mod 目录: {path}\n{ex}");
                 }
                 
                 return path;
             }
             
-            // ����·��������Ҳ��� Mod��
+            // 备用路径（如果找不到 Mod）
             return Path.Combine(GenFilePaths.SaveDataFolderPath, "TheSecondSeat", "Portraits");
         }
         
         /// <summary>
-        /// �� Mod ����Ŀ¼
-        /// ? �������� Mod ��������Ŀ¼��������ʹ�ã�
+        /// 打开 Mod 立绘目录
+        /// 引导用户将立绘文件放到该目录
         /// </summary>
         public static void OpenModPortraitsDirectory()
         {
@@ -758,18 +771,18 @@ namespace TheSecondSeat.PersonaGeneration
             try
             {
                 Application.OpenURL("file://" + path);
-                Messages.Message($"�Ѵ� Mod ����Ŀ¼:\n{path}\n\n�뽫 PNG �ļ������Ŀ¼", MessageTypeDefOf.NeutralEvent);
+                Messages.Message($"已打开 Mod 立绘目录:\n{path}\n\n请将 PNG 文件放到该目录", MessageTypeDefOf.NeutralEvent);
             }
             catch (Exception ex)
             {
-                Log.Error($"[PortraitLoader] �޷���Ŀ¼: {ex}");
-                Messages.Message($"���ֶ���Ŀ¼:\n{path}", MessageTypeDefOf.RejectInput);
+                Log.Error($"[PortraitLoader] 无法打开目录: {ex}");
+                Messages.Message($"请手动打开目录:\n{path}", MessageTypeDefOf.RejectInput);
             }
         }
         
         /// <summary>
-        /// ��ȡ�Ƽ����û�����Ŀ¼
-        /// ? ����ԭ�й��ܣ���Ҹ��İ�ʹ�ã�
+        /// 获取推荐的用户立绘目录
+        /// 保留原有功能，更加容易使用
         /// </summary>
         public static string GetUserPortraitsDirectory()
         {
@@ -780,20 +793,20 @@ namespace TheSecondSeat.PersonaGeneration
                 if (!Directory.Exists(path))
                 {
                     Directory.CreateDirectory(path);
-                    Log.Message($"[PortraitLoader] �����û�����Ŀ¼: {path}");
+                    Log.Message($"[PortraitLoader] 创建用户立绘目录: {path}");
                 }
             }
             catch (Exception ex)
             {
-                Log.Error($"[PortraitLoader] �޷�����Ŀ¼: {path}\n{ex}");
+                Log.Error($"[PortraitLoader] 无法创建目录: {path}\n{ex}");
             }
             
             return path;
         }
         
         /// <summary>
-        /// ���û�����Ŀ¼
-        /// ? ����ԭ�й��ܣ���Ҹ��İ�ʹ�ã�
+        /// 打开用户立绘目录
+        /// 保留原有功能，更加容易使用
         /// </summary>
         public static void OpenUserPortraitsDirectory()
         {
@@ -802,18 +815,18 @@ namespace TheSecondSeat.PersonaGeneration
             try
             {
                 Application.OpenURL("file://" + path);
-                Messages.Message($"�Ѵ��û�����Ŀ¼:\n{path}\n\n�žؼ PNG �� JPG �ļ����Ƶ���Ŀ¼", MessageTypeDefOf.NeutralEvent);
+                Messages.Message($"已打开用户立绘目录:\n{path}\n\n请将立绘 PNG 或 JPG 文件复制到该目录", MessageTypeDefOf.NeutralEvent);
             }
             catch (Exception ex)
             {
-                Log.Error($"[PortraitLoader] �o����Ŀ¼: {ex}");
-                Messages.Message($"���ֶ���Ŀ¼:\n{path}", MessageTypeDefOf.RejectInput);
+                Log.Error($"[PortraitLoader] 无法打开目录: {ex}");
+                Messages.Message($"请手动打开目录:\n{path}", MessageTypeDefOf.RejectInput);
             }
         }
         
         /// <summary>
-        /// ��ȡ Mod �����ļ��б�
-        /// ? ��������ȡ Mod Ŀ¼�е������ļ�
+        /// 获取 Mod 立绘文件列表
+        /// 获取所有可用的 Mod 目录中的立绘文件
         /// </summary>
         public static List<string> GetModPortraitFiles()
         {
@@ -825,23 +838,23 @@ namespace TheSecondSeat.PersonaGeneration
                 
                 if (Directory.Exists(modDir))
                 {
-                    // PNG �ļ�
+                    // PNG 文件
                     files.AddRange(Directory.GetFiles(modDir, "*.png"));
-                    // JPG �ļ�
+                    // JPG 文件
                     files.AddRange(Directory.GetFiles(modDir, "*.jpg"));
                     files.AddRange(Directory.GetFiles(modDir, "*.jpeg"));
                 }
             }
             catch (Exception ex)
             {
-                Log.Error($"[PortraitLoader] ��ȡ Mod ����ʧ��: {ex}");
+                Log.Error($"[PortraitLoader] 获取 Mod 立绘失败: {ex}");
             }
             
             return files;
         }
         
         /// <summary>
-        /// ��ȡ�û������ļ��б�
+        /// 获取用户立绘文件列表
         /// </summary>
         public static List<string> GetUserPortraitFiles()
         {
@@ -853,24 +866,24 @@ namespace TheSecondSeat.PersonaGeneration
                 
                 if (Directory.Exists(userDir))
                 {
-                    // PNG �ļ�
+                    // PNG 文件
                     files.AddRange(Directory.GetFiles(userDir, "*.png"));
-                    // JPG �ļ�
+                    // JPG 文件
                     files.AddRange(Directory.GetFiles(userDir, "*.jpg"));
                     files.AddRange(Directory.GetFiles(userDir, "*.jpeg"));
                 }
             }
             catch (Exception ex)
             {
-                Log.Error($"[PortraitLoader] ��ȡ�û�����ʧ��: {ex}");
+                Log.Error($"[PortraitLoader] 获取用户立绘失败: {ex}");
             }
             
             return files;
         }
         
         /// <summary>
-        /// ��ȡ���פ��õ������ľ���
-        /// ? ����������ԭ������������ + Mod���� + �û�����
+        /// 获取所有可用的立绘列表（多源）
+        /// 包含所有来源：原版叙事者立绘 + Mod立绘 + 用户立绘
         /// </summary>
         public static List<PortraitFileInfo> GetAllAvailablePortraits()
         {
@@ -878,29 +891,29 @@ namespace TheSecondSeat.PersonaGeneration
             
             try
             {
-                // 1. ���ԭ�� RimWorld ����������
+                // 1. 添加原版 RimWorld 叙事者立绘
                 portraits.AddRange(GetVanillaStorytellerPortraits());
                 
-                // 2. ������� Mod ������������
+                // 2. 添加其他 Mod 的叙事者立绘
                 portraits.AddRange(GetModStorytellerPortraits());
                 
-                // 3. ��ӱ� Mod �Դ�����
+                // 3. 添加本 Mod 自带立绘
                 portraits.AddRange(GetModPortraitFilesWithInfo());
                 
-                // 4. ����û��Զ�������
+                // 4. 添加用户自定义立绘
                 portraits.AddRange(GetUserPortraitFilesWithInfo());
             }
             catch (Exception ex)
             {
-                Log.Error($"[PortraitLoader] ��ȡ���������б�ʧ��: {ex}");
+                Log.Error($"[PortraitLoader] 获取可用立绘列表失败: {ex}");
             }
             
             return portraits;
         }
         
         /// <summary>
-        /// ��ȡԭ�� RimWorld ����������
-        /// ? Cassandra, Phoebe, Randy ��
+        /// 获取原版 RimWorld 叙事者立绘
+        /// Cassandra, Phoebe, Randy 等
         /// </summary>
         private static List<PortraitFileInfo> GetVanillaStorytellerPortraits()
         {
@@ -908,18 +921,18 @@ namespace TheSecondSeat.PersonaGeneration
             
             try
             {
-                // ԭ���������б�
+                // 原版叙事者列表
                 var vanillaStorytellers = new[]
                 {
                     "Cassandra",
                     "Phoebe", 
                     "Randy",
-                    "Igor"  // DLC ������
+                    "Igor"  // DLC 叙事者
                 };
                 
                 foreach (var storyteller in vanillaStorytellers)
                 {
-                    // RimWorld ԭ������·����UI/HeroArt/{StorytellerName}
+                    // RimWorld 原版立绘路径：UI/HeroArt/{StorytellerName}
                     string texturePath = $"UI/HeroArt/{storyteller}";
                     var texture = ContentFinder<Texture2D>.Get(texturePath, false);
                     
@@ -927,27 +940,27 @@ namespace TheSecondSeat.PersonaGeneration
                     {
                         portraits.Add(new PortraitFileInfo
                         {
-                            Name = $"{storyteller} (ԭ��)",
-                            Path = texturePath,  // ? �޸�������Ӧ����string·��
+                            Name = $"{storyteller} (原版)",
+                            Path = texturePath,
                             Source = PortraitSource.Vanilla,
-                            Texture = texture  // ? Texture������ֵ
+                            Texture = texture
                         });
                         
-                        Log.Message($"[PortraitLoader] �ڵ��Ǵ�ԭ������: {storyteller}");
+                        Log.Message($"[PortraitLoader] 找到并添加原版立绘: {storyteller}");
                     }
                 }
             }
             catch (Exception ex)
             {
-                Log.Warning($"[PortraitLoader] ��ȡԭ������ʧ��: {ex.Message}");
+                Log.Warning($"[PortraitLoader] 获取原版立绘失败: {ex.Message}");
             }
             
             return portraits;
         }
         
         /// <summary>
-        /// ��ȡ���� Mod ������������
-        /// ? �Զ��������� Mod �� StorytellerDefs
+        /// 获取其他 Mod 的叙事者立绘
+        /// 自动检测其他 Mod 的 StorytellerDefs
         /// </summary>
         private static List<PortraitFileInfo> GetModStorytellerPortraits()
         {
@@ -955,12 +968,12 @@ namespace TheSecondSeat.PersonaGeneration
             
             try
             {
-                // ��ȡ���������߶��壨���� Mod ��ӵģ�
+                // 获取所有叙事者定义（包括 Mod 添加的）
                 var allStorytellers = DefDatabase<StorytellerDef>.AllDefsListForReading;
                 
                 foreach (var storyteller in allStorytellers)
                 {
-                    // ����ԭ�������ߣ��������洦���
+                    // 跳过原版叙事者，已在前面处理
                     if (storyteller.defName == "Cassandra" || 
                         storyteller.defName == "Phoebe" || 
                         storyteller.defName == "Randy" ||
@@ -969,41 +982,41 @@ namespace TheSecondSeat.PersonaGeneration
                         continue;
                     }
                     
-                    // ? �޸���StorytellerDef.portraitLargeTex �� Texture2D������ string
-                    // ������Ҫͨ�� defName ����·��
+                    // 修改：StorytellerDef.portraitLargeTex 是 Texture2D，而非 string
+                    // 所以需要通过 defName 构建路径
                     var texture = storyteller.portraitLargeTex;
                     
                     if (texture != null)
                     {
-                        // ��ȡ Mod ����
-                        string modName = storyteller.modContentPack?.Name ?? "δ֪Mod";
+                        // 获取 Mod 名称
+                        string modName = storyteller.modContentPack?.Name ?? "未知Mod";
                         
-                        // ��������·����ͨ���� UI/HeroArt/{DefName}��
+                        // 立绘纹理路径（通常是 UI/HeroArt/{DefName}）
                         string portraitPath = $"UI/HeroArt/{storyteller.defName}";
                         
                         var portraitInfo = new PortraitFileInfo();
                         portraitInfo.Name = $"{storyteller.LabelCap} ({modName})";
-                        portraitInfo.Path = portraitPath;  // ? ʹ�ù�����·��
+                        portraitInfo.Path = portraitPath;
                         portraitInfo.Source = PortraitSource.OtherMod;
-                        portraitInfo.Texture = texture;  // ? ֱ��ʹ���Ѽ��ص�Texture
+                        portraitInfo.Texture = texture;
                         portraitInfo.ModName = modName;
                         
                         portraits.Add(portraitInfo);
                         
-                        Log.Message($"[PortraitLoader] �ҵ�Mod����: {storyteller.LabelCap} from {modName}");
+                        Log.Message($"[PortraitLoader] 找到Mod立绘: {storyteller.LabelCap} from {modName}");
                     }
                 }
             }
             catch (Exception ex)
             {
-                Log.Warning($"[PortraitLoader] ��ȡMod����ʧ��: {ex.Message}");
+                Log.Warning($"[PortraitLoader] 获取Mod立绘失败: {ex.Message}");
             }
             
             return portraits;
         }
         
         /// <summary>
-        /// ��ȡ�� Mod �����ļ�������ϸ��Ϣ��
+        /// 获取本 Mod 立绘文件（含详细信息）
         /// </summary>
         private static List<PortraitFileInfo> GetModPortraitFilesWithInfo()
         {
@@ -1026,14 +1039,15 @@ namespace TheSecondSeat.PersonaGeneration
             }
             catch (Exception ex)
             {
-                Log.Warning($"[PortraitLoader] ��ȡ��Mod����ʧ��: {ex.Message}");
+                Log.Warning($"[PortraitLoader] 获取本Mod立绘失败: {ex.Message}");
             }
             
             return portraits;
         }
         
         /// <summary>
-        /// ��ȡ�û������ļ�������ϸ��Ϣ��
+        /// 获取用户自定义立绘文件信息
+        /// ? 逐个文件检查并构建信息
         /// </summary>
         private static List<PortraitFileInfo> GetUserPortraitFilesWithInfo()
         {
@@ -1047,7 +1061,7 @@ namespace TheSecondSeat.PersonaGeneration
                 {
                     portraits.Add(new PortraitFileInfo
                     {
-                        Name = Path.GetFileNameWithoutExtension(file) + " (�û�)",
+                        Name = Path.GetFileNameWithoutExtension(file) + " (用户)",
                         Path = file,
                         Source = PortraitSource.User
                     });
@@ -1055,14 +1069,14 @@ namespace TheSecondSeat.PersonaGeneration
             }
             catch (Exception ex)
             {
-                Log.Warning($"[PortraitLoader] ��ȡ�û�����ʧ��: {ex.Message}");
+                Log.Warning($"[PortraitLoader] 获取用户立绘失败: {ex.Message}");
             }
             
             return portraits;
         }
         
         /// <summary>
-        /// ��ȡ������Ϣ
+        /// 获取调试信息
         /// </summary>
         public static string GetDebugInfo()
         {
@@ -1073,18 +1087,18 @@ namespace TheSecondSeat.PersonaGeneration
             var thisModCount = allPortraits.Count(p => p.Source == PortraitSource.ThisMod);
             var userCount = allPortraits.Count(p => p.Source == PortraitSource.User);
             
-            return $"[PortraitLoader] ��������: {cache.Count}\n" +
-                   $"������������: {allPortraits.Count}\n" +
-                   $"  - ԭ������: {vanillaCount}\n" +
-                   $"  - ����Mod����: {modCount}\n" +
-                   $"  - ��Mod����: {thisModCount}\n" +
-                   $"  - �û�����: {userCount}\n" +
-                   $"Mod ����Ŀ¼: {GetModPortraitsDirectory()}\n" +
-                   $"�û�����Ŀ¼: {GetUserPortraitsDirectory()}";
+            return $"[PortraitLoader] 缓存数量: {cache.Count}\n" +
+                   $"可用立绘总数: {allPortraits.Count}\n" +
+                   $"  - 原版立绘: {vanillaCount}\n" +
+                   $"  - 其他Mod立绘: {modCount}\n" +
+                   $"  - 本Mod立绘: {thisModCount}\n" +
+                   $"  - 用户立绘: {userCount}\n" +
+                   $"Mod 立绘目录: {GetModPortraitsDirectory()}\n" +
+                   $"用户立绘目录: {GetUserPortraitsDirectory()}";
         }
         
         /// <summary>
-        /// ? ���ӷ�װ���
+        /// 应用服装差分
         /// </summary>
         private static Texture2D ApplyOutfit(Texture2D baseTexture, string personaDefName)
         {
@@ -1092,36 +1106,15 @@ namespace TheSecondSeat.PersonaGeneration
             // 原因：ContentFinder加载的纹理默认不可读，无法调用GetPixel()
             // 如果需要服装系统，应该预先合成好完整立绘，而不是运行时合成
             return baseTexture;
-            
-            /*
-            // 以下代码保留作为参考，但禁用以避免错误
-            string outfitPath = OutfitSystem.GetCurrentOutfitPath(personaDefName);
-            
-            if (string.IsNullOrEmpty(outfitPath))
-            {
-                return baseTexture;
-            }
-            
-            var outfitTexture = ContentFinder<Texture2D>.Get(outfitPath, false);
-            
-            if (outfitTexture == null)
-            {
-                return baseTexture;
-            }
-            
-            return CompositeTextures(baseTexture, outfitTexture);
-            */
         }
         
         /// <summary>
-        /// ? �ϳ������������������ + ��װ/���飩
+        /// 合成多层纹理（基础立绘 + 服装/差分）
         /// </summary>
         private static Texture2D CompositeTextures(Texture2D bottom, Texture2D top)
         {
             try
             {
-                // ȷ����
-
                 // 确保纹理尺寸一致
                 int width = Mathf.Min(bottom.width, top.width);
                 int height = Mathf.Min(bottom.height, top.height);
@@ -1260,3 +1253,4 @@ namespace TheSecondSeat.PersonaGeneration
         }
     }
 }
+
