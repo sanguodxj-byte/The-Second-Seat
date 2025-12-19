@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using Verse;
 using UnityEngine;
@@ -6,42 +6,54 @@ using UnityEngine;
 namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
-    /// ? v1.6.18: ÕÅ×ì¶¯»­ÏµÍ³£¨¿ÚĞÍÍ¬²½£©
-    /// ? v1.6.36: ¼¯³É TTSAudioPlayer ×´Ì¬£¬ÊµÏÖÕæÕıµÄ¿ÚĞÍÍ¬²½
+    /// ğŸ“Œ v1.6.18: å¼ å˜´åŠ¨ç”»ç³»ç»Ÿï¼ˆå£å‹åŒæ­¥ï¼‰
+    /// ğŸ“Œ v1.6.36: é›†æˆ TTSAudioPlayer çŠ¶æ€ï¼Œå®ç°çœŸæ­£çš„å£å‹åŒæ­¥
+    /// âœ… v1.6.60: ä¼˜åŒ–å¹³æ»‘è¿‡æ¸¡ï¼Œè§£å†³"é€Ÿåº¦è¿‡å¿«/æŠ½æ"é—®é¢˜
     /// 
-    /// ¹¦ÄÜ£º
-    /// - TTS²¥·ÅÊ±×Ô¶¯ÕÅ×ì
-    /// - 3ÖÖ×ìĞÍËæ»úÇĞ»»£¨small_mouth, medium_mouth, larger_mouth£©
-    /// - ±ÜÃâÁ¬ĞøÖØ¸´ÏàÍ¬×ìĞÍ
+    /// åŠŸèƒ½ï¼š
+    /// - TTSæ’­æ”¾æ—¶è‡ªåŠ¨å¼ å˜´
+    /// - 3ç§å˜´å‹å¹³æ»‘åˆ‡æ¢ï¼ˆsmall_mouth, medium_mouth, larger_mouthï¼‰
+    /// - å¹³æ»‘é˜»å°¼ç®—æ³•ï¼ˆé¿å…æœºæ¢°è·³åŠ¨ï¼‰
+    /// - æœ€å°ä¿æŒæ—¶é—´ï¼ˆé˜²æ­¢é«˜é¢‘é—ªçƒï¼‰
+    /// - è°ƒæ•´é˜ˆå€¼ï¼ˆè¿‡æ»¤å™ªéŸ³ï¼‰
     /// 
-    /// Ê¹ÓÃ£º
-    /// 1. Update() ¼ì²â TTSAudioPlayer.IsSpeaking(defName)
-    /// 2. GetMouthLayerName(defName) ·µ»Øµ±Ç°×ìĞÍÍ¼²ãÃû
+    /// ä½¿ç”¨ï¼š
+    /// 1. Update() æ£€æµ‹ TTSAudioPlayer.IsSpeaking(defName)
+    /// 2. GetMouthLayerName(defName) è¿”å›å½“å‰å˜´å‹å›¾å±‚å
     /// </summary>
     public static class MouthAnimationSystem
     {
-        // ===== ÅäÖÃ²ÎÊı =====
-        private const float MOUTH_CHANGE_INTERVAL = 0.15f;  // Ã¿0.15ÃëÇĞ»»Ò»´Î×ìĞÍ
+        // ===== é…ç½®å‚æ•° =====
+        private const float SMOOTHING_FACTOR = 0.15f;           // âœ… å¹³æ»‘å› å­ï¼ˆè¶Šå°è¶Šæ…¢ï¼Œå»ºè®® 0.1~0.2ï¼‰
+        private const float MIN_HOLD_TIME = 0.05f;              // âœ… æœ€å°ä¿æŒæ—¶é—´ï¼ˆç§’ï¼Œé¿å…é«˜é¢‘é—ªçƒï¼‰
+        private const float SUDDEN_CHANGE_THRESHOLD = 0.5f;     // âœ… çªå˜é˜ˆå€¼ï¼ˆå¤§äºæ­¤å€¼ç«‹å³åˆ‡æ¢ï¼‰
+        private const float SILENCE_THRESHOLD = 0.05f;          // âœ… é—­å˜´é˜ˆå€¼ï¼ˆæé«˜ä»¥è¿‡æ»¤å™ªéŸ³ï¼‰
+        private const float MOUTH_CHANGE_INTERVAL = 0.15f;      // æ¯0.15ç§’åˆ‡æ¢ä¸€æ¬¡å˜´å‹
         
-        // ===== Ëµ»°×´Ì¬Êı¾İ =====
+        // ===== è¯´è¯çŠ¶æ€æ•°æ® =====
         private class SpeakingState
         {
-            public bool IsSpeaking;                      // ÊÇ·ñÕıÔÚËµ»°
-            public string CurrentMouthLayer;             // µ±Ç°×ìĞÍ²ãÃû³Æ
-            public string LastMouthLayer;                // ÉÏÒ»´ÎµÄ×ìĞÍ²ãÃû³Æ£¨±ÜÃâÖØ¸´£©
-            public float LastChangeTime;                 // ÉÏ´ÎÇĞ»»Ê±¼ä
+            public bool IsSpeaking;                      // æ˜¯å¦æ­£åœ¨è¯´è¯
+            public string CurrentMouthLayer;             // å½“å‰å˜´å‹å±‚åç§°
+            public string LastMouthLayer;                // ä¸Šä¸€æ¬¡çš„å˜´å‹å±‚åç§°ï¼ˆé¿å…é‡å¤ï¼‰
+            public float LastChangeTime;                 // ä¸Šæ¬¡åˆ‡æ¢æ—¶é—´
             
-            // ? v1.6.44: ĞÂÔö×Ö¶Î
-            public ExpressionType currentExpression;     // µ±Ç°±íÇé
-            public float currentOpenness;                // µ±Ç°×ìĞÍ¿ªºÏ¶È£¨0-1£©
-            public float speakingTime;                   // Ëµ»°ÀÛ¼ÆÊ±¼ä
-            public bool isSpeaking;                      // ÊÇ·ñÕıÔÚËµ»°£¨ĞÂ×´Ì¬±êÖ¾£©
+            // ğŸ“Œ v1.6.44: æ–°å¢å­—æ®µ
+            public ExpressionType currentExpression;     // å½“å‰è¡¨æƒ…
+            public float currentOpenness;                // âœ… å½“å‰å¹³æ»‘åçš„å¼€åˆåº¦ï¼ˆ0-1ï¼‰
+            public float targetRawOpenness;              // âœ… ç›®æ ‡åŸå§‹å¼€åˆåº¦ï¼ˆæ¥è‡ªæ­£å¼¦æ³¢ï¼‰
+            public float speakingTime;                   // è¯´è¯ç´¯è®¡æ—¶é—´
+            public bool isSpeaking;                      // æ˜¯å¦æ­£åœ¨è¯´è¯ï¼ˆæ–°çŠ¶æ€æ ‡å¿—ï¼‰
+            
+            // âœ… v1.6.60: æ–°å¢å­—æ®µï¼ˆæœ€å°ä¿æŒæ—¶é—´ï¼‰
+            public float lastStateChangeTime;            // ä¸Šæ¬¡çŠ¶æ€å˜åŒ–æ—¶é—´
+            public string lockedMouthLayer;              // é”å®šçš„å˜´å‹ï¼ˆä¿æŒæœŸé—´ï¼‰
         }
         
-        // ===== Êı¾İ´æ´¢ =====
+        // ===== æ•°æ®å­˜å‚¨ =====
         private static readonly Dictionary<string, SpeakingState> speakingStates = new Dictionary<string, SpeakingState>();
         
-        // ===== ×ìĞÍÁĞ±í =====
+        // ===== å˜´å‹åˆ—è¡¨ =====
         private static readonly string[] mouthLayers = new[]
         {
             "small_mouth",
@@ -50,13 +62,13 @@ namespace TheSecondSeat.PersonaGeneration
         };
         
         /// <summary>
-        /// ? v1.6.36: Ã¿Ö¡¸üĞÂ£¨¼ì²âTTS²¥·Å×´Ì¬²¢´¥·¢ÕÅ×ì¶¯»­£©
-        /// ? v1.6.44: ¼ò»¯Îª½ö¸üĞÂ×´Ì¬£¬Êµ¼Ê×ìĞÍÓÉ GetMouthLayerName ¼ÆËã
+        /// ğŸ“Œ v1.6.36: æ¯å¸§æ›´æ–°ï¼ˆæ£€æµ‹TTSæ’­æ”¾çŠ¶æ€å¹¶è§¦å‘å¼ å˜´åŠ¨ç”»ï¼‰
+        /// ğŸ“Œ v1.6.44: ç®€åŒ–ä¸ºä»…æ›´æ–°çŠ¶æ€ï¼Œå®é™…å˜´å‹ç”± GetMouthLayerName è®¡ç®—
         /// </summary>
-        /// <param name="deltaTime">ÔöÁ¿Ê±¼ä</param>
+        /// <param name="deltaTime">å¢é‡æ—¶é—´</param>
         public static void Update(float deltaTime)
         {
-            // ? ±éÀúËùÓĞÈË¸ñ£¬¼ì²âTTS²¥·Å×´Ì¬
+            // ğŸ“Œ éå†æ‰€æœ‰äººæ ¼ï¼Œæ£€æµ‹TTSæ’­æ”¾çŠ¶æ€
             var allPersonas = DefDatabase<NarratorPersonaDef>.AllDefsListForReading;
             
             foreach (var persona in allPersonas)
@@ -66,10 +78,10 @@ namespace TheSecondSeat.PersonaGeneration
                     continue;
                 }
                 
-                // ? ¼ì²âTTSÊÇ·ñÕıÔÚ²¥·Å¸ÃÈË¸ñµÄÒôÆµ
+                // ğŸ“Œ æ£€æµ‹TTSæ˜¯å¦æ­£åœ¨æ’­æ”¾è¯¥äººæ ¼çš„éŸ³é¢‘
                 bool isCurrentlySpeaking = TTS.TTSAudioPlayer.IsSpeaking(persona.defName);
                 
-                // »ñÈ¡»ò´´½¨×´Ì¬
+                // è·å–æˆ–åˆ›å»ºçŠ¶æ€
                 if (!speakingStates.TryGetValue(persona.defName, out var state))
                 {
                     state = new SpeakingState
@@ -80,36 +92,39 @@ namespace TheSecondSeat.PersonaGeneration
                         LastChangeTime = 0f,
                         currentExpression = ExpressionType.Neutral,
                         currentOpenness = 0f,
+                        targetRawOpenness = 0f,
                         speakingTime = 0f,
-                        isSpeaking = false
+                        isSpeaking = false,
+                        lastStateChangeTime = 0f,
+                        lockedMouthLayer = null
                     };
                     speakingStates[persona.defName] = state;
                 }
                 
-                // ? ¸üĞÂ×´Ì¬£¨Êµ¼Ê×ìĞÍÓÉ GetMouthLayerName ¼ÆËã£©
+                // ğŸ“Œ æ›´æ–°çŠ¶æ€ï¼ˆå®é™…å˜´å‹ç”± GetMouthLayerName è®¡ç®—ï¼‰
                 state.IsSpeaking = isCurrentlySpeaking;
                 
                 if (Prefs.DevMode && isCurrentlySpeaking && !state.isSpeaking)
                 {
-                    Log.Message($"[MouthAnimationSystem] {persona.defName} ¿ªÊ¼Ëµ»°");
+                    Log.Message($"[MouthAnimationSystem] {persona.defName} å¼€å§‹è¯´è¯");
                 }
                 else if (Prefs.DevMode && !isCurrentlySpeaking && state.isSpeaking)
                 {
-                    Log.Message($"[MouthAnimationSystem] {persona.defName} Í£Ö¹Ëµ»°");
+                    Log.Message($"[MouthAnimationSystem] {persona.defName} åœæ­¢è¯´è¯");
                 }
             }
         }
         
         /// <summary>
-        /// ? v1.6.44: »ñÈ¡µ±Ç°×ì°ÍÍ¼²ãÃû³Æ£¨¹© LayeredPortraitCompositor µ÷ÓÃ£©
-        /// ĞŞ¸´£º
-        /// - Í¬²½ ExpressionSystem µ±Ç°±íÇé
-        /// - TTS ²¥·ÅÊ±¶¯Ì¬ÕÅ×ì
-        /// - ³ÁÄ¬Ê±¸ù¾İ±íÇéÊ¹ÓÃ¶ÔÓ¦µÄ¾²Ì¬×ìĞÍ
-        /// - Ôö¼Óµ÷ÊÔÈÕÖ¾Êä³ö
+        /// âœ… v1.6.60: è·å–å½“å‰å˜´å·´å›¾å±‚åç§°ï¼ˆä¾› LayeredPortraitCompositor è°ƒç”¨ï¼‰
+        /// ä¼˜åŒ–ï¼š
+        /// - å¹³æ»‘é˜»å°¼ç®—æ³•ï¼ˆé¿å…æœºæ¢°è·³åŠ¨ï¼‰
+        /// - æœ€å°ä¿æŒæ—¶é—´ï¼ˆé˜²æ­¢é«˜é¢‘é—ªçƒï¼‰
+        /// - è°ƒæ•´é˜ˆå€¼ï¼ˆè¿‡æ»¤å™ªéŸ³ï¼‰
+        /// - çªå˜æ£€æµ‹ï¼ˆå¤§å£°è¯´è¯æ—¶ç«‹å³åˆ‡æ¢ï¼‰
         /// </summary>
-        /// <param name="defName">ÈË¸ñ DefName</param>
-        /// <returns>×ì²¿Í¼²ãÃû³Æ£¨Èç¹û²»ĞèÒªÔò·µ»Ø null£©</returns>
+        /// <param name="defName">äººæ ¼ DefName</param>
+        /// <returns>å˜´éƒ¨å›¾å±‚åç§°ï¼ˆå¦‚æœä¸éœ€è¦åˆ™è¿”å› nullï¼‰</returns>
         public static string GetMouthLayerName(string defName)
         {
             if (string.IsNullOrEmpty(defName))
@@ -117,7 +132,7 @@ namespace TheSecondSeat.PersonaGeneration
                 return null;
             }
             
-            // ? 1. »ñÈ¡»ò´´½¨×´Ì¬
+            // ğŸ“Œ 1. è·å–æˆ–åˆ›å»ºçŠ¶æ€
             if (!speakingStates.TryGetValue(defName, out var state))
             {
                 state = new SpeakingState
@@ -128,17 +143,20 @@ namespace TheSecondSeat.PersonaGeneration
                     LastChangeTime = 0f,
                     currentExpression = ExpressionType.Neutral,
                     currentOpenness = 0f,
+                    targetRawOpenness = 0f,
                     speakingTime = 0f,
-                    isSpeaking = false
+                    isSpeaking = false,
+                    lastStateChangeTime = 0f,
+                    lockedMouthLayer = null
                 };
                 speakingStates[defName] = state;
             }
             
-            // ? 2. Í¬²½µ±Ç°±íÇé£¨´Ó ExpressionSystem£©
+            // ğŸ“Œ 2. åŒæ­¥å½“å‰è¡¨æƒ…ï¼ˆä» ExpressionSystemï¼‰
             var expressionState = ExpressionSystem.GetExpressionState(defName);
             state.currentExpression = expressionState.CurrentExpression;
             
-            // ? 3. ¼ì²é TTS ²¥·Å×´Ì¬£¨ĞŞ¸Ä£ºÊ¹ÓÃ try-catch ±ÜÃâ±ÀÀ££©
+            // ğŸ“Œ 3. æ£€æŸ¥ TTS æ’­æ”¾çŠ¶æ€ï¼ˆä¿®æ”¹ï¼šä½¿ç”¨ try-catch é¿å…å´©æºƒï¼‰
             bool isPlayingTTS = false;
             try
             {
@@ -148,106 +166,151 @@ namespace TheSecondSeat.PersonaGeneration
             {
                 if (Prefs.DevMode)
                 {
-                    Log.Warning($"[MouthAnimationSystem] ¼ì²â TTS ×´Ì¬Ê§°Ü: {ex.Message}");
+                    Log.Warning($"[MouthAnimationSystem] æ£€æµ‹ TTS çŠ¶æ€å¤±è´¥: {ex.Message}");
                 }
                 isPlayingTTS = false;
             }
             
-            // ? 4. ¼ÆËãÄ¿±ê×ì²¿¿ªºÏ¶È
+            // ğŸ“Œ 4. è®¡ç®—ç›®æ ‡å˜´éƒ¨å¼€åˆåº¦
             float targetOpenness = 0f;
             
             if (isPlayingTTS)
             {
-                // ? TTS ²¥·ÅÖĞ£º¶¯Ì¬ÕÅ×ì£¨Ê¹ÓÃÕıÏÒ²¨Ä£ÄâËµ»°£©
+                // ğŸ“Œ TTS æ’­æ”¾ä¸­ï¼šåŠ¨æ€å¼ å˜´ï¼ˆä½¿ç”¨æ­£å¼¦æ³¢æ¨¡æ‹Ÿè¯´è¯ï¼‰
                 state.isSpeaking = true;
                 state.speakingTime += Time.deltaTime;
                 
-                // Ê¹ÓÃÕıÏÒ²¨ÔÚ 0 µ½ 0.8 µÄ¿ªºÏ¶È
-                float sineWave = Mathf.Sin(state.speakingTime * 10f); // 10Hz ÆµÂÊ
+                // ä½¿ç”¨æ­£å¼¦æ³¢åœ¨ 0 åˆ° 0.8 çš„å¼€åˆåº¦
+                float sineWave = Mathf.Sin(state.speakingTime * 10f); // 10Hz é¢‘ç‡
                 targetOpenness = Mathf.Lerp(0f, 0.8f, (sineWave + 1f) * 0.5f);
                 
-                // ? µ÷ÊÔÈÕÖ¾£ºTTS ²¥·ÅÊ±Êä³ö
-                if (Prefs.DevMode && state.speakingTime % 1f < 0.1f) // Ã¿ÃëÊä³öÒ»´Î
+                // âœ… ä¿å­˜åŸå§‹ç›®æ ‡å€¼ï¼ˆç”¨äºçªå˜æ£€æµ‹ï¼‰
+                state.targetRawOpenness = targetOpenness;
+                
+                // ğŸ“Œ è°ƒè¯•æ—¥å¿—ï¼šTTS æ’­æ”¾æ—¶è¾“å‡º
+                if (Prefs.DevMode && state.speakingTime % 1f < 0.1f) // æ¯ç§’è¾“å‡ºä¸€æ¬¡
                 {
-                    Log.Message($"[MouthAnimationSystem] {defName} TTS²¥·ÅÖĞ - ¿ªºÏ¶È: {targetOpenness:F2}");
+                    Log.Message($"[MouthAnimationSystem] {defName} TTSæ’­æ”¾ä¸­ - åŸå§‹å¼€åˆåº¦: {targetOpenness:F2}, å¹³æ»‘å: {state.currentOpenness:F2}");
                 }
             }
             else
             {
-                // ? v1.6.54: TTS Í£Ö¹ºóÁ¢¼´ÖØÖÃ¿ªºÏ¶È£¨²»Ê¹ÓÃÆ½»¬¹ı¶É£©
+                // âœ… v1.6.60: TTS åœæ­¢åç«‹å³é‡ç½®å¼€åˆåº¦ï¼ˆä¸ä½¿ç”¨å¹³æ»‘è¿‡æ¸¡ï¼‰
                 if (state.isSpeaking)
                 {
-                    // ¸Õ¸ÕÍ£Ö¹Ëµ»°£¬Á¢¼´ÖØÖÃ
+                    // åˆšåˆšåœæ­¢è¯´è¯ï¼Œç«‹å³é‡ç½®
                     state.isSpeaking = false;
                     state.speakingTime = 0f;
-                    state.currentOpenness = 0f;  // ? ¹Ø¼üĞŞ¸´£ºÁ¢¼´ÖØÖÃÎª 0
+                    state.currentOpenness = 0f;  // âœ… å…³é”®ä¿®å¤ï¼šç«‹å³é‡ç½®ä¸º 0
+                    state.targetRawOpenness = 0f;
+                    state.lockedMouthLayer = null; // âœ… æ¸…é™¤é”å®š
                     
                     if (Prefs.DevMode)
                     {
-                        Log.Message($"[MouthAnimationSystem] {defName} TTSÍ£Ö¹ - Á¢¼´±Õ×ì");
+                        Log.Message($"[MouthAnimationSystem] {defName} TTSåœæ­¢ - ç«‹å³é—­å˜´");
                     }
                 }
                 
-                // ¸ù¾İ±íÇé»ñÈ¡¾²Ì¬¿ªºÏ¶È
+                // æ ¹æ®è¡¨æƒ…è·å–é™æ€å¼€åˆåº¦
                 targetOpenness = GetMouthOpennessForExpression(state.currentExpression);
+                state.targetRawOpenness = targetOpenness;
             }
             
-            // ? 5. Æ½»¬¹ı¶Éµ½Ä¿±ê¿ªºÏ¶È£¨½öÔÚ TTS ²¥·ÅÊ±»ò±íÇé±ä»¯Ê±£©
+            // âœ… 5. å¹³æ»‘é˜»å°¼ç®—æ³•ï¼ˆSmoothing Dampingï¼‰
             if (isPlayingTTS)
             {
-                // TTS ²¥·ÅÖĞ£ºÆ½»¬¹ı¶É£¨ÓÃÓÚÕıÏÒ²¨¶¯»­£©
-                state.currentOpenness = Mathf.Lerp(state.currentOpenness, targetOpenness, Time.deltaTime * 10f);
+                // âœ… æ£€æµ‹çªå˜ï¼ˆå¤§å£°è¯´è¯æ—¶ï¼‰
+                float opennessDelta = Mathf.Abs(state.targetRawOpenness - state.currentOpenness);
+                bool isSuddenChange = opennessDelta > SUDDEN_CHANGE_THRESHOLD;
+                
+                if (isSuddenChange)
+                {
+                    // çªå˜ï¼šå¿«é€Ÿè·Ÿéšï¼ˆç”¨äºæ•æ‰å¤§å£°è¯´è¯çš„ç¬é—´ï¼‰
+                    state.currentOpenness = Mathf.Lerp(state.currentOpenness, state.targetRawOpenness, SMOOTHING_FACTOR * 3f);
+                }
+                else
+                {
+                    // æ­£å¸¸å¹³æ»‘è¿‡æ¸¡ï¼ˆé¿å…æœºæ¢°è·³åŠ¨ï¼‰
+                    state.currentOpenness = Mathf.Lerp(state.currentOpenness, state.targetRawOpenness, SMOOTHING_FACTOR);
+                }
             }
             else
             {
-                // TTS Í£Ö¹ºó£ºÖ±½ÓÉèÖÃÎªÄ¿±êÖµ£¨±ÜÃâÑÓ³Ù£©
+                // TTS åœæ­¢åï¼šç›´æ¥è®¾ç½®ä¸ºç›®æ ‡å€¼ï¼ˆé¿å…å»¶è¿Ÿï¼‰
                 state.currentOpenness = targetOpenness;
             }
             
-            // ? 6. ¸ù¾İ¿ªºÏ¶È·µ»Ø¶ÔÓ¦µÄ×ì²¿Í¼²ãÃû³Æ
+            // âœ… 6. åº”ç”¨é—­å˜´é˜ˆå€¼ï¼ˆè¿‡æ»¤å™ªéŸ³ï¼‰
+            if (state.currentOpenness < SILENCE_THRESHOLD)
+            {
+                state.currentOpenness = 0f; // å¼ºåˆ¶é—­å˜´
+            }
+            
+            // âœ… 7. æ ¹æ®å¼€åˆåº¦è¿”å›å¯¹åº”çš„å˜´éƒ¨å›¾å±‚åç§°
             string layerName = GetMouthShapeLayerName(state.currentExpression, state.currentOpenness);
             
-            // ? µ÷ÊÔÈÕÖ¾£ºÃ¿´Î·µ»ØÍ¼²ãÊ±Êä³ö£¨°ïÖúÕï¶ÏÎÊÌâ£©
-            if (Prefs.DevMode && layerName != state.CurrentMouthLayer)
+            // âœ… 8. æœ€å°ä¿æŒæ—¶é—´æœºåˆ¶ï¼ˆé˜²æ­¢é«˜é¢‘é—ªçƒï¼‰
+            float currentTime = Time.time;
+            bool canChange = (currentTime - state.lastStateChangeTime) >= MIN_HOLD_TIME;
+            
+            // å¦‚æœåœ¨ä¿æŒæœŸé—´ä¸”ä¸æ˜¯çªå˜ï¼Œç»§ç»­ä½¿ç”¨é”å®šçš„å˜´å‹
+            if (!canChange && state.lockedMouthLayer != null)
             {
-                Log.Message($"[MouthAnimationSystem] {defName} ×ì²¿Í¼²ã: {layerName ?? "null"} (±íÇé={state.currentExpression}, ¿ªºÏ¶È={state.currentOpenness:F2}, TTS={isPlayingTTS})");
-                state.CurrentMouthLayer = layerName;
+                // é™¤éæ˜¯çªå˜ï¼ˆå¤§å£°è¯´è¯ï¼‰ï¼Œå¦åˆ™ä¿æŒå½“å‰å˜´å‹
+                float opennessDelta = Mathf.Abs(state.targetRawOpenness - state.currentOpenness);
+                if (opennessDelta < SUDDEN_CHANGE_THRESHOLD)
+                {
+                    layerName = state.lockedMouthLayer;
+                }
+            }
+            
+            // å¦‚æœå˜´å‹å‘ç”Ÿå˜åŒ–ï¼Œæ›´æ–°é”å®šçŠ¶æ€
+            if (layerName != state.lockedMouthLayer)
+            {
+                state.lockedMouthLayer = layerName;
+                state.lastStateChangeTime = currentTime;
+                
+                // ğŸ“Œ è°ƒè¯•æ—¥å¿—ï¼šæ¯æ¬¡åˆ‡æ¢å˜´å‹æ—¶è¾“å‡º
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[MouthAnimationSystem] {defName} å˜´å‹åˆ‡æ¢: {layerName ?? "null"} (è¡¨æƒ…={state.currentExpression}, å¼€åˆåº¦={state.currentOpenness:F2}, TTS={isPlayingTTS})");
+                }
             }
             
             return layerName;
         }
         
         /// <summary>
-        /// ? v1.6.44: ¸ù¾İ±íÇé»ñÈ¡¾²Ì¬×ìĞÍ¿ªºÏ¶È
+        /// ğŸ“Œ v1.6.44: æ ¹æ®è¡¨æƒ…è·å–é™æ€å˜´å‹å¼€åˆåº¦
         /// </summary>
         private static float GetMouthOpennessForExpression(ExpressionType expression)
         {
             return expression switch
             {
-                ExpressionType.Happy => 0.5f,      // Î¢Ğ¦£ºÖĞµÈ¿ªºÏ
-                ExpressionType.Surprised => 0.8f,  // ¾ªÑÈ£º´óÕÅ
-                ExpressionType.Smug => 0.3f,       // µÃÒâ£ºÂÔÎ¢ÉÏÑï
-                ExpressionType.Angry => 0.4f,      // ÉúÆø£º½ô±Á
-                ExpressionType.Sad => 0.2f,        // ±¯ÉË£ºÎ¢Î¢ÏÂÆ²
-                ExpressionType.Confused => 0.2f,   // À§»ó£ºĞ¡¿ª¿Ú
-                ExpressionType.Shy => 0.1f,        // º¦Ğß£º¼¸ºõ±Õ×ì
-                ExpressionType.Neutral => 0f,      // Æ½¾²£º±Õ×ì
+                ExpressionType.Happy => 0.5f,      // å¾®ç¬‘ï¼šä¸­ç­‰å¼€åˆ
+                ExpressionType.Surprised => 0.8f,  // æƒŠè®¶ï¼šå¤§å¼ 
+                ExpressionType.Smug => 0.3f,       // å¾—æ„ï¼šç•¥å¾®ä¸Šæ‰¬
+                ExpressionType.Angry => 0.4f,      // ç”Ÿæ°”ï¼šç´§ç»·
+                ExpressionType.Sad => 0.2f,        // æ‚²ä¼¤ï¼šå¾®å¾®ä¸‹æ’‡
+                ExpressionType.Confused => 0.2f,   // å›°æƒ‘ï¼šå°å¼€å£
+                ExpressionType.Shy => 0.1f,        // å®³ç¾ï¼šå‡ ä¹é—­å˜´
+                ExpressionType.Neutral => 0f,      // å¹³é™ï¼šé—­å˜´
                 _ => 0f
             };
         }
         
         /// <summary>
-        /// ? v1.6.44: ¸ù¾İ±íÇéºÍ¿ªºÏ¶È·µ»Ø×ìĞÍÍ¼²ãÃû³Æ
+        /// ğŸ“Œ v1.6.44: æ ¹æ®è¡¨æƒ…å’Œå¼€åˆåº¦è¿”å›å˜´å‹å›¾å±‚åç§°
         /// </summary>
         private static string GetMouthShapeLayerName(ExpressionType expression, float openness)
         {
-            // Èç¹û¿ªºÏ¶È½Ó½ü 0£¬·µ»Ø null£¨Ê¹ÓÃ base_body µÄ±Õ×ì£©
-            if (openness < 0.05f)
+            // âœ… ä½¿ç”¨æ›´é«˜çš„é˜ˆå€¼ï¼ˆè¿‡æ»¤å™ªéŸ³ï¼‰
+            if (openness < SILENCE_THRESHOLD)
             {
-                return null;
+                return null; // é—­å˜´ï¼ˆä½¿ç”¨ base_body çš„é»˜è®¤å˜´å‹ï¼‰
             }
             
-            // ¸ù¾İ¿ªºÏ¶ÈÑ¡Ôñ×ìĞÍ
+            // æ ¹æ®å¼€åˆåº¦é€‰æ‹©å˜´å‹
             if (openness < 0.3f)
             {
                 return "small_mouth";
@@ -263,7 +326,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ? Çå³ıÖ¸¶¨ÈË¸ñµÄ×´Ì¬
+        /// ğŸ“Œ æ¸…é™¤æŒ‡å®šäººæ ¼çš„çŠ¶æ€
         /// </summary>
         public static void ClearState(string defName)
         {
@@ -271,7 +334,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ? Çå³ıËùÓĞ×´Ì¬
+        /// ğŸ“Œ æ¸…é™¤æ‰€æœ‰çŠ¶æ€
         /// </summary>
         public static void ClearAllStates()
         {
