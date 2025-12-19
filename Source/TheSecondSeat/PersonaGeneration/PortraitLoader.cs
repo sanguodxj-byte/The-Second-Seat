@@ -946,7 +946,8 @@ namespace TheSecondSeat.PersonaGeneration
                             Texture = texture
                         });
                         
-                        Log.Message($"[PortraitLoader] 找到并添加原版立绘: {storyteller}");
+                        // ✅ v1.6.61: 关闭调试日志
+                        // Log.Message($"[PortraitLoader] 找到并添加原版立绘: {storyteller}");
                     }
                 }
             }
@@ -1003,7 +1004,8 @@ namespace TheSecondSeat.PersonaGeneration
                         
                         portraits.Add(portraitInfo);
                         
-                        Log.Message($"[PortraitLoader] 找到Mod立绘: {storyteller.LabelCap} from {modName}");
+                        // ✅ v1.6.61: 关闭调试日志
+                        // Log.Message($"[PortraitLoader] 找到Mod立绘: {storyteller.LabelCap} from {modName}");
                     }
                 }
             }
@@ -1170,6 +1172,7 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// ✅ v1.6.34: 获取单个图层纹理（用于运行时分层绘制）
+        /// ✅ v1.6.61: 关闭调试日志
         /// </summary>
         /// <param name="def">人格定义</param>
         /// <param name="layerName">图层名称（如 "base_body", "happy_eyes", "small_mouth"）</param>
@@ -1202,15 +1205,16 @@ namespace TheSecondSeat.PersonaGeneration
                 // 设置纹理过滤模式为双线性（更平滑）
                 texture.filterMode = FilterMode.Bilinear;
                 texture.anisoLevel = 4; // 各向异性过滤（提升斜角质量）
-                texture.wrapMode = TextureWrapMode.Clamp; // ? 消除边缘杂色
+                texture.wrapMode = TextureWrapMode.Clamp; // 消除边缘杂色
                 
                 // 缓存纹理
                 cache[cacheKey] = texture;
                 
-                if (Prefs.DevMode)
-                {
-                    Log.Message($"[PortraitLoader] Loaded layer: {layerPath} ({texture.width}x{texture.height})");
-                }
+                // ✅ v1.6.61: 关闭调试日志
+                // if (Prefs.DevMode)
+                // {
+                //     Log.Message($"[PortraitLoader] Loaded layer: {layerPath} ({texture.width}x{texture.height})");
+                // }
             }
             else if (Prefs.DevMode)
             {
