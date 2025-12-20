@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using Verse;
 using RimWorld;
@@ -6,19 +6,19 @@ using RimWorld;
 namespace TheSecondSeat.Framework
 {
     /// <summary>
-    /// TSSĞĞ¶¯»ùÀà - ¶¨Òå"×öÊ²Ã´"
+    /// TSSè¡ŒåŠ¨åŸºç±» - å®šä¹‰"åšä»€ä¹ˆ"
     /// 
-    /// Éè¼ÆÔ­Ôò£º
-    /// 1. Ô­×ÓĞÔ£ºÃ¿¸öActionÖ»×öÒ»¼şÊÂ
-    /// 2. ÎŞ×´Ì¬£ºËùÓĞÊı¾İÍ¨¹ıcontext´«Èë
-    /// 3. ¿É×éºÏ£º¶à¸öAction¿É´®ÁªÖ´ĞĞ
+    /// è®¾è®¡åŸåˆ™ï¼š
+    /// 1. åŸå­æ€§ï¼šæ¯ä¸ªActionåªåšä¸€ä»¶äº‹
+    /// 2. æ— çŠ¶æ€ï¼šæ‰€æœ‰æ•°æ®é€šè¿‡contextä¼ å…¥
+    /// 3. å¯ç»„åˆï¼šå¤šä¸ªActionå¯ä¸²è”æ‰§è¡Œ
     /// 
-    /// XMLÅäÖÃÊ¾Àı£º
+    /// XMLé…ç½®ç¤ºä¾‹ï¼š
     /// <![CDATA[
     /// <actions>
     ///   <li Class="TheSecondSeat.Framework.Actions.ModifyAffinityAction">
     ///     <delta>10</delta>
-    ///     <reason>Íæ¼ÒÍê³ÉÁËÌôÕ½</reason>
+    ///     <reason>ç©å®¶å®Œæˆäº†æŒ‘æˆ˜</reason>
     ///   </li>
     /// </actions>
     /// ]]>
@@ -26,45 +26,45 @@ namespace TheSecondSeat.Framework
     public abstract class TSSAction
     {
         // ============================================
-        // XML¿ÉÅäÖÃ×Ö¶Î
+        // XMLå¯é…ç½®å­—æ®µ
         // ============================================
         
         /// <summary>
-        /// Ö´ĞĞÑÓ³Ù£¨ÓÎÏ·Tick£©
-        /// 0 = Á¢¼´Ö´ĞĞ£¬3600 = 1·ÖÖÓºóÖ´ĞĞ
+        /// æ‰§è¡Œå»¶è¿Ÿï¼ˆæ¸¸æˆTickï¼‰
+        /// 0 = ç«‹å³æ‰§è¡Œï¼Œ3600 = 1åˆ†é’Ÿåæ‰§è¡Œ
         /// </summary>
         public float delayTicks = 0f;
         
         /// <summary>
-        /// ActionÎ¨Ò»±êÊ¶£¨ÓÃÓÚµ÷ÊÔºÍÈÕÖ¾£©
+        /// Actionå”¯ä¸€æ ‡è¯†ï¼ˆç”¨äºè°ƒè¯•å’Œæ—¥å¿—ï¼‰
         /// </summary>
         public string actionId = "";
         
         /// <summary>
-        /// ÊÇ·ñÆôÓÃ´ËAction
+        /// æ˜¯å¦å¯ç”¨æ­¤Action
         /// </summary>
         public bool enabled = true;
         
         /// <summary>
-        /// Ö´ĞĞÌõ¼ş±í´ïÊ½£¨¿ÉÑ¡£¬Áô¿Õ±íÊ¾ÎŞÌõ¼şÖ´ĞĞ£©
-        /// ÀıÈç£º"context['affinity'] > 50"
+        /// æ‰§è¡Œæ¡ä»¶è¡¨è¾¾å¼ï¼ˆå¯é€‰ï¼Œç•™ç©ºè¡¨ç¤ºæ— æ¡ä»¶æ‰§è¡Œï¼‰
+        /// ä¾‹å¦‚ï¼š"context['affinity'] > 50"
         /// </summary>
         public string conditionExpression = "";
         
         // ============================================
-        // ºËĞÄ·½·¨
+        // æ ¸å¿ƒæ–¹æ³•
         // ============================================
         
         /// <summary>
-        /// Ö´ĞĞĞĞ¶¯£¨³éÏó·½·¨£¬ÓÉ×ÓÀàÊµÏÖ£©
+        /// æ‰§è¡Œè¡ŒåŠ¨ï¼ˆæŠ½è±¡æ–¹æ³•ï¼Œç”±å­ç±»å®ç°ï¼‰
         /// </summary>
-        /// <param name="map">Ä¿±êµØÍ¼</param>
-        /// <param name="context">ÉÏÏÂÎÄÊı¾İ£¨¹²ÏíÊı¾İ£¬Èçaffinity¡¢personaµÈ£©</param>
+        /// <param name="map">ç›®æ ‡åœ°å›¾</param>
+        /// <param name="context">ä¸Šä¸‹æ–‡æ•°æ®ï¼ˆå…±äº«æ•°æ®ï¼Œå¦‚affinityã€personaç­‰ï¼‰</param>
         public abstract void Execute(Map map, Dictionary<string, object> context);
         
         /// <summary>
-        /// °²È«Ö´ĞĞ°ü×°Æ÷£¨´øÒì³£´¦Àí£©
-        /// Íâ²¿µ÷ÓÃÓ¦Ê¹ÓÃ´Ë·½·¨¶ø·ÇÖ±½Óµ÷ÓÃExecute
+        /// å®‰å…¨æ‰§è¡ŒåŒ…è£…å™¨ï¼ˆå¸¦å¼‚å¸¸å¤„ç†ï¼‰
+        /// å¤–éƒ¨è°ƒç”¨åº”ä½¿ç”¨æ­¤æ–¹æ³•è€Œéç›´æ¥è°ƒç”¨Execute
         /// </summary>
         public void ExecuteSafe(Map map, Dictionary<string, object> context)
         {
@@ -79,7 +79,7 @@ namespace TheSecondSeat.Framework
             
             try
             {
-                // ¼ì²éÖ´ĞĞÌõ¼ş
+                // æ£€æŸ¥æ‰§è¡Œæ¡ä»¶
                 if (!string.IsNullOrEmpty(conditionExpression))
                 {
                     if (!EvaluateCondition(context))
@@ -92,7 +92,7 @@ namespace TheSecondSeat.Framework
                     }
                 }
                 
-                // Ö´ĞĞAction
+                // æ‰§è¡ŒAction
                 if (Prefs.DevMode)
                 {
                     Log.Message($"[TSSAction] Executing action: {actionId} ({GetType().Name})");
@@ -112,14 +112,14 @@ namespace TheSecondSeat.Framework
         }
         
         /// <summary>
-        /// ÆÀ¹ÀÌõ¼ş±í´ïÊ½£¨¼òµ¥ÊµÏÖ£¬¿ÉÀ©Õ¹£©
+        /// è¯„ä¼°æ¡ä»¶è¡¨è¾¾å¼ï¼ˆç®€å•å®ç°ï¼Œå¯æ‰©å±•ï¼‰
         /// </summary>
         private bool EvaluateCondition(Dictionary<string, object> context)
         {
             try
             {
-                // TODO: ÊµÏÖ¸ü¸´ÔÓµÄ±í´ïÊ½½âÎö
-                // µ±Ç°½öÖ§³Ö¼òµ¥µÄ¼üÖµ¼ì²é
+                // TODO: å®ç°æ›´å¤æ‚çš„è¡¨è¾¾å¼è§£æ
+                // å½“å‰ä»…æ”¯æŒç®€å•çš„é”®å€¼æ£€æŸ¥
                 return true;
             }
             catch (Exception ex)
@@ -130,7 +130,7 @@ namespace TheSecondSeat.Framework
         }
         
         /// <summary>
-        /// »ñÈ¡ActionÃèÊö£¨ÓÃÓÚUIÏÔÊ¾ºÍµ÷ÊÔ£©
+        /// è·å–Actionæè¿°ï¼ˆç”¨äºUIæ˜¾ç¤ºå’Œè°ƒè¯•ï¼‰
         /// </summary>
         public virtual string GetDescription()
         {
@@ -138,7 +138,7 @@ namespace TheSecondSeat.Framework
         }
         
         /// <summary>
-        /// ÑéÖ¤ÅäÖÃÊÇ·ñÓĞĞ§£¨ÔÚ¼ÓÔØÊ±µ÷ÓÃ£©
+        /// éªŒè¯é…ç½®æ˜¯å¦æœ‰æ•ˆï¼ˆåœ¨åŠ è½½æ—¶è°ƒç”¨ï¼‰
         /// </summary>
         public virtual bool Validate(out string error)
         {

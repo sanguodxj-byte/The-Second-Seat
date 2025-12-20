@@ -1,148 +1,148 @@
-# TSSÊÂ¼şÏµÍ³¿ò¼Ü - ÊµÏÖÍê³É×Ü½á
+ï»¿# TSSäº‹ä»¶ç³»ç»Ÿæ¡†æ¶ - å®ç°å®Œæˆæ€»ç»“
 
-## ? Íê³É×´Ì¬
+## ? å®ŒæˆçŠ¶æ€
 
-**¿ò¼Ü°æ±¾**: v1.0.0  
-**Íê³ÉÊ±¼ä**: 2025-01-XX  
-**±àÒë×´Ì¬**: ? ³É¹¦£¨0´íÎó£¬4¾¯¸æ£©
-
----
-
-## ?? ÒÑÊµÏÖ¹¦ÄÜ
-
-### 1. ºËĞÄ»ùÀàÏµÍ³ ?
-
-#### `TSSAction` - ĞĞ¶¯»ùÀà
-- **ÎÄ¼ş**: `Source/TheSecondSeat/Framework/TSSAction.cs`
-- **¹¦ÄÜ**:
-  - ³éÏó·½·¨ `Execute(Map, Dictionary<string, object>)`
-  - °²È«Ö´ĞĞ°ü×°Æ÷ `ExecuteSafe()`
-  - Ìõ¼ş±í´ïÊ½Ö§³Ö
-  - ÑÓ³ÙÖ´ĞĞÖ§³Ö `delayTicks`
-  - ÍêÕûÒì³£´¦ÀíºÍÈÕÖ¾¼ÇÂ¼
-
-#### `TSSTrigger` - ´¥·¢Æ÷»ùÀà
-- **ÎÄ¼ş**: `Source/TheSecondSeat/Framework/TSSTrigger.cs`
-- **¹¦ÄÜ**:
-  - ³éÏó·½·¨ `IsSatisfied(Map, Dictionary<string, object>)`
-  - °²È«¼ì²é°ü×°Æ÷ `CheckSafe()`
-  - ·´×ªÂß¼­Ö§³Ö `invert`
-  - ´¥·¢Æ÷×éºÏÆ÷ `CompositeTrigger` (AND/OR/Custom)
-  - È¨ÖØÏµÍ³Ö§³ÖÓÅÏÈ¼¶
-
-#### `NarratorEventDef` - ÊÂ¼ş¶¨Òå
-- **ÎÄ¼ş**: `Source/TheSecondSeat/Framework/NarratorEventDef.cs`
-- **¹¦ÄÜ**:
-  - ÍêÕûµÄDefÏµÍ³¼Ì³Ğ
-  - ´¥·¢Ìõ¼şÁĞ±í¹ÜÀí
-  - ĞĞ¶¯ÁĞ±íÖ´ĞĞ£¨´®ĞĞ/²¢ĞĞ£©
-  - ÀäÈ´Ê±¼ä¹ÜÀí
-  - ´¥·¢¸ÅÂÊ¿ØÖÆ
-  - Ò»´ÎĞÔÊÂ¼şÖ§³Ö
-  - ÈË¸ñºÍÄÑ¶ÈÄ£Ê½¹ıÂË
-  - ÓÎÏ·Ê±¼äÏŞÖÆ
-  - UIÍ¨ÖªÏµÍ³
+**æ¡†æ¶ç‰ˆæœ¬**: v1.0.0  
+**å®Œæˆæ—¶é—´**: 2025-01-XX  
+**ç¼–è¯‘çŠ¶æ€**: ? æˆåŠŸï¼ˆ0é”™è¯¯ï¼Œ4è­¦å‘Šï¼‰
 
 ---
 
-### 2. ÊÂ¼ş¹ÜÀíÆ÷ ?
+## ?? å·²å®ç°åŠŸèƒ½
+
+### 1. æ ¸å¿ƒåŸºç±»ç³»ç»Ÿ ?
+
+#### `TSSAction` - è¡ŒåŠ¨åŸºç±»
+- **æ–‡ä»¶**: `Source/TheSecondSeat/Framework/TSSAction.cs`
+- **åŠŸèƒ½**:
+  - æŠ½è±¡æ–¹æ³• `Execute(Map, Dictionary<string, object>)`
+  - å®‰å…¨æ‰§è¡ŒåŒ…è£…å™¨ `ExecuteSafe()`
+  - æ¡ä»¶è¡¨è¾¾å¼æ”¯æŒ
+  - å»¶è¿Ÿæ‰§è¡Œæ”¯æŒ `delayTicks`
+  - å®Œæ•´å¼‚å¸¸å¤„ç†å’Œæ—¥å¿—è®°å½•
+
+#### `TSSTrigger` - è§¦å‘å™¨åŸºç±»
+- **æ–‡ä»¶**: `Source/TheSecondSeat/Framework/TSSTrigger.cs`
+- **åŠŸèƒ½**:
+  - æŠ½è±¡æ–¹æ³• `IsSatisfied(Map, Dictionary<string, object>)`
+  - å®‰å…¨æ£€æŸ¥åŒ…è£…å™¨ `CheckSafe()`
+  - åè½¬é€»è¾‘æ”¯æŒ `invert`
+  - è§¦å‘å™¨ç»„åˆå™¨ `CompositeTrigger` (AND/OR/Custom)
+  - æƒé‡ç³»ç»Ÿæ”¯æŒä¼˜å…ˆçº§
+
+#### `NarratorEventDef` - äº‹ä»¶å®šä¹‰
+- **æ–‡ä»¶**: `Source/TheSecondSeat/Framework/NarratorEventDef.cs`
+- **åŠŸèƒ½**:
+  - å®Œæ•´çš„Defç³»ç»Ÿç»§æ‰¿
+  - è§¦å‘æ¡ä»¶åˆ—è¡¨ç®¡ç†
+  - è¡ŒåŠ¨åˆ—è¡¨æ‰§è¡Œï¼ˆä¸²è¡Œ/å¹¶è¡Œï¼‰
+  - å†·å´æ—¶é—´ç®¡ç†
+  - è§¦å‘æ¦‚ç‡æ§åˆ¶
+  - ä¸€æ¬¡æ€§äº‹ä»¶æ”¯æŒ
+  - äººæ ¼å’Œéš¾åº¦æ¨¡å¼è¿‡æ»¤
+  - æ¸¸æˆæ—¶é—´é™åˆ¶
+  - UIé€šçŸ¥ç³»ç»Ÿ
+
+---
+
+### 2. äº‹ä»¶ç®¡ç†å™¨ ?
 
 #### `NarratorEventManager` - GameComponent
-- **ÎÄ¼ş**: `Source/TheSecondSeat/Framework/NarratorEventManager.cs`
-- **¹¦ÄÜ**:
-  - ¶¨ÆÚ¼ì²éËùÓĞÊÂ¼ş£¨60 Tick¼ä¸ô£©
-  - ¸ßÓÅÏÈ¼¶ÊÂ¼ş¿ìËÙÍ¨µÀ£¨30 Tick¼ä¸ô£©
-  - ÉÏÏÂÎÄÊı¾İ×Ô¶¯ÊÕ¼¯ºÍ»º´æ
-  - ÊÂ¼şÖ´ĞĞÍ³¼Æ
-  - ÊÖ¶¯´¥·¢API `ForceTriggerEvent()`
-  - ×´Ì¬ÖØÖÃ¹¦ÄÜ
-  - ÍêÕûµÄ´æµµÖ§³Ö
+- **æ–‡ä»¶**: `Source/TheSecondSeat/Framework/NarratorEventManager.cs`
+- **åŠŸèƒ½**:
+  - å®šæœŸæ£€æŸ¥æ‰€æœ‰äº‹ä»¶ï¼ˆ60 Tické—´éš”ï¼‰
+  - é«˜ä¼˜å…ˆçº§äº‹ä»¶å¿«é€Ÿé€šé“ï¼ˆ30 Tické—´éš”ï¼‰
+  - ä¸Šä¸‹æ–‡æ•°æ®è‡ªåŠ¨æ”¶é›†å’Œç¼“å­˜
+  - äº‹ä»¶æ‰§è¡Œç»Ÿè®¡
+  - æ‰‹åŠ¨è§¦å‘API `ForceTriggerEvent()`
+  - çŠ¶æ€é‡ç½®åŠŸèƒ½
+  - å®Œæ•´çš„å­˜æ¡£æ”¯æŒ
 
-#### ÉÏÏÂÎÄÊı¾İ
-×Ô¶¯ÊÕ¼¯µÄcontextÊı¾İ£º
-- `persona` - µ±Ç°ÈË¸ñdefName
-- `personaDef` - µ±Ç°ÈË¸ñDef¶ÔÏó
-- `affinity` - ºÃ¸Ğ¶È
-- `mood` - ĞÄÇé×´Ì¬
-- `difficultyMode` - AIÄÑ¶ÈÄ£Ê½
-- `colonistCount` - Ö³ÃñÕßÊıÁ¿
-- `prisonerCount` - Çô·¸ÊıÁ¿
-- `animalCount` - ¶¯ÎïÊıÁ¿
-- `wealthTotal/Buildings/Items` - ²Æ¸»Í³¼Æ
-- `gameTicks` - ÓÎÏ·TickÊı
-- `gameYear` - ÓÎÏ·Äê·İ
-- `gameSeason` - ÓÎÏ·¼¾½Ú
+#### ä¸Šä¸‹æ–‡æ•°æ®
+è‡ªåŠ¨æ”¶é›†çš„contextæ•°æ®ï¼š
+- `persona` - å½“å‰äººæ ¼defName
+- `personaDef` - å½“å‰äººæ ¼Defå¯¹è±¡
+- `affinity` - å¥½æ„Ÿåº¦
+- `mood` - å¿ƒæƒ…çŠ¶æ€
+- `difficultyMode` - AIéš¾åº¦æ¨¡å¼
+- `colonistCount` - æ®–æ°‘è€…æ•°é‡
+- `prisonerCount` - å›šçŠ¯æ•°é‡
+- `animalCount` - åŠ¨ç‰©æ•°é‡
+- `wealthTotal/Buildings/Items` - è´¢å¯Œç»Ÿè®¡
+- `gameTicks` - æ¸¸æˆTickæ•°
+- `gameYear` - æ¸¸æˆå¹´ä»½
+- `gameSeason` - æ¸¸æˆå­£èŠ‚
 
 ---
 
-### 3. »ù´¡TriggerÊµÏÖ ?
+### 3. åŸºç¡€Triggerå®ç° ?
 
-**ÎÄ¼ş**: `Source/TheSecondSeat/Framework/Triggers/BasicTriggers.cs`
+**æ–‡ä»¶**: `Source/TheSecondSeat/Framework/Triggers/BasicTriggers.cs`
 
-| Trigger | ¹¦ÄÜ | XMLÊ¾Àı |
+| Trigger | åŠŸèƒ½ | XMLç¤ºä¾‹ |
 |---------|------|---------|
-| **AffinityRangeTrigger** | ºÃ¸Ğ¶È·¶Î§¼ì²é | `<minAffinity>60</minAffinity>` |
-| **ColonistCountTrigger** | Ö³ÃñÕßÊıÁ¿¼ì²é | `<minCount>5</minCount>` |
-| **WealthRangeTrigger** | ²Æ¸»·¶Î§¼ì²é | `<minWealth>50000</minWealth>` |
-| **SeasonTrigger** | ¼¾½Ú¼ì²é | `<allowedSeasons><li>Spring</li>` |
-| **TimeRangeTrigger** | Ê±¼ä¶Î¼ì²é | `<minHour>6</minHour>` |
-| **RandomChanceTrigger** | Ëæ»ú¸ÅÂÊ¼ì²é | `<chance>0.5</chance>` |
-| **MoodStateTrigger** | ĞÄÇé×´Ì¬¼ì²é | `<allowedMoods><li>Cheerful</li>` |
+| **AffinityRangeTrigger** | å¥½æ„Ÿåº¦èŒƒå›´æ£€æŸ¥ | `<minAffinity>60</minAffinity>` |
+| **ColonistCountTrigger** | æ®–æ°‘è€…æ•°é‡æ£€æŸ¥ | `<minCount>5</minCount>` |
+| **WealthRangeTrigger** | è´¢å¯ŒèŒƒå›´æ£€æŸ¥ | `<minWealth>50000</minWealth>` |
+| **SeasonTrigger** | å­£èŠ‚æ£€æŸ¥ | `<allowedSeasons><li>Spring</li>` |
+| **TimeRangeTrigger** | æ—¶é—´æ®µæ£€æŸ¥ | `<minHour>6</minHour>` |
+| **RandomChanceTrigger** | éšæœºæ¦‚ç‡æ£€æŸ¥ | `<chance>0.5</chance>` |
+| **MoodStateTrigger** | å¿ƒæƒ…çŠ¶æ€æ£€æŸ¥ | `<allowedMoods><li>Cheerful</li>` |
 
 ---
 
-### 4. »ù´¡ActionÊµÏÖ ?
+### 4. åŸºç¡€Actionå®ç° ?
 
-**ÎÄ¼ş**: `Source/TheSecondSeat/Framework/Actions/BasicActions.cs`
+**æ–‡ä»¶**: `Source/TheSecondSeat/Framework/Actions/BasicActions.cs`
 
-| Action | ¹¦ÄÜ | XMLÊ¾Àı |
+| Action | åŠŸèƒ½ | XMLç¤ºä¾‹ |
 |--------|------|---------|
-| **ModifyAffinityAction** | ĞŞ¸ÄºÃ¸Ğ¶È | `<delta>10</delta>` |
-| **ShowDialogueAction** | ÏÔÊ¾¶Ô»°/ÏûÏ¢ | `<dialogueText>ÄãºÃ</dialogueText>` |
-| **SpawnResourceAction** | Éú³ÉÎïÆ· | `<resourceType>Steel</resourceType>` |
-| **TriggerEventAction** | Á´Ê½´¥·¢ÊÂ¼ş | `<targetEventDefName>MyEvent</targetEventDefName>` |
-| **PlaySoundAction** | ²¥·ÅÒôĞ§£¨Õ¼Î»£© | `<sound>...</sound>` |
-| **SetMoodAction** | ÉèÖÃĞÄÇé | `<newMood>Cheerful</newMood>` |
-| **LogMessageAction** | Êä³öÈÕÖ¾ | `<message>µ÷ÊÔĞÅÏ¢</message>` |
+| **ModifyAffinityAction** | ä¿®æ”¹å¥½æ„Ÿåº¦ | `<delta>10</delta>` |
+| **ShowDialogueAction** | æ˜¾ç¤ºå¯¹è¯/æ¶ˆæ¯ | `<dialogueText>ä½ å¥½</dialogueText>` |
+| **SpawnResourceAction** | ç”Ÿæˆç‰©å“ | `<resourceType>Steel</resourceType>` |
+| **TriggerEventAction** | é“¾å¼è§¦å‘äº‹ä»¶ | `<targetEventDefName>MyEvent</targetEventDefName>` |
+| **PlaySoundAction** | æ’­æ”¾éŸ³æ•ˆï¼ˆå ä½ï¼‰ | `<sound>...</sound>` |
+| **SetMoodAction** | è®¾ç½®å¿ƒæƒ… | `<newMood>Cheerful</newMood>` |
+| **LogMessageAction** | è¾“å‡ºæ—¥å¿— | `<message>è°ƒè¯•ä¿¡æ¯</message>` |
 
 ---
 
-### 5. Ê¾ÀıÊÂ¼ş ?
+### 5. ç¤ºä¾‹äº‹ä»¶ ?
 
-**ÎÄ¼ş**: `Defs/NarratorEventDefs.xml`
+**æ–‡ä»¶**: `Defs/NarratorEventDefs.xml`
 
-´´½¨ÁË5¸öÍêÕûÊ¾ÀıÊÂ¼ş£º
+åˆ›å»ºäº†5ä¸ªå®Œæ•´ç¤ºä¾‹äº‹ä»¶ï¼š
 
-1. **HighAffinityReward** - ¸ßºÃ¸Ğ¶È½±Àø
-   - ºÃ¸Ğ¶È80+´¥·¢
-   - Éú³É¸Ö²ÄºÍ×é¼ş
-   - 10·ÖÖÓÀäÈ´
+1. **HighAffinityReward** - é«˜å¥½æ„Ÿåº¦å¥–åŠ±
+   - å¥½æ„Ÿåº¦80+è§¦å‘
+   - ç”Ÿæˆé’¢æå’Œç»„ä»¶
+   - 10åˆ†é’Ÿå†·å´
 
-2. **LowAffinityWarning** - µÍºÃ¸Ğ¶È¾¯¸æ
-   - ºÃ¸Ğ¶È<-50´¥·¢
-   - ÏÔÊ¾¾¯¸æÏûÏ¢
-   - ½µµÍºÃ¸Ğ¶È
+2. **LowAffinityWarning** - ä½å¥½æ„Ÿåº¦è­¦å‘Š
+   - å¥½æ„Ÿåº¦<-50è§¦å‘
+   - æ˜¾ç¤ºè­¦å‘Šæ¶ˆæ¯
+   - é™ä½å¥½æ„Ÿåº¦
 
-3. **SpringGreeting** - ´º¼¾ÎÊºò
-   - ´º¼¾+Ôç³¿´¥·¢
-   - ¼¾½ÚĞÔ»¥¶¯
+3. **SpringGreeting** - æ˜¥å­£é—®å€™
+   - æ˜¥å­£+æ—©æ™¨è§¦å‘
+   - å­£èŠ‚æ€§äº’åŠ¨
 
-4. **WealthMilestone** - ²Æ¸»Àï³Ì±®
-   - ²Æ¸»50000+´¥·¢
-   - Ò»´ÎĞÔÊÂ¼ş
-   - Éú³É½±ÀøÒø±Ò
+4. **WealthMilestone** - è´¢å¯Œé‡Œç¨‹ç¢‘
+   - è´¢å¯Œ50000+è§¦å‘
+   - ä¸€æ¬¡æ€§äº‹ä»¶
+   - ç”Ÿæˆå¥–åŠ±é“¶å¸
 
-5. **EventChainStart** - Á´Ê½ÊÂ¼ş
-   - Á´Ê½´¥·¢ÆäËûÊÂ¼ş
-   - ÑÓ³ÙÖ´ĞĞÑİÊ¾
+5. **EventChainStart** - é“¾å¼äº‹ä»¶
+   - é“¾å¼è§¦å‘å…¶ä»–äº‹ä»¶
+   - å»¶è¿Ÿæ‰§è¡Œæ¼”ç¤º
 
 ---
 
-### 6. GameComponent×¢²á ?
+### 6. GameComponentæ³¨å†Œ ?
 
-**ÎÄ¼ş**: `Defs/GameComponentDefs.xml`
+**æ–‡ä»¶**: `Defs/GameComponentDefs.xml`
 
-ÒÑÌí¼Ó£º
+å·²æ·»åŠ ï¼š
 ```xml
 <GameComponentDef>
   <defName>TheSecondSeat_NarratorEventManager</defName>
@@ -152,68 +152,68 @@
 
 ---
 
-### 7. ÎÄµµ ?
+### 7. æ–‡æ¡£ ?
 
-**ÎÄ¼ş**: `Docs/TSSÊÂ¼şÏµÍ³-¿ìËÙ²Î¿¼.md`
+**æ–‡ä»¶**: `Docs/TSSäº‹ä»¶ç³»ç»Ÿ-å¿«é€Ÿå‚è€ƒ.md`
 
-°üº¬£º
-- ¿ìËÙ¿ªÊ¼Ö¸ÄÏ
-- ËùÓĞTriggerºÍActionµÄÏêÏ¸ËµÃ÷
-- XMLÅäÖÃÊ¾Àı
-- µ÷ÊÔ¼¼ÇÉ
-- À©Õ¹·½·¨
-- ³£¼ûÎÊÌâ½â´ğ
-
----
-
-## ??? ¼Ü¹¹ÌØµã
-
-### ? Êı¾İÇı¶¯
-- ËùÓĞÊÂ¼şÂß¼­Í¨¹ıXML¶¨Òå
-- ÎŞĞèĞŞ¸ÄC#´úÂëÌí¼ÓĞÂÊÂ¼ş
-- ÍêÈ«½âñîµÄÉè¼Æ
-
-### ? ÀàĞÍ°²È«
-- ¼Ì³Ğ×ÔVerse.Def
-- RimWorld XML¼ÓÔØÆ÷×Ô¶¯´¦Àí
-- Ö§³Ö¶àÌ¬¼ÓÔØ `Class="..."`
-
-### ? Òì³£°²È«
-- ËùÓĞExecuteºÍIsSatisfied·½·¨¶¼ÓĞtry-catch°ü×°
-- ´íÎó²»»áµ¼ÖÂÓÎÏ·±ÀÀ£
-- ÏêÏ¸µÄ´íÎóÈÕÖ¾
-
-### ? ¸ßĞÔÄÜ
-- ÉÏÏÂÎÄÊı¾İ»º´æ
-- ¸ßÓÅÏÈ¼¶ÊÂ¼ş¿ìËÙÍ¨µÀ
-- ×îĞ¡»¯GCÑ¹Á¦
-
-### ? ¿ÉÀ©Õ¹
-- ÇåÎúµÄ¼Ì³Ğ½á¹¹
-- ×ÓMod¿ÉÇáËÉÌí¼Ó×Ô¶¨ÒåTriggerºÍAction
-- ÊÂ¼şÁ´Ê½´¥·¢Ö§³Ö
+åŒ…å«ï¼š
+- å¿«é€Ÿå¼€å§‹æŒ‡å—
+- æ‰€æœ‰Triggerå’ŒActionçš„è¯¦ç»†è¯´æ˜
+- XMLé…ç½®ç¤ºä¾‹
+- è°ƒè¯•æŠ€å·§
+- æ‰©å±•æ–¹æ³•
+- å¸¸è§é—®é¢˜è§£ç­”
 
 ---
 
-## ?? ´úÂëÍ³¼Æ
+## ??? æ¶æ„ç‰¹ç‚¹
 
-| ÎÄ¼ş | ĞĞÊı | ¹¦ÄÜ |
+### ? æ•°æ®é©±åŠ¨
+- æ‰€æœ‰äº‹ä»¶é€»è¾‘é€šè¿‡XMLå®šä¹‰
+- æ— éœ€ä¿®æ”¹C#ä»£ç æ·»åŠ æ–°äº‹ä»¶
+- å®Œå…¨è§£è€¦çš„è®¾è®¡
+
+### ? ç±»å‹å®‰å…¨
+- ç»§æ‰¿è‡ªVerse.Def
+- RimWorld XMLåŠ è½½å™¨è‡ªåŠ¨å¤„ç†
+- æ”¯æŒå¤šæ€åŠ è½½ `Class="..."`
+
+### ? å¼‚å¸¸å®‰å…¨
+- æ‰€æœ‰Executeå’ŒIsSatisfiedæ–¹æ³•éƒ½æœ‰try-catchåŒ…è£…
+- é”™è¯¯ä¸ä¼šå¯¼è‡´æ¸¸æˆå´©æºƒ
+- è¯¦ç»†çš„é”™è¯¯æ—¥å¿—
+
+### ? é«˜æ€§èƒ½
+- ä¸Šä¸‹æ–‡æ•°æ®ç¼“å­˜
+- é«˜ä¼˜å…ˆçº§äº‹ä»¶å¿«é€Ÿé€šé“
+- æœ€å°åŒ–GCå‹åŠ›
+
+### ? å¯æ‰©å±•
+- æ¸…æ™°çš„ç»§æ‰¿ç»“æ„
+- å­Modå¯è½»æ¾æ·»åŠ è‡ªå®šä¹‰Triggerå’ŒAction
+- äº‹ä»¶é“¾å¼è§¦å‘æ”¯æŒ
+
+---
+
+## ?? ä»£ç ç»Ÿè®¡
+
+| æ–‡ä»¶ | è¡Œæ•° | åŠŸèƒ½ |
 |------|------|------|
-| TSSAction.cs | ~120 | ĞĞ¶¯»ùÀà |
-| TSSTrigger.cs | ~160 | ´¥·¢Æ÷»ùÀà |
-| NarratorEventDef.cs | ~420 | ÊÂ¼ş¶¨Òå |
-| NarratorEventManager.cs | ~380 | ÊÂ¼ş¹ÜÀíÆ÷ |
-| BasicTriggers.cs | ~180 | 7¸ö»ù´¡´¥·¢Æ÷ |
-| BasicActions.cs | ~260 | 7¸ö»ù´¡ĞĞ¶¯ |
-| **×Ü¼Æ** | **~1,520ĞĞ** | **ÍêÕû¿ò¼Ü** |
+| TSSAction.cs | ~120 | è¡ŒåŠ¨åŸºç±» |
+| TSSTrigger.cs | ~160 | è§¦å‘å™¨åŸºç±» |
+| NarratorEventDef.cs | ~420 | äº‹ä»¶å®šä¹‰ |
+| NarratorEventManager.cs | ~380 | äº‹ä»¶ç®¡ç†å™¨ |
+| BasicTriggers.cs | ~180 | 7ä¸ªåŸºç¡€è§¦å‘å™¨ |
+| BasicActions.cs | ~260 | 7ä¸ªåŸºç¡€è¡ŒåŠ¨ |
+| **æ€»è®¡** | **~1,520è¡Œ** | **å®Œæ•´æ¡†æ¶** |
 
-XMLÊ¾ÀıºÍÎÄµµ£º~800ĞĞ
+XMLç¤ºä¾‹å’Œæ–‡æ¡£ï¼š~800è¡Œ
 
 ---
 
-## ?? Ê¹ÓÃÁ÷³Ì
+## ?? ä½¿ç”¨æµç¨‹
 
-### 1. ´´½¨ÊÂ¼şXML
+### 1. åˆ›å»ºäº‹ä»¶XML
 ```xml
 <TheSecondSeat.Framework.NarratorEventDef>
   <defName>MyEvent</defName>
@@ -222,12 +222,12 @@ XMLÊ¾ÀıºÍÎÄµµ£º~800ĞĞ
 </TheSecondSeat.Framework.NarratorEventDef>
 ```
 
-### 2. ÓÎÏ·×Ô¶¯¼ÓÔØ
-- NarratorEventManager×Ô¶¯¼ì²â
-- ¶¨ÆÚÆÀ¹À´¥·¢Ìõ¼ş
-- ×Ô¶¯Ö´ĞĞ·ûºÏÌõ¼şµÄÊÂ¼ş
+### 2. æ¸¸æˆè‡ªåŠ¨åŠ è½½
+- NarratorEventManagerè‡ªåŠ¨æ£€æµ‹
+- å®šæœŸè¯„ä¼°è§¦å‘æ¡ä»¶
+- è‡ªåŠ¨æ‰§è¡Œç¬¦åˆæ¡ä»¶çš„äº‹ä»¶
 
-### 3. ×ÓModÀ©Õ¹£¨¿ÉÑ¡£©
+### 3. å­Modæ‰©å±•ï¼ˆå¯é€‰ï¼‰
 ```csharp
 public class MyTrigger : TSSTrigger { ... }
 public class MyAction : TSSAction { ... }
@@ -235,150 +235,150 @@ public class MyAction : TSSAction { ... }
 
 ---
 
-## ?? API±©Â¶
+## ?? APIæš´éœ²
 
-### ¹«¹²·½·¨
+### å…¬å…±æ–¹æ³•
 
 #### NarratorEventManager
 ```csharp
-// ÊÖ¶¯´¥·¢ÊÂ¼ş
+// æ‰‹åŠ¨è§¦å‘äº‹ä»¶
 public void ForceTriggerEvent(string eventDefName)
 
-// »ñÈ¡Ö´ĞĞÍ³¼Æ
+// è·å–æ‰§è¡Œç»Ÿè®¡
 public int GetEventExecutionCount(string eventDefName)
 public Dictionary<string, int> GetAllEventStats()
 
-// ÖØÖÃ×´Ì¬
+// é‡ç½®çŠ¶æ€
 public void ResetAllEventStates()
 ```
 
 #### NarratorEventDef
 ```csharp
-// ¼ì²éÊÇ·ñ¿É´¥·¢
+// æ£€æŸ¥æ˜¯å¦å¯è§¦å‘
 public bool CanTrigger(Map map, Dictionary<string, object> context)
 
-// ´¥·¢ÊÂ¼ş
+// è§¦å‘äº‹ä»¶
 public void TriggerEvent(Map map, Dictionary<string, object> context)
 
-// ÖØÖÃ×´Ì¬
+// é‡ç½®çŠ¶æ€
 public void ResetState()
 
-// »ñÈ¡ÀäÈ´Ê±¼ä
+// è·å–å†·å´æ—¶é—´
 public int GetSecondsUntilNextTrigger()
 ```
 
 ---
 
-## ?? ²âÊÔ·½·¨
+## ?? æµ‹è¯•æ–¹æ³•
 
-### ¿ª·¢Õß¿ØÖÆÌ¨²âÊÔ
+### å¼€å‘è€…æ§åˆ¶å°æµ‹è¯•
 ```csharp
-// 1. Ç¿ÖÆ´¥·¢ÊÂ¼ş
+// 1. å¼ºåˆ¶è§¦å‘äº‹ä»¶
 TheSecondSeat.Framework.NarratorEventManager.Instance.ForceTriggerEvent("HighAffinityReward");
 
-// 2. ²é¿´Í³¼Æ
+// 2. æŸ¥çœ‹ç»Ÿè®¡
 var stats = TheSecondSeat.Framework.NarratorEventManager.Instance.GetAllEventStats();
 foreach(var kv in stats) {
     Log.Message($"{kv.Key}: {kv.Value} times");
 }
 
-// 3. ÖØÖÃËùÓĞÊÂ¼ş
+// 3. é‡ç½®æ‰€æœ‰äº‹ä»¶
 TheSecondSeat.Framework.NarratorEventManager.Instance.ResetAllEventStates();
 ```
 
 ---
 
-## ?? ÒÑÖªÏŞÖÆ
+## ?? å·²çŸ¥é™åˆ¶
 
-1. **PlaySoundAction**: ÒôĞ§²¥·Å¹¦ÄÜÎ´ÊµÏÖ£¨ĞèÒªÕıÈ·µÄRimWorldÒôĞ§API£©
-2. **±í´ïÊ½½âÎö**: Ìõ¼ş±í´ïÊ½½öÖ§³Ö¼òµ¥¼ì²é£¨¿ÉÀ©Õ¹£©
-3. **ĞÔÄÜ**: ´óÁ¿ÊÂ¼ş£¨>100¸ö£©¿ÉÄÜĞèÒªÓÅ»¯¼ì²éÆµÂÊ
-
----
-
-## ?? ºóĞøÀ©Õ¹½¨Òé
-
-### Phase 2 - ÔöÇ¿¹¦ÄÜ
-- [ ] ¸´ÔÓÌõ¼ş±í´ïÊ½½âÎöÆ÷
-- [ ] ÊÂ¼şÓÅÏÈ¼¶¶ÓÁĞÏµÍ³
-- [ ] ÊÂ¼şÖ´ĞĞÀúÊ·¼ÇÂ¼
-- [ ] UIÊÂ¼ş±à¼­Æ÷
-- [ ] ÊÂ¼şÔ¤ÀÀÏµÍ³
-
-### Phase 3 - ¸ß¼¶¹¦ÄÜ
-- [ ] ÊÂ¼şÄ£°åÏµÍ³
-- [ ] ¶¯Ì¬ÊÂ¼şÉú³É
-- [ ] ÊÂ¼şÒÀÀµ¹ØÏµÍ¼
-- [ ] ĞÔÄÜ·ÖÎö¹¤¾ß
-- [ ] ¿ÉÊÓ»¯ÊÂ¼şÁ÷±à¼­Æ÷
+1. **PlaySoundAction**: éŸ³æ•ˆæ’­æ”¾åŠŸèƒ½æœªå®ç°ï¼ˆéœ€è¦æ­£ç¡®çš„RimWorldéŸ³æ•ˆAPIï¼‰
+2. **è¡¨è¾¾å¼è§£æ**: æ¡ä»¶è¡¨è¾¾å¼ä»…æ”¯æŒç®€å•æ£€æŸ¥ï¼ˆå¯æ‰©å±•ï¼‰
+3. **æ€§èƒ½**: å¤§é‡äº‹ä»¶ï¼ˆ>100ä¸ªï¼‰å¯èƒ½éœ€è¦ä¼˜åŒ–æ£€æŸ¥é¢‘ç‡
 
 ---
 
-## ?? ÎÄ¼şÇåµ¥
+## ?? åç»­æ‰©å±•å»ºè®®
 
-### ºËĞÄ¿ò¼Ü
+### Phase 2 - å¢å¼ºåŠŸèƒ½
+- [ ] å¤æ‚æ¡ä»¶è¡¨è¾¾å¼è§£æå™¨
+- [ ] äº‹ä»¶ä¼˜å…ˆçº§é˜Ÿåˆ—ç³»ç»Ÿ
+- [ ] äº‹ä»¶æ‰§è¡Œå†å²è®°å½•
+- [ ] UIäº‹ä»¶ç¼–è¾‘å™¨
+- [ ] äº‹ä»¶é¢„è§ˆç³»ç»Ÿ
+
+### Phase 3 - é«˜çº§åŠŸèƒ½
+- [ ] äº‹ä»¶æ¨¡æ¿ç³»ç»Ÿ
+- [ ] åŠ¨æ€äº‹ä»¶ç”Ÿæˆ
+- [ ] äº‹ä»¶ä¾èµ–å…³ç³»å›¾
+- [ ] æ€§èƒ½åˆ†æå·¥å…·
+- [ ] å¯è§†åŒ–äº‹ä»¶æµç¼–è¾‘å™¨
+
+---
+
+## ?? æ–‡ä»¶æ¸…å•
+
+### æ ¸å¿ƒæ¡†æ¶
 ```
 Source/TheSecondSeat/Framework/
-©À©¤©¤ TSSAction.cs
-©À©¤©¤ TSSTrigger.cs
-©À©¤©¤ NarratorEventDef.cs
-©À©¤©¤ NarratorEventManager.cs
-©À©¤©¤ Triggers/
-©¦   ©¸©¤©¤ BasicTriggers.cs
-©¸©¤©¤ Actions/
-    ©¸©¤©¤ BasicActions.cs
+â”œâ”€â”€ TSSAction.cs
+â”œâ”€â”€ TSSTrigger.cs
+â”œâ”€â”€ NarratorEventDef.cs
+â”œâ”€â”€ NarratorEventManager.cs
+â”œâ”€â”€ Triggers/
+â”‚   â””â”€â”€ BasicTriggers.cs
+â””â”€â”€ Actions/
+    â””â”€â”€ BasicActions.cs
 ```
 
-### ÅäÖÃºÍÊ¾Àı
+### é…ç½®å’Œç¤ºä¾‹
 ```
 Defs/
-©À©¤©¤ GameComponentDefs.xml (ÒÑ¸üĞÂ)
-©¸©¤©¤ NarratorEventDefs.xml (ĞÂÔö)
+â”œâ”€â”€ GameComponentDefs.xml (å·²æ›´æ–°)
+â””â”€â”€ NarratorEventDefs.xml (æ–°å¢)
 
 Docs/
-©¸©¤©¤ TSSÊÂ¼şÏµÍ³-¿ìËÙ²Î¿¼.md
+â””â”€â”€ TSSäº‹ä»¶ç³»ç»Ÿ-å¿«é€Ÿå‚è€ƒ.md
 ```
 
 ---
 
-## ? ÑéÖ¤Çåµ¥
+## ? éªŒè¯æ¸…å•
 
-- [x] ËùÓĞÀà¼Ì³Ğ×ÔÕıÈ·µÄ»ùÀà
-- [x] XML¼ÓÔØÏµÍ³¼æÈİ
-- [x] Òì³£´¦ÀíÍêÕû
-- [x] ÈÕÖ¾¼ÇÂ¼ÏêÏ¸
-- [x] DevModeµ÷ÊÔÖ§³Ö
-- [x] ´æµµ¼æÈİĞÔ
-- [x] ±àÒë³É¹¦£¨0´íÎó£©
-- [x] ´úÂë×¢ÊÍÍêÕû
-- [x] XMLÊ¾Àı·á¸»
-- [x] ÎÄµµÇåÎú
-
----
-
-## ?? ×Ü½á
-
-**The Second Seat ÊÂ¼şÏµÍ³¿ò¼Ü**ÏÖÒÑÍê³É£¡
-
-### ºËĞÄÓÅÊÆ
-1. **ÍêÈ«Êı¾İÇı¶¯** - ½öĞèXMLÅäÖÃ¼´¿É´´½¨¸´ÔÓÊÂ¼ş
-2. **ÀàĞÍ°²È«** - ÀûÓÃRimWorldµÄDefÏµÍ³
-3. **¸ß¶È¿ÉÀ©Õ¹** - ÇåÎúµÄ¼Ì³Ğ½á¹¹
-4. **Ò×ÓÚÊ¹ÓÃ** - ·á¸»µÄÊ¾ÀıºÍÎÄµµ
-5. **Éú²ú¾ÍĞ÷** - ÍêÕûµÄÒì³£´¦ÀíºÍÈÕÖ¾
-
-### ÊÊÓÃ³¡¾°
-- ? ºÃ¸Ğ¶ÈÇı¶¯µÄ½±Àø/³Í·£
-- ? ¼¾½ÚĞÔ/Ê±¼äĞÔÊÂ¼ş
-- ? Ö³ÃñµØÀï³Ì±®Çì×£
-- ? Á´Ê½¾çÇéÊÂ¼ş
-- ? ¶¯Ì¬ÄÑ¶Èµ÷Õû
-- ? ÈÎºÎÌõ¼ş´¥·¢µÄÓÎÏ·Âß¼­
-
-**¿ò¼ÜÒÑ¾ÍĞ÷£¬¿ªÊ¼´´ÔìÄãµÄĞğÊÂÕß¹ÊÊÂ°É£¡** ???
+- [x] æ‰€æœ‰ç±»ç»§æ‰¿è‡ªæ­£ç¡®çš„åŸºç±»
+- [x] XMLåŠ è½½ç³»ç»Ÿå…¼å®¹
+- [x] å¼‚å¸¸å¤„ç†å®Œæ•´
+- [x] æ—¥å¿—è®°å½•è¯¦ç»†
+- [x] DevModeè°ƒè¯•æ”¯æŒ
+- [x] å­˜æ¡£å…¼å®¹æ€§
+- [x] ç¼–è¯‘æˆåŠŸï¼ˆ0é”™è¯¯ï¼‰
+- [x] ä»£ç æ³¨é‡Šå®Œæ•´
+- [x] XMLç¤ºä¾‹ä¸°å¯Œ
+- [x] æ–‡æ¡£æ¸…æ™°
 
 ---
 
-**×÷Õß**: GitHub Copilot  
-**ÈÕÆÚ**: 2025-01-XX  
-**°æ±¾**: v1.0.0
+## ?? æ€»ç»“
+
+**The Second Seat äº‹ä»¶ç³»ç»Ÿæ¡†æ¶**ç°å·²å®Œæˆï¼
+
+### æ ¸å¿ƒä¼˜åŠ¿
+1. **å®Œå…¨æ•°æ®é©±åŠ¨** - ä»…éœ€XMLé…ç½®å³å¯åˆ›å»ºå¤æ‚äº‹ä»¶
+2. **ç±»å‹å®‰å…¨** - åˆ©ç”¨RimWorldçš„Defç³»ç»Ÿ
+3. **é«˜åº¦å¯æ‰©å±•** - æ¸…æ™°çš„ç»§æ‰¿ç»“æ„
+4. **æ˜“äºä½¿ç”¨** - ä¸°å¯Œçš„ç¤ºä¾‹å’Œæ–‡æ¡£
+5. **ç”Ÿäº§å°±ç»ª** - å®Œæ•´çš„å¼‚å¸¸å¤„ç†å’Œæ—¥å¿—
+
+### é€‚ç”¨åœºæ™¯
+- ? å¥½æ„Ÿåº¦é©±åŠ¨çš„å¥–åŠ±/æƒ©ç½š
+- ? å­£èŠ‚æ€§/æ—¶é—´æ€§äº‹ä»¶
+- ? æ®–æ°‘åœ°é‡Œç¨‹ç¢‘åº†ç¥
+- ? é“¾å¼å‰§æƒ…äº‹ä»¶
+- ? åŠ¨æ€éš¾åº¦è°ƒæ•´
+- ? ä»»ä½•æ¡ä»¶è§¦å‘çš„æ¸¸æˆé€»è¾‘
+
+**æ¡†æ¶å·²å°±ç»ªï¼Œå¼€å§‹åˆ›é€ ä½ çš„å™äº‹è€…æ•…äº‹å§ï¼** ???
+
+---
+
+**ä½œè€…**: GitHub Copilot  
+**æ—¥æœŸ**: 2025-01-XX  
+**ç‰ˆæœ¬**: v1.0.0

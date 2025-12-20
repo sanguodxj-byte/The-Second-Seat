@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
@@ -8,64 +8,64 @@ using Verse;
 namespace TheSecondSeat.NaturalLanguage
 {
     /// <summary>
-    /// ¸ß¼¶ÃüÁî²ÎÊı
+    /// é«˜çº§å‘½ä»¤å‚æ•°
     /// </summary>
     [Serializable]
     public class AdvancedCommandParams
     {
-        public string? target { get; set; }          // Ä¿±êÀàĞÍ£¨Èç "Blighted", "All", "Damaged"£©
-        public string? scope { get; set; }           // ·¶Î§£¨"Map", "Home", "Selected"£©
-        public Dictionary<string, object>? filters { get; set; }  // ¹ıÂËÌõ¼ş
-        public int? count { get; set; }              // ÊıÁ¿ÏŞÖÆ
-        public bool? priority { get; set; }          // ÊÇ·ñÓÅÏÈ
+        public string? target { get; set; }          // ç›®æ ‡ç±»å‹ï¼ˆå¦‚ "Blighted", "All", "Damaged"ï¼‰
+        public string? scope { get; set; }           // èŒƒå›´ï¼ˆ"Map", "Home", "Selected"ï¼‰
+        public Dictionary<string, object>? filters { get; set; }  // è¿‡æ»¤æ¡ä»¶
+        public int? count { get; set; }              // æ•°é‡é™åˆ¶
+        public bool? priority { get; set; }          // æ˜¯å¦ä¼˜å…ˆ
     }
 
     /// <summary>
-    /// ×ÔÈ»ÓïÑÔÃüÁî½âÎö½á¹û
+    /// è‡ªç„¶è¯­è¨€å‘½ä»¤è§£æç»“æœ
     /// </summary>
     public class ParsedCommand
     {
         public string action = "";
         public AdvancedCommandParams parameters = new AdvancedCommandParams();
-        public float confidence = 0f;  // ½âÎöÖÃĞÅ¶È
+        public float confidence = 0f;  // è§£æç½®ä¿¡åº¦
         public string originalQuery = "";
     }
 
     /// <summary>
-    /// ×ÔÈ»ÓïÑÔÃüÁî½âÎöÆ÷ - ÔöÇ¿°æ
+    /// è‡ªç„¶è¯­è¨€å‘½ä»¤è§£æå™¨ - å¢å¼ºç‰ˆ
     /// </summary>
     public static class NaturalLanguageParser
     {
-        // ÃüÁîÓ³Éä±í
+        // å‘½ä»¤æ˜ å°„è¡¨
         private static readonly Dictionary<string, string[]> ActionKeywords = new Dictionary<string, string[]>
         {
-            { "BatchHarvest", new[] { "ÊÕ»ñ", "ÊÕ¸î", "²É¼¯", "Õª", "harvest", "cut" } },
-            { "BatchEquip", new[] { "×°±¸", "Îä×°", "´©´÷", "equip", "arm" } },
-            { "BatchCapture", new[] { "·ıÂ²", "²¶»ñ", "×¥²¶", "capture", "arrest", "imprison" } },
-            { "BatchMine", new[] { "²É¿ó", "ÍÚ¿ó", "¿ª²É", "mine", "dig", "excavate" } },
-            { "PriorityRepair", new[] { "ĞŞ¸´", "Î¬ĞŞ", "ĞŞÀí", "repair", "fix" } },
-            { "EmergencyRetreat", new[] { "³·ÍË", "ÌÓÅÜ", "Õ÷ÕÙ", "retreat", "draft" } },
-            { "ChangePolicy", new[] { "Õş²ß", "ÏŞÖÆ", "¹æÔò", "policy", "restriction" } },
-            { "DesignatePlantCut", new[] { "¿³Ê÷", "¿³Ö²Îï", "ÇåÀíÖ²Îï", "cut plant", "chop" } },
-            { "DesignateConstruction", new[] { "½¨Ôì", "½¨Öş", "construct", "build" } },
-            { "AssignWork", new[] { "·ÖÅä¹¤×÷", "Ö¸ÅÉ", "assign work" } },
-            { "ForbidItems", new[] { "½ûÖ¹", "Ëø¶¨", "forbid" } },
-            { "AllowItems", new[] { "ÔÊĞí", "½âËø", "allow", "permit" } }
+            { "BatchHarvest", new[] { "æ”¶è·", "æ”¶å‰²", "é‡‡é›†", "æ‘˜", "harvest", "cut" } },
+            { "BatchEquip", new[] { "è£…å¤‡", "æ­¦è£…", "ç©¿æˆ´", "equip", "arm" } },
+            { "BatchCapture", new[] { "ä¿˜è™", "æ•è·", "æŠ“æ•", "capture", "arrest", "imprison" } },
+            { "BatchMine", new[] { "é‡‡çŸ¿", "æŒ–çŸ¿", "å¼€é‡‡", "mine", "dig", "excavate" } },
+            { "PriorityRepair", new[] { "ä¿®å¤", "ç»´ä¿®", "ä¿®ç†", "repair", "fix" } },
+            { "EmergencyRetreat", new[] { "æ’¤é€€", "é€ƒè·‘", "å¾å¬", "retreat", "draft" } },
+            { "ChangePolicy", new[] { "æ”¿ç­–", "é™åˆ¶", "è§„åˆ™", "policy", "restriction" } },
+            { "DesignatePlantCut", new[] { "ç æ ‘", "ç æ¤ç‰©", "æ¸…ç†æ¤ç‰©", "cut plant", "chop" } },
+            { "DesignateConstruction", new[] { "å»ºé€ ", "å»ºç­‘", "construct", "build" } },
+            { "AssignWork", new[] { "åˆ†é…å·¥ä½œ", "æŒ‡æ´¾", "assign work" } },
+            { "ForbidItems", new[] { "ç¦æ­¢", "é”å®š", "forbid" } },
+            { "AllowItems", new[] { "å…è®¸", "è§£é”", "allow", "permit" } }
         };
 
-        // Ä¿±êÀàĞÍ¹Ø¼ü´Ê
+        // ç›®æ ‡ç±»å‹å…³é”®è¯
         private static readonly Dictionary<string, string[]> TargetKeywords = new Dictionary<string, string[]>
         {
-            { "Blighted", new[] { "¿İÎ®", "²¡º¦", "»µµô", "blighted" } },
-            { "All", new[] { "ËùÓĞ", "È«²¿", "È«Í¼", "all", "everything" } },
-            { "Damaged", new[] { "ÊÜËğ", "ÆÆËğ", "Ëğ»µ", "damaged", "broken" } },
-            { "Mature", new[] { "³ÉÊì", "¿ÉÊÕ»ñ", "mature", "ready" } },
-            { "Weapon", new[] { "ÎäÆ÷", "weapon", "gun" } },
-            { "Armor", new[] { "»¤¼×", "¿ø¼×", "armor" } }
+            { "Blighted", new[] { "æ¯è", "ç—…å®³", "åæ‰", "blighted" } },
+            { "All", new[] { "æ‰€æœ‰", "å…¨éƒ¨", "å…¨å›¾", "all", "everything" } },
+            { "Damaged", new[] { "å—æŸ", "ç ´æŸ", "æŸå", "damaged", "broken" } },
+            { "Mature", new[] { "æˆç†Ÿ", "å¯æ”¶è·", "mature", "ready" } },
+            { "Weapon", new[] { "æ­¦å™¨", "weapon", "gun" } },
+            { "Armor", new[] { "æŠ¤ç”²", "ç›”ç”²", "armor" } }
         };
 
         /// <summary>
-        /// ½âÎö×ÔÈ»ÓïÑÔÃüÁî
+        /// è§£æè‡ªç„¶è¯­è¨€å‘½ä»¤
         /// </summary>
         public static ParsedCommand? Parse(string naturalLanguageQuery)
         {
@@ -74,27 +74,27 @@ namespace TheSecondSeat.NaturalLanguage
 
             string query = naturalLanguageQuery.ToLower().Trim();
 
-            // 1. Ê¶±ğ¶¯×÷
+            // 1. è¯†åˆ«åŠ¨ä½œ
             string? action = IdentifyAction(query);
             if (action == null)
             {
-                Log.Warning($"[NLParser] ÎŞ·¨Ê¶±ğ¶¯×÷: {query}");
+                Log.Warning($"[NLParser] æ— æ³•è¯†åˆ«åŠ¨ä½œ: {query}");
                 return null;
             }
 
-            // 2. Ê¶±ğÄ¿±ê
+            // 2. è¯†åˆ«ç›®æ ‡
             string? target = IdentifyTarget(query);
 
-            // 3. Ê¶±ğ·¶Î§
+            // 3. è¯†åˆ«èŒƒå›´
             string? scope = IdentifyScope(query);
 
-            // 4. ÌáÈ¡ÊıÁ¿
+            // 4. æå–æ•°é‡
             int? count = ExtractCount(query);
 
-            // 5. ÅĞ¶ÏÊÇ·ñÓÅÏÈ
-            bool? priority = query.Contains("ÓÅÏÈ") || query.Contains("½ô¼±") || query.Contains("priority");
+            // 5. åˆ¤æ–­æ˜¯å¦ä¼˜å…ˆ
+            bool? priority = query.Contains("ä¼˜å…ˆ") || query.Contains("ç´§æ€¥") || query.Contains("priority");
 
-            // 6. ¼ÆËãÖÃĞÅ¶È
+            // 6. è®¡ç®—ç½®ä¿¡åº¦
             float confidence = CalculateConfidence(query, action, target, scope);
 
             var parsed = new ParsedCommand
@@ -111,7 +111,7 @@ namespace TheSecondSeat.NaturalLanguage
                 originalQuery = naturalLanguageQuery
             };
 
-            Log.Message($"[NLParser] ½âÎö½á¹û: Action={action}, Target={target}, Scope={scope}, Confidence={confidence:P0}");
+            Log.Message($"[NLParser] è§£æç»“æœ: Action={action}, Target={target}, Scope={scope}, Confidence={confidence:P0}");
 
             return parsed;
         }
@@ -137,16 +137,16 @@ namespace TheSecondSeat.NaturalLanguage
                     return kvp.Key;
                 }
             }
-            return "All"; // Ä¬ÈÏÄ¿±ê
+            return "All"; // é»˜è®¤ç›®æ ‡
         }
 
         private static string? IdentifyScope(string query)
         {
-            if (query.Contains("µØÍ¼") || query.Contains("È«Í¼") || query.Contains("map"))
+            if (query.Contains("åœ°å›¾") || query.Contains("å…¨å›¾") || query.Contains("map"))
                 return "Map";
-            if (query.Contains("¼ÒÔ°") || query.Contains("Ö³ÃñµØ") || query.Contains("home"))
+            if (query.Contains("å®¶å›­") || query.Contains("æ®–æ°‘åœ°") || query.Contains("home"))
                 return "Home";
-            if (query.Contains("Ñ¡ÖĞ") || query.Contains("µ±Ç°") || query.Contains("selected"))
+            if (query.Contains("é€‰ä¸­") || query.Contains("å½“å‰") || query.Contains("selected"))
                 return "Selected";
             
             return null;
@@ -154,7 +154,7 @@ namespace TheSecondSeat.NaturalLanguage
 
         private static int? ExtractCount(string query)
         {
-            // ¼òµ¥Êı×ÖÌáÈ¡
+            // ç®€å•æ•°å­—æå–
             var words = query.Split(' ');
             foreach (var word in words)
             {
@@ -164,9 +164,9 @@ namespace TheSecondSeat.NaturalLanguage
                 }
             }
 
-            // ÖĞÎÄÊı×ÖÊ¶±ğ
-            if (query.Contains("Ê®¸ö")) return 10;
-            if (query.Contains("Îå¸ö")) return 5;
+            // ä¸­æ–‡æ•°å­—è¯†åˆ«
+            if (query.Contains("åä¸ª")) return 10;
+            if (query.Contains("äº”ä¸ª")) return 5;
             
             return null;
         }
@@ -183,7 +183,7 @@ namespace TheSecondSeat.NaturalLanguage
         }
 
         /// <summary>
-        /// ´ÓLLM JSONÏìÓ¦ÖĞ½âÎöÃüÁî
+        /// ä»LLM JSONå“åº”ä¸­è§£æå‘½ä»¤
         /// </summary>
         public static ParsedCommand? ParseFromLLMResponse(string llmJsonResponse)
         {
@@ -203,7 +203,7 @@ namespace TheSecondSeat.NaturalLanguage
                     return null;
                 }
 
-                // ×ª»»ÎªParsedCommand
+                // è½¬æ¢ä¸ºParsedCommand
                 var parsed = new ParsedCommand
                 {
                     action = command.action,
@@ -212,11 +212,11 @@ namespace TheSecondSeat.NaturalLanguage
                         target = command.target,
                         scope = "Map"
                     },
-                    confidence = 1f, // LLM½âÎöµÄÖÃĞÅ¶ÈÄ¬ÈÏÎª1
+                    confidence = 1f, // LLMè§£æçš„ç½®ä¿¡åº¦é»˜è®¤ä¸º1
                     originalQuery = ""
                 };
 
-                // ³¢ÊÔ½âÎöparameters
+                // å°è¯•è§£æparameters
                 if (command.parameters != null)
                 {
                     var paramsJson = JsonConvert.SerializeObject(command.parameters);
@@ -231,44 +231,44 @@ namespace TheSecondSeat.NaturalLanguage
             }
             catch (Exception ex)
             {
-                Log.Error($"[NLParser] ½âÎöLLMÏìÓ¦Ê§°Ü: {ex.Message}");
+                Log.Error($"[NLParser] è§£æLLMå“åº”å¤±è´¥: {ex.Message}");
                 return null;
             }
         }
     }
 
     /// <summary>
-    /// ÃüÁîÖ´ĞĞ½¨ÒéÉú³ÉÆ÷
+    /// å‘½ä»¤æ‰§è¡Œå»ºè®®ç”Ÿæˆå™¨
     /// </summary>
     public static class CommandSuggestionGenerator
     {
         /// <summary>
-        /// ¸ù¾İÓÎÏ·×´Ì¬Éú³ÉÃüÁî½¨Òé
+        /// æ ¹æ®æ¸¸æˆçŠ¶æ€ç”Ÿæˆå‘½ä»¤å»ºè®®
         /// </summary>
         public static List<string> GenerateSuggestions(Observer.GameStateSnapshot gameState)
         {
             var suggestions = new List<string>();
 
-            // ¼ì²é³ÉÊì×÷Îï
-            // £¨ĞèÒª·ÃÎÊÊµ¼ÊµÄÖ²ÎïÊı¾İ£¬ÕâÀï½ö×÷Ê¾Òâ£©
+            // æ£€æŸ¥æˆç†Ÿä½œç‰©
+            // ï¼ˆéœ€è¦è®¿é—®å®é™…çš„æ¤ç‰©æ•°æ®ï¼Œè¿™é‡Œä»…ä½œç¤ºæ„ï¼‰
             if (gameState.colonists.Count > 0)
             {
-                suggestions.Add("Èç¹ûÓĞ³ÉÊì×÷Îï£¬¿ÉÒÔËµ£º'°ïÎÒÊÕ»ñËùÓĞ³ÉÊìµÄ×÷Îï'");
+                suggestions.Add("å¦‚æœæœ‰æˆç†Ÿä½œç‰©ï¼Œå¯ä»¥è¯´ï¼š'å¸®æˆ‘æ”¶è·æ‰€æœ‰æˆç†Ÿçš„ä½œç‰©'");
             }
 
-            // ¼ì²éµÍ×ÊÔ´
+            // æ£€æŸ¥ä½èµ„æº
             if (gameState.resources.food < 100)
             {
-                suggestions.Add("×ÊÔ´²»×ãÊ±¿ÉÒÔËµ£º'¸øÎÒÒ»Ğ©Ê³Îï²¹¸ø'");
+                suggestions.Add("èµ„æºä¸è¶³æ—¶å¯ä»¥è¯´ï¼š'ç»™æˆ‘ä¸€äº›é£Ÿç‰©è¡¥ç»™'");
             }
 
-            // ¼ì²éÊÜËğ½¨Öş
-            suggestions.Add("½¨ÖşÊÜËğÊ±¿ÉÒÔËµ£º'ÓÅÏÈĞŞ¸´ËùÓĞÊÜËğµÄ½¨Öş'");
+            // æ£€æŸ¥å—æŸå»ºç­‘
+            suggestions.Add("å»ºç­‘å—æŸæ—¶å¯ä»¥è¯´ï¼š'ä¼˜å…ˆä¿®å¤æ‰€æœ‰å—æŸçš„å»ºç­‘'");
 
-            // ¼ì²éÍşĞ²
+            // æ£€æŸ¥å¨èƒ
             if (gameState.threats.raidActive)
             {
-                suggestions.Add("ÔâÓöÏ®»÷Ê±¿ÉÒÔËµ£º'½ô¼±Îä×°ËùÓĞÖ³ÃñÕß'");
+                suggestions.Add("é­é‡è¢­å‡»æ—¶å¯ä»¥è¯´ï¼š'ç´§æ€¥æ­¦è£…æ‰€æœ‰æ®–æ°‘è€…'");
             }
 
             return suggestions;

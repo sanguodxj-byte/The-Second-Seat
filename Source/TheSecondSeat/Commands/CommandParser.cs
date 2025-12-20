@@ -1,4 +1,4 @@
-using System;
+锘縰sing System;
 using System.Collections.Generic;
 using TheSecondSeat.Commands.Implementations;
 using TheSecondSeat.LLM;
@@ -19,7 +19,7 @@ namespace TheSecondSeat.Commands
             { "PriorityRepair", () => new PriorityRepairCommand() },
             { "EmergencyRetreat", () => new EmergencyRetreatCommand() },
             { "ChangePolicy", () => new ChangePolicyCommand() },
-            // ? 事件触发命令（对弈者模式）
+            // ? 浜嬩欢瑙﹀彂鍛戒护锛堝寮堣�呮ā寮忥級
             { "TriggerEvent", () => new TriggerEventCommand() },
             { "ScheduleEvent", () => new ScheduleEventCommand() }
         };

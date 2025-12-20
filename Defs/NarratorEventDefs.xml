@@ -1,47 +1,47 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Defs>
   <!-- ========================================== -->
   <!-- The Second Seat - Narrator Event Examples -->
-  <!-- �������¼�ϵͳʾ��                          -->
+  <!-- 叙事者事件系统示例                          -->
   <!-- ========================================== -->
   
-  <!-- ʾ��1: �ߺøжȽ��� -->
+  <!-- 示例1: 高好感度奖励 -->
   <TheSecondSeat.Framework.NarratorEventDef>
     <defName>HighAffinityReward</defName>
-    <eventLabel>�����ߵĽ���</eventLabel>
-    <eventDescription>���øжȴﵽ80+ʱ���������ṩ�������</eventDescription>
+    <eventLabel>叙事者的奖励</eventLabel>
+    <eventDescription>当好感度达到80+时，叙事者提供额外帮助</eventDescription>
     <category>Reward</category>
     <priority>50</priority>
     
-    <!-- �������� -->
+    <!-- 触发条件 -->
     <chance>0.5</chance>
-    <cooldownTicks>36000</cooldownTicks> <!-- 10������ȴ -->
+    <cooldownTicks>36000</cooldownTicks> <!-- 10分钟冷却 -->
     
     <triggers>
-      <!-- �øжȱ�����80-100֮�� -->
+      <!-- 好感度必须在80-100之间 -->
       <li Class="TheSecondSeat.Framework.Triggers.AffinityRangeTrigger">
         <triggerId>affinity_check</triggerId>
         <minAffinity>80</minAffinity>
         <maxAffinity>100</maxAffinity>
       </li>
       
-      <!-- ֳ������������3�� -->
+      <!-- 殖民者数量至少3人 -->
       <li Class="TheSecondSeat.Framework.Triggers.ColonistCountTrigger">
         <triggerId>colonist_check</triggerId>
         <minCount>3</minCount>
       </li>
     </triggers>
     
-    <!-- ִ�ж��� -->
+    <!-- 执行动作 -->
     <actions>
-      <!-- ��ʾ�Ի� -->
+      <!-- 显示对话 -->
       <li Class="TheSecondSeat.Framework.Actions.ShowDialogueAction">
         <actionId>show_dialogue</actionId>
-        <dialogueText>�����������ò��������Ұ���һ��~ (???)</dialogueText>
+        <dialogueText>看起来你做得不错！让我帮你一把~ (???)</dialogueText>
         <messageType>PositiveEvent</messageType>
       </li>
       
-      <!-- �ӳ�2���������Դ -->
+      <!-- 延迟2秒后生成资源 -->
       <li Class="TheSecondSeat.Framework.Actions.SpawnResourceAction">
         <actionId>spawn_steel</actionId>
         <delayTicks>120</delayTicks>
@@ -50,7 +50,7 @@
         <dropNearPlayer>true</dropNearPlayer>
       </li>
       
-      <!-- ���ӳ�1�����ɸ�����Դ -->
+      <!-- 再延迟1秒生成更多资源 -->
       <li Class="TheSecondSeat.Framework.Actions.SpawnResourceAction">
         <actionId>spawn_components</actionId>
         <delayTicks>60</delayTicks>
@@ -61,19 +61,19 @@
     </actions>
     
     <showNotification>true</showNotification>
-    <customNotificationText>? ���������������</customNotificationText>
+    <customNotificationText>? 叙事者赠送了礼物！</customNotificationText>
   </TheSecondSeat.Framework.NarratorEventDef>
   
-  <!-- ʾ��2: �ͺøжȳͷ� -->
+  <!-- 示例2: 低好感度惩罚 -->
   <TheSecondSeat.Framework.NarratorEventDef>
     <defName>LowAffinityWarning</defName>
-    <eventLabel>�����ߵľ���</eventLabel>
-    <eventDescription>���øжȵ���-50ʱ�������߷�������</eventDescription>
+    <eventLabel>叙事者的警告</eventLabel>
+    <eventDescription>当好感度低于-50时，叙事者发出警告</eventDescription>
     <category>Warning</category>
     <priority>60</priority>
     
     <chance>0.8</chance>
-    <cooldownTicks>18000</cooldownTicks> <!-- 5������ȴ -->
+    <cooldownTicks>18000</cooldownTicks> <!-- 5分钟冷却 -->
     
     <triggers>
       <li Class="TheSecondSeat.Framework.Triggers.AffinityRangeTrigger">
@@ -84,31 +84,31 @@
     
     <actions>
       <li Class="TheSecondSeat.Framework.Actions.ShowDialogueAction">
-        <dialogueText>���������Ϊ���Һ�ʧ��...ϣ�����ܸı䡣</dialogueText>
+        <dialogueText>你的所作所为让我很失望...希望你能改变。</dialogueText>
         <messageType>NegativeEvent</messageType>
       </li>
       
       <li Class="TheSecondSeat.Framework.Actions.ModifyAffinityAction">
         <delayTicks>300</delayTicks>
         <delta>-5</delta>
-        <reason>�����ͺøжȾ���</reason>
+        <reason>持续低好感度警告</reason>
       </li>
     </actions>
     
     <showNotification>true</showNotification>
   </TheSecondSeat.Framework.NarratorEventDef>
   
-  <!-- ʾ��3: �������ʺ� -->
+  <!-- 示例3: 季节性问候 -->
   <TheSecondSeat.Framework.NarratorEventDef>
     <defName>SpringGreeting</defName>
-    <eventLabel>�����ʺ�</eventLabel>
-    <eventDescription>������ʼʱ�����ߵ��ʺ�</eventDescription>
+    <eventLabel>春日问候</eventLabel>
+    <eventDescription>春季开始时叙事者的问候</eventDescription>
     <category>Dialogue</category>
     <priority>10</priority>
     
     <chance>1.0</chance>
     <triggerOnce>false</triggerOnce>
-    <cooldownTicks>900000</cooldownTicks> <!-- Լ4��Ϸ�� -->
+    <cooldownTicks>900000</cooldownTicks> <!-- 约4游戏日 -->
     
     <triggers>
       <li Class="TheSecondSeat.Framework.Triggers.SeasonTrigger">
@@ -125,24 +125,24 @@
     
     <actions>
       <li Class="TheSecondSeat.Framework.Actions.ShowDialogueAction">
-        <dialogueText>���쵽����~ϣ�����ֳ���Ҳ���������٣�</dialogueText>
+        <dialogueText>春天到了呢~希望你的殖民地也能欣欣向荣！</dialogueText>
         <messageType>PositiveEvent</messageType>
       </li>
       
       <li Class="TheSecondSeat.Framework.Actions.ModifyAffinityAction">
         <delta>2</delta>
-        <reason>�����Ի���</reason>
+        <reason>季节性互动</reason>
       </li>
     </actions>
     
     <showNotification>true</showNotification>
   </TheSecondSeat.Framework.NarratorEventDef>
   
-  <!-- ʾ��4: �Ƹ���꽱�� -->
+  <!-- 示例4: 财富达标奖励 -->
   <TheSecondSeat.Framework.NarratorEventDef>
     <defName>WealthMilestone</defName>
-    <eventLabel>�Ƹ���̱�</eventLabel>
-    <eventDescription>��ֳ��زƸ��ﵽһ��ˮƽʱ�Ľ���</eventDescription>
+    <eventLabel>财富里程碑</eventLabel>
+    <eventDescription>当殖民地财富达到一定水平时的奖励</eventDescription>
     <category>Reward</category>
     <priority>30</priority>
     
@@ -162,7 +162,7 @@
     
     <actions>
       <li Class="TheSecondSeat.Framework.Actions.ShowDialogueAction">
-        <dialogueText>�ۣ����ֳ��ط�չ���治���������Ҹ������ף����~</dialogueText>
+        <dialogueText>哇！你的殖民地发展得真不错！这是我给你的庆祝礼物~</dialogueText>
         <messageType>PositiveEvent</messageType>
       </li>
       
@@ -175,19 +175,19 @@
       <li Class="TheSecondSeat.Framework.Actions.ModifyAffinityAction">
         <delayTicks>120</delayTicks>
         <delta>10</delta>
-        <reason>�Ƹ���̱����</reason>
+        <reason>财富里程碑达成</reason>
       </li>
     </actions>
     
     <showNotification>true</showNotification>
-    <customNotificationText>?? �Ƹ���̱���ɣ�</customNotificationText>
+    <customNotificationText>?? 财富里程碑达成！</customNotificationText>
   </TheSecondSeat.Framework.NarratorEventDef>
   
-  <!-- ʾ��5: ��ʽ�¼����� -->
+  <!-- 示例5: 链式事件触发 -->
   <TheSecondSeat.Framework.NarratorEventDef>
     <defName>EventChainStart</defName>
-    <eventLabel>�¼�����ʼ</eventLabel>
-    <eventDescription>���������ʽ������һ���¼�</eventDescription>
+    <eventLabel>事件链开始</eventLabel>
+    <eventDescription>触发后会链式触发另一个事件</eventDescription>
     <category>Dialogue</category>
     <priority>20</priority>
     
@@ -202,10 +202,10 @@
     
     <actions>
       <li Class="TheSecondSeat.Framework.Actions.ShowDialogueAction">
-        <dialogueText>���Ҹ��㿴����Ȥ�Ķ���...</dialogueText>
+        <dialogueText>让我给你看点有趣的东西...</dialogueText>
       </li>
       
-      <!-- �ӳ�5��󴥷���һ���¼� -->
+      <!-- 延迟5秒后触发另一个事件 -->
       <li Class="TheSecondSeat.Framework.Actions.TriggerEventAction">
         <delayTicks>300</delayTicks>
         <targetEventDefName>HighAffinityReward</targetEventDefName>
@@ -216,63 +216,63 @@
   </TheSecondSeat.Framework.NarratorEventDef>
   
   <!-- ========================================== -->
-  <!-- ʹ��˵��                                    -->
+  <!-- 使用说明                                    -->
   <!-- ========================================== -->
   <!-- 
-  �����Զ����¼���
+  创建自定义事件：
   
-  1. ���崥������ (triggers):
-     - AffinityRangeTrigger: �øжȷ�Χ
-     - ColonistCountTrigger: ֳ��������
-     - WealthRangeTrigger: �Ƹ���Χ
-     - SeasonTrigger: ����
-     - TimeRangeTrigger: ʱ���
-     - RandomChanceTrigger: �������
-     - MoodStateTrigger: ����״̬
+  1. 定义触发条件 (triggers):
+     - AffinityRangeTrigger: 好感度范围
+     - ColonistCountTrigger: 殖民者数量
+     - WealthRangeTrigger: 财富范围
+     - SeasonTrigger: 季节
+     - TimeRangeTrigger: 时间段
+     - RandomChanceTrigger: 随机概率
+     - MoodStateTrigger: 心情状态
   
-  2. ����ִ�ж��� (actions):
-     - ModifyAffinityAction: �޸ĺøж�
-     - ShowDialogueAction: ��ʾ�Ի�
-     - SpawnResourceAction: ������Դ
-     - TriggerEventAction: ���������¼�
-     - PlaySoundAction: ������Ч
-     - SetMoodAction: ��������
-     - LogMessageAction: �����־�������ã�
+  2. 定义执行动作 (actions):
+     - ModifyAffinityAction: 修改好感度
+     - ShowDialogueAction: 显示对话
+     - SpawnResourceAction: 生成资源
+     - TriggerEventAction: 触发其他事件
+     - PlaySoundAction: 播放音效
+     - SetMoodAction: 设置心情
+     - LogMessageAction: 输出日志（调试用）
   
-  3. �߽׶��� (AdvancedActions):
-     ?? Ȩ�޺ܸߣ������ʹ��
-     - StrikeLightningAction: ��������
-     - GiveHediffAction: ���ӽ���״̬
-     - StartIncidentAction: ǿ�ƴ���ԭ���¼�
+  3. 高阶动作 (AdvancedActions):
+     ?? 权限很高，请谨慎使用
+     - StrikeLightningAction: 降下雷劈
+     - GiveHediffAction: 添加健康状态
+     - StartIncidentAction: 强制触发原版事件
   
-  4. ���ò���:
-     - chance: �������� (0.0-1.0)
-     - cooldownTicks: ��ȴʱ�䣨Tick��
-     - triggerOnce: �Ƿ�ֻ����һ��
-     - delayTicks: �����ӳ�ִ��ʱ��
-     - priority: �¼����ȼ��������ȼ���Ƶ����飩
+  4. 配置参数:
+     - chance: 触发概率 (0.0-1.0)
+     - cooldownTicks: 冷却时间（Tick）
+     - triggerOnce: 是否只触发一次
+     - delayTicks: 动作延迟执行时间
+     - priority: 事件优先级（高优先级更频繁检查）
   
-  ��չ������
-  - �����µ�Trigger: �̳�TSSTrigger��ʵ��IsSatisfied����
-  - �����µ�Action: �̳�TSSAction��ʵ��Execute����
-  - �����������XML����Class����ָ�����������ռ�
+  扩展方法：
+  - 创建新的Trigger: 继承TSSTrigger，实现IsSatisfied方法
+  - 创建新的Action: 继承TSSAction，实现Execute方法
+  - 所有类必须在XML中用Class属性指定完整命名空间
   -->
   
   <!-- ========================================== -->
-  <!-- �߽׶���ʾ��                                -->
-  <!-- ?? Ȩ�޺ܸߣ������ʹ��                      -->
+  <!-- 高阶动作示例                                -->
+  <!-- ?? 权限很高，请谨慎使用                      -->
   <!-- ========================================== -->
   
-  <!-- ʾ��6: �췣�׻� -->
+  <!-- 示例6: 天罚雷击 -->
   <TheSecondSeat.Framework.NarratorEventDef>
     <defName>DivinePunishment</defName>
-    <eventLabel>�췣����</eventLabel>
-    <eventDescription>���øжȼ���ʱ�������߽��������ͷ�</eventDescription>
+    <eventLabel>天罚降临</eventLabel>
+    <eventDescription>当好感度极低时，叙事者降下雷劈惩罚</eventDescription>
     <category>Punishment</category>
     <priority>70</priority>
     
     <chance>0.3</chance>
-    <cooldownTicks>108000</cooldownTicks> <!-- 30������ȴ -->
+    <cooldownTicks>108000</cooldownTicks> <!-- 30分钟冷却 -->
     
     <triggers>
       <li Class="TheSecondSeat.Framework.Triggers.AffinityRangeTrigger">
@@ -282,14 +282,14 @@
     </triggers>
     
     <actions>
-      <!-- ? �������������� -->
+      <!-- ? 叙事者语音警告 -->
       <li Class="TheSecondSeat.Framework.Actions.NarratorSpeakAction">
         <textKey>TSS_Event_DivinePunishment</textKey>
-        <text>���������Ϊ...���Ҳ��ò���ȡ��ʩ�ˡ�</text>
+        <text>你的所作所为...让我不得不采取措施了。</text>
         <showDialogue>true</showDialogue>
       </li>
       
-      <!-- �ӳ�3����� -->
+      <!-- 延迟3秒后降雷 -->
       <li Class="TheSecondSeat.Framework.Actions.StrikeLightningAction">
         <actionId>divine_lightning</actionId>
         <delayTicks>180</delayTicks>
@@ -303,24 +303,24 @@
       <li Class="TheSecondSeat.Framework.Actions.ModifyAffinityAction">
         <delayTicks>180</delayTicks>
         <delta>-10</delta>
-        <reason>�췣�ͷ�</reason>
+        <reason>天罚惩罚</reason>
       </li>
     </actions>
     
     <showNotification>true</showNotification>
-    <customNotificationText>? �췣���٣�</customNotificationText>
+    <customNotificationText>? 天罚降临！</customNotificationText>
   </TheSecondSeat.Framework.NarratorEventDef>
   
-  <!-- ʾ��7: �������� -->
+  <!-- 示例7: 瘟疫诅咒 -->
   <TheSecondSeat.Framework.NarratorEventDef>
     <defName>PlagueCurse</defName>
-    <eventLabel>��������</eventLabel>
-    <eventDescription>�ͺøж�ʱ����������ֳ����Ⱦ��</eventDescription>
+    <eventLabel>瘟疫诅咒</eventLabel>
+    <eventDescription>低好感度时，叙事者让殖民者染病</eventDescription>
     <category>Punishment</category>
     <priority>40</priority>
     
     <chance>0.4</chance>
-    <cooldownTicks>72000</cooldownTicks> <!-- 20������ȴ -->
+    <cooldownTicks>72000</cooldownTicks> <!-- 20分钟冷却 -->
     
     <triggers>
       <li Class="TheSecondSeat.Framework.Triggers.AffinityRangeTrigger">
@@ -330,13 +330,13 @@
     </triggers>
     
     <actions>
-      <!-- ? �������� -->
+      <!-- ? 语音警告 -->
       <li Class="TheSecondSeat.Framework.Actions.NarratorSpeakAction">
-        <text>Ҳ��һ��С�������㷴˼һ��...</text>
+        <text>也许一场小病能让你反思一下...</text>
         <showDialogue>true</showDialogue>
       </li>
       
-      <!-- ��2�����ֳ����Ⱦ������ -->
+      <!-- 给2个随机殖民者染上流感 -->
       <li Class="TheSecondSeat.Framework.Actions.GiveHediffAction">
         <actionId>plague_curse</actionId>
         <delayTicks>120</delayTicks>
@@ -351,16 +351,16 @@
     <showNotification>true</showNotification>
   </TheSecondSeat.Framework.NarratorEventDef>
   
-  <!-- ʾ��8: �����̶� -->
+  <!-- 示例8: 神秘商队 -->
   <TheSecondSeat.Framework.NarratorEventDef>
     <defName>MysteriousTrader</defName>
-    <eventLabel>�����̶�</eventLabel>
-    <eventDescription>�ߺøж�ʱ���������ٻ��߼��̶�</eventDescription>
+    <eventLabel>神秘商队</eventLabel>
+    <eventDescription>高好感度时，叙事者召唤高级商队</eventDescription>
     <category>Reward</category>
     <priority>30</priority>
     
     <chance>0.6</chance>
-    <cooldownTicks>144000</cooldownTicks> <!-- 40������ȴ -->
+    <cooldownTicks>144000</cooldownTicks> <!-- 40分钟冷却 -->
     
     <triggers>
       <li Class="TheSecondSeat.Framework.Triggers.AffinityRangeTrigger">
@@ -369,19 +369,19 @@
     </triggers>
     
     <actions>
-      <!-- ? ����֪ͨ -->
+      <!-- ? 语音通知 -->
       <li Class="TheSecondSeat.Framework.Actions.NarratorSpeakAction">
-        <text>�ҽ��˸�������������~ϣ�����ϲ�����Ļ��</text>
+        <text>我叫了个朋友来看看你~希望你会喜欢他的货物。</text>
         <showDialogue>true</showDialogue>
       </li>
       
-      <!-- ������Ч -->
+      <!-- 播放音效 -->
       <li Class="TheSecondSeat.Framework.Actions.PlaySoundAction">
         <delayTicks>60</delayTicks>
-        <sound>TradeShip_Ambience</sound>
+        <sound>PsychicPulseGlobal</sound>
       </li>
       
-      <!-- �ӳ�5��󴥷��̶��¼� -->
+      <!-- 延迟5秒后触发商队事件 -->
       <li Class="TheSecondSeat.Framework.Actions.StartIncidentAction">
         <actionId>summon_trader</actionId>
         <delayTicks>300</delayTicks>
@@ -392,24 +392,24 @@
       <li Class="TheSecondSeat.Framework.Actions.ModifyAffinityAction">
         <delayTicks>300</delayTicks>
         <delta>5</delta>
-        <reason>�ٻ��̶�</reason>
+        <reason>召唤商队</reason>
       </li>
     </actions>
     
     <showNotification>true</showNotification>
-    <customNotificationText>?? �����̶Ӽ������</customNotificationText>
+    <customNotificationText>?? 神秘商队即将到达！</customNotificationText>
   </TheSecondSeat.Framework.NarratorEventDef>
   
-  <!-- ʾ��9: �콵���������ߺøжȽ����� -->
+  <!-- 示例9: 天降福祉（超高好感度奖励） -->
   <TheSecondSeat.Framework.NarratorEventDef>
     <defName>DivineBlessingSupreme</defName>
-    <eventLabel>�콵����</eventLabel>
-    <eventDescription>�øж�90+ʱ���ռ���������Դ+����</eventDescription>
+    <eventLabel>天降福祉</eventLabel>
+    <eventDescription>好感度90+时的终极奖励：资源+治疗</eventDescription>
     <category>Reward</category>
     <priority>80</priority>
     
     <chance>0.8</chance>
-    <cooldownTicks>216000</cooldownTicks> <!-- 1��Ϸ����ȴ -->
+    <cooldownTicks>216000</cooldownTicks> <!-- 1游戏日冷却 -->
     
     <triggers>
       <li Class="TheSecondSeat.Framework.Triggers.AffinityRangeTrigger">
@@ -419,11 +419,11 @@
     
     <actions>
       <li Class="TheSecondSeat.Framework.Actions.ShowDialogueAction">
-        <dialogueText>�������Ҽ��������ָ�ӹ٣�����ȫ��������ɣ�?</dialogueText>
+        <dialogueText>你真是我见过最棒的指挥官！让我全力帮助你吧！?</dialogueText>
         <messageType>PositiveEvent</messageType>
       </li>
       
-      <!-- ���ɴ�����Դ -->
+      <!-- 生成大量资源 -->
       <li Class="TheSecondSeat.Framework.Actions.SpawnResourceAction">
         <delayTicks>120</delayTicks>
         <resourceType>Steel</resourceType>
@@ -442,37 +442,28 @@
         <amount>50</amount>
       </li>
       
-      <!-- ������������ֳ���ߣ��Ƴ������� -->
-      <li Class="TheSecondSeat.Framework.Actions.GiveHediffAction">
-        <delayTicks>180</delayTicks>
-        <hediffDef>Luciferium</hediffDef>
-        <targetMode>Weakest</targetMode>
-        <severity>0.01</severity>
-        <targetCount>1</targetCount>
-        <showNotification>true</showNotification>
-      </li>
-      
+      <!-- ? 修复：移除错误的 Luciferium hediff，改为增加更多好感度 -->
       <li Class="TheSecondSeat.Framework.Actions.ModifyAffinityAction">
         <delayTicks>300</delayTicks>
-        <delta>5</delta>
-        <reason>�콵����</reason>
+        <delta>10</delta>
+        <reason>天降福祉</reason>
       </li>
     </actions>
     
     <showNotification>true</showNotification>
-    <customNotificationText>?? �콵�����������ߵ��ռ�������</customNotificationText>
+    <customNotificationText>?? 天降福祉！叙事者的终极馈赠！</customNotificationText>
   </TheSecondSeat.Framework.NarratorEventDef>
   
-  <!-- ʾ��10: ���ȷ�ŭ���ռ��ͷ��� -->
+  <!-- 示例10: 极度愤怒（终极惩罚） -->
   <TheSecondSeat.Framework.NarratorEventDef>
     <defName>UltimateWrath</defName>
-    <eventLabel>���ȷ�ŭ</eventLabel>
-    <eventDescription>�øж�-90���µ��ռ��ͷ���Ϯ��+����</eventDescription>
+    <eventLabel>极度愤怒</eventLabel>
+    <eventDescription>好感度-90以下的终极惩罚：袭击+雷劈</eventDescription>
     <category>Punishment</category>
     <priority>90</priority>
     
     <chance>0.7</chance>
-    <cooldownTicks>180000</cooldownTicks> <!-- 50������ȴ -->
+    <cooldownTicks>180000</cooldownTicks> <!-- 50分钟冷却 -->
     <triggerOnce>false</triggerOnce>
     
     <triggers>
@@ -484,11 +475,11 @@
     
     <actions>
       <li Class="TheSecondSeat.Framework.Actions.ShowDialogueAction">
-        <dialogueText>���Ѿ����׼�ŭ���ˣ������ҵ�ŭ��ɣ�����</dialogueText>
+        <dialogueText>你已经彻底激怒我了！承受我的怒火吧！！！</dialogueText>
         <messageType>ThreatBig</messageType>
       </li>
       
-      <!-- �������ģϮ�� -->
+      <!-- 触发大规模袭击 -->
       <li Class="TheSecondSeat.Framework.Actions.StartIncidentAction">
         <delayTicks>120</delayTicks>
         <incidentDef>RaidEnemy</incidentDef>
@@ -496,7 +487,7 @@
         <forced>true</forced>
       </li>
       
-      <!-- ͬʱ���¶������ -->
+      <!-- 同时降下多次雷劈 -->
       <li Class="TheSecondSeat.Framework.Actions.StrikeLightningAction">
         <delayTicks>240</delayTicks>
         <strikeMode>Random</strikeMode>
@@ -509,12 +500,12 @@
       <li Class="TheSecondSeat.Framework.Actions.ModifyAffinityAction">
         <delayTicks>300</delayTicks>
         <delta>-15</delta>
-        <reason>���ȷ�ŭ�ͷ�</reason>
+        <reason>极度愤怒惩罚</reason>
       </li>
     </actions>
     
     <showNotification>true</showNotification>
-    <customNotificationText>?? �����ߵļ��ȷ�ŭ������</customNotificationText>
+    <customNotificationText>?? 叙事者的极度愤怒！！！</customNotificationText>
   </TheSecondSeat.Framework.NarratorEventDef>
 
 </Defs>

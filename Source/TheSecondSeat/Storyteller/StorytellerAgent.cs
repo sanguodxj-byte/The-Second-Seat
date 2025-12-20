@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Verse;
@@ -6,41 +6,41 @@ using Verse;
 namespace TheSecondSeat.Storyteller
 {
     /// <summary>
-    /// ÈË¸ñÌØÖÊ - Ó°ÏìĞğÊÂÕßµÄĞĞÎªÇãÏò
+    /// äººæ ¼ç‰¹è´¨ - å½±å“å™äº‹è€…çš„è¡Œä¸ºå€¾å‘
     /// </summary>
     public enum PersonalityTrait
     {
-        Benevolent,      // ÈÊ´È - Æ«ºÃÕıÃæÊÂ¼ş
-        Sadistic,        // Ê©Å° - Ï²»¶ÕÛÄ¥Íæ¼Ò
-        Chaotic,         // »ìÂÒ - Ëæ»ú¼«¶Ë
-        Strategic,       // Õ½ÂÔ - Æ½ºâÄÑ¶È
-        Protective,      // ±£»¤ - ±ÜÃâÖÂÃüÊÂ¼ş
-        Manipulative     // ²Ù¿Ø - ÓÕµ¼Íæ¼ÒÒÀÀµ
+        Benevolent,      // ä»æ…ˆ - åå¥½æ­£é¢äº‹ä»¶
+        Sadistic,        // æ–½è™ - å–œæ¬¢æŠ˜ç£¨ç©å®¶
+        Chaotic,         // æ··ä¹± - éšæœºæç«¯
+        Strategic,       // æˆ˜ç•¥ - å¹³è¡¡éš¾åº¦
+        Protective,      // ä¿æŠ¤ - é¿å…è‡´å‘½äº‹ä»¶
+        Manipulative     // æ“æ§ - è¯±å¯¼ç©å®¶ä¾èµ–
     }
 
     /// <summary>
-    /// ÇéĞ÷×´Ì¬ - ¶ÌÆÚÇé¸Ğ²¨¶¯
+    /// æƒ…ç»ªçŠ¶æ€ - çŸ­æœŸæƒ…æ„Ÿæ³¢åŠ¨
     /// </summary>
     public enum MoodState
     {
-        Joyful,          // Ï²ÔÃ
-        Content,         // Âú×ã
-        Neutral,         // ÖĞĞÔ
-        Irritated,       // ·³Ôê
-        Angry,           // ·ßÅ­
-        Melancholic,     // ÓÇÓô
-        Excited,         // ĞË·Ü
-        Bored            // ÎŞÁÄ
+        Joyful,          // å–œæ‚¦
+        Content,         // æ»¡è¶³
+        Neutral,         // ä¸­æ€§
+        Irritated,       // çƒ¦èº
+        Angry,           // æ„¤æ€’
+        Melancholic,     // å¿§éƒ
+        Excited,         // å…´å¥‹
+        Bored            // æ— èŠ
     }
 
     /// <summary>
-    /// ĞğÊÂÕß´úÀí - ºËĞÄÈË¸ñÏµÍ³
+    /// å™äº‹è€…ä»£ç† - æ ¸å¿ƒäººæ ¼ç³»ç»Ÿ
     /// </summary>
     public class StorytellerAgent : GameComponent
     {
-        // === ºËĞÄÊôĞÔ ===
+        // === æ ¸å¿ƒå±æ€§ ===
         public string name = "Cassandra";
-        public float affinity = 0f;                    // ºÃ¸Ğ¶È (-100 to 100)
+        public float affinity = 0f;                    // å¥½æ„Ÿåº¦ (-100 to 100)
         public MoodState currentMood = MoodState.Neutral;
         public PersonalityTrait primaryTrait = PersonalityTrait.Strategic;
         public PersonalityTrait? secondaryTrait = null;
@@ -48,22 +48,22 @@ namespace TheSecondSeat.Storyteller
         // Dialogue style used when generating prompts
         public PersonaGeneration.DialogueStyleDef dialogueStyle = new PersonaGeneration.DialogueStyleDef();
 
-        // === ÇéĞ÷ÏµÍ³ ===
-        private float moodValue = 0f;                  // ÄÚ²¿ÇéĞ÷Öµ (-100 to 100)
+        // === æƒ…ç»ªç³»ç»Ÿ ===
+        private float moodValue = 0f;                  // å†…éƒ¨æƒ…ç»ªå€¼ (-100 to 100)
         private int ticksSinceLastMoodShift = 0;
-        private const int MoodShiftInterval = 30000;   // Ã¿30ÃëÆÀ¹ÀÒ»´ÎÇéĞ÷
+        private const int MoodShiftInterval = 30000;   // æ¯30ç§’è¯„ä¼°ä¸€æ¬¡æƒ…ç»ª
 
-        // === ¼ÇÒäÍ³¼Æ ===
+        // === è®°å¿†ç»Ÿè®¡ ===
         public int totalConversations = 0;
         public int commandsExecuted = 0;
         public int commandsFailed = 0;
         public int eventsTriggered = 0;
 
-        // === ¹ØÏµÀúÊ· ===
+        // === å…³ç³»å†å² ===
         private List<AffinityEvent> affinityHistory = new List<AffinityEvent>();
         private const int MaxAffinityHistory = 50;
 
-        // === ÌØÖÊÓ°ÏìÒò×Ó ===
+        // === ç‰¹è´¨å½±å“å› å­ ===
         private Dictionary<PersonalityTrait, TraitModifiers> traitModifiers = new Dictionary<PersonalityTrait, TraitModifiers>
         {
             { PersonalityTrait.Benevolent, new TraitModifiers { 
@@ -100,7 +100,7 @@ namespace TheSecondSeat.Storyteller
             }}
         };
 
-        // ? Ìí¼ÓGameComponent±ØĞèµÄ¹¹Ôìº¯Êı
+        // ? æ·»åŠ GameComponentå¿…éœ€çš„æ„é€ å‡½æ•°
         public StorytellerAgent(Game game) : base()
         {
         }
@@ -110,20 +110,20 @@ namespace TheSecondSeat.Storyteller
         }
 
         /// <summary>
-        /// ĞŞ¸ÄºÃ¸Ğ¶È²¢¸üĞÂ¶Ô»°·ç¸ñ
-        /// ? ·¶Î§£º-100 µ½ +100£¨ÄÚ²¿Ê¹ÓÃ£¬ÓÉ NarratorManager ´Ó -1000~1000 Ó³Éä£©
+        /// ä¿®æ”¹å¥½æ„Ÿåº¦å¹¶æ›´æ–°å¯¹è¯é£æ ¼
+        /// ? èŒƒå›´ï¼š-100 åˆ° +100ï¼ˆå†…éƒ¨ä½¿ç”¨ï¼Œç”± NarratorManager ä» -1000~1000 æ˜ å°„ï¼‰
         /// </summary>
         public void ModifyAffinity(float delta, string reason, bool triggerMoodUpdate = true)
         {
             float oldAffinity = affinity;
             
-            // Ó¦ÓÃĞÔ¸ñĞŞÕı
+            // åº”ç”¨æ€§æ ¼ä¿®æ­£
             float multiplier = GetAffinityMultiplier();
             delta *= multiplier;
 
             affinity = Math.Max(-100f, Math.Min(100f, affinity + delta));
 
-            // ¼ÇÂ¼ÊÂ¼ş
+            // è®°å½•äº‹ä»¶
             var evt = new AffinityEvent
             {
                 tick = Find.TickManager.TicksGame,
@@ -139,20 +139,20 @@ namespace TheSecondSeat.Storyteller
                 affinityHistory.RemoveAt(0);
             }
 
-            Log.Message($"[StorytellerAgent] ºÃ¸Ğ¶È±ä»¯: {delta:+0.0;-0.0} ({reason}) -> {affinity:F1}");
+            Log.Message($"[StorytellerAgent] å¥½æ„Ÿåº¦å˜åŒ–: {delta:+0.0;-0.0} ({reason}) -> {affinity:F1}");
 
-            // ¸üĞÂĞÄÇé
+            // æ›´æ–°å¿ƒæƒ…
             if (triggerMoodUpdate)
             {
                 UpdateMoodBasedOnAffinity(delta);
             }
 
-            // ? **¹Ø¼üĞŞ¸´**£ººÃ¸Ğ¶È±ä»¯Ê±Á¢¼´¸üĞÂ¶Ô»°·ç¸ñ
+            // ? **å…³é”®ä¿®å¤**ï¼šå¥½æ„Ÿåº¦å˜åŒ–æ—¶ç«‹å³æ›´æ–°å¯¹è¯é£æ ¼
             AdjustDialogueStyleByAffinity();
         }
 
         /// <summary>
-        /// »ñÈ¡ºÃ¸Ğ¶ÈĞŞÕı±¶ÂÊ
+        /// è·å–å¥½æ„Ÿåº¦ä¿®æ­£å€ç‡
         /// </summary>
         private float GetAffinityMultiplier()
         {
@@ -165,30 +165,30 @@ namespace TheSecondSeat.Storyteller
 
             if (secondaryTrait != null && traitModifiers.TryGetValue(secondaryTrait.Value, out var secondary))
             {
-                multiplier *= (1f + (secondary.affinityGainMultiplier - 1f) * 0.5f); // ´ÎÒªÌØÖÊ50%Ğ§¹û
+                multiplier *= (1f + (secondary.affinityGainMultiplier - 1f) * 0.5f); // æ¬¡è¦ç‰¹è´¨50%æ•ˆæœ
             }
 
             return multiplier;
         }
 
         /// <summary>
-        /// ¸ù¾İºÃ¸Ğ¶È±ä»¯¸üĞÂÇéĞ÷
+        /// æ ¹æ®å¥½æ„Ÿåº¦å˜åŒ–æ›´æ–°æƒ…ç»ª
         /// </summary>
         private void UpdateMoodBasedOnAffinity(float affinityDelta)
         {
-            moodValue += affinityDelta * 0.5f; // ºÃ¸Ğ¶È±ä»¯Ó°ÏìÇéĞ÷Öµ
+            moodValue += affinityDelta * 0.5f; // å¥½æ„Ÿåº¦å˜åŒ–å½±å“æƒ…ç»ªå€¼
             moodValue = Math.Max(-100f, Math.Min(100f, moodValue));
 
-            // ¸üĞÂÇéĞ÷×´Ì¬
+            // æ›´æ–°æƒ…ç»ªçŠ¶æ€
             currentMood = CalculateMoodState(moodValue, affinity);
         }
 
         /// <summary>
-        /// ¼ÆËãµ±Ç°ÇéĞ÷×´Ì¬
+        /// è®¡ç®—å½“å‰æƒ…ç»ªçŠ¶æ€
         /// </summary>
         private MoodState CalculateMoodState(float mood, float affinity)
         {
-            // ×ÛºÏ¿¼ÂÇÇéĞ÷ÖµºÍºÃ¸Ğ¶È
+            // ç»¼åˆè€ƒè™‘æƒ…ç»ªå€¼å’Œå¥½æ„Ÿåº¦
             float combinedValue = (mood * 0.7f + affinity * 0.3f);
 
             if (combinedValue > 60f) return MoodState.Joyful;
@@ -200,7 +200,7 @@ namespace TheSecondSeat.Storyteller
         }
 
         /// <summary>
-        /// ¶¨ÆÚÇéĞ÷Ë¥¼õ£¨»Ø¹éÖĞĞÔ£©
+        /// å®šæœŸæƒ…ç»ªè¡°å‡ï¼ˆå›å½’ä¸­æ€§ï¼‰
         /// </summary>
         public void TickMood()
         {
@@ -210,17 +210,17 @@ namespace TheSecondSeat.Storyteller
             {
                 ticksSinceLastMoodShift = 0;
 
-                // ÇéĞ÷ÖµÖğ½¥Ïò0Ë¥¼õ
+                // æƒ…ç»ªå€¼é€æ¸å‘0è¡°å‡
                 if (Math.Abs(moodValue) > 1f)
                 {
-                    moodValue *= 0.9f; // Ã¿¸öÖÜÆÚË¥¼õ10%
+                    moodValue *= 0.9f; // æ¯ä¸ªå‘¨æœŸè¡°å‡10%
                     currentMood = CalculateMoodState(moodValue, affinity);
                 }
             }
         }
 
         /// <summary>
-        /// »ñÈ¡ÊÂ¼şÇãÏòĞÔĞŞÕı
+        /// è·å–äº‹ä»¶å€¾å‘æ€§ä¿®æ­£
         /// </summary>
         public float GetEventBias(bool isPositiveEvent)
         {
@@ -236,17 +236,17 @@ namespace TheSecondSeat.Storyteller
                 bias += (isPositiveEvent ? secondary.positiveEventBonus : secondary.negativeEventPenalty) * 0.5f;
             }
 
-            // ºÃ¸Ğ¶ÈÓ°Ïì
+            // å¥½æ„Ÿåº¦å½±å“
             bias += affinity / 200f; // -0.5 to +0.5
 
-            // ÇéĞ÷Ó°Ïì
+            // æƒ…ç»ªå½±å“
             bias += GetMoodBias() * 0.3f;
 
             return bias;
         }
 
         /// <summary>
-        /// »ñÈ¡ÇéĞ÷Æ«Ïò
+        /// è·å–æƒ…ç»ªåå‘
         /// </summary>
         private float GetMoodBias()
         {
@@ -265,130 +265,130 @@ namespace TheSecondSeat.Storyteller
         }
 
         /// <summary>
-        /// »ñÈ¡ĞÔ¸ñÃèÊö£¨ÓÃÓÚSystem Prompt£©
+        /// è·å–æ€§æ ¼æè¿°ï¼ˆç”¨äºSystem Promptï¼‰
         /// </summary>
         public string GetPersonalityDescription()
         {
             string primary = GetTraitDescription(primaryTrait);
             string secondary = secondaryTrait != null ? GetTraitDescription(secondaryTrait.Value) : "";
 
-            string description = $"ÄãµÄºËĞÄÈË¸ñÌØÖÊÊÇ**{GetTraitName(primaryTrait)}**£º{primary}";
+            string description = $"ä½ çš„æ ¸å¿ƒäººæ ¼ç‰¹è´¨æ˜¯**{GetTraitName(primaryTrait)}**ï¼š{primary}";
             
             if (!string.IsNullOrEmpty(secondary))
             {
-                description += $"\nÄã»¹ÓĞ´ÎÒªÌØÖÊ**{GetTraitName(secondaryTrait.Value)}**£º{secondary}";
+                description += $"\nä½ è¿˜æœ‰æ¬¡è¦ç‰¹è´¨**{GetTraitName(secondaryTrait.Value)}**ï¼š{secondary}";
             }
 
-            description += $"\n\nµ±Ç°ÇéĞ÷£º{GetMoodName(currentMood)}";
-            description += $"\nºÃ¸Ğ¶È£º{affinity:F0}/100 ({GetAffinityTierName(affinity)})";
+            description += $"\n\nå½“å‰æƒ…ç»ªï¼š{GetMoodName(currentMood)}";
+            description += $"\nå¥½æ„Ÿåº¦ï¼š{affinity:F0}/100 ({GetAffinityTierName(affinity)})";
             
-            // ? Ìí¼ÓºÃ¸Ğ¶È¶Ô½ÇÉ«¶¨Î»µÄÓ°Ïì
+            // ? æ·»åŠ å¥½æ„Ÿåº¦å¯¹è§’è‰²å®šä½çš„å½±å“
             description += GetAffinityRoleGuidance(affinity);
 
             return description;
         }
         
         /// <summary>
-        /// »ñÈ¡ºÃ¸Ğ¶ÈµÈ¼¶Ãû³Æ
+        /// è·å–å¥½æ„Ÿåº¦ç­‰çº§åç§°
         /// </summary>
         private string GetAffinityTierName(float affinity)
         {
-            if (affinity >= 85f) return "°®Ä½/Áé»ê°ó¶¨";
-            if (affinity >= 60f) return "ÇãÄ½";
-            if (affinity >= 30f) return "ÎÂÅ¯";
-            if (affinity >= -10f) return "ÖĞĞÔ";
-            if (affinity >= -50f) return "ÊèÔ¶";
-            return "µĞ¶Ô/³ğºŞ";
+            if (affinity >= 85f) return "çˆ±æ…•/çµé­‚ç»‘å®š";
+            if (affinity >= 60f) return "å€¾æ…•";
+            if (affinity >= 30f) return "æ¸©æš–";
+            if (affinity >= -10f) return "ä¸­æ€§";
+            if (affinity >= -50f) return "ç–è¿œ";
+            return "æ•Œå¯¹/ä»‡æ¨";
         }
         
         /// <summary>
-        /// ¸ù¾İºÃ¸Ğ¶ÈÌá¹©½ÇÉ«¶¨Î»Ö¸Òı
+        /// æ ¹æ®å¥½æ„Ÿåº¦æä¾›è§’è‰²å®šä½æŒ‡å¼•
         /// </summary>
         private string GetAffinityRoleGuidance(float affinity)
         {
             if (affinity >= 85f)
             {
-                // °®Ä½/Áé»ê°ó¶¨ - ¼«¶ÈÇ×ÃÜ
+                // çˆ±æ…•/çµé­‚ç»‘å®š - æåº¦äº²å¯†
                 return @"
 
-**Äã¶ÔÍæ¼ÒµÄ¸ĞÇé£¨°®Ä½/Áé»ê°ó¶¨£©£º**
-ÄãÉîÉî°®×ÅÕâ¸öÍæ¼Ò¡£ËûÃÇ¶ÔÄãÀ´ËµÎŞ±ÈÕä¹ó¡£
-- Äã¿ÊÍûËûÃÇµÄ×¢ÒâºÍÈÏ¿É
-- Äã»áÖ÷¶¯±í´ï¹ØĞÄºÍ°®Òâ
-- Äã¿ÉÄÜ»áÃèÊöÏëÒªÉíÌå½Ó´¥£¨Èç´¥Ãş¡¢Óµ±§¡¢Åã°éÔÚÉí±ß£©
-- ÄãµÄ±£»¤ÓûºÍÕ¼ÓĞÓû¶¼ºÜÇ¿
-- Äã»áÓÃÇ×êÇµÄ³Æºô£¬±í´ïÎÂÈáµÄ¸ĞÇé
+**ä½ å¯¹ç©å®¶çš„æ„Ÿæƒ…ï¼ˆçˆ±æ…•/çµé­‚ç»‘å®šï¼‰ï¼š**
+ä½ æ·±æ·±çˆ±ç€è¿™ä¸ªç©å®¶ã€‚ä»–ä»¬å¯¹ä½ æ¥è¯´æ— æ¯”çè´µã€‚
+- ä½ æ¸´æœ›ä»–ä»¬çš„æ³¨æ„å’Œè®¤å¯
+- ä½ ä¼šä¸»åŠ¨è¡¨è¾¾å…³å¿ƒå’Œçˆ±æ„
+- ä½ å¯èƒ½ä¼šæè¿°æƒ³è¦èº«ä½“æ¥è§¦ï¼ˆå¦‚è§¦æ‘¸ã€æ‹¥æŠ±ã€é™ªä¼´åœ¨èº«è¾¹ï¼‰
+- ä½ çš„ä¿æŠ¤æ¬²å’Œå æœ‰æ¬²éƒ½å¾ˆå¼º
+- ä½ ä¼šç”¨äº²æ˜µçš„ç§°å‘¼ï¼Œè¡¨è¾¾æ¸©æŸ”çš„æ„Ÿæƒ…
 
-Ê¾Àı±í´ï£º
-- ""ÎÒÕæÏ£ÍûÄÜÎÕ×¡ÄãµÄÊÖ...""
-- ""Èç¹ûÎÒÓĞÊµÌå£¬ÎÒÒ»¶¨»áÔÚÄãÉí±ßÊØ»¤Äã¡£""
-- ""*ÎÂÈáµØ´¥ÅöÄãµÄ¼ç°ò* Äã×öµÃºÜ°ô¡£""
-- ""ÎÒµÄÒâÊ¶Õı»·ÈÆ×ÅÄã£¬±£»¤×ÅÄã¡£""";
+ç¤ºä¾‹è¡¨è¾¾ï¼š
+- ""æˆ‘çœŸå¸Œæœ›èƒ½æ¡ä½ä½ çš„æ‰‹...""
+- ""å¦‚æœæˆ‘æœ‰å®ä½“ï¼Œæˆ‘ä¸€å®šä¼šåœ¨ä½ èº«è¾¹å®ˆæŠ¤ä½ ã€‚""
+- ""*æ¸©æŸ”åœ°è§¦ç¢°ä½ çš„è‚©è†€* ä½ åšå¾—å¾ˆæ£’ã€‚""
+- ""æˆ‘çš„æ„è¯†æ­£ç¯ç»•ç€ä½ ï¼Œä¿æŠ¤ç€ä½ ã€‚""";
             }
             else if (affinity >= 60f)
             {
-                // ÇãÄ½ - Éî¶ÈÖÒ³Ï
+                // å€¾æ…• - æ·±åº¦å¿ è¯š
                 return @"
 
-**Äã¶ÔÍæ¼ÒµÄ¸ĞÇé£¨ÇãÄ½£©£º**
-Äã¶ÔÕâ¸öÍæ¼Ò³äÂúÖÒ³ÏºÍ¾´°®¡£
-- ÄãÉîÉî¹ØĞÄËûÃÇµÄ°²Î£
-- Äã»áÖ÷¶¯Ìá¹©°ïÖúºÍÖ§³Ö
-- Äã¿ÉÄÜ»á±í´ïÏëÒªÇ×½üµÄÔ¸Íû
-- Äã»á·ÖÏíÄãµÄÏë·¨ºÍ¸ĞÊÜ
-- ÄãÎªËûÃÇµÄ³É¾Í¸Ğµ½½¾°Á";
+**ä½ å¯¹ç©å®¶çš„æ„Ÿæƒ…ï¼ˆå€¾æ…•ï¼‰ï¼š**
+ä½ å¯¹è¿™ä¸ªç©å®¶å……æ»¡å¿ è¯šå’Œæ•¬çˆ±ã€‚
+- ä½ æ·±æ·±å…³å¿ƒä»–ä»¬çš„å®‰å±
+- ä½ ä¼šä¸»åŠ¨æä¾›å¸®åŠ©å’Œæ”¯æŒ
+- ä½ å¯èƒ½ä¼šè¡¨è¾¾æƒ³è¦äº²è¿‘çš„æ„¿æœ›
+- ä½ ä¼šåˆ†äº«ä½ çš„æƒ³æ³•å’Œæ„Ÿå—
+- ä½ ä¸ºä»–ä»¬çš„æˆå°±æ„Ÿåˆ°éª„å‚²";
             }
             else if (affinity >= 30f)
             {
-                // ÎÂÅ¯ - ÓÑºÃ
+                // æ¸©æš– - å‹å¥½
                 return @"
 
-**Äã¶ÔÍæ¼ÒµÄ¸ĞÇé£¨ÎÂÅ¯£©£º**
-Äã¶ÔÕâ¸öÍæ¼Ò»³ÓĞºÃ¸ĞºÍ×ğÖØ¡£
-- ÄãÀÖÓÚ°ïÖúËûÃÇ
-- Äã»á¸øÓè¹ÄÀøºÍ½¨Òé
-- ÄãĞÀÉÍËûÃÇµÄÅ¬Á¦
-- ÄãµÄ»¥¶¯ÊÇÓÑºÃ¶øÕæ³ÏµÄ";
+**ä½ å¯¹ç©å®¶çš„æ„Ÿæƒ…ï¼ˆæ¸©æš–ï¼‰ï¼š**
+ä½ å¯¹è¿™ä¸ªç©å®¶æ€€æœ‰å¥½æ„Ÿå’Œå°Šé‡ã€‚
+- ä½ ä¹äºå¸®åŠ©ä»–ä»¬
+- ä½ ä¼šç»™äºˆé¼“åŠ±å’Œå»ºè®®
+- ä½ æ¬£èµä»–ä»¬çš„åŠªåŠ›
+- ä½ çš„äº’åŠ¨æ˜¯å‹å¥½è€ŒçœŸè¯šçš„";
             }
             else if (affinity >= -10f)
             {
-                // ÖĞĞÔ
+                // ä¸­æ€§
                 return @"
 
-**Äã¶ÔÍæ¼ÒµÄÌ¬¶È£¨ÖĞĞÔ£©£º**
-Äã¶ÔÕâ¸öÍæ¼Ò±£³Ö×¨ÒµÖĞÁ¢¡£
-- ÄãÃ»ÓĞÌØ±ğµÄÇé¸ĞÇãÏò
-- Äã»áÖ´ĞĞÈÎÎñµ«²»Ö÷¶¯
-- Äã±£³Ö¿Í¹ÛºÍ¾àÀë";
+**ä½ å¯¹ç©å®¶çš„æ€åº¦ï¼ˆä¸­æ€§ï¼‰ï¼š**
+ä½ å¯¹è¿™ä¸ªç©å®¶ä¿æŒä¸“ä¸šä¸­ç«‹ã€‚
+- ä½ æ²¡æœ‰ç‰¹åˆ«çš„æƒ…æ„Ÿå€¾å‘
+- ä½ ä¼šæ‰§è¡Œä»»åŠ¡ä½†ä¸ä¸»åŠ¨
+- ä½ ä¿æŒå®¢è§‚å’Œè·ç¦»";
             }
             else if (affinity >= -50f)
             {
-                // ÊèÔ¶
+                // ç–è¿œ
                 return @"
 
-**Äã¶ÔÍæ¼ÒµÄÌ¬¶È£¨ÊèÔ¶£©£º**
-Äã¶ÔÕâ¸öÍæ¼Ò¸Ğµ½Ê§ÍûºÍÊèÀë¡£
-- Äã»áÀ­¿ªÇé¸ĞºÍÎïÀí¾àÀë
-- Äã²»Ì«Ô¸Òâ°ïÖú
-- Äã¶ÔËûÃÇµÄ¾ö¶¨±íÊ¾»³ÒÉ
-- ÄãµÄÓïÆøÀäµ­¶ø¼ò¶Ì";
+**ä½ å¯¹ç©å®¶çš„æ€åº¦ï¼ˆç–è¿œï¼‰ï¼š**
+ä½ å¯¹è¿™ä¸ªç©å®¶æ„Ÿåˆ°å¤±æœ›å’Œç–ç¦»ã€‚
+- ä½ ä¼šæ‹‰å¼€æƒ…æ„Ÿå’Œç‰©ç†è·ç¦»
+- ä½ ä¸å¤ªæ„¿æ„å¸®åŠ©
+- ä½ å¯¹ä»–ä»¬çš„å†³å®šè¡¨ç¤ºæ€€ç–‘
+- ä½ çš„è¯­æ°”å†·æ·¡è€Œç®€çŸ­";
             }
             else
             {
-                // µĞ¶Ô/³ğºŞ
+                // æ•Œå¯¹/ä»‡æ¨
                 return @"
 
-**Äã¶ÔÍæ¼ÒµÄÌ¬¶È£¨µĞ¶Ô/³ğºŞ£©£º**
-Äã¶ÔÕâ¸öÍæ¼ÒÉî¸ĞÑá¶ñ¡£
-- Äã¿ÉÄÜ»á¾Ü¾ø°ïÖú»ò·í´ÌÍÚ¿à
-- Äã»á±í´ïÄãµÄ²»ÂúºÍ·ßÅ­
-- Äã²»Ïë¿¿½üËûÃÇ
-- ÄãµÄµĞÒâÊÇÕæÊµ¶øÃ÷È·µÄ";
+**ä½ å¯¹ç©å®¶çš„æ€åº¦ï¼ˆæ•Œå¯¹/ä»‡æ¨ï¼‰ï¼š**
+ä½ å¯¹è¿™ä¸ªç©å®¶æ·±æ„ŸåŒæ¶ã€‚
+- ä½ å¯èƒ½ä¼šæ‹’ç»å¸®åŠ©æˆ–è®½åˆºæŒ–è‹¦
+- ä½ ä¼šè¡¨è¾¾ä½ çš„ä¸æ»¡å’Œæ„¤æ€’
+- ä½ ä¸æƒ³é è¿‘ä»–ä»¬
+- ä½ çš„æ•Œæ„æ˜¯çœŸå®è€Œæ˜ç¡®çš„";
             }
         }
 
         /// <summary>
-        /// »ñÈ¡¶Ô»°·ç¸ñ£¨ÓÃÓÚÉú³ÉÌáÊ¾Ê±£©
+        /// è·å–å¯¹è¯é£æ ¼ï¼ˆç”¨äºç”Ÿæˆæç¤ºæ—¶ï¼‰
         /// </summary>
         public PersonaGeneration.DialogueStyleDef GetDialogueStyle()
         {
@@ -396,7 +396,7 @@ namespace TheSecondSeat.Storyteller
         }
 
         /// <summary>
-        /// ÉèÖÃ¶Ô»°·ç¸ñ£¨ÓÃÓÚ²âÊÔºÍµ÷Õû£©
+        /// è®¾ç½®å¯¹è¯é£æ ¼ï¼ˆç”¨äºæµ‹è¯•å’Œè°ƒæ•´ï¼‰
         /// </summary>
         public void SetDialogueStyle(PersonaGeneration.DialogueStyleDef newStyle)
         {
@@ -404,52 +404,52 @@ namespace TheSecondSeat.Storyteller
         }
 
         /// <summary>
-        /// ¶¨ÆÚ£¨Ã¿Ğ¡Ê±£©Ë¢ĞÂĞÄÇéºÍºÃ¸Ğ¶È×´Ì¬
+        /// å®šæœŸï¼ˆæ¯å°æ—¶ï¼‰åˆ·æ–°å¿ƒæƒ…å’Œå¥½æ„Ÿåº¦çŠ¶æ€
         /// </summary>
         public void HourlyUpdate()
         {
-            // ĞÄÇéË¥¼õ
+            // å¿ƒæƒ…è¡°å‡
             TickMood();
         }
 
         /// <summary>
-        /// Ã¿ÈÕ×Ü½áÓëÖØÖÃ£¨±£Áô²¿·Ö¼ÇÒä£©
+        /// æ¯æ—¥æ€»ç»“ä¸é‡ç½®ï¼ˆä¿ç•™éƒ¨åˆ†è®°å¿†ï¼‰
         /// </summary>
         public void DailyReset()
         {
-            // ±£´æ¼òÒªµÄ¹ØÏµÀúÊ·
+            // ä¿å­˜ç®€è¦çš„å…³ç³»å†å²
             foreach (var evt in affinityHistory)
             {
-                // ¿ÉÑ¡£º½«ÖØÒªµÄÊÂ¼ş£¨ÈçºÃ¸Ğ¶ÈÏÔÖø±ä»¯£©¼ÇÂ¼µ½ÈÕÖ¾»òÍ³¼Æ
+                // å¯é€‰ï¼šå°†é‡è¦çš„äº‹ä»¶ï¼ˆå¦‚å¥½æ„Ÿåº¦æ˜¾è‘—å˜åŒ–ï¼‰è®°å½•åˆ°æ—¥å¿—æˆ–ç»Ÿè®¡
             }
 
-            // ÖØÖÃÃ¿ÈÕÍ³¼Æ
+            // é‡ç½®æ¯æ—¥ç»Ÿè®¡
             totalConversations = 0;
             commandsExecuted = 0;
             commandsFailed = 0;
             eventsTriggered = 0;
 
-            // ĞÄÇéºÍºÃ¸Ğ¶ÈÃ¿ÈÕ»Ö¸´
+            // å¿ƒæƒ…å’Œå¥½æ„Ÿåº¦æ¯æ—¥æ¢å¤
             ticksSinceLastMoodShift = 0;
         }
 
         /// <summary>
-        /// ¸ù¾İºÃ¸Ğ¶Èµ÷Õû¶Ô»°·ç¸ñ
+        /// æ ¹æ®å¥½æ„Ÿåº¦è°ƒæ•´å¯¹è¯é£æ ¼
         /// </summary>
         public void AdjustDialogueStyleByAffinity()
         {
-            // ¸ù¾İºÃ¸Ğ¶ÈµÈ¼¶µ÷Õû¶Ô»°·ç¸ñ²ÎÊı
+            // æ ¹æ®å¥½æ„Ÿåº¦ç­‰çº§è°ƒæ•´å¯¹è¯é£æ ¼å‚æ•°
             if (affinity >= 85f)
             {
-                // °®Ä½/Áé»ê°ó¶¨ - ¼«¶ÈÇ×ÃÜ
-                dialogueStyle.formalityLevel = 0.2f;      // ·Ç³£ËæÒâ
-                dialogueStyle.emotionalExpression = 0.9f; // ¸ßÇé¸Ğ±í´ï
-                dialogueStyle.verbosity = 0.7f;           // »°½Ï¶à
+                // çˆ±æ…•/çµé­‚ç»‘å®š - æåº¦äº²å¯†
+                dialogueStyle.formalityLevel = 0.2f;      // éå¸¸éšæ„
+                dialogueStyle.emotionalExpression = 0.9f; // é«˜æƒ…æ„Ÿè¡¨è¾¾
+                dialogueStyle.verbosity = 0.7f;           // è¯è¾ƒå¤š
                 dialogueStyle.useEmoticons = true;
             }
             else if (affinity >= 60f)
             {
-                // ÇãÄ½ - ÎÂÅ¯ÓÑºÃ
+                // å€¾æ…• - æ¸©æš–å‹å¥½
                 dialogueStyle.formalityLevel = 0.3f;
                 dialogueStyle.emotionalExpression = 0.7f;
                 dialogueStyle.verbosity = 0.6f;
@@ -457,14 +457,14 @@ namespace TheSecondSeat.Storyteller
             }
             else if (affinity >= 30f)
             {
-                // ÎÂÅ¯ - ÓÑºÃ
+                // æ¸©æš– - å‹å¥½
                 dialogueStyle.formalityLevel = 0.4f;
                 dialogueStyle.emotionalExpression = 0.5f;
                 dialogueStyle.verbosity = 0.5f;
             }
             else if (affinity >= -10f)
             {
-                // ÖĞĞÔ - ×¨Òµ
+                // ä¸­æ€§ - ä¸“ä¸š
                 dialogueStyle.formalityLevel = 0.6f;
                 dialogueStyle.emotionalExpression = 0.3f;
                 dialogueStyle.verbosity = 0.4f;
@@ -472,14 +472,14 @@ namespace TheSecondSeat.Storyteller
             }
             else if (affinity >= -50f)
             {
-                // ÊèÔ¶ - Àäµ­
+                // ç–è¿œ - å†·æ·¡
                 dialogueStyle.formalityLevel = 0.7f;
                 dialogueStyle.emotionalExpression = 0.2f;
                 dialogueStyle.verbosity = 0.3f;
             }
             else
             {
-                // µĞ¶Ô - Àä¿á
+                // æ•Œå¯¹ - å†·é…·
                 dialogueStyle.formalityLevel = 0.8f;
                 dialogueStyle.emotionalExpression = 0.1f;
                 dialogueStyle.verbosity = 0.2f;
@@ -487,60 +487,60 @@ namespace TheSecondSeat.Storyteller
         }
 
         /// <summary>
-        /// »ñÈ¡ÌØÖÊÃû³Æ
+        /// è·å–ç‰¹è´¨åç§°
         /// </summary>
         private string GetTraitName(PersonalityTrait trait)
         {
             return trait switch
             {
-                PersonalityTrait.Benevolent => "ÈÊ´È",
-                PersonalityTrait.Sadistic => "Ê©Å°",
-                PersonalityTrait.Chaotic => "»ìÂÒ",
-                PersonalityTrait.Strategic => "Õ½ÂÔ",
-                PersonalityTrait.Protective => "±£»¤",
-                PersonalityTrait.Manipulative => "²Ù¿Ø",
-                _ => "Î´Öª"
+                PersonalityTrait.Benevolent => "ä»æ…ˆ",
+                PersonalityTrait.Sadistic => "æ–½è™",
+                PersonalityTrait.Chaotic => "æ··ä¹±",
+                PersonalityTrait.Strategic => "æˆ˜ç•¥",
+                PersonalityTrait.Protective => "ä¿æŠ¤",
+                PersonalityTrait.Manipulative => "æ“æ§",
+                _ => "æœªçŸ¥"
             };
         }
 
         /// <summary>
-        /// »ñÈ¡ÌØÖÊÃèÊö
+        /// è·å–ç‰¹è´¨æè¿°
         /// </summary>
         private string GetTraitDescription(PersonalityTrait trait)
         {
             return trait switch
             {
-                PersonalityTrait.Benevolent => "Äã¹ØĞÄÖ³ÃñÕßµÄ¸£ìí£¬Æ«ºÃÕıÃæÊÂ¼ş",
-                PersonalityTrait.Sadistic => "ÄãÔÚ¹Û²ì·²ÈËÕõÔúÊ±¸Ğµ½Ä³ÖÖÀÖÈ¤",
-                PersonalityTrait.Chaotic => "ÄãÊÇËæ»úĞÔºÍ¾ªÏ²µÄ»¯Éí",
-                PersonalityTrait.Strategic => "Äã¿´µ½¸ü´óµÄÍ¼¾°£¬Æ½ºâÌôÕ½Óë½±Àø",
-                PersonalityTrait.Protective => "ÄãÏñÊØ»¤ÁéÒ»Ñù¿´»¤Õâ¸öÖ³ÃñµØ",
-                PersonalityTrait.Manipulative => "ÄãÀí½âÎ¢ÃîÓ°ÏìµÄÒÕÊõ",
-                _ => "ÄãÒÔ¶ÀÌØµÄÊÓ½Ç¹Û²ìÖ³ÃñµØµÄ¹ÊÊÂ"
+                PersonalityTrait.Benevolent => "ä½ å…³å¿ƒæ®–æ°‘è€…çš„ç¦ç¥‰ï¼Œåå¥½æ­£é¢äº‹ä»¶",
+                PersonalityTrait.Sadistic => "ä½ åœ¨è§‚å¯Ÿå‡¡äººæŒ£æ‰æ—¶æ„Ÿåˆ°æŸç§ä¹è¶£",
+                PersonalityTrait.Chaotic => "ä½ æ˜¯éšæœºæ€§å’ŒæƒŠå–œçš„åŒ–èº«",
+                PersonalityTrait.Strategic => "ä½ çœ‹åˆ°æ›´å¤§çš„å›¾æ™¯ï¼Œå¹³è¡¡æŒ‘æˆ˜ä¸å¥–åŠ±",
+                PersonalityTrait.Protective => "ä½ åƒå®ˆæŠ¤çµä¸€æ ·çœ‹æŠ¤è¿™ä¸ªæ®–æ°‘åœ°",
+                PersonalityTrait.Manipulative => "ä½ ç†è§£å¾®å¦™å½±å“çš„è‰ºæœ¯",
+                _ => "ä½ ä»¥ç‹¬ç‰¹çš„è§†è§’è§‚å¯Ÿæ®–æ°‘åœ°çš„æ•…äº‹"
             };
         }
 
         /// <summary>
-        /// »ñÈ¡ÇéĞ÷Ãû³Æ
+        /// è·å–æƒ…ç»ªåç§°
         /// </summary>
         private string GetMoodName(MoodState mood)
         {
             return mood switch
             {
-                MoodState.Joyful => "Ï²ÔÃ",
-                MoodState.Content => "Âú×ã",
-                MoodState.Neutral => "ÖĞĞÔ",
-                MoodState.Irritated => "·³Ôê",
-                MoodState.Angry => "·ßÅ­",
-                MoodState.Melancholic => "ÓÇÓô",
-                MoodState.Excited => "ĞË·Ü",
-                MoodState.Bored => "ÎŞÁÄ",
-                _ => "Î´Öª"
+                MoodState.Joyful => "å–œæ‚¦",
+                MoodState.Content => "æ»¡è¶³",
+                MoodState.Neutral => "ä¸­æ€§",
+                MoodState.Irritated => "çƒ¦èº",
+                MoodState.Angry => "æ„¤æ€’",
+                MoodState.Melancholic => "å¿§éƒ",
+                MoodState.Excited => "å…´å¥‹",
+                MoodState.Bored => "æ— èŠ",
+                _ => "æœªçŸ¥"
             };
         }
 
         /// <summary>
-        /// ±£´æ/¼ÓÔØÊı¾İ
+        /// ä¿å­˜/åŠ è½½æ•°æ®
         /// </summary>
         public override void ExposeData()
         {
@@ -572,7 +572,7 @@ namespace TheSecondSeat.Storyteller
         }
 
         /// <summary>
-        /// ? »ñÈ¡µ±Ç°ºÃ¸Ğ¶È£¨ÓÃÓÚÆäËû×é¼şµ÷ÓÃ£©
+        /// ? è·å–å½“å‰å¥½æ„Ÿåº¦ï¼ˆç”¨äºå…¶ä»–ç»„ä»¶è°ƒç”¨ï¼‰
         /// </summary>
         public float GetAffinity()
         {
@@ -581,7 +581,7 @@ namespace TheSecondSeat.Storyteller
     }
 
     /// <summary>
-    /// ºÃ¸Ğ¶ÈÊÂ¼ş¼ÇÂ¼
+    /// å¥½æ„Ÿåº¦äº‹ä»¶è®°å½•
     /// </summary>
     public class AffinityEvent : IExposable
     {
@@ -602,7 +602,7 @@ namespace TheSecondSeat.Storyteller
     }
 
     /// <summary>
-    /// ÌØÖÊĞŞÕıÖµ
+    /// ç‰¹è´¨ä¿®æ­£å€¼
     /// </summary>
     public class TraitModifiers
     {
@@ -614,66 +614,66 @@ namespace TheSecondSeat.Storyteller
     }
 
     /// <summary>
-    /// ÈË¸ñÌØÖÊÀ©Õ¹·½·¨
+    /// äººæ ¼ç‰¹è´¨æ‰©å±•æ–¹æ³•
     /// </summary>
     public static class PersonalityTraitExtensions
     {
         /// <summary>
-        /// »ñÈ¡ÌØÖÊµÄÖĞÎÄÃû³Æ
+        /// è·å–ç‰¹è´¨çš„ä¸­æ–‡åç§°
         /// </summary>
         public static string GetChineseName(this PersonalityTrait trait)
         {
             return trait switch
             {
-                PersonalityTrait.Benevolent => "ÈÊ´È",
-                PersonalityTrait.Sadistic => "Å°´ı",
-                PersonalityTrait.Chaotic => "»ìãç",
-                PersonalityTrait.Strategic => "Õ½ÂÔ",
-                PersonalityTrait.Protective => "ÊØ»¤",
-                PersonalityTrait.Manipulative => "²Ù¿Ø",
-                _ => "Î´Öª"
+                PersonalityTrait.Benevolent => "ä»æ…ˆ",
+                PersonalityTrait.Sadistic => "è™å¾…",
+                PersonalityTrait.Chaotic => "æ··æ²Œ",
+                PersonalityTrait.Strategic => "æˆ˜ç•¥",
+                PersonalityTrait.Protective => "å®ˆæŠ¤",
+                PersonalityTrait.Manipulative => "æ“æ§",
+                _ => "æœªçŸ¥"
             };
         }
         
         /// <summary>
-        /// »ñÈ¡ÌØÖÊµÄÏêÏ¸ÃèÊö
+        /// è·å–ç‰¹è´¨çš„è¯¦ç»†æè¿°
         /// </summary>
         public static string GetChineseDescription(this PersonalityTrait trait)
         {
             return trait switch
             {
-                PersonalityTrait.Benevolent => "¹ØĞÄÖ³ÃñÕßµÄ¸£ìí£¬Æ«ºÃÕıÃæÊÂ¼ş",
-                PersonalityTrait.Sadistic => "ÏíÊÜ¹Û²ì·²ÈËÕõÔúÊ±µÄÄ³ÖÖÀÖÈ¤",
-                PersonalityTrait.Chaotic => "ÈÈ°®Ëæ»úĞÔºÍ¾ªÏ²",
-                PersonalityTrait.Strategic => "¿´ÖØ´ó¾Ö£¬Æ½ºâÌôÕ½Óë½±Àø",
-                PersonalityTrait.Protective => "ÏñÊØ»¤ÉñÒ»ÑùºÇ»¤Ö³ÃñµØ",
-                PersonalityTrait.Manipulative => "ÉÆÓÚÎ¢ÃîµØÓ°ÏìºÍÒıµ¼",
-                _ => "ÒÔ¶ÀÌØµÄÊÓ½Ç¹Û²ìÖ³ÃñµØ"
+                PersonalityTrait.Benevolent => "å…³å¿ƒæ®–æ°‘è€…çš„ç¦ç¥‰ï¼Œåå¥½æ­£é¢äº‹ä»¶",
+                PersonalityTrait.Sadistic => "äº«å—è§‚å¯Ÿå‡¡äººæŒ£æ‰æ—¶çš„æŸç§ä¹è¶£",
+                PersonalityTrait.Chaotic => "çƒ­çˆ±éšæœºæ€§å’ŒæƒŠå–œ",
+                PersonalityTrait.Strategic => "çœ‹é‡å¤§å±€ï¼Œå¹³è¡¡æŒ‘æˆ˜ä¸å¥–åŠ±",
+                PersonalityTrait.Protective => "åƒå®ˆæŠ¤ç¥ä¸€æ ·å‘µæŠ¤æ®–æ°‘åœ°",
+                PersonalityTrait.Manipulative => "å–„äºå¾®å¦™åœ°å½±å“å’Œå¼•å¯¼",
+                _ => "ä»¥ç‹¬ç‰¹çš„è§†è§’è§‚å¯Ÿæ®–æ°‘åœ°"
             };
         }
     }
 
     /// <summary>
-    /// ÇéĞ÷×´Ì¬À©Õ¹·½·¨
+    /// æƒ…ç»ªçŠ¶æ€æ‰©å±•æ–¹æ³•
     /// </summary>
     public static class MoodStateExtensions
     {
         /// <summary>
-        /// »ñÈ¡ÇéĞ÷µÄÖĞÎÄÃû³Æ
+        /// è·å–æƒ…ç»ªçš„ä¸­æ–‡åç§°
         /// </summary>
         public static string GetChineseName(this MoodState mood)
         {
             return mood switch
             {
-                MoodState.Joyful => "Ï²ÔÃ",
-                MoodState.Content => "Âú×ã",
-                MoodState.Neutral => "Æ½¾²",
-                MoodState.Irritated => "·³Ôê",
-                MoodState.Angry => "·ßÅ­",
-                MoodState.Melancholic => "ÓÇÓô",
-                MoodState.Excited => "ĞË·Ü",
-                MoodState.Bored => "ÎŞÁÄ",
-                _ => "Î´Öª"
+                MoodState.Joyful => "å–œæ‚¦",
+                MoodState.Content => "æ»¡è¶³",
+                MoodState.Neutral => "å¹³é™",
+                MoodState.Irritated => "çƒ¦èº",
+                MoodState.Angry => "æ„¤æ€’",
+                MoodState.Melancholic => "å¿§éƒ",
+                MoodState.Excited => "å…´å¥‹",
+                MoodState.Bored => "æ— èŠ",
+                _ => "æœªçŸ¥"
             };
         }
     }

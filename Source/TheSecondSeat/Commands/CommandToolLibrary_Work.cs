@@ -1,86 +1,86 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 
 namespace TheSecondSeat.Commands
 {
     /// <summary>
-    /// ÃüÁî¹¤¾ß¿â - ¹¤×÷Ö¸ÅÉ²¿·Ö
+    /// å‘½ä»¤å·¥å…·åº“ - å·¥ä½œæŒ‡æ´¾éƒ¨åˆ†
     /// </summary>
     public static partial class CommandToolLibrary
     {
         /// <summary>
-        /// ×¢²á¹¤×÷Ö¸ÅÉÃüÁî
-        /// ? v1.6.27: Ìí¼Ó limit ºÍ nearFocus ²ÎÊı
+        /// æ³¨å†Œå·¥ä½œæŒ‡æ´¾å‘½ä»¤
+        /// ? v1.6.27: æ·»åŠ  limit å’Œ nearFocus å‚æ•°
         /// </summary>
         private static void RegisterWorkCommands()
         {
-            // 4.1 Ö¸ÅÉ²É¿ó
+            // 4.1 æŒ‡æ´¾é‡‡çŸ¿
             Register(new CommandDefinition
             {
                 commandId = "DesignateMine",
                 category = "Work",
-                displayName = "Ö¸ÅÉ²É¿ó",
-                description = "Ö¸ÅÉ¿óÊ¯½øĞĞ¿ª²É",
+                displayName = "æŒ‡æ´¾é‡‡çŸ¿",
+                description = "æŒ‡æ´¾çŸ¿çŸ³è¿›è¡Œå¼€é‡‡",
                 parameters = new List<ParameterDef>
                 {
                     new ParameterDef { name = "target", type = "string", required = false, defaultValue = "all",
-                        validValues = new List<string> { "all", "metal", "stone", "components" }, description = "²É¿óÄ¿±êÀàĞÍ" },
-                    new ParameterDef { name = "x", type = "int", required = false, description = "ÌØ¶¨X×ø±ê" },
-                    new ParameterDef { name = "z", type = "int", required = false, description = "ÌØ¶¨Z×ø±ê" },
-                    new ParameterDef { name = "limit", type = "int", required = false, defaultValue = "-1", description = "ÏŞÖÆÊıÁ¿£¨-1=È«²¿£©" },
-                    new ParameterDef { name = "nearFocus", type = "bool", required = false, defaultValue = "false", description = "ÓÅÏÈÑ¡Ôñ¿¿½üÊó±ê/¾µÍ·µÄÄ¿±ê" }
+                        validValues = new List<string> { "all", "metal", "stone", "components" }, description = "é‡‡çŸ¿ç›®æ ‡ç±»å‹" },
+                    new ParameterDef { name = "x", type = "int", required = false, description = "ç‰¹å®šXåæ ‡" },
+                    new ParameterDef { name = "z", type = "int", required = false, description = "ç‰¹å®šZåæ ‡" },
+                    new ParameterDef { name = "limit", type = "int", required = false, defaultValue = "-1", description = "é™åˆ¶æ•°é‡ï¼ˆ-1=å…¨éƒ¨ï¼‰" },
+                    new ParameterDef { name = "nearFocus", type = "bool", required = false, defaultValue = "false", description = "ä¼˜å…ˆé€‰æ‹©é è¿‘é¼ æ ‡/é•œå¤´çš„ç›®æ ‡" }
                 },
                 example = "{ \"action\": \"DesignateMine\", \"target\": \"metal\", \"limit\": 10, \"nearFocus\": true }",
-                notes = "metal=¸ÖÌú/½ğ/Òø/ÓËµÈ£»stone=Ê¯²Ä£»components=Áã¼ş¡£Ìí¼ÓlimitºÍnearFocus¿É¾«È·¿ØÖÆ"
+                notes = "metal=é’¢é“/é‡‘/é“¶/é“€ç­‰ï¼›stone=çŸ³æï¼›components=é›¶ä»¶ã€‚æ·»åŠ limitå’ŒnearFocuså¯ç²¾ç¡®æ§åˆ¶"
             });
             
-            // 4.2 Ö¸ÅÉ¿³·¥
+            // 4.2 æŒ‡æ´¾ç ä¼
             Register(new CommandDefinition
             {
                 commandId = "DesignateCut",
                 category = "Work",
-                displayName = "Ö¸ÅÉ¿³·¥",
-                description = "Ö¸ÅÉÖ²Îï½øĞĞ¿³·¥",
+                displayName = "æŒ‡æ´¾ç ä¼",
+                description = "æŒ‡æ´¾æ¤ç‰©è¿›è¡Œç ä¼",
                 parameters = new List<ParameterDef>
                 {
                     new ParameterDef { name = "target", type = "string", required = false, defaultValue = "trees",
-                        validValues = new List<string> { "trees", "blighted", "wild", "all" }, description = "¿³·¥Ä¿±êÀàĞÍ" },
-                    new ParameterDef { name = "limit", type = "int", required = false, defaultValue = "-1", description = "ÏŞÖÆÊıÁ¿£¨-1=È«²¿£©" },
-                    new ParameterDef { name = "nearFocus", type = "bool", required = false, defaultValue = "false", description = "ÓÅÏÈÑ¡Ôñ¿¿½üÊó±ê/¾µÍ·µÄÄ¿±ê" }
+                        validValues = new List<string> { "trees", "blighted", "wild", "all" }, description = "ç ä¼ç›®æ ‡ç±»å‹" },
+                    new ParameterDef { name = "limit", type = "int", required = false, defaultValue = "-1", description = "é™åˆ¶æ•°é‡ï¼ˆ-1=å…¨éƒ¨ï¼‰" },
+                    new ParameterDef { name = "nearFocus", type = "bool", required = false, defaultValue = "false", description = "ä¼˜å…ˆé€‰æ‹©é è¿‘é¼ æ ‡/é•œå¤´çš„ç›®æ ‡" }
                 },
                 example = "{ \"action\": \"DesignateCut\", \"target\": \"trees\", \"limit\": 5, \"nearFocus\": true }",
-                notes = "trees=³ÉÊìÊ÷Ä¾£»blighted=¿İÎ®Ö²Îï£»wild=Ò°ÉúÖ²Îï¡£¿³·¥×î½üµÄ5¿ÃÊ÷"
+                notes = "trees=æˆç†Ÿæ ‘æœ¨ï¼›blighted=æ¯èæ¤ç‰©ï¼›wild=é‡ç”Ÿæ¤ç‰©ã€‚ç ä¼æœ€è¿‘çš„5æ£µæ ‘"
             });
             
-            // 4.3 Ö¸ÅÉÊÕ»ñ
+            // 4.3 æŒ‡æ´¾æ”¶è·
             Register(new CommandDefinition
             {
                 commandId = "DesignateHarvest",
                 category = "Work",
-                displayName = "Ö¸ÅÉÊÕ»ñ",
-                description = "Ö¸ÅÉ³ÉÊì×÷Îï½øĞĞÊÕ»ñ",
+                displayName = "æŒ‡æ´¾æ”¶è·",
+                description = "æŒ‡æ´¾æˆç†Ÿä½œç‰©è¿›è¡Œæ”¶è·",
                 parameters = new List<ParameterDef>
                 {
-                    new ParameterDef { name = "plantDef", type = "string", required = false, description = "ÌØ¶¨Ö²ÎïDefName£¨Îª¿ÕÔòÊÕ»ñËùÓĞ³ÉÊì×÷Îï£©" },
-                    new ParameterDef { name = "limit", type = "int", required = false, defaultValue = "-1", description = "ÏŞÖÆÊıÁ¿£¨-1=È«²¿£©" },
-                    new ParameterDef { name = "nearFocus", type = "bool", required = false, defaultValue = "false", description = "ÓÅÏÈÑ¡Ôñ¿¿½üÊó±ê/¾µÍ·µÄÄ¿±ê" }
+                    new ParameterDef { name = "plantDef", type = "string", required = false, description = "ç‰¹å®šæ¤ç‰©DefNameï¼ˆä¸ºç©ºåˆ™æ”¶è·æ‰€æœ‰æˆç†Ÿä½œç‰©ï¼‰" },
+                    new ParameterDef { name = "limit", type = "int", required = false, defaultValue = "-1", description = "é™åˆ¶æ•°é‡ï¼ˆ-1=å…¨éƒ¨ï¼‰" },
+                    new ParameterDef { name = "nearFocus", type = "bool", required = false, defaultValue = "false", description = "ä¼˜å…ˆé€‰æ‹©é è¿‘é¼ æ ‡/é•œå¤´çš„ç›®æ ‡" }
                 },
                 example = "{ \"action\": \"DesignateHarvest\", \"limit\": 50, \"nearFocus\": true }",
-                notes = "Ö»ÊÕ»ñÒÑ³ÉÊì×÷Îï£¬ÓÅÏÈÊÕ»ñ×î½üµÄ50Öê"
+                notes = "åªæ”¶è·å·²æˆç†Ÿä½œç‰©ï¼Œä¼˜å…ˆæ”¶è·æœ€è¿‘çš„50æ ª"
             });
             
-            // 4.4 Ìí¼Ó¹¤×÷µ¥
+            // 4.4 æ·»åŠ å·¥ä½œå•
             Register(new CommandDefinition
             {
                 commandId = "AddBill",
                 category = "Work",
-                displayName = "Ìí¼Ó¹¤×÷µ¥",
-                description = "ÔÚ¹¤×÷Ì¨ÉÏÌí¼ÓÉú²ú¶©µ¥",
+                displayName = "æ·»åŠ å·¥ä½œå•",
+                description = "åœ¨å·¥ä½œå°ä¸Šæ·»åŠ ç”Ÿäº§è®¢å•",
                 parameters = new List<ParameterDef>
                 {
-                    new ParameterDef { name = "workbenchDef", type = "string", required = true, description = "¹¤×÷Ì¨DefName" },
-                    new ParameterDef { name = "recipeDef", type = "string", required = true, description = "Åä·½DefName" },
-                    new ParameterDef { name = "count", type = "int", required = false, defaultValue = "-1", description = "Éú²úÊıÁ¿ (-1=ÓÀ¾Ã)" },
-                    new ParameterDef { name = "targetCount", type = "int", required = false, description = "Ä¿±ê¿â´æÊıÁ¿" }
+                    new ParameterDef { name = "workbenchDef", type = "string", required = true, description = "å·¥ä½œå°DefName" },
+                    new ParameterDef { name = "recipeDef", type = "string", required = true, description = "é…æ–¹DefName" },
+                    new ParameterDef { name = "count", type = "int", required = false, defaultValue = "-1", description = "ç”Ÿäº§æ•°é‡ (-1=æ°¸ä¹…)" },
+                    new ParameterDef { name = "targetCount", type = "int", required = false, description = "ç›®æ ‡åº“å­˜æ•°é‡" }
                 },
                 example = "{ \"action\": \"AddBill\", \"workbenchDef\": \"ElectricStove\", \"recipeDef\": \"CookMealSimple\", \"count\": 10 }",
                 notes = ""

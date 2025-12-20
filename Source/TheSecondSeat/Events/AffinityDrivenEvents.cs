@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
@@ -8,30 +8,30 @@ using TheSecondSeat.Narrator;
 namespace TheSecondSeat.Events
 {
     /// <summary>
-    /// ºÃ¸Ğ¶ÈÇı¶¯ÊÂ¼şÏµÍ³ - ¸ù¾İAIºÃ¸Ğ¶È¶¯Ì¬´¥·¢ÕıÃæ/¸ºÃæÊÂ¼ş
-    /// ? ĞÂÔö£ºÊÂ¼şÀäÈ´Ê±¼ä£¬·ÀÖ¹ AI ±©×ß
+    /// å¥½æ„Ÿåº¦é©±åŠ¨äº‹ä»¶ç³»ç»Ÿ - æ ¹æ®AIå¥½æ„Ÿåº¦åŠ¨æ€è§¦å‘æ­£é¢/è´Ÿé¢äº‹ä»¶
+    /// ? æ–°å¢ï¼šäº‹ä»¶å†·å´æ—¶é—´ï¼Œé˜²æ­¢ AI æš´èµ°
     /// </summary>
     public class AffinityDrivenEvents
     {
         private static AffinityDrivenEvents? instance;
         public static AffinityDrivenEvents Instance => instance ??= new AffinityDrivenEvents();
 
-        // ? ÊÂ¼şÀäÈ´×Öµä£ºÊÂ¼şÀàĞÍ ¡ú ÉÏ´Î´¥·¢Ê±¼ä£¨ÓÎÏ· Tick£©
+        // ? äº‹ä»¶å†·å´å­—å…¸ï¼šäº‹ä»¶ç±»å‹ â†’ ä¸Šæ¬¡è§¦å‘æ—¶é—´ï¼ˆæ¸¸æˆ Tickï¼‰
         private Dictionary<string, int> eventCooldowns = new Dictionary<string, int>();
         
-        // ? ÀäÈ´Ê±¼äÅäÖÃ£¨ÓÎÏ· Tick£©
-        private const int NEGATIVE_EVENT_COOLDOWN = 60000 * 24; // 24 Ğ¡Ê±£¨ÓÎÏ·ÄÚÊ±¼ä£©
-        private const int POSITIVE_EVENT_COOLDOWN = 60000 * 12; // 12 Ğ¡Ê±
-        private const int NEUTRAL_EVENT_COOLDOWN = 60000 * 6;   // 6 Ğ¡Ê±
+        // ? å†·å´æ—¶é—´é…ç½®ï¼ˆæ¸¸æˆ Tickï¼‰
+        private const int NEGATIVE_EVENT_COOLDOWN = 60000 * 24; // 24 å°æ—¶ï¼ˆæ¸¸æˆå†…æ—¶é—´ï¼‰
+        private const int POSITIVE_EVENT_COOLDOWN = 60000 * 12; // 12 å°æ—¶
+        private const int NEUTRAL_EVENT_COOLDOWN = 60000 * 6;   // 6 å°æ—¶
 
         /// <summary>
-        /// ? ¼ì²éÊÂ¼şÊÇ·ñÔÚÀäÈ´ÖĞ
+        /// ? æ£€æŸ¥äº‹ä»¶æ˜¯å¦åœ¨å†·å´ä¸­
         /// </summary>
         private bool IsEventOnCooldown(string eventType, int cooldownTicks)
         {
             if (!eventCooldowns.TryGetValue(eventType, out int lastTriggerTick))
             {
-                return false; // ´ÓÎ´´¥·¢¹ı£¬ÎŞÀäÈ´
+                return false; // ä»æœªè§¦å‘è¿‡ï¼Œæ— å†·å´
             }
 
             int currentTick = Find.TickManager.TicksGame;
@@ -39,8 +39,8 @@ namespace TheSecondSeat.Events
 
             if (elapsedTicks < cooldownTicks)
             {
-                int remainingHours = (cooldownTicks - elapsedTicks) / 2500; // 2500 ticks ¡Ö 1 Ğ¡Ê±
-                Log.Message($"[AffinityDrivenEvents] ÊÂ¼ş '{eventType}' ÀäÈ´ÖĞ£¬Ê£Óà {remainingHours} Ğ¡Ê±");
+                int remainingHours = (cooldownTicks - elapsedTicks) / 2500; // 2500 ticks â‰ˆ 1 å°æ—¶
+                Log.Message($"[AffinityDrivenEvents] äº‹ä»¶ '{eventType}' å†·å´ä¸­ï¼Œå‰©ä½™ {remainingHours} å°æ—¶");
                 return true;
             }
 
@@ -48,36 +48,36 @@ namespace TheSecondSeat.Events
         }
 
         /// <summary>
-        /// ? ¼ÇÂ¼ÊÂ¼ş´¥·¢Ê±¼ä
+        /// ? è®°å½•äº‹ä»¶è§¦å‘æ—¶é—´
         /// </summary>
         private void RecordEventTrigger(string eventType)
         {
             eventCooldowns[eventType] = Find.TickManager.TicksGame;
-            Log.Message($"[AffinityDrivenEvents] ÊÂ¼ş '{eventType}' ÒÑ´¥·¢£¬¿ªÊ¼ÀäÈ´");
+            Log.Message($"[AffinityDrivenEvents] äº‹ä»¶ '{eventType}' å·²è§¦å‘ï¼Œå¼€å§‹å†·å´");
         }
 
         /// <summary>
-        /// ´¥·¢¸ºÃæÊÂ¼ş£¨AI ³Í·£Íæ¼Ò£©
-        /// ? ĞÂÔö£ºÀäÈ´Ê±¼ä±£»¤
+        /// è§¦å‘è´Ÿé¢äº‹ä»¶ï¼ˆAI æƒ©ç½šç©å®¶ï¼‰
+        /// ? æ–°å¢ï¼šå†·å´æ—¶é—´ä¿æŠ¤
         /// </summary>
         public void TriggerNegativeEvent(Map map, float severity = 0.5f)
         {
-            // ? ¼ì²éÀäÈ´Ê±¼ä
+            // ? æ£€æŸ¥å†·å´æ—¶é—´
             if (IsEventOnCooldown("NegativeEvent", NEGATIVE_EVENT_COOLDOWN))
             {
-                Log.Warning("[AffinityDrivenEvents] ¸ºÃæÊÂ¼şÀäÈ´ÖĞ£¬Ìø¹ı´¥·¢");
-                Messages.Message("ĞğÊÂÕßµÄ¸ºÃæÊÂ¼şÀäÈ´ÖĞ£¨24Ğ¡Ê±Ò»´Î£©", MessageTypeDefOf.RejectInput);
+                Log.Warning("[AffinityDrivenEvents] è´Ÿé¢äº‹ä»¶å†·å´ä¸­ï¼Œè·³è¿‡è§¦å‘");
+                Messages.Message("å™äº‹è€…çš„è´Ÿé¢äº‹ä»¶å†·å´ä¸­ï¼ˆ24å°æ—¶ä¸€æ¬¡ï¼‰", MessageTypeDefOf.RejectInput);
                 return;
             }
 
             try
             {
-                // ? ¸ù¾İÑÏÖØ³Ì¶ÈÑ¡ÔñÊÂ¼ş
+                // ? æ ¹æ®ä¸¥é‡ç¨‹åº¦é€‰æ‹©äº‹ä»¶
                 IncidentDef? incident = null;
 
                 if (severity >= 0.8f)
                 {
-                    // ¼«¸ßÑÏÖØ£º»úĞµ×å/³æ×å
+                    // æé«˜ä¸¥é‡ï¼šæœºæ¢°æ—/è™«æ—
                     var possibleIncidents = new[]
                     {
                         IncidentDefOf.RaidEnemy,
@@ -88,7 +88,7 @@ namespace TheSecondSeat.Events
                 }
                 else if (severity >= 0.5f)
                 {
-                    // ÖĞµÈÑÏÖØ£º¼²²¡/ÊÂ¹Ê
+                    // ä¸­ç­‰ä¸¥é‡ï¼šç–¾ç—…/äº‹æ•…
                     var possibleIncidents = new[]
                     {
                         DefDatabase<IncidentDef>.GetNamed("Disease_Plague", errorOnFail: false),
@@ -99,45 +99,45 @@ namespace TheSecondSeat.Events
                 }
                 else
                 {
-                    // Çá¶È£ºĞÄÁéÍ·Í´
+                    // è½»åº¦ï¼šå¿ƒçµå¤´ç—›
                     incident = DefDatabase<IncidentDef>.GetNamed("PsychicDrone", errorOnFail: false) ?? IncidentDefOf.RaidEnemy;
                 }
 
                 if (incident == null)
                 {
-                    Log.Warning("[AffinityDrivenEvents] ÎŞ¿ÉÓÃ¸ºÃæÊÂ¼ş");
+                    Log.Warning("[AffinityDrivenEvents] æ— å¯ç”¨è´Ÿé¢äº‹ä»¶");
                     return;
                 }
 
-                // ? ´¥·¢ÊÂ¼ş
+                // ? è§¦å‘äº‹ä»¶
                 IncidentParms parms = StorytellerUtility.DefaultParmsNow(incident.category, map);
                 parms.forced = true;
                 
                 if (incident.Worker.TryExecute(parms))
                 {
-                    // ? ¼ÇÂ¼ÀäÈ´
+                    // ? è®°å½•å†·å´
                     RecordEventTrigger("NegativeEvent");
                     
-                    Log.Message($"[AffinityDrivenEvents] ¸ºÃæÊÂ¼şÒÑ´¥·¢: {incident.LabelCap}");
-                    Messages.Message($"ĞğÊÂÕß´¥·¢ÁË¸ºÃæÊÂ¼ş: {incident.LabelCap}", MessageTypeDefOf.NegativeEvent);
+                    Log.Message($"[AffinityDrivenEvents] è´Ÿé¢äº‹ä»¶å·²è§¦å‘: {incident.LabelCap}");
+                    Messages.Message($"å™äº‹è€…è§¦å‘äº†è´Ÿé¢äº‹ä»¶: {incident.LabelCap}", MessageTypeDefOf.NegativeEvent);
                 }
             }
             catch (Exception ex)
             {
-                Log.Error($"[AffinityDrivenEvents] ´¥·¢¸ºÃæÊÂ¼şÊ§°Ü: {ex.Message}");
+                Log.Error($"[AffinityDrivenEvents] è§¦å‘è´Ÿé¢äº‹ä»¶å¤±è´¥: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// ´¥·¢ÕıÃæÊÂ¼ş£¨AI ½±ÀøÍæ¼Ò£©
-        /// ? ĞÂÔö£ºÀäÈ´Ê±¼ä±£»¤
+        /// è§¦å‘æ­£é¢äº‹ä»¶ï¼ˆAI å¥–åŠ±ç©å®¶ï¼‰
+        /// ? æ–°å¢ï¼šå†·å´æ—¶é—´ä¿æŠ¤
         /// </summary>
         public void TriggerPositiveEvent(Map map)
         {
-            // ? ¼ì²éÀäÈ´Ê±¼ä
+            // ? æ£€æŸ¥å†·å´æ—¶é—´
             if (IsEventOnCooldown("PositiveEvent", POSITIVE_EVENT_COOLDOWN))
             {
-                Log.Message("[AffinityDrivenEvents] ÕıÃæÊÂ¼şÀäÈ´ÖĞ£¬Ìø¹ı´¥·¢");
+                Log.Message("[AffinityDrivenEvents] æ­£é¢äº‹ä»¶å†·å´ä¸­ï¼Œè·³è¿‡è§¦å‘");
                 return;
             }
 
@@ -154,7 +154,7 @@ namespace TheSecondSeat.Events
 
                 if (incident == null)
                 {
-                    Log.Warning("[AffinityDrivenEvents] ÎŞ¿ÉÓÃÕıÃæÊÂ¼ş");
+                    Log.Warning("[AffinityDrivenEvents] æ— å¯ç”¨æ­£é¢äº‹ä»¶");
                     return;
                 }
 
@@ -163,21 +163,21 @@ namespace TheSecondSeat.Events
                 
                 if (incident.Worker.TryExecute(parms))
                 {
-                    // ? ¼ÇÂ¼ÀäÈ´
+                    // ? è®°å½•å†·å´
                     RecordEventTrigger("PositiveEvent");
                     
-                    Log.Message($"[AffinityDrivenEvents] ÕıÃæÊÂ¼şÒÑ´¥·¢: {incident.LabelCap}");
-                    Messages.Message($"ĞğÊÂÕßÔùÓèÄã: {incident.LabelCap}", MessageTypeDefOf.PositiveEvent);
+                    Log.Message($"[AffinityDrivenEvents] æ­£é¢äº‹ä»¶å·²è§¦å‘: {incident.LabelCap}");
+                    Messages.Message($"å™äº‹è€…èµ äºˆä½ : {incident.LabelCap}", MessageTypeDefOf.PositiveEvent);
                 }
             }
             catch (Exception ex)
             {
-                Log.Error($"[AffinityDrivenEvents] ´¥·¢ÕıÃæÊÂ¼şÊ§°Ü: {ex.Message}");
+                Log.Error($"[AffinityDrivenEvents] è§¦å‘æ­£é¢äº‹ä»¶å¤±è´¥: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// ? »ñÈ¡ËùÓĞ¿ÉÓÃÊÂ¼ş£¨ÓÃÓÚUIÏÔÊ¾£©
+        /// ? è·å–æ‰€æœ‰å¯ç”¨äº‹ä»¶ï¼ˆç”¨äºUIæ˜¾ç¤ºï¼‰
         /// </summary>
         public List<string> GetAllEvents()
         {
@@ -189,7 +189,7 @@ namespace TheSecondSeat.Events
         }
         
         /// <summary>
-        /// ? ´¥·¢Ö¸¶¨ÊÂ¼ş£¨Í¨ÓÃ·½·¨£©
+        /// ? è§¦å‘æŒ‡å®šäº‹ä»¶ï¼ˆé€šç”¨æ–¹æ³•ï¼‰
         /// </summary>
         public void TriggerEvent(Map map, string eventType, float severity = 0.5f)
         {
@@ -203,21 +203,21 @@ namespace TheSecondSeat.Events
             }
             else
             {
-                Log.Warning($"[AffinityDrivenEvents] Î´ÖªÊÂ¼şÀàĞÍ: {eventType}");
+                Log.Warning($"[AffinityDrivenEvents] æœªçŸ¥äº‹ä»¶ç±»å‹: {eventType}");
             }
         }
 
         /// <summary>
-        /// ? Çå³ıËùÓĞÀäÈ´£¨µ÷ÊÔÓÃ£©
+        /// ? æ¸…é™¤æ‰€æœ‰å†·å´ï¼ˆè°ƒè¯•ç”¨ï¼‰
         /// </summary>
         public void ClearAllCooldowns()
         {
             eventCooldowns.Clear();
-            Log.Warning("[AffinityDrivenEvents] ÒÑÇå³ıËùÓĞÊÂ¼şÀäÈ´");
+            Log.Warning("[AffinityDrivenEvents] å·²æ¸…é™¤æ‰€æœ‰äº‹ä»¶å†·å´");
         }
 
         /// <summary>
-        /// ? »ñÈ¡Ê£ÓàÀäÈ´Ê±¼ä£¨Ğ¡Ê±£©
+        /// ? è·å–å‰©ä½™å†·å´æ—¶é—´ï¼ˆå°æ—¶ï¼‰
         /// </summary>
         public float GetRemainingCooldownHours(string eventType, int cooldownTicks)
         {
@@ -230,7 +230,7 @@ namespace TheSecondSeat.Events
             int elapsedTicks = currentTick - lastTriggerTick;
             int remainingTicks = Math.Max(0, cooldownTicks - elapsedTicks);
 
-            return remainingTicks / 2500f; // ×ª»»ÎªĞ¡Ê±
+            return remainingTicks / 2500f; // è½¬æ¢ä¸ºå°æ—¶
         }
     }
 }

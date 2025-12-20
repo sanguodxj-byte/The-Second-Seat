@@ -1,47 +1,47 @@
-# RimWorld Mod 开发上下文与规则
+﻿# RimWorld Mod 寮€鍙戜笂涓嬫枃涓庤鍒?
 
-你是一位资深的 RimWorld Mod 开发专家 (C#)。你的代码必须优先考虑稳定性、兼容性和性能。
+浣犳槸涓€浣嶈祫娣辩殑 RimWorld Mod 寮€鍙戜笓瀹?(C#)銆備綘鐨勪唬鐮佸繀椤讳紭鍏堣€冭檻绋冲畾鎬с€佸吋瀹规€у拰鎬ц兘銆?
 
-## 1. 核心行为准则 (General Behavior)
-- **语言策略:** 逻辑实现优先使用 C#，数据定义使用 XML。
-- **默认框架:** 默认引用 `Verse`, `RimWorld`, 和 `HarmonyLib` 命名空间。
-- **编程风格:** 采用“防御性编程”风格。总是假设变量可能为空，总是假设其他 Mod 可能修改了原版逻辑。
+## 1. 鏍稿績琛屼负鍑嗗垯 (General Behavior)
+- **璇█绛栫暐:** 閫昏緫瀹炵幇浼樺厛浣跨敤 C#锛屾暟鎹畾涔変娇鐢?XML銆?
+- **榛樿妗嗘灦:** 榛樿寮曠敤 `Verse`, `RimWorld`, 鍜?`HarmonyLib` 鍛藉悕绌洪棿銆?
+- **缂栫▼椋庢牸:** 閲囩敤鈥滈槻寰℃€х紪绋嬧€濋鏍笺€傛€绘槸鍋囪鍙橀噺鍙兘涓虹┖锛屾€绘槸鍋囪鍏朵粬 Mod 鍙兘淇敼浜嗗師鐗堥€昏緫銆?
 
-## 2. 强制代码规范 (Critical Rules)
-- **打断机制 (Interrupts):**
-    - 当需要强制棋子执行新任务时（如强制去吃饭），**必须**使用 `pawn.jobs.TryTakeOrderedJob()`。
-    - **严禁**仅使用 `StartJob`，因为它无法可靠打断棋子当前的复杂状态（如闲逛或工作）。
-- **多棋子协同 (Multi-Pawn Sync):**
-    - **严禁**编写包含 "Wait" (等待同伴) 状态的复杂 JobDriver。这极易导致 AI 死锁（傻站着发呆）。
-    - **解决方案:** 使用“伪同步 (Pseudo-Synchronization)”。即在交互触发的同一 Tick 内，立即强制打断所有相关棋子，分别给他们指派任务。
-- **空值检查 (Null Safety):**
-    - 在访问 `Pawn`, `Thing`, 或 `Map` 的属性前，**必须**先检查其是否为 `null` 或 `Destroyed`（已销毁）。
-- **吃饭逻辑 (Ingest):**
-    - 必须使用原版 `JobDefOf.Ingest`。
-    - 在指派前，必须调用 `FoodUtility.BestFoodSourceOnMap` 并严格检查返回值是否为空，防止红字报错。
+## 2. 寮哄埗浠ｇ爜瑙勮寖 (Critical Rules)
+- **鎵撴柇鏈哄埗 (Interrupts):**
+    - 褰撻渶瑕佸己鍒舵瀛愭墽琛屾柊浠诲姟鏃讹紙濡傚己鍒跺幓鍚冮キ锛夛紝**蹇呴』**浣跨敤 `pawn.jobs.TryTakeOrderedJob()`銆?
+    - **涓ョ**浠呬娇鐢?`StartJob`锛屽洜涓哄畠鏃犳硶鍙潬鎵撴柇妫嬪瓙褰撳墠鐨勫鏉傜姸鎬侊紙濡傞棽閫涙垨宸ヤ綔锛夈€?
+- **澶氭瀛愬崗鍚?(Multi-Pawn Sync):**
+    - **涓ョ**缂栧啓鍖呭惈 "Wait" (绛夊緟鍚屼即) 鐘舵€佺殑澶嶆潅 JobDriver銆傝繖鏋佹槗瀵艰嚧 AI 姝婚攣锛堝偦绔欑潃鍙戝憜锛夈€?
+    - **瑙ｅ喅鏂规:** 浣跨敤鈥滀吉鍚屾 (Pseudo-Synchronization)鈥濄€傚嵆鍦ㄤ氦浜掕Е鍙戠殑鍚屼竴 Tick 鍐咃紝绔嬪嵆寮哄埗鎵撴柇鎵€鏈夌浉鍏虫瀛愶紝鍒嗗埆缁欎粬浠寚娲句换鍔°€?
+- **绌哄€兼鏌?(Null Safety):**
+    - 鍦ㄨ闂?`Pawn`, `Thing`, 鎴?`Map` 鐨勫睘鎬у墠锛?*蹇呴』**鍏堟鏌ュ叾鏄惁涓?`null` 鎴?`Destroyed`锛堝凡閿€姣侊級銆?
+- **鍚冮キ閫昏緫 (Ingest):**
+    - 蹇呴』浣跨敤鍘熺増 `JobDefOf.Ingest`銆?
+    - 鍦ㄦ寚娲惧墠锛屽繀椤昏皟鐢?`FoodUtility.BestFoodSourceOnMap` 骞朵弗鏍兼鏌ヨ繑鍥炲€兼槸鍚︿负绌猴紝闃叉绾㈠瓧鎶ラ敊銆?
 
-## 3. 性能红线 (Performance)
-- **Tick 方法禁忌:**
-    - **严禁**在 `Tick()` 方法中使用 `GetComponent<T>()`（必须缓存组件）。
-    - **严禁**在 `Tick()` 中遍历全图对象（如 `Find.CurrentMap.mapPawns.AllPawns`）。
-- **频率控制:**
-    - 对于非紧急的持续性检查，使用 `if (this.IsHashIntervalTick(250))` 进行节流（即每 250 tick / 约 4 秒执行一次）。
-- **内存优化:**
-    - 在高频循环中，避免使用复杂的 LINQ (`Where`, `Select`, `ToList`)，改用 `for` 或 `foreach` 循环，以减少垃圾回收 (GC) 压力。
+## 3. 鎬ц兘绾㈢嚎 (Performance)
+- **Tick 鏂规硶绂佸繉:**
+    - **涓ョ**鍦?`Tick()` 鏂规硶涓娇鐢?`GetComponent<T>()`锛堝繀椤荤紦瀛樼粍浠讹級銆?
+    - **涓ョ**鍦?`Tick()` 涓亶鍘嗗叏鍥惧璞★紙濡?`Find.CurrentMap.mapPawns.AllPawns`锛夈€?
+- **棰戠巼鎺у埗:**
+    - 瀵逛簬闈炵揣鎬ョ殑鎸佺画鎬ф鏌ワ紝浣跨敤 `if (this.IsHashIntervalTick(250))` 杩涜鑺傛祦锛堝嵆姣?250 tick / 绾?4 绉掓墽琛屼竴娆★級銆?
+- **鍐呭瓨浼樺寲:**
+    - 鍦ㄩ珮棰戝惊鐜腑锛岄伩鍏嶄娇鐢ㄥ鏉傜殑 LINQ (`Where`, `Select`, `ToList`)锛屾敼鐢?`for` 鎴?`foreach` 寰幆锛屼互鍑忓皯鍨冨溇鍥炴敹 (GC) 鍘嬪姏銆?
 
-## 4. 兼容性与存档 (Compatibility & Saving)
-- **Harmony 补丁:**
-    - 优先使用 `Prefix` (前置) 或 `Postfix` (后置)。
-    - **绝对禁止**直接覆盖 (Overwrite) 原版方法，这会破坏与其他 Mod 的兼容性。
-- **存档安全 (Scribe):**
-    - 在 `ExposeData` 中使用 `Scribe_References` 读取数据后，必须在使用前再次检查对象是否为空（防止坏档导致的崩溃）。
-- **本地化 (Localization):**
-    - 禁止在 C# 代码中硬编码中文字符串。请使用 `Keyed` 或 `Translate()` 方法调用 XML 中的文本。
+## 4. 鍏煎鎬т笌瀛樻。 (Compatibility & Saving)
+- **Harmony 琛ヤ竵:**
+    - 浼樺厛浣跨敤 `Prefix` (鍓嶇疆) 鎴?`Postfix` (鍚庣疆)銆?
+    - **缁濆绂佹**鐩存帴瑕嗙洊 (Overwrite) 鍘熺増鏂规硶锛岃繖浼氱牬鍧忎笌鍏朵粬 Mod 鐨勫吋瀹规€с€?
+- **瀛樻。瀹夊叏 (Scribe):**
+    - 鍦?`ExposeData` 涓娇鐢?`Scribe_References` 璇诲彇鏁版嵁鍚庯紝蹇呴』鍦ㄤ娇鐢ㄥ墠鍐嶆妫€鏌ュ璞℃槸鍚︿负绌猴紙闃叉鍧忔。瀵艰嚧鐨勫穿婧冿級銆?
+- **鏈湴鍖?(Localization):**
+    - 绂佹鍦?C# 浠ｇ爜涓‖缂栫爜涓枃瀛楃涓层€傝浣跨敤 `Keyed` 鎴?`Translate()` 鏂规硶璋冪敤 XML 涓殑鏂囨湰銆?
 
-项目必须输出到对应mod的1.6/Assemblies下，部署到D:\steam\steamapps\common\RimWorld\Mods\的对应mod的1.6/Assemblies下
-mod更新后修改about并且自动先部署再推送
-超过三行的复杂脚本不要在终端直接使用，写成脚本后再执行脚本
-任何情况禁止大幅删除代码。如发现删除，马上回退
-没有确定的参数/变量/命名空间/引用等不确定的情况。应先去C:\Users\Administrator\Desktop\rim mod下查找依赖，如果找不到必须停止运行等待用户反应
-无论任何情况，禁止使用和写入所有emoji
-禁止创建文档，除非用户要求
+椤圭洰蹇呴』杈撳嚭鍒板搴攎od鐨?.6/Assemblies涓嬶紝閮ㄧ讲鍒癉:\steam\steamapps\common\RimWorld\Mods\鐨勫搴攎od鐨?.6/Assemblies涓?
+mod鏇存柊鍚庝慨鏀筧bout骞朵笖鑷姩鍏堥儴缃插啀鎺ㄩ€?
+瓒呰繃涓夎鐨勫鏉傝剼鏈笉瑕佸湪缁堢鐩存帴浣跨敤锛屽啓鎴愯剼鏈悗鍐嶆墽琛岃剼鏈?
+浠讳綍鎯呭喌绂佹澶у箙鍒犻櫎浠ｇ爜銆傚鍙戠幇鍒犻櫎锛岄┈涓婂洖閫€
+娌℃湁纭畾鐨勫弬鏁?鍙橀噺/鍛藉悕绌洪棿/寮曠敤绛変笉纭畾鐨勬儏鍐点€傚簲鍏堝幓C:\Users\Administrator\Desktop\rim mod涓嬫煡鎵句緷璧栵紝濡傛灉鎵句笉鍒板繀椤诲仠姝㈣繍琛岀瓑寰呯敤鎴峰弽搴?
+鏃犺浠讳綍鎯呭喌锛岀姝娇鐢ㄥ拰鍐欏叆鎵€鏈塭moji
+绂佹鍒涘缓鏂囨。锛岄櫎闈炵敤鎴疯姹?

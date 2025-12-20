@@ -153,6 +153,17 @@ namespace TheSecondSeat.PersonaGeneration
         /// <summary>API: 禁用词列表（AI不会使用这些词）</summary>
         public List<string> forbiddenWords = new List<string>();
         
+        /// <summary>
+        /// 📌 v1.6.62: 个性标签（如：善良、坚强、爱撒娇、病娇等）
+        /// 来自AI分析或用户标注，可在人格卡片上显示和修改
+        /// </summary>
+        public List<string> personalityTags = new List<string>();
+        
+        /// <summary>
+        /// 📌 v1.6.62: 用户选择的特质（创建人格时选择的3个特质）
+        /// </summary>
+        public List<string> selectedTraits = new List<string>();
+        
         // ============================================
         // 运行时数据（不从XML加载）
         // ============================================
@@ -335,6 +346,8 @@ namespace TheSecondSeat.PersonaGeneration
             if (specialAbilities == null) specialAbilities = new List<string>();
             if (toneTags == null) toneTags = new List<string>();
             if (forbiddenWords == null) forbiddenWords = new List<string>();
+            if (personalityTags == null) personalityTags = new List<string>();  // 📌 v1.6.62
+            if (selectedTraits == null) selectedTraits = new List<string>();    // 📌 v1.6.62
             
             // 确保嵌套对象被初始化
             if (dialogueStyle == null) dialogueStyle = new DialogueStyleDef();

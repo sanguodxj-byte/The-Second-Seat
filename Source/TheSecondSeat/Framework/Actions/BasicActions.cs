@@ -1,20 +1,20 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using Verse;
 using RimWorld;
-using Verse.Sound; // ? Ìí¼ÓÓÃÓÚSoundStarter
+using Verse.Sound; // ? æ·»åŠ ç”¨äºSoundStarter
 using TheSecondSeat.Storyteller;
 
 namespace TheSecondSeat.Framework.Actions
 {
     /// <summary>
-    /// ĞŞ¸ÄºÃ¸Ğ¶ÈĞĞ¶¯
+    /// ä¿®æ”¹å¥½æ„Ÿåº¦è¡ŒåŠ¨
     /// 
-    /// XMLÊ¾Àı£º
+    /// XMLç¤ºä¾‹ï¼š
     /// <![CDATA[
     /// <li Class="TheSecondSeat.Framework.Actions.ModifyAffinityAction">
     ///   <delta>10</delta>
-    ///   <reason>Íæ¼ÒÍê³ÉÌôÕ½</reason>
+    ///   <reason>ç©å®¶å®ŒæˆæŒ‘æˆ˜</reason>
     /// </li>
     /// ]]>
     /// </summary>
@@ -44,7 +44,7 @@ namespace TheSecondSeat.Framework.Actions
     }
     
     /// <summary>
-    /// ÏÔÊ¾¶Ô»°ĞĞ¶¯
+    /// æ˜¾ç¤ºå¯¹è¯è¡ŒåŠ¨
     /// </summary>
     public class ShowDialogueAction : TSSAction
     {
@@ -61,7 +61,7 @@ namespace TheSecondSeat.Framework.Actions
             
             if (useNarratorWindow)
             {
-                // TODO: ´ò¿ªĞğÊÂÕß´°¿ÚÏÔÊ¾¶Ô»°
+                // TODO: æ‰“å¼€å™äº‹è€…çª—å£æ˜¾ç¤ºå¯¹è¯
                 // NarratorWindow.Show(dialogueText);
             }
             else
@@ -82,7 +82,7 @@ namespace TheSecondSeat.Framework.Actions
     }
     
     /// <summary>
-    /// Éú³É×ÊÔ´ĞĞ¶¯
+    /// ç”Ÿæˆèµ„æºè¡ŒåŠ¨
     /// </summary>
     public class SpawnResourceAction : TSSAction
     {
@@ -98,11 +98,11 @@ namespace TheSecondSeat.Framework.Actions
                 return;
             }
             
-            // È·¶¨Éú³ÉÎ»ÖÃ
+            // ç¡®å®šç”Ÿæˆä½ç½®
             IntVec3 loc = spawnLocation;
             if (!loc.IsValid || dropNearPlayer)
             {
-                // ? ĞŞ¸´£ºÊ¹ÓÃÕıÈ·µÄRimWorld API
+                // ? ä¿®å¤ï¼šä½¿ç”¨æ­£ç¡®çš„RimWorld API
                 if (!CellFinder.TryFindRandomCellNear(map.Center, map, 35, 
                     (IntVec3 c) => c.Standable(map) && !c.Roofed(map), 
                     out IntVec3 result))
@@ -112,7 +112,7 @@ namespace TheSecondSeat.Framework.Actions
                 loc = result;
             }
             
-            // Éú³ÉÎïÆ·
+            // ç”Ÿæˆç‰©å“
             Thing thing = ThingMaker.MakeThing(resourceType);
             thing.stackCount = amount;
             GenSpawn.Spawn(thing, loc, map);
@@ -147,7 +147,7 @@ namespace TheSecondSeat.Framework.Actions
     }
     
     /// <summary>
-    /// ´¥·¢ÊÂ¼şĞĞ¶¯£¨Á´Ê½´¥·¢£©
+    /// è§¦å‘äº‹ä»¶è¡ŒåŠ¨ï¼ˆé“¾å¼è§¦å‘ï¼‰
     /// </summary>
     public class TriggerEventAction : TSSAction
     {
@@ -179,7 +179,7 @@ namespace TheSecondSeat.Framework.Actions
     }
     
     /// <summary>
-    /// ²¥·ÅÒôĞ§ĞĞ¶¯
+    /// æ’­æ”¾éŸ³æ•ˆè¡ŒåŠ¨
     /// </summary>
     public class PlaySoundAction : TSSAction
     {
@@ -190,7 +190,7 @@ namespace TheSecondSeat.Framework.Actions
         {
             if (sound != null)
             {
-                // ? Ê¹ÓÃÕıÈ·µÄRimWorldÒôĞ§²¥·ÅAPI
+                // ? ä½¿ç”¨æ­£ç¡®çš„RimWorldéŸ³æ•ˆæ’­æ”¾API
                 SoundStarter.PlayOneShotOnCamera(sound, null);
                 
                 if (Prefs.DevMode)
@@ -207,7 +207,7 @@ namespace TheSecondSeat.Framework.Actions
     }
     
     /// <summary>
-    /// ĞŞ¸ÄĞÄÇéĞĞ¶¯
+    /// ä¿®æ”¹å¿ƒæƒ…è¡ŒåŠ¨
     /// </summary>
     public class SetMoodAction : TSSAction
     {
@@ -218,7 +218,7 @@ namespace TheSecondSeat.Framework.Actions
             var agent = Current.Game?.GetComponent<StorytellerAgent>();
             if (agent != null)
             {
-                // TODO: Ìí¼ÓSetMood·½·¨µ½StorytellerAgent
+                // TODO: æ·»åŠ SetMoodæ–¹æ³•åˆ°StorytellerAgent
                 // agent.SetMood(newMood);
                 
                 if (Prefs.DevMode)
@@ -235,7 +235,7 @@ namespace TheSecondSeat.Framework.Actions
     }
     
     /// <summary>
-    /// ÈÕÖ¾Êä³öĞĞ¶¯£¨µ÷ÊÔÓÃ£©
+    /// æ—¥å¿—è¾“å‡ºè¡ŒåŠ¨ï¼ˆè°ƒè¯•ç”¨ï¼‰
     /// </summary>
     public class LogMessageAction : TSSAction
     {

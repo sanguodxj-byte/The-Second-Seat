@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Verse;
@@ -64,20 +64,20 @@ namespace TheSecondSeat.Observer
 
     /// <summary>
     /// Observes and captures the current game state in a token-efficient format
-    /// ? v1.6.42: Ìí¼ÓÏß³Ì°²È«µÄ¿ìÕÕ½Ó¿Ú
+    /// ? v1.6.42: æ·»åŠ çº¿ç¨‹å®‰å…¨çš„å¿«ç…§æ¥å£
     /// </summary>
     public static class GameStateObserver
     {
         /// <summary>
-        /// ? v1.6.42: Ïß³Ì°²È«µÄ¿ìÕÕ»ñÈ¡£¨¹©ºóÌ¨ AI Ïß³Ìµ÷ÓÃ£©
-        /// ´Ó»º´æ¶ÁÈ¡£¬±ÜÃâ¿çÏß³Ì·ÃÎÊÓÎÏ·×´Ì¬
-        /// ? v1.6.46: ÁÙÊ±½ûÓÃ»º´æ£¨GameStateCache Àà²»´æÔÚ£©
+        /// ? v1.6.42: çº¿ç¨‹å®‰å…¨çš„å¿«ç…§è·å–ï¼ˆä¾›åå° AI çº¿ç¨‹è°ƒç”¨ï¼‰
+        /// ä»ç¼“å­˜è¯»å–ï¼Œé¿å…è·¨çº¿ç¨‹è®¿é—®æ¸¸æˆçŠ¶æ€
+        /// ? v1.6.46: ä¸´æ—¶ç¦ç”¨ç¼“å­˜ï¼ˆGameStateCache ç±»ä¸å­˜åœ¨ï¼‰
         /// </summary>
         public static GameStateSnapshot CaptureSnapshotSafe()
         {
-            // ? v1.6.46: ÁÙÊ±×¢ÊÍµô»º´æµ÷ÓÃ£¨GameStateCache Àà²»´æÔÚ£©
+            // ? v1.6.46: ä¸´æ—¶æ³¨é‡Šæ‰ç¼“å­˜è°ƒç”¨ï¼ˆGameStateCache ç±»ä¸å­˜åœ¨ï¼‰
             /*
-            // ³¢ÊÔ´Ó»º´æ»ñÈ¡
+            // å°è¯•ä»ç¼“å­˜è·å–
             var cached = GameStateCache.GetCachedSnapshot();
             
             if (cached != null)
@@ -86,9 +86,9 @@ namespace TheSecondSeat.Observer
             }
             */
             
-            // ? v1.6.46: Ö±½Óµ÷ÓÃ Unsafe ·½·¨£¨ĞèÒªÔÚÖ÷Ïß³Ìµ÷ÓÃ£©
-            // Ô­ÒòÊÇ£º»º´æ»úÖÆ±È½Ï¸´ÔÓ£¬Éæ¼°µ½ÓÎÏ·×´Ì¬µÄĞòÁĞ»¯Óë¿çÏß³Ì·ÃÎÊ£¬
-            // ¶øºóÌ¨ AI Ïß³Ì²¢²»ÄÜ±£Ö¤ºÎÊ±ºÎµØ±»µ÷ÓÃ£¬Òò´ËÖ±½ÓÔÚÖ÷Ïß³Ì²¶»ñ×´Ì¬±È½Ï¿É¿¿
+            // ? v1.6.46: ç›´æ¥è°ƒç”¨ Unsafe æ–¹æ³•ï¼ˆéœ€è¦åœ¨ä¸»çº¿ç¨‹è°ƒç”¨ï¼‰
+            // åŸå› æ˜¯ï¼šç¼“å­˜æœºåˆ¶æ¯”è¾ƒå¤æ‚ï¼Œæ¶‰åŠåˆ°æ¸¸æˆçŠ¶æ€çš„åºåˆ—åŒ–ä¸è·¨çº¿ç¨‹è®¿é—®ï¼Œ
+            // è€Œåå° AI çº¿ç¨‹å¹¶ä¸èƒ½ä¿è¯ä½•æ—¶ä½•åœ°è¢«è°ƒç”¨ï¼Œå› æ­¤ç›´æ¥åœ¨ä¸»çº¿ç¨‹æ•è·çŠ¶æ€æ¯”è¾ƒå¯é 
             if (Prefs.DevMode)
             {
                 Log.Warning("[GameStateObserver] Cache system disabled, using direct capture (main thread only)");
@@ -97,9 +97,9 @@ namespace TheSecondSeat.Observer
         }
 
         /// <summary>
-        /// ? v1.6.42: ·ÇÏß³Ì°²È«µÄ¿ìÕÕ²¶»ñ£¨½öÏŞÖ÷Ïß³Ìµ÷ÓÃ£©
-        /// Ô­ CaptureSnapshot() ÖØÃüÃû£¬Ã÷È·±íÊ¾Ïß³Ì²»°²È«
-        /// ? v1.6.46: ĞŞ¸´Ïß³Ì°²È«ÎÊÌâ - ±ÜÃâ·ÃÎÊ map.mapPawns
+        /// ? v1.6.42: éçº¿ç¨‹å®‰å…¨çš„å¿«ç…§æ•è·ï¼ˆä»…é™ä¸»çº¿ç¨‹è°ƒç”¨ï¼‰
+        /// åŸ CaptureSnapshot() é‡å‘½åï¼Œæ˜ç¡®è¡¨ç¤ºçº¿ç¨‹ä¸å®‰å…¨
+        /// ? v1.6.46: ä¿®å¤çº¿ç¨‹å®‰å…¨é—®é¢˜ - é¿å…è®¿é—® map.mapPawns
         /// </summary>
         public static GameStateSnapshot CaptureSnapshotUnsafe()
         {
@@ -116,8 +116,8 @@ namespace TheSecondSeat.Observer
             snapshot.colony.daysPassed = GenDate.DaysPassed;
             snapshot.colony.wealth = (int)map.wealthWatcher.WealthTotal;
 
-            // ? ĞŞ¸´£º±ÜÃâÊ¹ÓÃ map.mapPawns£¬¸ÄÎª°²È«µÄ±éÀú·½Ê½
-            // Ê¹ÓÃ map.listerThings.ThingsInGroup(ThingRequestGroup.Pawn) ´úÌæ
+            // ? ä¿®å¤ï¼šé¿å…ä½¿ç”¨ map.mapPawnsï¼Œæ”¹ä¸ºå®‰å…¨çš„éå†æ–¹å¼
+            // ä½¿ç”¨ map.listerThings.ThingsInGroup(ThingRequestGroup.Pawn) ä»£æ›¿
             try
             {
                 var allPawns = map.listerThings.ThingsInGroup(ThingRequestGroup.Pawn);
@@ -170,10 +170,10 @@ namespace TheSecondSeat.Observer
         }
 
         /// <summary>
-        /// ?? ÒÑ·ÏÆú£ºÊ¹ÓÃ CaptureSnapshotSafe() ´úÌæ£¨Ïß³Ì°²È«£©
-        /// »òÊ¹ÓÃ CaptureSnapshotUnsafe() £¨½öÖ÷Ïß³Ì£©
+        /// ?? å·²åºŸå¼ƒï¼šä½¿ç”¨ CaptureSnapshotSafe() ä»£æ›¿ï¼ˆçº¿ç¨‹å®‰å…¨ï¼‰
+        /// æˆ–ä½¿ç”¨ CaptureSnapshotUnsafe() ï¼ˆä»…ä¸»çº¿ç¨‹ï¼‰
         /// </summary>
-        [Obsolete("Ê¹ÓÃ CaptureSnapshotSafe() ´úÌæ£¨Ïß³Ì°²È«£©")]
+        [Obsolete("ä½¿ç”¨ CaptureSnapshotSafe() ä»£æ›¿ï¼ˆçº¿ç¨‹å®‰å…¨ï¼‰")]
         public static GameStateSnapshot CaptureSnapshot()
         {
             return CaptureSnapshotUnsafe();
@@ -185,19 +185,19 @@ namespace TheSecondSeat.Observer
 
             try
             {
-                // ? ĞŞ¸´£ºÖ»¼ÆËãÖ³ÃñµØÇøÓò£¨Home Area£©µÄ×ÊÔ´£¬¶ø²»ÊÇÕû¸öµØÍ¼
+                // ? ä¿®å¤ï¼šåªè®¡ç®—æ®–æ°‘åœ°åŒºåŸŸï¼ˆHome Areaï¼‰çš„èµ„æºï¼Œè€Œä¸æ˜¯æ•´ä¸ªåœ°å›¾
                 var homeArea = map.areaManager.Home;
                 
                 if (homeArea == null)
                 {
                     Log.Warning("[The Second Seat] Home area not found, counting all stockpile zones");
-                    // Èç¹ûÃ»ÓĞ Home Area£¬Ôò¼ÆËãËùÓĞ´¢´æÇøÓò
+                    // å¦‚æœæ²¡æœ‰ Home Areaï¼Œåˆ™è®¡ç®—æ‰€æœ‰å‚¨å­˜åŒºåŸŸ
                     return CaptureResourcesFromStockpiles(map);
                 }
 
-                // Ö»¼ÆËã Home Area ÄÚµÄÎïÆ·
+                // åªè®¡ç®— Home Area å†…çš„ç‰©å“
                 var allThings = map.listerThings.AllThings
-                    .Where(t => homeArea[t.Position]) // ? ¹ıÂË£ºÖ»ÔÚ Home Area ÄÚ
+                    .Where(t => homeArea[t.Position]) // ? è¿‡æ»¤ï¼šåªåœ¨ Home Area å†…
                     .ToList();
 
                 resources.food = allThings
@@ -219,7 +219,7 @@ namespace TheSecondSeat.Observer
         }
 
         /// <summary>
-        /// ±¸ÓÃ·½°¸£º´Ó´¢´æÇøÓò¼ÆËã×ÊÔ´
+        /// å¤‡ç”¨æ–¹æ¡ˆï¼šä»å‚¨å­˜åŒºåŸŸè®¡ç®—èµ„æº
         /// </summary>
         private static ResourceInfo CaptureResourcesFromStockpiles(Map map)
         {
@@ -227,7 +227,7 @@ namespace TheSecondSeat.Observer
 
             try
             {
-                // »ñÈ¡ËùÓĞ´¢´æÇøÓòµÄÎïÆ·
+                // è·å–æ‰€æœ‰å‚¨å­˜åŒºåŸŸçš„ç‰©å“
                 var stockpileZones = map.zoneManager.AllZones
                     .OfType<Zone_Stockpile>()
                     .ToList();
@@ -272,7 +272,7 @@ namespace TheSecondSeat.Observer
 
             try
             {
-                // ? ĞŞ¸´£º±ÜÃâÊ¹ÓÃ map.mapPawns.AllPawnsSpawned
+                // ? ä¿®å¤ï¼šé¿å…ä½¿ç”¨ map.mapPawns.AllPawnsSpawned
                 // Check for active raids using safe method
                 var allPawns = map.listerThings.ThingsInGroup(ThingRequestGroup.Pawn);
                 var hostilePawns = allPawns
@@ -283,20 +283,20 @@ namespace TheSecondSeat.Observer
                 threats.raidActive = hostilePawns.Any();
                 threats.raidStrength = hostilePawns.Count;
 
-                // Check for active incidents - ĞŞ¸Ä£ºIncidentQueue ²»Ö§³Ö LINQ
-                // ¼ò»¯´¦Àí£¬Ö»¼ì²âÅÅ¶ÓÖĞµÄµÚÒ»¸öÊÂ¼ş
+                // Check for active incidents - ä¿®æ”¹ï¼šIncidentQueue ä¸æ”¯æŒ LINQ
+                // ç®€åŒ–å¤„ç†ï¼Œåªæ£€æµ‹æ’é˜Ÿä¸­çš„ç¬¬ä¸€ä¸ªäº‹ä»¶
                 var storyteller = Find.Storyteller;
                 if (storyteller?.incidentQueue != null)
                 {
                     try
                     {
-                        // ÓÉÓÚÃ»ÓĞ¹«¿ª API£¬ÎÒÃÇ¾Í¼òµ¥¼ì²â¼´¿É
-                        // incidentQueue ÄÚ²¿Ã»ÓĞ¹«¿ª API£¬ËùÒÔÔİ²»¼ì²âÁË
-                        threats.currentEvent = null; // Ôİ²»Ö§³Ö
+                        // ç”±äºæ²¡æœ‰å…¬å¼€ APIï¼Œæˆ‘ä»¬å°±ç®€å•æ£€æµ‹å³å¯
+                        // incidentQueue å†…éƒ¨æ²¡æœ‰å…¬å¼€ APIï¼Œæ‰€ä»¥æš‚ä¸æ£€æµ‹äº†
+                        threats.currentEvent = null; // æš‚ä¸æ”¯æŒ
                     }
                     catch
                     {
-                        // ¶ÁÈ¡Ê§°ÜÊ±ºöÂÔ
+                        // è¯»å–å¤±è´¥æ—¶å¿½ç•¥
                         threats.currentEvent = null;
                     }
                 }

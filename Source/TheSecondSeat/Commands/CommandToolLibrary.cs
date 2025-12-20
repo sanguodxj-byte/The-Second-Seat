@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Verse;
@@ -8,64 +8,64 @@ using RimWorld;
 namespace TheSecondSeat.Commands
 {
     /// <summary>
-    /// AI ÃüÁî¹¤¾ß¿â£¨Ö÷ÎÄ¼ş£©
-    /// Ìá¹©±ê×¼»¯ÃüÁî¶¨ÒåºÍÖ´ĞĞ·½·¨£¬¹© LLM µ÷ÓÃºÍ²Ù×÷
+    /// AI å‘½ä»¤å·¥å…·åº“ï¼ˆä¸»æ–‡ä»¶ï¼‰
+    /// æä¾›æ ‡å‡†åŒ–å‘½ä»¤å®šä¹‰å’Œæ‰§è¡Œæ–¹æ³•ï¼Œä¾› LLM è°ƒç”¨å’Œæ“ä½œ
     /// 
-    /// ? Ê¹ÓÃ partial Àà²ğ·Ö£º
-    /// - CommandToolLibrary.cs (Ö÷ÎÄ¼ş)£ººËĞÄ½á¹¹¡¢×¢²áÂß¼­
-    /// - CommandToolLibrary_Batch.cs£ºÅúÁ¿ÃüÁî×¢²á
-    /// - CommandToolLibrary_Work.cs£º¹¤×÷ÃüÁî×¢²á
+    /// ? ä½¿ç”¨ partial ç±»æ‹†åˆ†ï¼š
+    /// - CommandToolLibrary.cs (ä¸»æ–‡ä»¶)ï¼šæ ¸å¿ƒç»“æ„ã€æ³¨å†Œé€»è¾‘
+    /// - CommandToolLibrary_Batch.csï¼šæ‰¹é‡å‘½ä»¤æ³¨å†Œ
+    /// - CommandToolLibrary_Work.csï¼šå·¥ä½œå‘½ä»¤æ³¨å†Œ
     /// </summary>
     public static partial class CommandToolLibrary
     {
-        #region ÃüÁîÊı¾İ½á¹¹
+        #region å‘½ä»¤æ•°æ®ç»“æ„
         
         /// <summary>
-        /// ÃüÁî¶¨Òå
+        /// å‘½ä»¤å®šä¹‰
         /// </summary>
         public class CommandDefinition
         {
-            public string commandId;           // ÃüÁîÎ¨Ò»±êÊ¶
-            public string category;            // Àà±ğ
-            public string displayName;         // ÏÔÊ¾Ãû³Æ
-            public string description;         // ÃèÊö
-            public List<ParameterDef> parameters = new List<ParameterDef>();  // ²ÎÊıÁĞ±í
-            public string example;             // Ê¹ÓÃÊ¾Àı
-            public string notes;               // ×¢½â
+            public string commandId;           // å‘½ä»¤å”¯ä¸€æ ‡è¯†
+            public string category;            // ç±»åˆ«
+            public string displayName;         // æ˜¾ç¤ºåç§°
+            public string description;         // æè¿°
+            public List<ParameterDef> parameters = new List<ParameterDef>();  // å‚æ•°åˆ—è¡¨
+            public string example;             // ä½¿ç”¨ç¤ºä¾‹
+            public string notes;               // æ³¨è§£
         }
         
         /// <summary>
-        /// ²ÎÊı¶¨Òå
+        /// å‚æ•°å®šä¹‰
         /// </summary>
         public class ParameterDef
         {
-            public string name;                // ²ÎÊıÃû
-            public string type;                // ÀàĞÍ (string, int, float, bool, IntVec3, etc.)
-            public bool required;              // ÊÇ·ñ±ØĞë
-            public string defaultValue;        // Ä¬ÈÏÖµ
-            public string description;         // ÃèÊö
-            public List<string> validValues;   // ÓĞĞ§ÖµÁĞ±í£¨Ã¶¾ÙÀàĞÍ£©
+            public string name;                // å‚æ•°å
+            public string type;                // ç±»å‹ (string, int, float, bool, IntVec3, etc.)
+            public bool required;              // æ˜¯å¦å¿…é¡»
+            public string defaultValue;        // é»˜è®¤å€¼
+            public string description;         // æè¿°
+            public List<string> validValues;   // æœ‰æ•ˆå€¼åˆ—è¡¨ï¼ˆæšä¸¾ç±»å‹ï¼‰
         }
         
         /// <summary>
-        /// ÃüÁîÖ´ĞĞ½á¹û
+        /// å‘½ä»¤æ‰§è¡Œç»“æœ
         /// </summary>
         public class CommandResult
         {
             public bool success;
             public string message;
-            public object data;                // ·µ»ØµÄÊı¾İ
+            public object data;                // è¿”å›çš„æ•°æ®
         }
         
         #endregion
         
-        #region ÃüÁî×¢²áÆ÷
+        #region å‘½ä»¤æ³¨å†Œå™¨
         
         private static Dictionary<string, CommandDefinition> commandRegistry = new Dictionary<string, CommandDefinition>();
         private static bool initialized = false;
         
         /// <summary>
-        /// ³õÊ¼»¯ÃüÁî¿â
+        /// åˆå§‹åŒ–å‘½ä»¤åº“
         /// </summary>
         public static void Initialize()
         {
@@ -74,260 +74,260 @@ namespace TheSecondSeat.Commands
             RegisterAllCommands();
             initialized = true;
             
-            Log.Message($"[CommandToolLibrary] ÒÑ×¢²á {commandRegistry.Count} ¸öÃüÁî");
+            Log.Message($"[CommandToolLibrary] å·²æ³¨å†Œ {commandRegistry.Count} ä¸ªå‘½ä»¤");
         }
         
         /// <summary>
-        /// ×¢²áËùÓĞÃüÁî
+        /// æ³¨å†Œæ‰€æœ‰å‘½ä»¤
         /// </summary>
         private static void RegisterAllCommands()
         {
-            // === 1. Ö³ÃñÕßºÍµ¥Î»²Ù×÷ ===
+            // === 1. æ®–æ°‘è€…å’Œå•ä½æ“ä½œ ===
             RegisterPawnManagementCommands();
             
-            // === 2. ×ÊÔ´ºÍÎïÆ·¹ÜÀí ===
+            // === 2. èµ„æºå’Œç‰©å“ç®¡ç† ===
             RegisterResourceCommands();
             
-            // === 3. ½¨ÖşºÍÇøÓò¹ÜÀí ===
+            // === 3. å»ºç­‘å’ŒåŒºåŸŸç®¡ç† ===
             RegisterBuildingCommands();
             
-            // === 4. ¹¤×÷Ö¸ÅÉÃüÁî ===
-            RegisterWorkCommands();  // ? ÔÚ CommandToolLibrary_Work.cs ÖĞÊµÏÖ
+            // === 4. å·¥ä½œæŒ‡æ´¾å‘½ä»¤ ===
+            RegisterWorkCommands();  // ? åœ¨ CommandToolLibrary_Work.cs ä¸­å®ç°
             
-            // === 5. ÊÂ¼ş´¥·¢Óë¿ØÖÆ ===
+            // === 5. äº‹ä»¶è§¦å‘ä¸æ§åˆ¶ ===
             RegisterEventCommands();
             
-            // === 6. ÅúÁ¿²Ù×÷ÃüÁî ===
-            RegisterBatchCommands();  // ? ÔÚ CommandToolLibrary_Batch.cs ÖĞÊµÏÖ
+            // === 6. æ‰¹é‡æ“ä½œå‘½ä»¤ ===
+            RegisterBatchCommands();  // ? åœ¨ CommandToolLibrary_Batch.cs ä¸­å®ç°
             
-            // === 7. ²éÑ¯ºÍĞÅÏ¢»ñÈ¡ ===
+            // === 7. æŸ¥è¯¢å’Œä¿¡æ¯è·å– ===
             RegisterQueryCommands();
         }
         
         #endregion
         
-        #region 1. Ö³ÃñÕßºÍµ¥Î»²Ù×÷ÃüÁî
+        #region 1. æ®–æ°‘è€…å’Œå•ä½æ“ä½œå‘½ä»¤
         
         private static void RegisterPawnManagementCommands()
         {
-            // 1.1 Õ÷ÕÙ/½â³ıÕ÷ÕÙ
+            // 1.1 å¾å¬/è§£é™¤å¾å¬
             Register(new CommandDefinition
             {
                 commandId = "DraftPawn",
                 category = "PawnManagement",
-                displayName = "Õ÷ÕÙÖ³ÃñÕß",
-                description = "½«Ö¸¶¨Ö³ÃñÕßÉèÎªÕ÷ÕÙ×´Ì¬£¬¿É½ÓÊÜÊÖ¶¯Õ½¶·ÃüÁî",
+                displayName = "å¾å¬æ®–æ°‘è€…",
+                description = "å°†æŒ‡å®šæ®–æ°‘è€…è®¾ä¸ºå¾å¬çŠ¶æ€ï¼Œå¯æ¥å—æ‰‹åŠ¨æˆ˜æ–—å‘½ä»¤",
                 parameters = new List<ParameterDef>
                 {
-                    new ParameterDef { name = "pawnName", type = "string", required = false, description = "Ö³ÃñÕßÃû×Ö£¨Îª¿ÕÔòÕ÷ÕÙÈ«²¿£©" },
-                    new ParameterDef { name = "drafted", type = "bool", required = false, defaultValue = "true", description = "true=Õ÷ÕÙ, false=½â³ı" }
+                    new ParameterDef { name = "pawnName", type = "string", required = false, description = "æ®–æ°‘è€…åå­—ï¼ˆä¸ºç©ºåˆ™å¾å¬å…¨éƒ¨ï¼‰" },
+                    new ParameterDef { name = "drafted", type = "bool", required = false, defaultValue = "true", description = "true=å¾å¬, false=è§£é™¤" }
                 },
-                example = "{ \"action\": \"DraftPawn\", \"pawnName\": \"ÕÅÈı\", \"drafted\": true }",
-                notes = "Õ÷ÕÙºóÖ³ÃñÕß»áÍ£Ö¹µ±Ç°¹¤×÷"
+                example = "{ \"action\": \"DraftPawn\", \"pawnName\": \"å¼ ä¸‰\", \"drafted\": true }",
+                notes = "å¾å¬åæ®–æ°‘è€…ä¼šåœæ­¢å½“å‰å·¥ä½œ"
             });
             
-            // 1.2 ÒÆ¶¯µ½Î»ÖÃ
+            // 1.2 ç§»åŠ¨åˆ°ä½ç½®
             Register(new CommandDefinition
             {
                 commandId = "MovePawn",
                 category = "PawnManagement",
-                displayName = "ÒÆ¶¯Ö³ÃñÕß",
-                description = "ÃüÁîÒÑÕ÷ÕÙµÄÖ³ÃñÕßÒÆ¶¯µ½Ö¸¶¨Î»ÖÃ",
+                displayName = "ç§»åŠ¨æ®–æ°‘è€…",
+                description = "å‘½ä»¤å·²å¾å¬çš„æ®–æ°‘è€…ç§»åŠ¨åˆ°æŒ‡å®šä½ç½®",
                 parameters = new List<ParameterDef>
                 {
-                    new ParameterDef { name = "pawnName", type = "string", required = true, description = "Ö³ÃñÕßÃû×Ö" },
-                    new ParameterDef { name = "x", type = "int", required = true, description = "Ä¿±êX×ø±ê" },
-                    new ParameterDef { name = "z", type = "int", required = true, description = "Ä¿±êZ×ø±ê" }
+                    new ParameterDef { name = "pawnName", type = "string", required = true, description = "æ®–æ°‘è€…åå­—" },
+                    new ParameterDef { name = "x", type = "int", required = true, description = "ç›®æ ‡Xåæ ‡" },
+                    new ParameterDef { name = "z", type = "int", required = true, description = "ç›®æ ‡Zåæ ‡" }
                 },
-                example = "{ \"action\": \"MovePawn\", \"pawnName\": \"ÕÅÈı\", \"x\": 50, \"z\": 50 }",
-                notes = "Ö³ÃñÕß±ØĞë´¦ÓÚÕ÷ÕÙ×´Ì¬"
+                example = "{ \"action\": \"MovePawn\", \"pawnName\": \"å¼ ä¸‰\", \"x\": 50, \"z\": 50 }",
+                notes = "æ®–æ°‘è€…å¿…é¡»å¤„äºå¾å¬çŠ¶æ€"
             });
             
-            // 1.3 ÖÎÁÆÖ³ÃñÕß
+            // 1.3 æ²»ç–—æ®–æ°‘è€…
             Register(new CommandDefinition
             {
                 commandId = "HealPawn",
                 category = "PawnManagement",
-                displayName = "ÖÎÁÆÖ³ÃñÕß",
-                description = "°²ÅÅÎªÖ¸¶¨Ö³ÃñÕß°²ÅÅÒ½ÁÆ¾ÈÖÎ",
+                displayName = "æ²»ç–—æ®–æ°‘è€…",
+                description = "å®‰æ’ä¸ºæŒ‡å®šæ®–æ°‘è€…å®‰æ’åŒ»ç–—æ•‘æ²»",
                 parameters = new List<ParameterDef>
                 {
-                    new ParameterDef { name = "pawnName", type = "string", required = false, description = "Ö³ÃñÕßÃû×Ö£¨Îª¿ÕÔòÖÎÁÆËùÓĞÉËÔ±£©" },
-                    new ParameterDef { name = "priority", type = "bool", required = false, defaultValue = "true", description = "ÊÇ·ñÉèÎª×î¸ßÓÅÏÈ" }
+                    new ParameterDef { name = "pawnName", type = "string", required = false, description = "æ®–æ°‘è€…åå­—ï¼ˆä¸ºç©ºåˆ™æ²»ç–—æ‰€æœ‰ä¼¤å‘˜ï¼‰" },
+                    new ParameterDef { name = "priority", type = "bool", required = false, defaultValue = "true", description = "æ˜¯å¦è®¾ä¸ºæœ€é«˜ä¼˜å…ˆ" }
                 },
-                example = "{ \"action\": \"HealPawn\", \"pawnName\": \"ÕÅÈı\" }",
-                notes = "ĞèÒªÓĞ¿ÉÓÃµÄÒ½ÉúºÍÒ½ÁÆÎïÆ·"
+                example = "{ \"action\": \"HealPawn\", \"pawnName\": \"å¼ ä¸‰\" }",
+                notes = "éœ€è¦æœ‰å¯ç”¨çš„åŒ»ç”Ÿå’ŒåŒ»ç–—ç‰©å“"
             });
             
-            // 1.4 ÉèÖÃ¹¤×÷ÓÅÏÈ¼¶
+            // 1.4 è®¾ç½®å·¥ä½œä¼˜å…ˆçº§
             Register(new CommandDefinition
             {
                 commandId = "SetWorkPriority",
                 category = "PawnManagement",
-                displayName = "ÉèÖÃ¹¤×÷ÓÅÏÈ¼¶",
-                description = "µ÷ÕûÖ³ÃñÕß¶ÔÌØ¶¨¹¤×÷ÀàĞÍµÄÓÅÏÈ¼¶",
+                displayName = "è®¾ç½®å·¥ä½œä¼˜å…ˆçº§",
+                description = "è°ƒæ•´æ®–æ°‘è€…å¯¹ç‰¹å®šå·¥ä½œç±»å‹çš„ä¼˜å…ˆçº§",
                 parameters = new List<ParameterDef>
                 {
-                    new ParameterDef { name = "pawnName", type = "string", required = true, description = "Ö³ÃñÕßÃû×Ö" },
-                    new ParameterDef { name = "workType", type = "string", required = true, description = "¹¤×÷ÀàĞÍ",
+                    new ParameterDef { name = "pawnName", type = "string", required = true, description = "æ®–æ°‘è€…åå­—" },
+                    new ParameterDef { name = "workType", type = "string", required = true, description = "å·¥ä½œç±»å‹",
                         validValues = new List<string> { "Firefighter", "Doctor", "PatientBedRest", "BasicWorker", 
                             "Warden", "Handling", "Cooking", "Hunting", "Construction", "Growing", 
                             "Mining", "PlantCutting", "Smithing", "Tailoring", "Art", "Crafting", 
                             "Hauling", "Cleaning", "Research" } },
-                    new ParameterDef { name = "priority", type = "int", required = true, description = "ÓÅÏÈ¼¶ (1×î¸ß, 4×îµÍ, 0½ûÓÃ)" }
+                    new ParameterDef { name = "priority", type = "int", required = true, description = "ä¼˜å…ˆçº§ (1æœ€é«˜, 4æœ€ä½, 0ç¦ç”¨)" }
                 },
-                example = "{ \"action\": \"SetWorkPriority\", \"pawnName\": \"ÕÅÈı\", \"workType\": \"Doctor\", \"priority\": 1 }",
-                notes = "ÓÅÏÈ¼¶1-4£¬0±íÊ¾½ûÓÃ¸Ã¹¤×÷"
+                example = "{ \"action\": \"SetWorkPriority\", \"pawnName\": \"å¼ ä¸‰\", \"workType\": \"Doctor\", \"priority\": 1 }",
+                notes = "ä¼˜å…ˆçº§1-4ï¼Œ0è¡¨ç¤ºç¦ç”¨è¯¥å·¥ä½œ"
             });
             
-            // 1.5 ×°±¸ÎäÆ÷
+            // 1.5 è£…å¤‡æ­¦å™¨
             Register(new CommandDefinition
             {
                 commandId = "EquipWeapon",
                 category = "PawnManagement",
-                displayName = "×°±¸ÎäÆ÷",
-                description = "ÃüÁîÖ³ÃñÕß×°±¸Ö¸¶¨ÎäÆ÷",
+                displayName = "è£…å¤‡æ­¦å™¨",
+                description = "å‘½ä»¤æ®–æ°‘è€…è£…å¤‡æŒ‡å®šæ­¦å™¨",
                 parameters = new List<ParameterDef>
                 {
-                    new ParameterDef { name = "pawnName", type = "string", required = true, description = "Ö³ÃñÕßÃû×Ö" },
-                    new ParameterDef { name = "weaponDef", type = "string", required = false, description = "ÎäÆ÷DefName£¨Îª¿ÕÔò×Ô¶¯Ñ¡Ôñ×î¼Ñ£©" }
+                    new ParameterDef { name = "pawnName", type = "string", required = true, description = "æ®–æ°‘è€…åå­—" },
+                    new ParameterDef { name = "weaponDef", type = "string", required = false, description = "æ­¦å™¨DefNameï¼ˆä¸ºç©ºåˆ™è‡ªåŠ¨é€‰æ‹©æœ€ä½³ï¼‰" }
                 },
-                example = "{ \"action\": \"EquipWeapon\", \"pawnName\": \"ÕÅÈı\", \"weaponDef\": \"Gun_AssaultRifle\" }",
-                notes = "ÎäÆ÷±ØĞëÔÚÖ³ÃñÕß¿É´ï·¶Î§ÇÒÎ´±»½ûÖ¹"
+                example = "{ \"action\": \"EquipWeapon\", \"pawnName\": \"å¼ ä¸‰\", \"weaponDef\": \"Gun_AssaultRifle\" }",
+                notes = "æ­¦å™¨å¿…é¡»åœ¨æ®–æ°‘è€…å¯è¾¾èŒƒå›´ä¸”æœªè¢«ç¦æ­¢"
             });
         }
         
         #endregion
         
-        #region 2. ×ÊÔ´ºÍÎïÆ·²Ù×÷ÃüÁî
+        #region 2. èµ„æºå’Œç‰©å“æ“ä½œå‘½ä»¤
         
         private static void RegisterResourceCommands()
         {
-            // 2.1 ½ûÖ¹/ÔÊĞíÎïÆ·
+            // 2.1 ç¦æ­¢/å…è®¸ç‰©å“
             Register(new CommandDefinition
             {
                 commandId = "ForbidItem",
                 category = "ResourceManagement",
-                displayName = "½ûÖ¹/ÔÊĞíÎïÆ·",
-                description = "ÉèÖÃÎïÆ·µÄ½ûÖ¹×´Ì¬",
+                displayName = "ç¦æ­¢/å…è®¸ç‰©å“",
+                description = "è®¾ç½®ç‰©å“çš„ç¦æ­¢çŠ¶æ€",
                 parameters = new List<ParameterDef>
                 {
-                    new ParameterDef { name = "thingDef", type = "string", required = true, description = "ÎïÆ·DefName" },
-                    new ParameterDef { name = "forbidden", type = "bool", required = false, defaultValue = "true", description = "true=½ûÖ¹, false=ÔÊĞí" },
+                    new ParameterDef { name = "thingDef", type = "string", required = true, description = "ç‰©å“DefName" },
+                    new ParameterDef { name = "forbidden", type = "bool", required = false, defaultValue = "true", description = "true=ç¦æ­¢, false=å…è®¸" },
                     new ParameterDef { name = "scope", type = "string", required = false, defaultValue = "All", 
-                        validValues = new List<string> { "All", "Selected", "Area" }, description = "·¶Î§" }
+                        validValues = new List<string> { "All", "Selected", "Area" }, description = "èŒƒå›´" }
                 },
                 example = "{ \"action\": \"ForbidItem\", \"thingDef\": \"Steel\", \"forbidden\": false }",
-                notes = "½ûÖ¹µÄÎïÆ·²»»á±»°áÔË"
+                notes = "ç¦æ­¢çš„ç‰©å“ä¸ä¼šè¢«æ¬è¿"
             });
             
-            // 2.2 °áÔËµ½²Ö¿â
+            // 2.2 æ¬è¿åˆ°ä»“åº“
             Register(new CommandDefinition
             {
                 commandId = "HaulToStorage",
                 category = "ResourceManagement",
-                displayName = "°áÔËµ½²Ö¿â",
-                description = "½«ÎïÆ·°áÔËµ½Ö¸¶¨²Ö¿âÇø",
+                displayName = "æ¬è¿åˆ°ä»“åº“",
+                description = "å°†ç‰©å“æ¬è¿åˆ°æŒ‡å®šä»“åº“åŒº",
                 parameters = new List<ParameterDef>
                 {
-                    new ParameterDef { name = "thingDef", type = "string", required = false, description = "ÎïÆ·DefName£¨Îª¿ÕÔò°áÔËËùÓĞ¿É°áÔËÎïÆ·£©" },
-                    new ParameterDef { name = "storageZone", type = "string", required = false, description = "Ä¿±ê²Ö¿âÇøÃû³Æ" }
+                    new ParameterDef { name = "thingDef", type = "string", required = false, description = "ç‰©å“DefNameï¼ˆä¸ºç©ºåˆ™æ¬è¿æ‰€æœ‰å¯æ¬è¿ç‰©å“ï¼‰" },
+                    new ParameterDef { name = "storageZone", type = "string", required = false, description = "ç›®æ ‡ä»“åº“åŒºåç§°" }
                 },
                 example = "{ \"action\": \"HaulToStorage\", \"thingDef\": \"MealSimple\" }",
-                notes = "ĞèÒªÓĞ¿ÉÓÃµÄ°áÔË¹¤"
+                notes = "éœ€è¦æœ‰å¯ç”¨çš„æ¬è¿å·¥"
             });
             
-            // 2.3 ¶ªÆúÎïÆ·
+            // 2.3 ä¸¢å¼ƒç‰©å“
             Register(new CommandDefinition
             {
                 commandId = "DropItem",
                 category = "ResourceManagement",
-                displayName = "¶ªÆúÎïÆ·",
-                description = "ÃüÁîÖ³ÃñÕß¶ªÆúµ±Ç°Ğ¯´øµÄÎïÆ·",
+                displayName = "ä¸¢å¼ƒç‰©å“",
+                description = "å‘½ä»¤æ®–æ°‘è€…ä¸¢å¼ƒå½“å‰æºå¸¦çš„ç‰©å“",
                 parameters = new List<ParameterDef>
                 {
-                    new ParameterDef { name = "pawnName", type = "string", required = true, description = "Ö³ÃñÕßÃû×Ö" },
-                    new ParameterDef { name = "thingDef", type = "string", required = false, description = "ÎïÆ·DefName£¨Îª¿ÕÔò¶ªÆúÈ«²¿£©" }
+                    new ParameterDef { name = "pawnName", type = "string", required = true, description = "æ®–æ°‘è€…åå­—" },
+                    new ParameterDef { name = "thingDef", type = "string", required = false, description = "ç‰©å“DefNameï¼ˆä¸ºç©ºåˆ™ä¸¢å¼ƒå…¨éƒ¨ï¼‰" }
                 },
-                example = "{ \"action\": \"DropItem\", \"pawnName\": \"ÕÅÈı\" }",
+                example = "{ \"action\": \"DropItem\", \"pawnName\": \"å¼ ä¸‰\" }",
                 notes = ""
             });
         }
         
         #endregion
         
-        #region 3. ½¨ÖşºÍÇøÓò²Ù×÷ÃüÁî
+        #region 3. å»ºç­‘å’ŒåŒºåŸŸæ“ä½œå‘½ä»¤
         
         private static void RegisterBuildingCommands()
         {
-            // 3.1 Ö¸ÅÉ½¨Ôì
+            // 3.1 æŒ‡æ´¾å»ºé€ 
             Register(new CommandDefinition
             {
                 commandId = "DesignateBuild",
                 category = "Building",
-                displayName = "Ö¸ÅÉ½¨Ôì",
-                description = "ÔÚÖ¸¶¨Î»ÖÃ¹æ»®ĞÂ½¨Öş",
+                displayName = "æŒ‡æ´¾å»ºé€ ",
+                description = "åœ¨æŒ‡å®šä½ç½®è§„åˆ’æ–°å»ºç­‘",
                 parameters = new List<ParameterDef>
                 {
-                    new ParameterDef { name = "buildingDef", type = "string", required = true, description = "½¨ÖşDefName" },
-                    new ParameterDef { name = "x", type = "int", required = true, description = "X×ø±ê" },
-                    new ParameterDef { name = "z", type = "int", required = true, description = "Z×ø±ê" },
+                    new ParameterDef { name = "buildingDef", type = "string", required = true, description = "å»ºç­‘DefName" },
+                    new ParameterDef { name = "x", type = "int", required = true, description = "Xåæ ‡" },
+                    new ParameterDef { name = "z", type = "int", required = true, description = "Zåæ ‡" },
                     new ParameterDef { name = "rotation", type = "string", required = false, defaultValue = "North",
-                        validValues = new List<string> { "North", "South", "East", "West" }, description = "³¯Ïò" },
-                    new ParameterDef { name = "stuffDef", type = "string", required = false, description = "²ÄÁÏDefName" }
+                        validValues = new List<string> { "North", "South", "East", "West" }, description = "æœå‘" },
+                    new ParameterDef { name = "stuffDef", type = "string", required = false, description = "ææ–™DefName" }
                 },
                 example = "{ \"action\": \"DesignateBuild\", \"buildingDef\": \"Wall\", \"x\": 10, \"z\": 10, \"stuffDef\": \"BlocksGranite\" }",
-                notes = "ĞèÒªÓĞ×ã¹»µÄ²ÄÁÏºÍ½¨Öş¹¤ÈË"
+                notes = "éœ€è¦æœ‰è¶³å¤Ÿçš„ææ–™å’Œå»ºç­‘å·¥äºº"
             });
             
-            // 3.2 È¡Ïû½¨Ôì
+            // 3.2 å–æ¶ˆå»ºé€ 
             Register(new CommandDefinition
             {
                 commandId = "CancelBuild",
                 category = "Building",
-                displayName = "È¡Ïû½¨Ôì",
-                description = "È¡ÏûÖ¸¶¨Î»ÖÃµÄ½¨Ôì¼Æ»®",
+                displayName = "å–æ¶ˆå»ºé€ ",
+                description = "å–æ¶ˆæŒ‡å®šä½ç½®çš„å»ºé€ è®¡åˆ’",
                 parameters = new List<ParameterDef>
                 {
-                    new ParameterDef { name = "x", type = "int", required = true, description = "X×ø±ê" },
-                    new ParameterDef { name = "z", type = "int", required = true, description = "Z×ø±ê" }
+                    new ParameterDef { name = "x", type = "int", required = true, description = "Xåæ ‡" },
+                    new ParameterDef { name = "z", type = "int", required = true, description = "Zåæ ‡" }
                 },
                 example = "{ \"action\": \"CancelBuild\", \"x\": 10, \"z\": 10 }",
                 notes = ""
             });
             
-            // 3.3 ²ğ³ı½¨Öş
+            // 3.3 æ‹†é™¤å»ºç­‘
             Register(new CommandDefinition
             {
                 commandId = "Deconstruct",
                 category = "Building",
-                displayName = "²ğ³ı½¨Öş",
-                description = "Ö¸ÅÉ²ğ³ı½¨Öş",
+                displayName = "æ‹†é™¤å»ºç­‘",
+                description = "æŒ‡æ´¾æ‹†é™¤å»ºç­‘",
                 parameters = new List<ParameterDef>
                 {
-                    new ParameterDef { name = "x", type = "int", required = true, description = "X×ø±ê" },
-                    new ParameterDef { name = "z", type = "int", required = true, description = "Z×ø±ê" }
+                    new ParameterDef { name = "x", type = "int", required = true, description = "Xåæ ‡" },
+                    new ParameterDef { name = "z", type = "int", required = true, description = "Zåæ ‡" }
                 },
                 example = "{ \"action\": \"Deconstruct\", \"x\": 10, \"z\": 10 }",
-                notes = "²ğ³ı»á»ØÊÕ²¿·Ö²ÄÁÏ"
+                notes = "æ‹†é™¤ä¼šå›æ”¶éƒ¨åˆ†ææ–™"
             });
             
-            // 3.4 ´´½¨ÇøÓò
+            // 3.4 åˆ›å»ºåŒºåŸŸ
             Register(new CommandDefinition
             {
                 commandId = "CreateZone",
                 category = "Building",
-                displayName = "´´½¨ÇøÓò",
-                description = "´´½¨²Ö¿âÇø¡¢ÖÖÖ²Çø»òÇãµ¹Çø",
+                displayName = "åˆ›å»ºåŒºåŸŸ",
+                description = "åˆ›å»ºä»“åº“åŒºã€ç§æ¤åŒºæˆ–å€¾å€’åŒº",
                 parameters = new List<ParameterDef>
                 {
                     new ParameterDef { name = "zoneType", type = "string", required = true, 
-                        validValues = new List<string> { "Stockpile", "Growing", "Dumping" }, description = "ÇøÓòÀàĞÍ" },
-                    new ParameterDef { name = "x1", type = "int", required = true, description = "ÆğÊ¼X×ø±ê" },
-                    new ParameterDef { name = "z1", type = "int", required = true, description = "ÆğÊ¼Z×ø±ê" },
-                    new ParameterDef { name = "x2", type = "int", required = true, description = "½áÊøX×ø±ê" },
-                    new ParameterDef { name = "z2", type = "int", required = true, description = "½áÊøZ×ø±ê" },
-                    new ParameterDef { name = "zoneName", type = "string", required = false, description = "ÇøÓòÃû³Æ" }
+                        validValues = new List<string> { "Stockpile", "Growing", "Dumping" }, description = "åŒºåŸŸç±»å‹" },
+                    new ParameterDef { name = "x1", type = "int", required = true, description = "èµ·å§‹Xåæ ‡" },
+                    new ParameterDef { name = "z1", type = "int", required = true, description = "èµ·å§‹Zåæ ‡" },
+                    new ParameterDef { name = "x2", type = "int", required = true, description = "ç»“æŸXåæ ‡" },
+                    new ParameterDef { name = "z2", type = "int", required = true, description = "ç»“æŸZåæ ‡" },
+                    new ParameterDef { name = "zoneName", type = "string", required = false, description = "åŒºåŸŸåç§°" }
                 },
                 example = "{ \"action\": \"CreateZone\", \"zoneType\": \"Stockpile\", \"x1\": 10, \"z1\": 10, \"x2\": 20, \"z2\": 20 }",
                 notes = ""
@@ -336,140 +336,140 @@ namespace TheSecondSeat.Commands
         
         #endregion
         
-        #region 5. ÊÂ¼ş´¥·¢Óë¿ØÖÆÃüÁî
+        #region 5. äº‹ä»¶è§¦å‘ä¸æ§åˆ¶å‘½ä»¤
         
         private static void RegisterEventCommands()
         {
-            // 5.1 ´¥·¢ÊÂ¼ş
+            // 5.1 è§¦å‘äº‹ä»¶
             Register(new CommandDefinition
             {
                 commandId = "TriggerEvent",
                 category = "Event",
-                displayName = "´¥·¢ÊÂ¼ş",
-                description = "´¥·¢ÓÎÏ·ÊÂ¼ş£¨¶ÔŞÄÕßÄ£Ê½£©",
+                displayName = "è§¦å‘äº‹ä»¶",
+                description = "è§¦å‘æ¸¸æˆäº‹ä»¶ï¼ˆå¯¹å¼ˆè€…æ¨¡å¼ï¼‰",
                 parameters = new List<ParameterDef>
                 {
                     new ParameterDef { name = "eventType", type = "string", required = true,
                         validValues = new List<string> { "raid", "trader", "wanderer", "disease", "resource", "eclipse", "toxic" },
-                        description = "ÊÂ¼şÀàĞÍ" },
-                    new ParameterDef { name = "comment", type = "string", required = false, description = "AIÆÀÂÛ" }
+                        description = "äº‹ä»¶ç±»å‹" },
+                    new ParameterDef { name = "comment", type = "string", required = false, description = "AIè¯„è®º" }
                 },
-                example = "{ \"action\": \"TriggerEvent\", \"eventType\": \"raid\", \"comment\": \"À´Ï®£¡Õ¹ÏÖÄãÃÇµÄÁ¦Á¿£¡\" }",
-                notes = "½öÔÚ¶ÔŞÄÕßÄ£Ê½ÏÂ¿ÉÓÃ"
+                example = "{ \"action\": \"TriggerEvent\", \"eventType\": \"raid\", \"comment\": \"æ¥è¢­ï¼å±•ç°ä½ ä»¬çš„åŠ›é‡ï¼\" }",
+                notes = "ä»…åœ¨å¯¹å¼ˆè€…æ¨¡å¼ä¸‹å¯ç”¨"
             });
             
-            // 5.2 °²ÅÅÊÂ¼ş
+            // 5.2 å®‰æ’äº‹ä»¶
             Register(new CommandDefinition
             {
                 commandId = "ScheduleEvent",
                 category = "Event",
-                displayName = "°²ÅÅÊÂ¼ş",
-                description = "ÔÚÎ´À´Ä³Ê±¿Ì´¥·¢ÊÂ¼ş",
+                displayName = "å®‰æ’äº‹ä»¶",
+                description = "åœ¨æœªæ¥æŸæ—¶åˆ»è§¦å‘äº‹ä»¶",
                 parameters = new List<ParameterDef>
                 {
                     new ParameterDef { name = "eventType", type = "string", required = true,
                         validValues = new List<string> { "raid", "trader", "wanderer", "disease", "resource", "eclipse", "toxic" },
-                        description = "ÊÂ¼şÀàĞÍ" },
-                    new ParameterDef { name = "delayMinutes", type = "int", required = false, defaultValue = "10", description = "ÑÓ³ÙÊ±¼ä£¨ÓÎÏ··ÖÖÓ£©" },
-                    new ParameterDef { name = "comment", type = "string", required = false, description = "AIÆÀÂÛ" }
+                        description = "äº‹ä»¶ç±»å‹" },
+                    new ParameterDef { name = "delayMinutes", type = "int", required = false, defaultValue = "10", description = "å»¶è¿Ÿæ—¶é—´ï¼ˆæ¸¸æˆåˆ†é’Ÿï¼‰" },
+                    new ParameterDef { name = "comment", type = "string", required = false, description = "AIè¯„è®º" }
                 },
                 example = "{ \"action\": \"ScheduleEvent\", \"eventType\": \"raid\", \"delayMinutes\": 30 }",
-                notes = "½öÔÚ¶ÔŞÄÕßÄ£Ê½ÏÂ¿ÉÓÃ"
+                notes = "ä»…åœ¨å¯¹å¼ˆè€…æ¨¡å¼ä¸‹å¯ç”¨"
             });
             
-            // 5.3 ĞŞ¸ÄÌìÆø
+            // 5.3 ä¿®æ”¹å¤©æ°”
             Register(new CommandDefinition
             {
                 commandId = "ChangeWeather",
                 category = "Event",
-                displayName = "ĞŞ¸ÄÌìÆø",
-                description = "¸Ä±äµ±Ç°µØÍ¼ÌìÆø",
+                displayName = "ä¿®æ”¹å¤©æ°”",
+                description = "æ”¹å˜å½“å‰åœ°å›¾å¤©æ°”",
                 parameters = new List<ParameterDef>
                 {
                     new ParameterDef { name = "weatherDef", type = "string", required = true,
                         validValues = new List<string> { "Clear", "Rain", "RainyThunderstorm", "DryThunderstorm", "FoggyRain", "Fog", "SnowGentle", "SnowHard" },
-                        description = "ÌìÆøDefName" }
+                        description = "å¤©æ°”DefName" }
                 },
                 example = "{ \"action\": \"ChangeWeather\", \"weatherDef\": \"Rain\" }",
-                notes = "½öÔÚ¶ÔŞÄÕßÄ£Ê½ÏÂ¿ÉÓÃ"
+                notes = "ä»…åœ¨å¯¹å¼ˆè€…æ¨¡å¼ä¸‹å¯ç”¨"
             });
         }
         
         #endregion
         
-        #region 7. ²éÑ¯ºÍĞÅÏ¢»ñÈ¡ÃüÁî
+        #region 7. æŸ¥è¯¢å’Œä¿¡æ¯è·å–å‘½ä»¤
         
         private static void RegisterQueryCommands()
         {
-            // 7.1 »ñÈ¡Ö³ÃñÕßÁĞ±í
+            // 7.1 è·å–æ®–æ°‘è€…åˆ—è¡¨
             Register(new CommandDefinition
             {
                 commandId = "GetColonists",
                 category = "Query",
-                displayName = "»ñÈ¡Ö³ÃñÕßÁĞ±í",
-                description = "»ñÈ¡ËùÓĞÖ³ÃñÕßµÄĞÅÏ¢",
+                displayName = "è·å–æ®–æ°‘è€…åˆ—è¡¨",
+                description = "è·å–æ‰€æœ‰æ®–æ°‘è€…çš„ä¿¡æ¯",
                 parameters = new List<ParameterDef>
                 {
-                    new ParameterDef { name = "includeDetails", type = "bool", required = false, defaultValue = "false", description = "ÊÇ·ñ°üº¬ÏêÏ¸ĞÅÏ¢" }
+                    new ParameterDef { name = "includeDetails", type = "bool", required = false, defaultValue = "false", description = "æ˜¯å¦åŒ…å«è¯¦ç»†ä¿¡æ¯" }
                 },
                 example = "{ \"action\": \"GetColonists\", \"includeDetails\": true }",
-                notes = "·µ»ØÖ³ÃñÕßÃû×Ö¡¢½¡¿µ×´Ì¬¡¢µ±Ç°¹¤×÷µÈ"
+                notes = "è¿”å›æ®–æ°‘è€…åå­—ã€å¥åº·çŠ¶æ€ã€å½“å‰å·¥ä½œç­‰"
             });
             
-            // 7.2 »ñÈ¡×ÊÔ´Í³¼Æ
+            // 7.2 è·å–èµ„æºç»Ÿè®¡
             Register(new CommandDefinition
             {
                 commandId = "GetResources",
                 category = "Query",
-                displayName = "»ñÈ¡×ÊÔ´Í³¼Æ",
-                description = "»ñÈ¡Ö³ÃñµØ×ÊÔ´ÊıÁ¿",
+                displayName = "è·å–èµ„æºç»Ÿè®¡",
+                description = "è·å–æ®–æ°‘åœ°èµ„æºæ•°é‡",
                 parameters = new List<ParameterDef>
                 {
                     new ParameterDef { name = "category", type = "string", required = false, 
                         validValues = new List<string> { "all", "food", "medicine", "weapons", "materials" },
-                        description = "×ÊÔ´Àà±ğ" }
+                        description = "èµ„æºç±»åˆ«" }
                 },
                 example = "{ \"action\": \"GetResources\", \"category\": \"food\" }",
                 notes = ""
             });
             
-            // 7.3 »ñÈ¡ÍşĞ²ĞÅÏ¢
+            // 7.3 è·å–å¨èƒä¿¡æ¯
             Register(new CommandDefinition
             {
                 commandId = "GetThreats",
                 category = "Query",
-                displayName = "»ñÈ¡ÍşĞ²ĞÅÏ¢",
-                description = "»ñÈ¡µ±Ç°µØÍ¼ÉÏµÄÍşĞ²ĞÅÏ¢",
+                displayName = "è·å–å¨èƒä¿¡æ¯",
+                description = "è·å–å½“å‰åœ°å›¾ä¸Šçš„å¨èƒä¿¡æ¯",
                 parameters = new List<ParameterDef>(),
                 example = "{ \"action\": \"GetThreats\" }",
-                notes = "·µ»ØµĞÈËÊıÁ¿¡¢Î»ÖÃ¡¢ÍşĞ²µÈ¼¶µÈ"
+                notes = "è¿”å›æ•Œäººæ•°é‡ã€ä½ç½®ã€å¨èƒç­‰çº§ç­‰"
             });
             
-            // 7.4 »ñÈ¡Ö³ÃñµØ×´Ì¬
+            // 7.4 è·å–æ®–æ°‘åœ°çŠ¶æ€
             Register(new CommandDefinition
             {
                 commandId = "GetColonyStatus",
                 category = "Query",
-                displayName = "»ñÈ¡Ö³ÃñµØ×´Ì¬",
-                description = "»ñÈ¡Ö³ÃñµØÕûÌå×´Ì¬¸ÅÀÀ",
+                displayName = "è·å–æ®–æ°‘åœ°çŠ¶æ€",
+                description = "è·å–æ®–æ°‘åœ°æ•´ä½“çŠ¶æ€æ¦‚è§ˆ",
                 parameters = new List<ParameterDef>(),
                 example = "{ \"action\": \"GetColonyStatus\" }",
-                notes = "·µ»Ø²Æ¸»¡¢ÈË¿Ú¡¢µçÁ¦¡¢Ê³Îï´¢±¸µÈ"
+                notes = "è¿”å›è´¢å¯Œã€äººå£ã€ç”µåŠ›ã€é£Ÿç‰©å‚¨å¤‡ç­‰"
             });
         }
         
         #endregion
         
-        #region ¹«¹² API
+        #region å…¬å…± API
         
         /// <summary>
-        /// ×¢²áÃüÁî
+        /// æ³¨å†Œå‘½ä»¤
         /// </summary>
         public static void Register(CommandDefinition def)
         {
             if (string.IsNullOrEmpty(def.commandId))
             {
-                Log.Warning("[CommandToolLibrary] ÃüÁîID²»ÄÜÎª¿Õ");
+                Log.Warning("[CommandToolLibrary] å‘½ä»¤IDä¸èƒ½ä¸ºç©º");
                 return;
             }
             
@@ -477,7 +477,7 @@ namespace TheSecondSeat.Commands
         }
         
         /// <summary>
-        /// »ñÈ¡ËùÓĞÃüÁî
+        /// è·å–æ‰€æœ‰å‘½ä»¤
         /// </summary>
         public static List<CommandDefinition> GetAllCommands()
         {
@@ -486,7 +486,7 @@ namespace TheSecondSeat.Commands
         }
         
         /// <summary>
-        /// »ñÈ¡Ö¸¶¨Àà±ğµÄÃüÁî
+        /// è·å–æŒ‡å®šç±»åˆ«çš„å‘½ä»¤
         /// </summary>
         public static List<CommandDefinition> GetCommandsByCategory(string category)
         {
@@ -495,7 +495,7 @@ namespace TheSecondSeat.Commands
         }
         
         /// <summary>
-        /// »ñÈ¡ÃüÁî
+        /// è·å–å‘½ä»¤
         /// </summary>
         public static CommandDefinition? GetCommand(string commandId)
         {
@@ -504,7 +504,7 @@ namespace TheSecondSeat.Commands
         }
         
         /// <summary>
-        /// »ñÈ¡ËùÓĞÀà±ğ
+        /// è·å–æ‰€æœ‰ç±»åˆ«
         /// </summary>
         public static List<string> GetCategories()
         {
@@ -513,7 +513,7 @@ namespace TheSecondSeat.Commands
         }
         
         /// <summary>
-        /// Éú³É¹© LLM µ÷ÓÃµÄÃüÁîÎÄµµ£¨JSON ¸ñÊ½£©
+        /// ç”Ÿæˆä¾› LLM è°ƒç”¨çš„å‘½ä»¤æ–‡æ¡£ï¼ˆJSON æ ¼å¼ï¼‰
         /// </summary>
         public static string GenerateCommandDocumentation()
         {
@@ -522,7 +522,7 @@ namespace TheSecondSeat.Commands
             var doc = new
             {
                 version = "1.0",
-                description = "The Second Seat ÃüÁî¹¤¾ß¿â - ¹© LLM µ÷ÓÃºÍ²Ù×÷",
+                description = "The Second Seat å‘½ä»¤å·¥å…·åº“ - ä¾› LLM è°ƒç”¨å’Œæ“ä½œ",
                 categories = GetCategories(),
                 commands = commandRegistry.Values.Select(c => new
                 {
@@ -548,14 +548,14 @@ namespace TheSecondSeat.Commands
         }
         
         /// <summary>
-        /// Éú³É¾«¼òÃüÁîÁĞ±í£¨¹© LLM ¿ìËÙ²Î¿¼£©
+        /// ç”Ÿæˆç²¾ç®€å‘½ä»¤åˆ—è¡¨ï¼ˆä¾› LLM å¿«é€Ÿå‚è€ƒï¼‰
         /// </summary>
         public static string GenerateCompactCommandList()
         {
             Initialize();
             
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("# ¿ÉÓÃÃüÁîÁĞ±í");
+            sb.AppendLine("# å¯ç”¨å‘½ä»¤åˆ—è¡¨");
             sb.AppendLine();
             
             foreach (var category in GetCategories())

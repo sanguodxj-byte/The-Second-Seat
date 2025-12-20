@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;
@@ -8,16 +8,16 @@ using TheSecondSeat.TTS;
 namespace TheSecondSeat.Utils
 {
     /// <summary>
-    /// Á¢»æ¿ØÖÆÆ÷ - ¹ÜÀíÕûÍ¼ÇĞ»»¶¯»­ÏµÍ³
-    /// ¸ºÔğ»º´æÎÆÀí¡¢Õ£ÑÛÂß¼­¡¢ÓïÒôÍ¬²½
+    /// ç«‹ç»˜æ§åˆ¶å™¨ - ç®¡ç†æ•´å›¾åˆ‡æ¢åŠ¨ç”»ç³»ç»Ÿ
+    /// è´Ÿè´£ç¼“å­˜çº¹ç†ã€çœ¨çœ¼é€»è¾‘ã€è¯­éŸ³åŒæ­¥
     /// </summary>
     public class PortraitController
     {
-        // ========== µ¥ÀıÄ£Ê½ ==========
+        // ========== å•ä¾‹æ¨¡å¼ ==========
         private static PortraitController? instance;
         
         /// <summary>
-        /// µ¥ÀıÊµÀı
+        /// å•ä¾‹å®ä¾‹
         /// </summary>
         public static PortraitController Instance
         {
@@ -32,54 +32,54 @@ namespace TheSecondSeat.Utils
             }
         }
         
-        // ========== ÎÆÀí»º´æ ==========
+        // ========== çº¹ç†ç¼“å­˜ ==========
         /// <summary>
-        /// ÎÆÀí»º´æ£ºkey = "defName_type" (ÀıÈç "Sideria_base", "Sideria_blink")
+        /// çº¹ç†ç¼“å­˜ï¼škey = "defName_type" (ä¾‹å¦‚ "Sideria_base", "Sideria_blink")
         /// </summary>
         private Dictionary<string, Texture2D> textureCache = new Dictionary<string, Texture2D>();
         
-        // ========== Õ£ÑÛ×´Ì¬ ==========
+        // ========== çœ¨çœ¼çŠ¶æ€ ==========
         /// <summary>
-        /// ÏÂ´ÎÕ£ÑÛÊ±¼ä£¨ÓÎÏ·Ê±¼ä´Á£©
+        /// ä¸‹æ¬¡çœ¨çœ¼æ—¶é—´ï¼ˆæ¸¸æˆæ—¶é—´æˆ³ï¼‰
         /// </summary>
         private float nextBlinkTime = 0f;
         
         /// <summary>
-        /// ÊÇ·ñÕıÔÚÕ£ÑÛ
+        /// æ˜¯å¦æ­£åœ¨çœ¨çœ¼
         /// </summary>
         private bool isBlinking = false;
         
         /// <summary>
-        /// Õ£ÑÛ¿ªÊ¼Ê±¼ä
+        /// çœ¨çœ¼å¼€å§‹æ—¶é—´
         /// </summary>
         private float blinkStartTime = 0f;
         
         /// <summary>
-        /// Õ£ÑÛ³ÖĞøÊ±¼ä£¨Ãë£©
+        /// çœ¨çœ¼æŒç»­æ—¶é—´ï¼ˆç§’ï¼‰
         /// </summary>
         private const float BLINK_DURATION = 0.15f;
         
         /// <summary>
-        /// Õ£ÑÛ¼ä¸ô·¶Î§£¨Ãë£©
+        /// çœ¨çœ¼é—´éš”èŒƒå›´ï¼ˆç§’ï¼‰
         /// </summary>
         private const float BLINK_INTERVAL_MIN = 3f;
         private const float BLINK_INTERVAL_MAX = 6f;
         
-        // ========== ¹¹Ôìº¯Êı ==========
+        // ========== æ„é€ å‡½æ•° ==========
         private PortraitController()
         {
-            // ³õÊ¼»¯ÏÂ´ÎÕ£ÑÛÊ±¼ä
+            // åˆå§‹åŒ–ä¸‹æ¬¡çœ¨çœ¼æ—¶é—´
             ScheduleNextBlink();
         }
         
-        // ========== Ö÷Òª·½·¨£º»ñÈ¡µ±Ç°Á¢»æ ==========
+        // ========== ä¸»è¦æ–¹æ³•ï¼šè·å–å½“å‰ç«‹ç»˜ ==========
         
         /// <summary>
-        /// »ñÈ¡µ±Ç°Ó¦ÏÔÊ¾µÄÁ¢»æÎÆÀí
-        /// ÓÅÏÈ¼¶£ºÕ£ÑÛ > Ëµ»° > Ä¬ÈÏ
+        /// è·å–å½“å‰åº”æ˜¾ç¤ºçš„ç«‹ç»˜çº¹ç†
+        /// ä¼˜å…ˆçº§ï¼šçœ¨çœ¼ > è¯´è¯ > é»˜è®¤
         /// </summary>
-        /// <param name="def">ÈË¸ñ¶¨Òå</param>
-        /// <returns>µ±Ç°Ó¦ÏÔÊ¾µÄÎÆÀí</returns>
+        /// <param name="def">äººæ ¼å®šä¹‰</param>
+        /// <returns>å½“å‰åº”æ˜¾ç¤ºçš„çº¹ç†</returns>
         public Texture2D GetCurrentPortrait(NarratorPersonaDef def)
         {
             if (def == null)
@@ -88,17 +88,17 @@ namespace TheSecondSeat.Utils
                 return GenerateFallbackTexture();
             }
             
-            // ¸üĞÂÕ£ÑÛ×´Ì¬
+            // æ›´æ–°çœ¨çœ¼çŠ¶æ€
             UpdateBlinkState();
             
-            // Step 1: ½âÎö²¢»º´æÎÆÀí
+            // Step 1: è§£æå¹¶ç¼“å­˜çº¹ç†
             Texture2D baseTexture = GetOrLoadTexture(def.defName, "base", def.portraitPath);
             Texture2D blinkTexture = GetOrLoadTexture(def.defName, "blink", def.portraitPathBlink);
             Texture2D speakingTexture = GetOrLoadTexture(def.defName, "speaking", def.portraitPathSpeaking);
             
-            // Step 2: ÓÅÏÈ¼¶Âß¼­
+            // Step 2: ä¼˜å…ˆçº§é€»è¾‘
             
-            // ÓÅÏÈ¼¶ 1: Õ£ÑÛ£¨×î¸ßÓÅÏÈ¼¶£©
+            // ä¼˜å…ˆçº§ 1: çœ¨çœ¼ï¼ˆæœ€é«˜ä¼˜å…ˆçº§ï¼‰
             if (isBlinking)
             {
                 if (blinkTexture != null)
@@ -109,14 +109,14 @@ namespace TheSecondSeat.Utils
                     }
                     return blinkTexture;
                 }
-                // »ØÍËµ½»ù´¡ÎÆÀí
+                // å›é€€åˆ°åŸºç¡€çº¹ç†
                 if (Prefs.DevMode)
                 {
                     Log.Warning($"[PortraitController] {def.defName}: Blink texture missing, fallback to base");
                 }
             }
             
-            // ÓÅÏÈ¼¶ 2: Ëµ»°
+            // ä¼˜å…ˆçº§ 2: è¯´è¯
             if (TTSService.Instance != null && TTSService.Instance.IsSpeaking)
             {
                 if (speakingTexture != null)
@@ -127,61 +127,61 @@ namespace TheSecondSeat.Utils
                     }
                     return speakingTexture;
                 }
-                // »ØÍËµ½»ù´¡ÎÆÀí
+                // å›é€€åˆ°åŸºç¡€çº¹ç†
                 if (Prefs.DevMode)
                 {
                     Log.Warning($"[PortraitController] {def.defName}: Speaking texture missing, fallback to base");
                 }
             }
             
-            // ÓÅÏÈ¼¶ 3: Ä¬ÈÏ£¨»ù´¡ÎÆÀí£©
+            // ä¼˜å…ˆçº§ 3: é»˜è®¤ï¼ˆåŸºç¡€çº¹ç†ï¼‰
             if (baseTexture != null)
             {
                 return baseTexture;
             }
             
-            // ËùÓĞÎÆÀí¶¼È±Ê§£¬Éú³ÉÕ¼Î»·û
+            // æ‰€æœ‰çº¹ç†éƒ½ç¼ºå¤±ï¼Œç”Ÿæˆå ä½ç¬¦
             Log.Warning($"[PortraitController] {def.defName}: All textures missing, using fallback");
             return GenerateFallbackTexture();
         }
         
-        // ========== ÎÆÀí¼ÓÔØÓë»º´æ ==========
+        // ========== çº¹ç†åŠ è½½ä¸ç¼“å­˜ ==========
         
         /// <summary>
-        /// »ñÈ¡»ò¼ÓÔØÎÆÀí£¨´ø»º´æ£©
+        /// è·å–æˆ–åŠ è½½çº¹ç†ï¼ˆå¸¦ç¼“å­˜ï¼‰
         /// </summary>
-        /// <param name="defName">ÈË¸ñ defName</param>
-        /// <param name="type">ÎÆÀíÀàĞÍ£¨base, blink, speaking£©</param>
-        /// <param name="texturePath">ÎÆÀíÂ·¾¶£¨À´×Ô XML£©</param>
-        /// <returns>ÎÆÀí¶ÔÏó£¬Èç¹û²»´æÔÚ·µ»Ø null</returns>
+        /// <param name="defName">äººæ ¼ defName</param>
+        /// <param name="type">çº¹ç†ç±»å‹ï¼ˆbase, blink, speakingï¼‰</param>
+        /// <param name="texturePath">çº¹ç†è·¯å¾„ï¼ˆæ¥è‡ª XMLï¼‰</param>
+        /// <returns>çº¹ç†å¯¹è±¡ï¼Œå¦‚æœä¸å­˜åœ¨è¿”å› null</returns>
         private Texture2D? GetOrLoadTexture(string defName, string type, string texturePath)
         {
-            // ¼ì²éÂ·¾¶ÊÇ·ñÎª¿Õ
+            // æ£€æŸ¥è·¯å¾„æ˜¯å¦ä¸ºç©º
             if (string.IsNullOrEmpty(texturePath))
             {
                 return null;
             }
             
-            // Éú³É»º´æ¼ü
+            // ç”Ÿæˆç¼“å­˜é”®
             string cacheKey = $"{defName}_{type}";
             
-            // ¼ì²é»º´æ
+            // æ£€æŸ¥ç¼“å­˜
             if (textureCache.TryGetValue(cacheKey, out Texture2D cachedTexture))
             {
                 return cachedTexture;
             }
             
-            // ´Ó´ÅÅÌ¼ÓÔØ
+            // ä»ç£ç›˜åŠ è½½
             try
             {
                 Texture2D texture = ContentFinder<Texture2D>.Get(texturePath, false);
                 
                 if (texture != null)
                 {
-                    // ÉèÖÃÎÆÀíÖÊÁ¿
+                    // è®¾ç½®çº¹ç†è´¨é‡
                     SetTextureQuality(texture);
                     
-                    // »º´æ
+                    // ç¼“å­˜
                     textureCache[cacheKey] = texture;
                     
                     if (Prefs.DevMode)
@@ -208,7 +208,7 @@ namespace TheSecondSeat.Utils
         }
         
         /// <summary>
-        /// ÉèÖÃÎÆÀíÖÊÁ¿²ÎÊı
+        /// è®¾ç½®çº¹ç†è´¨é‡å‚æ•°
         /// </summary>
         private void SetTextureQuality(Texture2D texture)
         {
@@ -221,14 +221,14 @@ namespace TheSecondSeat.Utils
             }
             catch
             {
-                // ¾²Ä¬ºöÂÔ£¬ÎÆÀíÉèÖÃ²»ÊÇ¹Ø¼ü¹¦ÄÜ
+                // é™é»˜å¿½ç•¥ï¼Œçº¹ç†è®¾ç½®ä¸æ˜¯å…³é”®åŠŸèƒ½
             }
         }
         
-        // ========== Õ£ÑÛÂß¼­ ==========
+        // ========== çœ¨çœ¼é€»è¾‘ ==========
         
         /// <summary>
-        /// ¸üĞÂÕ£ÑÛ×´Ì¬
+        /// æ›´æ–°çœ¨çœ¼çŠ¶æ€
         /// </summary>
         private void UpdateBlinkState()
         {
@@ -236,12 +236,12 @@ namespace TheSecondSeat.Utils
             
             if (isBlinking)
             {
-                // ÕıÔÚÕ£ÑÛ£º¼ì²éÊÇ·ñ½áÊø
+                // æ­£åœ¨çœ¨çœ¼ï¼šæ£€æŸ¥æ˜¯å¦ç»“æŸ
                 float elapsedTime = currentTime - blinkStartTime;
                 
                 if (elapsedTime >= BLINK_DURATION)
                 {
-                    // Õ£ÑÛ½áÊø
+                    // çœ¨çœ¼ç»“æŸ
                     isBlinking = false;
                     ScheduleNextBlink();
                     
@@ -253,7 +253,7 @@ namespace TheSecondSeat.Utils
             }
             else
             {
-                // Î´Õ£ÑÛ£º¼ì²éÊÇ·ñÓ¦¸Ã¿ªÊ¼
+                // æœªçœ¨çœ¼ï¼šæ£€æŸ¥æ˜¯å¦åº”è¯¥å¼€å§‹
                 if (currentTime >= nextBlinkTime)
                 {
                     StartBlink();
@@ -262,7 +262,7 @@ namespace TheSecondSeat.Utils
         }
         
         /// <summary>
-        /// ¿ªÊ¼Õ£ÑÛ
+        /// å¼€å§‹çœ¨çœ¼
         /// </summary>
         private void StartBlink()
         {
@@ -276,7 +276,7 @@ namespace TheSecondSeat.Utils
         }
         
         /// <summary>
-        /// ¼Æ»®ÏÂ´ÎÕ£ÑÛÊ±¼ä£¨Ëæ»ú3-6Ãëºó£©
+        /// è®¡åˆ’ä¸‹æ¬¡çœ¨çœ¼æ—¶é—´ï¼ˆéšæœº3-6ç§’åï¼‰
         /// </summary>
         private void ScheduleNextBlink()
         {
@@ -289,10 +289,10 @@ namespace TheSecondSeat.Utils
             }
         }
         
-        // ========== »º´æ¹ÜÀí ==========
+        // ========== ç¼“å­˜ç®¡ç† ==========
         
         /// <summary>
-        /// Çå¿ÕËùÓĞÎÆÀí»º´æ
+        /// æ¸…ç©ºæ‰€æœ‰çº¹ç†ç¼“å­˜
         /// </summary>
         public void ClearCache()
         {
@@ -301,9 +301,9 @@ namespace TheSecondSeat.Utils
         }
         
         /// <summary>
-        /// Çå³ıÌØ¶¨ÈË¸ñµÄÎÆÀí»º´æ
+        /// æ¸…é™¤ç‰¹å®šäººæ ¼çš„çº¹ç†ç¼“å­˜
         /// </summary>
-        /// <param name="defName">ÈË¸ñ defName</param>
+        /// <param name="defName">äººæ ¼ defName</param>
         public void ClearCacheFor(string defName)
         {
             List<string> keysToRemove = new List<string>();
@@ -325,21 +325,21 @@ namespace TheSecondSeat.Utils
         }
         
         /// <summary>
-        /// »ñÈ¡»º´æÍ³¼ÆĞÅÏ¢
+        /// è·å–ç¼“å­˜ç»Ÿè®¡ä¿¡æ¯
         /// </summary>
         public string GetCacheInfo()
         {
             return $"[PortraitController] Cached textures: {textureCache.Count}";
         }
         
-        // ========== Õ¼Î»·ûÎÆÀí ==========
+        // ========== å ä½ç¬¦çº¹ç† ==========
         
         /// <summary>
-        /// Éú³ÉÕ¼Î»·ûÎÆÀí£¨µ±ËùÓĞÎÆÀí¶¼È±Ê§Ê±Ê¹ÓÃ£©
+        /// ç”Ÿæˆå ä½ç¬¦çº¹ç†ï¼ˆå½“æ‰€æœ‰çº¹ç†éƒ½ç¼ºå¤±æ—¶ä½¿ç”¨ï¼‰
         /// </summary>
         private Texture2D GenerateFallbackTexture()
         {
-            // ´´½¨¼òµ¥µÄ»ÒÉ«ÎÆÀí
+            // åˆ›å»ºç®€å•çš„ç°è‰²çº¹ç†
             Texture2D fallback = new Texture2D(512, 512, TextureFormat.RGBA32, false);
             Color gray = new Color(0.3f, 0.3f, 0.3f, 1f);
             
@@ -355,10 +355,10 @@ namespace TheSecondSeat.Utils
             return fallback;
         }
         
-        // ========== µ÷ÊÔ·½·¨ ==========
+        // ========== è°ƒè¯•æ–¹æ³• ==========
         
         /// <summary>
-        /// Ç¿ÖÆ´¥·¢Õ£ÑÛ£¨ÓÃÓÚ²âÊÔ£©
+        /// å¼ºåˆ¶è§¦å‘çœ¨çœ¼ï¼ˆç”¨äºæµ‹è¯•ï¼‰
         /// </summary>
         public void ForceBlinkNow()
         {
@@ -367,7 +367,7 @@ namespace TheSecondSeat.Utils
         }
         
         /// <summary>
-        /// »ñÈ¡µ±Ç°Õ£ÑÛ×´Ì¬£¨ÓÃÓÚµ÷ÊÔ£©
+        /// è·å–å½“å‰çœ¨çœ¼çŠ¶æ€ï¼ˆç”¨äºè°ƒè¯•ï¼‰
         /// </summary>
         public string GetBlinkStatus()
         {
@@ -387,7 +387,7 @@ namespace TheSecondSeat.Utils
         }
         
         /// <summary>
-        /// »ñÈ¡ÍêÕûµ÷ÊÔĞÅÏ¢
+        /// è·å–å®Œæ•´è°ƒè¯•ä¿¡æ¯
         /// </summary>
         public string GetDebugInfo()
         {

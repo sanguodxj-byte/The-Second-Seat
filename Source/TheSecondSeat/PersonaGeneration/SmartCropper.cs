@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;
@@ -6,47 +6,47 @@ using Verse;
 namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
-    /// ÖÇÄÜ²Ã¼ôÏµÍ³ - ×Ô¶¯´ÓÍêÕûÁ¢»æ²Ã¼ô³öÍ·ÏñºÍ±íÇéÇøÓò
-    /// ¹¦ÄÜ£º
-    /// 1. Í·Ïñ²Ã¼ô - ÌáÈ¡ÉÏ°ëÉí×÷ÎªÁÄÌì´°¿ÚÍ·Ïñ
-    /// 2. ±íÇé²î·Ö²Ã¼ô - ÌáÈ¡Ãæ²¿ÇøÓò¼õÉÙÄÚ´æÕ¼ÓÃ
-    /// 3. ÖÇÄÜ¶¨Î» - ×Ô¶¯Ê¶±ğ×î¼Ñ²Ã¼ôÇøÓò
-    /// 4. »º´æÓÅ»¯ - ±ÜÃâÖØ¸´²Ã¼ô
+    /// æ™ºèƒ½è£å‰ªç³»ç»Ÿ - è‡ªåŠ¨ä»å®Œæ•´ç«‹ç»˜è£å‰ªå‡ºå¤´åƒå’Œè¡¨æƒ…åŒºåŸŸ
+    /// åŠŸèƒ½ï¼š
+    /// 1. å¤´åƒè£å‰ª - æå–ä¸ŠåŠèº«ä½œä¸ºèŠå¤©çª—å£å¤´åƒ
+    /// 2. è¡¨æƒ…å·®åˆ†è£å‰ª - æå–é¢éƒ¨åŒºåŸŸå‡å°‘å†…å­˜å ç”¨
+    /// 3. æ™ºèƒ½å®šä½ - è‡ªåŠ¨è¯†åˆ«æœ€ä½³è£å‰ªåŒºåŸŸ
+    /// 4. ç¼“å­˜ä¼˜åŒ– - é¿å…é‡å¤è£å‰ª
     /// </summary>
     public static class SmartCropper
     {
-        // ²Ã¼ô»º´æ
+        // è£å‰ªç¼“å­˜
         private static Dictionary<string, Texture2D> cropCache = new Dictionary<string, Texture2D>();
         
         /// <summary>
-        /// ²Ã¼ôÀàĞÍ
+        /// è£å‰ªç±»å‹
         /// </summary>
         public enum CropType
         {
-            Avatar,      // Í·Ïñ£¨ÁÄÌì´°¿ÚÓÃ£©
-            Expression,  // ±íÇé²î·Ö£¨¶¯Ì¬±íÇéÓÃ£©
-            Portrait     // ÍêÕûÁ¢»æ£¨²»²Ã¼ô£©
+            Avatar,      // å¤´åƒï¼ˆèŠå¤©çª—å£ç”¨ï¼‰
+            Expression,  // è¡¨æƒ…å·®åˆ†ï¼ˆåŠ¨æ€è¡¨æƒ…ç”¨ï¼‰
+            Portrait     // å®Œæ•´ç«‹ç»˜ï¼ˆä¸è£å‰ªï¼‰
         }
         
         /// <summary>
-        /// ´ÓÍêÕûÁ¢»æ²Ã¼ôÖ¸¶¨ÇøÓò
+        /// ä»å®Œæ•´ç«‹ç»˜è£å‰ªæŒ‡å®šåŒºåŸŸ
         /// </summary>
-        /// <param name="sourceTexture">Ô´ÎÆÀí£¨ÍêÕûÁ¢»æ£©</param>
-        /// <param name="cropType">²Ã¼ôÀàĞÍ</param>
-        /// <param name="customRect">×Ô¶¨Òå²Ã¼ôÇøÓò£¨¿ÉÑ¡£©</param>
-        /// <returns>²Ã¼ôºóµÄÎÆÀí</returns>
+        /// <param name="sourceTexture">æºçº¹ç†ï¼ˆå®Œæ•´ç«‹ç»˜ï¼‰</param>
+        /// <param name="cropType">è£å‰ªç±»å‹</param>
+        /// <param name="customRect">è‡ªå®šä¹‰è£å‰ªåŒºåŸŸï¼ˆå¯é€‰ï¼‰</param>
+        /// <returns>è£å‰ªåçš„çº¹ç†</returns>
         public static Texture2D CropTexture(Texture2D sourceTexture, CropType cropType, Rect? customRect = null)
         {
             if (sourceTexture == null)
             {
-                Log.Warning("[SmartCropper] Ô´ÎÆÀíÎª¿Õ£¬ÎŞ·¨²Ã¼ô");
+                Log.Warning("[SmartCropper] æºçº¹ç†ä¸ºç©ºï¼Œæ— æ³•è£å‰ª");
                 return null;
             }
             
-            // Éú³É»º´æ¼ü
+            // ç”Ÿæˆç¼“å­˜é”®
             string cacheKey = $"{sourceTexture.name}_{cropType}_{customRect?.ToString() ?? "auto"}";
             
-            // ¼ì²é»º´æ
+            // æ£€æŸ¥ç¼“å­˜
             if (cropCache.TryGetValue(cacheKey, out Texture2D cached))
             {
                 return cached;
@@ -54,72 +54,72 @@ namespace TheSecondSeat.PersonaGeneration
             
             try
             {
-                // È·¶¨²Ã¼ôÇøÓò
+                // ç¡®å®šè£å‰ªåŒºåŸŸ
                 Rect cropRect = customRect ?? GetDefaultCropRect(cropType, sourceTexture);
                 
-                // Ö´ĞĞ²Ã¼ô
+                // æ‰§è¡Œè£å‰ª
                 Texture2D croppedTexture = PerformCrop(sourceTexture, cropRect);
                 
                 if (croppedTexture != null)
                 {
                     croppedTexture.name = $"{sourceTexture.name}_{cropType}";
                     
-                    // »º´æ½á¹û
+                    // ç¼“å­˜ç»“æœ
                     cropCache[cacheKey] = croppedTexture;
                     
-                    Log.Message($"[SmartCropper] ³É¹¦²Ã¼ôÎÆÀí: {sourceTexture.name} -> {cropType} ({cropRect})");
+                    Log.Message($"[SmartCropper] æˆåŠŸè£å‰ªçº¹ç†: {sourceTexture.name} -> {cropType} ({cropRect})");
                 }
                 
                 return croppedTexture;
             }
             catch (Exception ex)
             {
-                Log.Error($"[SmartCropper] ²Ã¼ôÊ§°Ü: {ex.Message}");
+                Log.Error($"[SmartCropper] è£å‰ªå¤±è´¥: {ex.Message}");
                 return null;
             }
         }
         
         /// <summary>
-        /// »ñÈ¡Ä¬ÈÏ²Ã¼ôÇøÓò£¨¹éÒ»»¯×ø±ê 0-1£©
+        /// è·å–é»˜è®¤è£å‰ªåŒºåŸŸï¼ˆå½’ä¸€åŒ–åæ ‡ 0-1ï¼‰
         /// </summary>
         private static Rect GetDefaultCropRect(CropType cropType, Texture2D texture)
         {
             switch (cropType)
             {
                 case CropType.Avatar:
-                    // Í·Ïñ£ºÈ¡ÉÏ·½ 40%£¬Ë®Æ½¾ÓÖĞ 80%
+                    // å¤´åƒï¼šå–ä¸Šæ–¹ 40%ï¼Œæ°´å¹³å±…ä¸­ 80%
                     return new Rect(0.1f, 0.6f, 0.8f, 0.4f);
                 
                 case CropType.Expression:
-                    // ±íÇé²î·Ö£ºÈ¡ÖĞÉÏ²¿ 50%£¬Ë®Æ½¾ÓÖĞ 70%
-                    // Õâ¸öÇøÓò¸²¸ÇÃæ²¿ºÍÉÏ°ëÉí
+                    // è¡¨æƒ…å·®åˆ†ï¼šå–ä¸­ä¸Šéƒ¨ 50%ï¼Œæ°´å¹³å±…ä¸­ 70%
+                    // è¿™ä¸ªåŒºåŸŸè¦†ç›–é¢éƒ¨å’Œä¸ŠåŠèº«
                     return new Rect(0.15f, 0.45f, 0.7f, 0.5f);
                 
                 case CropType.Portrait:
                 default:
-                    // ÍêÕûÁ¢»æ£º²»²Ã¼ô
+                    // å®Œæ•´ç«‹ç»˜ï¼šä¸è£å‰ª
                     return new Rect(0f, 0f, 1f, 1f);
             }
         }
         
         /// <summary>
-        /// Ö´ĞĞÊµ¼ÊµÄÏñËØ²Ã¼ô
+        /// æ‰§è¡Œå®é™…çš„åƒç´ è£å‰ª
         /// </summary>
         private static Texture2D PerformCrop(Texture2D source, Rect normalizedRect)
         {
-            // ×ª»»ÎªÏñËØ×ø±ê
+            // è½¬æ¢ä¸ºåƒç´ åæ ‡
             int x = Mathf.RoundToInt(normalizedRect.x * source.width);
             int y = Mathf.RoundToInt(normalizedRect.y * source.height);
             int width = Mathf.RoundToInt(normalizedRect.width * source.width);
             int height = Mathf.RoundToInt(normalizedRect.height * source.height);
             
-            // ±ß½ç¼ì²é
+            // è¾¹ç•Œæ£€æŸ¥
             x = Mathf.Clamp(x, 0, source.width - 1);
             y = Mathf.Clamp(y, 0, source.height - 1);
             width = Mathf.Clamp(width, 1, source.width - x);
             height = Mathf.Clamp(height, 1, source.height - y);
             
-            // ¶ÁÈ¡ÏñËØ£¨È·±£ÎÆÀí¿É¶Á£©
+            // è¯»å–åƒç´ ï¼ˆç¡®ä¿çº¹ç†å¯è¯»ï¼‰
             Color[] pixels;
             try
             {
@@ -127,8 +127,8 @@ namespace TheSecondSeat.PersonaGeneration
             }
             catch (UnityException)
             {
-                // ÎÆÀí²»¿É¶Á£¬³¢ÊÔ´´½¨¿É¶Á¸±±¾
-                Log.Warning($"[SmartCropper] ÎÆÀí {source.name} ²»¿É¶Á£¬³¢ÊÔ´´½¨¸±±¾");
+                // çº¹ç†ä¸å¯è¯»ï¼Œå°è¯•åˆ›å»ºå¯è¯»å‰¯æœ¬
+                Log.Warning($"[SmartCropper] çº¹ç† {source.name} ä¸å¯è¯»ï¼Œå°è¯•åˆ›å»ºå‰¯æœ¬");
                 Texture2D readable = MakeTextureReadable(source);
                 if (readable == null)
                 {
@@ -137,7 +137,7 @@ namespace TheSecondSeat.PersonaGeneration
                 pixels = readable.GetPixels(x, y, width, height);
             }
             
-            // ´´½¨ĞÂÎÆÀí
+            // åˆ›å»ºæ–°çº¹ç†
             Texture2D croppedTexture = new Texture2D(width, height, TextureFormat.RGBA32, false);
             croppedTexture.SetPixels(pixels);
             croppedTexture.Apply();
@@ -146,25 +146,25 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ½«²»¿É¶ÁÎÆÀí×ª»»Îª¿É¶ÁÎÆÀí
+        /// å°†ä¸å¯è¯»çº¹ç†è½¬æ¢ä¸ºå¯è¯»çº¹ç†
         /// </summary>
         private static Texture2D MakeTextureReadable(Texture2D source)
         {
             try
             {
-                // ´´½¨ RenderTexture
+                // åˆ›å»º RenderTexture
                 RenderTexture rt = RenderTexture.GetTemporary(source.width, source.height, 0, RenderTextureFormat.ARGB32);
                 RenderTexture.active = rt;
                 
-                // äÖÈ¾µ½ RenderTexture
+                // æ¸²æŸ“åˆ° RenderTexture
                 Graphics.Blit(source, rt);
                 
-                // ¶ÁÈ¡ÏñËØ
+                // è¯»å–åƒç´ 
                 Texture2D readable = new Texture2D(source.width, source.height, TextureFormat.RGBA32, false);
                 readable.ReadPixels(new Rect(0, 0, source.width, source.height), 0, 0);
                 readable.Apply();
                 
-                // ÇåÀí
+                // æ¸…ç†
                 RenderTexture.active = null;
                 RenderTexture.ReleaseTemporary(rt);
                 
@@ -172,25 +172,25 @@ namespace TheSecondSeat.PersonaGeneration
             }
             catch (Exception ex)
             {
-                Log.Error($"[SmartCropper] ´´½¨¿É¶ÁÎÆÀíÊ§°Ü: {ex.Message}");
+                Log.Error($"[SmartCropper] åˆ›å»ºå¯è¯»çº¹ç†å¤±è´¥: {ex.Message}");
                 return null;
             }
         }
         
         /// <summary>
-        /// ÖÇÄÜ·ÖÎöÍ¼Ïñ£¬×Ô¶¯¶¨Î»×î¼Ñ²Ã¼ôÇøÓò£¨¸ß¼¶¹¦ÄÜ£©
+        /// æ™ºèƒ½åˆ†æå›¾åƒï¼Œè‡ªåŠ¨å®šä½æœ€ä½³è£å‰ªåŒºåŸŸï¼ˆé«˜çº§åŠŸèƒ½ï¼‰
         /// </summary>
-        /// <param name="texture">Òª·ÖÎöµÄÎÆÀí</param>
-        /// <param name="cropType">²Ã¼ôÀàĞÍ</param>
-        /// <returns>½¨ÒéµÄ²Ã¼ôÇøÓò</returns>
+        /// <param name="texture">è¦åˆ†æçš„çº¹ç†</param>
+        /// <param name="cropType">è£å‰ªç±»å‹</param>
+        /// <returns>å»ºè®®çš„è£å‰ªåŒºåŸŸ</returns>
         public static Rect AnalyzeOptimalCropRect(Texture2D texture, CropType cropType)
         {
             try
             {
-                // ¼ò»¯ÊµÏÖ£º»ùÓÚÁÁ¶È·Ö²¼¶¨Î»Ö÷Ìå
+                // ç®€åŒ–å®ç°ï¼šåŸºäºäº®åº¦åˆ†å¸ƒå®šä½ä¸»ä½“
                 Color[] pixels = texture.GetPixels();
                 
-                // ¼ÆËãÃ¿ĞĞºÍÃ¿ÁĞµÄÆ½¾ùÁÁ¶È
+                // è®¡ç®—æ¯è¡Œå’Œæ¯åˆ—çš„å¹³å‡äº®åº¦
                 float[] rowBrightness = new float[texture.height];
                 float[] colBrightness = new float[texture.width];
                 
@@ -207,32 +207,32 @@ namespace TheSecondSeat.PersonaGeneration
                     rowBrightness[y] = rowSum / texture.width;
                 }
                 
-                // ¹éÒ»»¯
+                // å½’ä¸€åŒ–
                 for (int x = 0; x < texture.width; x++)
                 {
                     colBrightness[x] /= texture.height;
                 }
                 
-                // ÕÒµ½ÁÁ¶È¼¯ÖĞÇøÓò£¨¼ÙÉèÈËÎïÖ÷Ìå½ÏÁÁ£©
+                // æ‰¾åˆ°äº®åº¦é›†ä¸­åŒºåŸŸï¼ˆå‡è®¾äººç‰©ä¸»ä½“è¾ƒäº®ï¼‰
                 int topY = FindContentBoundary(rowBrightness, true);
                 int bottomY = FindContentBoundary(rowBrightness, false);
                 int leftX = FindContentBoundary(colBrightness, true);
                 int rightX = FindContentBoundary(colBrightness, false);
                 
-                // ¸ù¾İ²Ã¼ôÀàĞÍµ÷ÕûÇøÓò
+                // æ ¹æ®è£å‰ªç±»å‹è°ƒæ•´åŒºåŸŸ
                 if (cropType == CropType.Avatar)
                 {
-                    // Í·Ïñ£ºÈ¡ÉÏ°ë²¿·Ö
+                    // å¤´åƒï¼šå–ä¸ŠåŠéƒ¨åˆ†
                     bottomY = Mathf.Min(bottomY, topY + (bottomY - topY) / 2);
                 }
                 else if (cropType == CropType.Expression)
                 {
-                    // ±íÇé£º¾Û½¹ÖĞÉÏ²¿
+                    // è¡¨æƒ…ï¼šèšç„¦ä¸­ä¸Šéƒ¨
                     int centerY = (topY + bottomY) / 2;
                     topY = Mathf.Max(topY, centerY - (bottomY - topY) / 3);
                 }
                 
-                // ×ª»»Îª¹éÒ»»¯×ø±ê
+                // è½¬æ¢ä¸ºå½’ä¸€åŒ–åæ ‡
                 return new Rect(
                     (float)leftX / texture.width,
                     (float)topY / texture.height,
@@ -242,17 +242,17 @@ namespace TheSecondSeat.PersonaGeneration
             }
             catch (Exception ex)
             {
-                Log.Warning($"[SmartCropper] ÖÇÄÜ·ÖÎöÊ§°Ü£¬Ê¹ÓÃÄ¬ÈÏÇøÓò: {ex.Message}");
+                Log.Warning($"[SmartCropper] æ™ºèƒ½åˆ†æå¤±è´¥ï¼Œä½¿ç”¨é»˜è®¤åŒºåŸŸ: {ex.Message}");
                 return GetDefaultCropRect(cropType, texture);
             }
         }
         
         /// <summary>
-        /// ²éÕÒÄÚÈİ±ß½ç
+        /// æŸ¥æ‰¾å†…å®¹è¾¹ç•Œ
         /// </summary>
         private static int FindContentBoundary(float[] brightness, bool fromStart)
         {
-            float threshold = 0.1f; // ÁÁ¶ÈãĞÖµ
+            float threshold = 0.1f; // äº®åº¦é˜ˆå€¼
             
             if (fromStart)
             {
@@ -275,7 +275,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ÇåÀí»º´æ
+        /// æ¸…ç†ç¼“å­˜
         /// </summary>
         public static void ClearCache()
         {
@@ -287,19 +287,19 @@ namespace TheSecondSeat.PersonaGeneration
                 }
             }
             cropCache.Clear();
-            Log.Message("[SmartCropper] »º´æÒÑÇåÀí");
+            Log.Message("[SmartCropper] ç¼“å­˜å·²æ¸…ç†");
         }
         
         /// <summary>
-        /// »ñÈ¡»º´æÍ³¼Æ
+        /// è·å–ç¼“å­˜ç»Ÿè®¡
         /// </summary>
         public static string GetCacheStats()
         {
-            return $"[SmartCropper] »º´æÏî: {cropCache.Count}, ÄÚ´æ¹ÀËã: {EstimateCacheMemoryMB():F2} MB";
+            return $"[SmartCropper] ç¼“å­˜é¡¹: {cropCache.Count}, å†…å­˜ä¼°ç®—: {EstimateCacheMemoryMB():F2} MB";
         }
         
         /// <summary>
-        /// ¹ÀËã»º´æÕ¼ÓÃÄÚ´æ
+        /// ä¼°ç®—ç¼“å­˜å ç”¨å†…å­˜
         /// </summary>
         private static float EstimateCacheMemoryMB()
         {

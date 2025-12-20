@@ -1,4 +1,4 @@
-using HarmonyLib;
+ï»¿using HarmonyLib;
 using Verse;
 using TheSecondSeat.Settings;
 using TheSecondSeat.Narrator;
@@ -23,9 +23,9 @@ namespace TheSecondSeat
             harmony.PatchAll(Assembly.GetExecutingAssembly());
             
             Log.Message("[The Second Seat] ================================================");
-            Log.Message("[The Second Seat] AI Narrator Assistant ³õÊ¼»¯ÖĞ...");
-            Log.Message("[The Second Seat] °æ±¾: 1.0.0");
-            Log.Message("[The Second Seat] Harmony²¹¶¡ÒÑÓ¦ÓÃ");
+            Log.Message("[The Second Seat] AI Narrator Assistant åˆå§‹åŒ–ä¸­...");
+            Log.Message("[The Second Seat] ç‰ˆæœ¬: 1.0.0");
+            Log.Message("[The Second Seat] Harmonyè¡¥ä¸å·²åº”ç”¨");
             Log.Message("[The Second Seat] ================================================");
         }
     }
@@ -85,7 +85,7 @@ namespace TheSecondSeat
                 return;
             }
 
-            Log.Message("[The Second Seat] ¿ªÊ¼×¢²á GameComponents...");
+            Log.Message("[The Second Seat] å¼€å§‹æ³¨å†Œ GameComponents...");
 
             // Add NarratorManager if not present
             var narratorManager = game.GetComponent<NarratorManager>();
@@ -93,7 +93,7 @@ namespace TheSecondSeat
             {
                 narratorManager = new NarratorManager(game);
                 game.components.Add(narratorManager);
-                Log.Message("[The Second Seat] ? NarratorManager ÒÑ×¢²á");
+                Log.Message("[The Second Seat] ? NarratorManager å·²æ³¨å†Œ");
             }
 
             // Add NarratorController if not present
@@ -102,7 +102,7 @@ namespace TheSecondSeat
             {
                 narratorController = new NarratorController(game);
                 game.components.Add(narratorController);
-                Log.Message("[The Second Seat] ? NarratorController ÒÑ×¢²á");
+                Log.Message("[The Second Seat] ? NarratorController å·²æ³¨å†Œ");
             }
 
             // Add AutoEventTrigger if not present
@@ -111,7 +111,7 @@ namespace TheSecondSeat
             {
                 autoEventTrigger = new AutoEventTrigger(game);
                 game.components.Add(autoEventTrigger);
-                Log.Message("[The Second Seat] ? AutoEventTrigger ÒÑ×¢²á");
+                Log.Message("[The Second Seat] ? AutoEventTrigger å·²æ³¨å†Œ");
             }
 
             // Add AutonomousBehaviorSystem if not present
@@ -120,7 +120,7 @@ namespace TheSecondSeat
             {
                 autonomousSystem = new AutonomousBehaviorSystem(game);
                 game.components.Add(autonomousSystem);
-                Log.Message("[The Second Seat] ? AutonomousBehaviorSystem ÒÑ×¢²á");
+                Log.Message("[The Second Seat] ? AutonomousBehaviorSystem å·²æ³¨å†Œ");
             }
 
             // Add ColonyStateMonitor if not present
@@ -129,7 +129,7 @@ namespace TheSecondSeat
             {
                 colonyMonitor = new ColonyStateMonitor(game);
                 game.components.Add(colonyMonitor);
-                Log.Message("[The Second Seat] ? ColonyStateMonitor ÒÑ×¢²á (¼à¿ØÖ³ÃñµØ×´Ì¬±ä»¯)");
+                Log.Message("[The Second Seat] ? ColonyStateMonitor å·²æ³¨å†Œ (ç›‘æ§æ®–æ°‘åœ°çŠ¶æ€å˜åŒ–)");
             }
 
             // Add PlayerInteractionMonitor if not present
@@ -138,20 +138,20 @@ namespace TheSecondSeat
             {
                 interactionMonitor = new PlayerInteractionMonitor(game);
                 game.components.Add(interactionMonitor);
-                Log.Message("[The Second Seat] ? PlayerInteractionMonitor ÒÑ×¢²á (¼à¿ØÍæ¼Ò»¥¶¯)");
+                Log.Message("[The Second Seat] ? PlayerInteractionMonitor å·²æ³¨å†Œ (ç›‘æ§ç©å®¶äº’åŠ¨)");
             }
 
-            // Add OpponentEventController if not present (¶ÔŞÄÕßÄ£Ê½ÊÂ¼ş¿ØÖÆÆ÷)
+            // Add OpponentEventController if not present (å¯¹å¼ˆè€…æ¨¡å¼äº‹ä»¶æ§åˆ¶å™¨)
             var opponentController = game.GetComponent<OpponentEventController>();
             if (opponentController == null)
             {
                 opponentController = new OpponentEventController(game);
                 game.components.Add(opponentController);
-                Log.Message("[The Second Seat] ? OpponentEventController ÒÑ×¢²á (¶ÔŞÄÕßÄ£Ê½ÊÂ¼ş¿ØÖÆ)");
+                Log.Message("[The Second Seat] ? OpponentEventController å·²æ³¨å†Œ (å¯¹å¼ˆè€…æ¨¡å¼äº‹ä»¶æ§åˆ¶)");
             }
 
             componentsRegistered = true;
-            Log.Message("[The Second Seat] ËùÓĞ GameComponents ×¢²áÍê³É£¡");
+            Log.Message("[The Second Seat] æ‰€æœ‰ GameComponents æ³¨å†Œå®Œæˆï¼");
             Log.Message("[The Second Seat] ================================================");
         }
 
@@ -174,7 +174,7 @@ namespace TheSecondSeat
             {
                 buttonManager = new UI.NarratorButtonManager(map);
                 map.components.Add(buttonManager);
-                Log.Message("[The Second Seat] ? NarratorButtonManager ÒÑ×¢²áµ½µØÍ¼");
+                Log.Message("[The Second Seat] ? NarratorButtonManager å·²æ³¨å†Œåˆ°åœ°å›¾");
             }
         }
     }

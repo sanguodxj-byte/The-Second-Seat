@@ -1,23 +1,23 @@
-using Verse;
+ï»¿using Verse;
 
 namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
-    /// ÊÂ¼şÆ«ºÃ¶¨Òå - ¿ØÖÆĞğÊÂÕßµÄÊÂ¼şÉú³ÉÇãÏò
-    /// API: ¿ÉÔÚXMLÖĞÅäÖÃËùÓĞ×Ö¶Î
+    /// äº‹ä»¶åå¥½å®šä¹‰ - æ§åˆ¶å™äº‹è€…çš„äº‹ä»¶ç”Ÿæˆå€¾å‘
+    /// API: å¯åœ¨XMLä¸­é…ç½®æ‰€æœ‰å­—æ®µ
     /// </summary>
     public class EventPreferencesDef : IExposable
     {
-        /// <summary>API: ÕıÃæÊÂ¼şÆ«ºÃ (-1=±ÜÃâ, 0=ÖĞĞÔ, 1=Æ«ºÃ)</summary>
+        /// <summary>API: æ­£é¢äº‹ä»¶åå¥½ (-1=é¿å…, 0=ä¸­æ€§, 1=åå¥½)</summary>
         public float positiveEventBias = 0f;
         
-        /// <summary>API: ¸ºÃæÊÂ¼şÆ«ºÃ (-1=±ÜÃâ, 0=ÖĞĞÔ, 1=Æ«ºÃ)</summary>
+        /// <summary>API: è´Ÿé¢äº‹ä»¶åå¥½ (-1=é¿å…, 0=ä¸­æ€§, 1=åå¥½)</summary>
         public float negativeEventBias = 0f;
         
-        /// <summary>API: »ìãç³Ì¶È (0=ÓĞĞò, 1=»ìãç)</summary>
+        /// <summary>API: æ··æ²Œç¨‹åº¦ (0=æœ‰åº, 1=æ··æ²Œ)</summary>
         public float chaosLevel = 0.3f;
         
-        /// <summary>API: ¸ÉÔ¤ÆµÂÊ (0=º±¼û, 1=Æµ·±)</summary>
+        /// <summary>API: å¹²é¢„é¢‘ç‡ (0=ç½•è§, 1=é¢‘ç¹)</summary>
         public float interventionFrequency = 0.5f;
 
         public EventPreferencesDef()

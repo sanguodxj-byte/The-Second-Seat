@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -35,24 +35,24 @@ namespace TheSecondSeat.UI
         public override void DoWindowContents(Rect inRect)
         {
             Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(0f, 0f, inRect.width, 40f), "Ñ¡ÔñĞğÊÂÕßÈË¸ñ");
+            Widgets.Label(new Rect(0f, 0f, inRect.width, 40f), "é€‰æ‹©å™äº‹è€…äººæ ¼");
             Text.Font = GameFont.Small;
 
             var listRect = new Rect(0f, 50f, inRect.width, inRect.height - 110f);
             DrawPersonaList(listRect);
 
-            // °´Å¥ÇøÓò
+            // æŒ‰é’®åŒºåŸŸ
             var buttonY = inRect.height - 50f;
             
             var settings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
             bool multimodalEnabled = settings?.enableMultimodalAnalysis == true;
             
-            // ´ÓÁ¢»æÉú³ÉĞÂÈË¸ñ
-            if (Widgets.ButtonText(new Rect(10f, buttonY, 200f, 35f), "´ÓÁ¢»æÉú³ÉĞÂÈË¸ñ"))
+            // ä»ç«‹ç»˜ç”Ÿæˆæ–°äººæ ¼
+            if (Widgets.ButtonText(new Rect(10f, buttonY, 200f, 35f), "ä»ç«‹ç»˜ç”Ÿæˆæ–°äººæ ¼"))
             {
                 if (!multimodalEnabled)
                 {
-                    Messages.Message("ÇëÏÈÔÚÄ£×éÉèÖÃÖĞÆôÓÃ¶àÄ£Ì¬·ÖÎö", MessageTypeDefOf.RejectInput);
+                    Messages.Message("è¯·å…ˆåœ¨æ¨¡ç»„è®¾ç½®ä¸­å¯ç”¨å¤šæ¨¡æ€åˆ†æ", MessageTypeDefOf.RejectInput);
                 }
                 else
                 {
@@ -60,17 +60,17 @@ namespace TheSecondSeat.UI
                 }
             }
             
-            if (Widgets.ButtonText(new Rect(inRect.width - 220f, buttonY, 100f, 35f), "Ó¦ÓÃ"))
+            if (Widgets.ButtonText(new Rect(inRect.width - 220f, buttonY, 100f, 35f), "åº”ç”¨"))
             {
                 if (selectedPersona != null)
                 {
                     narratorManager.LoadPersona(selectedPersona);
-                    Messages.Message($"ÒÑÇĞ»»Îª£º{selectedPersona.narratorName}", MessageTypeDefOf.PositiveEvent);
+                    Messages.Message($"å·²åˆ‡æ¢ä¸ºï¼š{selectedPersona.narratorName}", MessageTypeDefOf.PositiveEvent);
                 }
                 Close();
             }
 
-            if (Widgets.ButtonText(new Rect(inRect.width - 110f, buttonY, 100f, 35f), "È¡Ïû"))
+            if (Widgets.ButtonText(new Rect(inRect.width - 110f, buttonY, 100f, 35f), "å–æ¶ˆ"))
             {
                 Close();
             }
@@ -106,7 +106,7 @@ namespace TheSecondSeat.UI
 
                 Widgets.DrawBox(rect);
 
-                // µã»÷Ñ¡Ôñ
+                // ç‚¹å‡»é€‰æ‹©
                 if (Mouse.IsOver(rect) && Event.current.type == EventType.MouseDown)
                 {
                     if (Event.current.button == 0)
@@ -114,7 +114,7 @@ namespace TheSecondSeat.UI
                         selectedPersona = persona;
                         Event.current.Use();
                     }
-                    // ÓÒ¼ü±à¼­²Ëµ¥
+                    // å³é”®ç¼–è¾‘èœå•
                     else if (Event.current.button == 1)
                     {
                         ShowPersonaContextMenu(persona);
@@ -125,54 +125,54 @@ namespace TheSecondSeat.UI
                 var contentRect = rect.ContractedBy(10f);
                 var portraitRect = new Rect(contentRect.x, contentRect.y, 100f, 100f);
                 
-                // ? °ü×°Á¢»æ¼ÓÔØ£¬·ÀÖ¹µ¥¸öÈË¸ñ´íÎóµ¼ÖÂÕû¸öÁĞ±í±ÀÀ£
+                // ? åŒ…è£…ç«‹ç»˜åŠ è½½ï¼Œé˜²æ­¢å•ä¸ªäººæ ¼é”™è¯¯å¯¼è‡´æ•´ä¸ªåˆ—è¡¨å´©æºƒ
                 try
                 {
                     DrawPortraitPreview(portraitRect, persona);
                 }
                 catch (Exception ex)
                 {
-                    // »æÖÆ´íÎóÕ¼Î»·û
+                    // ç»˜åˆ¶é”™è¯¯å ä½ç¬¦
                     Widgets.DrawBoxSolid(portraitRect, Color.red * 0.5f);
-                    Log.Warning($"[PersonaSelectionWindow] Á¢»æ¼ÓÔØÊ§°Ü: {persona.defName} - {ex.Message}");
+                    Log.Warning($"[PersonaSelectionWindow] ç«‹ç»˜åŠ è½½å¤±è´¥: {persona.defName} - {ex.Message}");
                 }
 
                 var infoRect = new Rect(contentRect.x + 110f, contentRect.y, contentRect.width - 110f, contentRect.height);
                 float curY = infoRect.y;
 
                 Text.Font = GameFont.Medium;
-                Widgets.Label(new Rect(infoRect.x, curY, infoRect.width, 30f), persona.narratorName ?? "Î´Öª");
+                Widgets.Label(new Rect(infoRect.x, curY, infoRect.width, 30f), persona.narratorName ?? "æœªçŸ¥");
                 
                 if (isCurrent)
                 {
                     Text.Font = GameFont.Tiny;
                     GUI.color = Color.green;
-                    Widgets.Label(new Rect(infoRect.x + infoRect.width - 80f, curY, 80f, 20f), "(µ±Ç°)");
+                    Widgets.Label(new Rect(infoRect.x + infoRect.width - 80f, curY, 80f, 20f), "(å½“å‰)");
                     GUI.color = Color.white;
                 }
 
                 Text.Font = GameFont.Small;
                 curY += 32f;
 
-                // ? °ü×°·ÖÎö£¬·ÀÖ¹´íÎó
+                // ? åŒ…è£…åˆ†æï¼Œé˜²æ­¢é”™è¯¯
                 try
                 {
                     var analysis = PersonaAnalyzer.AnalyzePersonaDef(persona);
                     GUI.color = GetPersonalityColor(analysis.SuggestedPersonality);
-                    // ? Ê¹ÓÃÖĞÎÄÏÔÊ¾ÌØÖÊ
-                    string personalityText = analysis.SuggestedPersonality?.GetChineseName() ?? "Î´Öª";
-                    Widgets.Label(new Rect(infoRect.x, curY, infoRect.width, 20f), $"¸öĞÔ£º{personalityText}");
+                    // ? ä½¿ç”¨ä¸­æ–‡æ˜¾ç¤ºç‰¹è´¨
+                    string personalityText = analysis.SuggestedPersonality?.GetChineseName() ?? "æœªçŸ¥";
+                    Widgets.Label(new Rect(infoRect.x, curY, infoRect.width, 20f), $"ä¸ªæ€§ï¼š{personalityText}");
                     GUI.color = Color.white;
                 }
                 catch
                 {
-                    Widgets.Label(new Rect(infoRect.x, curY, infoRect.width, 20f), "¸öĞÔ£ºÎ´Öª");
+                    Widgets.Label(new Rect(infoRect.x, curY, infoRect.width, 20f), "ä¸ªæ€§ï¼šæœªçŸ¥");
                 }
                 curY += 22f;
 
                 Text.Font = GameFont.Tiny;
                 
-                // ? °ü×°·ç¸ñÕªÒª
+                // ? åŒ…è£…é£æ ¼æ‘˜è¦
                 try
                 {
                     if (persona.dialogueStyle != null)
@@ -192,12 +192,12 @@ namespace TheSecondSeat.UI
             }
             catch (Exception ex)
             {
-                // Õû¸ö¿¨Æ¬äÖÈ¾Ê§°ÜÊ±µÄ½µ¼¶´¦Àí
+                // æ•´ä¸ªå¡ç‰‡æ¸²æŸ“å¤±è´¥æ—¶çš„é™çº§å¤„ç†
                 Widgets.DrawBoxSolid(rect, Color.red * 0.3f);
                 Widgets.DrawBox(rect);
                 Text.Font = GameFont.Small;
-                Widgets.Label(rect.ContractedBy(10f), $"äÖÈ¾´íÎó: {persona?.defName ?? "null"}\n{ex.Message}");
-                Log.Error($"[PersonaSelectionWindow] DrawPersonaCard Ê§°Ü: {ex}");
+                Widgets.Label(rect.ContractedBy(10f), $"æ¸²æŸ“é”™è¯¯: {persona?.defName ?? "null"}\n{ex.Message}");
+                Log.Error($"[PersonaSelectionWindow] DrawPersonaCard å¤±è´¥: {ex}");
             }
         }
 
@@ -205,11 +205,11 @@ namespace TheSecondSeat.UI
         {
             try
             {
-                // »ñÈ¡µ±Ç°±íÇé×´Ì¬
+                // è·å–å½“å‰è¡¨æƒ…çŠ¶æ€
                 var expressionState = ExpressionSystem.GetExpressionState(persona.defName);
                 ExpressionType currentExpression = expressionState.CurrentExpression;
                 
-                // ¼ÓÔØ´ø±íÇéµÄÁ¢»æ
+                // åŠ è½½å¸¦è¡¨æƒ…çš„ç«‹ç»˜
                 var texture = PortraitLoader.LoadPortrait(persona, currentExpression);
                 
                 if (texture != null)
@@ -219,7 +219,7 @@ namespace TheSecondSeat.UI
                 
                 Widgets.DrawBox(rect);
                 
-                // ÏÔÊ¾µ±Ç°±íÇé£¨µ÷ÊÔÓÃ£©
+                // æ˜¾ç¤ºå½“å‰è¡¨æƒ…ï¼ˆè°ƒè¯•ç”¨ï¼‰
                 var settings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
                 if (settings?.debugMode == true)
                 {
@@ -232,33 +232,33 @@ namespace TheSecondSeat.UI
             }
             catch (Exception ex)
             {
-                // Á¢»æ¼ÓÔØÊ§°Ü£¬ÏÔÊ¾ÑÕÉ«Õ¼Î»·û
+                // ç«‹ç»˜åŠ è½½å¤±è´¥ï¼Œæ˜¾ç¤ºé¢œè‰²å ä½ç¬¦
                 Widgets.DrawBoxSolid(rect, persona.primaryColor);
                 Widgets.DrawBox(rect);
-                Log.Warning($"[PersonaSelectionWindow] DrawPortraitPreview Ê§°Ü: {persona.defName} - {ex.Message}");
+                Log.Warning($"[PersonaSelectionWindow] DrawPortraitPreview å¤±è´¥: {persona.defName} - {ex.Message}");
             }
             
-            // ÓÒ¼ü²Ëµ¥ÒÆµ½Íâ²ã´¦Àí£¬±ÜÃâÒì³£Ó°Ïì
+            // å³é”®èœå•ç§»åˆ°å¤–å±‚å¤„ç†ï¼Œé¿å…å¼‚å¸¸å½±å“
         }
         
         private void ShowPortraitContextMenu(NarratorPersonaDef persona)
         {
             List<FloatMenuOption> options = new List<FloatMenuOption>
             {
-                new FloatMenuOption("Ê¹ÓÃ Mod ×Ô´øÁ¢»æ", () => {
+                new FloatMenuOption("ä½¿ç”¨ Mod è‡ªå¸¦ç«‹ç»˜", () => {
                     persona.useCustomPortrait = false;
                     PortraitLoader.ClearCache();
                 }),
-                new FloatMenuOption("Ñ¡Ôñ×Ô¶¨ÒåÁ¢»æ...", () => OpenCustomPortraitPicker(persona)),
-                // ? ĞŞ¸Ä£º´ò¿ª Mod Á¢»æÄ¿Â¼£¨¿ª·¢ÕßÊ¹ÓÃ£©
-                new FloatMenuOption("´ò¿ª Mod Á¢»æÄ¿Â¼£¨¿ª·¢Õß£©", () => PortraitLoader.OpenModPortraitsDirectory()),
-                // ? ±£Áô£º´ò¿ªÓÃ»§Á¢»æÄ¿Â¼£¨Íæ¼Ò¸öĞÔ»¯£©
-                new FloatMenuOption("´ò¿ªÓÃ»§Á¢»æÄ¿Â¼£¨¸öĞÔ»¯£©", () => PortraitLoader.OpenUserPortraitsDirectory())
+                new FloatMenuOption("é€‰æ‹©è‡ªå®šä¹‰ç«‹ç»˜...", () => OpenCustomPortraitPicker(persona)),
+                // ? ä¿®æ”¹ï¼šæ‰“å¼€ Mod ç«‹ç»˜ç›®å½•ï¼ˆå¼€å‘è€…ä½¿ç”¨ï¼‰
+                new FloatMenuOption("æ‰“å¼€ Mod ç«‹ç»˜ç›®å½•ï¼ˆå¼€å‘è€…ï¼‰", () => PortraitLoader.OpenModPortraitsDirectory()),
+                // ? ä¿ç•™ï¼šæ‰“å¼€ç”¨æˆ·ç«‹ç»˜ç›®å½•ï¼ˆç©å®¶ä¸ªæ€§åŒ–ï¼‰
+                new FloatMenuOption("æ‰“å¼€ç”¨æˆ·ç«‹ç»˜ç›®å½•ï¼ˆä¸ªæ€§åŒ–ï¼‰", () => PortraitLoader.OpenUserPortraitsDirectory())
             };
             
             if (persona.useCustomPortrait)
             {
-                options.Add(new FloatMenuOption("Çå³ı×Ô¶¨ÒåÁ¢»æ", () => {
+                options.Add(new FloatMenuOption("æ¸…é™¤è‡ªå®šä¹‰ç«‹ç»˜", () => {
                     persona.useCustomPortrait = false;
                     persona.customPortraitPath = "";
                     PortraitLoader.ClearCache();
@@ -270,40 +270,40 @@ namespace TheSecondSeat.UI
         
         private void OpenCustomPortraitPicker(NarratorPersonaDef persona)
         {
-            // ? Ê¹ÓÃĞÂµÄÍ³Ò»Á¢»æÁĞ±í
+            // ? ä½¿ç”¨æ–°çš„ç»Ÿä¸€ç«‹ç»˜åˆ—è¡¨
             var allPortraits = PortraitLoader.GetAllAvailablePortraits();
             
             if (allPortraits.Count == 0)
             {
-                Messages.Message("Î´ÕÒµ½¿ÉÓÃÁ¢»æ", MessageTypeDefOf.RejectInput);
+                Messages.Message("æœªæ‰¾åˆ°å¯ç”¨ç«‹ç»˜", MessageTypeDefOf.RejectInput);
                 PortraitLoader.OpenModPortraitsDirectory();
                 return;
             }
             
             List<FloatMenuOption> options = new List<FloatMenuOption>();
             
-            // °´À´Ô´·Ö×éÏÔÊ¾
+            // æŒ‰æ¥æºåˆ†ç»„æ˜¾ç¤º
             var vanillaPortraits = allPortraits.Where(p => p.Source == PortraitSource.Vanilla).ToList();
             var modPortraits = allPortraits.Where(p => p.Source == PortraitSource.OtherMod).ToList();
             var thisModPortraits = allPortraits.Where(p => p.Source == PortraitSource.ThisMod).ToList();
             var userPortraits = allPortraits.Where(p => p.Source == PortraitSource.User).ToList();
             
-            // Ô­°æÁ¢»æ
+            // åŸç‰ˆç«‹ç»˜
             if (vanillaPortraits.Count > 0)
             {
-                options.Add(new FloatMenuOption("--- Ô­°æĞğÊÂÕß ---", null));
+                options.Add(new FloatMenuOption("--- åŸç‰ˆå™äº‹è€… ---", null));
                 foreach (var portrait in vanillaPortraits)
                 {
-                    // ? Èç¹ûÓĞTexture£¬Ö±½Ó´«µİ
+                    // ? å¦‚æœæœ‰Textureï¼Œç›´æ¥ä¼ é€’
                     Texture2D? texture = portrait.Texture;
                     options.Add(new FloatMenuOption(portrait.Name, () => CreatePersonaFromPortrait(portrait.Path, texture)));
                 }
             }
             
-            // ÆäËûModÁ¢»æ
+            // å…¶ä»–Modç«‹ç»˜
             if (modPortraits.Count > 0)
             {
-                options.Add(new FloatMenuOption("--- ÆäËûModĞğÊÂÕß ---", null));
+                options.Add(new FloatMenuOption("--- å…¶ä»–Modå™äº‹è€… ---", null));
                 foreach (var portrait in modPortraits)
                 {
                     Texture2D? texture = portrait.Texture;
@@ -311,20 +311,20 @@ namespace TheSecondSeat.UI
                 }
             }
             
-            // ±¾ModÁ¢»æ
+            // æœ¬Modç«‹ç»˜
             if (thisModPortraits.Count > 0)
             {
-                options.Add(new FloatMenuOption("--- ±¾ModÁ¢»æ ---", null));
+                options.Add(new FloatMenuOption("--- æœ¬Modç«‹ç»˜ ---", null));
                 foreach (var portrait in thisModPortraits)
                 {
                     options.Add(new FloatMenuOption(portrait.Name, () => CreatePersonaFromPortrait(portrait.Path, null)));
                 }
             }
             
-            // ÓÃ»§×Ô¶¨ÒåÁ¢»æ
+            // ç”¨æˆ·è‡ªå®šä¹‰ç«‹ç»˜
             if (userPortraits.Count > 0)
             {
-                options.Add(new FloatMenuOption("--- ÓÃ»§×Ô¶¨Òå ---", null));
+                options.Add(new FloatMenuOption("--- ç”¨æˆ·è‡ªå®šä¹‰ ---", null));
                 foreach (var portrait in userPortraits)
                 {
                     options.Add(new FloatMenuOption(portrait.Name, () => CreatePersonaFromPortrait(portrait.Path, null)));
@@ -336,40 +336,40 @@ namespace TheSecondSeat.UI
 
         private void OpenPortraitPickerForNewPersona()
         {
-            // ? Ê¹ÓÃÍ³Ò»Á¢»æÁĞ±í
+            // ? ä½¿ç”¨ç»Ÿä¸€ç«‹ç»˜åˆ—è¡¨
             var allPortraits = PortraitLoader.GetAllAvailablePortraits();
             
             if (allPortraits.Count == 0)
             {
-                Messages.Message("Î´ÕÒµ½¿ÉÓÃÁ¢»æ", MessageTypeDefOf.RejectInput);
+                Messages.Message("æœªæ‰¾åˆ°å¯ç”¨ç«‹ç»˜", MessageTypeDefOf.RejectInput);
                 PortraitLoader.OpenModPortraitsDirectory();
                 return;
             }
             
             List<FloatMenuOption> options = new List<FloatMenuOption>();
             
-            // °´À´Ô´·Ö×éÏÔÊ¾
+            // æŒ‰æ¥æºåˆ†ç»„æ˜¾ç¤º
             var vanillaPortraits = allPortraits.Where(p => p.Source == PortraitSource.Vanilla).ToList();
             var modPortraits = allPortraits.Where(p => p.Source == PortraitSource.OtherMod).ToList();
             var thisModPortraits = allPortraits.Where(p => p.Source == PortraitSource.ThisMod).ToList();
             var userPortraits = allPortraits.Where(p => p.Source == PortraitSource.User).ToList();
             
-            // Ô­°æÁ¢»æ
+            // åŸç‰ˆç«‹ç»˜
             if (vanillaPortraits.Count > 0)
             {
-                options.Add(new FloatMenuOption("--- Ô­°æĞğÊÂÕß ---", null));
+                options.Add(new FloatMenuOption("--- åŸç‰ˆå™äº‹è€… ---", null));
                 foreach (var portrait in vanillaPortraits)
                 {
-                    // ? Èç¹ûÓĞTexture£¬Ö±½Ó´«µİ
+                    // ? å¦‚æœæœ‰Textureï¼Œç›´æ¥ä¼ é€’
                     Texture2D? texture = portrait.Texture;
                     options.Add(new FloatMenuOption(portrait.Name, () => CreatePersonaFromPortrait(portrait.Path, texture)));
                 }
             }
             
-            // ÆäËûModÁ¢»æ
+            // å…¶ä»–Modç«‹ç»˜
             if (modPortraits.Count > 0)
             {
-                options.Add(new FloatMenuOption("--- ÆäËûModĞğÊÂÕß ---", null));
+                options.Add(new FloatMenuOption("--- å…¶ä»–Modå™äº‹è€… ---", null));
                 foreach (var portrait in modPortraits)
                 {
                     Texture2D? texture = portrait.Texture;
@@ -377,20 +377,20 @@ namespace TheSecondSeat.UI
                 }
             }
             
-            // ±¾ModÁ¢»æ
+            // æœ¬Modç«‹ç»˜
             if (thisModPortraits.Count > 0)
             {
-                options.Add(new FloatMenuOption("--- ±¾ModÁ¢»æ ---", null));
+                options.Add(new FloatMenuOption("--- æœ¬Modç«‹ç»˜ ---", null));
                 foreach (var portrait in thisModPortraits)
                 {
                     options.Add(new FloatMenuOption(portrait.Name, () => CreatePersonaFromPortrait(portrait.Path, null)));
                 }
             }
             
-            // ÓÃ»§×Ô¶¨ÒåÁ¢»æ
+            // ç”¨æˆ·è‡ªå®šä¹‰ç«‹ç»˜
             if (userPortraits.Count > 0)
             {
-                options.Add(new FloatMenuOption("--- ÓÃ»§×Ô¶¨Òå ---", null));
+                options.Add(new FloatMenuOption("--- ç”¨æˆ·è‡ªå®šä¹‰ ---", null));
                 foreach (var portrait in userPortraits)
                 {
                     options.Add(new FloatMenuOption(portrait.Name, () => CreatePersonaFromPortrait(portrait.Path, null)));
@@ -404,41 +404,41 @@ namespace TheSecondSeat.UI
         {
             try
             {
-                Messages.Message("ÕıÔÚ·ÖÎöÁ¢»æ...", MessageTypeDefOf.NeutralEvent);
+                Messages.Message("æ­£åœ¨åˆ†æç«‹ç»˜...", MessageTypeDefOf.NeutralEvent);
                 
-                // ? ÓÅÏÈÊ¹ÓÃÒÑÓĞµÄTexture£¨ContentFinder¼ÓÔØµÄ£©
+                // ? ä¼˜å…ˆä½¿ç”¨å·²æœ‰çš„Textureï¼ˆContentFinderåŠ è½½çš„ï¼‰
                 Texture2D? texture = existingTexture;
                 
                 if (texture == null)
                 {
-                    // Èç¹ûÃ»ÓĞÏÖ³ÉµÄTexture£¬³¢ÊÔ¼ÓÔØ
+                    // å¦‚æœæ²¡æœ‰ç°æˆçš„Textureï¼Œå°è¯•åŠ è½½
                     if (portraitPath.StartsWith("UI/"))
                     {
-                        // ContentFinderÂ·¾¶
+                        // ContentFinderè·¯å¾„
                         texture = ContentFinder<Texture2D>.Get(portraitPath, false);
                     }
                     else
                     {
-                        // ÎÄ¼şÂ·¾¶
+                        // æ–‡ä»¶è·¯å¾„
                         texture = PortraitLoader.LoadFromExternalFile(portraitPath);
                     }
                 }
                 
                 if (texture == null)
                 {
-                    Messages.Message("ÎŞ·¨¼ÓÔØÁ¢»æ", MessageTypeDefOf.RejectInput);
+                    Messages.Message("æ— æ³•åŠ è½½ç«‹ç»˜", MessageTypeDefOf.RejectInput);
                     return;
                 }
                 
-                // Ê¹ÓÃ MultimodalAnalysisService ·ÖÎöÁ¢»æ
+                // ä½¿ç”¨ MultimodalAnalysisService åˆ†æç«‹ç»˜
                 var visionResult = await MultimodalAnalysisService.Instance.AnalyzeTextureAsync(texture);
                 if (visionResult == null)
                 {
-                    Messages.Message("API ·ÖÎöÊ§°Ü", MessageTypeDefOf.NegativeEvent);
+                    Messages.Message("API åˆ†æå¤±è´¥", MessageTypeDefOf.NegativeEvent);
                     return;
                 }
                 
-                // ´ÓÎÄ¼şÃû»òÂ·¾¶ÌáÈ¡Ãû³Æ
+                // ä»æ–‡ä»¶åæˆ–è·¯å¾„æå–åç§°
                 string fileName = Path.GetFileNameWithoutExtension(portraitPath);
                 if (portraitPath.Contains("/"))
                 {
@@ -446,38 +446,38 @@ namespace TheSecondSeat.UI
                     fileName = Path.GetFileNameWithoutExtension(fileName);
                 }
                 
-                // ? Ê¹ÓÃ API ·µ»ØµÄ¼ò½é£¬²¢»ùÓÚËü½øĞĞÉî¶È·ÖÎö
+                // ? ä½¿ç”¨ API è¿”å›çš„ç®€ä»‹ï¼Œå¹¶åŸºäºå®ƒè¿›è¡Œæ·±åº¦åˆ†æ
                 string biography = !string.IsNullOrEmpty(visionResult.characterDescription) 
                     ? visionResult.characterDescription 
-                    : "ÕâÊÇÒ»Î»ÉñÃØµÄĞğÊÂÕß¡£";
+                    : "è¿™æ˜¯ä¸€ä½ç¥ç§˜çš„å™äº‹è€…ã€‚";
                 
-                // ? Ê¹ÓÃ PersonaAnalyzer ±¾µØ·ÖÎö¼ò½é£¬»ñÈ¡¶Ô»°·ç¸ñºÍÊÂ¼şÆ«ºÃ
+                // ? ä½¿ç”¨ PersonaAnalyzer æœ¬åœ°åˆ†æç®€ä»‹ï¼Œè·å–å¯¹è¯é£æ ¼å’Œäº‹ä»¶åå¥½
                 var biographyAnalysis = PersonaAnalyzer.AnalyzeBiography(biography);
                 
-                // ? ´´½¨ÈË¸ñ£¨Ê¹ÓÃ API Í¼Æ¬·ÖÎö + ±¾µØÎÄ±¾·ÖÎö£©
+                // ? åˆ›å»ºäººæ ¼ï¼ˆä½¿ç”¨ API å›¾ç‰‡åˆ†æ + æœ¬åœ°æ–‡æœ¬åˆ†æï¼‰
                 var newPersona = new NarratorPersonaDef
                 {
                     defName = $"CustomPersona_{Guid.NewGuid().ToString().Substring(0, 8)}",
                     label = fileName,
                     narratorName = fileName,
                     
-                    // ? Ê¹ÓÃ API ·ÖÎöµÄÃèÊö×÷Îª¼ò½é
+                    // ? ä½¿ç”¨ API åˆ†æçš„æè¿°ä½œä¸ºç®€ä»‹
                     biography = biography,
                     
-                    // ? ¡¾ĞŞ¸´¡¿²»ÔÙÖØ¸´´æ´¢ visualDescription£¨ÒÑ°üº¬ÔÚ biography ÖĞ£©
-                    // visualDescription ±£Áô¿Õ£¬±ÜÃâ XML ÄÚÈİÖØ¸´
+                    // ? ã€ä¿®å¤ã€‘ä¸å†é‡å¤å­˜å‚¨ visualDescriptionï¼ˆå·²åŒ…å«åœ¨ biography ä¸­ï¼‰
+                    // visualDescription ä¿ç•™ç©ºï¼Œé¿å… XML å†…å®¹é‡å¤
                     visualDescription = "",
-                    visualElements = visionResult.visualElements ?? new List<string>(),  // ÊÓ¾õÔªËØÁĞ±íÈÔ±£Áô
-                    visualMood = visionResult.mood ?? "",  // ÊÓ¾õ·ÕÎ§ÈÔ±£Áô
+                    visualElements = visionResult.visualElements ?? new List<string>(),  // è§†è§‰å…ƒç´ åˆ—è¡¨ä»ä¿ç•™
+                    visualMood = visionResult.mood ?? "",  // è§†è§‰æ°›å›´ä»ä¿ç•™
                     
-                    // ? Ê¹ÓÃ API ÌáÈ¡µÄÑÕÉ«
+                    // ? ä½¿ç”¨ API æå–çš„é¢œè‰²
                     primaryColor = visionResult.GetPrimaryColor(),
                     accentColor = visionResult.GetAccentColor(),
                     
-                    // ? Ê¹ÓÃ API ÍÆ¶ÏµÄĞÔ¸ñ£¨ÓÅÏÈ£©»ò±¾µØ·ÖÎö½á¹û
+                    // ? ä½¿ç”¨ API æ¨æ–­çš„æ€§æ ¼ï¼ˆä¼˜å…ˆï¼‰æˆ–æœ¬åœ°åˆ†æç»“æœ
                     overridePersonality = visionResult.suggestedPersonality ?? biographyAnalysis.SuggestedPersonality?.ToString(),
                     
-                    // ? Ê¹ÓÃ±¾µØ·ÖÎöµÄ¶Ô»°·ç¸ñ£¨´Ó¼ò½éÍÆ¶Ï£©
+                    // ? ä½¿ç”¨æœ¬åœ°åˆ†æçš„å¯¹è¯é£æ ¼ï¼ˆä»ç®€ä»‹æ¨æ–­ï¼‰
                     dialogueStyle = biographyAnalysis.DialogueStyle != null 
                         ? new DialogueStyleDef
                         {
@@ -490,7 +490,7 @@ namespace TheSecondSeat.UI
                             useEllipsis = biographyAnalysis.DialogueStyle.useEllipsis,
                             useExclamation = biographyAnalysis.DialogueStyle.useExclamation
                         }
-                        : new DialogueStyleDef  // ½µ¼¶£ºÊ¹ÓÃÄ¬ÈÏÖµ
+                        : new DialogueStyleDef  // é™çº§ï¼šä½¿ç”¨é»˜è®¤å€¼
                         {
                             formalityLevel = 0.5f,
                             emotionalExpression = 0.5f,
@@ -499,10 +499,10 @@ namespace TheSecondSeat.UI
                             verbosity = 0.5f
                         },
                     
-                    // ? Ê¹ÓÃ API ÌáÈ¡µÄ·ç¸ñ¹Ø¼ü´Ê + ±¾µØ·ÖÎöµÄ¹Ø¼ü´Ê
+                    // ? ä½¿ç”¨ API æå–çš„é£æ ¼å…³é”®è¯ + æœ¬åœ°åˆ†æçš„å…³é”®è¯
                     toneTags = visionResult.styleKeywords ?? new List<string>(),
                     
-                    // ? Ê¹ÓÃ±¾µØ·ÖÎöµÄÊÂ¼şÆ«ºÃ£¨´Ó¼ò½éÍÆ¶Ï£©
+                    // ? ä½¿ç”¨æœ¬åœ°åˆ†æçš„äº‹ä»¶åå¥½ï¼ˆä»ç®€ä»‹æ¨æ–­ï¼‰
                     eventPreferences = biographyAnalysis.EventPreferences != null
                         ? new EventPreferencesDef
                         {
@@ -511,14 +511,14 @@ namespace TheSecondSeat.UI
                             chaosLevel = biographyAnalysis.EventPreferences.chaosLevel,
                             interventionFrequency = biographyAnalysis.EventPreferences.interventionFrequency
                         }
-                        : null,  // ÔÊĞíÎª¿Õ
+                        : null,  // å…è®¸ä¸ºç©º
                         
-                    useCustomPortrait = false, // ? Ê¹ÓÃµ¼³öµÄÁ¢»æ
+                    useCustomPortrait = false, // ? ä½¿ç”¨å¯¼å‡ºçš„ç«‹ç»˜
                     customPortraitPath = "",
-                    portraitPath = "" // ? ½«ÔÚµ¼³öÊ±ÉèÖÃ
+                    portraitPath = "" // ? å°†åœ¨å¯¼å‡ºæ—¶è®¾ç½®
                 };
                 
-                // ºÏ²¢·ç¸ñ¹Ø¼ü´Ê£¨È¥ÖØ£©
+                // åˆå¹¶é£æ ¼å…³é”®è¯ï¼ˆå»é‡ï¼‰
                 var combinedTags = new List<string>(visionResult.styleKeywords ?? new List<string>());
                 foreach (var tag in biographyAnalysis.ToneTags)
                 {
@@ -529,28 +529,28 @@ namespace TheSecondSeat.UI
                 }
                 newPersona.toneTags = combinedTags;
                 
-                // ? ¡¾ºËĞÄ¹¦ÄÜ¡¿µ¼³öÈË¸ñ£¨¸´ÖÆÁ¢»æ+Éú³ÉXML£©
+                // ? ã€æ ¸å¿ƒåŠŸèƒ½ã€‘å¯¼å‡ºäººæ ¼ï¼ˆå¤åˆ¶ç«‹ç»˜+ç”ŸæˆXMLï¼‰
                 bool exportSuccess = PersonaDefExporter.ExportPersona(newPersona, portraitPath, texture);
                 
                 if (!exportSuccess)
                 {
-                    // Èç¹ûµ¼³öÊ§°Ü£¬ÈÔÈ»Ìí¼Óµ½ÔËĞĞÊ±£¨µ«²»³Ö¾Ã»¯£©
-                    Log.Warning($"[PersonaSelectionWindow] ÈË¸ñµ¼³öÊ§°Ü£¬½öÌí¼Óµ½ÔËĞĞÊ±: {newPersona.defName}");
+                    // å¦‚æœå¯¼å‡ºå¤±è´¥ï¼Œä»ç„¶æ·»åŠ åˆ°è¿è¡Œæ—¶ï¼ˆä½†ä¸æŒä¹…åŒ–ï¼‰
+                    Log.Warning($"[PersonaSelectionWindow] äººæ ¼å¯¼å‡ºå¤±è´¥ï¼Œä»…æ·»åŠ åˆ°è¿è¡Œæ—¶: {newPersona.defName}");
                     DefDatabase<NarratorPersonaDef>.Add(newPersona);
-                    Messages.Message($"?? ÈË¸ñÒÑ´´½¨µ«Î´±£´æµ½ÎÄ¼ş\nÖØÆôÓÎÏ·ºó½«¶ªÊ§", MessageTypeDefOf.CautionInput);
+                    Messages.Message($"?? äººæ ¼å·²åˆ›å»ºä½†æœªä¿å­˜åˆ°æ–‡ä»¶\né‡å¯æ¸¸æˆåå°†ä¸¢å¤±", MessageTypeDefOf.CautionInput);
                 }
                 
                 PortraitLoader.ClearCache();
                 selectedPersona = newPersona;
                 
-                // ? ÏÔÊ¾ÏêÏ¸µÄ´´½¨½á¹û
-                string resultMessage = $"? ³É¹¦´´½¨ÈË¸ñ£º{fileName}\n" +
-                                     $"ĞÔ¸ñ£º{newPersona.overridePersonality ?? "Î´Öª"}\n" +
-                                     $"·ç¸ñ£ºÕıÊ½¶È={newPersona.dialogueStyle.formalityLevel:F2}, ¸ĞĞÔ={newPersona.dialogueStyle.emotionalExpression:F2}\n" +
-                                     $"¹Ø¼ü´Ê£º{string.Join(", ", newPersona.toneTags)}";
+                // ? æ˜¾ç¤ºè¯¦ç»†çš„åˆ›å»ºç»“æœ
+                string resultMessage = $"? æˆåŠŸåˆ›å»ºäººæ ¼ï¼š{fileName}\n" +
+                                     $"æ€§æ ¼ï¼š{newPersona.overridePersonality ?? "æœªçŸ¥"}\n" +
+                                     $"é£æ ¼ï¼šæ­£å¼åº¦={newPersona.dialogueStyle.formalityLevel:F2}, æ„Ÿæ€§={newPersona.dialogueStyle.emotionalExpression:F2}\n" +
+                                     $"å…³é”®è¯ï¼š{string.Join(", ", newPersona.toneTags)}";
                 Messages.Message(resultMessage, MessageTypeDefOf.PositiveEvent);
                 
-                Log.Message($"[PersonaSelectionWindow] ´´½¨ĞÂÈË¸ñ£º{newPersona.defName}\n" +
+                Log.Message($"[PersonaSelectionWindow] åˆ›å»ºæ–°äººæ ¼ï¼š{newPersona.defName}\n" +
                            $"  biography: {newPersona.biography.Substring(0, Math.Min(50, newPersona.biography.Length))}...\n" +
                            $"  personality: {newPersona.overridePersonality}\n" +
                            $"  dialogueStyle: formality={newPersona.dialogueStyle.formalityLevel:F2}, emotion={newPersona.dialogueStyle.emotionalExpression:F2}\n" +
@@ -558,8 +558,8 @@ namespace TheSecondSeat.UI
             }
             catch (Exception ex)
             {
-                Messages.Message($"´´½¨ÈË¸ñÊ§°Ü£º{ex.Message}", MessageTypeDefOf.NegativeEvent);
-                Log.Error($"[PersonaSelectionWindow] ´´½¨ÈË¸ñÒì³££º{ex}");
+                Messages.Message($"åˆ›å»ºäººæ ¼å¤±è´¥ï¼š{ex.Message}", MessageTypeDefOf.NegativeEvent);
+                Log.Error($"[PersonaSelectionWindow] åˆ›å»ºäººæ ¼å¼‚å¸¸ï¼š{ex}");
             }
         }
 
@@ -577,47 +577,47 @@ namespace TheSecondSeat.UI
         private string GetStyleSummary(DialogueStyleDef style)
         {
             var parts = new List<string>();
-            if (style.formalityLevel > 0.6f) parts.Add("ÕıÊ½");
-            else if (style.formalityLevel < 0.4f) parts.Add("ËæÒâ");
-            if (style.emotionalExpression > 0.6f) parts.Add("¸ĞĞÔ");
-            else if (style.emotionalExpression < 0.4f) parts.Add("ÀíĞÔ");
-            if (style.humorLevel > 0.5f) parts.Add("ÓÄÄ¬");
-            if (style.sarcasmLevel > 0.5f) parts.Add("·í´Ì");
-            if (style.verbosity > 0.6f) parts.Add("ÏêÏ¸");
-            else if (style.verbosity < 0.4f) parts.Add("¼ò½à");
-            return parts.Count > 0 ? $"·ç¸ñ£º{string.Join(", ", parts)}" : "·ç¸ñ£ºÆ½ºâ";
+            if (style.formalityLevel > 0.6f) parts.Add("æ­£å¼");
+            else if (style.formalityLevel < 0.4f) parts.Add("éšæ„");
+            if (style.emotionalExpression > 0.6f) parts.Add("æ„Ÿæ€§");
+            else if (style.emotionalExpression < 0.4f) parts.Add("ç†æ€§");
+            if (style.humorLevel > 0.5f) parts.Add("å¹½é»˜");
+            if (style.sarcasmLevel > 0.5f) parts.Add("è®½åˆº");
+            if (style.verbosity > 0.6f) parts.Add("è¯¦ç»†");
+            else if (style.verbosity < 0.4f) parts.Add("ç®€æ´");
+            return parts.Count > 0 ? $"é£æ ¼ï¼š{string.Join(", ", parts)}" : "é£æ ¼ï¼šå¹³è¡¡";
         }
 
         /// <summary>
-        /// ÏÔÊ¾ÈË¸ñÓÒ¼ü²Ëµ¥£¨±à¼­Ñ¡Ïî£©
+        /// æ˜¾ç¤ºäººæ ¼å³é”®èœå•ï¼ˆç¼–è¾‘é€‰é¡¹ï¼‰
         /// </summary>
         private void ShowPersonaContextMenu(NarratorPersonaDef persona)
         {
             List<FloatMenuOption> options = new List<FloatMenuOption>();
 
-            // ? µ÷ÊÔÑ¡Ïî£¨½öÔÚµ÷ÊÔÄ£Ê½ÏÂÏÔÊ¾£©
+            // ? è°ƒè¯•é€‰é¡¹ï¼ˆä»…åœ¨è°ƒè¯•æ¨¡å¼ä¸‹æ˜¾ç¤ºï¼‰
             var settings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
             if (settings?.debugMode == true)
             {
-                options.Add(new FloatMenuOption("[µ÷ÊÔ] ºÃ¸Ğ¶È", () => {
+                options.Add(new FloatMenuOption("[è°ƒè¯•] å¥½æ„Ÿåº¦", () => {
                     Find.WindowStack.Add(new Dialog_FavorabilityDebug(narratorManager));
                 }));
                 
-                options.Add(new FloatMenuOption("[µ÷ÊÔ] ±íÇé", () => {
+                options.Add(new FloatMenuOption("[è°ƒè¯•] è¡¨æƒ…", () => {
                     Find.WindowStack.Add(new Dialog_ExpressionDebug(persona));
                 }));
                 
-                options.Add(new FloatMenuOption("--- ÆÕÍ¨Ñ¡Ïî ---", null));
+                options.Add(new FloatMenuOption("--- æ™®é€šé€‰é¡¹ ---", null));
             }
 
-            // ±à¼­ÈË¸ñÃû³Æ
-            options.Add(new FloatMenuOption("±à¼­Ãû³Æ", () => OpenNameEditor(persona)));
+            // ç¼–è¾‘äººæ ¼åç§°
+            options.Add(new FloatMenuOption("ç¼–è¾‘åç§°", () => OpenNameEditor(persona)));
 
-            // ±à¼­¼ò½é
-            options.Add(new FloatMenuOption("±à¼­¼ò½é", () => OpenBiographyEditor(persona)));
+            // ç¼–è¾‘ç®€ä»‹
+            options.Add(new FloatMenuOption("ç¼–è¾‘ç®€ä»‹", () => OpenBiographyEditor(persona)));
 
-            // ¸ü»»Á¢»æ - ? Ê¹ÓÃÍ³Ò»Á¢»æÁĞ±í
-            options.Add(new FloatMenuOption("¸ü»»Á¢»æ", () => {
+            // æ›´æ¢ç«‹ç»˜ - ? ä½¿ç”¨ç»Ÿä¸€ç«‹ç»˜åˆ—è¡¨
+            options.Add(new FloatMenuOption("æ›´æ¢ç«‹ç»˜", () => {
                 var allPortraits = PortraitLoader.GetAllAvailablePortraits();
                 
                 if (allPortraits.Count == 0)
@@ -628,22 +628,22 @@ namespace TheSecondSeat.UI
                 
                 List<FloatMenuOption> portraitOptions = new List<FloatMenuOption>();
                 
-                // Ê¹ÓÃ Mod ×Ô´øÁ¢»æ
-                portraitOptions.Add(new FloatMenuOption("Ê¹ÓÃ Mod ×Ô´øÁ¢»æ", () => {
+                // ä½¿ç”¨ Mod è‡ªå¸¦ç«‹ç»˜
+                portraitOptions.Add(new FloatMenuOption("ä½¿ç”¨ Mod è‡ªå¸¦ç«‹ç»˜", () => {
                     persona.useCustomPortrait = false;
                     PortraitLoader.ClearCache();
                 }));
                 
-                // °´À´Ô´·Ö×é
+                // æŒ‰æ¥æºåˆ†ç»„
                 var vanillaPortraits = allPortraits.Where(p => p.Source == PortraitSource.Vanilla).ToList();
                 var modPortraits = allPortraits.Where(p => p.Source == PortraitSource.OtherMod).ToList();
                 var thisModPortraits = allPortraits.Where(p => p.Source == PortraitSource.ThisMod).ToList();
                 var userPortraits = allPortraits.Where(p => p.Source == PortraitSource.User).ToList();
                 
-                // Ô­°æÁ¢»æ
+                // åŸç‰ˆç«‹ç»˜
                 if (vanillaPortraits.Count > 0)
                 {
-                    portraitOptions.Add(new FloatMenuOption("--- Ô­°æĞğÊÂÕß ---", null));
+                    portraitOptions.Add(new FloatMenuOption("--- åŸç‰ˆå™äº‹è€… ---", null));
                     foreach (var portrait in vanillaPortraits)
                     {
                         portraitOptions.Add(new FloatMenuOption(portrait.Name, () => {
@@ -654,10 +654,10 @@ namespace TheSecondSeat.UI
                     }
                 }
                 
-                // ÆäËûModÁ¢»æ
+                // å…¶ä»–Modç«‹ç»˜
                 if (modPortraits.Count > 0)
                 {
-                    portraitOptions.Add(new FloatMenuOption("--- ÆäËûModĞğÊÂÕß ---", null));
+                    portraitOptions.Add(new FloatMenuOption("--- å…¶ä»–Modå™äº‹è€… ---", null));
                     foreach (var portrait in modPortraits)
                     {
                         portraitOptions.Add(new FloatMenuOption(portrait.Name, () => {
@@ -668,10 +668,10 @@ namespace TheSecondSeat.UI
                     }
                 }
                 
-                // ±¾ModÁ¢»æ
+                // æœ¬Modç«‹ç»˜
                 if (thisModPortraits.Count > 0)
                 {
-                    portraitOptions.Add(new FloatMenuOption("--- ±¾ModÁ¢»æ ---", null));
+                    portraitOptions.Add(new FloatMenuOption("--- æœ¬Modç«‹ç»˜ ---", null));
                     foreach (var portrait in thisModPortraits)
                     {
                         portraitOptions.Add(new FloatMenuOption(portrait.Name, () => {
@@ -682,10 +682,10 @@ namespace TheSecondSeat.UI
                     }
                 }
                 
-                // ÓÃ»§Á¢»æ
+                // ç”¨æˆ·ç«‹ç»˜
                 if (userPortraits.Count > 0)
                 {
-                    portraitOptions.Add(new FloatMenuOption("--- ÓÃ»§×Ô¶¨Òå ---", null));
+                    portraitOptions.Add(new FloatMenuOption("--- ç”¨æˆ·è‡ªå®šä¹‰ ---", null));
                     foreach (var portrait in userPortraits)
                     {
                         portraitOptions.Add(new FloatMenuOption(portrait.Name, () => {
@@ -699,30 +699,30 @@ namespace TheSecondSeat.UI
                 Find.WindowStack.Add(new FloatMenu(portraitOptions));
             }));
 
-            // ¸´ÖÆÈË¸ñ
-            options.Add(new FloatMenuOption("¸´ÖÆ", () => DuplicatePersona(persona)));
+            // å¤åˆ¶äººæ ¼
+            options.Add(new FloatMenuOption("å¤åˆ¶", () => DuplicatePersona(persona)));
 
-            // ? É¾³ıÈË¸ñ£¨¶ÔËùÓĞ·ÇÄÚÖÃÈË¸ñÏÔÊ¾£©
-            // ÄÚÖÃÈË¸ñÁĞ±í£¨ÊÜ±£»¤£¬²»ÄÜÉ¾³ı£©
+            // ? åˆ é™¤äººæ ¼ï¼ˆå¯¹æ‰€æœ‰éå†…ç½®äººæ ¼æ˜¾ç¤ºï¼‰
+            // å†…ç½®äººæ ¼åˆ—è¡¨ï¼ˆå—ä¿æŠ¤ï¼Œä¸èƒ½åˆ é™¤ï¼‰
             string[] protectedPersonas = { "Cassandra_Classic", "Randy_Random", "Phoebe_Chillax" };
             bool isProtected = protectedPersonas.Contains(persona.defName);
             
             if (!isProtected)
             {
-                options.Add(new FloatMenuOption("É¾³ı", () => DeletePersona(persona)));
+                options.Add(new FloatMenuOption("åˆ é™¤", () => DeletePersona(persona)));
             }
 
-            // ´ò¿ª Mod Á¢»æÄ¿Â¼£¨ÍÆ¼ö¸ø¿ª·¢Õß£©
-            options.Add(new FloatMenuOption("´ò¿ª Mod Á¢»æÄ¿Â¼", () => PortraitLoader.OpenModPortraitsDirectory()));
+            // æ‰“å¼€ Mod ç«‹ç»˜ç›®å½•ï¼ˆæ¨èç»™å¼€å‘è€…ï¼‰
+            options.Add(new FloatMenuOption("æ‰“å¼€ Mod ç«‹ç»˜ç›®å½•", () => PortraitLoader.OpenModPortraitsDirectory()));
             
-            // Ìí¼Ó£º´ò¿ªÓÃ»§Á¢»æÄ¿Â¼£¨¸øÍæ¼ÒÊ¹ÓÃ£©
-            options.Add(new FloatMenuOption("´ò¿ªÓÃ»§Á¢»æÄ¿Â¼", () => PortraitLoader.OpenUserPortraitsDirectory()));
+            // æ·»åŠ ï¼šæ‰“å¼€ç”¨æˆ·ç«‹ç»˜ç›®å½•ï¼ˆç»™ç©å®¶ä½¿ç”¨ï¼‰
+            options.Add(new FloatMenuOption("æ‰“å¼€ç”¨æˆ·ç«‹ç»˜ç›®å½•", () => PortraitLoader.OpenUserPortraitsDirectory()));
 
             Find.WindowStack.Add(new FloatMenu(options));
         }
 
         /// <summary>
-        /// ´ò¿ªÃû³Æ±à¼­Æ÷
+        /// æ‰“å¼€åç§°ç¼–è¾‘å™¨
         /// </summary>
         private void OpenNameEditor(NarratorPersonaDef persona)
         {
@@ -730,7 +730,7 @@ namespace TheSecondSeat.UI
         }
 
         /// <summary>
-        /// ´ò¿ª¼ò½é±à¼­Æ÷
+        /// æ‰“å¼€ç®€ä»‹ç¼–è¾‘å™¨
         /// </summary>
         private void OpenBiographyEditor(NarratorPersonaDef persona)
         {
@@ -738,15 +738,15 @@ namespace TheSecondSeat.UI
         }
 
         /// <summary>
-        /// ¸´ÖÆÈË¸ñ
+        /// å¤åˆ¶äººæ ¼
         /// </summary>
         private void DuplicatePersona(NarratorPersonaDef original)
         {
             var newPersona = new NarratorPersonaDef
             {
                 defName = $"CustomPersona_{Guid.NewGuid().ToString().Substring(0, 8)}",
-                label = original.label + " (¸±±¾)",
-                narratorName = original.narratorName + " (¸±±¾)",
+                label = original.label + " (å‰¯æœ¬)",
+                narratorName = original.narratorName + " (å‰¯æœ¬)",
                 biography = original.biography,
                 primaryColor = original.primaryColor,
                 accentColor = original.accentColor,
@@ -767,23 +767,23 @@ namespace TheSecondSeat.UI
             
             DefDatabase<NarratorPersonaDef>.Add(newPersona);
             selectedPersona = newPersona;
-            Messages.Message($"ÒÑ¸´ÖÆÈË¸ñ£º{newPersona.narratorName}", MessageTypeDefOf.PositiveEvent);
+            Messages.Message($"å·²å¤åˆ¶äººæ ¼ï¼š{newPersona.narratorName}", MessageTypeDefOf.PositiveEvent);
         }
 
         /// <summary>
-        /// É¾³ı×Ô¶¨ÒåÈË¸ñ
+        /// åˆ é™¤è‡ªå®šä¹‰äººæ ¼
         /// </summary>
         private void DeletePersona(NarratorPersonaDef persona)
         {
-            string confirmMessage = "È·¶¨ÒªÉ¾³ıÈË¸ñ\"" + persona.narratorName + "\"Âğ£¿\n\n" +
-                                    "¾¯¸æ£ºÈç¹û´ËÈË¸ñÓĞ¶ÔÓ¦µÄXMLÎÄ¼ş£¬ĞèÒªÊÖ¶¯É¾³ıÎÄ¼ş²¢ÖØÆôÓÎÏ·¡£";
+            string confirmMessage = "ç¡®å®šè¦åˆ é™¤äººæ ¼\"" + persona.narratorName + "\"å—ï¼Ÿ\n\n" +
+                                    "è­¦å‘Šï¼šå¦‚æœæ­¤äººæ ¼æœ‰å¯¹åº”çš„XMLæ–‡ä»¶ï¼Œéœ€è¦æ‰‹åŠ¨åˆ é™¤æ–‡ä»¶å¹¶é‡å¯æ¸¸æˆã€‚";
             
             Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation(
                 confirmMessage,
                 () => {
                     try
                     {
-                        // ? ĞŞ¸´£ºÊ¹ÓÃ·´ÉäÕıÈ·É¾³ı Def
+                        // ? ä¿®å¤ï¼šä½¿ç”¨åå°„æ­£ç¡®åˆ é™¤ Def
                         var defDatabaseType = typeof(DefDatabase<NarratorPersonaDef>);
                         var defListField = defDatabaseType.GetField("defsList", 
                             System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
@@ -794,11 +794,11 @@ namespace TheSecondSeat.UI
                             if (defsList != null && defsList.Contains(persona))
                             {
                                 defsList.Remove(persona);
-                                Log.Message($"[PersonaSelectionWindow] ÒÑ´Ó DefDatabase É¾³ıÈË¸ñ: {persona.defName}");
+                                Log.Message($"[PersonaSelectionWindow] å·²ä» DefDatabase åˆ é™¤äººæ ¼: {persona.defName}");
                             }
                         }
                         
-                        // ? Í¬Ê±³¢ÊÔ´Ó×ÖµäÖĞÉ¾³ı£¨Èç¹û´æÔÚ£©
+                        // ? åŒæ—¶å°è¯•ä»å­—å…¸ä¸­åˆ é™¤ï¼ˆå¦‚æœå­˜åœ¨ï¼‰
                         var defsByNameField = defDatabaseType.GetField("defsByName",
                             System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
                         
@@ -808,40 +808,40 @@ namespace TheSecondSeat.UI
                             if (defsByName != null && defsByName.ContainsKey(persona.defName))
                             {
                                 defsByName.Remove(persona.defName);
-                                Log.Message($"[PersonaSelectionWindow] ÒÑ´Ó defsByName É¾³ıÈË¸ñ: {persona.defName}");
+                                Log.Message($"[PersonaSelectionWindow] å·²ä» defsByName åˆ é™¤äººæ ¼: {persona.defName}");
                             }
                         }
                         
-                        // ? ÇåÀíÑ¡ÖĞ×´Ì¬
+                        // ? æ¸…ç†é€‰ä¸­çŠ¶æ€
                         if (selectedPersona == persona)
                         {
                             selectedPersona = null;
                         }
                         
-                        // ? ÇåÀíÁ¢»æ»º´æ
+                        // ? æ¸…ç†ç«‹ç»˜ç¼“å­˜
                         PortraitLoader.ClearCache();
                         
-                        // ? Èç¹ûµ±Ç°Ê¹ÓÃµÄÊÇÕâ¸öÈË¸ñ£¬ÇĞ»»»ØÄ¬ÈÏÈË¸ñ
+                        // ? å¦‚æœå½“å‰ä½¿ç”¨çš„æ˜¯è¿™ä¸ªäººæ ¼ï¼Œåˆ‡æ¢å›é»˜è®¤äººæ ¼
                         if (narratorManager.GetCurrentPersona() == persona)
                         {
                             var cassandra = DefDatabase<NarratorPersonaDef>.GetNamedSilentFail("Cassandra_Classic");
                             if (cassandra != null)
                             {
                                 narratorManager.LoadPersona(cassandra);
-                                Messages.Message("µ±Ç°ÈË¸ñÒÑ±»É¾³ı£¬ÒÑÇĞ»»»Ø Cassandra", MessageTypeDefOf.CautionInput);
+                                Messages.Message("å½“å‰äººæ ¼å·²è¢«åˆ é™¤ï¼Œå·²åˆ‡æ¢å› Cassandra", MessageTypeDefOf.CautionInput);
                             }
                         }
                         
-                        string successMessage = "ÒÑÉ¾³ıÈË¸ñ\"" + persona.narratorName + "\"\n\n" +
-                                              "ÌáÊ¾£ºÈçĞè³¹µ×É¾³ı£¬ÇëÔÚ Defs/NarratorPersonaDefs ÎÄ¼ş¼ĞÖĞÉ¾³ı¶ÔÓ¦µÄ XML ÎÄ¼ş²¢ÖØÆôÓÎÏ·¡£";
+                        string successMessage = "å·²åˆ é™¤äººæ ¼\"" + persona.narratorName + "\"\n\n" +
+                                              "æç¤ºï¼šå¦‚éœ€å½»åº•åˆ é™¤ï¼Œè¯·åœ¨ Defs/NarratorPersonaDefs æ–‡ä»¶å¤¹ä¸­åˆ é™¤å¯¹åº”çš„ XML æ–‡ä»¶å¹¶é‡å¯æ¸¸æˆã€‚";
                         Messages.Message(successMessage, MessageTypeDefOf.PositiveEvent);
                         
-                        Log.Message($"[PersonaSelectionWindow] É¾³ıÈË¸ñ³É¹¦: {persona.defName}");
+                        Log.Message($"[PersonaSelectionWindow] åˆ é™¤äººæ ¼æˆåŠŸ: {persona.defName}");
                     }
                     catch (Exception ex)
                     {
-                        Log.Error($"[PersonaSelectionWindow] É¾³ıÈË¸ñÊ§°Ü: {ex.Message}\n{ex.StackTrace}");
-                        Messages.Message($"É¾³ıÈË¸ñÊ§°Ü: {ex.Message}", MessageTypeDefOf.RejectInput);
+                        Log.Error($"[PersonaSelectionWindow] åˆ é™¤äººæ ¼å¤±è´¥: {ex.Message}\n{ex.StackTrace}");
+                        Messages.Message($"åˆ é™¤äººæ ¼å¤±è´¥: {ex.Message}", MessageTypeDefOf.RejectInput);
                     }
                 },
                 true
@@ -850,7 +850,7 @@ namespace TheSecondSeat.UI
     }
 
     /// <summary>
-    /// ÈË¸ñ±à¼­¶Ô»°¿ò£¨Ãû³Æ»ò¼ò½é£©
+    /// äººæ ¼ç¼–è¾‘å¯¹è¯æ¡†ï¼ˆåç§°æˆ–ç®€ä»‹ï¼‰
     /// </summary>
     public class Dialog_RenamePersona : Window
     {
@@ -865,9 +865,9 @@ namespace TheSecondSeat.UI
             this.persona = persona;
             this.editingBio = editingBio;
             this.text = editingBio ? persona.biography : persona.narratorName;
-            this.doCloseButton = false; // ? ÒÆ³ı¹Ø±Õ°´Å¥£¬Ê¹ÓÃESC¼ü¹Ø±Õ
+            this.doCloseButton = false; // ? ç§»é™¤å…³é—­æŒ‰é’®ï¼Œä½¿ç”¨ESCé”®å…³é—­
             this.doCloseX = true;
-            this.closeOnCancel = true; // ? ESC¼ü¹Ø±Õ
+            this.closeOnCancel = true; // ? ESCé”®å…³é—­
             this.absorbInputAroundWindow = true;
             this.forcePause = true;
         }
@@ -875,7 +875,7 @@ namespace TheSecondSeat.UI
         public override void DoWindowContents(Rect inRect)
         {
             Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(0f, 0f, inRect.width, 40f), editingBio ? "±à¼­¼ò½é" : "±à¼­Ãû³Æ");
+            Widgets.Label(new Rect(0f, 0f, inRect.width, 40f), editingBio ? "ç¼–è¾‘ç®€ä»‹" : "ç¼–è¾‘åç§°");
             Text.Font = GameFont.Small;
 
             var textRect = new Rect(0f, 50f, inRect.width, editingBio ? 120f : 30f);
@@ -885,26 +885,26 @@ namespace TheSecondSeat.UI
 
             var buttonY = inRect.height - 40f;
 
-            if (Widgets.ButtonText(new Rect(inRect.width - 220f, buttonY, 100f, 35f), "È·¶¨"))
+            if (Widgets.ButtonText(new Rect(inRect.width - 220f, buttonY, 100f, 35f), "ç¡®å®š"))
             {
                 if (!string.IsNullOrWhiteSpace(text))
                 {
                     if (editingBio)
                     {
                         persona.biography = text.Trim();
-                        Messages.Message("ÒÑĞŞ¸Ä¼ò½é", MessageTypeDefOf.PositiveEvent);
+                        Messages.Message("å·²ä¿®æ”¹ç®€ä»‹", MessageTypeDefOf.PositiveEvent);
                     }
                     else
                     {
                         persona.narratorName = text.Trim();
                         persona.label = text.Trim();
-                        Messages.Message($"ÒÑĞŞ¸ÄÃû³ÆÎª£º{text.Trim()}", MessageTypeDefOf.PositiveEvent);
+                        Messages.Message($"å·²ä¿®æ”¹åç§°ä¸ºï¼š{text.Trim()}", MessageTypeDefOf.PositiveEvent);
                     }
                 }
                 Close();
             }
 
-            if (Widgets.ButtonText(new Rect(inRect.width - 110f, buttonY, 100f, 35f), "È¡Ïû"))
+            if (Widgets.ButtonText(new Rect(inRect.width - 110f, buttonY, 100f, 35f), "å–æ¶ˆ"))
             {
                 Close();
             }

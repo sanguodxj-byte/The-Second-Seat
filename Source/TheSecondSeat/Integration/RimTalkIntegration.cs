@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Verse;
@@ -6,50 +6,50 @@ using Verse;
 namespace TheSecondSeat.Integration
 {
     /// <summary>
-    /// RimTalk ¼¯³É½Ó¿Ú - ÓÃÓÚÓë RimTalk Expand Memory Ä£×éÍ¨ĞÅ
+    /// RimTalk é›†æˆæ¥å£ - ç”¨äºä¸ RimTalk Expand Memory æ¨¡ç»„é€šä¿¡
     /// </summary>
     public interface IRimTalkMemoryProvider
     {
         /// <summary>
-        /// Ìí¼Ó¶Ô»°¼ÇÒäµ½ RimTalk ÏµÍ³
+        /// æ·»åŠ å¯¹è¯è®°å¿†åˆ° RimTalk ç³»ç»Ÿ
         /// </summary>
         void AddConversationMemory(string speaker, string message, MemoryImportance importance);
 
         /// <summary>
-        /// Ìí¼ÓÊÂ¼ş¼ÇÒä
+        /// æ·»åŠ äº‹ä»¶è®°å¿†
         /// </summary>
         void AddEventMemory(string eventDescription, MemoryImportance importance);
 
         /// <summary>
-        /// »ñÈ¡Ïà¹Ø¼ÇÒä£¨ÓÃÓÚÉÏÏÂÎÄ×¢Èë£©
+        /// è·å–ç›¸å…³è®°å¿†ï¼ˆç”¨äºä¸Šä¸‹æ–‡æ³¨å…¥ï¼‰
         /// </summary>
         List<MemoryEntry> GetRelevantMemories(string query, int maxTokens);
 
         /// <summary>
-        /// ÇåÀí¾É¼ÇÒä
+        /// æ¸…ç†æ—§è®°å¿†
         /// </summary>
         void PruneOldMemories(int keepCount);
 
         /// <summary>
-        /// ¼ì²é RimTalk ÊÇ·ñ¿ÉÓÃ
+        /// æ£€æŸ¥ RimTalk æ˜¯å¦å¯ç”¨
         /// </summary>
         bool IsRimTalkAvailable();
     }
 
     /// <summary>
-    /// ¼ÇÒäÖØÒªĞÔµÈ¼¶
+    /// è®°å¿†é‡è¦æ€§ç­‰çº§
     /// </summary>
     public enum MemoryImportance
     {
-        Trivial = 0,      // ËöËé - ºÜ¿ì±»ÒÅÍü
-        Low = 1,          // µÍ - ¶ÌÆÚ¼ÇÒä
-        Medium = 2,       // ÖĞ - ÖĞÆÚ¼ÇÒä
-        High = 3,         // ¸ß - ³¤ÆÚ¼ÇÒä
-        Critical = 4      // ¹Ø¼ü - ÓÀ¾Ã¼ÇÒä
+        Trivial = 0,      // çç¢ - å¾ˆå¿«è¢«é—å¿˜
+        Low = 1,          // ä½ - çŸ­æœŸè®°å¿†
+        Medium = 2,       // ä¸­ - ä¸­æœŸè®°å¿†
+        High = 3,         // é«˜ - é•¿æœŸè®°å¿†
+        Critical = 4      // å…³é”® - æ°¸ä¹…è®°å¿†
     }
 
     /// <summary>
-    /// ¼ÇÒäÌõÄ¿
+    /// è®°å¿†æ¡ç›®
     /// </summary>
     public class MemoryEntry : IExposable
     {
@@ -70,7 +70,7 @@ namespace TheSecondSeat.Integration
             Scribe_Values.Look(ref accessCount, "accessCount", 0);
             Scribe_Values.Look(ref lastAccessTick, "lastAccessTick", 0);
             
-            // È·±£ tags ²»Îª null
+            // ç¡®ä¿ tags ä¸ä¸º null
             if (Scribe.mode == LoadSaveMode.LoadingVars && tags == null)
             {
                 tags = new Dictionary<string, float>();
@@ -78,7 +78,7 @@ namespace TheSecondSeat.Integration
             
             Scribe_Collections.Look(ref tags, "tags", LookMode.Value, LookMode.Value);
             
-            // ¼ÓÔØºóÔÙ´ÎÈ·±£²»Îª null
+            // åŠ è½½åå†æ¬¡ç¡®ä¿ä¸ä¸º null
             if (tags == null)
             {
                 tags = new Dictionary<string, float>();
@@ -87,7 +87,7 @@ namespace TheSecondSeat.Integration
     }
 
     /// <summary>
-    /// RimTalk ¼¯³ÉÊÊÅäÆ÷ - Ä¬ÈÏÊµÏÖ£¨Èç¹û RimTalk Î´°²×°ÔòÊ¹ÓÃÄÚÖÃÏµÍ³£©
+    /// RimTalk é›†æˆé€‚é…å™¨ - é»˜è®¤å®ç°ï¼ˆå¦‚æœ RimTalk æœªå®‰è£…åˆ™ä½¿ç”¨å†…ç½®ç³»ç»Ÿï¼‰
     /// </summary>
     public class RimTalkMemoryAdapter : IRimTalkMemoryProvider
     {
@@ -114,7 +114,7 @@ namespace TheSecondSeat.Integration
         {
             rimTalkChecked = true;
             
-            // ¼ì²é RimTalk Ä£×éÊÇ·ñ¼ÓÔØ
+            // æ£€æŸ¥ RimTalk æ¨¡ç»„æ˜¯å¦åŠ è½½
             var modContentPack = LoadedModManager.RunningMods.FirstOrDefault(m => 
                 m.PackageId.ToLower().Contains("rimtalk"));
 
@@ -122,11 +122,11 @@ namespace TheSecondSeat.Integration
 
             if (rimTalkAvailable)
             {
-                Log.Message("[The Second Seat] RimTalk Ä£×éÒÑ¼ì²âµ½£¬½«Ê¹ÓÃ RimTalk ¼ÇÒäÏµÍ³");
+                Log.Message("[The Second Seat] RimTalk æ¨¡ç»„å·²æ£€æµ‹åˆ°ï¼Œå°†ä½¿ç”¨ RimTalk è®°å¿†ç³»ç»Ÿ");
             }
             else
             {
-                Log.Message("[The Second Seat] Î´¼ì²âµ½ RimTalk£¬Ê¹ÓÃÄÚÖÃ¼ÇÒäÏµÍ³");
+                Log.Message("[The Second Seat] æœªæ£€æµ‹åˆ° RimTalkï¼Œä½¿ç”¨å†…ç½®è®°å¿†ç³»ç»Ÿ");
             }
         }
 
@@ -134,13 +134,13 @@ namespace TheSecondSeat.Integration
         {
             if (IsRimTalkAvailable())
             {
-                // µ÷ÓÃ RimTalk API
+                // è°ƒç”¨ RimTalk API
                 TryAddToRimTalk($"{speaker}: {message}", importance);
             }
             else
             {
-                // Ê¹ÓÃÄÚÖÃÏµÍ³
-                AddToInternalMemory($"[¶Ô»°] {speaker}: {message}", importance);
+                // ä½¿ç”¨å†…ç½®ç³»ç»Ÿ
+                AddToInternalMemory($"[å¯¹è¯] {speaker}: {message}", importance);
             }
         }
 
@@ -148,11 +148,11 @@ namespace TheSecondSeat.Integration
         {
             if (IsRimTalkAvailable())
             {
-                TryAddToRimTalk($"[ÊÂ¼ş] {eventDescription}", importance);
+                TryAddToRimTalk($"[äº‹ä»¶] {eventDescription}", importance);
             }
             else
             {
-                AddToInternalMemory($"[ÊÂ¼ş] {eventDescription}", importance);
+                AddToInternalMemory($"[äº‹ä»¶] {eventDescription}", importance);
             }
         }
 
@@ -172,7 +172,7 @@ namespace TheSecondSeat.Integration
         {
             if (!IsRimTalkAvailable())
             {
-                // ÄÚÖÃÏµÍ³£º°´ÖØÒªĞÔºÍÊ±¼äÅÅĞò£¬±£Áô×îÖØÒªµÄ
+                // å†…ç½®ç³»ç»Ÿï¼šæŒ‰é‡è¦æ€§å’Œæ—¶é—´æ’åºï¼Œä¿ç•™æœ€é‡è¦çš„
                 var sorted = internalMemory
                     .OrderByDescending(m => (int)m.importance * 100 + m.accessCount)
                     .ThenByDescending(m => m.timestamp)
@@ -185,7 +185,7 @@ namespace TheSecondSeat.Integration
             }
         }
 
-        // === ÄÚÖÃ¼ÇÒäÏµÍ³ ===
+        // === å†…ç½®è®°å¿†ç³»ç»Ÿ ===
 
         private void AddToInternalMemory(string content, MemoryImportance importance)
         {
@@ -196,18 +196,18 @@ namespace TheSecondSeat.Integration
                 importance = importance
             };
 
-            // ×Ô¶¯±êÇ©ÌáÈ¡£¨¼òµ¥¹Ø¼ü´Ê£©
+            // è‡ªåŠ¨æ ‡ç­¾æå–ï¼ˆç®€å•å…³é”®è¯ï¼‰
             ExtractTags(entry);
 
             internalMemory.Add(entry);
 
-            // ³¬³öÏŞÖÆÊ±ÇåÀí
+            // è¶…å‡ºé™åˆ¶æ—¶æ¸…ç†
             if (internalMemory.Count > MaxInternalMemories)
             {
                 PruneOldMemories(MaxInternalMemories - 20);
             }
 
-            Log.Message($"[Memory] Ìí¼Ó¼ÇÒä: {content.Substring(0, Math.Min(50, content.Length))}...");
+            Log.Message($"[Memory] æ·»åŠ è®°å¿†: {content.Substring(0, Math.Min(50, content.Length))}...");
         }
 
         private List<MemoryEntry> GetFromInternalMemory(string query, int maxTokens)
@@ -215,7 +215,7 @@ namespace TheSecondSeat.Integration
             var results = new List<MemoryEntry>();
             int currentTokens = 0;
 
-            // ¼òµ¥Ïà¹ØĞÔÆÀ·Ö
+            // ç®€å•ç›¸å…³æ€§è¯„åˆ†
             var scored = internalMemory
                 .Select(m => new { Memory = m, Score = CalculateRelevance(m, query) })
                 .Where(s => s.Score > 0.1f)
@@ -231,7 +231,7 @@ namespace TheSecondSeat.Integration
                 results.Add(item.Memory);
                 currentTokens += tokens;
 
-                // ¸üĞÂ·ÃÎÊ¼ÇÂ¼
+                // æ›´æ–°è®¿é—®è®°å½•
                 item.Memory.accessCount++;
                 item.Memory.lastAccessTick = Find.TickManager.TicksGame;
             }
@@ -243,20 +243,20 @@ namespace TheSecondSeat.Integration
         {
             float score = 0f;
 
-            // ¹Ø¼ü´ÊÆ¥Åä
+            // å…³é”®è¯åŒ¹é…
             var queryWords = query.ToLower().Split(' ');
             var memoryWords = memory.content.ToLower().Split(' ');
 
             int matches = queryWords.Count(qw => memoryWords.Any(mw => mw.Contains(qw)));
             score += matches * 0.3f;
 
-            // ÖØÒªĞÔ¼Ó³É
+            // é‡è¦æ€§åŠ æˆ
             score += (int)memory.importance * 0.2f;
 
-            // ·ÃÎÊÆµÂÊ¼Ó³É
+            // è®¿é—®é¢‘ç‡åŠ æˆ
             score += Math.Min(memory.accessCount * 0.05f, 0.5f);
 
-            // Ê±¼äË¥¼õ
+            // æ—¶é—´è¡°å‡
             int age = Find.TickManager.TicksGame - memory.timestamp;
             float ageInDays = age / 60000f;
             score *= Math.Max(0.3f, 1f - (ageInDays * 0.1f));
@@ -266,8 +266,8 @@ namespace TheSecondSeat.Integration
 
         private void ExtractTags(MemoryEntry entry)
         {
-            // ¼òµ¥±êÇ©ÌáÈ¡£¨¿ÉÀ©Õ¹Îª¸ü¸´ÔÓµÄNLP£©
-            var keywords = new[] { "Ï®»÷", "Ã³Ò×", "Ö³ÃñÕß", "ËÀÍö", "½¨Ôì", "ÊÕ»ñ", "»ğÔÖ", "¼²²¡" };
+            // ç®€å•æ ‡ç­¾æå–ï¼ˆå¯æ‰©å±•ä¸ºæ›´å¤æ‚çš„NLPï¼‰
+            var keywords = new[] { "è¢­å‡»", "è´¸æ˜“", "æ®–æ°‘è€…", "æ­»äº¡", "å»ºé€ ", "æ”¶è·", "ç«ç¾", "ç–¾ç—…" };
             
             foreach (var keyword in keywords)
             {
@@ -280,19 +280,19 @@ namespace TheSecondSeat.Integration
 
         private int EstimateTokens(string text)
         {
-            // ¼òµ¥¹ÀËã£ºÖĞÎÄ 1 ×Ö ¡Ö 2 tokens£¬Ó¢ÎÄ 4 ×ÖÄ¸ ¡Ö 1 token
+            // ç®€å•ä¼°ç®—ï¼šä¸­æ–‡ 1 å­— â‰ˆ 2 tokensï¼Œè‹±æ–‡ 4 å­—æ¯ â‰ˆ 1 token
             int chineseChars = text.Count(c => c >= 0x4E00 && c <= 0x9FFF);
             int otherChars = text.Length - chineseChars;
             return chineseChars * 2 + otherChars / 4;
         }
 
-        // === RimTalk ¼¯³É£¨ĞèÒª·´Éäµ÷ÓÃ£© ===
+        // === RimTalk é›†æˆï¼ˆéœ€è¦åå°„è°ƒç”¨ï¼‰ ===
 
         private void TryAddToRimTalk(string content, MemoryImportance importance)
         {
             try
             {
-                // Ê¹ÓÃ·´Éäµ÷ÓÃ RimTalk API
+                // ä½¿ç”¨åå°„è°ƒç”¨ RimTalk API
                 // var rimTalkMemory = GenTypes.GetTypeInAnyAssembly("RimTalk.ExpandMemory.MemoryManager");
                 // if (rimTalkMemory != null)
                 // {
@@ -300,12 +300,12 @@ namespace TheSecondSeat.Integration
                 //     method?.Invoke(null, new object[] { content, (int)importance });
                 // }
 
-                // ÁÙÊ±£ºÊ¹ÓÃÄÚÖÃÏµÍ³
+                // ä¸´æ—¶ï¼šä½¿ç”¨å†…ç½®ç³»ç»Ÿ
                 AddToInternalMemory(content, importance);
             }
             catch (Exception ex)
             {
-                Log.Warning($"[The Second Seat] RimTalk ¼¯³ÉÊ§°Ü: {ex.Message}");
+                Log.Warning($"[The Second Seat] RimTalk é›†æˆå¤±è´¥: {ex.Message}");
                 AddToInternalMemory(content, importance);
             }
         }
@@ -314,7 +314,7 @@ namespace TheSecondSeat.Integration
         {
             try
             {
-                // Ê¹ÓÃ·´Éäµ÷ÓÃ RimTalk API
+                // ä½¿ç”¨åå°„è°ƒç”¨ RimTalk API
                 // var rimTalkMemory = GenTypes.GetTypeInAnyAssembly("RimTalk.ExpandMemory.MemoryManager");
                 // if (rimTalkMemory != null)
                 // {
@@ -323,37 +323,37 @@ namespace TheSecondSeat.Integration
                 //     return ConvertFromRimTalkFormat(result);
                 // }
 
-                // ÁÙÊ±£ºÊ¹ÓÃÄÚÖÃÏµÍ³
+                // ä¸´æ—¶ï¼šä½¿ç”¨å†…ç½®ç³»ç»Ÿ
                 return GetFromInternalMemory(query, maxTokens);
             }
             catch (Exception ex)
             {
-                Log.Warning($"[The Second Seat] RimTalk ²éÑ¯Ê§°Ü: {ex.Message}");
+                Log.Warning($"[The Second Seat] RimTalk æŸ¥è¯¢å¤±è´¥: {ex.Message}");
                 return GetFromInternalMemory(query, maxTokens);
             }
         }
     }
 
     /// <summary>
-    /// ¼ÇÒäÉÏÏÂÎÄ¹¹½¨Æ÷ - ÓÃÓÚ LLM Prompt ×¢Èë
+    /// è®°å¿†ä¸Šä¸‹æ–‡æ„å»ºå™¨ - ç”¨äº LLM Prompt æ³¨å…¥
     /// </summary>
     public static class MemoryContextBuilder
     {
         /// <summary>
-        /// ? ¹¹½¨¼ÇÒäÉÏÏÂÎÄ£¨ÔöÇ¿°æ - Ö§³ÖĞğÊÂÕßÄ£Ê½ºÍ Pawn Ä£Ê½£©
+        /// ? æ„å»ºè®°å¿†ä¸Šä¸‹æ–‡ï¼ˆå¢å¼ºç‰ˆ - æ”¯æŒå™äº‹è€…æ¨¡å¼å’Œ Pawn æ¨¡å¼ï¼‰
         /// </summary>
         public static string BuildMemoryContext(string currentQuery, int maxTokens = 1000)
         {
-            // ? Ê¹ÓÃĞÂµÄ SimpleRimTalkIntegration£¨ĞğÊÂÕßÄ£Ê½£©
+            // ? ä½¿ç”¨æ–°çš„ SimpleRimTalkIntegrationï¼ˆå™äº‹è€…æ¨¡å¼ï¼‰
             return SimpleRimTalkIntegration.GetMemoryPrompt(
                 basePrompt: "",
-                pawn: null,  // ĞğÊÂÕßÄ£Ê½£ºÖ»ÓĞ¹²Í¨ÖªÊ¶ + È«¾Ö×´Ì¬
-                maxKnowledgeEntries: maxTokens / 100  // ¹ÀËã£ºÃ¿Ìõ ~100 tokens
+                pawn: null,  // å™äº‹è€…æ¨¡å¼ï¼šåªæœ‰å…±é€šçŸ¥è¯† + å…¨å±€çŠ¶æ€
+                maxKnowledgeEntries: maxTokens / 100  // ä¼°ç®—ï¼šæ¯æ¡ ~100 tokens
             );
         }
 
         /// <summary>
-        /// ? ĞÂÔö£ºÎªÌØ¶¨ Pawn ¹¹½¨¼ÇÒäÉÏÏÂÎÄ
+        /// ? æ–°å¢ï¼šä¸ºç‰¹å®š Pawn æ„å»ºè®°å¿†ä¸Šä¸‹æ–‡
         /// </summary>
         public static string BuildMemoryContextForPawn(Pawn pawn, string currentQuery, int maxTokens = 1000)
         {
@@ -364,14 +364,14 @@ namespace TheSecondSeat.Integration
 
             return SimpleRimTalkIntegration.GetMemoryPrompt(
                 basePrompt: "",
-                pawn: pawn,  // Pawn Ä£Ê½£º¸öÈË¼ÇÒä + ¹²Í¨ÖªÊ¶
+                pawn: pawn,  // Pawn æ¨¡å¼ï¼šä¸ªäººè®°å¿† + å…±é€šçŸ¥è¯†
                 maxPersonalMemories: 5,
                 maxKnowledgeEntries: 3
             );
         }
 
         /// <summary>
-        /// ¼ÇÂ¼¶Ô»°µ½¼ÇÒäÏµÍ³
+        /// è®°å½•å¯¹è¯åˆ°è®°å¿†ç³»ç»Ÿ
         /// </summary>
         public static void RecordConversation(string speaker, string message, bool isImportant = false)
         {
@@ -380,7 +380,7 @@ namespace TheSecondSeat.Integration
         }
 
         /// <summary>
-        /// ¼ÇÂ¼ÓÎÏ·ÊÂ¼ş
+        /// è®°å½•æ¸¸æˆäº‹ä»¶
         /// </summary>
         public static void RecordEvent(string eventDescription, MemoryImportance importance = MemoryImportance.Medium)
         {

@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using TheSecondSeat.Commands;
@@ -16,7 +16,7 @@ namespace TheSecondSeat.Core
 {
     /// <summary>
     /// Main controller that orchestrates the AI narrator loop
-    /// ? ĞŞ¸´£ºÒÆ³ı×Ô¶¯¶¨Ê±¸üĞÂ£¬Ö»ÔÚÍæ¼ÒÖ÷¶¯´¥·¢»òÊ×´Î¼ÓÔØÊ±·¢ËÍÏûÏ¢
+    /// ? ä¿®å¤ï¼šç§»é™¤è‡ªåŠ¨å®šæ—¶æ›´æ–°ï¼Œåªåœ¨ç©å®¶ä¸»åŠ¨è§¦å‘æˆ–é¦–æ¬¡åŠ è½½æ—¶å‘é€æ¶ˆæ¯
     /// </summary>
     public class NarratorController : GameComponent
     {
@@ -25,10 +25,10 @@ namespace TheSecondSeat.Core
         private string lastDialogue = "";
         private string lastError = "";
         
-        // ? Ê×´Î¼ÓÔØ±ê¼Ç£¨Ö»ÔÚÓÎÏ·¼ÓÔØÊ±´¥·¢Ò»´ÎÎÊºò£©
+        // ? é¦–æ¬¡åŠ è½½æ ‡è®°ï¼ˆåªåœ¨æ¸¸æˆåŠ è½½æ—¶è§¦å‘ä¸€æ¬¡é—®å€™ï¼‰
         private bool hasGreetedOnLoad = false;
         private int ticksSinceLoad = 0;
-        private const int GreetingDelayTicks = 300; // ¼ÓÔØºó5ÃëÔÙ·¢ËÍÎÊºò
+        private const int GreetingDelayTicks = 300; // åŠ è½½å5ç§’å†å‘é€é—®å€™
 
         public string LastDialogue => lastDialogue;
         public bool IsProcessing => isProcessing;
@@ -48,32 +48,32 @@ namespace TheSecondSeat.Core
                 narratorManager = Current.Game.GetComponent<NarratorManager>();
             }
 
-            // ? Ö»ÔÚÊ×´Î¼ÓÔØºó·¢ËÍÒ»´ÎÎÊºò£¨ÑÓ³Ù5Ãë£©
+            // ? åªåœ¨é¦–æ¬¡åŠ è½½åå‘é€ä¸€æ¬¡é—®å€™ï¼ˆå»¶è¿Ÿ5ç§’ï¼‰
             if (!hasGreetedOnLoad)
             {
                 ticksSinceLoad++;
                 if (ticksSinceLoad >= GreetingDelayTicks && !isProcessing)
                 {
                     hasGreetedOnLoad = true;
-                    // ? ·¢ËÍ¼ÓÔØÎÊºò£¨Ö»´¥·¢Ò»´Î£©
+                    // ? å‘é€åŠ è½½é—®å€™ï¼ˆåªè§¦å‘ä¸€æ¬¡ï¼‰
                     TriggerLoadGreeting();
                 }
             }
             
-            // ? ÒÆ³ı×Ô¶¯¶¨Ê±¸üĞÂ - ²»ÔÙÃ¿60Ãë×Ô¶¯·¢ËÍÏûÏ¢
-            // ÏÖÔÚAIÖ»»áÔÚÒÔÏÂÇé¿ö·¢ÑÔ£º
-            // 1. ÓÎÏ·Ê×´Î¼ÓÔØÊ±£¨Ò»´Î£©
-            // 2. Íæ¼ÒÖ÷¶¯·¢ËÍÏûÏ¢Ê±
-            // 3. Íæ¼Òµã»÷ÁÄÌì´°¿Ú·¢ËÍ°´Å¥Ê±
+            // ? ç§»é™¤è‡ªåŠ¨å®šæ—¶æ›´æ–° - ä¸å†æ¯60ç§’è‡ªåŠ¨å‘é€æ¶ˆæ¯
+            // ç°åœ¨AIåªä¼šåœ¨ä»¥ä¸‹æƒ…å†µå‘è¨€ï¼š
+            // 1. æ¸¸æˆé¦–æ¬¡åŠ è½½æ—¶ï¼ˆä¸€æ¬¡ï¼‰
+            // 2. ç©å®¶ä¸»åŠ¨å‘é€æ¶ˆæ¯æ—¶
+            // 3. ç©å®¶ç‚¹å‡»èŠå¤©çª—å£å‘é€æŒ‰é’®æ—¶
         }
 
         /// <summary>
-        /// ? Ê×´Î¼ÓÔØÎÊºò£¨Ö»´¥·¢Ò»´Î£©
+        /// ? é¦–æ¬¡åŠ è½½é—®å€™ï¼ˆåªè§¦å‘ä¸€æ¬¡ï¼‰
         /// </summary>
         private void TriggerLoadGreeting()
         {
-            Log.Message("[NarratorController] ·¢ËÍ¼ÓÔØÎÊºò...");
-            TriggerNarratorUpdate(""); // ¿ÕÏûÏ¢£¬ÈÃAI×ÔÓÉ·¢»Ó
+            Log.Message("[NarratorController] å‘é€åŠ è½½é—®å€™...");
+            TriggerNarratorUpdate(""); // ç©ºæ¶ˆæ¯ï¼Œè®©AIè‡ªç”±å‘æŒ¥
         }
 
         /// <summary>
@@ -87,13 +87,13 @@ namespace TheSecondSeat.Core
                 return;
             }
 
-            // ĞŞ¸´£ºÔÚÖ÷Ïß³Ì²¶»ñÓÎÏ·×´Ì¬
+            // ä¿®å¤ï¼šåœ¨ä¸»çº¿ç¨‹æ•è·æ¸¸æˆçŠ¶æ€
             GameStateSnapshot snapshot;
             string gameStateJson;
             
             try
             {
-                // 1. ÔÚÖ÷Ïß³Ì²¶»ñÓÎÏ·×´Ì¬£¨±ØĞë£¡£©
+                // 1. åœ¨ä¸»çº¿ç¨‹æ•è·æ¸¸æˆçŠ¶æ€ï¼ˆå¿…é¡»ï¼ï¼‰
                 snapshot = GameStateObserver.CaptureSnapshot();
                 gameStateJson = GameStateObserver.SnapshotToJson(snapshot);
             }
@@ -104,10 +104,10 @@ namespace TheSecondSeat.Core
                 return;
             }
 
-            // ? ÅĞ¶ÏÊÇ·ñÊÇÊ×´ÎÎÊºò
+            // ? åˆ¤æ–­æ˜¯å¦æ˜¯é¦–æ¬¡é—®å€™
             bool isGreeting = string.IsNullOrEmpty(userMessage) && !hasGreetedOnLoad;
             
-            // ? ÉèÖÃË¼¿¼±íÇé£¨Êı¾İ´«ÊäÖĞ£©
+            // ? è®¾ç½®æ€è€ƒè¡¨æƒ…ï¼ˆæ•°æ®ä¼ è¾“ä¸­ï¼‰
             try
             {
                 var persona = narratorManager?.GetCurrentPersona();
@@ -118,43 +118,43 @@ namespace TheSecondSeat.Core
             }
             catch (Exception ex)
             {
-                Log.Warning($"[NarratorController] ÉèÖÃË¼¿¼±íÇéÊ§°Ü: {ex.Message}");
+                Log.Warning($"[NarratorController] è®¾ç½®æ€è€ƒè¡¨æƒ…å¤±è´¥: {ex.Message}");
             }
 
-            // 2. È»ºóÔÚºóÌ¨Ïß³Ì´¦Àí£¨²»·ÃÎÊÓÎÏ·Êı¾İ£©
+            // 2. ç„¶ååœ¨åå°çº¿ç¨‹å¤„ç†ï¼ˆä¸è®¿é—®æ¸¸æˆæ•°æ®ï¼‰
             Task.Run(async () => await ProcessNarratorUpdateAsync(userMessage, gameStateJson, isGreeting));
         }
 
         private async Task ProcessNarratorUpdateAsync(string userMessage, string gameStateJson, bool isGreeting = false)
         {
             isProcessing = true;
-            lastError = ""; // Çå³ıÖ®Ç°µÄ´íÎó
+            lastError = ""; // æ¸…é™¤ä¹‹å‰çš„é”™è¯¯
 
             try
             {
-                // ? »ñÈ¡±¾µØÊ±¼äĞÅÏ¢
+                // ? è·å–æœ¬åœ°æ—¶é—´ä¿¡æ¯
                 DateTime now = DateTime.Now;
                 string timeContext = BuildTimeContext(now);
                 
-                // ÓÎÏ·×´Ì¬ÒÑ¾­ÔÚÖ÷Ïß³Ì²¶»ñ£¬Ö±½ÓÊ¹ÓÃ JSON ×Ö·û´®
+                // æ¸¸æˆçŠ¶æ€å·²ç»åœ¨ä¸»çº¿ç¨‹æ•è·ï¼Œç›´æ¥ä½¿ç”¨ JSON å­—ç¬¦ä¸²
 
                 // 2. Get dynamic system prompt based on favorability
                 var systemPrompt = narratorManager?.GetDynamicSystemPrompt() ?? GetDefaultSystemPrompt();
                 
-                // ? ÔÚÏµÍ³ÌáÊ¾´ÊÖĞÌí¼ÓÊ±¼äĞÅÏ¢
+                // ? åœ¨ç³»ç»Ÿæç¤ºè¯ä¸­æ·»åŠ æ—¶é—´ä¿¡æ¯
                 systemPrompt = InjectTimeIntoSystemPrompt(systemPrompt, now);
 
-                // ? Ê¹ÓÃĞÂµÄ SimpleRimTalkIntegration.GetMemoryPrompt£¨ĞğÊÂÕßÄ£Ê½ pawn = null£©
+                // ? ä½¿ç”¨æ–°çš„ SimpleRimTalkIntegration.GetMemoryPromptï¼ˆå™äº‹è€…æ¨¡å¼ pawn = nullï¼‰
                 systemPrompt = SimpleRimTalkIntegration.GetMemoryPrompt(
                     basePrompt: systemPrompt,
-                    pawn: null,  // ? ĞğÊÂÕß AI Ä£Ê½
-                    maxPersonalMemories: 5,  // ÎŞĞ§£¨pawn == null£©
-                    maxKnowledgeEntries: 3   // ×Ô¶¯ +5 = 8 Ìõ¹²Í¨ÖªÊ¶ + È«¾Ö×´Ì¬
+                    pawn: null,  // ? å™äº‹è€… AI æ¨¡å¼
+                    maxPersonalMemories: 5,  // æ— æ•ˆï¼ˆpawn == nullï¼‰
+                    maxKnowledgeEntries: 3   // è‡ªåŠ¨ +5 = 8 æ¡å…±é€šçŸ¥è¯† + å…¨å±€çŠ¶æ€
                 );
                 
-                Log.Message("[NarratorController] ÒÑ×¢Èë¼ÇÒäÉÏÏÂÎÄºÍÈ«¾ÖÓÎÏ·×´Ì¬µ½ System Prompt");
+                Log.Message("[NarratorController] å·²æ³¨å…¥è®°å¿†ä¸Šä¸‹æ–‡å’Œå…¨å±€æ¸¸æˆçŠ¶æ€åˆ° System Prompt");
 
-                // 4. ¼ì²éÊÇ·ñĞèÒªÁªÍøËÑË÷
+                // 4. æ£€æŸ¥æ˜¯å¦éœ€è¦è”ç½‘æœç´¢
                 string searchContext = "";
                 var modSettings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
                 
@@ -162,33 +162,33 @@ namespace TheSecondSeat.Core
                     !string.IsNullOrEmpty(userMessage) && 
                     WebSearchService.ShouldSearch(userMessage))
                 {
-                    Log.Message($"[NarratorController] ¼ì²âµ½ĞèÒªÁªÍøËÑË÷: {userMessage}");
+                    Log.Message($"[NarratorController] æ£€æµ‹åˆ°éœ€è¦è”ç½‘æœç´¢: {userMessage}");
                     var searchResult = await WebSearchService.Instance.SearchAsync(userMessage, maxResults: 3);
                     
                     if (searchResult != null)
                     {
                         searchContext = WebSearchService.FormatResultsForContext(searchResult);
-                        Log.Message($"[NarratorController] ËÑË÷Íê³É£¬Ìí¼Ó {searchResult.Results.Count} ¸ö½á¹ûµ½ÉÏÏÂÎÄ");
+                        Log.Message($"[NarratorController] æœç´¢å®Œæˆï¼Œæ·»åŠ  {searchResult.Results.Count} ä¸ªç»“æœåˆ°ä¸Šä¸‹æ–‡");
                         
-                        // ¼ÇÂ¼ËÑË÷µ½¼ÇÒä
+                        // è®°å½•æœç´¢åˆ°è®°å¿†
                         MemoryContextBuilder.RecordEvent(
-                            $"ÍøÂçËÑË÷: {userMessage} - ÕÒµ½ {searchResult.Results.Count} ¸ö½á¹û",
+                            $"ç½‘ç»œæœç´¢: {userMessage} - æ‰¾åˆ° {searchResult.Results.Count} ä¸ªç»“æœ",
                             MemoryImportance.Medium
                         );
                     }
                 }
 
-                // ? ¸ù¾İÇé¿ö¹¹½¨ÓÃ»§ÏûÏ¢£¨²»ÔÙ°üº¬ memoryContext£©
+                // ? æ ¹æ®æƒ…å†µæ„å»ºç”¨æˆ·æ¶ˆæ¯ï¼ˆä¸å†åŒ…å« memoryContextï¼‰
                 string enhancedUserMessage;
                 if (isGreeting || string.IsNullOrEmpty(userMessage))
                 {
-                    // ? Ê×´Î¼ÓÔØÎÊºò - ¼òµ¥ÌáÊ¾£¬²»ÒªÇ¿µ÷"¹Û²ì×´Ì¬"
+                    // ? é¦–æ¬¡åŠ è½½é—®å€™ - ç®€å•æç¤ºï¼Œä¸è¦å¼ºè°ƒ"è§‚å¯ŸçŠ¶æ€"
                     enhancedUserMessage = timeContext + 
-                        "Íæ¼Ò¸Õ¸Õ¼ÓÔØÁËÓÎÏ·´æµµ¡£Çë¼ò¶ÌµØ´ò¸öÕĞºô£¬²»ĞèÒª»ã±¨Ö³ÃñµØ×´Ì¬¡£";
+                        "ç©å®¶åˆšåˆšåŠ è½½äº†æ¸¸æˆå­˜æ¡£ã€‚è¯·ç®€çŸ­åœ°æ‰“ä¸ªæ‹›å‘¼ï¼Œä¸éœ€è¦æ±‡æŠ¥æ®–æ°‘åœ°çŠ¶æ€ã€‚";
                 }
                 else
                 {
-                    // ? Íæ¼ÒÖ÷¶¯·¢ËÍÏûÏ¢£¨²»°üº¬ memoryContext£©
+                    // ? ç©å®¶ä¸»åŠ¨å‘é€æ¶ˆæ¯ï¼ˆä¸åŒ…å« memoryContextï¼‰
                     enhancedUserMessage = timeContext + searchContext + userMessage;
                 }
 
@@ -200,10 +200,10 @@ namespace TheSecondSeat.Core
 
                 if (response == null)
                 {
-                    lastError = "LLM API µ÷ÓÃÊ§°Ü - Çë¼ì²éÅäÖÃ";
+                    lastError = "LLM API è°ƒç”¨å¤±è´¥ - è¯·æ£€æŸ¥é…ç½®";
                     Log.Error("[The Second Seat] No response from LLM - API call failed");
                     
-                    // ÔÚÖ÷Ïß³ÌÏÔÊ¾´íÎóÏûÏ¢
+                    // åœ¨ä¸»çº¿ç¨‹æ˜¾ç¤ºé”™è¯¯æ¶ˆæ¯
                     Verse.LongEventHandler.ExecuteWhenFinished(() => 
                     {
                         Messages.Message("TSS_APICallFailed".Translate(), MessageTypeDefOf.NegativeEvent);
@@ -211,18 +211,18 @@ namespace TheSecondSeat.Core
                     return;
                 }
 
-                // 6. Process response on main thread - ĞŞ¸´£ºÊ¹ÓÃ LongEventHandler
+                // 6. Process response on main thread - ä¿®å¤ï¼šä½¿ç”¨ LongEventHandler
                 Verse.LongEventHandler.ExecuteWhenFinished(() => ProcessResponse(response, userMessage));
             }
             catch (Exception ex)
             {
-                lastError = $"´íÎó: {ex.Message}";
+                lastError = $"é”™è¯¯: {ex.Message}";
                 Log.Error($"[The Second Seat] Error in narrator update: {ex.Message}\n{ex.StackTrace}");
                 
-                // ÔÚÖ÷Ïß³ÌÏÔÊ¾´íÎóÏûÏ¢
+                // åœ¨ä¸»çº¿ç¨‹æ˜¾ç¤ºé”™è¯¯æ¶ˆæ¯
                 Verse.LongEventHandler.ExecuteWhenFinished(() => 
                 {
-                    Messages.Message($"AI ´¦ÀíÊ§°Ü: {ex.Message}", MessageTypeDefOf.NegativeEvent);
+                    Messages.Message($"AI å¤„ç†å¤±è´¥: {ex.Message}", MessageTypeDefOf.NegativeEvent);
                 });
             }
             finally
@@ -232,62 +232,62 @@ namespace TheSecondSeat.Core
         }
         
         /// <summary>
-        /// ? ¹¹½¨Ê±¼äÉÏÏÂÎÄĞÅÏ¢£¨¹© AI ²Î¿¼£©
-        /// ? ¼ò»¯£ºÒÆ³ı¹ı¶àµÄÌáÊ¾£¬±ÜÃâAI¹ı¶È¹Ø×¢Ê±¼ä
+        /// ? æ„å»ºæ—¶é—´ä¸Šä¸‹æ–‡ä¿¡æ¯ï¼ˆä¾› AI å‚è€ƒï¼‰
+        /// ? ç®€åŒ–ï¼šç§»é™¤è¿‡å¤šçš„æç¤ºï¼Œé¿å…AIè¿‡åº¦å…³æ³¨æ—¶é—´
         /// </summary>
         private string BuildTimeContext(DateTime now)
         {
             string timePeriod = GetTimePeriod(now.Hour);
             
-            // ? ¼ò»¯Ê±¼äÉÏÏÂÎÄ£¬Ö»Ìá¹©»ù±¾ĞÅÏ¢
-            return $"[µ±Ç°Ê±¼ä: {timePeriod}]\n";
+            // ? ç®€åŒ–æ—¶é—´ä¸Šä¸‹æ–‡ï¼Œåªæä¾›åŸºæœ¬ä¿¡æ¯
+            return $"[å½“å‰æ—¶é—´: {timePeriod}]\n";
         }
         
         /// <summary>
-        /// ? ½«Ê±¼äĞÅÏ¢×¢ÈëÏµÍ³ÌáÊ¾´Ê
-        /// ? ¼ò»¯£º¼õÉÙ¶ÔÊ±¼äµÄÇ¿µ÷
+        /// ? å°†æ—¶é—´ä¿¡æ¯æ³¨å…¥ç³»ç»Ÿæç¤ºè¯
+        /// ? ç®€åŒ–ï¼šå‡å°‘å¯¹æ—¶é—´çš„å¼ºè°ƒ
         /// </summary>
         private string InjectTimeIntoSystemPrompt(string originalPrompt, DateTime now)
         {
-            // ? ¼ò»¯£º²»ÔÙÌí¼Ó¹ı¶àµÄÊ±¼äÏà¹ØÖ¸Ê¾
-            // Ê±¼äĞÅÏ¢ÒÑ¾­ÔÚ BuildTimeContext ÖĞÌá¹©
+            // ? ç®€åŒ–ï¼šä¸å†æ·»åŠ è¿‡å¤šçš„æ—¶é—´ç›¸å…³æŒ‡ç¤º
+            // æ—¶é—´ä¿¡æ¯å·²ç»åœ¨ BuildTimeContext ä¸­æä¾›
             return originalPrompt;
         }
         
         /// <summary>
-        /// ? »ñÈ¡Ê±¼ä¶ÎÃèÊö
+        /// ? è·å–æ—¶é—´æ®µæè¿°
         /// </summary>
         private string GetTimePeriod(int hour)
         {
             if (hour >= 0 && hour < 6)
-                return "ÉîÒ¹";
+                return "æ·±å¤œ";
             else if (hour >= 6 && hour < 9)
-                return "Çå³¿";
+                return "æ¸…æ™¨";
             else if (hour >= 9 && hour < 12)
-                return "ÉÏÎç";
+                return "ä¸Šåˆ";
             else if (hour >= 12 && hour < 14)
-                return "ÖĞÎç";
+                return "ä¸­åˆ";
             else if (hour >= 14 && hour < 18)
-                return "ÏÂÎç";
+                return "ä¸‹åˆ";
             else if (hour >= 18 && hour < 20)
-                return "°øÍí";
+                return "å‚æ™š";
             else if (hour >= 20 && hour < 22)
-                return "ÍíÉÏ";
+                return "æ™šä¸Š";
             else
-                return "ÉîÒ¹";
+                return "æ·±å¤œ";
         }
 
         private void ProcessResponse(LLMResponse response, string userMessage)
         {
             try
             {
-                // ¼ÇÂ¼¶Ô»°£¨×÷ÎªÒ»´Î½»»¥£©
+                // è®°å½•å¯¹è¯ï¼ˆä½œä¸ºä¸€æ¬¡äº¤äº’ï¼‰
                 var interactionMonitor = Current.Game?.GetComponent<Monitoring.PlayerInteractionMonitor>();
                 interactionMonitor?.RecordConversation(!string.IsNullOrEmpty(userMessage));
 
-                // »ñÈ¡µ±Ç°ÈË¸ñĞÅÏ¢
+                // è·å–å½“å‰äººæ ¼ä¿¡æ¯
                 string narratorDefName = "Cassandra_Classic";
-                string narratorName = "¿¨É£µÂÀ­";
+                string narratorName = "å¡æ¡‘å¾·æ‹‰";
                 if (narratorManager != null)
                 {
                     var persona = narratorManager.GetCurrentPersona();
@@ -298,69 +298,69 @@ namespace TheSecondSeat.Core
                     }
                 }
 
-                // ? ¼ÇÂ¼Íæ¼ÒÏûÏ¢µ½ RimTalk ¼ÇÒäÀ©Õ¹
+                // ? è®°å½•ç©å®¶æ¶ˆæ¯åˆ° RimTalk è®°å¿†æ‰©å±•
                 if (!string.IsNullOrEmpty(userMessage))
                 {
-                    // ÄÚ²¿¼ÇÒäÏµÍ³
+                    // å†…éƒ¨è®°å¿†ç³»ç»Ÿ
                     MemoryContextBuilder.RecordConversation("Player", userMessage, false);
                     
-                    // ? RimTalk ¼ÇÒäÀ©Õ¹
+                    // ? RimTalk è®°å¿†æ‰©å±•
                     RimTalkMemoryIntegration.RecordConversation(
                         narratorDefName,
                         narratorName,
                         "Player",
                         userMessage,
                         importance: 0.8f,
-                        tags: new List<string> { "Íæ¼Ò¶Ô»°", "ĞğÊöÕß»¥¶¯" }
+                        tags: new List<string> { "ç©å®¶å¯¹è¯", "å™è¿°è€…äº’åŠ¨" }
                     );
                 }
 
-                // »ñÈ¡¸É¾»µÄ¶Ô»°ÄÚÈİ
+                // è·å–å¹²å‡€çš„å¯¹è¯å†…å®¹
                 string displayText = response.dialogue;
                 
                 if (string.IsNullOrEmpty(displayText))
                 {
-                    displayText = "[AI ÕıÔÚË¼¿¼...]";
+                    displayText = "[AI æ­£åœ¨æ€è€ƒ...]";
                 }
                 
-                // ±£´æ×îĞÂµÄ¶Ô»°£¨´ø¶¯×÷£©
+                // ä¿å­˜æœ€æ–°çš„å¯¹è¯ï¼ˆå¸¦åŠ¨ä½œï¼‰
                 lastDialogue = displayText;
                 
-                // ? ĞÂÔö£ºÌáÈ¡²¢Ó¦ÓÃ expression ×Ö¶Î
+                // ? æ–°å¢ï¼šæå–å¹¶åº”ç”¨ expression å­—æ®µ
                 try
                 {
                     if (!string.IsNullOrEmpty(response.expression))
                     {
-                        // ³¢ÊÔ½âÎö±íÇéÀàĞÍ
+                        // å°è¯•è§£æè¡¨æƒ…ç±»å‹
                         if (System.Enum.TryParse<PersonaGeneration.ExpressionType>(response.expression, true, out var expressionType))
                         {
-                            // ÉèÖÃ±íÇé£¬³ÖĞø 3 Ãë
+                            // è®¾ç½®è¡¨æƒ…ï¼ŒæŒç»­ 3 ç§’
                             PersonaGeneration.ExpressionSystem.SetExpression(
                                 narratorDefName, 
                                 expressionType, 
-                                180,  // 3 Ãë = 180 ticks
-                                "¶Ô»°´¥·¢"
+                                180,  // 3 ç§’ = 180 ticks
+                                "å¯¹è¯è§¦å‘"
                             );
                             
-                            Log.Message($"[NarratorController] AI ±íÇéÇĞ»»: {response.expression}");
+                            Log.Message($"[NarratorController] AI è¡¨æƒ…åˆ‡æ¢: {response.expression}");
                         }
                         else
                         {
-                            Log.Warning($"[NarratorController] ÎŞĞ§µÄ±íÇéÀàĞÍ: {response.expression}");
+                            Log.Warning($"[NarratorController] æ— æ•ˆçš„è¡¨æƒ…ç±»å‹: {response.expression}");
                         }
                     }
                     else
                     {
-                        // Èç¹û AI Ã»ÓĞÌá¹© expression£¬¸ù¾İ¶Ô»°ÄÚÈİ×Ô¶¯ÍÆ¶Ï
+                        // å¦‚æœ AI æ²¡æœ‰æä¾› expressionï¼Œæ ¹æ®å¯¹è¯å†…å®¹è‡ªåŠ¨æ¨æ–­
                         PersonaGeneration.ExpressionSystem.UpdateExpressionByDialogueTone(narratorDefName, displayText);
                     }
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning($"[NarratorController] ¸üĞÂ±íÇéÊ§°Ü: {ex.Message}");
+                    Log.Warning($"[NarratorController] æ›´æ–°è¡¨æƒ…å¤±è´¥: {ex.Message}");
                 }
                 
-                // ? ¼ÇÂ¼ AI »Ø¸´µ½ RimTalk ¼ÇÒäÀ©Õ¹
+                // ? è®°å½• AI å›å¤åˆ° RimTalk è®°å¿†æ‰©å±•
                 MemoryContextBuilder.RecordConversation("Cassandra", displayText, false);
                 RimTalkMemoryIntegration.RecordConversation(
                     narratorDefName,
@@ -368,29 +368,29 @@ namespace TheSecondSeat.Core
                     "Narrator",
                     displayText,
                     importance: 0.7f,
-                    tags: new List<string> { "AI»Ø¸´", "ĞğÊöÕß»¥¶¯", narratorName }
+                    tags: new List<string> { "AIå›å¤", "å™è¿°è€…äº’åŠ¨", narratorName }
                 );
                 
-                // »ñÈ¡±íÇéID£¨Èç¹ûÓĞ£©
+                // è·å–è¡¨æƒ…IDï¼ˆå¦‚æœæœ‰ï¼‰
                 string emoticonId = "";
                 if (!string.IsNullOrEmpty(response.emoticon))
                 {
                     emoticonId = response.emoticon;
-                    Log.Message($"[NarratorController] AI Ê¹ÓÃ±íÇé·û: {emoticonId}");
+                    Log.Message($"[NarratorController] AI ä½¿ç”¨è¡¨æƒ…ç¬¦: {emoticonId}");
                 }
                 
-                // Ìí¼Óµ½ÁÄÌì´°¿Ú£¨´ø±íÇé·û£©
+                // æ·»åŠ åˆ°èŠå¤©çª—å£ï¼ˆå¸¦è¡¨æƒ…ç¬¦ï¼‰
                 UI.NarratorWindow.AddAIMessage(displayText, emoticonId);
 
-                // ? Í¬Ê±·¢ËÍµ½ÏµÍ³ÏûÏ¢
+                // ? åŒæ—¶å‘é€åˆ°ç³»ç»Ÿæ¶ˆæ¯
                 SendAsSystemMessage(displayText);
 
                 Log.Message($"[NarratorController] AI says: {displayText}");
 
-                // ? ×Ô¶¯²¥·Å TTS£¨¸ù¾İÉèÖÃ£©
+                // ? è‡ªåŠ¨æ’­æ”¾ TTSï¼ˆæ ¹æ®è®¾ç½®ï¼‰
                 AutoPlayTTS(displayText);
 
-                // Ö´ĞĞÃüÁî£¨Ä¬ÈÏÖ´ĞĞ£©
+                // æ‰§è¡Œå‘½ä»¤ï¼ˆé»˜è®¤æ‰§è¡Œï¼‰
                 if (response.command != null)
                 {
                     ExecuteAdvancedCommand(response.command);
@@ -403,28 +403,28 @@ namespace TheSecondSeat.Core
         }
         
         /// <summary>
-        /// ? ×Ô¶¯²¥·Å TTS£¨ĞğÊÂÕß·¢ÑÔÊ±£©
-        /// ? ÓÅ»¯£ºÌí¼Ó¼ÓÔØ×´Ì¬ÌáÊ¾
-        /// ? v1.6.51: ĞŞ¸´×ì²¿¶¯»­ - ´«µİ personaDefName ²ÎÊı
+        /// ? è‡ªåŠ¨æ’­æ”¾ TTSï¼ˆå™äº‹è€…å‘è¨€æ—¶ï¼‰
+        /// ? ä¼˜åŒ–ï¼šæ·»åŠ åŠ è½½çŠ¶æ€æç¤º
+        /// ? v1.6.51: ä¿®å¤å˜´éƒ¨åŠ¨ç”» - ä¼ é€’ personaDefName å‚æ•°
         /// </summary>
         private void AutoPlayTTS(string text)
         {
             try
             {
-                // ¼ì²éÊÇ·ñÆôÓÃ TTS
+                // æ£€æŸ¥æ˜¯å¦å¯ç”¨ TTS
                 var modSettings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
                 
                 if (modSettings == null || !modSettings.enableTTS || !modSettings.autoPlayTTS)
                 {
-                    return; // TTS Î´ÆôÓÃ£¬Ìø¹ı
+                    return; // TTS æœªå¯ç”¨ï¼Œè·³è¿‡
                 }
                 
-                // Çå³ı¶¯×÷±ê¼Ç£¨À¨ºÅÄÚµÄÄÚÈİ£©
+                // æ¸…é™¤åŠ¨ä½œæ ‡è®°ï¼ˆæ‹¬å·å†…çš„å†…å®¹ï¼‰
                 string cleanText = System.Text.RegularExpressions.Regex.Replace(text, @"\([^)]*\)", "").Trim();
                 
                 if (string.IsNullOrEmpty(cleanText))
                 {
-                    return; // Ã»ÓĞÊµ¼ÊÎÄ±¾£¬Ìø¹ı
+                    return; // æ²¡æœ‰å®é™…æ–‡æœ¬ï¼Œè·³è¿‡
                 }
                 
                 // ? v1.6.51: ????????? defName?????? TTS ?????????
@@ -496,14 +496,14 @@ namespace TheSecondSeat.Core
         }
         
         /// <summary>
-        /// ? ½«ĞğÊÂÕßÏûÏ¢Î±×°³ÉÏµÍ³ÏûÏ¢·¢ËÍ
+        /// ? å°†å™äº‹è€…æ¶ˆæ¯ä¼ªè£…æˆç³»ç»Ÿæ¶ˆæ¯å‘é€
         /// </summary>
         private void SendAsSystemMessage(string message)
         {
             try
             {
-                // »ñÈ¡µ±Ç°ÈË¸ñÃû³Æ
-                string narratorName = "ĞğÊÂÕß";
+                // è·å–å½“å‰äººæ ¼åç§°
+                string narratorName = "å™äº‹è€…";
                 if (narratorManager != null)
                 {
                     var persona = narratorManager.GetCurrentPersona();
@@ -513,51 +513,51 @@ namespace TheSecondSeat.Core
                     }
                 }
                 
-                // ¸ñÊ½»¯ÎªÏµÍ³ÏûÏ¢·ç¸ñ
-                string systemMessage = $"¡¾{narratorName}¡¿{message}";
+                // æ ¼å¼åŒ–ä¸ºç³»ç»Ÿæ¶ˆæ¯é£æ ¼
+                string systemMessage = $"ã€{narratorName}ã€‘{message}";
                 
-                // ·¢ËÍµ½ÓÎÏ·ÏµÍ³ÏûÏ¢
+                // å‘é€åˆ°æ¸¸æˆç³»ç»Ÿæ¶ˆæ¯
                 Messages.Message(systemMessage, MessageTypeDefOf.NeutralEvent);
                 
-                Log.Message($"[NarratorController] ÏµÍ³ÏûÏ¢ÒÑ·¢ËÍ: {systemMessage}");
+                Log.Message($"[NarratorController] ç³»ç»Ÿæ¶ˆæ¯å·²å‘é€: {systemMessage}");
             }
             catch (Exception ex)
             {
-                Log.Warning($"[NarratorController] ·¢ËÍÏµÍ³ÏûÏ¢Ê§°Ü: {ex.Message}");
+                Log.Warning($"[NarratorController] å‘é€ç³»ç»Ÿæ¶ˆæ¯å¤±è´¥: {ex.Message}");
             }
         }
         
         /// <summary>
-        /// Ö´ĞĞ¸ß¼¶ÃüÁî£¨Ö±½Ó¹¹Ôì ParsedCommand£¬²»ÔÙÖØ¸´½âÎö£©
-        /// ? v1.6.40: ÓÅ»¯ÃüÁîÖ´ĞĞÁ÷³Ì£¬±ÜÃâÊı¾İ¶ªÊ§
+        /// æ‰§è¡Œé«˜çº§å‘½ä»¤ï¼ˆç›´æ¥æ„é€  ParsedCommandï¼Œä¸å†é‡å¤è§£æï¼‰
+        /// ? v1.6.40: ä¼˜åŒ–å‘½ä»¤æ‰§è¡Œæµç¨‹ï¼Œé¿å…æ•°æ®ä¸¢å¤±
         /// </summary>
         private void ExecuteAdvancedCommand(LLMCommand llmCommand)
         {
             try
             {
-                // ? 1. Ö±½Ó¹¹Ôì ParsedCommand
+                // ? 1. ç›´æ¥æ„é€  ParsedCommand
                 var parsedCommand = new ParsedCommand
                 {
                     action = llmCommand.action,
                     originalQuery = "",
-                    confidence = 1f, // LLM Êä³öµÄÃüÁîÖÃĞÅ¶ÈÄ¬ÈÏÎª 1
+                    confidence = 1f, // LLM è¾“å‡ºçš„å‘½ä»¤ç½®ä¿¡åº¦é»˜è®¤ä¸º 1
                     parameters = new AdvancedCommandParams
                     {
                         target = llmCommand.target,
-                        scope = "Map" // Ä¬ÈÏ×÷ÓÃÓò
+                        scope = "Map" // é»˜è®¤ä½œç”¨åŸŸ
                     }
                 };
 
-                // ? 2. ´¦Àí parameters ×Ö¶Î
+                // ? 2. å¤„ç† parameters å­—æ®µ
                 if (llmCommand.parameters != null)
                 {
-                    // ³¢ÊÔ×ª»»Îª Dictionary<string, object>
+                    // å°è¯•è½¬æ¢ä¸º Dictionary<string, object>
                     var paramsDict = new Dictionary<string, object>();
                     
-                    // ´¦Àí JObject »ò dynamic ÀàĞÍ
+                    // å¤„ç† JObject æˆ– dynamic ç±»å‹
                     if (llmCommand.parameters is Newtonsoft.Json.Linq.JObject jObj)
                     {
-                        // ·´ĞòÁĞ»¯Îª Dictionary
+                        // ååºåˆ—åŒ–ä¸º Dictionary
                         paramsDict = jObj.ToObject<Dictionary<string, object>>() ?? new Dictionary<string, object>();
                     }
                     else if (llmCommand.parameters is Dictionary<string, object> dict)
@@ -566,7 +566,7 @@ namespace TheSecondSeat.Core
                     }
                     else
                     {
-                        // ³¢ÊÔĞòÁĞ»¯ÔÙ·´ĞòÁĞ»¯
+                        // å°è¯•åºåˆ—åŒ–å†ååºåˆ—åŒ–
                         try
                         {
                             string json = Newtonsoft.Json.JsonConvert.SerializeObject(llmCommand.parameters);
@@ -575,14 +575,14 @@ namespace TheSecondSeat.Core
                         }
                         catch
                         {
-                            Log.Warning($"[NarratorController] ÎŞ·¨×ª»» parameters: {llmCommand.parameters}");
+                            Log.Warning($"[NarratorController] æ— æ³•è½¬æ¢ parameters: {llmCommand.parameters}");
                         }
                     }
                     
-                    // ? 3. ½« Dictionary ¸³Öµ¸ø filters
+                    // ? 3. å°† Dictionary èµ‹å€¼ç»™ filters
                     parsedCommand.parameters.filters = paramsDict;
                     
-                    // ? 4. ¹Ø¼ü£¡¼ì²é "limit" ²¢Ó³Éäµ½ count
+                    // ? 4. å…³é”®ï¼æ£€æŸ¥ "limit" å¹¶æ˜ å°„åˆ° count
                     if (paramsDict.TryGetValue("limit", out var limitObj))
                     {
                         if (limitObj is int limitInt)
@@ -595,13 +595,13 @@ namespace TheSecondSeat.Core
                         }
                     }
                     
-                    // ? 5. Èç¹û parameters °üº¬ scope£¬¸²¸ÇÄ¬ÈÏÖµ
+                    // ? 5. å¦‚æœ parameters åŒ…å« scopeï¼Œè¦†ç›–é»˜è®¤å€¼
                     if (paramsDict.TryGetValue("scope", out var scopeObj))
                     {
                         parsedCommand.parameters.scope = scopeObj?.ToString() ?? "Map";
                     }
                     
-                    // ? 6. ´¦Àí priority ±êÖ¾
+                    // ? 6. å¤„ç† priority æ ‡å¿—
                     if (paramsDict.TryGetValue("priority", out var priorityObj))
                     {
                         if (priorityObj is bool priorityBool)
@@ -615,47 +615,47 @@ namespace TheSecondSeat.Core
                     }
                 }
 
-                Log.Message($"[NarratorController] ¹¹Ôì ParsedCommand: Action={parsedCommand.action}, Target={parsedCommand.parameters.target}, Count={parsedCommand.parameters.count}");
+                Log.Message($"[NarratorController] æ„é€  ParsedCommand: Action={parsedCommand.action}, Target={parsedCommand.parameters.target}, Count={parsedCommand.parameters.count}");
 
-                // ? 7. Ö´ĞĞÃüÁî
+                // ? 7. æ‰§è¡Œå‘½ä»¤
                 var result = GameActionExecutor.Execute(parsedCommand);
 
-                // ? 8. ¸üĞÂºÃ¸Ğ¶È
+                // ? 8. æ›´æ–°å¥½æ„Ÿåº¦
                 if (narratorManager != null)
                 {
                     float affinityChange = result.success ? 2f : -1f;
                     narratorManager.ModifyFavorability(
                         affinityChange,
-                        $"ÃüÁî {llmCommand.action}: {result.message}"
+                        $"å‘½ä»¤ {llmCommand.action}: {result.message}"
                     );
                 }
 
-                // ? 9. ¼ÇÂ¼µ½¼ÇÒä
+                // ? 9. è®°å½•åˆ°è®°å¿†
                 MemoryContextBuilder.RecordEvent(
-                    $"Ö´ĞĞÃüÁî {llmCommand.action}: {result.message}",
+                    $"æ‰§è¡Œå‘½ä»¤ {llmCommand.action}: {result.message}",
                     result.success ? MemoryImportance.High : MemoryImportance.Medium
                 );
 
-                // ? 10. ÏÔÊ¾½á¹û
+                // ? 10. æ˜¾ç¤ºç»“æœ
                 if (!result.success)
                 {
-                    Messages.Message($"ÃüÁîÊ§°Ü: {result.message}", MessageTypeDefOf.RejectInput);
+                    Messages.Message($"å‘½ä»¤å¤±è´¥: {result.message}", MessageTypeDefOf.RejectInput);
                 }
                 else
                 {
-                    Log.Message($"[NarratorController] ÃüÁî³É¹¦: {result.message}");
+                    Log.Message($"[NarratorController] å‘½ä»¤æˆåŠŸ: {result.message}");
                 }
             }
             catch (Exception ex)
             {
-                Log.Error($"[NarratorController] Ö´ĞĞÃüÁîÊ§°Ü: {ex.Message}\n{ex.StackTrace}");
-                Messages.Message($"ÃüÁîÖ´ĞĞÒì³£: {ex.Message}", MessageTypeDefOf.RejectInput);
+                Log.Error($"[NarratorController] æ‰§è¡Œå‘½ä»¤å¤±è´¥: {ex.Message}\n{ex.StackTrace}");
+                Messages.Message($"å‘½ä»¤æ‰§è¡Œå¼‚å¸¸: {ex.Message}", MessageTypeDefOf.RejectInput);
             }
         }
 
         private string GetDefaultSystemPrompt()
         {
-            return @"ÄãÊÇCassandra£¬AIĞğÊÂÕß¡£ÓÃJSON¸ñÊ½»Ø¸´£¬°üº¬'thought'¡¢'dialogue'ºÍ¿ÉÑ¡µÄ'command'×Ö¶Î¡£";
+            return @"ä½ æ˜¯Cassandraï¼ŒAIå™äº‹è€…ã€‚ç”¨JSONæ ¼å¼å›å¤ï¼ŒåŒ…å«'thought'ã€'dialogue'å’Œå¯é€‰çš„'command'å­—æ®µã€‚";
         }
 
         public override void ExposeData()
@@ -663,7 +663,7 @@ namespace TheSecondSeat.Core
             base.ExposeData();
             Scribe_Values.Look(ref lastDialogue, "lastDialogue", "");
             Scribe_Values.Look(ref hasGreetedOnLoad, "hasGreetedOnLoad", false);
-            // ? ×¢Òâ£º²»±£´æ ticksSinceLoad£¬Ã¿´Î¼ÓÔØ¶¼ÖØĞÂ¼ÆÊ±
+            // ? æ³¨æ„ï¼šä¸ä¿å­˜ ticksSinceLoadï¼Œæ¯æ¬¡åŠ è½½éƒ½é‡æ–°è®¡æ—¶
         }
     }
 }

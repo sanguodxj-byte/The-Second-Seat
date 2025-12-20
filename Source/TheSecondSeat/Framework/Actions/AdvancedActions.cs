@@ -1,32 +1,32 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Verse;
 using RimWorld;
-using UnityEngine; // ? Ìí¼ÓUnityEngineÃüÃû¿Õ¼äÓÃÓÚMathf
-using Verse.Sound; // ? Ìí¼ÓÓÃÓÚSoundStarter
+using UnityEngine; // ? æ·»åŠ UnityEngineå‘½åç©ºé—´ç”¨äºMathf
+using Verse.Sound; // ? æ·»åŠ ç”¨äºSoundStarter
 
 namespace TheSecondSeat.Framework.Actions
 {
     /// <summary>
-    /// ¸ß½×¶¯×÷¼¯ºÏ - "ÉÏµÛ¼¶"ÄÜÁ¦
+    /// é«˜é˜¶åŠ¨ä½œé›†åˆ - "ä¸Šå¸çº§"èƒ½åŠ›
     /// 
-    /// °üº¬Ç¿´óµÄÓÎÏ·¸ÉÔ¤ÄÜÁ¦£º
-    /// - Ìì·£À×»÷
-    /// - ½¡¿µ×´Ì¬²Ù¿Ø
-    /// - Ç¿ÖÆ´¥·¢Ô­°æÊÂ¼ş
+    /// åŒ…å«å¼ºå¤§çš„æ¸¸æˆå¹²é¢„èƒ½åŠ›ï¼š
+    /// - å¤©ç½šé›·å‡»
+    /// - å¥åº·çŠ¶æ€æ“æ§
+    /// - å¼ºåˆ¶è§¦å‘åŸç‰ˆäº‹ä»¶
     /// 
-    /// ?? ¾¯¸æ£ºÕâĞ©¶¯×÷È¨ÏŞºÜ¸ß£¬Çë½÷É÷Ê¹ÓÃ
+    /// ?? è­¦å‘Šï¼šè¿™äº›åŠ¨ä½œæƒé™å¾ˆé«˜ï¼Œè¯·è°¨æ…ä½¿ç”¨
     /// </summary>
     
     // ============================================
-    // Ìì·£ÏµÍ³
+    // å¤©ç½šç³»ç»Ÿ
     // ============================================
     
     /// <summary>
-    /// À×»÷¶¯×÷ - ÔÚÖ¸¶¨Î»ÖÃ½µÏÂÌì·£
+    /// é›·å‡»åŠ¨ä½œ - åœ¨æŒ‡å®šä½ç½®é™ä¸‹å¤©ç½š
     /// 
-    /// XMLÊ¾Àı£º
+    /// XMLç¤ºä¾‹ï¼š
     /// <![CDATA[
     /// <li Class="TheSecondSeat.Framework.Actions.StrikeLightningAction">
     ///   <strikeMode>Random</strikeMode>
@@ -38,40 +38,40 @@ namespace TheSecondSeat.Framework.Actions
     /// </summary>
     public class StrikeLightningAction : TSSAction
     {
-        /// <summary>À×»÷Ä£Ê½</summary>
+        /// <summary>é›·å‡»æ¨¡å¼</summary>
         public enum LightningStrikeMode
         {
-            /// <summary>Ëæ»úÎ»ÖÃ</summary>
+            /// <summary>éšæœºä½ç½®</summary>
             Random,
-            /// <summary>µØÍ¼ÖĞĞÄ</summary>
+            /// <summary>åœ°å›¾ä¸­å¿ƒ</summary>
             MapCenter,
-            /// <summary>×î½üµÄµĞÈË</summary>
+            /// <summary>æœ€è¿‘çš„æ•Œäºº</summary>
             NearestEnemy,
-            /// <summary>×î½üµÄÖ³ÃñÕß£¨É÷ÓÃ£¡£©</summary>
+            /// <summary>æœ€è¿‘çš„æ®–æ°‘è€…ï¼ˆæ…ç”¨ï¼ï¼‰</summary>
             NearestColonist,
-            /// <summary>Ö¸¶¨×ø±ê</summary>
+            /// <summary>æŒ‡å®šåæ ‡</summary>
             Specific
         }
         
-        /// <summary>À×»÷Ä£Ê½</summary>
+        /// <summary>é›·å‡»æ¨¡å¼</summary>
         public LightningStrikeMode strikeMode = LightningStrikeMode.Random;
         
-        /// <summary>À×»÷´ÎÊı</summary>
+        /// <summary>é›·å‡»æ¬¡æ•°</summary>
         public int strikeCount = 1;
         
-        /// <summary>ÉËº¦Á¿£¨Ã¿´ÎÀ×»÷£©</summary>
+        /// <summary>ä¼¤å®³é‡ï¼ˆæ¯æ¬¡é›·å‡»ï¼‰</summary>
         public float damageAmount = 100f;
         
-        /// <summary>AOE·¶Î§°ë¾¶</summary>
+        /// <summary>AOEèŒƒå›´åŠå¾„</summary>
         public float radius = 3f;
         
-        /// <summary>Ö¸¶¨×ø±ê£¨½öÔÚstrikeMode=SpecificÊ±Ê¹ÓÃ£©</summary>
+        /// <summary>æŒ‡å®šåæ ‡ï¼ˆä»…åœ¨strikeMode=Specificæ—¶ä½¿ç”¨ï¼‰</summary>
         public IntVec3 targetCell = IntVec3.Invalid;
         
-        /// <summary>ÊÇ·ñÔì³É»ğÔÖ</summary>
+        /// <summary>æ˜¯å¦é€ æˆç«ç¾</summary>
         public bool causesFire = true;
         
-        /// <summary>ÊÇ·ñ²¥·ÅÒôĞ§</summary>
+        /// <summary>æ˜¯å¦æ’­æ”¾éŸ³æ•ˆ</summary>
         public bool playSound = true;
         
         public override void Execute(Map map, Dictionary<string, object> context)
@@ -95,7 +95,7 @@ namespace TheSecondSeat.Framework.Actions
                     continue;
                 }
                 
-                // Ö´ĞĞÀ×»÷
+                // æ‰§è¡Œé›·å‡»
                 ExecuteLightningStrike(map, strikePos);
                 
                 if (Prefs.DevMode)
@@ -106,14 +106,14 @@ namespace TheSecondSeat.Framework.Actions
         }
         
         /// <summary>
-        /// »ñÈ¡À×»÷Î»ÖÃ
+        /// è·å–é›·å‡»ä½ç½®
         /// </summary>
         private IntVec3 GetStrikePosition(Map map)
         {
             switch (strikeMode)
             {
                 case LightningStrikeMode.Random:
-                    // Ëæ»ú¿ÉÕ¾Á¢Î»ÖÃ
+                    // éšæœºå¯ç«™ç«‹ä½ç½®
                     return CellFinderLoose.RandomCellWith(
                         (IntVec3 c) => c.Standable(map) && !c.Fogged(map),
                         map,
@@ -124,7 +124,7 @@ namespace TheSecondSeat.Framework.Actions
                     return map.Center;
                     
                 case LightningStrikeMode.NearestEnemy:
-                    // ÕÒ×î½üµÄµĞ¶ÔÉúÎï
+                    // æ‰¾æœ€è¿‘çš„æ•Œå¯¹ç”Ÿç‰©
                     Pawn enemy = map.mapPawns.AllPawnsSpawned
                         .Where(p => p.HostileTo(Faction.OfPlayer) && !p.Downed)
                         .OrderBy(p => p.Position.DistanceTo(map.Center))
@@ -134,7 +134,7 @@ namespace TheSecondSeat.Framework.Actions
                     {
                         return enemy.Position;
                     }
-                    // ÕÒ²»µ½µĞÈËÔòËæ»úÎ»ÖÃ
+                    // æ‰¾ä¸åˆ°æ•Œäººåˆ™éšæœºä½ç½®
                     return CellFinderLoose.RandomCellWith(
                         (IntVec3 c) => c.Standable(map),
                         map,
@@ -142,7 +142,7 @@ namespace TheSecondSeat.Framework.Actions
                     );
                     
                 case LightningStrikeMode.NearestColonist:
-                    // ÕÒ×î½üµÄÖ³ÃñÕß£¨É÷ÓÃ£¡£©
+                    // æ‰¾æœ€è¿‘çš„æ®–æ°‘è€…ï¼ˆæ…ç”¨ï¼ï¼‰
                     Pawn colonist = map.mapPawns.FreeColonists
                         .OrderBy(p => p.Position.DistanceTo(map.Center))
                         .FirstOrDefault();
@@ -166,23 +166,23 @@ namespace TheSecondSeat.Framework.Actions
         }
         
         /// <summary>
-        /// Ö´ĞĞÀ×»÷Ğ§¹û
+        /// æ‰§è¡Œé›·å‡»æ•ˆæœ
         /// </summary>
         private void ExecuteLightningStrike(Map map, IntVec3 pos)
         {
-            // ? ĞŞ¸´£ºÊ¹ÓÃÕıÈ·µÄÒôĞ§²¥·ÅAPI
+            // ? ä¿®å¤ï¼šä½¿ç”¨æ­£ç¡®çš„éŸ³æ•ˆæ’­æ”¾API
             if (playSound && SoundDefOf.Thunder_OnMap != null)
             {
                 SoundStarter.PlayOneShotOnCamera(SoundDefOf.Thunder_OnMap, null);
             }
             
-            // Éú³ÉÉÁµçÊÓ¾õĞ§¹û
+            // ç”Ÿæˆé—ªç”µè§†è§‰æ•ˆæœ
             FlashLightning(map, pos);
             
-            // Ôì³ÉÉËº¦
+            // é€ æˆä¼¤å®³
             DealLightningDamage(map, pos);
             
-            // ? ĞŞ¸´£ºµãÈ¼»ğÑæ£¨Ìí¼Óinstigator²ÎÊı£©
+            // ? ä¿®å¤ï¼šç‚¹ç‡ƒç«ç„°ï¼ˆæ·»åŠ instigatorå‚æ•°ï¼‰
             if (causesFire)
             {
                 FireUtility.TryStartFireIn(pos, map, Rand.Range(0.1f, 0.5f), null);
@@ -190,19 +190,19 @@ namespace TheSecondSeat.Framework.Actions
         }
         
         /// <summary>
-        /// ÉÁµçÊÓ¾õĞ§¹û
+        /// é—ªç”µè§†è§‰æ•ˆæœ
         /// </summary>
         private void FlashLightning(Map map, IntVec3 pos)
         {
-            // ? ĞŞ¸´£ºÊ¹ÓÃ¼ò»¯µÄÉÁµçĞ§¹û
-            // ´´½¨Ğ¡ĞÍ±¬Õ¨Ğ§¹ûÄ£ÄâÉÁµç
+            // ? ä¿®å¤ï¼šä½¿ç”¨ç®€åŒ–çš„é—ªç”µæ•ˆæœ
+            // åˆ›å»ºå°å‹çˆ†ç‚¸æ•ˆæœæ¨¡æ‹Ÿé—ªç”µ
             GenExplosion.DoExplosion(
                 center: pos,
                 map: map,
                 radius: 2.5f,
                 damType: DamageDefOf.Flame,
                 instigator: null,
-                damAmount: (int)(damageAmount * 0.5f), // ÊÓ¾õĞ§¹ûÉËº¦¼õ°ë
+                damAmount: (int)(damageAmount * 0.5f), // è§†è§‰æ•ˆæœä¼¤å®³å‡åŠ
                 armorPenetration: 999f,
                 explosionSound: null,
                 weapon: null,
@@ -221,11 +221,11 @@ namespace TheSecondSeat.Framework.Actions
         }
         
         /// <summary>
-        /// Ôì³ÉÀ×»÷ÉËº¦
+        /// é€ æˆé›·å‡»ä¼¤å®³
         /// </summary>
         private void DealLightningDamage(Map map, IntVec3 pos)
         {
-            // »ñÈ¡·¶Î§ÄÚµÄËùÓĞÎïÌå
+            // è·å–èŒƒå›´å†…çš„æ‰€æœ‰ç‰©ä½“
             IEnumerable<Thing> affectedThings = GenRadial.RadialDistinctThingsAround(
                 pos, 
                 map, 
@@ -235,18 +235,18 @@ namespace TheSecondSeat.Framework.Actions
             
             foreach (Thing thing in affectedThings)
             {
-                // ¼ÆËã¾àÀëË¥¼õ
+                // è®¡ç®—è·ç¦»è¡°å‡
                 float distance = thing.Position.DistanceTo(pos);
                 float damageMultiplier = 1f - (distance / radius);
                 float actualDamage = damageAmount * damageMultiplier;
                 
                 if (actualDamage <= 0) continue;
                 
-                // Ôì³Éµç»÷ÉËº¦
+                // é€ æˆç”µå‡»ä¼¤å®³
                 DamageInfo dinfo = new DamageInfo(
                     DamageDefOf.Flame, 
                     actualDamage,
-                    999f, // »¤¼×´©Í¸
+                    999f, // æŠ¤ç”²ç©¿é€
                     -1f,
                     null,
                     null,
@@ -256,7 +256,7 @@ namespace TheSecondSeat.Framework.Actions
                 
                 thing.TakeDamage(dinfo);
                 
-                // ¶ÔÉúÎïÔì³É¶îÍâµÄÑ£ÔÎĞ§¹û
+                // å¯¹ç”Ÿç‰©é€ æˆé¢å¤–çš„çœ©æ™•æ•ˆæœ
                 if (thing is Pawn pawn && !pawn.Dead)
                 {
                     pawn.stances.stunner.StunFor(Mathf.RoundToInt(60 * damageMultiplier), null);
@@ -271,13 +271,13 @@ namespace TheSecondSeat.Framework.Actions
     }
     
     // ============================================
-    // ½¡¿µ×´Ì¬²Ù¿Ø
+    // å¥åº·çŠ¶æ€æ“æ§
     // ============================================
     
     /// <summary>
-    /// Ìí¼Ó½¡¿µ×´Ì¬¶¯×÷ - ¸øĞ¡ÈËÌí¼ÓHediff£¨¼²²¡¡¢ÔöÒæ¡¢ÒåÌåµÈ£©
+    /// æ·»åŠ å¥åº·çŠ¶æ€åŠ¨ä½œ - ç»™å°äººæ·»åŠ Hediffï¼ˆç–¾ç—…ã€å¢ç›Šã€ä¹‰ä½“ç­‰ï¼‰
     /// 
-    /// XMLÊ¾Àı£º
+    /// XMLç¤ºä¾‹ï¼š
     /// <![CDATA[
     /// <li Class="TheSecondSeat.Framework.Actions.GiveHediffAction">
     ///   <hediffDef>Flu</hediffDef>
@@ -289,37 +289,37 @@ namespace TheSecondSeat.Framework.Actions
     /// </summary>
     public class GiveHediffAction : TSSAction
     {
-        /// <summary>Ä¿±êÑ¡ÔñÄ£Ê½</summary>
+        /// <summary>ç›®æ ‡é€‰æ‹©æ¨¡å¼</summary>
         public enum TargetSelectionMode
         {
-            /// <summary>Ëæ»úÖ³ÃñÕß</summary>
+            /// <summary>éšæœºæ®–æ°‘è€…</summary>
             Random,
-            /// <summary>ËùÓĞÖ³ÃñÕß</summary>
+            /// <summary>æ‰€æœ‰æ®–æ°‘è€…</summary>
             AllColonists,
-            /// <summary>×î½¡¿µµÄÖ³ÃñÕß</summary>
+            /// <summary>æœ€å¥åº·çš„æ®–æ°‘è€…</summary>
             Healthiest,
-            /// <summary>×îĞéÈõµÄÖ³ÃñÕß</summary>
+            /// <summary>æœ€è™šå¼±çš„æ®–æ°‘è€…</summary>
             Weakest,
-            /// <summary>Ëæ»úµĞÈË</summary>
+            /// <summary>éšæœºæ•Œäºº</summary>
             RandomEnemy
         }
         
-        /// <summary>Hediff¶¨Òå£¨¼²²¡¡¢ÔöÒæµÈ£©</summary>
+        /// <summary>Hediffå®šä¹‰ï¼ˆç–¾ç—…ã€å¢ç›Šç­‰ï¼‰</summary>
         public HediffDef hediffDef = null;
         
-        /// <summary>Ä¿±êÑ¡ÔñÄ£Ê½</summary>
+        /// <summary>ç›®æ ‡é€‰æ‹©æ¨¡å¼</summary>
         public TargetSelectionMode targetMode = TargetSelectionMode.Random;
         
-        /// <summary>ÑÏÖØ³Ì¶È£¨0.0-1.0£©</summary>
+        /// <summary>ä¸¥é‡ç¨‹åº¦ï¼ˆ0.0-1.0ï¼‰</summary>
         public float severity = 0.5f;
         
-        /// <summary>Ä¿±êÊıÁ¿</summary>
+        /// <summary>ç›®æ ‡æ•°é‡</summary>
         public int targetCount = 1;
         
-        /// <summary>×÷ÓÃÉíÌå²¿Î»£¨Áô¿Õ±íÊ¾Ëæ»ú»òÈ«Éí£©</summary>
+        /// <summary>ä½œç”¨èº«ä½“éƒ¨ä½ï¼ˆç•™ç©ºè¡¨ç¤ºéšæœºæˆ–å…¨èº«ï¼‰</summary>
         public BodyPartDef targetBodyPart = null;
         
-        /// <summary>ÊÇ·ñÏÔÊ¾Í¨Öª</summary>
+        /// <summary>æ˜¯å¦æ˜¾ç¤ºé€šçŸ¥</summary>
         public bool showNotification = true;
         
         public override void Execute(Map map, Dictionary<string, object> context)
@@ -336,7 +336,7 @@ namespace TheSecondSeat.Framework.Actions
                 return;
             }
             
-            // »ñÈ¡Ä¿±êÁĞ±í
+            // è·å–ç›®æ ‡åˆ—è¡¨
             List<Pawn> targets = GetTargets(map);
             
             if (targets.Count == 0)
@@ -348,7 +348,7 @@ namespace TheSecondSeat.Framework.Actions
                 return;
             }
             
-            // Ëæ»úÑ¡ÔñÖ¸¶¨ÊıÁ¿µÄÄ¿±ê
+            // éšæœºé€‰æ‹©æŒ‡å®šæ•°é‡çš„ç›®æ ‡
             int actualCount = Math.Min(targetCount, targets.Count);
             List<Pawn> selectedTargets = targets.InRandomOrder().Take(actualCount).ToList();
             
@@ -359,7 +359,7 @@ namespace TheSecondSeat.Framework.Actions
         }
         
         /// <summary>
-        /// »ñÈ¡Ä¿±êÁĞ±í
+        /// è·å–ç›®æ ‡åˆ—è¡¨
         /// </summary>
         private List<Pawn> GetTargets(Map map)
         {
@@ -395,12 +395,32 @@ namespace TheSecondSeat.Framework.Actions
         }
         
         /// <summary>
-        /// Ó¦ÓÃHediffµ½Ä¿±ê
+        /// åº”ç”¨Hediffåˆ°ç›®æ ‡
         /// </summary>
         private void ApplyHediff(Pawn target)
         {
-            if (target == null || target.Dead || target.health == null)
+            // ? å¢å¼ºç©ºå€¼æ£€æŸ¥
+            if (target == null)
             {
+                Log.Warning("[GiveHediffAction] Target pawn is null");
+                return;
+            }
+            
+            if (target.Dead)
+            {
+                Log.Warning($"[GiveHediffAction] Target {target.LabelShort} is already dead");
+                return;
+            }
+            
+            if (target.health == null)
+            {
+                Log.Error($"[GiveHediffAction] Target {target.LabelShort} has null health component");
+                return;
+            }
+            
+            if (target.health.hediffSet == null)
+            {
+                Log.Error($"[GiveHediffAction] Target {target.LabelShort} has null hediffSet");
                 return;
             }
             
@@ -408,24 +428,41 @@ namespace TheSecondSeat.Framework.Actions
             {
                 BodyPartRecord part = null;
                 
-                // Èç¹ûÖ¸¶¨ÁËÉíÌå²¿Î»£¬³¢ÊÔÕÒµ½¶ÔÓ¦²¿Î»
+                // å¦‚æœæŒ‡å®šäº†èº«ä½“éƒ¨ä½ï¼Œå°è¯•æ‰¾åˆ°å¯¹åº”éƒ¨ä½
                 if (targetBodyPart != null)
                 {
-                    part = target.health.hediffSet.GetNotMissingParts()
-                        .FirstOrDefault(p => p.def == targetBodyPart);
+                    var parts = target.health.hediffSet.GetNotMissingParts();
+                    if (parts != null)
+                    {
+                        part = parts.FirstOrDefault(p => p != null && p.def == targetBodyPart);
+                    }
                 }
                 
-                // Ìí¼ÓHediff
+                // ? éªŒè¯hediffDefä¸ä¸ºnull
+                if (hediffDef == null)
+                {
+                    Log.Error("[GiveHediffAction] hediffDef is null, cannot create hediff");
+                    return;
+                }
+                
+                // æ·»åŠ Hediff
                 Hediff hediff = HediffMaker.MakeHediff(hediffDef, target, part);
+                
+                if (hediff == null)
+                {
+                    Log.Error($"[GiveHediffAction] Failed to create hediff {hediffDef.defName}");
+                    return;
+                }
+                
                 hediff.Severity = severity;
                 target.health.AddHediff(hediff, part);
                 
-                // ÏÔÊ¾Í¨Öª
+                // æ˜¾ç¤ºé€šçŸ¥
                 if (showNotification)
                 {
-                    string partName = part != null ? part.Label : "È«Éí";
+                    string partName = part != null ? part.Label : "å…¨èº«";
                     Messages.Message(
-                        $"{target.LabelShort} ±»Ê©¼ÓÁË {hediffDef.LabelCap} ({partName})",
+                        $"{target.LabelShort} è¢«æ–½åŠ äº† {hediffDef.LabelCap} ({partName})",
                         target,
                         MessageTypeDefOf.NeutralEvent
                     );
@@ -438,7 +475,7 @@ namespace TheSecondSeat.Framework.Actions
             }
             catch (Exception ex)
             {
-                Log.Error($"[GiveHediffAction] Failed to apply hediff to {target.LabelShort}: {ex.Message}");
+                Log.Error($"[GiveHediffAction] Failed to apply hediff to {target.LabelShort}: {ex.Message}\nStack trace: {ex.StackTrace}");
             }
         }
         
@@ -466,13 +503,13 @@ namespace TheSecondSeat.Framework.Actions
     }
     
     // ============================================
-    // ÊÂ¼şÇ¿ÖÆ´¥·¢
+    // äº‹ä»¶å¼ºåˆ¶è§¦å‘
     // ============================================
     
     /// <summary>
-    /// Ç¿ÖÆ´¥·¢Ô­°æÊÂ¼ş¶¯×÷ - ´¥·¢RimWorldµÄIncidentDef
+    /// å¼ºåˆ¶è§¦å‘åŸç‰ˆäº‹ä»¶åŠ¨ä½œ - è§¦å‘RimWorldçš„IncidentDef
     /// 
-    /// XMLÊ¾Àı£º
+    /// XMLç¤ºä¾‹ï¼š
     /// <![CDATA[
     /// <li Class="TheSecondSeat.Framework.Actions.StartIncidentAction">
     ///   <incidentDef>RaidEnemy</incidentDef>
@@ -483,19 +520,19 @@ namespace TheSecondSeat.Framework.Actions
     /// </summary>
     public class StartIncidentAction : TSSAction
     {
-        /// <summary>ÊÂ¼ş¶¨Òå</summary>
+        /// <summary>äº‹ä»¶å®šä¹‰</summary>
         public IncidentDef incidentDef = null;
         
-        /// <summary>ÊÂ¼şµãÊı£¨Ó°ÏìÏ®»÷¹æÄ£µÈ£©</summary>
-        public float points = -1f; // -1±íÊ¾Ê¹ÓÃÄ¬ÈÏÖµ
+        /// <summary>äº‹ä»¶ç‚¹æ•°ï¼ˆå½±å“è¢­å‡»è§„æ¨¡ç­‰ï¼‰</summary>
+        public float points = -1f; // -1è¡¨ç¤ºä½¿ç”¨é»˜è®¤å€¼
         
-        /// <summary>ÊÇ·ñÇ¿ÖÆ´¥·¢£¨ºöÂÔÀäÈ´ºÍÌõ¼ş£©</summary>
+        /// <summary>æ˜¯å¦å¼ºåˆ¶è§¦å‘ï¼ˆå¿½ç•¥å†·å´å’Œæ¡ä»¶ï¼‰</summary>
         public bool forced = false;
         
-        /// <summary>Ä¿±êÅÉÏµ£¨Áô¿Õ±íÊ¾Ëæ»ú£©</summary>
+        /// <summary>ç›®æ ‡æ´¾ç³»ï¼ˆç•™ç©ºè¡¨ç¤ºéšæœºï¼‰</summary>
         public FactionDef targetFaction = null;
         
-        /// <summary>ÊÇ·ñÔÊĞí´ó¹æÄ£ÊÂ¼ş</summary>
+        /// <summary>æ˜¯å¦å…è®¸å¤§è§„æ¨¡äº‹ä»¶</summary>
         public bool allowBigThreat = true;
         
         public override void Execute(Map map, Dictionary<string, object> context)
@@ -512,25 +549,25 @@ namespace TheSecondSeat.Framework.Actions
                 return;
             }
             
-            // ´´½¨ÊÂ¼ş²ÎÊı
+            // åˆ›å»ºäº‹ä»¶å‚æ•°
             IncidentParms parms = StorytellerUtility.DefaultParmsNow(
                 incidentDef.category,
                 map
             );
             
-            // ÉèÖÃµãÊı
+            // è®¾ç½®ç‚¹æ•°
             if (points > 0)
             {
                 parms.points = points;
             }
             
-            // ÉèÖÃÄ¿±êÅÉÏµ
+            // è®¾ç½®ç›®æ ‡æ´¾ç³»
             if (targetFaction != null)
             {
                 parms.faction = Find.FactionManager.FirstFactionOfDef(targetFaction);
             }
             
-            // ÉèÖÃÆäËû²ÎÊı
+            // è®¾ç½®å…¶ä»–å‚æ•°
             parms.forced = forced;
             parms.target = map;
             
@@ -539,7 +576,7 @@ namespace TheSecondSeat.Framework.Actions
                 parms.points = Math.Min(parms.points, 1000f);
             }
             
-            // ³¢ÊÔ´¥·¢ÊÂ¼ş
+            // å°è¯•è§¦å‘äº‹ä»¶
             if (incidentDef.Worker.TryExecute(parms))
             {
                 if (Prefs.DevMode)
@@ -581,17 +618,17 @@ namespace TheSecondSeat.Framework.Actions
     }
     
     // ============================================
-    // ĞğÊÂÕßÓïÒôÏµÍ³
+    // å™äº‹è€…è¯­éŸ³ç³»ç»Ÿ
     // ============================================
     
     /// <summary>
-    /// ĞğÊÂÕßÓïÒô¶¯×÷ - µ÷ÓÃ¿ò¼ÜÄÚÖÃµÄTTSService²¥·ÅÓïÒô
+    /// å™äº‹è€…è¯­éŸ³åŠ¨ä½œ - è°ƒç”¨æ¡†æ¶å†…ç½®çš„TTSServiceæ’­æ”¾è¯­éŸ³
     /// 
-    /// XMLÊ¾Àı£º
+    /// XMLç¤ºä¾‹ï¼š
     /// <![CDATA[
     /// <li Class="TheSecondSeat.Framework.Actions.NarratorSpeakAction">
     ///   <textKey>TSS_Event_DivinePunishment</textKey>
-    ///   <text>ÄãµÄËù×÷ËùÎªÈÃÎÒ²»µÃ²»²ÉÈ¡´ëÊ©ÁË...</text>
+    ///   <text>ä½ çš„æ‰€ä½œæ‰€ä¸ºè®©æˆ‘ä¸å¾—ä¸é‡‡å–æªæ–½äº†...</text>
     ///   <personaDefName>Sideria_Default</personaDefName>
     ///   <showDialogue>true</showDialogue>
     /// </li>
@@ -599,23 +636,23 @@ namespace TheSecondSeat.Framework.Actions
     /// </summary>
     public class NarratorSpeakAction : TSSAction
     {
-        /// <summary>·­Òë¼ü£¨ÓÅÏÈÊ¹ÓÃ£©</summary>
+        /// <summary>ç¿»è¯‘é”®ï¼ˆä¼˜å…ˆä½¿ç”¨ï¼‰</summary>
         public string textKey = "";
         
-        /// <summary>Ö±½ÓÎÄ±¾£¨Èç¹ûÃ»ÓĞ·­Òë¼ü£©</summary>
+        /// <summary>ç›´æ¥æ–‡æœ¬ï¼ˆå¦‚æœæ²¡æœ‰ç¿»è¯‘é”®ï¼‰</summary>
         public string text = "";
         
-        /// <summary>Ö¸¶¨ÈË¸ñDefName£¨Áô¿ÕÊ¹ÓÃµ±Ç°ÈË¸ñ£©</summary>
+        /// <summary>æŒ‡å®šäººæ ¼DefNameï¼ˆç•™ç©ºä½¿ç”¨å½“å‰äººæ ¼ï¼‰</summary>
         public string personaDefName = "";
         
-        /// <summary>ÊÇ·ñÏÔÊ¾¶Ô»°¿ò</summary>
+        /// <summary>æ˜¯å¦æ˜¾ç¤ºå¯¹è¯æ¡†</summary>
         public bool showDialogue = true;
         
         public override void Execute(Map map, Dictionary<string, object> context)
         {
             try
             {
-                // 1. È·¶¨×îÖÕÎÄ±¾
+                // 1. ç¡®å®šæœ€ç»ˆæ–‡æœ¬
                 string finalText = GetFinalText();
                 
                 if (string.IsNullOrEmpty(finalText))
@@ -627,13 +664,13 @@ namespace TheSecondSeat.Framework.Actions
                     return;
                 }
                 
-                // 2. ÏÔÊ¾¶Ô»°¿ò£¨¿ÉÑ¡£©
+                // 2. æ˜¾ç¤ºå¯¹è¯æ¡†ï¼ˆå¯é€‰ï¼‰
                 if (showDialogue)
                 {
                     ShowDialogueBox(finalText);
                 }
                 
-                // 3. µ÷ÓÃTTS·şÎñ²¥·ÅÓïÒô
+                // 3. è°ƒç”¨TTSæœåŠ¡æ’­æ”¾è¯­éŸ³
                 PlayTTS(finalText);
                 
                 if (Prefs.DevMode)
@@ -648,11 +685,11 @@ namespace TheSecondSeat.Framework.Actions
         }
         
         /// <summary>
-        /// »ñÈ¡×îÖÕÎÄ±¾£¨ÓÅÏÈÊ¹ÓÃ·­Òë¼ü£©
+        /// è·å–æœ€ç»ˆæ–‡æœ¬ï¼ˆä¼˜å…ˆä½¿ç”¨ç¿»è¯‘é”®ï¼‰
         /// </summary>
         private string GetFinalText()
         {
-            // ÓÅÏÈÊ¹ÓÃ·­Òë¼ü
+            // ä¼˜å…ˆä½¿ç”¨ç¿»è¯‘é”®
             if (!string.IsNullOrEmpty(textKey))
             {
                 try
@@ -665,16 +702,16 @@ namespace TheSecondSeat.Framework.Actions
                 }
                 catch
                 {
-                    // ·­ÒëÊ§°Ü£¬¼ÌĞøÊ¹ÓÃÖ±½ÓÎÄ±¾
+                    // ç¿»è¯‘å¤±è´¥ï¼Œç»§ç»­ä½¿ç”¨ç›´æ¥æ–‡æœ¬
                 }
             }
             
-            // ±¸ÓÃ£ºÊ¹ÓÃÖ±½ÓÎÄ±¾
+            // å¤‡ç”¨ï¼šä½¿ç”¨ç›´æ¥æ–‡æœ¬
             return text;
         }
         
         /// <summary>
-        /// ÏÔÊ¾¶Ô»°¿ò
+        /// æ˜¾ç¤ºå¯¹è¯æ¡†
         /// </summary>
         private void ShowDialogueBox(string message)
         {
@@ -693,13 +730,13 @@ namespace TheSecondSeat.Framework.Actions
         }
         
         /// <summary>
-        /// µ÷ÓÃTTS·şÎñ²¥·ÅÓïÒô
+        /// è°ƒç”¨TTSæœåŠ¡æ’­æ”¾è¯­éŸ³
         /// </summary>
         private void PlayTTS(string textToSpeak)
         {
             try
             {
-                // »ñÈ¡TTS·şÎñÊµÀı
+                // è·å–TTSæœåŠ¡å®ä¾‹
                 var ttsService = TheSecondSeat.TTS.TTSService.Instance;
                 
                 if (ttsService == null)
@@ -711,8 +748,8 @@ namespace TheSecondSeat.Framework.Actions
                     return;
                 }
                 
-                // Òì²½²¥·Å£¨²»×èÈûÖ÷Ïß³Ì£©
-                // ×¢Òâ£ºSpeakAsyncÊÇÒì²½·½·¨£¬µ«ÎÒÃÇÖ±½Óµ÷ÓÃËüÈÃËüÔÚºóÌ¨ÔËĞĞ
+                // å¼‚æ­¥æ’­æ”¾ï¼ˆä¸é˜»å¡ä¸»çº¿ç¨‹ï¼‰
+                // æ³¨æ„ï¼šSpeakAsyncæ˜¯å¼‚æ­¥æ–¹æ³•ï¼Œä½†æˆ‘ä»¬ç›´æ¥è°ƒç”¨å®ƒè®©å®ƒåœ¨åå°è¿è¡Œ
                 System.Threading.Tasks.Task.Run(async () =>
                 {
                     try

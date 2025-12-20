@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;
@@ -6,32 +6,32 @@ using Verse;
 namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
-    /// Õ£ÑÛ¶¯»­ÏµÍ³ - Îª·Ö²ãÁ¢»æÌá¹©×ÔÈ»µÄÕ£ÑÛĞ§¹û
-    /// ? v1.6.33: ĞŞ¸´ÑÛ¾¦ÃüÃû - ¸ù¾İ±íÇéÑ¡Ôñ¶ÔÓ¦µÄeyes£¬±ÕÑÛÍ³Ò»Ê¹ÓÃclosed_eyes
+    /// çœ¨çœ¼åŠ¨ç”»ç³»ç»Ÿ - ä¸ºåˆ†å±‚ç«‹ç»˜æä¾›è‡ªç„¶çš„çœ¨çœ¼æ•ˆæœ
+    /// ? v1.6.33: ä¿®å¤çœ¼ç›å‘½å - æ ¹æ®è¡¨æƒ…é€‰æ‹©å¯¹åº”çš„eyesï¼Œé—­çœ¼ç»Ÿä¸€ä½¿ç”¨closed_eyes
     /// </summary>
     public static class BlinkAnimationSystem
     {
         private static Dictionary<string, BlinkState> blinkStates = new Dictionary<string, BlinkState>();
         
-        // Õ£ÑÛ²ÎÊı
-        private const float MIN_BLINK_INTERVAL = 3.0f;  // ×îĞ¡Õ£ÑÛ¼ä¸ô£¨Ãë£©
-        private const float MAX_BLINK_INTERVAL = 6.0f;  // ×î´óÕ£ÑÛ¼ä¸ô£¨Ãë£©
-        private const float BLINK_DURATION = 0.15f;     // Õ£ÑÛ³ÖĞøÊ±¼ä£¨Ãë£©
+        // çœ¨çœ¼å‚æ•°
+        private const float MIN_BLINK_INTERVAL = 3.0f;  // æœ€å°çœ¨çœ¼é—´éš”ï¼ˆç§’ï¼‰
+        private const float MAX_BLINK_INTERVAL = 6.0f;  // æœ€å¤§çœ¨çœ¼é—´éš”ï¼ˆç§’ï¼‰
+        private const float BLINK_DURATION = 0.15f;     // çœ¨çœ¼æŒç»­æ—¶é—´ï¼ˆç§’ï¼‰
         
         /// <summary>
-        /// Õ£ÑÛ×´Ì¬Êı¾İ
+        /// çœ¨çœ¼çŠ¶æ€æ•°æ®
         /// </summary>
         private class BlinkState
         {
-            public bool isBlinking;              // ÊÇ·ñÕıÔÚÕ£ÑÛ
-            public float blinkProgress;          // Õ£ÑÛ½ø¶È£¨0-1£©
-            public float lastBlinkTime;          // ÉÏ´ÎÕ£ÑÛÊ±¼ä
-            public float nextBlinkInterval;      // ÏÂ´ÎÕ£ÑÛ¼ä¸ô
+            public bool isBlinking;              // æ˜¯å¦æ­£åœ¨çœ¨çœ¼
+            public float blinkProgress;          // çœ¨çœ¼è¿›åº¦ï¼ˆ0-1ï¼‰
+            public float lastBlinkTime;          // ä¸Šæ¬¡çœ¨çœ¼æ—¶é—´
+            public float nextBlinkInterval;      // ä¸‹æ¬¡çœ¨çœ¼é—´éš”
             public ExpressionType currentExpression;
         }
         
         /// <summary>
-        /// »ñÈ¡»ò´´½¨Õ£ÑÛ×´Ì¬
+        /// è·å–æˆ–åˆ›å»ºçœ¨çœ¼çŠ¶æ€
         /// </summary>
         private static BlinkState GetOrCreateState(string personaDefName)
         {
@@ -51,16 +51,16 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// »ñÈ¡ÑÛ¾¦²ãÃû³Æ£¨¸ù¾İÕ£ÑÛ×´Ì¬·µ»Ø£©
-        /// ? v1.6.33: ÕöÑÛ=±íÇé¶ÔÓ¦eyes£¬±ÕÑÛ=closed_eyes
+        /// è·å–çœ¼ç›å±‚åç§°ï¼ˆæ ¹æ®çœ¨çœ¼çŠ¶æ€è¿”å›ï¼‰
+        /// ? v1.6.33: ççœ¼=è¡¨æƒ…å¯¹åº”eyesï¼Œé—­çœ¼=closed_eyes
         /// </summary>
-        /// <param name="personaDefName">ÈË¸ñ DefName</param>
-        /// <returns>ÑÛ¾¦²ãÃû³Æ£¨±íÇé_eyes »ò closed_eyes£©</returns>
+        /// <param name="personaDefName">äººæ ¼ DefName</param>
+        /// <returns>çœ¼ç›å±‚åç§°ï¼ˆè¡¨æƒ…_eyes æˆ– closed_eyesï¼‰</returns>
         public static string GetEyeLayerName(string personaDefName)
         {
             var state = GetOrCreateState(personaDefName);
             
-            // »ñÈ¡µ±Ç°±íÇé
+            // è·å–å½“å‰è¡¨æƒ…
             var expressionState = ExpressionSystem.GetExpressionState(personaDefName);
             if (expressionState.CurrentExpression != state.currentExpression)
             {
@@ -70,7 +70,7 @@ namespace TheSecondSeat.PersonaGeneration
             float currentTime = Time.realtimeSinceStartup;
             float elapsed = currentTime - state.lastBlinkTime;
             
-            // ¼ì²éÊÇ·ñÓ¦¸Ã¿ªÊ¼Õ£ÑÛ
+            // æ£€æŸ¥æ˜¯å¦åº”è¯¥å¼€å§‹çœ¨çœ¼
             if (!state.isBlinking && elapsed >= state.nextBlinkInterval)
             {
                 state.isBlinking = true;
@@ -79,34 +79,34 @@ namespace TheSecondSeat.PersonaGeneration
                 state.nextBlinkInterval = UnityEngine.Random.Range(MIN_BLINK_INTERVAL, MAX_BLINK_INTERVAL);
             }
             
-            // ¸üĞÂÕ£ÑÛ½ø¶È
+            // æ›´æ–°çœ¨çœ¼è¿›åº¦
             if (state.isBlinking)
             {
                 state.blinkProgress += Time.deltaTime / BLINK_DURATION;
                 
                 if (state.blinkProgress >= 1f)
                 {
-                    // Õ£ÑÛÍê³É
+                    // çœ¨çœ¼å®Œæˆ
                     state.isBlinking = false;
                     state.blinkProgress = 0f;
                 }
             }
             
-            // ? ·µ»ØÑÛ¾¦²ãÃû³Æ
+            // ? è¿”å›çœ¼ç›å±‚åç§°
             if (state.isBlinking && state.blinkProgress > 0.3f && state.blinkProgress < 0.7f)
             {
-                // Õ£ÑÛ¹ı³ÌÖĞ£º±ÕÑÛ
+                // çœ¨çœ¼è¿‡ç¨‹ä¸­ï¼šé—­çœ¼
                 return "closed_eyes";
             }
             else
             {
-                // ? ÕöÑÛ£º¸ù¾İ±íÇéÑ¡Ôñ¶ÔÓ¦µÄeyes
+                // ? ççœ¼ï¼šæ ¹æ®è¡¨æƒ…é€‰æ‹©å¯¹åº”çš„eyes
                 return GetEyesForExpression(state.currentExpression);
             }
         }
         
         /// <summary>
-        /// ? v1.6.33: ¸ù¾İ±íÇé»ñÈ¡¶ÔÓ¦µÄÑÛ¾¦²ã
+        /// ? v1.6.33: æ ¹æ®è¡¨æƒ…è·å–å¯¹åº”çš„çœ¼ç›å±‚
         /// </summary>
         private static string GetEyesForExpression(ExpressionType expression)
         {
@@ -116,12 +116,12 @@ namespace TheSecondSeat.PersonaGeneration
                 ExpressionType.Sad => "sad_eyes",
                 ExpressionType.Angry => "angry_eyes",
                 ExpressionType.Confused => "confused_eyes",
-                _ => "happy_eyes"  // Ä¬ÈÏÊ¹ÓÃhappy_eyes£¨×÷ÎªÍ¨ÓÃÕöÑÛ×´Ì¬£©
+                _ => "happy_eyes"  // é»˜è®¤ä½¿ç”¨happy_eyesï¼ˆä½œä¸ºé€šç”¨ççœ¼çŠ¶æ€ï¼‰
             };
         }
         
         /// <summary>
-        /// ? v1.6.30: ¶¯Ì¬ÉèÖÃÕ£ÑÛ¼ä¸ô£¨ÓÃÓÚ¸ĞÇéÇı¶¯¶¯»­£©
+        /// ? v1.6.30: åŠ¨æ€è®¾ç½®çœ¨çœ¼é—´éš”ï¼ˆç”¨äºæ„Ÿæƒ…é©±åŠ¨åŠ¨ç”»ï¼‰
         /// </summary>
         public static void SetBlinkInterval(string personaDefName, float minInterval, float maxInterval)
         {
@@ -130,12 +130,12 @@ namespace TheSecondSeat.PersonaGeneration
             
             if (Prefs.DevMode)
             {
-                Log.Message($"[BlinkAnimationSystem] Õ£ÑÛ¼ä¸ôµ÷Õû: {personaDefName} ({minInterval}-{maxInterval}Ãë)");
+                Log.Message($"[BlinkAnimationSystem] çœ¨çœ¼é—´éš”è°ƒæ•´: {personaDefName} ({minInterval}-{maxInterval}ç§’)");
             }
         }
         
         /// <summary>
-        /// Ç¿ÖÆ´¥·¢Õ£ÑÛ
+        /// å¼ºåˆ¶è§¦å‘çœ¨çœ¼
         /// </summary>
         public static void TriggerBlink(string personaDefName)
         {
@@ -146,7 +146,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// Çå³ıÕ£ÑÛ×´Ì¬
+        /// æ¸…é™¤çœ¨çœ¼çŠ¶æ€
         /// </summary>
         public static void ClearState(string personaDefName)
         {
@@ -154,7 +154,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// Çå³ıËùÓĞÕ£ÑÛ×´Ì¬
+        /// æ¸…é™¤æ‰€æœ‰çœ¨çœ¼çŠ¶æ€
         /// </summary>
         public static void ClearAllStates()
         {

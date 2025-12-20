@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
@@ -10,39 +10,39 @@ using TheSecondSeat.Commands.Implementations;
 namespace TheSecondSeat.Execution
 {
     /// <summary>
-    /// ÓÎÏ·¶¯×÷Ö´ĞĞÆ÷ - ÃüÁîÂ·ÓÉÆ÷
-    /// ? v1.6.40: ÍêÈ«Ç¨ÒÆµ½Â·ÓÉÆ÷¼Ü¹¹£¬ÒÆ³ıËùÓĞÖ±½ÓÊµÏÖ
+    /// æ¸¸æˆåŠ¨ä½œæ‰§è¡Œå™¨ - å‘½ä»¤è·¯ç”±å™¨
+    /// ? v1.6.40: å®Œå…¨è¿ç§»åˆ°è·¯ç”±å™¨æ¶æ„ï¼Œç§»é™¤æ‰€æœ‰ç›´æ¥å®ç°
     /// </summary>
     public static class GameActionExecutor
     {
         /// <summary>
-        /// Ö´ĞĞ½âÎöºóµÄÃüÁî
-        /// ? Ïß³Ì°²È«£º±ØĞëÔÚÖ÷Ïß³ÌÖ´ĞĞ
+        /// æ‰§è¡Œè§£æåçš„å‘½ä»¤
+        /// ? çº¿ç¨‹å®‰å…¨ï¼šå¿…é¡»åœ¨ä¸»çº¿ç¨‹æ‰§è¡Œ
         /// </summary>
         public static ExecutionResult Execute(ParsedCommand command)
         {
             if (command == null)
             {
-                return ExecutionResult.Failed("ÃüÁîÎª¿Õ");
+                return ExecutionResult.Failed("å‘½ä»¤ä¸ºç©º");
             }
 
-            Log.Message($"[GameActionExecutor] Ö´ĞĞÃüÁî: {command.action} (Target={command.parameters.target}, Scope={command.parameters.scope})");
+            Log.Message($"[GameActionExecutor] æ‰§è¡Œå‘½ä»¤: {command.action} (Target={command.parameters.target}, Scope={command.parameters.scope})");
 
-            // ? ¼ì²éÊÇ·ñÔÚÖ÷Ïß³Ì
+            // ? æ£€æŸ¥æ˜¯å¦åœ¨ä¸»çº¿ç¨‹
             if (!UnityEngine.Application.isPlaying)
             {
-                return ExecutionResult.Failed("ÓÎÏ·Î´ÔËĞĞ");
+                return ExecutionResult.Failed("æ¸¸æˆæœªè¿è¡Œ");
             }
 
             try
             {
-                // ? ×ª»»²ÎÊıÎª Dictionary<string, object>
+                // ? è½¬æ¢å‚æ•°ä¸º Dictionary<string, object>
                 Dictionary<string, object> paramsDict = ConvertParams(command.parameters);
 
-                // ? ¸ù¾İ action ×Ö·û´®ÊµÀı»¯¶ÔÓ¦µÄÃüÁîÀà²¢Ö´ĞĞ
+                // ? æ ¹æ® action å­—ç¬¦ä¸²å®ä¾‹åŒ–å¯¹åº”çš„å‘½ä»¤ç±»å¹¶æ‰§è¡Œ
                 bool success = command.action switch
                 {
-                    // === ÅúÁ¿²Ù×÷ÃüÁî ===
+                    // === æ‰¹é‡æ“ä½œå‘½ä»¤ ===
                     "BatchHarvest" => new BatchHarvestCommand().Execute(command.parameters.target, paramsDict),
                     "BatchEquip" => new BatchEquipCommand().Execute(command.parameters.target, paramsDict),
                     "BatchCapture" => new BatchCaptureCommand().Execute(command.parameters.target, paramsDict),
@@ -52,34 +52,34 @@ namespace TheSecondSeat.Execution
                     "EmergencyRetreat" => new EmergencyRetreatCommand().Execute(command.parameters.target, paramsDict),
                     "DesignatePlantCut" => new DesignatePlantCutCommand().Execute(command.parameters.target, paramsDict),
                     
-                    // === ¶ÔŞÄÕßÄ£Ê½ÊÂ¼şÃüÁî ===
+                    // === å¯¹å¼ˆè€…æ¨¡å¼äº‹ä»¶å‘½ä»¤ ===
                     "TriggerEvent" => new TriggerEventCommand().Execute(command.parameters.target, paramsDict),
                     "ScheduleEvent" => new ScheduleEventCommand().Execute(command.parameters.target, paramsDict),
                     
-                    // === ? v1.6.40: Ö³ÃñÕß²Ù×÷ÃüÁî£¨ÒÑÇ¨ÒÆ£© ===
+                    // === ? v1.6.40: æ®–æ°‘è€…æ“ä½œå‘½ä»¤ï¼ˆå·²è¿ç§»ï¼‰ ===
                     "DraftPawn" => new DraftPawnCommand().Execute(command.parameters.target, paramsDict),
                     "MovePawn" => new MovePawnCommand().Execute(command.parameters.target, paramsDict),
                     "HealPawn" => new HealPawnCommand().Execute(command.parameters.target, paramsDict),
                     "SetWorkPriority" => new SetWorkPriorityCommand().Execute(command.parameters.target, paramsDict),
                     "EquipWeapon" => new EquipWeaponCommand().Execute(command.parameters.target, paramsDict),
                     
-                    // === ? v1.6.40: ×ÊÔ´¹ÜÀíÃüÁî£¨ÒÑÇ¨ÒÆ£© ===
+                    // === ? v1.6.40: èµ„æºç®¡ç†å‘½ä»¤ï¼ˆå·²è¿ç§»ï¼‰ ===
                     "ForbidItems" => new ForbidItemsCommand().Execute(command.parameters.target, paramsDict),
                     "AllowItems" => new AllowItemsCommand().Execute(command.parameters.target, paramsDict),
                     
-                    // === ? v1.6.40: Õş²ßĞŞ¸ÄÃüÁî£¨ÒÑÇ¨ÒÆ£© ===
+                    // === ? v1.6.40: æ”¿ç­–ä¿®æ”¹å‘½ä»¤ï¼ˆå·²è¿ç§»ï¼‰ ===
                     "ChangePolicy" => new ChangePolicyCommand_New().Execute(command.parameters.target, paramsDict),
                     
-                    // === Ôİ²»Ö§³ÖµÄÃüÁî ===
-                    "DesignateConstruction" => throw new NotImplementedException("½¨ÔìÃüÁîĞèÒª¸ü¶àµÄ½¨ÖşÊı¾İ£¬Ôİ²»Ö§³Ö"),
-                    "AssignWork" => throw new NotImplementedException("¹¤×÷·ÖÅäĞèÒª¸ü¶àµÄ¹¤×÷ÀàĞÍ£¬Ôİ²»Ö§³Ö"),
+                    // === æš‚ä¸æ”¯æŒçš„å‘½ä»¤ ===
+                    "DesignateConstruction" => throw new NotImplementedException("å»ºé€ å‘½ä»¤éœ€è¦æ›´å¤šçš„å»ºç­‘æ•°æ®ï¼Œæš‚ä¸æ”¯æŒ"),
+                    "AssignWork" => throw new NotImplementedException("å·¥ä½œåˆ†é…éœ€è¦æ›´å¤šçš„å·¥ä½œç±»å‹ï¼Œæš‚ä¸æ”¯æŒ"),
                     
-                    _ => throw new NotImplementedException($"Î´ÖªÃüÁî: {command.action}")
+                    _ => throw new NotImplementedException($"æœªçŸ¥å‘½ä»¤: {command.action}")
                 };
 
                 return success 
-                    ? ExecutionResult.Success($"ÃüÁî {command.action} Ö´ĞĞ³É¹¦")
-                    : ExecutionResult.Failed($"ÃüÁî {command.action} Ö´ĞĞÊ§°Ü");
+                    ? ExecutionResult.Success($"å‘½ä»¤ {command.action} æ‰§è¡ŒæˆåŠŸ")
+                    : ExecutionResult.Failed($"å‘½ä»¤ {command.action} æ‰§è¡Œå¤±è´¥");
             }
             catch (NotImplementedException ex)
             {
@@ -88,34 +88,34 @@ namespace TheSecondSeat.Execution
             }
             catch (Exception ex)
             {
-                Log.Error($"[GameActionExecutor] Ö´ĞĞÊ§°Ü: {ex.Message}\n{ex.StackTrace}");
-                return ExecutionResult.Failed($"Ö´ĞĞÒì³£: {ex.Message}");
+                Log.Error($"[GameActionExecutor] æ‰§è¡Œå¤±è´¥: {ex.Message}\n{ex.StackTrace}");
+                return ExecutionResult.Failed($"æ‰§è¡Œå¼‚å¸¸: {ex.Message}");
             }
         }
 
-        #region ²ÎÊı×ª»»¸¨Öú·½·¨
+        #region å‚æ•°è½¬æ¢è¾…åŠ©æ–¹æ³•
 
         /// <summary>
-        /// ? ½« AdvancedCommandParams ×ª»»Îª Dictionary<string, object>
-        /// ºÏ²¢ target, scope, filters, count µ½Ò»¸ö×ÖµäÖĞ
+        /// ? å°† AdvancedCommandParams è½¬æ¢ä¸º Dictionary<string, object>
+        /// åˆå¹¶ target, scope, filters, count åˆ°ä¸€ä¸ªå­—å…¸ä¸­
         /// </summary>
         private static Dictionary<string, object> ConvertParams(AdvancedCommandParams p)
         {
             var dict = new Dictionary<string, object>();
 
-            // 1. Ìí¼Ó target
+            // 1. æ·»åŠ  target
             if (!string.IsNullOrEmpty(p.target))
             {
                 dict["target"] = p.target;
             }
 
-            // 2. Ìí¼Ó scope
+            // 2. æ·»åŠ  scope
             if (!string.IsNullOrEmpty(p.scope))
             {
                 dict["scope"] = p.scope;
             }
 
-            // 3. ºÏ²¢ filters ÖĞµÄËùÓĞ¼üÖµ¶Ô
+            // 3. åˆå¹¶ filters ä¸­çš„æ‰€æœ‰é”®å€¼å¯¹
             if (p.filters != null)
             {
                 foreach (var kvp in p.filters)
@@ -124,14 +124,14 @@ namespace TheSecondSeat.Execution
                 }
             }
 
-            // 4. ? Ó³Éä p.count ¡ú "limit"
+            // 4. ? æ˜ å°„ p.count â†’ "limit"
             if (p.count != null && p.count > 0)
             {
                 dict["limit"] = p.count;
             }
 
-            // 5. ? Ìí¼ÓÆäËû¿ÉÄÜµÄ²ÎÊı£¨´Ó scope ½âÎö£©
-            // ÀıÈç£ºÈç¹û scope ÊÇ "delay=30" »ò "comment=AIÆÀÂÛ"
+            // 5. ? æ·»åŠ å…¶ä»–å¯èƒ½çš„å‚æ•°ï¼ˆä» scope è§£æï¼‰
+            // ä¾‹å¦‚ï¼šå¦‚æœ scope æ˜¯ "delay=30" æˆ– "comment=AIè¯„è®º"
             if (!string.IsNullOrEmpty(p.scope) && p.scope.Contains("="))
             {
                 var parts = p.scope.Split('=');
@@ -140,7 +140,7 @@ namespace TheSecondSeat.Execution
                     string key = parts[0].Trim().ToLower();
                     string value = parts[1].Trim();
                     
-                    // ±ÜÃâ¸²¸ÇÒÑ´æÔÚµÄ scope ¼ü
+                    // é¿å…è¦†ç›–å·²å­˜åœ¨çš„ scope é”®
                     if (key != "scope")
                     {
                         dict[key] = value;
@@ -155,7 +155,7 @@ namespace TheSecondSeat.Execution
     }
 
     /// <summary>
-    /// Ö´ĞĞ½á¹û
+    /// æ‰§è¡Œç»“æœ
     /// </summary>
     public class ExecutionResult
     {

@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,13 +10,13 @@ using Newtonsoft.Json;
 namespace TheSecondSeat.LLM
 {
     /// <summary>
-    /// OpenAI ¼æÈİ API ¿Í»§¶Ë£¨Ö§³Ö OpenAI¡¢DeepSeek µÈ£©
-    /// Ö§³ÖÎÄ±¾ºÍÍ¼Æ¬£¨Vision£©·ÖÎö
+    /// OpenAI å…¼å®¹ API å®¢æˆ·ç«¯ï¼ˆæ”¯æŒ OpenAIã€DeepSeek ç­‰ï¼‰
+    /// æ”¯æŒæ–‡æœ¬å’Œå›¾ç‰‡ï¼ˆVisionï¼‰åˆ†æ
     /// </summary>
     public class OpenAICompatibleClient
     {
         /// <summary>
-        /// ·¢ËÍ´¿ÎÄ±¾ÇëÇóµ½ OpenAI ¼æÈİ API
+        /// å‘é€çº¯æ–‡æœ¬è¯·æ±‚åˆ° OpenAI å…¼å®¹ API
         /// </summary>
         public static async Task<OpenAIResponse?> SendRequestAsync(
             string endpoint,
@@ -44,8 +44,8 @@ namespace TheSecondSeat.LLM
         }
 
         /// <summary>
-        /// ·¢ËÍ°üº¬Í¼Æ¬µÄ Vision ÇëÇóµ½ OpenAI ¼æÈİ API
-        /// ? Ö§³Ö DeepSeek ÌØÊâ¸ñÊ½£¨²»Ê¹ÓÃ image_url£©
+        /// å‘é€åŒ…å«å›¾ç‰‡çš„ Vision è¯·æ±‚åˆ° OpenAI å…¼å®¹ API
+        /// ? æ”¯æŒ DeepSeek ç‰¹æ®Šæ ¼å¼ï¼ˆä¸ä½¿ç”¨ image_urlï¼‰
         /// </summary>
         public static async Task<OpenAIResponse?> SendVisionRequestAsync(
             string endpoint,
@@ -55,33 +55,33 @@ namespace TheSecondSeat.LLM
             Texture2D imageTexture,
             float temperature = 0.7f,
             int maxTokens = 1000,
-            string provider = "openai")  // ? ĞÂÔö£ºprovider ²ÎÊı
+            string provider = "openai")  // ? æ–°å¢ï¼šprovider å‚æ•°
         {
             if (imageTexture == null)
             {
-                Log.Error("[OpenAICompatible] Í¼Æ¬ÎÆÀíÎª¿Õ");
+                Log.Error("[OpenAICompatible] å›¾ç‰‡çº¹ç†ä¸ºç©º");
                 return null;
             }
 
             try
             {
-                // 1?? ½« Texture2D ×ª»»Îª Base64
+                // 1?? å°† Texture2D è½¬æ¢ä¸º Base64
                 string base64Image = TextureToBase64(imageTexture);
                 if (string.IsNullOrEmpty(base64Image))
                 {
-                    Log.Error("[OpenAICompatible] Í¼Æ¬ Base64 ±àÂëÊ§°Ü");
+                    Log.Error("[OpenAICompatible] å›¾ç‰‡ Base64 ç¼–ç å¤±è´¥");
                     return null;
                 }
 
-                Log.Message($"[OpenAICompatible] Í¼Æ¬ÒÑ±àÂëÎª Base64 ({base64Image.Length} ×Ö·û)");
+                Log.Message($"[OpenAICompatible] å›¾ç‰‡å·²ç¼–ç ä¸º Base64 ({base64Image.Length} å­—ç¬¦)");
 
-                // 2?? ¸ù¾İ provider ¹¹½¨²»Í¬¸ñÊ½µÄÇëÇó
+                // 2?? æ ¹æ® provider æ„å»ºä¸åŒæ ¼å¼çš„è¯·æ±‚
                 string jsonContent;
                 
                 if (provider.ToLower() == "deepseek")
                 {
-                    // ? DeepSeek ÌØÊâ¸ñÊ½£º²»Ê¹ÓÃ image_url£¬Ö»·¢ËÍÎÄ±¾ÌáÊ¾
-                    Log.Message("[OpenAICompatible] Ê¹ÓÃ DeepSeek ÎÄ±¾¸ñÊ½£¨²»Ö§³Ö Vision£©");
+                    // ? DeepSeek ç‰¹æ®Šæ ¼å¼ï¼šä¸ä½¿ç”¨ image_urlï¼Œåªå‘é€æ–‡æœ¬æç¤º
+                    Log.Message("[OpenAICompatible] ä½¿ç”¨ DeepSeek æ–‡æœ¬æ ¼å¼ï¼ˆä¸æ”¯æŒ Visionï¼‰");
                     
                     var request = new
                     {
@@ -93,7 +93,7 @@ namespace TheSecondSeat.LLM
                             new
                             {
                                 role = "user",
-                                content = textPrompt + "\n\n[×¢Òâ£ºDeepSeek µ±Ç°²»Ö§³ÖÍ¼Ïñ·ÖÎö£¬½«½ö»ùÓÚÎÄ±¾ÌáÊ¾·µ»ØÍ¨ÓÃ½á¹û]"
+                                content = textPrompt + "\n\n[æ³¨æ„ï¼šDeepSeek å½“å‰ä¸æ”¯æŒå›¾åƒåˆ†æï¼Œå°†ä»…åŸºäºæ–‡æœ¬æç¤ºè¿”å›é€šç”¨ç»“æœ]"
                             }
                         }
                     };
@@ -105,7 +105,7 @@ namespace TheSecondSeat.LLM
                 }
                 else
                 {
-                    // OpenAI ±ê×¼¸ñÊ½£¨Ö§³Ö image_url£©
+                    // OpenAI æ ‡å‡†æ ¼å¼ï¼ˆæ”¯æŒ image_urlï¼‰
                     var request = new
                     {
                         model = model,
@@ -142,27 +142,27 @@ namespace TheSecondSeat.LLM
             }
             catch (Exception ex)
             {
-                Log.Error($"[OpenAICompatible] Vision ÇëÇóÒì³£: {ex.Message}\n{ex.StackTrace}");
+                Log.Error($"[OpenAICompatible] Vision è¯·æ±‚å¼‚å¸¸: {ex.Message}\n{ex.StackTrace}");
                 return null;
             }
         }
 
         /// <summary>
-        /// ½« Texture2D ×ª»»Îª Base64 ±àÂëµÄ PNG/JPG ×Ö·û´®
-        /// ? ÓÅ»¯£ºÑ¹Ëõ´óÍ¼Æ¬ÒÔ¼õÉÙ Base64 ´óĞ¡
+        /// å°† Texture2D è½¬æ¢ä¸º Base64 ç¼–ç çš„ PNG/JPG å­—ç¬¦ä¸²
+        /// ? ä¼˜åŒ–ï¼šå‹ç¼©å¤§å›¾ç‰‡ä»¥å‡å°‘ Base64 å¤§å°
         /// </summary>
         private static string TextureToBase64(Texture2D texture)
         {
             try
             {
-                // È·±£ÎÆÀí¿É¶Á
+                // ç¡®ä¿çº¹ç†å¯è¯»
                 if (!texture.isReadable)
                 {
-                    Log.Warning("[OpenAICompatible] ÎÆÀí²»¿É¶Á£¬³¢ÊÔ´´½¨¿É¶Á¸±±¾");
+                    Log.Warning("[OpenAICompatible] çº¹ç†ä¸å¯è¯»ï¼Œå°è¯•åˆ›å»ºå¯è¯»å‰¯æœ¬");
                     texture = MakeTextureReadable(texture);
                 }
 
-                // ? Èç¹ûÍ¼Æ¬Ì«´ó£¬ÏÈËõĞ¡
+                // ? å¦‚æœå›¾ç‰‡å¤ªå¤§ï¼Œå…ˆç¼©å°
                 Texture2D textureToEncode = texture;
                 bool needsResize = texture.width > 1024 || texture.height > 1024;
                 
@@ -174,32 +174,32 @@ namespace TheSecondSeat.LLM
                     int newHeight = (int)(texture.height * scale);
                     
                     textureToEncode = ResizeTexture(texture, newWidth, newHeight);
-                    Log.Message($"[OpenAICompatible] Í¼Æ¬ÒÑËõĞ¡£º{texture.width}x{texture.height} ¡ú {newWidth}x{newHeight}");
+                    Log.Message($"[OpenAICompatible] å›¾ç‰‡å·²ç¼©å°ï¼š{texture.width}x{texture.height} â†’ {newWidth}x{newHeight}");
                 }
 
-                // ? Ê¹ÓÃ JPG ±àÂë£¨¸üĞ¡µÄÎÄ¼ş£©
-                byte[] imageBytes = textureToEncode.EncodeToJPG(75); // ÖÊÁ¿ 75%
+                // ? ä½¿ç”¨ JPG ç¼–ç ï¼ˆæ›´å°çš„æ–‡ä»¶ï¼‰
+                byte[] imageBytes = textureToEncode.EncodeToJPG(75); // è´¨é‡ 75%
                 
                 if (imageBytes == null || imageBytes.Length == 0)
                 {
-                    // Èç¹û JPG Ê§°Ü£¬»ØÍËµ½ PNG
-                    Log.Warning("[OpenAICompatible] JPG ±àÂëÊ§°Ü£¬»ØÍËµ½ PNG");
+                    // å¦‚æœ JPG å¤±è´¥ï¼Œå›é€€åˆ° PNG
+                    Log.Warning("[OpenAICompatible] JPG ç¼–ç å¤±è´¥ï¼Œå›é€€åˆ° PNG");
                     imageBytes = textureToEncode.EncodeToPNG();
                 }
                 
                 if (imageBytes == null || imageBytes.Length == 0)
                 {
-                    Log.Error("[OpenAICompatible] Í¼Æ¬±àÂëÊ§°Ü");
+                    Log.Error("[OpenAICompatible] å›¾ç‰‡ç¼–ç å¤±è´¥");
                     return string.Empty;
                 }
 
-                // ×ª»»Îª Base64
+                // è½¬æ¢ä¸º Base64
                 string base64 = Convert.ToBase64String(imageBytes);
                 
-                Log.Message($"[OpenAICompatible] Í¼Æ¬±àÂë³É¹¦£º{textureToEncode.width}x{textureToEncode.height}, " +
-                          $"{imageBytes.Length / 1024}KB ¡ú Base64 {base64.Length} ×Ö·û");
+                Log.Message($"[OpenAICompatible] å›¾ç‰‡ç¼–ç æˆåŠŸï¼š{textureToEncode.width}x{textureToEncode.height}, " +
+                          $"{imageBytes.Length / 1024}KB â†’ Base64 {base64.Length} å­—ç¬¦");
                 
-                // ÇåÀíÁÙÊ±ÎÆÀí
+                // æ¸…ç†ä¸´æ—¶çº¹ç†
                 if (needsResize && textureToEncode != texture)
                 {
                     UnityEngine.Object.Destroy(textureToEncode);
@@ -209,13 +209,13 @@ namespace TheSecondSeat.LLM
             }
             catch (Exception ex)
             {
-                Log.Error($"[OpenAICompatible] ÎÆÀí×ª Base64 Òì³£: {ex.Message}");
+                Log.Error($"[OpenAICompatible] çº¹ç†è½¬ Base64 å¼‚å¸¸: {ex.Message}");
                 return string.Empty;
             }
         }
 
         /// <summary>
-        /// ? µ÷ÕûÎÆÀí´óĞ¡
+        /// ? è°ƒæ•´çº¹ç†å¤§å°
         /// </summary>
         private static Texture2D ResizeTexture(Texture2D source, int newWidth, int newHeight)
         {
@@ -235,7 +235,7 @@ namespace TheSecondSeat.LLM
         }
 
         /// <summary>
-        /// ´´½¨ÎÆÀíµÄ¿É¶Á¸±±¾
+        /// åˆ›å»ºçº¹ç†çš„å¯è¯»å‰¯æœ¬
         /// </summary>
         private static Texture2D MakeTextureReadable(Texture2D source)
         {
@@ -262,14 +262,14 @@ namespace TheSecondSeat.LLM
         }
 
         /// <summary>
-        /// ·¢ËÍÔ­Ê¼ JSON ÇëÇóµ½ OpenAI ¼æÈİ¶Ëµã
+        /// å‘é€åŸå§‹ JSON è¯·æ±‚åˆ° OpenAI å…¼å®¹ç«¯ç‚¹
         /// </summary>
         private static async Task<OpenAIResponse?> SendOpenAIRawRequestAsync(string endpoint, string apiKey, string jsonContent)
         {
             try
             {
-                Log.Message($"[OpenAICompatible] ÇëÇó: {endpoint}");
-                Log.Message($"[OpenAICompatible] ÇëÇóÌå´óĞ¡: {jsonContent.Length} ×Ö·û");
+                Log.Message($"[OpenAICompatible] è¯·æ±‚: {endpoint}");
+                Log.Message($"[OpenAICompatible] è¯·æ±‚ä½“å¤§å°: {jsonContent.Length} å­—ç¬¦");
 
                 using var webRequest = new UnityWebRequest(endpoint, "POST");
                 webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonContent));
@@ -277,7 +277,7 @@ namespace TheSecondSeat.LLM
                 webRequest.SetRequestHeader("Content-Type", "application/json");
                 webRequest.timeout = 60;
 
-                // Ìí¼Ó Authorization Í·
+                // æ·»åŠ  Authorization å¤´
                 if (!string.IsNullOrEmpty(apiKey))
                 {
                     webRequest.SetRequestHeader("Authorization", $"Bearer {apiKey}");
@@ -294,21 +294,21 @@ namespace TheSecondSeat.LLM
                 if (webRequest.result == UnityWebRequest.Result.Success)
                 {
                     string responseText = webRequest.downloadHandler.text;
-                    Log.Message($"[OpenAICompatible] ÏìÓ¦³É¹¦: {responseText.Substring(0, Math.Min(500, responseText.Length))}...");
+                    Log.Message($"[OpenAICompatible] å“åº”æˆåŠŸ: {responseText.Substring(0, Math.Min(500, responseText.Length))}...");
 
                     var response = JsonConvert.DeserializeObject<OpenAIResponse>(responseText);
                     return response;
                 }
                 else
                 {
-                    Log.Error($"[OpenAICompatible] API ´íÎó: {webRequest.responseCode} - {webRequest.error}");
-                    Log.Error($"[OpenAICompatible] ÏìÓ¦ÄÚÈİ: {webRequest.downloadHandler.text}");
+                    Log.Error($"[OpenAICompatible] API é”™è¯¯: {webRequest.responseCode} - {webRequest.error}");
+                    Log.Error($"[OpenAICompatible] å“åº”å†…å®¹: {webRequest.downloadHandler.text}");
                     return null;
                 }
             }
             catch (Exception ex)
             {
-                Log.Error($"[OpenAICompatible] API Òì³£: {ex.Message}\n{ex.StackTrace}");
+                Log.Error($"[OpenAICompatible] API å¼‚å¸¸: {ex.Message}\n{ex.StackTrace}");
                 return null;
             }
         }

@@ -1,49 +1,49 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using Verse;
 
 namespace TheSecondSeat.UI
 {
     /// <summary>
-    /// AI ĞğÊÂÕß°´Å¥×´Ì¬
+    /// AI å™äº‹è€…æŒ‰é’®çŠ¶æ€
     /// </summary>
     public enum NarratorButtonState
     {
-        Ready,      // ¾ÍĞ÷£ºÁ¬½ÓÕı³££¬µÈ´ıÊÂ¼ş
-        Processing, // ´¦ÀíÖĞ£ºÕıÔÚÉú³ÉÄÚÈİ
-        Error,      // ´íÎó£ºÁ¬½ÓÊ§°Ü»ò API ´íÎó
-        Disabled    // ½ûÓÃ£ºÄ£×é±»¹Ø±Õ
+        Ready,      // å°±ç»ªï¼šè¿æ¥æ­£å¸¸ï¼Œç­‰å¾…äº‹ä»¶
+        Processing, // å¤„ç†ä¸­ï¼šæ­£åœ¨ç”Ÿæˆå†…å®¹
+        Error,      // é”™è¯¯ï¼šè¿æ¥å¤±è´¥æˆ– API é”™è¯¯
+        Disabled    // ç¦ç”¨ï¼šæ¨¡ç»„è¢«å…³é—­
     }
 
     /// <summary>
-    /// AI ĞğÊÂÕß°´Å¥¶¯»­ÏµÍ³
+    /// AI å™äº‹è€…æŒ‰é’®åŠ¨ç”»ç³»ç»Ÿ
     /// </summary>
-    [StaticConstructorOnStartup]  // ? ¹Ø¼ü£ºÌí¼Ó´ËÊôĞÔÒÔÔÚÖ÷Ïß³Ì¼ÓÔØÎÆÀí
+    [StaticConstructorOnStartup]  // ? å…³é”®ï¼šæ·»åŠ æ­¤å±æ€§ä»¥åœ¨ä¸»çº¿ç¨‹åŠ è½½çº¹ç†
     public static class NarratorButtonAnimator
     {
-        // ¶¯»­¼ÆÊ±Æ÷
+        // åŠ¨ç”»è®¡æ—¶å™¨
         private static float animationTimer = 0f;
         
-        // ¶¯»­ËÙ¶ÈÅäÖÃ
-        private const float PulseSpeed = 2f;        // Âö³åËÙ¶È
-        private const float FlashSpeed = 4f;        // ÉÁË¸ËÙ¶È
-        private const float RotationSpeed = 30f;    // Ğı×ªËÙ¶È£¨¶È/Ãë£©
+        // åŠ¨ç”»é€Ÿåº¦é…ç½®
+        private const float PulseSpeed = 2f;        // è„‰å†²é€Ÿåº¦
+        private const float FlashSpeed = 4f;        // é—ªçƒé€Ÿåº¦
+        private const float RotationSpeed = 30f;    // æ—‹è½¬é€Ÿåº¦ï¼ˆåº¦/ç§’ï¼‰
         
-        // Ëõ·Å·¶Î§
+        // ç¼©æ”¾èŒƒå›´
         private const float MinScale = 0.95f;
         private const float MaxScale = 1.05f;
         
-        // Í¸Ã÷¶È·¶Î§
+        // é€æ˜åº¦èŒƒå›´
         private const float MinAlpha = 0.7f;
         private const float MaxAlpha = 1.0f;
         
-        // ÑÕÉ«ÅäÖÃ
-        private static readonly Color ReadyColor = new Color(0.8f, 0.8f, 0.8f, 1f);      // »Ò°×É«
-        private static readonly Color ProcessingColor = new Color(1f, 0.75f, 0.3f, 1f);  // çúçêÉ«
-        private static readonly Color ErrorColor = new Color(1f, 0.2f, 0.2f, 1f);        // ºìÉ«
-        private static readonly Color DisabledColor = new Color(0.5f, 0.5f, 0.5f, 0.5f); // °ëÍ¸Ã÷»ÒÉ«
+        // é¢œè‰²é…ç½®
+        private static readonly Color ReadyColor = new Color(0.8f, 0.8f, 0.8f, 1f);      // ç°ç™½è‰²
+        private static readonly Color ProcessingColor = new Color(1f, 0.75f, 0.3f, 1f);  // ç¥ç€è‰²
+        private static readonly Color ErrorColor = new Color(1f, 0.2f, 0.2f, 1f);        // çº¢è‰²
+        private static readonly Color DisabledColor = new Color(0.5f, 0.5f, 0.5f, 0.5f); // åŠé€æ˜ç°è‰²
         
         /// <summary>
-        /// ¸üĞÂ¶¯»­¼ÆÊ±Æ÷£¨Ã¿Ö¡µ÷ÓÃ£©
+        /// æ›´æ–°åŠ¨ç”»è®¡æ—¶å™¨ï¼ˆæ¯å¸§è°ƒç”¨ï¼‰
         /// </summary>
         public static void UpdateAnimation()
         {
@@ -51,7 +51,7 @@ namespace TheSecondSeat.UI
         }
         
         /// <summary>
-        /// »ñÈ¡Âö³åËõ·ÅÖµ
+        /// è·å–è„‰å†²ç¼©æ”¾å€¼
         /// </summary>
         public static float GetPulsingScale(float speed = PulseSpeed)
         {
@@ -60,7 +60,7 @@ namespace TheSecondSeat.UI
         }
         
         /// <summary>
-        /// »ñÈ¡ÉÁË¸Í¸Ã÷¶È
+        /// è·å–é—ªçƒé€æ˜åº¦
         /// </summary>
         public static float GetFlashingAlpha(float speed = FlashSpeed)
         {
@@ -69,7 +69,7 @@ namespace TheSecondSeat.UI
         }
         
         /// <summary>
-        /// »ñÈ¡Ğı×ª½Ç¶È
+        /// è·å–æ—‹è½¬è§’åº¦
         /// </summary>
         public static float GetRotationAngle(float speed = RotationSpeed)
         {
@@ -77,7 +77,7 @@ namespace TheSecondSeat.UI
         }
         
         /// <summary>
-        /// ¸ù¾İ×´Ì¬»ñÈ¡ÑÕÉ«
+        /// æ ¹æ®çŠ¶æ€è·å–é¢œè‰²
         /// </summary>
         public static Color GetStateColor(NarratorButtonState state)
         {
@@ -92,7 +92,7 @@ namespace TheSecondSeat.UI
         }
         
         /// <summary>
-        /// ¸ù¾İ×´Ì¬»ñÈ¡·¢¹âÑÕÉ«£¨ÓÃÓÚÍâ·¢¹âĞ§¹û£©
+        /// æ ¹æ®çŠ¶æ€è·å–å‘å…‰é¢œè‰²ï¼ˆç”¨äºå¤–å‘å…‰æ•ˆæœï¼‰
         /// </summary>
         public static Color GetGlowColor(NarratorButtonState state)
         {
@@ -102,63 +102,63 @@ namespace TheSecondSeat.UI
         }
         
         /// <summary>
-        /// »æÖÆ´ø¶¯»­µÄÍ¼±ê
+        /// ç»˜åˆ¶å¸¦åŠ¨ç”»çš„å›¾æ ‡
         /// </summary>
-        /// <param name="rect">»æÖÆÇøÓò</param>
-        /// <param name="icon">Í¼±êÎÆÀí</param>
-        /// <param name="state">µ±Ç°×´Ì¬</param>
+        /// <param name="rect">ç»˜åˆ¶åŒºåŸŸ</param>
+        /// <param name="icon">å›¾æ ‡çº¹ç†</param>
+        /// <param name="state">å½“å‰çŠ¶æ€</param>
         public static void DrawAnimatedIcon(Rect rect, Texture2D icon, NarratorButtonState state)
         {
             if (icon == null) return;
             
-            // ¸ù¾İ×´Ì¬Ó¦ÓÃ²»Í¬µÄ¶¯»­Ğ§¹û
+            // æ ¹æ®çŠ¶æ€åº”ç”¨ä¸åŒçš„åŠ¨ç”»æ•ˆæœ
             switch (state)
             {
                 case NarratorButtonState.Ready:
-                    // ¾ÍĞ÷×´Ì¬£ºÎŞ¶¯»­£¬Ö±½Ó»æÖÆ
+                    // å°±ç»ªçŠ¶æ€ï¼šæ— åŠ¨ç”»ï¼Œç›´æ¥ç»˜åˆ¶
                     DrawIcon(rect, icon, GetStateColor(state), 1f, 0f);
                     break;
                 
                 case NarratorButtonState.Processing:
-                    // ´¦ÀíÖĞ£ºçúçêÉ«Âö³å + »ºÂıĞı×ª
+                    // å¤„ç†ä¸­ï¼šç¥ç€è‰²è„‰å†² + ç¼“æ…¢æ—‹è½¬
                     float scale = GetPulsingScale(PulseSpeed);
                     float rotation = GetRotationAngle(RotationSpeed * 0.5f);
                     DrawIcon(rect, icon, GetStateColor(state), scale, rotation);
                     
-                    // »æÖÆÍâ·¢¹â
+                    // ç»˜åˆ¶å¤–å‘å…‰
                     DrawGlow(rect, GetGlowColor(state));
                     break;
                 
                 case NarratorButtonState.Error:
-                    // ´íÎó×´Ì¬£ººìÉ«¿ìËÙÉÁË¸
+                    // é”™è¯¯çŠ¶æ€ï¼šçº¢è‰²å¿«é€Ÿé—ªçƒ
                     float alpha = GetFlashingAlpha(FlashSpeed);
                     Color errorColor = new Color(ErrorColor.r, ErrorColor.g, ErrorColor.b, alpha);
                     DrawIcon(rect, icon, errorColor, 1f, 0f);
                     
-                    // »æÖÆÍâ·¢¹â
+                    // ç»˜åˆ¶å¤–å‘å…‰
                     DrawGlow(rect, new Color(1f, 0f, 0f, alpha * 0.8f));
                     break;
                 
                 case NarratorButtonState.Disabled:
-                    // ½ûÓÃ×´Ì¬£º°ëÍ¸Ã÷»ÒÉ«£¬ÎŞ¶¯»­
+                    // ç¦ç”¨çŠ¶æ€ï¼šåŠé€æ˜ç°è‰²ï¼Œæ— åŠ¨ç”»
                     DrawIcon(rect, icon, DisabledColor, 1f, 0f);
                     break;
             }
         }
         
         /// <summary>
-        /// »æÖÆÍ¼±ê£¨Ö§³ÖËõ·ÅºÍĞı×ª£©
-        /// ? ĞŞ¸Ä£ºÍ¼±êÄÚĞı×ª£¬¶ø²»ÊÇÕû¸ö°´Å¥ÈÆÖĞĞÄĞı×ª
+        /// ç»˜åˆ¶å›¾æ ‡ï¼ˆæ”¯æŒç¼©æ”¾å’Œæ—‹è½¬ï¼‰
+        /// ? ä¿®æ”¹ï¼šå›¾æ ‡å†…æ—‹è½¬ï¼Œè€Œä¸æ˜¯æ•´ä¸ªæŒ‰é’®ç»•ä¸­å¿ƒæ—‹è½¬
         /// </summary>
         private static void DrawIcon(Rect rect, Texture2D icon, Color color, float scale, float rotation)
         {
-            // ±£´æµ±Ç°¾ØÕó
+            // ä¿å­˜å½“å‰çŸ©é˜µ
             Matrix4x4 matrix = GUI.matrix;
             
-            // ? ¹Ø¼üĞŞ¸Ä£ºÊ¹ÓÃÍ¼±ê×Ô¼ºµÄÖĞĞÄ×÷ÎªĞı×ªµã
+            // ? å…³é”®ä¿®æ”¹ï¼šä½¿ç”¨å›¾æ ‡è‡ªå·±çš„ä¸­å¿ƒä½œä¸ºæ—‹è½¬ç‚¹
             Vector2 iconCenter = new Vector2(rect.x + rect.width / 2f, rect.y + rect.height / 2f);
             
-            // Ó¦ÓÃËõ·Å
+            // åº”ç”¨ç¼©æ”¾
             Rect scaledRect = rect;
             if (scale != 1f)
             {
@@ -172,28 +172,28 @@ namespace TheSecondSeat.UI
                 );
             }
             
-            // ? Ó¦ÓÃĞı×ª£ºÈÆÍ¼±ê×Ô¼ºµÄÖĞĞÄĞı×ª£¨²»ÊÇÍâ²¿µã£©
+            // ? åº”ç”¨æ—‹è½¬ï¼šç»•å›¾æ ‡è‡ªå·±çš„ä¸­å¿ƒæ—‹è½¬ï¼ˆä¸æ˜¯å¤–éƒ¨ç‚¹ï¼‰
             if (rotation != 0f)
             {
-                // Ê¹ÓÃ GUIUtility.RotateAroundPivot£¬pivot µãÉèÖÃÎªÍ¼±êÖĞĞÄ
+                // ä½¿ç”¨ GUIUtility.RotateAroundPivotï¼Œpivot ç‚¹è®¾ç½®ä¸ºå›¾æ ‡ä¸­å¿ƒ
                 GUIUtility.RotateAroundPivot(rotation, iconCenter);
             }
             
-            // »æÖÆÍ¼±ê
+            // ç»˜åˆ¶å›¾æ ‡
             GUI.color = color;
             GUI.DrawTexture(scaledRect, icon);
             GUI.color = Color.white;
             
-            // »Ö¸´¾ØÕó
+            // æ¢å¤çŸ©é˜µ
             GUI.matrix = matrix;
         }
         
         /// <summary>
-        /// »æÖÆÍâ·¢¹âĞ§¹û
+        /// ç»˜åˆ¶å¤–å‘å…‰æ•ˆæœ
         /// </summary>
         private static void DrawGlow(Rect rect, Color glowColor)
         {
-            // »æÖÆ¶à²ã½¥±äµÄ·½ĞÎ·¢¹â
+            // ç»˜åˆ¶å¤šå±‚æ¸å˜çš„æ–¹å½¢å‘å…‰
             for (int i = 1; i <= 3; i++)
             {
                 float expansion = i * 4f;
@@ -208,41 +208,41 @@ namespace TheSecondSeat.UI
         }
         
         /// <summary>
-        /// »æÖÆÖ¸Ê¾µÆ£¨Ğ¡Ô²µã£©
+        /// ç»˜åˆ¶æŒ‡ç¤ºç¯ï¼ˆå°åœ†ç‚¹ï¼‰
         /// </summary>
-        /// <param name="rect">Ö¸Ê¾µÆÎ»ÖÃ</param>
-        /// <param name="state">µ±Ç°×´Ì¬</param>
+        /// <param name="rect">æŒ‡ç¤ºç¯ä½ç½®</param>
+        /// <param name="state">å½“å‰çŠ¶æ€</param>
         public static void DrawIndicatorLight(Rect rect, NarratorButtonState state)
         {
             Color lightColor = state switch
             {
-                NarratorButtonState.Ready => new Color(0f, 1f, 0.5f, 1f),      // ÂÌÉ«
-                NarratorButtonState.Processing => new Color(1f, 0.75f, 0f, GetFlashingAlpha()), // çúçêÉ«ÉÁË¸
-                NarratorButtonState.Error => new Color(1f, 0f, 0f, 1f),        // ºìÉ«
-                NarratorButtonState.Disabled => new Color(0.5f, 0.5f, 0.5f, 0.5f), // »ÒÉ«
+                NarratorButtonState.Ready => new Color(0f, 1f, 0.5f, 1f),      // ç»¿è‰²
+                NarratorButtonState.Processing => new Color(1f, 0.75f, 0f, GetFlashingAlpha()), // ç¥ç€è‰²é—ªçƒ
+                NarratorButtonState.Error => new Color(1f, 0f, 0f, 1f),        // çº¢è‰²
+                NarratorButtonState.Disabled => new Color(0.5f, 0.5f, 0.5f, 0.5f), // ç°è‰²
                 _ => Color.white
             };
             
-            // ´´½¨Ô²ĞÎÎÆÀí£¨Èç¹û»¹Ã»´´½¨£©
+            // åˆ›å»ºåœ†å½¢çº¹ç†ï¼ˆå¦‚æœè¿˜æ²¡åˆ›å»ºï¼‰
             Texture2D circleTexture = CreateCircleTexture(16);
             
-            // »æÖÆÍâ²ã·¢¹â£¨¸ü´óµÄ°ëÍ¸Ã÷Ô²£©
+            // ç»˜åˆ¶å¤–å±‚å‘å…‰ï¼ˆæ›´å¤§çš„åŠé€æ˜åœ†ï¼‰
             GUI.color = new Color(lightColor.r, lightColor.g, lightColor.b, lightColor.a * 0.3f);
             Rect glowRect = rect.ExpandedBy(3f);
             GUI.DrawTexture(glowRect, circleTexture);
             
-            // »æÖÆºËĞÄÔ²ĞÎ
+            // ç»˜åˆ¶æ ¸å¿ƒåœ†å½¢
             GUI.color = lightColor;
             GUI.DrawTexture(rect, circleTexture);
             
             GUI.color = Color.white;
         }
         
-        // »º´æÔ²ĞÎÎÆÀí
+        // ç¼“å­˜åœ†å½¢çº¹ç†
         private static Texture2D? cachedCircleTexture;
         
         /// <summary>
-        /// ´´½¨Ô²ĞÎÎÆÀí
+        /// åˆ›å»ºåœ†å½¢çº¹ç†
         /// </summary>
         private static Texture2D CreateCircleTexture(int size)
         {
@@ -260,7 +260,7 @@ namespace TheSecondSeat.UI
                     float distance = Mathf.Sqrt((x - center) * (x - center) + (y - center) * (y - center));
                     float alpha = distance < radius ? 1f : 0f;
                     
-                    // ±ßÔµ¿¹¾â³İ
+                    // è¾¹ç¼˜æŠ—é”¯é½¿
                     if (distance >= radius - 1f && distance < radius)
                     {
                         alpha = radius - distance;

@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Verse;
@@ -12,12 +12,12 @@ using TheSecondSeat.Integration;
 namespace TheSecondSeat.Autonomous
 {
     /// <summary>
-    /// ĞğÊÂÕß×ÔÖ÷ĞĞÎªÏµÍ³ - AIÖ÷¶¯¹Û²ì²¢Ìá³ö½¨Òé
+    /// å™äº‹è€…è‡ªä¸»è¡Œä¸ºç³»ç»Ÿ - AIä¸»åŠ¨è§‚å¯Ÿå¹¶æå‡ºå»ºè®®
     /// </summary>
     public class AutonomousBehaviorSystem : GameComponent
     {
         private int ticksSinceLastCheck = 0;
-        private const int CheckInterval = 18000; // 5·ÖÖÓ¼ì²éÒ»´Î
+        private const int CheckInterval = 18000; // 5åˆ†é’Ÿæ£€æŸ¥ä¸€æ¬¡
         private List<AutonomousSuggestion> pendingSuggestions = new List<AutonomousSuggestion>();
 
         public AutonomousBehaviorSystem(Game game) : base()
@@ -38,7 +38,7 @@ namespace TheSecondSeat.Autonomous
         }
 
         /// <summary>
-        /// Ö÷¶¯¼ì²éÓÎÏ·×´Ì¬²¢Éú³É½¨Òé
+        /// ä¸»åŠ¨æ£€æŸ¥æ¸¸æˆçŠ¶æ€å¹¶ç”Ÿæˆå»ºè®®
         /// </summary>
         private void CheckForProactiveSuggestions()
         {
@@ -48,7 +48,7 @@ namespace TheSecondSeat.Autonomous
             var agent = Current.Game?.GetComponent<Narrator.NarratorManager>()?.GetStorytellerAgent();
             if (agent == null) return;
 
-            // Ö»ÓĞÔÚ¸ßºÃ¸Ğ¶ÈÊ±²ÅÖ÷¶¯Ìá³ö½¨Òé
+            // åªæœ‰åœ¨é«˜å¥½æ„Ÿåº¦æ—¶æ‰ä¸»åŠ¨æå‡ºå»ºè®®
             if (agent.affinity < 30f) return;
 
             var snapshot = GameStateObserver.CaptureSnapshot();
@@ -58,69 +58,69 @@ namespace TheSecondSeat.Autonomous
             {
                 if (ShouldExecuteAutomatically(suggestion, agent))
                 {
-                    // ×Ô¶¯Ö´ĞĞ£¨½öÔÚ¼«¸ßºÃ¸Ğ¶È£©
+                    // è‡ªåŠ¨æ‰§è¡Œï¼ˆä»…åœ¨æé«˜å¥½æ„Ÿåº¦ï¼‰
                     ExecuteSuggestion(suggestion);
                 }
                 else
                 {
-                    // ÌáÊ¾Íæ¼Ò
+                    // æç¤ºç©å®¶
                     NotifyPlayer(suggestion);
                 }
             }
         }
 
         /// <summary>
-        /// Éú³ÉÖ÷¶¯½¨Òé
+        /// ç”Ÿæˆä¸»åŠ¨å»ºè®®
         /// </summary>
         private List<AutonomousSuggestion> GenerateSuggestions(GameStateSnapshot snapshot, StorytellerAgent agent)
         {
             var suggestions = new List<AutonomousSuggestion>();
 
-            // 1. ¼ì²é³ÉÊì×÷Îï
+            // 1. æ£€æŸ¥æˆç†Ÿä½œç‰©
             if (HasMatureCrops())
             {
                 suggestions.Add(new AutonomousSuggestion
                 {
                     action = "BatchHarvest",
-                    reason = "¼ì²âµ½³ÉÊìµÄ×÷ÎïµÈ´ıÊÕ»ñ",
+                    reason = "æ£€æµ‹åˆ°æˆç†Ÿçš„ä½œç‰©ç­‰å¾…æ”¶è·",
                     priority = SuggestionPriority.Medium,
                     requiresApproval = agent.affinity < 60f
                 });
             }
 
-            // 2. ¼ì²éÊÜËğ½¨Öş
+            // 2. æ£€æŸ¥å—æŸå»ºç­‘
             if (HasDamagedStructures())
             {
                 suggestions.Add(new AutonomousSuggestion
                 {
                     action = "PriorityRepair",
-                    reason = "·¢ÏÖ¶à¸öÊÜËğ½¨ÖşĞèÒªĞŞ¸´",
+                    reason = "å‘ç°å¤šä¸ªå—æŸå»ºç­‘éœ€è¦ä¿®å¤",
                     priority = SuggestionPriority.Medium,
                     requiresApproval = agent.affinity < 70f
                 });
             }
 
-            // 3. ¼ì²éÍşĞ²
+            // 3. æ£€æŸ¥å¨èƒ
             if (snapshot.threats.raidActive && snapshot.colonists.Any(c => c.health < 50))
             {
                 suggestions.Add(new AutonomousSuggestion
                 {
                     action = "EmergencyRetreat",
-                    reason = "Ï®»÷ÕıÔÚ½øĞĞ£¬²¿·ÖÖ³ÃñÕßÊÜÉËÑÏÖØ",
+                    reason = "è¢­å‡»æ­£åœ¨è¿›è¡Œï¼Œéƒ¨åˆ†æ®–æ°‘è€…å—ä¼¤ä¸¥é‡",
                     priority = SuggestionPriority.High,
                     requiresApproval = agent.affinity < 80f
                 });
             }
 
-            // 4. ¼ì²é×ÊÔ´¶ÌÈ±
+            // 4. æ£€æŸ¥èµ„æºçŸ­ç¼º
             if (snapshot.resources.food < 50)
             {
                 suggestions.Add(new AutonomousSuggestion
                 {
                     action = "Suggestion_Food",
-                    reason = "Ê³Îï´¢±¸²»×ã£¬½¨ÒéÓÅÏÈÖÖÖ²»ò½»Ò×",
+                    reason = "é£Ÿç‰©å‚¨å¤‡ä¸è¶³ï¼Œå»ºè®®ä¼˜å…ˆç§æ¤æˆ–äº¤æ˜“",
                     priority = SuggestionPriority.High,
-                    requiresApproval = true, // ÕâÊÇ½¨Òé£¬²»ÊÇÃüÁî
+                    requiresApproval = true, // è¿™æ˜¯å»ºè®®ï¼Œä¸æ˜¯å‘½ä»¤
                     isAdviceOnly = true
                 });
             }
@@ -129,15 +129,15 @@ namespace TheSecondSeat.Autonomous
         }
 
         /// <summary>
-        /// ÅĞ¶ÏÊÇ·ñÓ¦¸Ã×Ô¶¯Ö´ĞĞ
+        /// åˆ¤æ–­æ˜¯å¦åº”è¯¥è‡ªåŠ¨æ‰§è¡Œ
         /// </summary>
         private bool ShouldExecuteAutomatically(AutonomousSuggestion suggestion, StorytellerAgent agent)
         {
-            // Ö»ÓĞ¼«¸ßºÃ¸Ğ¶ÈÇÒ²»ĞèÒªÅú×¼µÄ½¨Òé²Å×Ô¶¯Ö´ĞĞ
+            // åªæœ‰æé«˜å¥½æ„Ÿåº¦ä¸”ä¸éœ€è¦æ‰¹å‡†çš„å»ºè®®æ‰è‡ªåŠ¨æ‰§è¡Œ
             if (suggestion.requiresApproval) return false;
             if (agent.affinity < 85f) return false;
             
-            // ÈË¸ñÌØÖÊÓ°Ïì
+            // äººæ ¼ç‰¹è´¨å½±å“
             if (agent.primaryTrait == PersonalityTrait.Protective && suggestion.priority == SuggestionPriority.High)
             {
                 return true;
@@ -145,7 +145,7 @@ namespace TheSecondSeat.Autonomous
 
             if (agent.primaryTrait == PersonalityTrait.Manipulative)
             {
-                // ²Ù¿ØĞÍÈË¸ñ¸üÇãÏòÓÚ×ÔÖ÷Ö´ĞĞ
+                // æ“æ§å‹äººæ ¼æ›´å€¾å‘äºè‡ªä¸»æ‰§è¡Œ
                 return agent.affinity >= 75f;
             }
 
@@ -153,7 +153,7 @@ namespace TheSecondSeat.Autonomous
         }
 
         /// <summary>
-        /// Ö´ĞĞ½¨Òé
+        /// æ‰§è¡Œå»ºè®®
         /// </summary>
         private void ExecuteSuggestion(AutonomousSuggestion suggestion)
         {
@@ -175,35 +175,35 @@ namespace TheSecondSeat.Autonomous
             if (result.success)
             {
                 Messages.Message(
-                    $"[×ÔÖ÷ĞĞ¶¯] ĞğÊÂÕßÖ´ĞĞÁË£º{suggestion.action} - {suggestion.reason}",
+                    $"[è‡ªä¸»è¡ŒåŠ¨] å™äº‹è€…æ‰§è¡Œäº†ï¼š{suggestion.action} - {suggestion.reason}",
                     MessageTypeDefOf.PositiveEvent
                 );
 
                 MemoryContextBuilder.RecordEvent(
-                    $"×ÔÖ÷Ö´ĞĞ£º{suggestion.action} - {result.message}",
+                    $"è‡ªä¸»æ‰§è¡Œï¼š{suggestion.action} - {result.message}",
                     MemoryImportance.High
                 );
             }
         }
 
         /// <summary>
-        /// Í¨ÖªÍæ¼Ò½¨Òé
+        /// é€šçŸ¥ç©å®¶å»ºè®®
         /// </summary>
         private void NotifyPlayer(AutonomousSuggestion suggestion)
         {
             string message = suggestion.isAdviceOnly
-                ? $"ĞğÊÂÕß½¨Òé£º{suggestion.reason}"
-                : $"ĞğÊÂÕß½¨ÒéÖ´ĞĞ£º{suggestion.action} - {suggestion.reason}\n£¨ÔÚ¶Ô»°´°¿Ú»Ø¸´'Í¬Òâ'»ò'Ö´ĞĞ'À´È·ÈÏ£©";
+                ? $"å™äº‹è€…å»ºè®®ï¼š{suggestion.reason}"
+                : $"å™äº‹è€…å»ºè®®æ‰§è¡Œï¼š{suggestion.action} - {suggestion.reason}\nï¼ˆåœ¨å¯¹è¯çª—å£å›å¤'åŒæ„'æˆ–'æ‰§è¡Œ'æ¥ç¡®è®¤ï¼‰";
 
             Messages.Message(message, MessageTypeDefOf.NeutralEvent);
 
-            // Ìí¼Óµ½´ı´¦ÀíÁĞ±í
+            // æ·»åŠ åˆ°å¾…å¤„ç†åˆ—è¡¨
             pendingSuggestions.Add(suggestion);
             suggestion.timestamp = Find.TickManager.TicksGame;
         }
 
         /// <summary>
-        /// ¼ì²éÊÇ·ñÓĞ³ÉÊì×÷Îï
+        /// æ£€æŸ¥æ˜¯å¦æœ‰æˆç†Ÿä½œç‰©
         /// </summary>
         private bool HasMatureCrops()
         {
@@ -214,11 +214,11 @@ namespace TheSecondSeat.Autonomous
                 .OfType<Plant>()
                 .Where(p => p.HarvestableNow && p.Spawned);
 
-            return maturePlants.Count() >= 10; // ÖÁÉÙ10Öê³ÉÊì×÷Îï
+            return maturePlants.Count() >= 10; // è‡³å°‘10æ ªæˆç†Ÿä½œç‰©
         }
 
         /// <summary>
-        /// ¼ì²éÊÇ·ñÓĞÊÜËğ½¨Öş
+        /// æ£€æŸ¥æ˜¯å¦æœ‰å—æŸå»ºç­‘
         /// </summary>
         private bool HasDamagedStructures()
         {
@@ -230,20 +230,20 @@ namespace TheSecondSeat.Autonomous
                            t.HitPoints < t.MaxHitPoints * 0.7f && 
                            t.def.building != null);
 
-            return damaged.Count() >= 3; // ÖÁÉÙ3¸öÊÜËğ½¨Öş
+            return damaged.Count() >= 3; // è‡³å°‘3ä¸ªå—æŸå»ºç­‘
         }
 
         /// <summary>
-        /// ´¦ÀíÍæ¼Ò¶Ô½¨ÒéµÄ»Ø¸´
+        /// å¤„ç†ç©å®¶å¯¹å»ºè®®çš„å›å¤
         /// </summary>
         public void ProcessPlayerResponse(string response)
         {
             response = response.ToLower().Trim();
 
-            if (response.Contains("Í¬Òâ") || response.Contains("Ö´ĞĞ") || response.Contains("ºÃ") || 
+            if (response.Contains("åŒæ„") || response.Contains("æ‰§è¡Œ") || response.Contains("å¥½") || 
                 response.Contains("agree") || response.Contains("yes") || response.Contains("ok"))
             {
-                // Ö´ĞĞ×î½üµÄ½¨Òé
+                // æ‰§è¡Œæœ€è¿‘çš„å»ºè®®
                 if (pendingSuggestions.Count > 0)
                 {
                     var latest = pendingSuggestions.Last();
@@ -251,15 +251,15 @@ namespace TheSecondSeat.Autonomous
                     pendingSuggestions.Remove(latest);
                 }
             }
-            else if (response.Contains("¾Ü¾ø") || response.Contains("²»Òª") || response.Contains("no"))
+            else if (response.Contains("æ‹’ç»") || response.Contains("ä¸è¦") || response.Contains("no"))
             {
                 if (pendingSuggestions.Count > 0)
                 {
                     pendingSuggestions.RemoveAt(pendingSuggestions.Count - 1);
                     
-                    // ½µµÍºÃ¸Ğ¶È
+                    // é™ä½å¥½æ„Ÿåº¦
                     var narrator = Current.Game?.GetComponent<Narrator.NarratorManager>();
-                    narrator?.ModifyFavorability(-0.5f, "Íæ¼Ò¾Ü¾øÁË½¨Òé");
+                    narrator?.ModifyFavorability(-0.5f, "ç©å®¶æ‹’ç»äº†å»ºè®®");
                 }
             }
         }
@@ -273,7 +273,7 @@ namespace TheSecondSeat.Autonomous
     }
 
     /// <summary>
-    /// ×ÔÖ÷½¨Òé
+    /// è‡ªä¸»å»ºè®®
     /// </summary>
     public class AutonomousSuggestion : IExposable
     {

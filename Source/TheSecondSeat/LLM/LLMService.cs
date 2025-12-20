@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -10,8 +10,8 @@ namespace TheSecondSeat.LLM
 {
     /// <summary>
     /// Handles asynchronous communication with LLM endpoints
-    /// Í³Ò»Ê¹ÓÃ UnityWebRequest£¨RimWorld ¼æÈİ£©
-    /// Ö§³Ö£ºOpenAI, DeepSeek, Gemini, ±¾µØ LLM
+    /// ç»Ÿä¸€ä½¿ç”¨ UnityWebRequestï¼ˆRimWorld å…¼å®¹ï¼‰
+    /// æ”¯æŒï¼šOpenAI, DeepSeek, Gemini, æœ¬åœ° LLM
     /// </summary>
     public class LLMService
     {
@@ -21,30 +21,30 @@ namespace TheSecondSeat.LLM
         private string apiEndpoint = "https://api.openai.com/v1/chat/completions";
         private string apiKey = "";
         private string modelName = "gpt-4";
-        private string provider = "openai"; // ? ĞÂÔö£º¼ÇÂ¼ provider ÀàĞÍ
+        private string provider = "openai"; // ? æ–°å¢ï¼šè®°å½• provider ç±»å‹
 
         public LLMService()
         {
-            // ²»ÔÙÊ¹ÓÃ HttpClient£¬È«²¿Ê¹ÓÃ UnityWebRequest
+            // ä¸å†ä½¿ç”¨ HttpClientï¼Œå…¨éƒ¨ä½¿ç”¨ UnityWebRequest
         }
 
         /// <summary>
         /// Configure the LLM endpoint and API key
-        /// ? ĞÂÔö£ºproviderType ²ÎÊı
+        /// ? æ–°å¢ï¼šproviderType å‚æ•°
         /// </summary>
         public void Configure(string endpoint, string key, string model = "gpt-4", string providerType = "openai")
         {
             apiEndpoint = endpoint;
             apiKey = key;
             modelName = model;
-            provider = providerType.ToLower(); // ? ĞÂÔö£º¼ÇÂ¼ provider
+            provider = providerType.ToLower(); // ? æ–°å¢ï¼šè®°å½• provider
             
             Log.Message($"[The Second Seat] LLM configured: provider={provider}, endpoint={endpoint}, model={model}");
         }
 
         /// <summary>
         /// Send game state to LLM and receive AI response asynchronously
-        /// ? ĞŞ¸Ä£ºÊ¹ÓÃ provider ×Ö¶ÎÅĞ¶Ï£¬¶ø²»ÊÇ URL ¼ì²â
+        /// ? ä¿®æ”¹ï¼šä½¿ç”¨ provider å­—æ®µåˆ¤æ–­ï¼Œè€Œä¸æ˜¯ URL æ£€æµ‹
         /// </summary>
         public async Task<LLMResponse?> SendStateAndGetActionAsync(
             string systemPrompt, 
@@ -53,15 +53,15 @@ namespace TheSecondSeat.LLM
         {
             try
             {
-                // ? Ê¹ÓÃ provider ×Ö¶ÎÅĞ¶Ï
+                // ? ä½¿ç”¨ provider å­—æ®µåˆ¤æ–­
                 if (provider == "gemini")
                 {
-                    Log.Message("[The Second Seat] Ê¹ÓÃ Gemini API");
+                    Log.Message("[The Second Seat] ä½¿ç”¨ Gemini API");
                     return await SendToGeminiAsync(systemPrompt, gameStateJson, userMessage);
                 }
                 else
                 {
-                    Log.Message($"[The Second Seat] Ê¹ÓÃ {provider} (OpenAI ¼æÈİ¸ñÊ½)");
+                    Log.Message($"[The Second Seat] ä½¿ç”¨ {provider} (OpenAI å…¼å®¹æ ¼å¼)");
                     return await SendToOpenAICompatibleAsync(systemPrompt, gameStateJson, userMessage);
                 }
             }
@@ -73,11 +73,11 @@ namespace TheSecondSeat.LLM
         }
 
         /// <summary>
-        /// Gemini API ×¨ÓÃÇëÇó
+        /// Gemini API ä¸“ç”¨è¯·æ±‚
         /// </summary>
         private async Task<LLMResponse?> SendToGeminiAsync(string systemPrompt, string gameStateJson, string userMessage)
         {
-            Log.Message("[The Second Seat] Ê¹ÓÃ Gemini API ¸ñÊ½");
+            Log.Message("[The Second Seat] ä½¿ç”¨ Gemini API æ ¼å¼");
             
             string fullMessage = $"Game State:\n{gameStateJson}\n\n{userMessage}";
             var geminiResponse = await GeminiApiClient.SendRequestAsync(
@@ -90,7 +90,7 @@ namespace TheSecondSeat.LLM
             
             if (geminiResponse == null || geminiResponse.Candidates == null || geminiResponse.Candidates.Count == 0)
             {
-                Log.Error("[The Second Seat] Gemini ·µ»Ø¿ÕÏìÓ¦");
+                Log.Error("[The Second Seat] Gemini è¿”å›ç©ºå“åº”");
                 return null;
             }
             
@@ -99,14 +99,14 @@ namespace TheSecondSeat.LLM
         }
 
         /// <summary>
-        /// OpenAI ¼æÈİ¸ñÊ½£¨OpenAI¡¢DeepSeek¡¢±¾µØ LLM£©
-        /// Ê¹ÓÃ UnityWebRequest Ìæ´ú HttpClient
+        /// OpenAI å…¼å®¹æ ¼å¼ï¼ˆOpenAIã€DeepSeekã€æœ¬åœ° LLMï¼‰
+        /// ä½¿ç”¨ UnityWebRequest æ›¿ä»£ HttpClient
         /// </summary>
         private async Task<LLMResponse?> SendToOpenAICompatibleAsync(string systemPrompt, string gameStateJson, string userMessage)
         {
-            Log.Message("[The Second Seat] Ê¹ÓÃ OpenAI ¼æÈİ¸ñÊ½");
+            Log.Message("[The Second Seat] ä½¿ç”¨ OpenAI å…¼å®¹æ ¼å¼");
             
-            // ¹¹½¨ÇëÇó
+            // æ„å»ºè¯·æ±‚
             var request = new OpenAIRequest
             {
                 model = modelName,
@@ -123,49 +123,49 @@ namespace TheSecondSeat.LLM
 
             try
             {
-                Log.Message($"[The Second Seat] ÇëÇó: {apiEndpoint}");
-                Log.Message($"[The Second Seat] Ä£ĞÍ: {modelName}");
+                Log.Message($"[The Second Seat] è¯·æ±‚: {apiEndpoint}");
+                Log.Message($"[The Second Seat] æ¨¡å‹: {modelName}");
 
-                // ? Ê¹ÓÃ UnityWebRequest
+                // ? ä½¿ç”¨ UnityWebRequest
                 using var webRequest = new UnityWebRequest(apiEndpoint, "POST");
                 webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonContent));
                 webRequest.downloadHandler = new DownloadHandlerBuffer();
                 webRequest.SetRequestHeader("Content-Type", "application/json");
                 webRequest.timeout = 60;
 
-                // ? Ìí¼Ó Authorization Í·£¨Èç¹ûÓĞ API Key£©
+                // ? æ·»åŠ  Authorization å¤´ï¼ˆå¦‚æœæœ‰ API Keyï¼‰
                 if (!string.IsNullOrEmpty(apiKey))
                 {
                     webRequest.SetRequestHeader("Authorization", $"Bearer {apiKey}");
                 }
 
-                // Òì²½·¢ËÍÇëÇó
+                // å¼‚æ­¥å‘é€è¯·æ±‚
                 var asyncOperation = webRequest.SendWebRequest();
 
                 while (!asyncOperation.isDone)
                 {
-                    if (Current.Game == null) return null; // ÓÎÏ·ÍË³ö
+                    if (Current.Game == null) return null; // æ¸¸æˆé€€å‡º
                     await Task.Delay(100);
                 }
 
-                // ¼ì²éÏìÓ¦
+                // æ£€æŸ¥å“åº”
                 if (webRequest.result == UnityWebRequest.Result.Success)
                 {
                     string responseText = webRequest.downloadHandler.text;
-                    Log.Message($"[The Second Seat] API ÏìÓ¦: {responseText.Substring(0, Math.Min(200, responseText.Length))}...");
+                    Log.Message($"[The Second Seat] API å“åº”: {responseText.Substring(0, Math.Min(200, responseText.Length))}...");
 
                     var openAIResponse = JsonConvert.DeserializeObject<OpenAIResponse>(responseText);
 
                     if (openAIResponse?.choices == null || openAIResponse.choices.Length == 0)
                     {
-                        Log.Error("[The Second Seat] LLM ·µ»Ø¿ÕÏìÓ¦");
+                        Log.Error("[The Second Seat] LLM è¿”å›ç©ºå“åº”");
                         return null;
                     }
 
                     string messageContent = openAIResponse.choices[0].message?.content;
                     if (string.IsNullOrEmpty(messageContent))
                     {
-                        Log.Error("[The Second Seat] LLM ÏûÏ¢ÄÚÈİÎª¿Õ");
+                        Log.Error("[The Second Seat] LLM æ¶ˆæ¯å†…å®¹ä¸ºç©º");
                         return null;
                     }
 
@@ -173,49 +173,49 @@ namespace TheSecondSeat.LLM
                 }
                 else
                 {
-                    Log.Error($"[The Second Seat] API ´íÎó: {webRequest.responseCode} - {webRequest.error}");
-                    Log.Error($"[The Second Seat] ÏìÓ¦ÄÚÈİ: {webRequest.downloadHandler.text}");
+                    Log.Error($"[The Second Seat] API é”™è¯¯: {webRequest.responseCode} - {webRequest.error}");
+                    Log.Error($"[The Second Seat] å“åº”å†…å®¹: {webRequest.downloadHandler.text}");
                     return null;
                 }
             }
             catch (Exception ex)
             {
-                Log.Error($"[The Second Seat] OpenAI ¼æÈİ API Òì³£: {ex.Message}\n{ex.StackTrace}");
+                Log.Error($"[The Second Seat] OpenAI å…¼å®¹ API å¼‚å¸¸: {ex.Message}\n{ex.StackTrace}");
                 return null;
             }
         }
 
         /// <summary>
-        /// ½âÎö LLM ÏìÓ¦£¨JSON »ò´¿ÎÄ±¾£©
-        /// ? ĞŞ¸´£º´Ó markdown ´úÂë¿éÖĞÌáÈ¡ JSON
+        /// è§£æ LLM å“åº”ï¼ˆJSON æˆ–çº¯æ–‡æœ¬ï¼‰
+        /// ? ä¿®å¤ï¼šä» markdown ä»£ç å—ä¸­æå– JSON
         /// </summary>
         private LLMResponse? ParseLLMResponse(string messageContent)
         {
             try
             {
-                // ? ÌáÈ¡ JSON£¨ÓĞÊ± AI »áÔÚ markdown ´úÂë¿éÖĞ·µ»Ø£©
+                // ? æå– JSONï¼ˆæœ‰æ—¶ AI ä¼šåœ¨ markdown ä»£ç å—ä¸­è¿”å›ï¼‰
                 string jsonContent = ExtractJsonFromMarkdown(messageContent);
                 
-                // ³¢ÊÔ½âÎöÎª JSON
+                // å°è¯•è§£æä¸º JSON
                 var llmResponse = JsonConvert.DeserializeObject<LLMResponse>(jsonContent);
                 
-                // ? ÑéÖ¤ÊÇ·ñ³É¹¦½âÎö
+                // ? éªŒè¯æ˜¯å¦æˆåŠŸè§£æ
                 if (llmResponse != null && !string.IsNullOrEmpty(llmResponse.dialogue))
                 {
                     return llmResponse;
                 }
                 
-                // Èç¹û dialogue Îª¿Õ£¬¿ÉÄÜ½âÎöÊ§°Ü£¬·µ»Ø´¿ÎÄ±¾
+                // å¦‚æœ dialogue ä¸ºç©ºï¼Œå¯èƒ½è§£æå¤±è´¥ï¼Œè¿”å›çº¯æ–‡æœ¬
                 return new LLMResponse
                 {
                     thought = "",
-                    dialogue = messageContent, // Ê¹ÓÃÔ­Ê¼ÄÚÈİ
+                    dialogue = messageContent, // ä½¿ç”¨åŸå§‹å†…å®¹
                     command = null
                 };
             }
             catch
             {
-                // Èç¹û²»ÊÇ JSON£¬×÷Îª´¿ÎÄ±¾¶Ô»°
+                // å¦‚æœä¸æ˜¯ JSONï¼Œä½œä¸ºçº¯æ–‡æœ¬å¯¹è¯
                 return new LLMResponse
                 {
                     thought = "",
@@ -226,11 +226,11 @@ namespace TheSecondSeat.LLM
         }
 
         /// <summary>
-        /// ´Ó markdown ´úÂë¿éÖĞÌáÈ¡ JSON
+        /// ä» markdown ä»£ç å—ä¸­æå– JSON
         /// </summary>
         private string ExtractJsonFromMarkdown(string content)
         {
-            // Èç¹û°üº¬ ```json ´úÂë¿é£¬ÌáÈ¡ÆäÖĞµÄÄÚÈİ
+            // å¦‚æœåŒ…å« ```json ä»£ç å—ï¼Œæå–å…¶ä¸­çš„å†…å®¹
             if (content.Contains("```json"))
             {
                 int startIndex = content.IndexOf("```json") + 7;
@@ -255,21 +255,21 @@ namespace TheSecondSeat.LLM
 
         /// <summary>
         /// Test connection to the LLM endpoint
-        /// ? ĞŞ¸Ä£ºÊ¹ÓÃ provider ×Ö¶ÎÅĞ¶Ï
+        /// ? ä¿®æ”¹ï¼šä½¿ç”¨ provider å­—æ®µåˆ¤æ–­
         /// </summary>
         public async Task<bool> TestConnectionAsync()
         {
             try
             {
-                // ? Ê¹ÓÃ provider ×Ö¶ÎÅĞ¶Ï
+                // ? ä½¿ç”¨ provider å­—æ®µåˆ¤æ–­
                 if (provider == "gemini")
                 {
-                    // Gemini API ²âÊÔ
+                    // Gemini API æµ‹è¯•
                     return await TestGeminiConnectionAsync();
                 }
                 else
                 {
-                    // OpenAI ¼æÈİ¸ñÊ½²âÊÔ
+                    // OpenAI å…¼å®¹æ ¼å¼æµ‹è¯•
                     return await TestOpenAICompatibleConnectionAsync();
                 }
             }
@@ -282,7 +282,7 @@ namespace TheSecondSeat.LLM
         }
 
         /// <summary>
-        /// ²âÊÔ Gemini API Á¬½Ó
+        /// æµ‹è¯• Gemini API è¿æ¥
         /// </summary>
         private async Task<bool> TestGeminiConnectionAsync()
         {
@@ -309,7 +309,7 @@ namespace TheSecondSeat.LLM
         }
 
         /// <summary>
-        /// ²âÊÔ OpenAI ¼æÈİ API Á¬½Ó
+        /// æµ‹è¯• OpenAI å…¼å®¹ API è¿æ¥
         /// </summary>
         private async Task<bool> TestOpenAICompatibleConnectionAsync()
         {
@@ -331,7 +331,7 @@ namespace TheSecondSeat.LLM
                 Log.Message($"[The Second Seat] Testing connection to: {apiEndpoint}");
                 Log.Message($"[The Second Seat] Using model: {modelName}");
 
-                // ? Ê¹ÓÃ UnityWebRequest
+                // ? ä½¿ç”¨ UnityWebRequest
                 using var webRequest = new UnityWebRequest(apiEndpoint, "POST");
                 webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonContent));
                 webRequest.downloadHandler = new DownloadHandlerBuffer();

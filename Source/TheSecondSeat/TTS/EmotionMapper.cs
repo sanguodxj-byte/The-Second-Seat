@@ -1,47 +1,47 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using TheSecondSeat.PersonaGeneration;
 
 namespace TheSecondSeat.TTS
 {
     /// <summary>
-    /// ±íÇéµ½ Azure TTS Çé¸Ğ·ç¸ñµÄÓ³ÉäÆ÷
-    /// ¸ù¾İ ExpressionType ×Ô¶¯ÍÆ¶Ï SSML Çé¸Ğ²ÎÊı
+    /// è¡¨æƒ…åˆ° Azure TTS æƒ…æ„Ÿé£æ ¼çš„æ˜ å°„å™¨
+    /// æ ¹æ® ExpressionType è‡ªåŠ¨æ¨æ–­ SSML æƒ…æ„Ÿå‚æ•°
     /// </summary>
     public static class EmotionMapper
     {
         /// <summary>
-        /// ±íÇéµ½Çé¸Ğ·ç¸ñµÄÓ³Éä±í
+        /// è¡¨æƒ…åˆ°æƒ…æ„Ÿé£æ ¼çš„æ˜ å°„è¡¨
         /// </summary>
         private static readonly Dictionary<ExpressionType, EmotionStyle> ExpressionToEmotion = new Dictionary<ExpressionType, EmotionStyle>
         {
-            // ? »ı¼«ÇéĞ÷
-            { ExpressionType.Happy,        new EmotionStyle("cheerful", 1.5f) },      // ¿ªĞÄ
-            { ExpressionType.Smug,         new EmotionStyle("cheerful", 1.2f) },      // µÃÒâ
-            { ExpressionType.Playful,      new EmotionStyle("cheerful", 1.3f) },      // µ÷Æ¤
+            // ? ç§¯ææƒ…ç»ª
+            { ExpressionType.Happy,        new EmotionStyle("cheerful", 1.5f) },      // å¼€å¿ƒ
+            { ExpressionType.Smug,         new EmotionStyle("cheerful", 1.2f) },      // å¾—æ„
+            { ExpressionType.Playful,      new EmotionStyle("cheerful", 1.3f) },      // è°ƒçš®
             
-            // ? Ïû¼«ÇéĞ÷
-            { ExpressionType.Sad,          new EmotionStyle("sad", 1.3f) },           // ±¯ÉË
-            { ExpressionType.Disappointed, new EmotionStyle("sad", 1.0f) },           // Ê§Íû
-            { ExpressionType.Worried,      new EmotionStyle("sad", 0.8f) },           // µ£ÓÇ
+            // ? æ¶ˆææƒ…ç»ª
+            { ExpressionType.Sad,          new EmotionStyle("sad", 1.3f) },           // æ‚²ä¼¤
+            { ExpressionType.Disappointed, new EmotionStyle("sad", 1.0f) },           // å¤±æœ›
+            { ExpressionType.Worried,      new EmotionStyle("sad", 0.8f) },           // æ‹…å¿§
             
-            // ? ·ßÅ­ÇéĞ÷
-            { ExpressionType.Angry,        new EmotionStyle("angry", 1.5f) },         // ·ßÅ­
-            { ExpressionType.Annoyed,      new EmotionStyle("angry", 1.0f) },         // ·³Ôê
+            // ? æ„¤æ€’æƒ…ç»ª
+            { ExpressionType.Angry,        new EmotionStyle("angry", 1.5f) },         // æ„¤æ€’
+            { ExpressionType.Annoyed,      new EmotionStyle("angry", 1.0f) },         // çƒ¦èº
             
-            // ? ¾ªÑÈÇéĞ÷
-            { ExpressionType.Surprised,    new EmotionStyle("excited", 1.4f) },       // ¾ªÑÈ
+            // ? æƒŠè®¶æƒ…ç»ª
+            { ExpressionType.Surprised,    new EmotionStyle("excited", 1.4f) },       // æƒŠè®¶
             
-            // ? ³ÁË¼/ÖĞĞÔ
-            { ExpressionType.Thoughtful,   new EmotionStyle("chat", 0.9f) },          // ³ÁË¼
-            { ExpressionType.Neutral,      new EmotionStyle("chat", 1.0f) },          // ÖĞĞÔ
+            // ? æ²‰æ€/ä¸­æ€§
+            { ExpressionType.Thoughtful,   new EmotionStyle("chat", 0.9f) },          // æ²‰æ€
+            { ExpressionType.Neutral,      new EmotionStyle("chat", 1.0f) },          // ä¸­æ€§
             
-            // ? ĞÂÔö£ºº¦Ğß£¨ÎÂÈá·ç¸ñ£¬µÍÇ¿¶È£©
-            { ExpressionType.Shy,          new EmotionStyle("gentle", 0.8f) },        // º¦Ğß
+            // ? æ–°å¢ï¼šå®³ç¾ï¼ˆæ¸©æŸ”é£æ ¼ï¼Œä½å¼ºåº¦ï¼‰
+            { ExpressionType.Shy,          new EmotionStyle("gentle", 0.8f) },        // å®³ç¾
         };
 
         /// <summary>
-        /// ¸ù¾İ±íÇéÀàĞÍ»ñÈ¡Çé¸Ğ·ç¸ñ
+        /// æ ¹æ®è¡¨æƒ…ç±»å‹è·å–æƒ…æ„Ÿé£æ ¼
         /// </summary>
         public static EmotionStyle GetEmotionStyle(ExpressionType expression)
         {
@@ -50,12 +50,12 @@ namespace TheSecondSeat.TTS
                 return style;
             }
 
-            // Ä¬ÈÏ£ºÏĞÁÄ·ç¸ñ
+            // é»˜è®¤ï¼šé—²èŠé£æ ¼
             return new EmotionStyle("chat", 1.0f);
         }
 
         /// <summary>
-        /// ¸ù¾İµ±Ç°±íÇé»ñÈ¡Çé¸Ğ·ç¸ñ£¨´Ó±íÇéÏµÍ³£©
+        /// æ ¹æ®å½“å‰è¡¨æƒ…è·å–æƒ…æ„Ÿé£æ ¼ï¼ˆä»è¡¨æƒ…ç³»ç»Ÿï¼‰
         /// </summary>
         public static EmotionStyle GetCurrentEmotionStyle(string personaDefName)
         {
@@ -66,24 +66,24 @@ namespace TheSecondSeat.TTS
             }
             catch
             {
-                // »ñÈ¡Ê§°Ü£¬·µ»ØÄ¬ÈÏ
+                // è·å–å¤±è´¥ï¼Œè¿”å›é»˜è®¤
                 return new EmotionStyle("chat", 1.0f);
             }
         }
     }
 
     /// <summary>
-    /// Çé¸Ğ·ç¸ñÊı¾İ½á¹¹
+    /// æƒ…æ„Ÿé£æ ¼æ•°æ®ç»“æ„
     /// </summary>
     public class EmotionStyle
     {
         /// <summary>
-        /// Azure TTS Çé¸Ğ·ç¸ñÃû³Æ
+        /// Azure TTS æƒ…æ„Ÿé£æ ¼åç§°
         /// </summary>
         public string StyleName { get; }
 
         /// <summary>
-        /// Çé¸ĞÇ¿¶È£¨0.01 - 2.0£©
+        /// æƒ…æ„Ÿå¼ºåº¦ï¼ˆ0.01 - 2.0ï¼‰
         /// </summary>
         public float StyleDegree { get; }
 

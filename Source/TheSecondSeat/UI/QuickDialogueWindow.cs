@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using Verse;
 using RimWorld;
 using TheSecondSeat.Core;
@@ -6,22 +6,22 @@ using TheSecondSeat.Core;
 namespace TheSecondSeat.UI
 {
     /// <summary>
-    /// ¿ìËÙ¶Ô»°´°¿Ú
-    /// ? ÓÒ¼ü AI °´Å¥´ò¿ª£¬¿ìËÙ·¢ËÍÏûÏ¢
-    /// ? »Ø³µ¼ü·¢ËÍ£¬ESC ¹Ø±Õ
-    /// ? ¼«¼òÉè¼Æ£ºÊäÈë¿ò¡¢·¢ËÍ°´Å¥¡¢¿ìËÙ»Ø¸´°´Å¥
+    /// å¿«é€Ÿå¯¹è¯çª—å£
+    /// ? å³é”® AI æŒ‰é’®æ‰“å¼€ï¼Œå¿«é€Ÿå‘é€æ¶ˆæ¯
+    /// ? å›è½¦é”®å‘é€ï¼ŒESC å…³é—­
+    /// ? æç®€è®¾è®¡ï¼šè¾“å…¥æ¡†ã€å‘é€æŒ‰é’®ã€å¿«é€Ÿå›å¤æŒ‰é’®
     /// </summary>
     public class QuickDialogueWindow : Window
     {
         private string userInput = "";
         private const float WindowWidth = 400f;
-        private const float InputHeight = 24f;  // ? ¼õĞ¡µ¥ĞĞ¸ß¶È
-        private const float QuickButtonHeight = 28f;  // ¿ìËÙ°´Å¥¸ß¶È
-        private const float Padding = 8f;  // ? ¼õĞ¡ÄÚ±ß¾à
-        private const float WindowHeight = 120f;  // ? ¹Ì¶¨×Ü¸ß¶È£¬È·±£ËùÓĞÔªËØ¿É¼û
+        private const float InputHeight = 24f;  // ? å‡å°å•è¡Œé«˜åº¦
+        private const float QuickButtonHeight = 28f;  // å¿«é€ŸæŒ‰é’®é«˜åº¦
+        private const float Padding = 8f;  // ? å‡å°å†…è¾¹è·
+        private const float WindowHeight = 120f;  // ? å›ºå®šæ€»é«˜åº¦ï¼Œç¡®ä¿æ‰€æœ‰å…ƒç´ å¯è§
         private const float SendButtonWidth = 60f;
         
-        // ? ÓÃÓÚ¸ú×ÙÊÇ·ñĞèÒª·¢ËÍ£¨»Ø³µ¼ü´¥·¢£©
+        // ? ç”¨äºè·Ÿè¸ªæ˜¯å¦éœ€è¦å‘é€ï¼ˆå›è½¦é”®è§¦å‘ï¼‰
         private bool pendingSend = false;
         private string pendingMessage = "";
         
@@ -30,11 +30,11 @@ namespace TheSecondSeat.UI
         public QuickDialogueWindow()
         {
             this.doCloseButton = false;
-            this.doCloseX = false;  // ? ÒÆ³ı¹Ø±Õ°´Å¥
+            this.doCloseX = false;  // ? ç§»é™¤å…³é—­æŒ‰é’®
             this.closeOnClickedOutside = true;
-            this.closeOnCancel = true;  // ESC ¹Ø±Õ
+            this.closeOnCancel = true;  // ESC å…³é—­
             this.absorbInputAroundWindow = true;
-            this.forcePause = false;  // ²»ÔİÍ£ÓÎÏ·
+            this.forcePause = false;  // ä¸æš‚åœæ¸¸æˆ
             this.draggable = true;
             this.resizeable = false;
             this.preventCameraMotion = false;
@@ -42,7 +42,7 @@ namespace TheSecondSeat.UI
 
         protected override void SetInitialSizeAndPosition()
         {
-            // ¾ÓÖĞÏÔÊ¾
+            // å±…ä¸­æ˜¾ç¤º
             float x = (Verse.UI.screenWidth - WindowWidth) / 2f;
             float y = (Verse.UI.screenHeight - WindowHeight) / 2f;
             this.windowRect = new Rect(x, y, WindowWidth, WindowHeight);
@@ -58,7 +58,7 @@ namespace TheSecondSeat.UI
 
         public override void DoWindowContents(Rect inRect)
         {
-            // ? ÏÈ´¦Àí»Ø³µ¼üÊÂ¼ş£¨ÔÚÈÎºÎ¿Ø¼şÖ®Ç°£©
+            // ? å…ˆå¤„ç†å›è½¦é”®äº‹ä»¶ï¼ˆåœ¨ä»»ä½•æ§ä»¶ä¹‹å‰ï¼‰
             Event evt = Event.current;
             if (evt.type == EventType.KeyDown)
             {
@@ -75,21 +75,21 @@ namespace TheSecondSeat.UI
             
             float curY = Padding;
             
-            // ? ÊäÈë¿òÇøÓò£¨µ¥±¶¸ß¶È£¬½ô´ÕÏÔÊ¾£©
+            // ? è¾“å…¥æ¡†åŒºåŸŸï¼ˆå•å€é«˜åº¦ï¼Œç´§å‡‘æ˜¾ç¤ºï¼‰
             float inputWidth = inRect.width - SendButtonWidth - Padding * 2 - 5f;
-            float inputAreaHeight = InputHeight * 1.5f;  // ? 1.5±¶¸ß¶È£¬×ã¹»ÏÔÊ¾1-2ĞĞ
+            float inputAreaHeight = InputHeight * 1.5f;  // ? 1.5å€é«˜åº¦ï¼Œè¶³å¤Ÿæ˜¾ç¤º1-2è¡Œ
             
-            // ÊäÈë¿ò£¨Ê¹ÓÃ TextArea Ö§³Ö¶àĞĞ£©
+            // è¾“å…¥æ¡†ï¼ˆä½¿ç”¨ TextArea æ”¯æŒå¤šè¡Œï¼‰
             GUI.SetNextControlName("QuickDialogueInput");
             var inputRect = new Rect(Padding, curY, inputWidth, inputAreaHeight);
             userInput = Widgets.TextArea(inputRect, userInput);
             
-            // ? ×Ô¶¯¾Û½¹ÊäÈë¿ò
+            // ? è‡ªåŠ¨èšç„¦è¾“å…¥æ¡†
             GUI.FocusControl("QuickDialogueInput");
             
-            // ·¢ËÍ°´Å¥£¨´¹Ö±¾ÓÖĞÓÚÊäÈë¿ò£©
+            // å‘é€æŒ‰é’®ï¼ˆå‚ç›´å±…ä¸­äºè¾“å…¥æ¡†ï¼‰
             var sendButtonRect = new Rect(inputRect.xMax + 5f, curY + (inputAreaHeight - InputHeight) / 2f, SendButtonWidth, InputHeight);
-            if (Widgets.ButtonText(sendButtonRect, "·¢ËÍ"))
+            if (Widgets.ButtonText(sendButtonRect, "å‘é€"))
             {
                 if (!string.IsNullOrWhiteSpace(userInput))
                 {
@@ -100,30 +100,30 @@ namespace TheSecondSeat.UI
             
             curY += inputAreaHeight + Padding;
             
-            // ? ¿ìËÙ»Ø¸´°´Å¥ÇøÓò
+            // ? å¿«é€Ÿå›å¤æŒ‰é’®åŒºåŸŸ
             float quickButtonWidth = (inRect.width - Padding * 3) / 2f;
             
-            // Í¬Òâ°´Å¥
+            // åŒæ„æŒ‰é’®
             var agreeRect = new Rect(Padding, curY, quickButtonWidth, QuickButtonHeight);
-            GUI.color = new Color(0.3f, 0.8f, 0.3f);  // ÂÌÉ«
-            if (Widgets.ButtonText(agreeRect, "? Í¬Òâ / ºÃµÄ"))
+            GUI.color = new Color(0.3f, 0.8f, 0.3f);  // ç»¿è‰²
+            if (Widgets.ButtonText(agreeRect, "? åŒæ„ / å¥½çš„"))
             {
                 pendingSend = true;
-                pendingMessage = "ºÃµÄ£¬ÎÒÍ¬Òâ¡£";
+                pendingMessage = "å¥½çš„ï¼Œæˆ‘åŒæ„ã€‚";
             }
             GUI.color = Color.white;
             
-            // ¾Ü¾ø°´Å¥
+            // æ‹’ç»æŒ‰é’®
             var rejectRect = new Rect(agreeRect.xMax + Padding, curY, quickButtonWidth, QuickButtonHeight);
-            GUI.color = new Color(0.8f, 0.3f, 0.3f);  // ºìÉ«
-            if (Widgets.ButtonText(rejectRect, "? ¾Ü¾ø / ²»Òª"))
+            GUI.color = new Color(0.8f, 0.3f, 0.3f);  // çº¢è‰²
+            if (Widgets.ButtonText(rejectRect, "? æ‹’ç» / ä¸è¦"))
             {
                 pendingSend = true;
-                pendingMessage = "²»£¬ÎÒ¾Ü¾ø¡£";
+                pendingMessage = "ä¸ï¼Œæˆ‘æ‹’ç»ã€‚";
             }
             GUI.color = Color.white;
             
-            // ? ÔÚäÖÈ¾Íê³Éºó´¦Àí·¢ËÍ£¨±ÜÃâÔÚäÖÈ¾ÖĞĞŞ¸Ä×´Ì¬£©
+            // ? åœ¨æ¸²æŸ“å®Œæˆåå¤„ç†å‘é€ï¼ˆé¿å…åœ¨æ¸²æŸ“ä¸­ä¿®æ”¹çŠ¶æ€ï¼‰
             if (pendingSend)
             {
                 pendingSend = false;
@@ -143,24 +143,24 @@ namespace TheSecondSeat.UI
                 var controller = Current.Game?.GetComponent<NarratorController>();
                 if (controller == null)
                 {
-                    Messages.Message("ĞğÊÂÕß¿ØÖÆÆ÷Î´ÕÒµ½", MessageTypeDefOf.RejectInput);
+                    Messages.Message("å™äº‹è€…æ§åˆ¶å™¨æœªæ‰¾åˆ°", MessageTypeDefOf.RejectInput);
                     this.Close();
                     return;
                 }
 
-                // Ìí¼Óµ½ÁÄÌìÀúÊ·
-                NarratorWindow.AddAIMessage($"[Äã]: {message}", "");
+                // æ·»åŠ åˆ°èŠå¤©å†å²
+                NarratorWindow.AddAIMessage($"[ä½ ]: {message}", "");
                 
-                // ´¥·¢ AI ÏìÓ¦
+                // è§¦å‘ AI å“åº”
                 controller.TriggerNarratorUpdate(message);
                 
-                // ¹Ø±Õ´°¿Ú
+                // å…³é—­çª—å£
                 this.Close();
             }
             catch (System.Exception ex)
             {
-                Log.Error($"[QuickDialogueWindow] ·¢ËÍÏûÏ¢Ê§°Ü: {ex}");
-                Messages.Message("·¢ËÍÊ§°Ü£º" + ex.Message, MessageTypeDefOf.RejectInput);
+                Log.Error($"[QuickDialogueWindow] å‘é€æ¶ˆæ¯å¤±è´¥: {ex}");
+                Messages.Message("å‘é€å¤±è´¥ï¼š" + ex.Message, MessageTypeDefOf.RejectInput);
                 this.Close();
             }
         }

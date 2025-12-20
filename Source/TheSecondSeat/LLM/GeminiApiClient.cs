@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,16 +11,16 @@ using Newtonsoft.Json;
 namespace TheSecondSeat.LLM
 {
     /// <summary>
-    /// Gemini API ×¨ÓÃ¿Í»§¶Ë
-    /// Ö§³ÖÎÄ±¾ºÍÍ¼Æ¬£¨Vision£©·ÖÎö
-    /// ²Î¿¼ RimWorld ÎÄµµºÍ Gemini API ¹æ·¶
+    /// Gemini API ä¸“ç”¨å®¢æˆ·ç«¯
+    /// æ”¯æŒæ–‡æœ¬å’Œå›¾ç‰‡ï¼ˆVisionï¼‰åˆ†æ
+    /// å‚è€ƒ RimWorld æ–‡æ¡£å’Œ Gemini API è§„èŒƒ
     /// </summary>
     public class GeminiApiClient
     {
         private const string BaseUrl = "https://generativelanguage.googleapis.com/v1beta";
         
         /// <summary>
-        /// ·¢ËÍ´¿ÎÄ±¾ÇëÇóµ½ Gemini API
+        /// å‘é€çº¯æ–‡æœ¬è¯·æ±‚åˆ° Gemini API
         /// </summary>
         public static async Task<GeminiResponse?> SendRequestAsync(
             string model,
@@ -31,14 +31,14 @@ namespace TheSecondSeat.LLM
         {
             if (string.IsNullOrEmpty(apiKey))
             {
-                Log.Error("[The Second Seat] Gemini API Key È±Ê§");
+                Log.Error("[The Second Seat] Gemini API Key ç¼ºå¤±");
                 return null;
             }
 
-            // ¹¹½¨ URL£¨API Key ÔÚ URL ²ÎÊıÖĞ£©
+            // æ„å»º URLï¼ˆAPI Key åœ¨ URL å‚æ•°ä¸­ï¼‰
             string url = $"{BaseUrl}/models/{model}:generateContent?key={apiKey}";
 
-            // ¹¹½¨ÇëÇóÌå£¨Gemini ¸ñÊ½£©
+            // æ„å»ºè¯·æ±‚ä½“ï¼ˆGemini æ ¼å¼ï¼‰
             var request = new GeminiRequest
             {
                 SystemInstruction = new SystemInstruction
@@ -66,7 +66,7 @@ namespace TheSecondSeat.LLM
         }
 
         /// <summary>
-        /// ·¢ËÍ°üº¬Í¼Æ¬µÄ¶àÄ£Ì¬ÇëÇóµ½ Gemini Vision API
+        /// å‘é€åŒ…å«å›¾ç‰‡çš„å¤šæ¨¡æ€è¯·æ±‚åˆ° Gemini Vision API
         /// </summary>
         public static async Task<GeminiResponse?> SendVisionRequestAsync(
             string model,
@@ -78,29 +78,29 @@ namespace TheSecondSeat.LLM
         {
             if (string.IsNullOrEmpty(apiKey))
             {
-                Log.Error("[The Second Seat] Gemini API Key È±Ê§");
+                Log.Error("[The Second Seat] Gemini API Key ç¼ºå¤±");
                 return null;
             }
 
             if (imageTexture == null)
             {
-                Log.Error("[The Second Seat] Í¼Æ¬ÎÆÀíÎª¿Õ");
+                Log.Error("[The Second Seat] å›¾ç‰‡çº¹ç†ä¸ºç©º");
                 return null;
             }
 
             try
             {
-                // 1?? ½« Texture2D ×ª»»Îª Base64
+                // 1?? å°† Texture2D è½¬æ¢ä¸º Base64
                 string base64Image = TextureToBase64(imageTexture);
                 if (string.IsNullOrEmpty(base64Image))
                 {
-                    Log.Error("[The Second Seat] Í¼Æ¬ Base64 ±àÂëÊ§°Ü");
+                    Log.Error("[The Second Seat] å›¾ç‰‡ Base64 ç¼–ç å¤±è´¥");
                     return null;
                 }
 
-                Log.Message($"[The Second Seat] Í¼Æ¬ÒÑ±àÂëÎª Base64 ({base64Image.Length} ×Ö·û)");
+                Log.Message($"[The Second Seat] å›¾ç‰‡å·²ç¼–ç ä¸º Base64 ({base64Image.Length} å­—ç¬¦)");
 
-                // 2?? ¹¹½¨¶àÄ£Ì¬ÇëÇóÌå
+                // 2?? æ„å»ºå¤šæ¨¡æ€è¯·æ±‚ä½“
                 string url = $"{BaseUrl}/models/{model}:generateContent?key={apiKey}";
 
                 var request = new GeminiRequest
@@ -112,9 +112,9 @@ namespace TheSecondSeat.LLM
                             Role = "user",
                             Parts = new List<Part>
                             {
-                                // ÏÈ·ÅÎÄ±¾ÌáÊ¾
+                                // å…ˆæ”¾æ–‡æœ¬æç¤º
                                 new Part { Text = textPrompt },
-                                // ÔÙ·ÅÍ¼Æ¬Êı¾İ
+                                // å†æ”¾å›¾ç‰‡æ•°æ®
                                 new Part
                                 {
                                     InlineData = new InlineData
@@ -131,7 +131,7 @@ namespace TheSecondSeat.LLM
                         Temperature = temperature,
                         TopK = 40,
                         TopP = 0.95f,
-                        MaxOutputTokens = maxTokens  // ? Ê¹ÓÃ²ÎÊı¶ø²»ÊÇÓ²±àÂë
+                        MaxOutputTokens = maxTokens  // ? ä½¿ç”¨å‚æ•°è€Œä¸æ˜¯ç¡¬ç¼–ç 
                     }
                 };
 
@@ -139,27 +139,27 @@ namespace TheSecondSeat.LLM
             }
             catch (Exception ex)
             {
-                Log.Error($"[The Second Seat] Gemini Vision ÇëÇóÒì³£: {ex.Message}\n{ex.StackTrace}");
+                Log.Error($"[The Second Seat] Gemini Vision è¯·æ±‚å¼‚å¸¸: {ex.Message}\n{ex.StackTrace}");
                 return null;
             }
         }
 
         /// <summary>
-        /// ½« Texture2D ×ª»»Îª Base64 ±àÂëµÄ PNG/JPG ×Ö·û´®
-        /// ? ÓÅ»¯£ºÑ¹Ëõ´óÍ¼Æ¬ÒÔ¼õÉÙ Base64 ´óĞ¡
+        /// å°† Texture2D è½¬æ¢ä¸º Base64 ç¼–ç çš„ PNG/JPG å­—ç¬¦ä¸²
+        /// ? ä¼˜åŒ–ï¼šå‹ç¼©å¤§å›¾ç‰‡ä»¥å‡å°‘ Base64 å¤§å°
         /// </summary>
         private static string TextureToBase64(Texture2D texture)
         {
             try
             {
-                // È·±£ÎÆÀí¿É¶Á
+                // ç¡®ä¿çº¹ç†å¯è¯»
                 if (!texture.isReadable)
                 {
-                    Log.Warning("[The Second Seat] ÎÆÀí²»¿É¶Á£¬³¢ÊÔ´´½¨¿É¶Á¸±±¾");
+                    Log.Warning("[The Second Seat] çº¹ç†ä¸å¯è¯»ï¼Œå°è¯•åˆ›å»ºå¯è¯»å‰¯æœ¬");
                     texture = MakeTextureReadable(texture);
                 }
 
-                // ? Èç¹ûÍ¼Æ¬Ì«´ó£¬ÏÈËõĞ¡
+                // ? å¦‚æœå›¾ç‰‡å¤ªå¤§ï¼Œå…ˆç¼©å°
                 Texture2D textureToEncode = texture;
                 bool needsResize = texture.width > 1024 || texture.height > 1024;
                 
@@ -171,32 +171,32 @@ namespace TheSecondSeat.LLM
                     int newHeight = (int)(texture.height * scale);
                     
                     textureToEncode = ResizeTexture(texture, newWidth, newHeight);
-                    Log.Message($"[The Second Seat] Í¼Æ¬ÒÑËõĞ¡£º{texture.width}x{texture.height} ¡ú {newWidth}x{newHeight}");
+                    Log.Message($"[The Second Seat] å›¾ç‰‡å·²ç¼©å°ï¼š{texture.width}x{texture.height} â†’ {newWidth}x{newHeight}");
                 }
 
-                // ? Ê¹ÓÃ JPG ±àÂë£¨¸üĞ¡µÄÎÄ¼ş£©
-                byte[] imageBytes = textureToEncode.EncodeToJPG(75); // ÖÊÁ¿ 75%
+                // ? ä½¿ç”¨ JPG ç¼–ç ï¼ˆæ›´å°çš„æ–‡ä»¶ï¼‰
+                byte[] imageBytes = textureToEncode.EncodeToJPG(75); // è´¨é‡ 75%
                 
                 if (imageBytes == null || imageBytes.Length == 0)
                 {
-                    // Èç¹û JPG Ê§°Ü£¬»ØÍËµ½ PNG
-                    Log.Warning("[The Second Seat] JPG ±àÂëÊ§°Ü£¬»ØÍËµ½ PNG");
+                    // å¦‚æœ JPG å¤±è´¥ï¼Œå›é€€åˆ° PNG
+                    Log.Warning("[The Second Seat] JPG ç¼–ç å¤±è´¥ï¼Œå›é€€åˆ° PNG");
                     imageBytes = textureToEncode.EncodeToPNG();
                 }
                 
                 if (imageBytes == null || imageBytes.Length == 0)
                 {
-                    Log.Error("[The Second Seat] Í¼Æ¬±àÂëÊ§°Ü");
+                    Log.Error("[The Second Seat] å›¾ç‰‡ç¼–ç å¤±è´¥");
                     return string.Empty;
                 }
 
-                // ×ª»»Îª Base64
+                // è½¬æ¢ä¸º Base64
                 string base64 = Convert.ToBase64String(imageBytes);
                 
-                Log.Message($"[The Second Seat] Í¼Æ¬±àÂë³É¹¦£º{textureToEncode.width}x{textureToEncode.height}, " +
-                          $"{imageBytes.Length / 1024}KB ¡ú Base64 {base64.Length} ×Ö·û");
+                Log.Message($"[The Second Seat] å›¾ç‰‡ç¼–ç æˆåŠŸï¼š{textureToEncode.width}x{textureToEncode.height}, " +
+                          $"{imageBytes.Length / 1024}KB â†’ Base64 {base64.Length} å­—ç¬¦");
                 
-                // ÇåÀíÁÙÊ±ÎÆÀí
+                // æ¸…ç†ä¸´æ—¶çº¹ç†
                 if (needsResize && textureToEncode != texture)
                 {
                     UnityEngine.Object.Destroy(textureToEncode);
@@ -206,13 +206,13 @@ namespace TheSecondSeat.LLM
             }
             catch (Exception ex)
             {
-                Log.Error($"[The Second Seat] ÎÆÀí×ª Base64 Òì³£: {ex.Message}");
+                Log.Error($"[The Second Seat] çº¹ç†è½¬ Base64 å¼‚å¸¸: {ex.Message}");
                 return string.Empty;
             }
         }
 
         /// <summary>
-        /// ? µ÷ÕûÎÆÀí´óĞ¡
+        /// ? è°ƒæ•´çº¹ç†å¤§å°
         /// </summary>
         private static Texture2D ResizeTexture(Texture2D source, int newWidth, int newHeight)
         {
@@ -232,7 +232,7 @@ namespace TheSecondSeat.LLM
         }
 
         /// <summary>
-        /// ´´½¨ÎÆÀíµÄ¿É¶Á¸±±¾
+        /// åˆ›å»ºçº¹ç†çš„å¯è¯»å‰¯æœ¬
         /// </summary>
         private static Texture2D MakeTextureReadable(Texture2D source)
         {
@@ -259,7 +259,7 @@ namespace TheSecondSeat.LLM
         }
 
         /// <summary>
-        /// Í³Ò»µÄ Gemini API ÇëÇó·¢ËÍ·½·¨
+        /// ç»Ÿä¸€çš„ Gemini API è¯·æ±‚å‘é€æ–¹æ³•
         /// </summary>
         private static async Task<GeminiResponse?> SendGeminiRequestAsync(string url, GeminiRequest request)
         {
@@ -271,50 +271,50 @@ namespace TheSecondSeat.LLM
 
             try
             {
-                Log.Message($"[The Second Seat] Gemini API ÇëÇó: {url}");
-                Log.Message($"[The Second Seat] ÇëÇóÌå´óĞ¡: {jsonContent.Length} ×Ö·û");
+                Log.Message($"[The Second Seat] Gemini API è¯·æ±‚: {url}");
+                Log.Message($"[The Second Seat] è¯·æ±‚ä½“å¤§å°: {jsonContent.Length} å­—ç¬¦");
 
-                // ? Ê¹ÓÃ UnityWebRequest
+                // ? ä½¿ç”¨ UnityWebRequest
                 using var webRequest = new UnityWebRequest(url, "POST");
                 webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonContent));
                 webRequest.downloadHandler = new DownloadHandlerBuffer();
                 webRequest.SetRequestHeader("Content-Type", "application/json");
-                webRequest.timeout = 60; // 60 Ãë³¬Ê±
+                webRequest.timeout = 60; // 60 ç§’è¶…æ—¶
 
-                // Òì²½·¢ËÍÇëÇó
+                // å¼‚æ­¥å‘é€è¯·æ±‚
                 var asyncOperation = webRequest.SendWebRequest();
 
                 while (!asyncOperation.isDone)
                 {
-                    if (Current.Game == null) return null; // ÓÎÏ·ÍË³ö
+                    if (Current.Game == null) return null; // æ¸¸æˆé€€å‡º
                     await Task.Delay(100);
                 }
 
-                // ¼ì²éÏìÓ¦
+                // æ£€æŸ¥å“åº”
                 if (webRequest.result == UnityWebRequest.Result.Success)
                 {
                     string responseText = webRequest.downloadHandler.text;
-                    Log.Message($"[The Second Seat] Gemini API ÏìÓ¦³É¹¦: {responseText.Substring(0, Math.Min(500, responseText.Length))}...");
+                    Log.Message($"[The Second Seat] Gemini API å“åº”æˆåŠŸ: {responseText.Substring(0, Math.Min(500, responseText.Length))}...");
 
                     var response = JsonConvert.DeserializeObject<GeminiResponse>(responseText);
                     return response;
                 }
                 else
                 {
-                    Log.Error($"[The Second Seat] Gemini API ´íÎó: {webRequest.responseCode} - {webRequest.error}");
-                    Log.Error($"[The Second Seat] ÏìÓ¦ÄÚÈİ: {webRequest.downloadHandler.text}");
+                    Log.Error($"[The Second Seat] Gemini API é”™è¯¯: {webRequest.responseCode} - {webRequest.error}");
+                    Log.Error($"[The Second Seat] å“åº”å†…å®¹: {webRequest.downloadHandler.text}");
                     return null;
                 }
             }
             catch (Exception ex)
             {
-                Log.Error($"[The Second Seat] Gemini API Òì³£: {ex.Message}\n{ex.StackTrace}");
+                Log.Error($"[The Second Seat] Gemini API å¼‚å¸¸: {ex.Message}\n{ex.StackTrace}");
                 return null;
             }
         }
     }
 
-    // ===== Gemini API Êı¾İ½á¹¹ =====
+    // ===== Gemini API æ•°æ®ç»“æ„ =====
 
     public class GeminiRequest
     {
@@ -353,7 +353,7 @@ namespace TheSecondSeat.LLM
     }
 
     /// <summary>
-    /// Í¼Æ¬Êı¾İ£¨Base64 ±àÂë£©
+    /// å›¾ç‰‡æ•°æ®ï¼ˆBase64 ç¼–ç ï¼‰
     /// </summary>
     public class InlineData
     {

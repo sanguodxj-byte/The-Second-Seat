@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using Verse;
 using RimWorld;
@@ -6,10 +6,10 @@ using RimWorld;
 namespace TheSecondSeat.Framework.Triggers
 {
     /// <summary>
-    /// ºÃ¸Ğ¶È·¶Î§´¥·¢Æ÷
-    /// ¼ì²éµ±Ç°ºÃ¸Ğ¶ÈÊÇ·ñÔÚÖ¸¶¨·¶Î§ÄÚ
+    /// å¥½æ„Ÿåº¦èŒƒå›´è§¦å‘å™¨
+    /// æ£€æŸ¥å½“å‰å¥½æ„Ÿåº¦æ˜¯å¦åœ¨æŒ‡å®šèŒƒå›´å†…
     /// 
-    /// XMLÊ¾Àı£º
+    /// XMLç¤ºä¾‹ï¼š
     /// <![CDATA[
     /// <li Class="TheSecondSeat.Framework.Triggers.AffinityRangeTrigger">
     ///   <minAffinity>60</minAffinity>
@@ -40,8 +40,8 @@ namespace TheSecondSeat.Framework.Triggers
     }
     
     /// <summary>
-    /// Ö³ÃñÕßÊıÁ¿´¥·¢Æ÷
-    /// ¼ì²éÖ³ÃñÕßÊıÁ¿ÊÇ·ñÂú×ãÌõ¼ş
+    /// æ®–æ°‘è€…æ•°é‡è§¦å‘å™¨
+    /// æ£€æŸ¥æ®–æ°‘è€…æ•°é‡æ˜¯å¦æ»¡è¶³æ¡ä»¶
     /// </summary>
     public class ColonistCountTrigger : TSSTrigger
     {
@@ -71,7 +71,7 @@ namespace TheSecondSeat.Framework.Triggers
     }
     
     /// <summary>
-    /// ²Æ¸»·¶Î§´¥·¢Æ÷
+    /// è´¢å¯ŒèŒƒå›´è§¦å‘å™¨
     /// </summary>
     public class WealthRangeTrigger : TSSTrigger
     {
@@ -113,7 +113,7 @@ namespace TheSecondSeat.Framework.Triggers
     }
     
     /// <summary>
-    /// ¼¾½Ú´¥·¢Æ÷
+    /// å­£èŠ‚è§¦å‘å™¨
     /// </summary>
     public class SeasonTrigger : TSSTrigger
     {
@@ -148,7 +148,7 @@ namespace TheSecondSeat.Framework.Triggers
     }
     
     /// <summary>
-    /// Ê±¼ä·¶Î§´¥·¢Æ÷£¨ÓÎÏ·ÄÚÊ±¼ä£©
+    /// æ—¶é—´èŒƒå›´è§¦å‘å™¨ï¼ˆæ¸¸æˆå†…æ—¶é—´ï¼‰
     /// </summary>
     public class TimeRangeTrigger : TSSTrigger
     {
@@ -168,7 +168,7 @@ namespace TheSecondSeat.Framework.Triggers
     }
     
     /// <summary>
-    /// Ëæ»ú¸ÅÂÊ´¥·¢Æ÷£¨¶îÍâµÄ¸ÅÂÊ¼ì²é£©
+    /// éšæœºæ¦‚ç‡è§¦å‘å™¨ï¼ˆé¢å¤–çš„æ¦‚ç‡æ£€æŸ¥ï¼‰
     /// </summary>
     public class RandomChanceTrigger : TSSTrigger
     {
@@ -186,7 +186,7 @@ namespace TheSecondSeat.Framework.Triggers
     }
     
     /// <summary>
-    /// ĞÄÇé×´Ì¬´¥·¢Æ÷
+    /// å¿ƒæƒ…çŠ¶æ€è§¦å‘å™¨
     /// </summary>
     public class MoodStateTrigger : TSSTrigger
     {

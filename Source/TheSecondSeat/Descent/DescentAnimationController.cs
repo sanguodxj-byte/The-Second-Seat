@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;
@@ -7,34 +7,34 @@ using TheSecondSeat.PersonaGeneration;
 namespace TheSecondSeat.Descent
 {
     /// <summary>
-    /// ? v2.0.0: ½µÁÙ¶¯»­¿ØÖÆÆ÷
+    /// ? v2.0.0: é™ä¸´åŠ¨ç”»æ§åˆ¶å™¨
     /// 
-    /// ¹¦ÄÜ£º
-    /// - ¿ØÖÆÁ¢»æ×ËÊÆÇĞ»»ĞòÁĞ
-    /// - ²¥·ÅÁúÆï±øÈë³¡¹ı³¡¶¯»­
-    /// - ¹ÜÀí¶¯»­Ê±¼äÖáºÍ¹ı¶ÉĞ§¹û
+    /// åŠŸèƒ½ï¼š
+    /// - æ§åˆ¶ç«‹ç»˜å§¿åŠ¿åˆ‡æ¢åºåˆ—
+    /// - æ’­æ”¾é¾™éª‘å…µå…¥åœºè¿‡åœºåŠ¨ç”»
+    /// - ç®¡ç†åŠ¨ç”»æ—¶é—´è½´å’Œè¿‡æ¸¡æ•ˆæœ
     /// 
-    /// ¶¯»­ĞòÁĞ£º
-    /// 1. ×ËÊÆÇĞ»»£¨3Ãë£©£ºready ¡ú charging ¡ú casting
-    /// 2. ¹ı³¡¶¯»­£¨6Ãë£©£ºÁúÆï±ø·ÉÈë¡¢ÅÌĞı¡¢½µÂä¡¢ÏÂÂí
-    /// 3. ÌØĞ§±¬·¢£¨2Ãë£©£º³å»÷²¨¡¢¹â»·¸¡ÏÖ
+    /// åŠ¨ç”»åºåˆ—ï¼š
+    /// 1. å§¿åŠ¿åˆ‡æ¢ï¼ˆ3ç§’ï¼‰ï¼šready â†’ charging â†’ casting
+    /// 2. è¿‡åœºåŠ¨ç”»ï¼ˆ6ç§’ï¼‰ï¼šé¾™éª‘å…µé£å…¥ã€ç›˜æ—‹ã€é™è½ã€ä¸‹é©¬
+    /// 3. ç‰¹æ•ˆçˆ†å‘ï¼ˆ2ç§’ï¼‰ï¼šå†²å‡»æ³¢ã€å…‰ç¯æµ®ç°
     /// </summary>
     public class DescentAnimationController
     {
-        // ==================== ×ËÊÆÇĞ»»ÅäÖÃ ====================
+        // ==================== å§¿åŠ¿åˆ‡æ¢é…ç½® ====================
         
-        private const float POSTURE_READY_DURATION = 0.5f;     // ×¼±¸×ËÊÆ³ÖĞøÊ±¼ä
-        private const float POSTURE_CHARGING_DURATION = 1.0f;  // ĞîÁ¦×ËÊÆ³ÖĞøÊ±¼ä
-        private const float POSTURE_CASTING_DURATION = 1.5f;   // Ê©·¨×ËÊÆ³ÖĞøÊ±¼ä
-        private const float POSTURE_FADE_DURATION = 0.3f;      // ×ËÊÆµ­Èëµ­³öÊ±¼ä
+        private const float POSTURE_READY_DURATION = 0.5f;     // å‡†å¤‡å§¿åŠ¿æŒç»­æ—¶é—´
+        private const float POSTURE_CHARGING_DURATION = 1.0f;  // è“„åŠ›å§¿åŠ¿æŒç»­æ—¶é—´
+        private const float POSTURE_CASTING_DURATION = 1.5f;   // æ–½æ³•å§¿åŠ¿æŒç»­æ—¶é—´
+        private const float POSTURE_FADE_DURATION = 0.3f;      // å§¿åŠ¿æ·¡å…¥æ·¡å‡ºæ—¶é—´
         
-        // ==================== ¹ı³¡¶¯»­ÅäÖÃ ====================
+        // ==================== è¿‡åœºåŠ¨ç”»é…ç½® ====================
         
-        private const float CINEMATIC_DURATION = 6.0f;         // ¹ı³¡¶¯»­×ÜÊ±³¤
-        private const int CINEMATIC_FPS = 15;                  // ¹ı³¡¶¯»­Ö¡ÂÊ
-        private const int CINEMATIC_TOTAL_FRAMES = 90;         // ¹ı³¡¶¯»­×ÜÖ¡Êı
+        private const float CINEMATIC_DURATION = 6.0f;         // è¿‡åœºåŠ¨ç”»æ€»æ—¶é•¿
+        private const int CINEMATIC_FPS = 15;                  // è¿‡åœºåŠ¨ç”»å¸§ç‡
+        private const int CINEMATIC_TOTAL_FRAMES = 90;         // è¿‡åœºåŠ¨ç”»æ€»å¸§æ•°
         
-        // ==================== ×´Ì¬×Ö¶Î ====================
+        // ==================== çŠ¶æ€å­—æ®µ ====================
         
         private PostureState currentPostureState = PostureState.None;
         private float postureTimer = 0f;
@@ -48,10 +48,10 @@ namespace TheSecondSeat.Descent
         
         private DescentMode currentMode = DescentMode.Assist;
         
-        // ==================== ¹«¹²·½·¨ ====================
+        // ==================== å…¬å…±æ–¹æ³• ====================
         
         /// <summary>
-        /// ¿ªÊ¼×ËÊÆÇĞ»»ĞòÁĞ
+        /// å¼€å§‹å§¿åŠ¿åˆ‡æ¢åºåˆ—
         /// </summary>
         public void StartPostureSequence(DescentMode mode, Action onComplete)
         {
@@ -60,14 +60,14 @@ namespace TheSecondSeat.Descent
             postureTimer = 0f;
             postureCompleteCallback = onComplete;
             
-            // ÇĞ»»µ½×¼±¸×ËÊÆ
+            // åˆ‡æ¢åˆ°å‡†å¤‡å§¿åŠ¿
             SwitchToPosture(PostureType.Ready);
             
             Log.Message($"[DescentAnimationController] Started posture sequence: {mode}");
         }
         
         /// <summary>
-        /// ¿ªÊ¼¹ı³¡¶¯»­
+        /// å¼€å§‹è¿‡åœºåŠ¨ç”»
         /// </summary>
         public void StartCinematic(DescentMode mode, IntVec3 location, Action onComplete)
         {
@@ -78,34 +78,34 @@ namespace TheSecondSeat.Descent
             currentFrame = 0;
             cinematicCompleteCallback = onComplete;
             
-            // Ô¤¼ÓÔØ¶¯»­Ö¡£¨Ç°30Ö¡£¬±ÜÃâÈ«²¿¼ÓÔØµ¼ÖÂÄÚ´æÑ¹Á¦£©
+            // é¢„åŠ è½½åŠ¨ç”»å¸§ï¼ˆå‰30å¸§ï¼Œé¿å…å…¨éƒ¨åŠ è½½å¯¼è‡´å†…å­˜å‹åŠ›ï¼‰
             PreloadCinematicFrames(0, 30);
             
             Log.Message($"[DescentAnimationController] Started cinematic: {mode} at {location}");
         }
         
         /// <summary>
-        /// ¸üĞÂ¶¯»­£¨Ã¿Ö¡µ÷ÓÃ£©
+        /// æ›´æ–°åŠ¨ç”»ï¼ˆæ¯å¸§è°ƒç”¨ï¼‰
         /// </summary>
         public void Update(float deltaTime)
         {
-            // ¸üĞÂ×ËÊÆĞòÁĞ
+            // æ›´æ–°å§¿åŠ¿åºåˆ—
             if (currentPostureState != PostureState.None && currentPostureState != PostureState.Completed)
             {
                 UpdatePostureSequence(deltaTime);
             }
             
-            // ¸üĞÂ¹ı³¡¶¯»­
+            // æ›´æ–°è¿‡åœºåŠ¨ç”»
             if (isPlayingCinematic)
             {
                 UpdateCinematic(deltaTime);
             }
         }
         
-        // ==================== Ë½ÓĞ·½·¨ - ×ËÊÆÇĞ»» ====================
+        // ==================== ç§æœ‰æ–¹æ³• - å§¿åŠ¿åˆ‡æ¢ ====================
         
         /// <summary>
-        /// ¸üĞÂ×ËÊÆĞòÁĞ
+        /// æ›´æ–°å§¿åŠ¿åºåˆ—
         /// </summary>
         private void UpdatePostureSequence(float deltaTime)
         {
@@ -116,7 +116,7 @@ namespace TheSecondSeat.Descent
                 case PostureState.Ready:
                     if (postureTimer >= POSTURE_READY_DURATION)
                     {
-                        // ÇĞ»»µ½ĞîÁ¦×ËÊÆ
+                        // åˆ‡æ¢åˆ°è“„åŠ›å§¿åŠ¿
                         currentPostureState = PostureState.Charging;
                         postureTimer = 0f;
                         SwitchToPosture(PostureType.Charging);
@@ -126,7 +126,7 @@ namespace TheSecondSeat.Descent
                 case PostureState.Charging:
                     if (postureTimer >= POSTURE_CHARGING_DURATION)
                     {
-                        // ÇĞ»»µ½Ê©·¨×ËÊÆ
+                        // åˆ‡æ¢åˆ°æ–½æ³•å§¿åŠ¿
                         currentPostureState = PostureState.Casting;
                         postureTimer = 0f;
                         SwitchToPosture(PostureType.Casting);
@@ -136,13 +136,13 @@ namespace TheSecondSeat.Descent
                 case PostureState.Casting:
                     if (postureTimer >= POSTURE_CASTING_DURATION)
                     {
-                        // ×ËÊÆĞòÁĞÍê³É
+                        // å§¿åŠ¿åºåˆ—å®Œæˆ
                         currentPostureState = PostureState.Completed;
                         postureTimer = 0f;
                         
                         Log.Message("[DescentAnimationController] Posture sequence completed");
                         
-                        // ´¥·¢»Øµ÷
+                        // è§¦å‘å›è°ƒ
                         postureCompleteCallback?.Invoke();
                         postureCompleteCallback = null;
                     }
@@ -151,13 +151,13 @@ namespace TheSecondSeat.Descent
         }
         
         /// <summary>
-        /// ÇĞ»»µ½Ö¸¶¨×ËÊÆ
+        /// åˆ‡æ¢åˆ°æŒ‡å®šå§¿åŠ¿
         /// </summary>
         private void SwitchToPosture(PostureType type)
         {
             try
             {
-                // »ñÈ¡µ±Ç°ÈË¸ñ
+                // è·å–å½“å‰äººæ ¼
                 var manager = Current.Game?.GetComponent<Narrator.NarratorManager>();
                 var persona = manager?.GetCurrentPersona();
                 
@@ -167,7 +167,7 @@ namespace TheSecondSeat.Descent
                     return;
                 }
                 
-                // ¼ÓÔØ×ËÊÆÁ¢»æ
+                // åŠ è½½å§¿åŠ¿ç«‹ç»˜
                 string postureName = type switch
                 {
                     PostureType.Ready => "descent_pose_ready",
@@ -181,8 +181,8 @@ namespace TheSecondSeat.Descent
                 
                 if (postureTexture != null)
                 {
-                    // Í¨¹ı FullBodyPortraitPanel ÇĞ»»Á¢»æ
-                    // TODO: ÊµÏÖÁ¢»æÃæ°åµÄ×ËÊÆÇĞ»»½Ó¿Ú
+                    // é€šè¿‡ FullBodyPortraitPanel åˆ‡æ¢ç«‹ç»˜
+                    // TODO: å®ç°ç«‹ç»˜é¢æ¿çš„å§¿åŠ¿åˆ‡æ¢æ¥å£
                     Log.Message($"[DescentAnimationController] Switched to posture: {postureName}");
                 }
                 else
@@ -196,33 +196,33 @@ namespace TheSecondSeat.Descent
             }
         }
         
-        // ==================== Ë½ÓĞ·½·¨ - ¹ı³¡¶¯»­ ====================
+        // ==================== ç§æœ‰æ–¹æ³• - è¿‡åœºåŠ¨ç”» ====================
         
         /// <summary>
-        /// ¸üĞÂ¹ı³¡¶¯»­
+        /// æ›´æ–°è¿‡åœºåŠ¨ç”»
         /// </summary>
         private void UpdateCinematic(float deltaTime)
         {
             cinematicTimer += deltaTime;
             
-            // ¼ÆËãµ±Ç°Ó¦¸ÃÏÔÊ¾µÄÖ¡
+            // è®¡ç®—å½“å‰åº”è¯¥æ˜¾ç¤ºçš„å¸§
             int targetFrame = Mathf.FloorToInt((cinematicTimer / CINEMATIC_DURATION) * CINEMATIC_TOTAL_FRAMES);
             targetFrame = Mathf.Clamp(targetFrame, 0, CINEMATIC_TOTAL_FRAMES - 1);
             
-            // Èç¹ûĞèÒªÇĞ»»Ö¡
+            // å¦‚æœéœ€è¦åˆ‡æ¢å¸§
             if (targetFrame != currentFrame)
             {
                 currentFrame = targetFrame;
                 DisplayCinematicFrame(currentFrame);
                 
-                // Ô¤¼ÓÔØ½ÓÏÂÀ´µÄÖ¡
-                if (currentFrame % 10 == 0) // Ã¿10Ö¡Ô¤¼ÓÔØÒ»´Î
+                // é¢„åŠ è½½æ¥ä¸‹æ¥çš„å¸§
+                if (currentFrame % 10 == 0) // æ¯10å¸§é¢„åŠ è½½ä¸€æ¬¡
                 {
                     PreloadCinematicFrames(currentFrame + 1, currentFrame + 30);
                 }
             }
             
-            // ¼ì²éÊÇ·ñÍê³É
+            // æ£€æŸ¥æ˜¯å¦å®Œæˆ
             if (cinematicTimer >= CINEMATIC_DURATION)
             {
                 isPlayingCinematic = false;
@@ -231,29 +231,29 @@ namespace TheSecondSeat.Descent
                 
                 Log.Message("[DescentAnimationController] Cinematic completed");
                 
-                // ´¥·¢»Øµ÷
+                // è§¦å‘å›è°ƒ
                 cinematicCompleteCallback?.Invoke();
                 cinematicCompleteCallback = null;
             }
         }
         
         /// <summary>
-        /// ÏÔÊ¾¹ı³¡¶¯»­Ö¡
+        /// æ˜¾ç¤ºè¿‡åœºåŠ¨ç”»å¸§
         /// </summary>
         private void DisplayCinematicFrame(int frameIndex)
         {
             try
             {
-                // »ñÈ¡Ö¡ÎÆÀíÂ·¾¶
+                // è·å–å¸§çº¹ç†è·¯å¾„
                 string framePath = GetCinematicFramePath(frameIndex);
                 Texture2D frameTexture = ContentFinder<Texture2D>.Get(framePath, false);
                 
                 if (frameTexture != null)
                 {
-                    // TODO: ÔÚÈ«ÆÁÏÔÊ¾¹ı³¡¶¯»­Ö¡
-                    // ¿ÉÒÔÊ¹ÓÃ Find.WindowStack.Add(new Window_Cinematic(frameTexture))
+                    // TODO: åœ¨å…¨å±æ˜¾ç¤ºè¿‡åœºåŠ¨ç”»å¸§
+                    // å¯ä»¥ä½¿ç”¨ Find.WindowStack.Add(new Window_Cinematic(frameTexture))
                     
-                    if (Prefs.DevMode && frameIndex % 15 == 0) // Ã¿ÃëÊä³öÒ»´Î
+                    if (Prefs.DevMode && frameIndex % 15 == 0) // æ¯ç§’è¾“å‡ºä¸€æ¬¡
                     {
                         Log.Message($"[DescentAnimationController] Displaying frame {frameIndex}/{CINEMATIC_TOTAL_FRAMES}");
                     }
@@ -273,11 +273,11 @@ namespace TheSecondSeat.Descent
         }
         
         /// <summary>
-        /// »ñÈ¡¹ı³¡¶¯»­Ö¡Â·¾¶
+        /// è·å–è¿‡åœºåŠ¨ç”»å¸§è·¯å¾„
         /// </summary>
         private string GetCinematicFramePath(int frameIndex)
         {
-            // ¸ù¾İÖ¡Ë÷ÒıÈ·¶¨ËùÊô½×¶Î
+            // æ ¹æ®å¸§ç´¢å¼•ç¡®å®šæ‰€å±é˜¶æ®µ
             string stage;
             int stageFrame;
             
@@ -306,7 +306,7 @@ namespace TheSecondSeat.Descent
         }
         
         /// <summary>
-        /// Ô¤¼ÓÔØ¹ı³¡¶¯»­Ö¡
+        /// é¢„åŠ è½½è¿‡åœºåŠ¨ç”»å¸§
         /// </summary>
         private void PreloadCinematicFrames(int startFrame, int endFrame)
         {
@@ -315,7 +315,7 @@ namespace TheSecondSeat.Descent
                 for (int i = startFrame; i <= endFrame && i < CINEMATIC_TOTAL_FRAMES; i++)
                 {
                     string framePath = GetCinematicFramePath(i);
-                    // Ô¤¼ÓÔØÎÆÀí£¨RimWorld »á×Ô¶¯»º´æ£©
+                    // é¢„åŠ è½½çº¹ç†ï¼ˆRimWorld ä¼šè‡ªåŠ¨ç¼“å­˜ï¼‰
                     ContentFinder<Texture2D>.Get(framePath, false);
                 }
                 
@@ -330,10 +330,10 @@ namespace TheSecondSeat.Descent
             }
         }
         
-        // ==================== ¸¨Öú·½·¨ ====================
+        // ==================== è¾…åŠ©æ–¹æ³• ====================
         
         /// <summary>
-        /// »ñÈ¡ÈË¸ñÃû³Æ£¨ÓÃÓÚÂ·¾¶£©
+        /// è·å–äººæ ¼åç§°ï¼ˆç”¨äºè·¯å¾„ï¼‰
         /// </summary>
         private string GetPersonaName(NarratorPersonaDef def)
         {
@@ -346,7 +346,7 @@ namespace TheSecondSeat.Descent
         }
         
         /// <summary>
-        /// Í£Ö¹ËùÓĞ¶¯»­
+        /// åœæ­¢æ‰€æœ‰åŠ¨ç”»
         /// </summary>
         public void Stop()
         {
@@ -363,27 +363,27 @@ namespace TheSecondSeat.Descent
         }
     }
     
-    // ==================== Ã¶¾Ù¶¨Òå ====================
+    // ==================== æšä¸¾å®šä¹‰ ====================
     
     /// <summary>
-    /// ×ËÊÆ×´Ì¬
+    /// å§¿åŠ¿çŠ¶æ€
     /// </summary>
     public enum PostureState
     {
-        None,       // ÎŞ
-        Ready,      // ×¼±¸
-        Charging,   // ĞîÁ¦
-        Casting,    // Ê©·¨
-        Completed   // Íê³É
+        None,       // æ— 
+        Ready,      // å‡†å¤‡
+        Charging,   // è“„åŠ›
+        Casting,    // æ–½æ³•
+        Completed   // å®Œæˆ
     }
     
     /// <summary>
-    /// ×ËÊÆÀàĞÍ
+    /// å§¿åŠ¿ç±»å‹
     /// </summary>
     public enum PostureType
     {
-        Ready,     // ×¼±¸×ËÊÆ
-        Charging,  // ĞîÁ¦×ËÊÆ
-        Casting    // Ê©·¨×ËÊÆ
+        Ready,     // å‡†å¤‡å§¿åŠ¿
+        Charging,  // è“„åŠ›å§¿åŠ¿
+        Casting    // æ–½æ³•å§¿åŠ¿
     }
 }

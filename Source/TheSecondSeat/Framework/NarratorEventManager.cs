@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Verse;
@@ -8,56 +8,56 @@ using TheSecondSeat.Storyteller;
 namespace TheSecondSeat.Framework
 {
     /// <summary>
-    /// ĞğÊÂÕßÊÂ¼ş¹ÜÀíÆ÷ - ¸ºÔğ¼ì²âºÍ´¥·¢NarratorEventDef
+    /// å™äº‹è€…äº‹ä»¶ç®¡ç†å™¨ - è´Ÿè´£æ£€æµ‹å’Œè§¦å‘NarratorEventDef
     /// 
-    /// Ö°Ôğ£º
-    /// 1. ¶¨ÆÚ¼ì²éËùÓĞÒÑ¼ÓÔØµÄNarratorEventDef
-    /// 2. ÆÀ¹À´¥·¢Ìõ¼ş
-    /// 3. Ö´ĞĞ·ûºÏÌõ¼şµÄÊÂ¼ş
-    /// 4. ¹ÜÀíÊÂ¼şÀäÈ´ºÍ×´Ì¬
+    /// èŒè´£ï¼š
+    /// 1. å®šæœŸæ£€æŸ¥æ‰€æœ‰å·²åŠ è½½çš„NarratorEventDef
+    /// 2. è¯„ä¼°è§¦å‘æ¡ä»¶
+    /// 3. æ‰§è¡Œç¬¦åˆæ¡ä»¶çš„äº‹ä»¶
+    /// 4. ç®¡ç†äº‹ä»¶å†·å´å’ŒçŠ¶æ€
     /// 
-    /// ¼Ü¹¹£º
-    /// - ÕâÊÇÒ»¸öGameComponent£¬ËæÓÎÏ·±£´æ/¼ÓÔØ
-    /// - ÓëStorytellerAgentĞ­Í¬¹¤×÷£¬µ«²»ÒÀÀµÔ­°æStoryteller
-    /// - ÍêÈ«Êı¾İÇı¶¯£¬²»ĞèÒªC#´úÂëÀ©Õ¹
+    /// æ¶æ„ï¼š
+    /// - è¿™æ˜¯ä¸€ä¸ªGameComponentï¼Œéšæ¸¸æˆä¿å­˜/åŠ è½½
+    /// - ä¸StorytellerAgentååŒå·¥ä½œï¼Œä½†ä¸ä¾èµ–åŸç‰ˆStoryteller
+    /// - å®Œå…¨æ•°æ®é©±åŠ¨ï¼Œä¸éœ€è¦C#ä»£ç æ‰©å±•
     /// </summary>
     public class NarratorEventManager : GameComponent
     {
         // ============================================
-        // ÅäÖÃ³£Á¿
+        // é…ç½®å¸¸é‡
         // ============================================
         
         /// <summary>
-        /// ÊÂ¼ş¼ì²é¼ä¸ô£¨Tick£©
-        /// Ä¬ÈÏ60 = Ã¿Ãë¼ì²éÒ»´Î
+        /// äº‹ä»¶æ£€æŸ¥é—´éš”ï¼ˆTickï¼‰
+        /// é»˜è®¤60 = æ¯ç§’æ£€æŸ¥ä¸€æ¬¡
         /// </summary>
         private const int CHECK_INTERVAL = 60;
         
         /// <summary>
-        /// ¸ßÓÅÏÈ¼¶ÊÂ¼ş¼ì²é¼ä¸ô£¨Tick£©
-        /// ¸ßÓÅÏÈ¼¶ÊÂ¼ş£¨priority >= 100£©¼ì²é¸üÆµ·±
+        /// é«˜ä¼˜å…ˆçº§äº‹ä»¶æ£€æŸ¥é—´éš”ï¼ˆTickï¼‰
+        /// é«˜ä¼˜å…ˆçº§äº‹ä»¶ï¼ˆpriority >= 100ï¼‰æ£€æŸ¥æ›´é¢‘ç¹
         /// </summary>
         private const int HIGH_PRIORITY_CHECK_INTERVAL = 30;
         
         // ============================================
-        // ÔËĞĞÊ±×´Ì¬
+        // è¿è¡Œæ—¶çŠ¶æ€
         // ============================================
         
         private int lastCheckTick = 0;
         private int lastHighPriorityCheckTick = 0;
         
         /// <summary>
-        /// ÊÂ¼şÖ´ĞĞÍ³¼Æ
+        /// äº‹ä»¶æ‰§è¡Œç»Ÿè®¡
         /// </summary>
         private Dictionary<string, int> eventExecutionCounts = new Dictionary<string, int>();
         
         /// <summary>
-        /// ÉÏÏÂÎÄÊı¾İ»º´æ£¨¹²Ïí¸øËùÓĞÊÂ¼şÊ¹ÓÃ£©
+        /// ä¸Šä¸‹æ–‡æ•°æ®ç¼“å­˜ï¼ˆå…±äº«ç»™æ‰€æœ‰äº‹ä»¶ä½¿ç”¨ï¼‰
         /// </summary>
         private Dictionary<string, object> cachedContext = new Dictionary<string, object>();
         
         // ============================================
-        // µ¥Àı·ÃÎÊ
+        // å•ä¾‹è®¿é—®
         // ============================================
         
         private static NarratorEventManager instance;
@@ -74,7 +74,7 @@ namespace TheSecondSeat.Framework
         }
         
         // ============================================
-        // ¹¹ÔìÓë³õÊ¼»¯
+        // æ„é€ ä¸åˆå§‹åŒ–
         // ============================================
         
         public NarratorEventManager(Game game) : base()
@@ -83,11 +83,11 @@ namespace TheSecondSeat.Framework
         }
         
         // ============================================
-        // ºËĞÄÂß¼­
+        // æ ¸å¿ƒé€»è¾‘
         // ============================================
         
         /// <summary>
-        /// Ã¿Tick¸üĞÂ£¨GameComponent½Ó¿Ú£©
+        /// æ¯Tickæ›´æ–°ï¼ˆGameComponentæ¥å£ï¼‰
         /// </summary>
         public override void GameComponentTick()
         {
@@ -97,14 +97,14 @@ namespace TheSecondSeat.Framework
             {
                 int currentTick = Find.TickManager.TicksGame;
                 
-                // ¸ßÓÅÏÈ¼¶ÊÂ¼ş¼ì²é£¨¸üÆµ·±£©
+                // é«˜ä¼˜å…ˆçº§äº‹ä»¶æ£€æŸ¥ï¼ˆæ›´é¢‘ç¹ï¼‰
                 if (currentTick - lastHighPriorityCheckTick >= HIGH_PRIORITY_CHECK_INTERVAL)
                 {
                     CheckHighPriorityEvents();
                     lastHighPriorityCheckTick = currentTick;
                 }
                 
-                // ÆÕÍ¨ÊÂ¼ş¼ì²é
+                // æ™®é€šäº‹ä»¶æ£€æŸ¥
                 if (currentTick - lastCheckTick >= CHECK_INTERVAL)
                 {
                     CheckAllEvents();
@@ -118,34 +118,34 @@ namespace TheSecondSeat.Framework
         }
         
         /// <summary>
-        /// ¼ì²éËùÓĞÊÂ¼ş
+        /// æ£€æŸ¥æ‰€æœ‰äº‹ä»¶
         /// </summary>
         private void CheckAllEvents()
         {
-            // »ñÈ¡µ±Ç°µØÍ¼
+            // è·å–å½“å‰åœ°å›¾
             Map map = Find.CurrentMap;
             if (map == null) return;
             
-            // ¸üĞÂÉÏÏÂÎÄÊı¾İ
+            // æ›´æ–°ä¸Šä¸‹æ–‡æ•°æ®
             UpdateContext();
             
-            // »ñÈ¡ËùÓĞNarratorEventDef£¨ÒÑÅÅĞò£©
+            // è·å–æ‰€æœ‰NarratorEventDefï¼ˆå·²æ’åºï¼‰
             var allEvents = GetSortedEvents();
             
             foreach (var eventDef in allEvents)
             {
                 try
                 {
-                    // Ìø¹ı¸ßÓÅÏÈ¼¶ÊÂ¼ş£¨ÒÑÔÚ¸ßÓÅÏÈ¼¶¼ì²éÖĞ´¦Àí£©
+                    // è·³è¿‡é«˜ä¼˜å…ˆçº§äº‹ä»¶ï¼ˆå·²åœ¨é«˜ä¼˜å…ˆçº§æ£€æŸ¥ä¸­å¤„ç†ï¼‰
                     if (eventDef.priority >= 100)
                     {
                         continue;
                     }
                     
-                    // ¼ì²éÊÇ·ñ¿É´¥·¢
+                    // æ£€æŸ¥æ˜¯å¦å¯è§¦å‘
                     if (eventDef.CanTrigger(map, cachedContext))
                     {
-                        // ´¥·¢ÊÂ¼ş
+                        // è§¦å‘äº‹ä»¶
                         TriggerEvent(eventDef, map);
                     }
                 }
@@ -157,7 +157,7 @@ namespace TheSecondSeat.Framework
         }
         
         /// <summary>
-        /// ¼ì²é¸ßÓÅÏÈ¼¶ÊÂ¼ş
+        /// æ£€æŸ¥é«˜ä¼˜å…ˆçº§äº‹ä»¶
         /// </summary>
         private void CheckHighPriorityEvents()
         {
@@ -185,16 +185,16 @@ namespace TheSecondSeat.Framework
         }
         
         /// <summary>
-        /// ´¥·¢ÊÂ¼ş
+        /// è§¦å‘äº‹ä»¶
         /// </summary>
         private void TriggerEvent(NarratorEventDef eventDef, Map map)
         {
             try
             {
-                // Ö´ĞĞÊÂ¼ş
+                // æ‰§è¡Œäº‹ä»¶
                 eventDef.TriggerEvent(map, cachedContext);
                 
-                // ¸üĞÂÍ³¼Æ
+                // æ›´æ–°ç»Ÿè®¡
                 if (!eventExecutionCounts.ContainsKey(eventDef.defName))
                 {
                     eventExecutionCounts[eventDef.defName] = 0;
@@ -213,7 +213,7 @@ namespace TheSecondSeat.Framework
         }
         
         /// <summary>
-        /// ¸üĞÂÉÏÏÂÎÄÊı¾İ£¨¹©ËùÓĞÊÂ¼şÊ¹ÓÃ£©
+        /// æ›´æ–°ä¸Šä¸‹æ–‡æ•°æ®ï¼ˆä¾›æ‰€æœ‰äº‹ä»¶ä½¿ç”¨ï¼‰
         /// </summary>
         private void UpdateContext()
         {
@@ -221,7 +221,7 @@ namespace TheSecondSeat.Framework
             
             try
             {
-                // »ñÈ¡µ±Ç°ÈË¸ñ
+                // è·å–å½“å‰äººæ ¼
                 var manager = Current.Game?.GetComponent<TheSecondSeat.Narrator.NarratorManager>();
                 var persona = manager?.GetCurrentPersona();
                 
@@ -231,13 +231,13 @@ namespace TheSecondSeat.Framework
                     cachedContext["personaDef"] = persona;
                 }
                 
-                // »ñÈ¡ºÃ¸Ğ¶È
+                // è·å–å¥½æ„Ÿåº¦
                 var agent = Current.Game?.GetComponent<StorytellerAgent>();
                 if (agent != null)
                 {
                     cachedContext["affinity"] = agent.GetAffinity();
                     cachedContext["mood"] = agent.currentMood.ToString();
-                    // ? ĞŞ¸´£ºdifficultyModeÊÇNarratorPersonaDefµÄ×Ö¶Î£¬²»ÊÇStorytellerAgentµÄ
+                    // ? ä¿®å¤ï¼šdifficultyModeæ˜¯NarratorPersonaDefçš„å­—æ®µï¼Œä¸æ˜¯StorytellerAgentçš„
                     var narratorManager = Current.Game?.GetComponent<TheSecondSeat.Narrator.NarratorManager>();
                     var currentPersonaDef = narratorManager?.GetCurrentPersona();
                     if (currentPersonaDef != null)
@@ -246,14 +246,14 @@ namespace TheSecondSeat.Framework
                     }
                 }
                 
-                // »ñÈ¡Ö³ÃñµØ»ù±¾ĞÅÏ¢
+                // è·å–æ®–æ°‘åœ°åŸºæœ¬ä¿¡æ¯
                 Map map = Find.CurrentMap;
                 if (map != null)
                 {
                     cachedContext["colonistCount"] = map.mapPawns.FreeColonistsCount;
-                    // ? ĞŞ¸´£ºÊ¹ÓÃÕıÈ·µÄAPI
+                    // ? ä¿®å¤ï¼šä½¿ç”¨æ­£ç¡®çš„API
                     cachedContext["prisonerCount"] = map.mapPawns.PrisonersOfColonyCount;
-                    // ? ĞŞ¸´£º¼ÆËãÖ³ÃñµØ¶¯ÎïÊıÁ¿
+                    // ? ä¿®å¤ï¼šè®¡ç®—æ®–æ°‘åœ°åŠ¨ç‰©æ•°é‡
                     int colonyAnimalCount = 0;
                     foreach (var pawn in map.mapPawns.SpawnedPawnsInFaction(Faction.OfPlayer))
                     {
@@ -264,13 +264,13 @@ namespace TheSecondSeat.Framework
                     }
                     cachedContext["animalCount"] = colonyAnimalCount;
                     
-                    // ²Æ¸»Í³¼Æ
+                    // è´¢å¯Œç»Ÿè®¡
                     cachedContext["wealthTotal"] = map.wealthWatcher?.WealthTotal ?? 0;
                     cachedContext["wealthBuildings"] = map.wealthWatcher?.WealthBuildings ?? 0;
                     cachedContext["wealthItems"] = map.wealthWatcher?.WealthItems ?? 0;
                 }
                 
-                // ÓÎÏ·Ê±¼ä
+                // æ¸¸æˆæ—¶é—´
                 cachedContext["gameTicks"] = Find.TickManager.TicksGame;
                 cachedContext["gameYear"] = GenDate.Year(Find.TickManager.TicksAbs, Find.WorldGrid.LongLatOf(map?.Tile ?? 0).x);
                 cachedContext["gameSeason"] = GenDate.Season(Find.TickManager.TicksAbs, Find.WorldGrid.LongLatOf(map?.Tile ?? 0));
@@ -282,7 +282,7 @@ namespace TheSecondSeat.Framework
         }
         
         /// <summary>
-        /// »ñÈ¡ËùÓĞÊÂ¼ş£¨°´ÓÅÏÈ¼¶ÅÅĞò£©
+        /// è·å–æ‰€æœ‰äº‹ä»¶ï¼ˆæŒ‰ä¼˜å…ˆçº§æ’åºï¼‰
         /// </summary>
         private List<NarratorEventDef> GetSortedEvents()
         {
@@ -292,7 +292,7 @@ namespace TheSecondSeat.Framework
         }
         
         /// <summary>
-        /// »ñÈ¡¸ßÓÅÏÈ¼¶ÊÂ¼ş
+        /// è·å–é«˜ä¼˜å…ˆçº§äº‹ä»¶
         /// </summary>
         private List<NarratorEventDef> GetHighPriorityEvents()
         {
@@ -303,11 +303,11 @@ namespace TheSecondSeat.Framework
         }
         
         // ============================================
-        // ¹«¹²API
+        // å…¬å…±API
         // ============================================
         
         /// <summary>
-        /// ÊÖ¶¯´¥·¢ÊÂ¼ş£¨ÓÃÓÚµ÷ÊÔ»òÌØÊâÇé¿ö£©
+        /// æ‰‹åŠ¨è§¦å‘äº‹ä»¶ï¼ˆç”¨äºè°ƒè¯•æˆ–ç‰¹æ®Šæƒ…å†µï¼‰
         /// </summary>
         public void ForceTriggerEvent(string eventDefName)
         {
@@ -330,7 +330,7 @@ namespace TheSecondSeat.Framework
         }
         
         /// <summary>
-        /// »ñÈ¡ÊÂ¼şÖ´ĞĞÍ³¼Æ
+        /// è·å–äº‹ä»¶æ‰§è¡Œç»Ÿè®¡
         /// </summary>
         public int GetEventExecutionCount(string eventDefName)
         {
@@ -338,7 +338,7 @@ namespace TheSecondSeat.Framework
         }
         
         /// <summary>
-        /// »ñÈ¡ËùÓĞÊÂ¼şÖ´ĞĞÍ³¼Æ
+        /// è·å–æ‰€æœ‰äº‹ä»¶æ‰§è¡Œç»Ÿè®¡
         /// </summary>
         public Dictionary<string, int> GetAllEventStats()
         {
@@ -346,7 +346,7 @@ namespace TheSecondSeat.Framework
         }
         
         /// <summary>
-        /// ÖØÖÃËùÓĞÊÂ¼ş×´Ì¬£¨µ÷ÊÔÓÃ£©
+        /// é‡ç½®æ‰€æœ‰äº‹ä»¶çŠ¶æ€ï¼ˆè°ƒè¯•ç”¨ï¼‰
         /// </summary>
         public void ResetAllEventStates()
         {
@@ -364,7 +364,7 @@ namespace TheSecondSeat.Framework
         }
         
         // ============================================
-        // ´æµµÖ§³Ö
+        // å­˜æ¡£æ”¯æŒ
         // ============================================
         
         public override void ExposeData()

@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using Verse;
 using RimWorld;
 using TheSecondSeat.PersonaGeneration;
@@ -9,18 +9,18 @@ using System.Collections.Generic;
 namespace TheSecondSeat.UI
 {
     /// <summary>
-    /// ? v1.6.44: È«ÉíÁ¢»æÃæ°å£¨¶ÀÁ¢»æÖÆ£¬²»¼Ì³Ğ Window£©
-    /// ¹¦ÄÜ£º
-    /// - Shift ¼üÓÄÁéÄ£Ê½£¨Î´°´ Shift£º°ëÍ¸Ã÷ + µã»÷´©Í¸£©
-    /// - ×Ô¶¨Òå¸¡¶¯ÎÄ×ÖÏµÍ³£¨Ìæ´ú MoteMaker£©
-    /// - ÇøÓò½»»¥£¨Í·²¿ÃşÃş¡¢ÉíÌå´Á´Á£©
-    /// - ·Ö²ãÁ¢»æ + ¶¯»­ÏµÍ³£¨ºôÎü¡¢Õ£ÑÛ¡¢ÕÅ×ì£©
-    /// - ? Runtime Layering£¨ĞŞ¸´Í¸Ã÷¶ÈºÍ¶¯»­ÎÊÌâ£©
+    /// ? v1.6.44: å…¨èº«ç«‹ç»˜é¢æ¿ï¼ˆç‹¬ç«‹ç»˜åˆ¶ï¼Œä¸ç»§æ‰¿ Windowï¼‰
+    /// åŠŸèƒ½ï¼š
+    /// - Shift é”®å¹½çµæ¨¡å¼ï¼ˆæœªæŒ‰ Shiftï¼šåŠé€æ˜ + ç‚¹å‡»ç©¿é€ï¼‰
+    /// - è‡ªå®šä¹‰æµ®åŠ¨æ–‡å­—ç³»ç»Ÿï¼ˆæ›¿ä»£ MoteMakerï¼‰
+    /// - åŒºåŸŸäº¤äº’ï¼ˆå¤´éƒ¨æ‘¸æ‘¸ã€èº«ä½“æˆ³æˆ³ï¼‰
+    /// - åˆ†å±‚ç«‹ç»˜ + åŠ¨ç”»ç³»ç»Ÿï¼ˆå‘¼å¸ã€çœ¨çœ¼ã€å¼ å˜´ï¼‰
+    /// - ? Runtime Layeringï¼ˆä¿®å¤é€æ˜åº¦å’ŒåŠ¨ç”»é—®é¢˜ï¼‰
     /// </summary>
     [StaticConstructorOnStartup]
     public class FullBodyPortraitPanel
     {
-        // ==================== ³£Á¿¶¨Òå ====================
+        // ==================== å¸¸é‡å®šä¹‰ ====================
         
         private const float PORTRAIT_WIDTH = 1024f;
         private const float PORTRAIT_HEIGHT = 1574f;
@@ -37,7 +37,7 @@ namespace TheSecondSeat.UI
         private const float FAST_FLASH_DURATION = 0.15f;
         private const float FAST_FLASH_INTERVAL = 0.05f;
         
-        // ==================== ×Ö¶Î¶¨Òå ====================
+        // ==================== å­—æ®µå®šä¹‰ ====================
         
         private float displayWidth;
         private float displayHeight;
@@ -48,11 +48,11 @@ namespace TheSecondSeat.UI
         private int portraitUpdateTick = 0;
         private const int PORTRAIT_UPDATE_INTERVAL = 30;
         
-        // ? v1.6.44: Runtime Layering »º´æ
+        // ? v1.6.44: Runtime Layering ç¼“å­˜
         private Texture2D? cachedBodyBase = null;
         private string? cachedPersonaDefName = null;
         
-        // ´¥Ãş»¥¶¯
+        // è§¦æ‘¸äº’åŠ¨
         private float hoverStartTime = 0f;
         private bool isHovering = false;
         private bool isTouchModeActive = false;
@@ -68,113 +68,113 @@ namespace TheSecondSeat.UI
             ExpressionType.Shy
         };
         
-        // ±ß¿òÉÁË¸
+        // è¾¹æ¡†é—ªçƒ
         private float borderFlashStartTime = 0f;
         private int borderFlashCount = 0;
         
-        // ÇøÓò½»»¥
+        // åŒºåŸŸäº¤äº’
         private float headRubProgress = 0f;
         private float lastHeadPatTime = 0f;
         
-        // ? ×Ô¶¨Òå¸¡¶¯ÎÄ×ÖÏµÍ³
+        // ? è‡ªå®šä¹‰æµ®åŠ¨æ–‡å­—ç³»ç»Ÿ
         private List<UIFloatingText> floatingTexts = new List<UIFloatingText>();
         
-        // ==================== ³õÊ¼»¯ ====================
+        // ==================== åˆå§‹åŒ– ====================
         
         public FullBodyPortraitPanel()
         {
             displayWidth = PORTRAIT_WIDTH * SCALE_FACTOR;
             displayHeight = PORTRAIT_HEIGHT * SCALE_FACTOR;
             
-            // ? v1.6.50: ¹Ì¶¨Î»ÖÃ£¨ÆÁÄ»×ó²à£¬´¹Ö±¾ÓÖĞ -40px ÉÏÒÆ£©
+            // ? v1.6.50: å›ºå®šä½ç½®ï¼ˆå±å¹•å·¦ä¾§ï¼Œå‚ç›´å±…ä¸­ -40px ä¸Šç§»ï¼‰
             float x = 10f;
-            float y = (Verse.UI.screenHeight - displayHeight) / 2f - 40f;  // ? ÉÏÒÆ 40px
+            float y = (Verse.UI.screenHeight - displayHeight) / 2f - 40f;  // ? ä¸Šç§» 40px
             drawRect = new Rect(x, y, displayWidth, displayHeight);
         }
         
-        // ==================== Ö÷»æÖÆ·½·¨ ====================
+        // ==================== ä¸»ç»˜åˆ¶æ–¹æ³• ====================
         
         /// <summary>
-        /// ? Ö÷»æÖÆÈë¿Ú£¨ÓÉ PortraitOverlaySystem µ÷ÓÃ£©
+        /// ? ä¸»ç»˜åˆ¶å…¥å£ï¼ˆç”± PortraitOverlaySystem è°ƒç”¨ï¼‰
         /// </summary>
         public void Draw()
         {
-            // ¸üĞÂÕÅ×ì¶¯»­
+            // æ›´æ–°å¼ å˜´åŠ¨ç”»
             MouthAnimationSystem.Update(Time.deltaTime);
             
-            // ¸üĞÂÈË¸ñĞÅÏ¢
+            // æ›´æ–°äººæ ¼ä¿¡æ¯
             UpdatePortrait();
             
-            // »æÖÆÁ¢»æÄÚÈİ
+            // ç»˜åˆ¶ç«‹ç»˜å†…å®¹
             DrawPortraitContents();
             
-            // »æÖÆ¸¡¶¯ÎÄ×Ö
+            // ç»˜åˆ¶æµ®åŠ¨æ–‡å­—
             DrawFloatingTexts();
         }
         
         /// <summary>
-        /// ? v1.6.44: »æÖÆÁ¢»æÄÚÈİ£¨ºËĞÄÂß¼­ - Runtime Layering °æ±¾£©
+        /// ? v1.6.44: ç»˜åˆ¶ç«‹ç»˜å†…å®¹ï¼ˆæ ¸å¿ƒé€»è¾‘ - Runtime Layering ç‰ˆæœ¬ï¼‰
         /// </summary>
         private void DrawPortraitContents()
         {
             if (currentPersona == null) return;
             
-            // ? ¸üĞÂÉíÌå²ã»º´æ£¨½öÔÚÈË¸ñ±ä»¯Ê±ÖØĞÂ¼ÓÔØ£©
+            // ? æ›´æ–°èº«ä½“å±‚ç¼“å­˜ï¼ˆä»…åœ¨äººæ ¼å˜åŒ–æ—¶é‡æ–°åŠ è½½ï¼‰
             UpdateBodyBaseIfNeeded();
             
             bool mouseOver = Mouse.IsOver(drawRect);
             bool shiftHeld = Event.current.shift;
             
-            // ==================== 1. ¼ÆËã Alpha Öµ ====================
+            // ==================== 1. è®¡ç®— Alpha å€¼ ====================
             
             float alpha = 1.0f;
             bool shouldConsumeInput = false;
             
             if (mouseOver && !shiftHeld)
             {
-                // Î´°´ Shift£º°ëÍ¸Ã÷ + ²»À¹½ØÊäÈë
+                // æœªæŒ‰ Shiftï¼šåŠé€æ˜ + ä¸æ‹¦æˆªè¾“å…¥
                 alpha = 0.2f;
                 shouldConsumeInput = false;
             }
             else
             {
-                // °´×¡ Shift »òÊó±ê²»ÔÚ·¶Î§£ºÍêÈ«²»Í¸Ã÷
+                // æŒ‰ä½ Shift æˆ–é¼ æ ‡ä¸åœ¨èŒƒå›´ï¼šå®Œå…¨ä¸é€æ˜
                 alpha = 1.0f;
                 shouldConsumeInput = shiftHeld && mouseOver;
             }
             
-            // ==================== 2. »æÖÆÁ¢»æ£¨¹Ø¼ü£ºÍ³Ò»ÉèÖÃ GUI.color£© ====================
+            // ==================== 2. ç»˜åˆ¶ç«‹ç»˜ï¼ˆå…³é”®ï¼šç»Ÿä¸€è®¾ç½® GUI.colorï¼‰ ====================
             
-            // Ó¦ÓÃºôÎü¶¯»­Æ«ÒÆ
+            // åº”ç”¨å‘¼å¸åŠ¨ç”»åç§»
             float breathingOffset = ExpressionSystem.GetBreathingOffset(currentPersona.defName);
             Rect animatedRect = new Rect(drawRect.x, drawRect.y + breathingOffset, drawRect.width, drawRect.height);
             
-            // ? ¹Ø¼ü£ºÔÚ»æÖÆÈÎºÎÍ¼²ãÇ°Í³Ò»ÉèÖÃ GUI.color£¨ĞŞ¸´Í¸Ã÷¶È²»Ò»ÖÂÎÊÌâ£©
+            // ? å…³é”®ï¼šåœ¨ç»˜åˆ¶ä»»ä½•å›¾å±‚å‰ç»Ÿä¸€è®¾ç½® GUI.colorï¼ˆä¿®å¤é€æ˜åº¦ä¸ä¸€è‡´é—®é¢˜ï¼‰
             GUI.color = new Color(1f, 1f, 1f, alpha);
             
-            // ÔËĞĞÊ±·Ö²ã»æÖÆ£¨ËùÓĞÍ¼²ã¼Ì³ĞÏàÍ¬µÄ alpha£©
+            // è¿è¡Œæ—¶åˆ†å±‚ç»˜åˆ¶ï¼ˆæ‰€æœ‰å›¾å±‚ç»§æ‰¿ç›¸åŒçš„ alphaï¼‰
             DrawLayeredPortraitRuntime(animatedRect, currentPersona);
             
-            // ? »æÖÆÍê³Éºó»Ö¸´ÑÕÉ«
+            // ? ç»˜åˆ¶å®Œæˆåæ¢å¤é¢œè‰²
             GUI.color = Color.white;
             
-            // ==================== 3. ½»»¥´¦Àí£¨½öÔÚ Shift Ä£Ê½ÏÂ£© ====================
+            // ==================== 3. äº¤äº’å¤„ç†ï¼ˆä»…åœ¨ Shift æ¨¡å¼ä¸‹ï¼‰ ====================
             
             if (shiftHeld && mouseOver)
             {
-                // ´¦ÀíÇøÓò½»»¥
+                // å¤„ç†åŒºåŸŸäº¤äº’
                 bool interactionHandled = HandleZoneInteraction(drawRect);
                 
-                // ´¦Àí´¥Ãş»¥¶¯£¨Èç¹ûÇøÓò½»»¥Î´´¦Àí£©
+                // å¤„ç†è§¦æ‘¸äº’åŠ¨ï¼ˆå¦‚æœåŒºåŸŸäº¤äº’æœªå¤„ç†ï¼‰
                 if (!interactionHandled)
                 {
                     HandleHoverAndTouch(drawRect);
                 }
                 
-                // »æÖÆ½»»¥ÌáÊ¾
+                // ç»˜åˆ¶äº¤äº’æç¤º
                 DrawInteractionUI(drawRect);
                 
-                // ? À¹½ØÊäÈë£¨·ÀÖ¹µã»÷´©Í¸µ½µØÍ¼£©
+                // ? æ‹¦æˆªè¾“å…¥ï¼ˆé˜²æ­¢ç‚¹å‡»ç©¿é€åˆ°åœ°å›¾ï¼‰
                 if (shouldConsumeInput && Event.current.type == EventType.MouseDown)
                 {
                     Event.current.Use();
@@ -182,7 +182,7 @@ namespace TheSecondSeat.UI
             }
             else
             {
-                // Î´°´ Shift£ºÈ¡Ïû´¥ÃşÄ£Ê½£¬Ë¥¼õÍ·²¿ÃşÃş½ø¶È
+                // æœªæŒ‰ Shiftï¼šå–æ¶ˆè§¦æ‘¸æ¨¡å¼ï¼Œè¡°å‡å¤´éƒ¨æ‘¸æ‘¸è¿›åº¦
                 if (isTouchModeActive || isHovering)
                 {
                     DeactivateTouchMode();
@@ -196,7 +196,7 @@ namespace TheSecondSeat.UI
                 }
             }
             
-            // ==================== 4. ¹¤¾ßÌáÊ¾ ====================
+            // ==================== 4. å·¥å…·æç¤º ====================
             
             if (mouseOver)
             {
@@ -206,14 +206,14 @@ namespace TheSecondSeat.UI
         }
         
         /// <summary>
-        /// ? ´¦ÀíÇøÓò½»»¥£¨Í·²¿ÃşÃş¡¢ÉíÌå´Á´Á£©
+        /// ? å¤„ç†åŒºåŸŸäº¤äº’ï¼ˆå¤´éƒ¨æ‘¸æ‘¸ã€èº«ä½“æˆ³æˆ³ï¼‰
         /// </summary>
         private bool HandleZoneInteraction(Rect inRect)
         {
             Vector2 mousePos = Event.current.mousePosition;
             var zone = GetInteractionZone(inRect, mousePos);
             
-            // Í·²¿ÃşÃşÂß¼­
+            // å¤´éƒ¨æ‘¸æ‘¸é€»è¾‘
             if (zone == InteractionPhrases.InteractionZone.Head)
             {
                 bool isMouseDragging = (Event.current.type == EventType.MouseDrag) || 
@@ -246,7 +246,7 @@ namespace TheSecondSeat.UI
             }
             else
             {
-                // Ë¥¼õ½ø¶È
+                // è¡°å‡è¿›åº¦
                 if (headRubProgress > 0f)
                 {
                     headRubProgress -= HEAD_RUB_DECAY_RATE * Time.deltaTime;
@@ -254,7 +254,7 @@ namespace TheSecondSeat.UI
                 }
             }
             
-            // ÉíÌå´Á´ÁÂß¼­
+            // èº«ä½“æˆ³æˆ³é€»è¾‘
             if (zone == InteractionPhrases.InteractionZone.Body)
             {
                 if (Event.current.type == EventType.MouseDown && Event.current.button == 0)
@@ -269,7 +269,7 @@ namespace TheSecondSeat.UI
         }
         
         /// <summary>
-        /// ? ´¦ÀíĞüÍ£ºÍ´¥Ãş»¥¶¯
+        /// ? å¤„ç†æ‚¬åœå’Œè§¦æ‘¸äº’åŠ¨
         /// </summary>
         private void HandleHoverAndTouch(Rect inRect)
         {
@@ -308,14 +308,14 @@ namespace TheSecondSeat.UI
         }
         
         /// <summary>
-        /// ? Í·²¿ÃşÃş½»»¥
+        /// ? å¤´éƒ¨æ‘¸æ‘¸äº¤äº’
         /// </summary>
         private void DoHeadPatInteraction()
         {
             var agent = Current.Game?.GetComponent<Storyteller.StorytellerAgent>();
             float affinity = agent?.GetAffinity() ?? 0f;
             
-            // Ñ¡Ôñ±íÇé
+            // é€‰æ‹©è¡¨æƒ…
             ExpressionType expression;
             if (affinity >= 60f)
             {
@@ -332,38 +332,38 @@ namespace TheSecondSeat.UI
             
             TriggerExpression(expression, duration: 3f);
             
-            // ÏÔÊ¾¶Ô»°ÎÄ±¾
+            // æ˜¾ç¤ºå¯¹è¯æ–‡æœ¬
             string phrase = InteractionPhrases.GetHeadPatPhrase(affinity);
             Color textColor = GetTextColorByAffinity(affinity);
             AddFloatingText(phrase, textColor);
             
-            // ±ß¿òÉÁË¸
+            // è¾¹æ¡†é—ªçƒ
             if (affinity >= 60f)
             {
                 StartBorderFlash(1);
             }
             
-            // ºÃ¸Ğ¶È±ä»¯
+            // å¥½æ„Ÿåº¦å˜åŒ–
             if (affinity >= 60f)
             {
-                ModifyAffinity(3f, "Í·²¿ÃşÃş»¥¶¯");
-                Messages.Message("ºÃ¸Ğ¶È +3£¨Í·²¿ÃşÃş£©", MessageTypeDefOf.PositiveEvent);
+                ModifyAffinity(3f, "å¤´éƒ¨æ‘¸æ‘¸äº’åŠ¨");
+                Messages.Message("å¥½æ„Ÿåº¦ +3ï¼ˆå¤´éƒ¨æ‘¸æ‘¸ï¼‰", MessageTypeDefOf.PositiveEvent);
             }
             else if (affinity < -20f)
             {
-                ModifyAffinity(-1f, "²»ÊÜ»¶Ó­µÄ´¥Åö");
+                ModifyAffinity(-1f, "ä¸å—æ¬¢è¿çš„è§¦ç¢°");
             }
         }
         
         /// <summary>
-        /// ? ÉíÌå´Á´Á½»»¥
+        /// ? èº«ä½“æˆ³æˆ³äº¤äº’
         /// </summary>
         private void DoPokeInteraction()
         {
             var agent = Current.Game?.GetComponent<Storyteller.StorytellerAgent>();
             float affinity = agent?.GetAffinity() ?? 0f;
             
-            // Ñ¡Ôñ±íÇé
+            // é€‰æ‹©è¡¨æƒ…
             ExpressionType expression;
             if (affinity >= 60f)
             {
@@ -380,24 +380,24 @@ namespace TheSecondSeat.UI
             
             TriggerExpression(expression, duration: 2f);
             
-            // ÏÔÊ¾¶Ô»°ÎÄ±¾
+            // æ˜¾ç¤ºå¯¹è¯æ–‡æœ¬
             string phrase = InteractionPhrases.GetPokePhrase(affinity);
             Color textColor = GetTextColorByAffinity(affinity);
             AddFloatingText(phrase, textColor);
             
-            // ºÃ¸Ğ¶È±ä»¯
+            // å¥½æ„Ÿåº¦å˜åŒ–
             if (affinity >= 60f)
             {
-                ModifyAffinity(1f, "ÉíÌå´Á´Á»¥¶¯");
+                ModifyAffinity(1f, "èº«ä½“æˆ³æˆ³äº’åŠ¨");
             }
             else if (affinity < -20f)
             {
-                ModifyAffinity(-0.5f, "·³ÈËµÄ´¥Åö");
+                ModifyAffinity(-0.5f, "çƒ¦äººçš„è§¦ç¢°");
             }
         }
         
         /// <summary>
-        /// ? ¼¤»î´¥ÃşÄ£Ê½
+        /// ? æ¿€æ´»è§¦æ‘¸æ¨¡å¼
         /// </summary>
         private void ActivateTouchMode()
         {
@@ -407,11 +407,11 @@ namespace TheSecondSeat.UI
             
             TriggerExpression(ExpressionType.Confused, duration: 2f);
             StartBorderFlash(1);
-            AddFloatingText("(?¦Ø?)?", new Color(0.8f, 0.9f, 1f));
+            AddFloatingText("(?Ï‰?)?", new Color(0.8f, 0.9f, 1f));
         }
         
         /// <summary>
-        /// ? È¡Ïû´¥ÃşÄ£Ê½
+        /// ? å–æ¶ˆè§¦æ‘¸æ¨¡å¼
         /// </summary>
         private void DeactivateTouchMode()
         {
@@ -423,7 +423,7 @@ namespace TheSecondSeat.UI
         }
         
         /// <summary>
-        /// ? ´¥ÃşÒÆ¶¯ÊÂ¼ş
+        /// ? è§¦æ‘¸ç§»åŠ¨äº‹ä»¶
         /// </summary>
         private void OnTouchMove(Vector2 mousePos)
         {
@@ -434,14 +434,14 @@ namespace TheSecondSeat.UI
             if (moveSpeed > 500f)
             {
                 TriggerExpression(ExpressionType.Shy, duration: 1.5f);
-                AddFloatingText("(/¦Ø£Ü)", new Color(1f, 0.6f, 0.6f));
+                AddFloatingText("(/Ï‰ï¼¼)", new Color(1f, 0.6f, 0.6f));
             }
             else if (touchCount % 3 == 0)
             {
                 var expression = touchExpressions[Random.Range(0, touchExpressions.Length)];
                 TriggerExpression(expression, duration: 2f);
                 
-                string[] emojis = { "(?¨Œ£à)", "(????)?", "(¨R¨Œ¨Q)", "©d(?¡ã?¡ã?)?", "(????)" };
+                string[] emojis = { "(?â–½ï½€)", "(????)?", "(â‰§â–½â‰¦)", "ãƒ¾(?Â°?Â°?)?", "(????)" };
                 AddFloatingText(emojis[Random.Range(0, emojis.Length)], new Color(1f, 0.8f, 0.9f));
             }
             
@@ -453,24 +453,24 @@ namespace TheSecondSeat.UI
         }
         
         /// <summary>
-        /// ? Á¬Ğø´¥Ãş½±Àø
+        /// ? è¿ç»­è§¦æ‘¸å¥–åŠ±
         /// </summary>
         private void OnTouchCombo()
         {
             bool isHappy = Random.value > 0.3f;
             TriggerExpression(isHappy ? ExpressionType.Happy : ExpressionType.Smug, duration: 3f);
             
-            AddFloatingText(isHappy ? "(*^¨Œ^*)" : "(£ş¦á£ş)¨J", new Color(1f, 0.7f, 0.3f));
+            AddFloatingText(isHappy ? "(*^â–½^*)" : "(ï¿£ï¸¶ï¿£)â†—", new Color(1f, 0.7f, 0.3f));
             StartBorderFlash(3);
             
-            ModifyAffinity(5f, "È«ÉíÁ¢»æ´¥Ãş»¥¶¯");
-            Messages.Message($"ºÃ¸Ğ¶È +5£¨È«ÉíÁ¢»æ»¥¶¯£©", MessageTypeDefOf.PositiveEvent);
+            ModifyAffinity(5f, "å…¨èº«ç«‹ç»˜è§¦æ‘¸äº’åŠ¨");
+            Messages.Message($"å¥½æ„Ÿåº¦ +5ï¼ˆå…¨èº«ç«‹ç»˜äº’åŠ¨ï¼‰", MessageTypeDefOf.PositiveEvent);
         }
         
-        // ==================== ×Ô¶¨Òå¸¡¶¯ÎÄ×ÖÏµÍ³ ====================
+        // ==================== è‡ªå®šä¹‰æµ®åŠ¨æ–‡å­—ç³»ç»Ÿ ====================
         
         /// <summary>
-        /// ? ¸¡¶¯ÎÄ×ÖÀà
+        /// ? æµ®åŠ¨æ–‡å­—ç±»
         /// </summary>
         private class UIFloatingText
         {
@@ -492,7 +492,7 @@ namespace TheSecondSeat.UI
             {
                 timer += deltaTime;
                 
-                // ÏòÉÏÒÆ¶¯
+                // å‘ä¸Šç§»åŠ¨
                 position.y -= 30f * deltaTime;
                 
                 return timer < maxLifetime;
@@ -516,7 +516,7 @@ namespace TheSecondSeat.UI
         }
         
         /// <summary>
-        /// ? Ìí¼Ó¸¡¶¯ÎÄ×Ö
+        /// ? æ·»åŠ æµ®åŠ¨æ–‡å­—
         /// </summary>
         private void AddFloatingText(string text, Color color)
         {
@@ -525,7 +525,7 @@ namespace TheSecondSeat.UI
         }
         
         /// <summary>
-        /// ? »æÖÆËùÓĞ¸¡¶¯ÎÄ×Ö
+        /// ? ç»˜åˆ¶æ‰€æœ‰æµ®åŠ¨æ–‡å­—
         /// </summary>
         private void DrawFloatingTexts()
         {
@@ -546,33 +546,33 @@ namespace TheSecondSeat.UI
             }
         }
         
-        // ==================== ¸¨Öú»æÖÆ·½·¨ ====================
+        // ==================== è¾…åŠ©ç»˜åˆ¶æ–¹æ³• ====================
         
         /// <summary>
-        /// ? »æÖÆ½»»¥UI£¨½ø¶ÈÌõ¡¢Ö¸Ê¾Æ÷µÈ£©
+        /// ? ç»˜åˆ¶äº¤äº’UIï¼ˆè¿›åº¦æ¡ã€æŒ‡ç¤ºå™¨ç­‰ï¼‰
         /// </summary>
         private void DrawInteractionUI(Rect inRect)
         {
-            // ĞüÍ£½ø¶ÈÌõ
+            // æ‚¬åœè¿›åº¦æ¡
             if (isHovering && !isTouchModeActive)
             {
                 float progress = (Time.realtimeSinceStartup - hoverStartTime) / HOVER_ACTIVATION_TIME;
                 DrawHoverProgress(inRect, progress);
             }
             
-            // Í·²¿ÃşÃş½ø¶ÈÌõ
+            // å¤´éƒ¨æ‘¸æ‘¸è¿›åº¦æ¡
             if (headRubProgress > 0f)
             {
                 DrawHeadRubProgress(inRect, headRubProgress / HEAD_RUB_THRESHOLD);
             }
             
-            // ´¥ÃşÄ£Ê½Ö¸Ê¾Æ÷
+            // è§¦æ‘¸æ¨¡å¼æŒ‡ç¤ºå™¨
             if (isTouchModeActive)
             {
                 DrawTouchModeIndicator(inRect);
             }
             
-            // ±ß¿òÉÁË¸
+            // è¾¹æ¡†é—ªçƒ
             DrawBorderFlash(inRect);
         }
         
@@ -604,7 +604,7 @@ namespace TheSecondSeat.UI
                 Text.Font = GameFont.Tiny;
                 Text.Anchor = TextAnchor.MiddleCenter;
                 GUI.color = new Color(1f, 1f, 1f, 0.8f);
-                Widgets.Label(progressBarRect, "¼ÌĞøÃşÃş...");
+                Widgets.Label(progressBarRect, "ç»§ç»­æ‘¸æ‘¸...");
                 Text.Anchor = TextAnchor.UpperLeft;
                 GUI.color = Color.white;
             }
@@ -623,7 +623,7 @@ namespace TheSecondSeat.UI
                 Text.Font = GameFont.Small;
                 Text.Anchor = TextAnchor.MiddleCenter;
                 GUI.color = new Color(1f, 1f, 1f, 0.9f);
-                Widgets.Label(countRect, $"¡Á{touchCount}");
+                Widgets.Label(countRect, $"Ã—{touchCount}");
                 Text.Anchor = TextAnchor.UpperLeft;
                 GUI.color = Color.white;
             }
@@ -677,29 +677,29 @@ namespace TheSecondSeat.UI
         }
         
         /// <summary>
-        /// ? v1.6.44: ÔËĞĞÊ±·Ö²ã»æÖÆÁ¢»æ£¨Runtime Layering£©
-        /// ? v1.6.53: ĞŞ¸´°ëÍ¸Ã÷ÎÊÌâ - Ê¹ÓÃ Graphics.DrawTexture Ìæ´ú GUI.DrawTexture
-        /// ¹Ø¼üĞŞ¸´£º
-        /// - Ê¹ÓÃ»º´æµÄ cachedBodyBase£¨¾²Ì¬²ã£©
-        /// - Ã¿Ö¡¶¯Ì¬»ñÈ¡ÑÛ¾¦ºÍ×ì°ÍÍ¼²ã£¨¶¯»­²ã£©
-        /// - ? Ê¹ÓÃ Graphics.DrawTexture ÕıÈ·Ó¦ÓÃ GUI.color µÄ alpha Öµ
+        /// ? v1.6.44: è¿è¡Œæ—¶åˆ†å±‚ç»˜åˆ¶ç«‹ç»˜ï¼ˆRuntime Layeringï¼‰
+        /// ? v1.6.53: ä¿®å¤åŠé€æ˜é—®é¢˜ - ä½¿ç”¨ Graphics.DrawTexture æ›¿ä»£ GUI.DrawTexture
+        /// å…³é”®ä¿®å¤ï¼š
+        /// - ä½¿ç”¨ç¼“å­˜çš„ cachedBodyBaseï¼ˆé™æ€å±‚ï¼‰
+        /// - æ¯å¸§åŠ¨æ€è·å–çœ¼ç›å’Œå˜´å·´å›¾å±‚ï¼ˆåŠ¨ç”»å±‚ï¼‰
+        /// - ? ä½¿ç”¨ Graphics.DrawTexture æ­£ç¡®åº”ç”¨ GUI.color çš„ alpha å€¼
         /// </summary>
         private void DrawLayeredPortraitRuntime(Rect rect, NarratorPersonaDef persona)
         {
-            // ==================== Layer 1: ÉíÌå»ù´¡²ã£¨»º´æ£© ====================
+            // ==================== Layer 1: èº«ä½“åŸºç¡€å±‚ï¼ˆç¼“å­˜ï¼‰ ====================
             
             if (cachedBodyBase == null)
             {
-                // Èç¹ûÃ»ÓĞ»º´æ£¬»æÖÆÕ¼Î»·û
+                // å¦‚æœæ²¡æœ‰ç¼“å­˜ï¼Œç»˜åˆ¶å ä½ç¬¦
                 Widgets.DrawBoxSolid(rect, persona.primaryColor);
                 return;
             }
             
-            // ? ĞŞ¸´£ºÊ¹ÓÃ Widgets.DrawTextureFitted ¶ø²»ÊÇ GUI.DrawTexture
-            // Widgets.DrawTextureFitted »áÕıÈ·Ó¦ÓÃ GUI.color µÄ alpha
+            // ? ä¿®å¤ï¼šä½¿ç”¨ Widgets.DrawTextureFitted è€Œä¸æ˜¯ GUI.DrawTexture
+            // Widgets.DrawTextureFitted ä¼šæ­£ç¡®åº”ç”¨ GUI.color çš„ alpha
             Widgets.DrawTextureFitted(rect, cachedBodyBase, 1.0f);
             
-            // ==================== Layer 2: ×ì°Í²ã£¨¶¯Ì¬¼ÓÔØ£¬ÕÅ×ì¶¯»­£© ====================
+            // ==================== Layer 2: å˜´å·´å±‚ï¼ˆåŠ¨æ€åŠ è½½ï¼Œå¼ å˜´åŠ¨ç”»ï¼‰ ====================
             
             string mouthLayerName = MouthAnimationSystem.GetMouthLayerName(persona.defName);
             if (!string.IsNullOrEmpty(mouthLayerName))
@@ -707,12 +707,12 @@ namespace TheSecondSeat.UI
                 var mouthTexture = PortraitLoader.GetLayerTexture(persona, mouthLayerName);
                 if (mouthTexture != null)
                 {
-                    // ? ĞŞ¸´£ºÊ¹ÓÃ Widgets.DrawTextureFitted
+                    // ? ä¿®å¤ï¼šä½¿ç”¨ Widgets.DrawTextureFitted
                     Widgets.DrawTextureFitted(rect, mouthTexture, 1.0f);
                 }
             }
             
-            // ==================== Layer 3: ÑÛ¾¦²ã£¨¶¯Ì¬¼ÓÔØ£¬Õ£ÑÛ¶¯»­£© ====================
+            // ==================== Layer 3: çœ¼ç›å±‚ï¼ˆåŠ¨æ€åŠ è½½ï¼Œçœ¨çœ¼åŠ¨ç”»ï¼‰ ====================
             
             string eyeLayerName = BlinkAnimationSystem.GetEyeLayerName(persona.defName);
             if (!string.IsNullOrEmpty(eyeLayerName))
@@ -720,12 +720,12 @@ namespace TheSecondSeat.UI
                 var eyeTexture = PortraitLoader.GetLayerTexture(persona, eyeLayerName);
                 if (eyeTexture != null)
                 {
-                    // ? ĞŞ¸´£ºÊ¹ÓÃ Widgets.DrawTextureFitted
+                    // ? ä¿®å¤ï¼šä½¿ç”¨ Widgets.DrawTextureFitted
                     Widgets.DrawTextureFitted(rect, eyeTexture, 1.0f);
                 }
             }
             
-            // ==================== Layer 4: ÌØĞ§²ã£¨¿ÉÑ¡£ºÈùºìµÈ£© ====================
+            // ==================== Layer 4: ç‰¹æ•ˆå±‚ï¼ˆå¯é€‰ï¼šè…®çº¢ç­‰ï¼‰ ====================
             
             var expressionState = ExpressionSystem.GetExpressionState(persona.defName);
             if (expressionState.CurrentExpression == ExpressionType.Shy || 
@@ -736,16 +736,16 @@ namespace TheSecondSeat.UI
                 var flushTexture = PortraitLoader.GetLayerTexture(persona, flushLayerName);
                 if (flushTexture != null)
                 {
-                    // ? ĞŞ¸´£ºÊ¹ÓÃ Widgets.DrawTextureFitted
+                    // ? ä¿®å¤ï¼šä½¿ç”¨ Widgets.DrawTextureFitted
                     Widgets.DrawTextureFitted(rect, flushTexture, 1.0f);
                 }
             }
         }
         
-        // ==================== ¸¨Öú·½·¨ ====================
+        // ==================== è¾…åŠ©æ–¹æ³• ====================
         
         /// <summary>
-        /// ? v1.6.44: ¸üĞÂ»ù´¡ÉíÌå²ã»º´æ£¨½öÔÚÈË¸ñ±ä»¯Ê±ÖØĞÂ¼ÓÔØ£©
+        /// ? v1.6.44: æ›´æ–°åŸºç¡€èº«ä½“å±‚ç¼“å­˜ï¼ˆä»…åœ¨äººæ ¼å˜åŒ–æ—¶é‡æ–°åŠ è½½ï¼‰
         /// </summary>
         private void UpdateBodyBaseIfNeeded()
         {
@@ -756,16 +756,16 @@ namespace TheSecondSeat.UI
                 return;
             }
             
-            // ¼ì²éÊÇ·ñĞèÒª¸üĞÂ»º´æ
+            // æ£€æŸ¥æ˜¯å¦éœ€è¦æ›´æ–°ç¼“å­˜
             if (cachedPersonaDefName == currentPersona.defName && cachedBodyBase != null)
             {
-                return; // »º´æÓĞĞ§£¬ÎŞĞè¸üĞÂ
+                return; // ç¼“å­˜æœ‰æ•ˆï¼Œæ— éœ€æ›´æ–°
             }
             
-            // ¼ÓÔØ»ù´¡ÉíÌå²ã£¨¾²Ì¬²ã£©
+            // åŠ è½½åŸºç¡€èº«ä½“å±‚ï¼ˆé™æ€å±‚ï¼‰
             cachedBodyBase = PortraitLoader.GetLayerTexture(currentPersona, "base_body");
             
-            // Èç¹ûÕÒ²»µ½ base_body£¬³¢ÊÔ body »ò base
+            // å¦‚æœæ‰¾ä¸åˆ° base_bodyï¼Œå°è¯• body æˆ– base
             if (cachedBodyBase == null)
             {
                 cachedBodyBase = PortraitLoader.GetLayerTexture(currentPersona, "body");
@@ -779,7 +779,7 @@ namespace TheSecondSeat.UI
             
             if (Prefs.DevMode && cachedBodyBase != null)
             {
-                Log.Message($"[FullBodyPortraitPanel] »º´æÉíÌå²ã: {currentPersona.defName}");
+                Log.Message($"[FullBodyPortraitPanel] ç¼“å­˜èº«ä½“å±‚: {currentPersona.defName}");
             }
         }
         
@@ -851,7 +851,7 @@ namespace TheSecondSeat.UI
             }
             catch (System.Exception ex)
             {
-                Log.Warning($"[FullBodyPortraitPanel] ¸üĞÂÁ¢»æÊ§°Ü: {ex.Message}");
+                Log.Warning($"[FullBodyPortraitPanel] æ›´æ–°ç«‹ç»˜å¤±è´¥: {ex.Message}");
                 currentPersona = null;
             }
         }
@@ -860,7 +860,7 @@ namespace TheSecondSeat.UI
         {
             if (currentPersona == null) return;
             
-            ExpressionSystem.SetExpression(currentPersona.defName, expression, (int)(duration * 60), "Á¢»æ½»»¥");
+            ExpressionSystem.SetExpression(currentPersona.defName, expression, (int)(duration * 60), "ç«‹ç»˜äº¤äº’");
             
             if (lastExpression != expression)
             {
@@ -940,38 +940,38 @@ namespace TheSecondSeat.UI
         {
             if (currentPersona == null) return "";
             
-            string tooltip = $"{currentPersona.narratorName}\n±íÇé: {lastExpression}";
+            string tooltip = $"{currentPersona.narratorName}\nè¡¨æƒ…: {lastExpression}";
             
             if (!shiftHeld)
             {
-                tooltip += "\n\n?? °´×¡ Shift ¼ü¼¤»î»¥¶¯Ä£Ê½";
+                tooltip += "\n\n?? æŒ‰ä½ Shift é”®æ¿€æ´»äº’åŠ¨æ¨¡å¼";
             }
             else
             {
-                tooltip += "\n\n? »¥¶¯Ä£Ê½ÒÑ¼¤»î";
+                tooltip += "\n\n? äº’åŠ¨æ¨¡å¼å·²æ¿€æ´»";
                 
                 var zone = GetInteractionZone(drawRect, Event.current.mousePosition);
                 if (zone == InteractionPhrases.InteractionZone.Head)
                 {
-                    tooltip += $"\n\n?? Í·²¿ÇøÓò | ÃşÃş½ø¶È: {headRubProgress:F0}/{HEAD_RUB_THRESHOLD}";
+                    tooltip += $"\n\n?? å¤´éƒ¨åŒºåŸŸ | æ‘¸æ‘¸è¿›åº¦: {headRubProgress:F0}/{HEAD_RUB_THRESHOLD}";
                 }
                 else if (zone == InteractionPhrases.InteractionZone.Body)
                 {
-                    tooltip += "\n\n?? ÉíÌåÇøÓò | µ¥»÷´Á´Á";
+                    tooltip += "\n\n?? èº«ä½“åŒºåŸŸ | å•å‡»æˆ³æˆ³";
                 }
                 
                 if (isTouchModeActive)
                 {
-                    tooltip += "\n\n? ´¥ÃşÄ£Ê½¼¤»î£¡ÒÆ¶¯Êó±êÓëËı»¥¶¯";
+                    tooltip += "\n\n? è§¦æ‘¸æ¨¡å¼æ¿€æ´»ï¼ç§»åŠ¨é¼ æ ‡ä¸å¥¹äº’åŠ¨";
                 }
                 else if (isHovering)
                 {
                     float progress = (Time.realtimeSinceStartup - hoverStartTime) / HOVER_ACTIVATION_TIME;
-                    tooltip += $"\n?? ĞüÍ£½ø¶È: {(progress * 100):F0}%";
+                    tooltip += $"\n?? æ‚¬åœè¿›åº¦: {(progress * 100):F0}%";
                 }
                 else
                 {
-                    tooltip += "\n?? ĞüÍ£1Ãë¼¤»î´¥ÃşÄ£Ê½";
+                    tooltip += "\n?? æ‚¬åœ1ç§’æ¿€æ´»è§¦æ‘¸æ¨¡å¼";
                 }
             }
             

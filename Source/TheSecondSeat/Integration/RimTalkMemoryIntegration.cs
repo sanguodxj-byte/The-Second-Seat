@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Verse;
@@ -7,21 +7,21 @@ using RimWorld;
 namespace TheSecondSeat.Integration
 {
     /// <summary>
-    /// RimTalk ¼ÇÒäÀ©Õ¹¼¯³É
-    /// ¹¦ÄÜ£º
-    /// 1. ×Ô¶¯¼ÇÂ¼ĞğÊÂÕßºÍÍæ¼ÒµÄ¶Ô»°µ½¼ÇÒäÏµÍ³
-    /// 2. ÎªĞğÊÂÕß´´½¨ĞéÄâ Pawn ÓÃÓÚ´æ´¢¼ÇÒä
-    /// 3. Ö§³Ö¼¯³ÉÀ©Õ¹µÄ UI ÏÔÊ¾
-    /// 4. ×Ô¶¯±êÇ©ºÍ±êÇ©
-    /// ? ĞŞ¸´£ºÊ¹ÓÃ WorldComponent ³Ö¾Ã»¯ĞéÄâ Pawn
+    /// RimTalk è®°å¿†æ‰©å±•é›†æˆ
+    /// åŠŸèƒ½ï¼š
+    /// 1. è‡ªåŠ¨è®°å½•å™äº‹è€…å’Œç©å®¶çš„å¯¹è¯åˆ°è®°å¿†ç³»ç»Ÿ
+    /// 2. ä¸ºå™äº‹è€…åˆ›å»ºè™šæ‹Ÿ Pawn ç”¨äºå­˜å‚¨è®°å¿†
+    /// 3. æ”¯æŒé›†æˆæ‰©å±•çš„ UI æ˜¾ç¤º
+    /// 4. è‡ªåŠ¨æ ‡ç­¾å’Œæ ‡ç­¾
+    /// ? ä¿®å¤ï¼šä½¿ç”¨ WorldComponent æŒä¹…åŒ–è™šæ‹Ÿ Pawn
     /// </summary>
     public static class RimTalkMemoryIntegration
     {
-        // RimTalk ¼ÇÒäÏµÍ³ÊÇ·ñ¿ÉÓÃ
+        // RimTalk è®°å¿†ç³»ç»Ÿæ˜¯å¦å¯ç”¨
         private static bool? isRimTalkAvailable = null;
         
         /// <summary>
-        /// ¼ì²é RimTalk ¼ÇÒäÀ©Õ¹ÊÇ·ñÒÑ¼ÓÔØ
+        /// æ£€æŸ¥ RimTalk è®°å¿†æ‰©å±•æ˜¯å¦å·²åŠ è½½
         /// </summary>
         public static bool IsRimTalkMemoryAvailable()
         {
@@ -30,32 +30,32 @@ namespace TheSecondSeat.Integration
             
             try
             {
-                // ¼ì²é RimTalk.Memory ÃüÃû¿Õ¼äÊÇ·ñ´æÔÚ
+                // æ£€æŸ¥ RimTalk.Memory å‘½åç©ºé—´æ˜¯å¦å­˜åœ¨
                 var memoryType = Type.GetType("RimTalk.Memory.MemoryEntry, RimTalk-ExpandMemory");
                 isRimTalkAvailable = (memoryType != null);
                 
                 if (isRimTalkAvailable.Value)
                 {
-                    Log.Message("[TheSecondSeat] RimTalk ¼ÇÒäÀ©Õ¹¼ì²â³É¹¦£¬¼¯³É¹¦ÄÜÒÑÆôÓÃ");
+                    Log.Message("[TheSecondSeat] RimTalk è®°å¿†æ‰©å±•æ£€æµ‹æˆåŠŸï¼Œé›†æˆåŠŸèƒ½å·²å¯ç”¨");
                 }
                 else
                 {
-                    Log.Warning("[TheSecondSeat] Î´¼ì²âµ½ RimTalk ¼ÇÒäÀ©Õ¹£¬¶Ô»°¼ÇÒä¹¦ÄÜÒÑ½ûÓÃ");
+                    Log.Warning("[TheSecondSeat] æœªæ£€æµ‹åˆ° RimTalk è®°å¿†æ‰©å±•ï¼Œå¯¹è¯è®°å¿†åŠŸèƒ½å·²ç¦ç”¨");
                 }
                 
                 return isRimTalkAvailable.Value;
             }
             catch (Exception ex)
             {
-                Log.Warning($"[TheSecondSeat] RimTalk ¼ÇÒäÀ©Õ¹¼ì²âÊ§°Ü: {ex.Message}");
+                Log.Warning($"[TheSecondSeat] RimTalk è®°å¿†æ‰©å±•æ£€æµ‹å¤±è´¥: {ex.Message}");
                 isRimTalkAvailable = false;
                 return false;
             }
         }
         
         /// <summary>
-        /// ? »ñÈ¡»ò´´½¨ĞğÊÂÕßµÄĞéÄâ Pawn£¨ÓÃÓÚ´æ´¢¼ÇÒä£©
-        /// ? ĞŞ¸´£ºÖ±½Ó´´½¨ÁÙÊ±Pawn£¬²»ÔÙÒÀÀµWorldComponent
+        /// ? è·å–æˆ–åˆ›å»ºå™äº‹è€…çš„è™šæ‹Ÿ Pawnï¼ˆç”¨äºå­˜å‚¨è®°å¿†ï¼‰
+        /// ? ä¿®å¤ï¼šç›´æ¥åˆ›å»ºä¸´æ—¶Pawnï¼Œä¸å†ä¾èµ–WorldComponent
         /// </summary>
         public static Pawn GetOrCreateNarratorPawn(string narratorDefName, string narratorName)
         {
@@ -64,29 +64,29 @@ namespace TheSecondSeat.Integration
             
             try
             {
-                // ? ¼ò»¯£ºÃ¿´Îµ÷ÓÃ¶¼´´½¨Ò»¸öÁÙÊ± Pawn
-                // Ô­Òò£ºRimTalk¼ÇÒäÏµÍ³±¾Éí»á¹ÜÀíPawnµÄ³Ö¾Ã»¯
+                // ? ç®€åŒ–ï¼šæ¯æ¬¡è°ƒç”¨éƒ½åˆ›å»ºä¸€ä¸ªä¸´æ—¶ Pawn
+                // åŸå› ï¼šRimTalkè®°å¿†ç³»ç»Ÿæœ¬èº«ä¼šç®¡ç†Pawnçš„æŒä¹…åŒ–
                 PawnKindDef kind = PawnKindDefOf.Colonist;
                 Faction faction = Faction.OfPlayer;
                 
                 Pawn pawn = PawnGenerator.GeneratePawn(kind, faction);
                 pawn.Name = new NameSingle(narratorName);
                 
-                // Ìí¼Ó¼ÇÒä×é¼ş
+                // æ·»åŠ è®°å¿†ç»„ä»¶
                 AddMemoryComponentToPawn(pawn);
                 
-                Log.Message($"[RimTalkMemoryIntegration] ÎªĞğÊÂÕß {narratorName} ´´½¨ÁÙÊ± Pawn");
+                Log.Message($"[RimTalkMemoryIntegration] ä¸ºå™äº‹è€… {narratorName} åˆ›å»ºä¸´æ—¶ Pawn");
                 return pawn;
             }
             catch (Exception ex)
             {
-                Log.Error($"[RimTalkMemoryIntegration] ´´½¨ĞğÊÂÕß Pawn Ê§°Ü: {ex.Message}");
+                Log.Error($"[RimTalkMemoryIntegration] åˆ›å»ºå™äº‹è€… Pawn å¤±è´¥: {ex.Message}");
                 return null;
             }
         }
         
         /// <summary>
-        /// ? ĞÂÔö£ºÎª Pawn Ìí¼Ó¼ÇÒä×é¼ş£¨¹©Íâ²¿µ÷ÓÃ£©
+        /// ? æ–°å¢ï¼šä¸º Pawn æ·»åŠ è®°å¿†ç»„ä»¶ï¼ˆä¾›å¤–éƒ¨è°ƒç”¨ï¼‰
         /// </summary>
         public static void AddMemoryComponentToPawn(Pawn pawn)
         {
@@ -95,88 +95,88 @@ namespace TheSecondSeat.Integration
             
             try
             {
-                // Ê¹ÓÃ·´ÉäÌí¼Ó FourLayerMemoryComp
+                // ä½¿ç”¨åå°„æ·»åŠ  FourLayerMemoryComp
                 var compType = Type.GetType("RimTalk.Memory.FourLayerMemoryComp, RimTalk-ExpandMemory");
                 if (compType == null)
                 {
-                    Log.Warning("[RimTalkMemoryIntegration] Î´ÕÒµ½ FourLayerMemoryComp ÀàĞÍ");
+                    Log.Warning("[RimTalkMemoryIntegration] æœªæ‰¾åˆ° FourLayerMemoryComp ç±»å‹");
                     return;
                 }
                 
-                // ¼ì²éÊÇ·ñÒÑ´æÔÚ
+                // æ£€æŸ¥æ˜¯å¦å·²å­˜åœ¨
                 var existingComp = pawn.AllComps.FirstOrDefault(c => c.GetType() == compType);
                 if (existingComp != null)
                 {
-                    Log.Message($"[RimTalkMemoryIntegration] Pawn {pawn.LabelShort} ÒÑÓĞ¼ÇÒä×é¼ş");
+                    Log.Message($"[RimTalkMemoryIntegration] Pawn {pawn.LabelShort} å·²æœ‰è®°å¿†ç»„ä»¶");
                     return;
                 }
                 
-                // ´´½¨×é¼şÊµÀı
+                // åˆ›å»ºç»„ä»¶å®ä¾‹
                 var comp = (ThingComp)Activator.CreateInstance(compType);
                 comp.parent = pawn;
                 pawn.AllComps.Add(comp);
                 
-                // ³õÊ¼»¯×é¼ş
+                // åˆå§‹åŒ–ç»„ä»¶
                 var initMethod = compType.GetMethod("Initialize");
                 initMethod?.Invoke(comp, new object[] { new CompProperties() });
                 
-                Log.Message($"[RimTalkMemoryIntegration] Îª {pawn.LabelShort} Ìí¼Ó¼ÇÒä×é¼ş³É¹¦");
+                Log.Message($"[RimTalkMemoryIntegration] ä¸º {pawn.LabelShort} æ·»åŠ è®°å¿†ç»„ä»¶æˆåŠŸ");
             }
             catch (Exception ex)
             {
-                Log.Error($"[RimTalkMemoryIntegration] Ìí¼Ó¼ÇÒä×é¼şÊ§°Ü: {ex.Message}\n{ex.StackTrace}");
+                Log.Error($"[RimTalkMemoryIntegration] æ·»åŠ è®°å¿†ç»„ä»¶å¤±è´¥: {ex.Message}\n{ex.StackTrace}");
             }
         }
         
         /// <summary>
-        /// Ìí¼Ó¼ÇÒä×é¼şµ½ Pawn
+        /// æ·»åŠ è®°å¿†ç»„ä»¶åˆ° Pawn
         /// </summary>
         private static void AddMemoryComponent(Pawn pawn)
         {
             try
             {
-                // Ê¹ÓÃ·´ÉäÌí¼Ó FourLayerMemoryComp
+                // ä½¿ç”¨åå°„æ·»åŠ  FourLayerMemoryComp
                 var compType = Type.GetType("RimTalk.Memory.FourLayerMemoryComp, RimTalk-ExpandMemory");
                 if (compType == null)
                 {
-                    Log.Warning("[TheSecondSeat] Î´ÕÒµ½ FourLayerMemoryComp ÀàĞÍ");
+                    Log.Warning("[TheSecondSeat] æœªæ‰¾åˆ° FourLayerMemoryComp ç±»å‹");
                     return;
                 }
                 
-                // ¼ì²éÊÇ·ñÒÑÓĞ×é¼ş
+                // æ£€æŸ¥æ˜¯å¦å·²æœ‰ç»„ä»¶
                 var existingComp = pawn.AllComps.FirstOrDefault(c => c.GetType() == compType);
                 if (existingComp != null)
                 {
-                    Log.Message($"[TheSecondSeat] Pawn {pawn.LabelShort} ÒÑÓĞ¼ÇÒä×é¼ş");
+                    Log.Message($"[TheSecondSeat] Pawn {pawn.LabelShort} å·²æœ‰è®°å¿†ç»„ä»¶");
                     return;
                 }
                 
-                // ´´½¨×é¼şÊµÀı
+                // åˆ›å»ºç»„ä»¶å®ä¾‹
                 var comp = (ThingComp)Activator.CreateInstance(compType);
                 comp.parent = pawn;
                 pawn.AllComps.Add(comp);
                 
-                // ³õÊ¼»¯×é¼ş
+                // åˆå§‹åŒ–ç»„ä»¶
                 var initMethod = compType.GetMethod("Initialize");
                 initMethod?.Invoke(comp, new object[] { new CompProperties() });
                 
-                Log.Message($"[TheSecondSeat] ÒÑÎª {pawn.LabelShort} Ìí¼Ó¼ÇÒä×é¼ş");
+                Log.Message($"[TheSecondSeat] å·²ä¸º {pawn.LabelShort} æ·»åŠ è®°å¿†ç»„ä»¶");
             }
             catch (Exception ex)
             {
-                Log.Error($"[TheSecondSeat] Ìí¼Ó¼ÇÒä×é¼şÊ§°Ü: {ex.Message}\n{ex.StackTrace}");
+                Log.Error($"[TheSecondSeat] æ·»åŠ è®°å¿†ç»„ä»¶å¤±è´¥: {ex.Message}\n{ex.StackTrace}");
             }
         }
         
         /// <summary>
-        /// ¼ÇÂ¼¶Ô»°µ½¼ÇÒäÏµÍ³
+        /// è®°å½•å¯¹è¯åˆ°è®°å¿†ç³»ç»Ÿ
         /// </summary>
-        /// <param name="narratorDefName">ĞğÊÂÕß DefName</param>
-        /// <param name="narratorName">ĞğÊÂÕßÃû³Æ</param>
-        /// <param name="speaker">Ëµ»°Õß£¨"Player" »ò "Narrator"£©</param>
-        /// <param name="content">¶Ô»°ÄÚÈİ</param>
-        /// <param name="importance">ÖØÒªĞÔ£¨0-1£©</param>
-        /// <param name="tags">±êÇ©</param>
+        /// <param name="narratorDefName">å™äº‹è€… DefName</param>
+        /// <param name="narratorName">å™äº‹è€…åç§°</param>
+        /// <param name="speaker">è¯´è¯è€…ï¼ˆ"Player" æˆ– "Narrator"ï¼‰</param>
+        /// <param name="content">å¯¹è¯å†…å®¹</param>
+        /// <param name="importance">é‡è¦æ€§ï¼ˆ0-1ï¼‰</param>
+        /// <param name="tags">æ ‡ç­¾</param>
         public static void RecordConversation(
             string narratorDefName,
             string narratorName,
@@ -190,41 +190,41 @@ namespace TheSecondSeat.Integration
             
             try
             {
-                // »ñÈ¡ĞğÊÂÕß Pawn
+                // è·å–å™äº‹è€… Pawn
                 Pawn narratorPawn = GetOrCreateNarratorPawn(narratorDefName, narratorName);
                 if (narratorPawn == null)
                     return;
                 
-                // »ñÈ¡¼ÇÒä×é¼ş
+                // è·å–è®°å¿†ç»„ä»¶
                 var memoryComp = GetMemoryComponent(narratorPawn);
                 if (memoryComp == null)
                     return;
                 
-                // ¸ñÊ½»¯¶Ô»°ÄÚÈİ
+                // æ ¼å¼åŒ–å¯¹è¯å†…å®¹
                 string formattedContent = speaker == "Player" 
-                    ? $"[Íæ¼Ò]: {content}" 
+                    ? $"[ç©å®¶]: {content}" 
                     : $"[{narratorName}]: {content}";
                 
-                // ×¼±¸±êÇ©
+                // å‡†å¤‡æ ‡ç­¾
                 var finalTags = tags ?? new List<string>();
-                if (!finalTags.Contains("ĞğÊÂÕß¶Ô»°"))
-                    finalTags.Add("ĞğÊÂÕß¶Ô»°");
+                if (!finalTags.Contains("å™äº‹è€…å¯¹è¯"))
+                    finalTags.Add("å™äº‹è€…å¯¹è¯");
                 if (!finalTags.Contains(narratorName))
                     finalTags.Add(narratorName);
                 
-                // µ÷ÓÃ¼ÇÒä×é¼şµÄ AddActiveMemory ·½·¨
+                // è°ƒç”¨è®°å¿†ç»„ä»¶çš„ AddActiveMemory æ–¹æ³•
                 AddMemoryToComp(memoryComp, formattedContent, importance, speaker, finalTags);
                 
-                Log.Message($"[TheSecondSeat] ÒÑ¼ÇÂ¼¶Ô»°µ½¼ÇÒäÏµÍ³: {formattedContent.Substring(0, Math.Min(50, formattedContent.Length))}...");
+                Log.Message($"[TheSecondSeat] å·²è®°å½•å¯¹è¯åˆ°è®°å¿†ç³»ç»Ÿ: {formattedContent.Substring(0, Math.Min(50, formattedContent.Length))}...");
             }
             catch (Exception ex)
             {
-                Log.Error($"[TheSecondSeat] ¼ÇÂ¼¶Ô»°µ½¼ÇÒäÏµÍ³Ê§°Ü: {ex.Message}");
+                Log.Error($"[TheSecondSeat] è®°å½•å¯¹è¯åˆ°è®°å¿†ç³»ç»Ÿå¤±è´¥: {ex.Message}");
             }
         }
         
         /// <summary>
-        /// »ñÈ¡¼ÇÒä×é¼ş
+        /// è·å–è®°å¿†ç»„ä»¶
         /// </summary>
         private static ThingComp GetMemoryComponent(Pawn pawn)
         {
@@ -238,13 +238,13 @@ namespace TheSecondSeat.Integration
             }
             catch (Exception ex)
             {
-                Log.Error($"[TheSecondSeat] »ñÈ¡¼ÇÒä×é¼şÊ§°Ü: {ex.Message}");
+                Log.Error($"[TheSecondSeat] è·å–è®°å¿†ç»„ä»¶å¤±è´¥: {ex.Message}");
                 return null;
             }
         }
         
         /// <summary>
-        /// Ìí¼Ó¼ÇÒäµ½×é¼ş£¨Ê¹ÓÃ·´Éä£©
+        /// æ·»åŠ è®°å¿†åˆ°ç»„ä»¶ï¼ˆä½¿ç”¨åå°„ï¼‰
         /// </summary>
         private static void AddMemoryToComp(
             ThingComp memoryComp,
@@ -257,11 +257,11 @@ namespace TheSecondSeat.Integration
             {
                 var compType = memoryComp.GetType();
                 
-                // »ñÈ¡ MemoryType Ã¶¾Ù
+                // è·å– MemoryType æšä¸¾
                 var memoryTypeEnum = Type.GetType("RimTalk.Memory.MemoryType, RimTalk-ExpandMemory");
                 var conversationType = Enum.Parse(memoryTypeEnum, "Conversation");
                 
-                // µ÷ÓÃ AddActiveMemory ·½·¨
+                // è°ƒç”¨ AddActiveMemory æ–¹æ³•
                 var method = compType.GetMethod("AddActiveMemory");
                 if (method != null)
                 {
@@ -273,7 +273,7 @@ namespace TheSecondSeat.Integration
                         relatedPawn     // string relatedPawn
                     });
                     
-                    // Èç¹ûÓĞ±êÇ©£¬³¢ÊÔÌí¼Ó
+                    // å¦‚æœæœ‰æ ‡ç­¾ï¼Œå°è¯•æ·»åŠ 
                     if (tags != null && tags.Count > 0)
                     {
                         AddTagsToLatestMemory(memoryComp, tags);
@@ -281,17 +281,17 @@ namespace TheSecondSeat.Integration
                 }
                 else
                 {
-                    Log.Warning("[TheSecondSeat] Î´ÕÒµ½ AddActiveMemory ·½·¨");
+                    Log.Warning("[TheSecondSeat] æœªæ‰¾åˆ° AddActiveMemory æ–¹æ³•");
                 }
             }
             catch (Exception ex)
             {
-                Log.Error($"[TheSecondSeat] Ìí¼Ó¼ÇÒäÊ§°Ü: {ex.Message}\n{ex.StackTrace}");
+                Log.Error($"[TheSecondSeat] æ·»åŠ è®°å¿†å¤±è´¥: {ex.Message}\n{ex.StackTrace}");
             }
         }
         
         /// <summary>
-        /// Îª×îĞÂ¼ÇÒäÌí¼Ó±êÇ©
+        /// ä¸ºæœ€æ–°è®°å¿†æ·»åŠ æ ‡ç­¾
         /// </summary>
         private static void AddTagsToLatestMemory(ThingComp memoryComp, List<string> tags)
         {
@@ -299,7 +299,7 @@ namespace TheSecondSeat.Integration
             {
                 var compType = memoryComp.GetType();
                 
-                // »ñÈ¡ activeMemories ×Ö¶Î
+                // è·å– activeMemories å­—æ®µ
                 var activeMemoriesField = compType.GetField("activeMemories", 
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 
@@ -332,12 +332,12 @@ namespace TheSecondSeat.Integration
             }
             catch (Exception ex)
             {
-                Log.Warning($"[TheSecondSeat] Ìí¼Ó±êÇ©Ê§°Ü: {ex.Message}");
+                Log.Warning($"[TheSecondSeat] æ·»åŠ æ ‡ç­¾å¤±è´¥: {ex.Message}");
             }
         }
         
         /// <summary>
-        /// »ñÈ¡ĞğÊÂÕßµÄ¶Ô»°¼ÇÒä£¨ÔİÊ±½ûÓÃ£¬ĞèÖØ¹¹£©
+        /// è·å–å™äº‹è€…çš„å¯¹è¯è®°å¿†ï¼ˆæš‚æ—¶ç¦ç”¨ï¼Œéœ€é‡æ„ï¼‰
         /// </summary>
         public static List<string> RetrieveConversationMemories(string narratorDefName, int maxCount = 10)
         {
@@ -346,46 +346,46 @@ namespace TheSecondSeat.Integration
             if (!IsRimTalkMemoryAvailable())
                 return result;
             
-            // ? ĞŞ¸´£ºÓÉÓÚÃ»ÓĞ³Ö¾Ã»¯µÄPawn¹ÜÀí£¬ÔİÊ±·µ»Ø¿ÕÁĞ±í
-            // Î´À´Èç¹ûĞèÒª£¬¿ÉÒÔ´ÓRimTalkµÄÈ«¾Ö¼ÇÒäÏµÍ³ÖĞ¼ìË÷
-            Log.Warning("[RimTalkMemoryIntegration] RetrieveConversationMemories ÔİÎ´ÊµÏÖ³Ö¾Ã»¯¼ìË÷");
+            // ? ä¿®å¤ï¼šç”±äºæ²¡æœ‰æŒä¹…åŒ–çš„Pawnç®¡ç†ï¼Œæš‚æ—¶è¿”å›ç©ºåˆ—è¡¨
+            // æœªæ¥å¦‚æœéœ€è¦ï¼Œå¯ä»¥ä»RimTalkçš„å…¨å±€è®°å¿†ç³»ç»Ÿä¸­æ£€ç´¢
+            Log.Warning("[RimTalkMemoryIntegration] RetrieveConversationMemories æš‚æœªå®ç°æŒä¹…åŒ–æ£€ç´¢");
             return result;
         }
         
         /// <summary>
-        /// »ñÈ¡ËùÓĞĞğÊÂÕßĞéÄâ Pawn£¨ÒÑ½ûÓÃ£©
+        /// è·å–æ‰€æœ‰å™äº‹è€…è™šæ‹Ÿ Pawnï¼ˆå·²ç¦ç”¨ï¼‰
         /// </summary>
         public static List<Pawn> GetAllNarratorPawns()
         {
-            // ? ĞŞ¸´£º·µ»Ø¿ÕÁĞ±í
+            // ? ä¿®å¤ï¼šè¿”å›ç©ºåˆ—è¡¨
             return new List<Pawn>();
         }
         
         /// <summary>
-        /// ÅĞ¶Ï Pawn ÊÇ·ñÎªĞğÊÂÕßĞéÄâ Pawn£¨ÒÑ½ûÓÃ£©
+        /// åˆ¤æ–­ Pawn æ˜¯å¦ä¸ºå™äº‹è€…è™šæ‹Ÿ Pawnï¼ˆå·²ç¦ç”¨ï¼‰
         /// </summary>
         public static bool IsNarratorPawn(Pawn pawn)
         {
-            // ? ĞŞ¸´£ºÊ¼ÖÕ·µ»Ø false
+            // ? ä¿®å¤ï¼šå§‹ç»ˆè¿”å› false
             return false;
         }
         
         /// <summary>
-        /// »ñÈ¡ĞğÊÂÕßµÄ DefName£¨ÒÑ½ûÓÃ£©
+        /// è·å–å™äº‹è€…çš„ DefNameï¼ˆå·²ç¦ç”¨ï¼‰
         /// </summary>
         public static string GetNarratorDefName(Pawn narratorPawn)
         {
-            // ? ĞŞ¸´£º·µ»Ø null
+            // ? ä¿®å¤ï¼šè¿”å› null
             return null;
         }
         
         /// <summary>
-        /// Çå¿ÕĞğÊÂÕßĞéÄâ Pawn »º´æ£¨ÒÑ½ûÓÃ£©
+        /// æ¸…ç©ºå™äº‹è€…è™šæ‹Ÿ Pawn ç¼“å­˜ï¼ˆå·²ç¦ç”¨ï¼‰
         /// </summary>
         public static void ClearCache()
         {
-            // ? ĞŞ¸´£º¿Õ²Ù×÷
-            Log.Message("[RimTalkMemoryIntegration] ClearCache ÒÑ½ûÓÃ£¨ÎŞ»º´æ£©");
+            // ? ä¿®å¤ï¼šç©ºæ“ä½œ
+            Log.Message("[RimTalkMemoryIntegration] ClearCache å·²ç¦ç”¨ï¼ˆæ— ç¼“å­˜ï¼‰");
         }
     }
 }

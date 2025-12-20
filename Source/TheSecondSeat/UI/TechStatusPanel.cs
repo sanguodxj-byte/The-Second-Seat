@@ -1,15 +1,15 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using Verse;
 using System;
 
 namespace TheSecondSeat.UI
 {
     /// <summary>
-    /// ¿Æ¼¼¸Ğ×´Ì¬Ãæ°å - ´¿´úÂë»æÖÆ°æ±¾£¨²»ĞèÒªÎÆÀí£©
+    /// ç§‘æŠ€æ„ŸçŠ¶æ€é¢æ¿ - çº¯ä»£ç ç»˜åˆ¶ç‰ˆæœ¬ï¼ˆä¸éœ€è¦çº¹ç†ï¼‰
     /// </summary>
     public static class TechStatusPanel
     {
-        // ÑÕÉ«¶¨Òå
+        // é¢œè‰²å®šä¹‰
         private static readonly Color CyanGlow = new Color(0f, 0.9f, 1f, 1f);
         private static readonly Color GreenGlow = new Color(0f, 1f, 0.53f, 1f);
         private static readonly Color RedGlow = new Color(1f, 0.2f, 0.4f, 1f);
@@ -17,55 +17,55 @@ namespace TheSecondSeat.UI
         private static readonly Color PanelBg = new Color(0.16f, 0.20f, 0.24f, 0.9f);
 
         /// <summary>
-        /// »æÖÆ¿Æ¼¼¸Ğ×´Ì¬Ãæ°å
+        /// ç»˜åˆ¶ç§‘æŠ€æ„ŸçŠ¶æ€é¢æ¿
         /// </summary>
         public static void DrawStatusPanel(Rect rect, bool isOnline, float syncProgress, bool hasError, string errorMessage = "")
         {
-            // Ö÷±³¾°
+            // ä¸»èƒŒæ™¯
             DrawTechBackground(rect);
             
-            // ±êÌâ
+            // æ ‡é¢˜
             var titleRect = new Rect(rect.x + 10, rect.y + 10, rect.width - 20, 30);
             DrawTechTitle(titleRect, "NARRATOR.OS");
             
-            // ÔÚÏß×´Ì¬
+            // åœ¨çº¿çŠ¶æ€
             var onlineRect = new Rect(rect.x + 20, rect.y + 50, 120, 30);
             DrawOnlineStatus(onlineRect, isOnline);
             
-            // Í¬²½½ø¶È
+            // åŒæ­¥è¿›åº¦
             var syncRect = new Rect(rect.x + 20, rect.y + 90, 120, 120);
             DrawSyncCircle(syncRect, syncProgress);
             
-            // Á¬½Ó×´Ì¬
+            // è¿æ¥çŠ¶æ€
             var linkRect = new Rect(rect.x + 20, rect.y + 220, 120, 120);
             DrawLinkStatus(linkRect, hasError, errorMessage);
             
-            // µ×²¿½ø¶ÈÌõ
+            // åº•éƒ¨è¿›åº¦æ¡
             var progressRect = new Rect(rect.x + 10, rect.y + rect.height - 30, rect.width - 20, 20);
             DrawProgressBar(progressRect, syncProgress);
         }
 
         /// <summary>
-        /// »æÖÆ¿Æ¼¼±³¾°
+        /// ç»˜åˆ¶ç§‘æŠ€èƒŒæ™¯
         /// </summary>
         private static void DrawTechBackground(Rect rect)
         {
-            // Ö÷±³¾°
+            // ä¸»èƒŒæ™¯
             GUI.color = DarkBg;
             Widgets.DrawBoxSolid(rect, GUI.color);
             GUI.color = Color.white;
             
-            // ·¢¹â±ß¿ò
+            // å‘å…‰è¾¹æ¡†
             GUI.color = CyanGlow;
             Widgets.DrawBox(rect, 2);
             
-            // ÄÚ±ß¿ò
+            // å†…è¾¹æ¡†
             var innerRect = rect.ContractedBy(8f);
             GUI.color = new Color(CyanGlow.r, CyanGlow.g, CyanGlow.b, 0.3f);
             Widgets.DrawBox(innerRect, 1);
             GUI.color = Color.white;
             
-            // ½ÇÂä×°ÊÎ
+            // è§’è½è£…é¥°
             DrawCornerDecoration(new Vector2(rect.x, rect.y), 20f, CyanGlow);
             DrawCornerDecoration(new Vector2(rect.xMax, rect.y), 20f, CyanGlow);
             DrawCornerDecoration(new Vector2(rect.x, rect.yMax), 20f, CyanGlow);
@@ -73,7 +73,7 @@ namespace TheSecondSeat.UI
         }
 
         /// <summary>
-        /// »æÖÆ±êÌâ
+        /// ç»˜åˆ¶æ ‡é¢˜
         /// </summary>
         private static void DrawTechTitle(Rect rect, string title)
         {
@@ -85,7 +85,7 @@ namespace TheSecondSeat.UI
             Text.Anchor = TextAnchor.UpperLeft;
             Text.Font = GameFont.Small;
             
-            // ±êÌâÏÂ»®Ïß
+            // æ ‡é¢˜ä¸‹åˆ’çº¿
             var lineRect = new Rect(rect.x + 20, rect.yMax - 2, rect.width - 40, 2);
             GUI.color = new Color(CyanGlow.r, CyanGlow.g, CyanGlow.b, 0.5f);
             Widgets.DrawBoxSolid(lineRect, GUI.color);
@@ -93,24 +93,24 @@ namespace TheSecondSeat.UI
         }
 
         /// <summary>
-        /// »æÖÆÔÚÏß×´Ì¬
+        /// ç»˜åˆ¶åœ¨çº¿çŠ¶æ€
         /// </summary>
         private static void DrawOnlineStatus(Rect rect, bool isOnline)
         {
-            // ×´Ì¬Ö¸Ê¾µÆ
+            // çŠ¶æ€æŒ‡ç¤ºç¯
             var indicatorRect = new Rect(rect.x, rect.y + 5, 16, 16);
             var color = isOnline ? GreenGlow : new Color(0.5f, 0.5f, 0.5f, 1f);
             
-            // ·¢¹âĞ§¹û
+            // å‘å…‰æ•ˆæœ
             GUI.color = new Color(color.r, color.g, color.b, 0.3f);
             Widgets.DrawBoxSolid(indicatorRect.ExpandedBy(4f), GUI.color);
             
-            // ºËĞÄ
+            // æ ¸å¿ƒ
             GUI.color = color;
             DrawCircle(indicatorRect.center, 8f, color);
             GUI.color = Color.white;
             
-            // ÎÄ±¾
+            // æ–‡æœ¬
             var labelRect = new Rect(rect.x + 24, rect.y, rect.width - 24, rect.height);
             Text.Anchor = TextAnchor.MiddleLeft;
             GUI.color = color;
@@ -120,23 +120,23 @@ namespace TheSecondSeat.UI
         }
 
         /// <summary>
-        /// »æÖÆÍ¬²½»·ĞÎ½ø¶È
+        /// ç»˜åˆ¶åŒæ­¥ç¯å½¢è¿›åº¦
         /// </summary>
         private static void DrawSyncCircle(Rect rect, float progress)
         {
             var center = rect.center;
             var radius = Mathf.Min(rect.width, rect.height) / 2f - 10f;
             
-            // ±³¾°Ô²»·
+            // èƒŒæ™¯åœ†ç¯
             GUI.color = new Color(PanelBg.r, PanelBg.g, PanelBg.b, 0.5f);
             DrawCircleOutline(center, radius, 4f, Color.gray);
             
-            // ½ø¶ÈÔ²»·
+            // è¿›åº¦åœ†ç¯
             GUI.color = CyanGlow;
             DrawArc(center, radius, 0f, progress * 360f, 4f, CyanGlow);
             GUI.color = Color.white;
             
-            // ÖĞĞÄÎÄ×Ö
+            // ä¸­å¿ƒæ–‡å­—
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.MiddleCenter;
             GUI.color = CyanGlow;
@@ -147,7 +147,7 @@ namespace TheSecondSeat.UI
         }
 
         /// <summary>
-        /// »æÖÆÁ¬½Ó×´Ì¬
+        /// ç»˜åˆ¶è¿æ¥çŠ¶æ€
         /// </summary>
         private static void DrawLinkStatus(Rect rect, bool hasError, string errorMessage)
         {
@@ -156,10 +156,10 @@ namespace TheSecondSeat.UI
             
             var color = hasError ? RedGlow : GreenGlow;
             
-            // ³İÂÖÍ¼±ê£¨¼ò»¯°æ£©
+            // é½¿è½®å›¾æ ‡ï¼ˆç®€åŒ–ç‰ˆï¼‰
             DrawGearIcon(center, radius * 0.6f, color);
             
-            // ±êÇ©
+            // æ ‡ç­¾
             var labelRect = new Rect(rect.x, rect.yMax + 5, rect.width, 20);
             Text.Anchor = TextAnchor.UpperCenter;
             GUI.color = color;
@@ -179,29 +179,29 @@ namespace TheSecondSeat.UI
         }
 
         /// <summary>
-        /// »æÖÆµ×²¿½ø¶ÈÌõ
+        /// ç»˜åˆ¶åº•éƒ¨è¿›åº¦æ¡
         /// </summary>
         private static void DrawProgressBar(Rect rect, float progress)
         {
-            // ±³¾°
+            // èƒŒæ™¯
             GUI.color = new Color(0f, 0f, 0f, 0.5f);
             Widgets.DrawBoxSolid(rect, GUI.color);
             
-            // ½ø¶ÈÌî³ä
+            // è¿›åº¦å¡«å……
             var fillRect = new Rect(rect.x, rect.y, rect.width * progress, rect.height);
             GUI.color = new Color(GreenGlow.r, GreenGlow.g, GreenGlow.b, 0.6f);
             Widgets.DrawBoxSolid(fillRect, GUI.color);
             
-            // ±ß¿ò
+            // è¾¹æ¡†
             GUI.color = CyanGlow;
             Widgets.DrawBox(rect, 1);
             GUI.color = Color.white;
         }
 
-        // ===== ¸¨Öú»æÖÆ·½·¨ =====
+        // ===== è¾…åŠ©ç»˜åˆ¶æ–¹æ³• =====
 
         /// <summary>
-        /// »æÖÆÔ²ĞÎ
+        /// ç»˜åˆ¶åœ†å½¢
         /// </summary>
         private static void DrawCircle(Vector2 center, float radius, Color color)
         {
@@ -216,14 +216,14 @@ namespace TheSecondSeat.UI
                 var p1 = center + new Vector2(Mathf.Cos(angle1), Mathf.Sin(angle1)) * radius;
                 var p2 = center + new Vector2(Mathf.Cos(angle2), Mathf.Sin(angle2)) * radius;
                 
-                // Ê¹ÓÃÈı½ÇĞÎÌî³ä£¨¼ò»¯£©
+                // ä½¿ç”¨ä¸‰è§’å½¢å¡«å……ï¼ˆç®€åŒ–ï¼‰
                 var rect = new Rect(p1.x - 1, p1.y - 1, 2, 2);
                 Widgets.DrawBoxSolid(rect, color);
             }
         }
 
         /// <summary>
-        /// »æÖÆÔ²ĞÎÂÖÀª
+        /// ç»˜åˆ¶åœ†å½¢è½®å»“
         /// </summary>
         private static void DrawCircleOutline(Vector2 center, float radius, float thickness, Color color)
         {
@@ -242,7 +242,7 @@ namespace TheSecondSeat.UI
         }
 
         /// <summary>
-        /// »æÖÆÔ²»¡
+        /// ç»˜åˆ¶åœ†å¼§
         /// </summary>
         private static void DrawArc(Vector2 center, float radius, float startAngle, float endAngle, float thickness, Color color)
         {
@@ -253,7 +253,7 @@ namespace TheSecondSeat.UI
             GUI.color = color;
             for (int i = 0; i <= segments; i++)
             {
-                var angle = (startAngle + i * angleStep - 90f) * Mathf.Deg2Rad; // -90¶ÈÊ¹0¶È´Ó¶¥²¿¿ªÊ¼
+                var angle = (startAngle + i * angleStep - 90f) * Mathf.Deg2Rad; // -90åº¦ä½¿0åº¦ä»é¡¶éƒ¨å¼€å§‹
                 var p = center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
                 var rect = new Rect(p.x - thickness / 2, p.y - thickness / 2, thickness, thickness);
                 Widgets.DrawBoxSolid(rect, color);
@@ -262,19 +262,19 @@ namespace TheSecondSeat.UI
         }
 
         /// <summary>
-        /// »æÖÆ³İÂÖÍ¼±ê£¨¼ò»¯°æ£©
+        /// ç»˜åˆ¶é½¿è½®å›¾æ ‡ï¼ˆç®€åŒ–ç‰ˆï¼‰
         /// </summary>
         private static void DrawGearIcon(Vector2 center, float radius, Color color)
         {
-            // ÍâÔ²
+            // å¤–åœ†
             GUI.color = new Color(color.r, color.g, color.b, 0.3f);
             DrawCircle(center, radius, color);
             
-            // ÄÚÔ²
+            // å†…åœ†
             GUI.color = color;
             DrawCircle(center, radius * 0.6f, color);
             
-            // ³İ
+            // é½¿
             for (int i = 0; i < 8; i++)
             {
                 var angle = i * 45f * Mathf.Deg2Rad;
@@ -287,13 +287,13 @@ namespace TheSecondSeat.UI
         }
 
         /// <summary>
-        /// »æÖÆ½ÇÂä×°ÊÎ
+        /// ç»˜åˆ¶è§’è½è£…é¥°
         /// </summary>
         private static void DrawCornerDecoration(Vector2 corner, float size, Color color)
         {
             GUI.color = new Color(color.r, color.g, color.b, 0.5f);
             
-            // ¼òµ¥µÄ½ÇÂä±ê¼Ç
+            // ç®€å•çš„è§’è½æ ‡è®°
             var rect1 = new Rect(corner.x - 2, corner.y - 2, size / 4, 2);
             var rect2 = new Rect(corner.x - 2, corner.y - 2, 2, size / 4);
             

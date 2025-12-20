@@ -173,75 +173,10 @@ namespace TheSecondSeat.UI
                 
                 if (useMultimodalAnalysis)
                 {
-                    // ✅ 尝试从用户上传的立绘文件进行多模态分析
-                    // 注意：这里假设用户已经将立绘放置在正确的文件夹中
-                    // 路径：Textures/UI/Narrators/9x16/{人格名}/base.png
-                    
-                    string portraitPath = $"UI/Narrators/9x16/{personaName}/base";
-                    Texture2D portraitTexture = ContentFinder<Texture2D>.Get(portraitPath, false);
-                    
-                    if (portraitTexture != null)
-                    {
-                        try
-                        {
-                            // ✅ 调用多模态分析服务
-                            var analysisService = new MultimodalAnalysisService();
-                            
-                            // ✅ 将用户输入的简介作为额外提示传递给分析服务
-                            var analysisResult = analysisService.AnalyzePersonaImage(
-                                portraitTexture, 
-                                personaName,
-                                userBio: personaBio  // 传递用户输入的简介
-                            );
-                            
-                            if (analysisResult != null)
-                            {
-                                // ✅ 使用分析结果增强人格定义
-                                newPersona.SetAnalysis(analysisResult);
-                                
-                                // ✅ 更新 biography：结合 AI 分析和用户输入
-                                if (!string.IsNullOrEmpty(analysisResult.GeneratedBiography))
-                                {
-                                    newPersona.biography = $"{personaBio}\n\n[AI 分析补充]\n{analysisResult.GeneratedBiography}";
-                                }
-                                
-                                // ✅ 更新视觉描述
-                                newPersona.visualDescription = analysisResult.VisualDescription;
-                                newPersona.visualElements = analysisResult.VisualTags;
-                                
-                                // ✅ 更新对话风格（基于分析结果）
-                                if (analysisResult.SuggestedDialogueStyle != null)
-                                {
-                                    newPersona.dialogueStyle = analysisResult.SuggestedDialogueStyle;
-                                }
-                                
-                                statusMessage = "✅ 多模态分析完成！人格数据已生成";
-                                
-                                if (Prefs.DevMode)
-                                {
-                                    Log.Message($"[Dialog_PersonaGenerationSettings] 多模态分析成功：{analysisResult.VisualTags.Count} 个视觉标签");
-                                }
-                            }
-                            else
-                            {
-                                Log.Warning("[Dialog_PersonaGenerationSettings] 多模态分析返回 null，使用默认配置");
-                            }
-                        }
-                        catch (Exception analysisEx)
-                        {
-                            Log.Warning($"[Dialog_PersonaGenerationSettings] 多模态分析失败（使用默认配置）: {analysisEx.Message}");
-                            statusMessage = "⚠️ 多模态分析失败，使用默认配置";
-                        }
-                    }
-                    else
-                    {
-                        Log.Message($"[Dialog_PersonaGenerationSettings] 未找到立绘文件：{portraitPath}，跳过多模态分析");
-                        statusMessage = "⚠️ 未找到立绘文件，跳过多模态分析";
-                    }
-                }
-                else
-                {
-                    Log.Message("[Dialog_PersonaGenerationSettings] 多模态分析未启用，跳过");
+                    // 简单版本：不使用多模态分析，只使用用户输入
+                    // 如果需要多模态分析，请使用 PersonaSelectionWindow 中的"从立绘生成"功能
+                    Log.Message("[Dialog_PersonaGenerationSettings] 此对话框使用简化流程，不进行多模态分析");
+                    statusMessage = "⚠️ 使用简化流程（无多模态分析）";
                 }
                 
                 // 4. ✅ 注册到 DefDatabase（本次游戏会话立即可用）
@@ -282,11 +217,6 @@ namespace TheSecondSeat.UI
                 else
                 {
                     successMsg += "⚠️ 人格已加载到当前会话，但未能保存到文件。\n重启游戏后将丢失，请手动备份。";
-                }
-                
-                if (useMultimodalAnalysis)
-                {
-                    successMsg += "\n\n💡 提示：AI 已根据你的描述和立绘生成了完整的人格数据。";
                 }
                 
                 Messages.Message(successMsg, MessageTypeDefOf.PositiveEvent);

@@ -1,35 +1,35 @@
-using Verse;
+ï»¿using Verse;
 
 namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
-    /// ¶Ô»°·ç¸ñ¶¨Òå - ¿ØÖÆĞğÊÂÕßµÄËµ»°·½Ê½
-    /// API: ¿ÉÔÚXMLÖĞÅäÖÃËùÓĞ×Ö¶Î
+    /// å¯¹è¯é£æ ¼å®šä¹‰ - æ§åˆ¶å™äº‹è€…çš„è¯´è¯æ–¹å¼
+    /// API: å¯åœ¨XMLä¸­é…ç½®æ‰€æœ‰å­—æ®µ
     /// </summary>
     public class DialogueStyleDef : IExposable
     {
-        /// <summary>API: ÕıÊ½³Ì¶È (0=ËæÒâ, 1=ÕıÊ½)</summary>
+        /// <summary>API: æ­£å¼ç¨‹åº¦ (0=éšæ„, 1=æ­£å¼)</summary>
         public float formalityLevel = 0.5f;
         
-        /// <summary>API: Çé¸Ğ±í´ï³Ì¶È (0=Àä¾², 1=ÈÈÇé)</summary>
+        /// <summary>API: æƒ…æ„Ÿè¡¨è¾¾ç¨‹åº¦ (0=å†·é™, 1=çƒ­æƒ…)</summary>
         public float emotionalExpression = 0.5f;
         
-        /// <summary>API: ÏêÏ¸³Ì¶È (0=¼ò½à, 1=ÏêÏ¸)</summary>
+        /// <summary>API: è¯¦ç»†ç¨‹åº¦ (0=ç®€æ´, 1=è¯¦ç»†)</summary>
         public float verbosity = 0.5f;
         
-        /// <summary>API: ÓÄÄ¬³Ì¶È (0=ÑÏËà, 1=ÓÄÄ¬)</summary>
+        /// <summary>API: å¹½é»˜ç¨‹åº¦ (0=ä¸¥è‚ƒ, 1=å¹½é»˜)</summary>
         public float humorLevel = 0.3f;
         
-        /// <summary>API: ·í´Ì³Ì¶È (0=Ö±°×, 1=·í´Ì)</summary>
+        /// <summary>API: è®½åˆºç¨‹åº¦ (0=ç›´ç™½, 1=è®½åˆº)</summary>
         public float sarcasmLevel = 0.2f;
 
-        /// <summary>API: ÊÇ·ñÊ¹ÓÃ±íÇé·ûºÅ£¨Èç ~¡¢?£©</summary>
+        /// <summary>API: æ˜¯å¦ä½¿ç”¨è¡¨æƒ…ç¬¦å·ï¼ˆå¦‚ ~ã€?ï¼‰</summary>
         public bool useEmoticons = false;
         
-        /// <summary>API: ÊÇ·ñÊ¹ÓÃÊ¡ÂÔºÅ£¨...£©</summary>
+        /// <summary>API: æ˜¯å¦ä½¿ç”¨çœç•¥å·ï¼ˆ...ï¼‰</summary>
         public bool useEllipsis = false;
         
-        /// <summary>API: ÊÇ·ñÊ¹ÓÃ¸ĞÌ¾ºÅ£¨!£©</summary>
+        /// <summary>API: æ˜¯å¦ä½¿ç”¨æ„Ÿå¹å·ï¼ˆ!ï¼‰</summary>
         public bool useExclamation = true;
 
         public DialogueStyleDef()

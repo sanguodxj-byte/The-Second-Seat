@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.IO;
 using System.Text;
 using System.Linq;
@@ -9,97 +9,97 @@ using RimWorld;
 namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
-    /// ÈË¸ñ¶¨Òåµ¼³ö¹¤¾ß
-    /// ? ½«Éú³ÉµÄÈË¸ñµ¼³öÎªXMLÎÄ¼şºÍÁ¢»æÎÄ¼ş
+    /// äººæ ¼å®šä¹‰å¯¼å‡ºå·¥å…·
+    /// ? å°†ç”Ÿæˆçš„äººæ ¼å¯¼å‡ºä¸ºXMLæ–‡ä»¶å’Œç«‹ç»˜æ–‡ä»¶
     /// </summary>
     public static class PersonaDefExporter
     {
         /// <summary>
-        /// µ¼³öÈË¸ñ£¨°üÀ¨Á¢»æºÍXML¶¨Òå£©
-        /// ? Í¬Ê±×¢²áµ½DefDatabaseºÍ±£´æÎªXMLÎÄ¼ş
+        /// å¯¼å‡ºäººæ ¼ï¼ˆåŒ…æ‹¬ç«‹ç»˜å’ŒXMLå®šä¹‰ï¼‰
+        /// ? åŒæ—¶æ³¨å†Œåˆ°DefDatabaseå’Œä¿å­˜ä¸ºXMLæ–‡ä»¶
         /// </summary>
         public static bool ExportPersona(NarratorPersonaDef persona, string sourcePortraitPath, Texture2D texture)
         {
             try
             {
-                // 1. ¸´ÖÆÁ¢»æµ½ModÄ¿Â¼
+                // 1. å¤åˆ¶ç«‹ç»˜åˆ°Modç›®å½•
                 string portraitFileName = CopyPortraitToModDirectory(persona, sourcePortraitPath, texture);
                 
                 if (string.IsNullOrEmpty(portraitFileName))
                 {
-                    Log.Warning($"[PersonaDefExporter] Á¢»æ¸´ÖÆÊ§°Ü£¬Ìø¹ıµ¼³ö: {persona.defName}");
+                    Log.Warning($"[PersonaDefExporter] ç«‹ç»˜å¤åˆ¶å¤±è´¥ï¼Œè·³è¿‡å¯¼å‡º: {persona.defName}");
                     return false;
                 }
                 
-                // 2. ¸üĞÂÈË¸ñ¶¨ÒåÖĞµÄÁ¢»æÂ·¾¶
+                // 2. æ›´æ–°äººæ ¼å®šä¹‰ä¸­çš„ç«‹ç»˜è·¯å¾„
                 persona.portraitPath = $"UI/Narrators/{Path.GetFileNameWithoutExtension(portraitFileName)}";
-                persona.useCustomPortrait = false; // Ê¹ÓÃModÁ¢»æ
+                persona.useCustomPortrait = false; // ä½¿ç”¨Modç«‹ç»˜
                 
-                // 3. ? ´´½¨ÈË¸ñ×¨ÊôÎÄ¼ş¼Ğ½á¹¹
+                // 3. ? åˆ›å»ºäººæ ¼ä¸“å±æ–‡ä»¶å¤¹ç»“æ„
                 CreatePersonaDirectories(persona);
                 
-                // 4. ? Á¢¼´×¢²áµ½DefDatabase£¨ÔËĞĞÊ±¿ÉÓÃ£©
+                // 4. ? ç«‹å³æ³¨å†Œåˆ°DefDatabaseï¼ˆè¿è¡Œæ—¶å¯ç”¨ï¼‰
                 if (!DefDatabase<NarratorPersonaDef>.AllDefs.Contains(persona))
                 {
                     DefDatabase<NarratorPersonaDef>.Add(persona);
-                    Log.Message($"[PersonaDefExporter] ÒÑ×¢²áÈË¸ñµ½DefDatabase: {persona.defName}");
+                    Log.Message($"[PersonaDefExporter] å·²æ³¨å†Œäººæ ¼åˆ°DefDatabase: {persona.defName}");
                 }
                 
-                // 5. Éú³ÉXML¶¨ÒåÎÄ¼ş£¨³Ö¾Ã»¯£¬ÏÂ´ÎÆô¶¯×Ô¶¯¼ÓÔØ£©
+                // 5. ç”ŸæˆXMLå®šä¹‰æ–‡ä»¶ï¼ˆæŒä¹…åŒ–ï¼Œä¸‹æ¬¡å¯åŠ¨è‡ªåŠ¨åŠ è½½ï¼‰
                 string xmlContent = GeneratePersonaDefXml(persona);
                 
-                // 6. ±£´æXMLÎÄ¼ş
+                // 6. ä¿å­˜XMLæ–‡ä»¶
                 string xmlFilePath = SavePersonaDefXml(persona.defName, xmlContent);
                 
-                // 7. Çå³ıÁ¢»æ»º´æ£¬Ç¿ÖÆÖØĞÂ¼ÓÔØ
+                // 7. æ¸…é™¤ç«‹ç»˜ç¼“å­˜ï¼Œå¼ºåˆ¶é‡æ–°åŠ è½½
                 PortraitLoader.ClearCache();
                 
-                // 8. ÌáÊ¾ÓÃ»§
+                // 8. æç¤ºç”¨æˆ·
                 Messages.Message(
-                    $"[³É¹¦] ³É¹¦µ¼³öÈË¸ñ£º{persona.narratorName}\n" +
-                    $"[ÎÄ¼ş] ¶¨ÒåÎÄ¼ş: {Path.GetFileName(xmlFilePath)}\n" +
-                    $"[Á¢»æ] Á¢»æÎÄ¼ş: {portraitFileName}\n" +
-                    $"[ÎÄ¼ş¼Ğ] ÒÑ´´½¨±íÇéºÍ·ş×°ÎÄ¼ş¼Ğ\n" +
-                    $"[ÌáÊ¾] ÖØÆôÓÎÏ·ºó½«ÓÀ¾Ã±£´æ",
+                    $"[æˆåŠŸ] æˆåŠŸå¯¼å‡ºäººæ ¼ï¼š{persona.narratorName}\n" +
+                    $"[æ–‡ä»¶] å®šä¹‰æ–‡ä»¶: {Path.GetFileName(xmlFilePath)}\n" +
+                    $"[ç«‹ç»˜] ç«‹ç»˜æ–‡ä»¶: {portraitFileName}\n" +
+                    $"[æ–‡ä»¶å¤¹] å·²åˆ›å»ºè¡¨æƒ…å’Œæœè£…æ–‡ä»¶å¤¹\n" +
+                    $"[æç¤º] é‡å¯æ¸¸æˆåå°†æ°¸ä¹…ä¿å­˜",
                     MessageTypeDefOf.PositiveEvent
                 );
                 
-                Log.Message($"[PersonaDefExporter] ³É¹¦µ¼³öÈË¸ñ: {persona.narratorName}\n" +
-                           $"  Á¢»æ: {portraitFileName}\n" +
-                           $"  ¶¨Òå: {xmlFilePath}\n" +
-                           $"  ×¢²á×´Ì¬: ÒÑÌí¼Óµ½DefDatabase");
+                Log.Message($"[PersonaDefExporter] æˆåŠŸå¯¼å‡ºäººæ ¼: {persona.narratorName}\n" +
+                           $"  ç«‹ç»˜: {portraitFileName}\n" +
+                           $"  å®šä¹‰: {xmlFilePath}\n" +
+                           $"  æ³¨å†ŒçŠ¶æ€: å·²æ·»åŠ åˆ°DefDatabase");
                 
                 return true;
             }
             catch (Exception ex)
             {
-                Log.Error($"[PersonaDefExporter] µ¼³öÈË¸ñÊ§°Ü: {persona.defName}\n{ex}");
-                Messages.Message($"? µ¼³öÈË¸ñÊ§°Ü: {ex.Message}", MessageTypeDefOf.RejectInput);
+                Log.Error($"[PersonaDefExporter] å¯¼å‡ºäººæ ¼å¤±è´¥: {persona.defName}\n{ex}");
+                Messages.Message($"? å¯¼å‡ºäººæ ¼å¤±è´¥: {ex.Message}", MessageTypeDefOf.RejectInput);
                 return false;
             }
         }
         
         /// <summary>
-        /// ? ´´½¨ÈË¸ñ×¨ÊôÎÄ¼ş¼Ğ½á¹¹
+        /// ? åˆ›å»ºäººæ ¼ä¸“å±æ–‡ä»¶å¤¹ç»“æ„
         /// </summary>
         private static void CreatePersonaDirectories(NarratorPersonaDef persona)
         {
             try
             {
-                // »ñÈ¡ Mod ¸ùÄ¿Â¼
+                // è·å– Mod æ ¹ç›®å½•
                 var modContentPack = LoadedModManager.RunningModsListForReading
                     .FirstOrDefault(mod => mod.PackageId.ToLower().Contains("thesecondseat") || 
                                           mod.Name.Contains("Second Seat"));
                 
                 if (modContentPack == null)
                 {
-                    Log.Warning("[PersonaDefExporter] ÎŞ·¨ÕÒµ½ModÄ¿Â¼£¬Ìø¹ıÎÄ¼ş¼Ğ´´½¨");
+                    Log.Warning("[PersonaDefExporter] æ— æ³•æ‰¾åˆ°Modç›®å½•ï¼Œè·³è¿‡æ–‡ä»¶å¤¹åˆ›å»º");
                     return;
                 }
                 
                 string personaName = SanitizeFileName(persona.narratorName);
                 
-                // ´´½¨ÈË¸ñÖ÷ÎÄ¼ş¼Ğ
+                // åˆ›å»ºäººæ ¼ä¸»æ–‡ä»¶å¤¹
                 string personaBaseDir = Path.Combine(
                     modContentPack.RootDir, 
                     "Textures", "UI", "Narrators", "9x16", personaName
@@ -108,10 +108,10 @@ namespace TheSecondSeat.PersonaGeneration
                 if (!Directory.Exists(personaBaseDir))
                 {
                     Directory.CreateDirectory(personaBaseDir);
-                    Log.Message($"[PersonaDefExporter] ´´½¨ÈË¸ñÎÄ¼ş¼Ğ: {personaBaseDir}");
+                    Log.Message($"[PersonaDefExporter] åˆ›å»ºäººæ ¼æ–‡ä»¶å¤¹: {personaBaseDir}");
                 }
                 
-                // ´´½¨±íÇéÎÄ¼ş¼Ğ
+                // åˆ›å»ºè¡¨æƒ…æ–‡ä»¶å¤¹
                 string expressionsDir = Path.Combine(
                     modContentPack.RootDir, 
                     "Textures", "UI", "Narrators", "9x16", "Expressions", personaName
@@ -120,93 +120,93 @@ namespace TheSecondSeat.PersonaGeneration
                 if (!Directory.Exists(expressionsDir))
                 {
                     Directory.CreateDirectory(expressionsDir);
-                    Log.Message($"[PersonaDefExporter] ´´½¨±íÇéÎÄ¼ş¼Ğ: {expressionsDir}");
+                    Log.Message($"[PersonaDefExporter] åˆ›å»ºè¡¨æƒ…æ–‡ä»¶å¤¹: {expressionsDir}");
                     
-                    // ´´½¨ËµÃ÷ÎÄ¼ş
+                    // åˆ›å»ºè¯´æ˜æ–‡ä»¶
                     string readmePath = Path.Combine(expressionsDir, "README.txt");
                     File.WriteAllText(readmePath, 
-                        $"# {persona.narratorName} ±íÇé²î·ÖÎÄ¼ş¼Ğ\n\n" +
-                        $"½«±íÇéÁ¢»æ·ÅÔÚ´Ë´¦£¬ÃüÃû¹æÔò£º\n" +
-                        $"- happy.png        (¿ªĞÄ)\n" +
-                        $"- sad.png          (±¯ÉË)\n" +
-                        $"- angry.png        (·ßÅ­)\n" +
-                        $"- surprised.png    (¾ªÑÈ)\n" +
-                        $"- thoughtful.png   (³ÁË¼)\n" +
-                        $"- annoyed.png      (·³Ôê)\n" +
-                        $"- smug.png         (µÃÒâ)\n" +
-                        $"- worried.png      (µ£ÓÇ)\n" +
-                        $"- disappointed.png (Ê§Íû)\n" +
-                        $"- playful.png      (µ÷Æ¤) ? ĞÂÔö\n\n" +
-                        $"×¢Òâ£º\n" +
-                        $"1. ÎÄ¼şÃû±ØĞëĞ¡Ğ´\n" +
-                        $"2. Ö§³Ö PNG ºÍ JPG ¸ñÊ½\n" +
-                        $"3. ÍÆ¼ö³ß´çÓë»ù´¡Á¢»æÒ»ÖÂ£¨Èç 1024x2048£©\n" +
-                        $"4. Èç¹ûÊ¹ÓÃÍêÕûÁ¢»æ£¬ÏµÍ³»á×Ô¶¯²Ã¼ôÃæ²¿ÇøÓò\n",
+                        $"# {persona.narratorName} è¡¨æƒ…å·®åˆ†æ–‡ä»¶å¤¹\n\n" +
+                        $"å°†è¡¨æƒ…ç«‹ç»˜æ”¾åœ¨æ­¤å¤„ï¼Œå‘½åè§„åˆ™ï¼š\n" +
+                        $"- happy.png        (å¼€å¿ƒ)\n" +
+                        $"- sad.png          (æ‚²ä¼¤)\n" +
+                        $"- angry.png        (æ„¤æ€’)\n" +
+                        $"- surprised.png    (æƒŠè®¶)\n" +
+                        $"- thoughtful.png   (æ²‰æ€)\n" +
+                        $"- annoyed.png      (çƒ¦èº)\n" +
+                        $"- smug.png         (å¾—æ„)\n" +
+                        $"- worried.png      (æ‹…å¿§)\n" +
+                        $"- disappointed.png (å¤±æœ›)\n" +
+                        $"- playful.png      (è°ƒçš®) ? æ–°å¢\n\n" +
+                        $"æ³¨æ„ï¼š\n" +
+                        $"1. æ–‡ä»¶åå¿…é¡»å°å†™\n" +
+                        $"2. æ”¯æŒ PNG å’Œ JPG æ ¼å¼\n" +
+                        $"3. æ¨èå°ºå¯¸ä¸åŸºç¡€ç«‹ç»˜ä¸€è‡´ï¼ˆå¦‚ 1024x2048ï¼‰\n" +
+                        $"4. å¦‚æœä½¿ç”¨å®Œæ•´ç«‹ç»˜ï¼Œç³»ç»Ÿä¼šè‡ªåŠ¨è£å‰ªé¢éƒ¨åŒºåŸŸ\n",
                         Encoding.UTF8
                     );
                 }
                 
-                // ´´½¨·ş×°ÎÄ¼ş¼Ğ
+                // åˆ›å»ºæœè£…æ–‡ä»¶å¤¹
                 string outfitsDir = Path.Combine(personaBaseDir, "Outfits");
                 
                 if (!Directory.Exists(outfitsDir))
                 {
                     Directory.CreateDirectory(outfitsDir);
-                    Log.Message($"[PersonaDefExporter] ´´½¨·ş×°ÎÄ¼ş¼Ğ: {outfitsDir}");
+                    Log.Message($"[PersonaDefExporter] åˆ›å»ºæœè£…æ–‡ä»¶å¤¹: {outfitsDir}");
                     
-                    // ´´½¨ËµÃ÷ÎÄ¼ş
+                    // åˆ›å»ºè¯´æ˜æ–‡ä»¶
                     string readmePath = Path.Combine(outfitsDir, "README.txt");
                     File.WriteAllText(readmePath, 
-                        $"# {persona.narratorName} ·ş×°²î·ÖÎÄ¼ş¼Ğ\n\n" +
-                        $"½«·ş×°Á¢»æ·ÅÔÚ´Ë´¦£¬ÃüÃû¹æÔò£º\n" +
-                        $"- neutral_1.png   (ÖĞĞÔ·ş×° - ºÃ¸Ğ¶È 0-199)\n" +
-                        $"- warm_1.png      (ÎÂÅ¯·ş×° - ºÃ¸Ğ¶È 200-499)\n" +
-                        $"- intimate_1.png  (Ç×ÃÜ·ş×° - ºÃ¸Ğ¶È 500-799)\n" +
-                        $"- devoted_1.png   (Ö¿°®·ş×° - ºÃ¸Ğ¶È 800+)\n\n" +
-                        $"×¢Òâ£º\n" +
-                        $"1. ÎÄ¼şÃû±ØĞëĞ¡Ğ´\n" +
-                        $"2. Ö§³Ö PNG ºÍ JPG ¸ñÊ½\n" +
-                        $"3. ÍÆ¼ö³ß´çÓë»ù´¡Á¢»æÒ»ÖÂ£¨Èç 1024x2048£©\n" +
-                        $"4. ·ş×°²î·Ö»áÓë±íÇé²î·Ö×Ô¶¯ºÏ³É\n",
+                        $"# {persona.narratorName} æœè£…å·®åˆ†æ–‡ä»¶å¤¹\n\n" +
+                        $"å°†æœè£…ç«‹ç»˜æ”¾åœ¨æ­¤å¤„ï¼Œå‘½åè§„åˆ™ï¼š\n" +
+                        $"- neutral_1.png   (ä¸­æ€§æœè£… - å¥½æ„Ÿåº¦ 0-199)\n" +
+                        $"- warm_1.png      (æ¸©æš–æœè£… - å¥½æ„Ÿåº¦ 200-499)\n" +
+                        $"- intimate_1.png  (äº²å¯†æœè£… - å¥½æ„Ÿåº¦ 500-799)\n" +
+                        $"- devoted_1.png   (æŒšçˆ±æœè£… - å¥½æ„Ÿåº¦ 800+)\n\n" +
+                        $"æ³¨æ„ï¼š\n" +
+                        $"1. æ–‡ä»¶åå¿…é¡»å°å†™\n" +
+                        $"2. æ”¯æŒ PNG å’Œ JPG æ ¼å¼\n" +
+                        $"3. æ¨èå°ºå¯¸ä¸åŸºç¡€ç«‹ç»˜ä¸€è‡´ï¼ˆå¦‚ 1024x2048ï¼‰\n" +
+                        $"4. æœè£…å·®åˆ†ä¼šä¸è¡¨æƒ…å·®åˆ†è‡ªåŠ¨åˆæˆ\n",
                         Encoding.UTF8
                     );
                 }
                 
-                Log.Message($"[PersonaDefExporter] ÈË¸ñÎÄ¼ş¼Ğ½á¹¹´´½¨Íê³É: {personaName}");
+                Log.Message($"[PersonaDefExporter] äººæ ¼æ–‡ä»¶å¤¹ç»“æ„åˆ›å»ºå®Œæˆ: {personaName}");
             }
             catch (Exception ex)
             {
-                Log.Warning($"[PersonaDefExporter] ´´½¨ÈË¸ñÎÄ¼ş¼ĞÊ§°Ü£¨·ÇÖÂÃü´íÎó£©: {ex.Message}");
+                Log.Warning($"[PersonaDefExporter] åˆ›å»ºäººæ ¼æ–‡ä»¶å¤¹å¤±è´¥ï¼ˆéè‡´å‘½é”™è¯¯ï¼‰: {ex.Message}");
             }
         }
         
         /// <summary>
-        /// ¸´ÖÆÁ¢»æµ½ModÄ¿Â¼
+        /// å¤åˆ¶ç«‹ç»˜åˆ°Modç›®å½•
         /// </summary>
         private static string CopyPortraitToModDirectory(NarratorPersonaDef persona, string sourcePath, Texture2D texture)
         {
             try
             {
-                // »ñÈ¡ModÁ¢»æÄ¿Â¼
+                // è·å–Modç«‹ç»˜ç›®å½•
                 string modPortraitsDir = PortraitLoader.GetModPortraitsDirectory();
                 
-                // Éú³ÉÎÄ¼şÃû£¨Ê¹ÓÃÈË¸ñÃû³Æ£¬ÇåÀí·Ç·¨×Ö·û£©
+                // ç”Ÿæˆæ–‡ä»¶åï¼ˆä½¿ç”¨äººæ ¼åç§°ï¼Œæ¸…ç†éæ³•å­—ç¬¦ï¼‰
                 string safeFileName = SanitizeFileName(persona.narratorName);
                 string targetFileName = $"{safeFileName}.png";
                 string targetPath = Path.Combine(modPortraitsDir, targetFileName);
                 
-                // ? ĞŞ¸´£ºÓÅÏÈÊ¹ÓÃ´«ÈëµÄ Texture2D£¨ContentFinder ÒÑ¼ÓÔØ£©
+                // ? ä¿®å¤ï¼šä¼˜å…ˆä½¿ç”¨ä¼ å…¥çš„ Texture2Dï¼ˆContentFinder å·²åŠ è½½ï¼‰
                 if (texture != null)
                 {
                     SaveTextureAsPNG(texture, targetPath);
-                    Log.Message($"[PersonaDefExporter] ÒÑ´Ó Texture2D ±£´æÁ¢»æ: {targetPath}");
+                    Log.Message($"[PersonaDefExporter] å·²ä» Texture2D ä¿å­˜ç«‹ç»˜: {targetPath}");
                     return targetFileName;
                 }
                 
-                // ? ½µ¼¶£º³¢ÊÔ×÷ÎªÎÄ¼şÂ·¾¶¸´ÖÆ£¨Íâ²¿ÎÄ¼ş£©
+                // ? é™çº§ï¼šå°è¯•ä½œä¸ºæ–‡ä»¶è·¯å¾„å¤åˆ¶ï¼ˆå¤–éƒ¨æ–‡ä»¶ï¼‰
                 if (File.Exists(sourcePath))
                 {
-                    // ¸´ÖÆÎÄ¼şÂß¼­£¨±£ÁôÔ­ÓĞµÄÖØÊÔ»úÖÆ£©
+                    // å¤åˆ¶æ–‡ä»¶é€»è¾‘ï¼ˆä¿ç•™åŸæœ‰çš„é‡è¯•æœºåˆ¶ï¼‰
                     bool copySuccess = false;
                     int retryCount = 0;
                     int maxRetries = 5;
@@ -215,7 +215,7 @@ namespace TheSecondSeat.PersonaGeneration
                     {
                         try
                         {
-                            // Èç¹ûÄ¿±êÎÄ¼ş´æÔÚ£¬ÏÈ³¢ÊÔÉ¾³ı
+                            // å¦‚æœç›®æ ‡æ–‡ä»¶å­˜åœ¨ï¼Œå…ˆå°è¯•åˆ é™¤
                             if (File.Exists(targetPath))
                             {
                                 try
@@ -225,42 +225,42 @@ namespace TheSecondSeat.PersonaGeneration
                                 }
                                 catch (IOException)
                                 {
-                                    Log.Warning($"[PersonaDefExporter] ÎŞ·¨É¾³ıÄ¿±êÎÄ¼ş£¨Õ¼ÓÃ£©£¬³¢ÊÔÖ±½Ó¸²¸Ç... ({retryCount + 1}/{maxRetries})");
+                                    Log.Warning($"[PersonaDefExporter] æ— æ³•åˆ é™¤ç›®æ ‡æ–‡ä»¶ï¼ˆå ç”¨ï¼‰ï¼Œå°è¯•ç›´æ¥è¦†ç›–... ({retryCount + 1}/{maxRetries})");
                                 }
                             }
                             
-                            // Ö´ĞĞ¸´ÖÆ
+                            // æ‰§è¡Œå¤åˆ¶
                             File.Copy(sourcePath, targetPath, overwrite: true);
                             copySuccess = true;
-                            Log.Message($"[PersonaDefExporter] ÒÑ¸´ÖÆÁ¢»æ: {sourcePath} ¡ú {targetPath}");
+                            Log.Message($"[PersonaDefExporter] å·²å¤åˆ¶ç«‹ç»˜: {sourcePath} â†’ {targetPath}");
                         }
                         catch (IOException ex)
                         {
                             retryCount++;
                             if (retryCount >= maxRetries)
                             {
-                                Log.Error($"[PersonaDefExporter] ¸´ÖÆÁ¢»æÊ§°Ü£¨ÖØÊÔ{maxRetries}´Îºó£©: {ex.Message}");
+                                Log.Error($"[PersonaDefExporter] å¤åˆ¶ç«‹ç»˜å¤±è´¥ï¼ˆé‡è¯•{maxRetries}æ¬¡åï¼‰: {ex.Message}");
                                 
-                                // ×îºó³¢ÊÔ£ºÊ¹ÓÃ²»Í¬µÄÎÄ¼şÃû
+                                // æœ€åå°è¯•ï¼šä½¿ç”¨ä¸åŒçš„æ–‡ä»¶å
                                 string alternativeFileName = $"{safeFileName}_{DateTime.Now:yyyyMMddHHmmss}.png";
                                 string alternativePath = Path.Combine(modPortraitsDir, alternativeFileName);
                                 
                                 try
                                 {
                                     File.Copy(sourcePath, alternativePath, overwrite: false);
-                                    Log.Warning($"[PersonaDefExporter] Ê¹ÓÃ±¸ÓÃÎÄ¼şÃû±£´æ: {alternativeFileName}");
+                                    Log.Warning($"[PersonaDefExporter] ä½¿ç”¨å¤‡ç”¨æ–‡ä»¶åä¿å­˜: {alternativeFileName}");
                                     return alternativeFileName;
                                 }
                                 catch
                                 {
-                                    throw new IOException($"ÎŞ·¨¸´ÖÆÁ¢»æÎÄ¼ş¡£Ä¿±êÎÄ¼ş¿ÉÄÜ±»Unity±à¼­Æ÷Õ¼ÓÃ¡£\n" +
-                                                        $"Çë¹Ø±ÕËùÓĞÍ¼Æ¬²é¿´Æ÷È»ºóÖØÊÔ¡£\n" +
-                                                        $"Ä¿±êÂ·¾¶: {targetPath}\n" +
-                                                        $"Ô­Ê¼´íÎó: {ex.Message}");
+                                    throw new IOException($"æ— æ³•å¤åˆ¶ç«‹ç»˜æ–‡ä»¶ã€‚ç›®æ ‡æ–‡ä»¶å¯èƒ½è¢«Unityç¼–è¾‘å™¨å ç”¨ã€‚\n" +
+                                                        $"è¯·å…³é—­æ‰€æœ‰å›¾ç‰‡æŸ¥çœ‹å™¨ç„¶åé‡è¯•ã€‚\n" +
+                                                        $"ç›®æ ‡è·¯å¾„: {targetPath}\n" +
+                                                        $"åŸå§‹é”™è¯¯: {ex.Message}");
                                 }
                             }
                             
-                            Log.Warning($"[PersonaDefExporter] ¸´ÖÆÊ§°Ü£¬{500 * (retryCount + 1)}msºóÖØÊÔ... ({retryCount}/{maxRetries})");
+                            Log.Warning($"[PersonaDefExporter] å¤åˆ¶å¤±è´¥ï¼Œ{500 * (retryCount + 1)}msåé‡è¯•... ({retryCount}/{maxRetries})");
                             System.Threading.Thread.Sleep(500 * (retryCount + 1));
                         }
                     }
@@ -268,8 +268,8 @@ namespace TheSecondSeat.PersonaGeneration
                     return targetFileName;
                 }
                 
-                // ? Èç¹û¼ÈÃ»ÓĞ Texture Ò²²»ÊÇÎÄ¼şÂ·¾¶£¬³¢ÊÔÓÃ ContentFinder ¼ÓÔØ
-                Log.Warning($"[PersonaDefExporter] Ô´Â·¾¶²»ÊÇÎÄ¼şÏµÍ³Â·¾¶£¬³¢ÊÔÓÃ ContentFinder ¼ÓÔØ: {sourcePath}");
+                // ? å¦‚æœæ—¢æ²¡æœ‰ Texture ä¹Ÿä¸æ˜¯æ–‡ä»¶è·¯å¾„ï¼Œå°è¯•ç”¨ ContentFinder åŠ è½½
+                Log.Warning($"[PersonaDefExporter] æºè·¯å¾„ä¸æ˜¯æ–‡ä»¶ç³»ç»Ÿè·¯å¾„ï¼Œå°è¯•ç”¨ ContentFinder åŠ è½½: {sourcePath}");
                 
                 Texture2D loadedTexture = null;
                 if (sourcePath.StartsWith("UI/"))
@@ -280,28 +280,28 @@ namespace TheSecondSeat.PersonaGeneration
                 if (loadedTexture != null)
                 {
                     SaveTextureAsPNG(loadedTexture, targetPath);
-                    Log.Message($"[PersonaDefExporter] ÒÑ´Ó ContentFinder ±£´æÁ¢»æ: {targetPath}");
+                    Log.Message($"[PersonaDefExporter] å·²ä» ContentFinder ä¿å­˜ç«‹ç»˜: {targetPath}");
                     return targetFileName;
                 }
                 
-                // È«²¿Ê§°Ü
-                Log.Error($"[PersonaDefExporter] ÎŞ·¨»ñÈ¡Á¢»æÎÆÀí: {sourcePath}");
+                // å…¨éƒ¨å¤±è´¥
+                Log.Error($"[PersonaDefExporter] æ— æ³•è·å–ç«‹ç»˜çº¹ç†: {sourcePath}");
                 return null;
             }
             catch (Exception ex)
             {
-                Log.Error($"[PersonaDefExporter] ¸´ÖÆÁ¢»æÊ§°Ü: {ex}");
-                Messages.Message($"?? Á¢»æ¸´ÖÆÊ§°Ü\n{ex.Message}\n\nÇëÈ·ÈÏÃ»ÓĞ³ÌĞò´ò¿ª¸ÃÍ¼Æ¬", MessageTypeDefOf.RejectInput);
+                Log.Error($"[PersonaDefExporter] å¤åˆ¶ç«‹ç»˜å¤±è´¥: {ex}");
+                Messages.Message($"?? ç«‹ç»˜å¤åˆ¶å¤±è´¥\n{ex.Message}\n\nè¯·ç¡®è®¤æ²¡æœ‰ç¨‹åºæ‰“å¼€è¯¥å›¾ç‰‡", MessageTypeDefOf.RejectInput);
                 return null;
             }
         }
         
         /// <summary>
-        /// ±£´æTexture2DÎªPNGÎÄ¼ş
+        /// ä¿å­˜Texture2Dä¸ºPNGæ–‡ä»¶
         /// </summary>
         private static void SaveTextureAsPNG(Texture2D texture, string filePath)
         {
-            // ´´½¨¿É¶ÁÎÆÀí¸±±¾£¨ÒòÎªÔ­Ê¼ÎÆÀí¿ÉÄÜ²»¿É¶Á£©
+            // åˆ›å»ºå¯è¯»çº¹ç†å‰¯æœ¬ï¼ˆå› ä¸ºåŸå§‹çº¹ç†å¯èƒ½ä¸å¯è¯»ï¼‰
             RenderTexture renderTex = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.Default, RenderTextureReadWrite.Linear);
             Graphics.Blit(texture, renderTex);
             RenderTexture previous = RenderTexture.active;
@@ -314,7 +314,7 @@ namespace TheSecondSeat.PersonaGeneration
             RenderTexture.active = previous;
             RenderTexture.ReleaseTemporary(renderTex);
             
-            // ±àÂëÎªPNG
+            // ç¼–ç ä¸ºPNG
             byte[] pngData = readableTexture.EncodeToPNG();
             File.WriteAllBytes(filePath, pngData);
             
@@ -322,7 +322,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// Éú³ÉÈË¸ñ¶¨ÒåXMLÄÚÈİ
+        /// ç”Ÿæˆäººæ ¼å®šä¹‰XMLå†…å®¹
         /// </summary>
         private static string GeneratePersonaDefXml(NarratorPersonaDef persona)
         {
@@ -331,8 +331,8 @@ namespace TheSecondSeat.PersonaGeneration
             sb.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
             sb.AppendLine("<Defs>");
             sb.AppendLine();
-            sb.AppendLine("  <!-- ×Ô¶¯Éú³ÉµÄÈË¸ñ¶¨Òå -->");
-            sb.AppendLine($"  <!-- Éú³ÉÊ±¼ä: {DateTime.Now:yyyy-MM-dd HH:mm:ss} -->");
+            sb.AppendLine("  <!-- è‡ªåŠ¨ç”Ÿæˆçš„äººæ ¼å®šä¹‰ -->");
+            sb.AppendLine($"  <!-- ç”Ÿæˆæ—¶é—´: {DateTime.Now:yyyy-MM-dd HH:mm:ss} -->");
             sb.AppendLine();
             sb.AppendLine("  <TheSecondSeat.PersonaGeneration.NarratorPersonaDef>");
             sb.AppendLine($"    <defName>{EscapeXml(persona.defName)}</defName>");
@@ -340,29 +340,29 @@ namespace TheSecondSeat.PersonaGeneration
             sb.AppendLine($"    <narratorName>{EscapeXml(persona.narratorName)}</narratorName>");
             sb.AppendLine();
             
-            // Á¢»æÂ·¾¶
+            // ç«‹ç»˜è·¯å¾„
             if (!string.IsNullOrEmpty(persona.portraitPath))
             {
                 sb.AppendLine($"    <portraitPath>{EscapeXml(persona.portraitPath)}</portraitPath>");
             }
             sb.AppendLine();
             
-            // ÑÕÉ«
+            // é¢œè‰²
             sb.AppendLine($"    <primaryColor>({persona.primaryColor.r:F2}, {persona.primaryColor.g:F2}, {persona.primaryColor.b:F2}, {persona.primaryColor.a:F2})</primaryColor>");
             sb.AppendLine($"    <accentColor>({persona.accentColor.r:F2}, {persona.accentColor.g:F2}, {persona.accentColor.b:F2}, {persona.accentColor.a:F2})</accentColor>");
             sb.AppendLine();
             
-            // ¼ò½é£¨ĞèÒª»»ĞĞ´¦Àí£©
+            // ç®€ä»‹ï¼ˆéœ€è¦æ¢è¡Œå¤„ç†ï¼‰
             sb.AppendLine("    <biography>");
             sb.AppendLine(IndentText(EscapeXml(persona.biography), 6));
             sb.AppendLine("    </biography>");
             sb.AppendLine();
             
-            // ? Íâ¹ÛÃèÊö£¨Vision ·ÖÎö½á¹û - ½öµ±Óë biography ²»Í¬Ê±²Å±£´æ£©
+            // ? å¤–è§‚æè¿°ï¼ˆVision åˆ†æç»“æœ - ä»…å½“ä¸ biography ä¸åŒæ—¶æ‰ä¿å­˜ï¼‰
             if (!string.IsNullOrEmpty(persona.visualDescription) && 
                 persona.visualDescription != persona.biography)
             {
-                sb.AppendLine("    <!-- Vision ·ÖÎö½á¹û£¨AI ¶Ô×ÔÉíÍâ¹ÛµÄÀí½â£©-->");
+                sb.AppendLine("    <!-- Vision åˆ†æç»“æœï¼ˆAI å¯¹è‡ªèº«å¤–è§‚çš„ç†è§£ï¼‰-->");
                 sb.AppendLine("    <visualDescription>");
                 sb.AppendLine(IndentText(EscapeXml(persona.visualDescription), 6));
                 sb.AppendLine("    </visualDescription>");
@@ -386,14 +386,14 @@ namespace TheSecondSeat.PersonaGeneration
                 sb.AppendLine();
             }
             
-            // ? ÈË¸ñÌØÖÊ£¨Èç¹ûÓĞ£©
+            // ? äººæ ¼ç‰¹è´¨ï¼ˆå¦‚æœæœ‰ï¼‰
             if (!string.IsNullOrEmpty(persona.overridePersonality))
             {
                 sb.AppendLine($"    <overridePersonality>{EscapeXml(persona.overridePersonality)}</overridePersonality>");
                 sb.AppendLine();
             }
             
-            // ? ¶Ô»°·ç¸ñ
+            // ? å¯¹è¯é£æ ¼
             if (persona.dialogueStyle != null)
             {
                 sb.AppendLine("    <dialogueStyle>");
@@ -403,7 +403,7 @@ namespace TheSecondSeat.PersonaGeneration
                 sb.AppendLine($"      <sarcasmLevel>{persona.dialogueStyle.sarcasmLevel:F2}</sarcasmLevel>");
                 sb.AppendLine($"      <verbosity>{persona.dialogueStyle.verbosity:F2}</verbosity>");
                 
-                // ? Ìí¼Ó²¼¶û±êÖ¾
+                // ? æ·»åŠ å¸ƒå°”æ ‡å¿—
                 if (persona.dialogueStyle.useEmoticons)
                 {
                     sb.AppendLine($"      <useEmoticons>true</useEmoticons>");
@@ -421,7 +421,7 @@ namespace TheSecondSeat.PersonaGeneration
                 sb.AppendLine();
             }
             
-            // ? ÊÂ¼şÆ«ºÃ£¨Èç¹ûÓĞ£©
+            // ? äº‹ä»¶åå¥½ï¼ˆå¦‚æœæœ‰ï¼‰
             if (persona.eventPreferences != null)
             {
                 sb.AppendLine("    <eventPreferences>");
@@ -433,7 +433,7 @@ namespace TheSecondSeat.PersonaGeneration
                 sb.AppendLine();
             }
             
-            // ? ÓïÆø±êÇ©
+            // ? è¯­æ°”æ ‡ç­¾
             if (persona.toneTags != null && persona.toneTags.Count > 0)
             {
                 sb.AppendLine("    <toneTags>");
@@ -453,51 +453,51 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ±£´æÈË¸ñ¶¨ÒåXMLÎÄ¼ş
+        /// ä¿å­˜äººæ ¼å®šä¹‰XMLæ–‡ä»¶
         /// </summary>
         private static string SavePersonaDefXml(string defName, string xmlContent)
         {
             try
             {
-                // »ñÈ¡Mod¸ùÄ¿Â¼
+                // è·å–Modæ ¹ç›®å½•
                 var modContentPack = LoadedModManager.RunningModsListForReading
                     .FirstOrDefault(mod => mod.PackageId.ToLower().Contains("thesecondseat") || 
                                           mod.Name.Contains("Second Seat"));
                 
                 if (modContentPack == null)
                 {
-                    Log.Error("[PersonaDefExporter] ÎŞ·¨ÕÒµ½ModÄ¿Â¼");
+                    Log.Error("[PersonaDefExporter] æ— æ³•æ‰¾åˆ°Modç›®å½•");
                     return null;
                 }
                 
-                // ´´½¨Defs/NarratorPersonaDefsÄ¿Â¼
+                // åˆ›å»ºDefs/NarratorPersonaDefsç›®å½•
                 string defsDir = Path.Combine(modContentPack.RootDir, "Defs", "NarratorPersonaDefs");
                 if (!Directory.Exists(defsDir))
                 {
                     Directory.CreateDirectory(defsDir);
-                    Log.Message($"[PersonaDefExporter] ´´½¨Ä¿Â¼: {defsDir}");
+                    Log.Message($"[PersonaDefExporter] åˆ›å»ºç›®å½•: {defsDir}");
                 }
                 
-                // Éú³ÉÎÄ¼şÃû
+                // ç”Ÿæˆæ–‡ä»¶å
                 string fileName = $"{SanitizeFileName(defName)}.xml";
                 string filePath = Path.Combine(defsDir, fileName);
                 
-                // ±£´æÎÄ¼ş£¨UTF-8±àÂë£¬ÎŞBOM£©
+                // ä¿å­˜æ–‡ä»¶ï¼ˆUTF-8ç¼–ç ï¼Œæ— BOMï¼‰
                 File.WriteAllText(filePath, xmlContent, new UTF8Encoding(false));
                 
-                Log.Message($"[PersonaDefExporter] ÒÑ±£´æÈË¸ñ¶¨Òå: {filePath}");
+                Log.Message($"[PersonaDefExporter] å·²ä¿å­˜äººæ ¼å®šä¹‰: {filePath}");
                 
                 return filePath;
             }
             catch (Exception ex)
             {
-                Log.Error($"[PersonaDefExporter] ±£´æXMLÎÄ¼şÊ§°Ü: {ex}");
+                Log.Error($"[PersonaDefExporter] ä¿å­˜XMLæ–‡ä»¶å¤±è´¥: {ex}");
                 return null;
             }
         }
         
         /// <summary>
-        /// ÇåÀíÎÄ¼şÃûÖĞµÄ·Ç·¨×Ö·û
+        /// æ¸…ç†æ–‡ä»¶åä¸­çš„éæ³•å­—ç¬¦
         /// </summary>
         private static string SanitizeFileName(string fileName)
         {
@@ -506,7 +506,7 @@ namespace TheSecondSeat.PersonaGeneration
                 return "UnnamedPersona";
             }
             
-            // ÒÆ³ı»òÌæ»»·Ç·¨×Ö·û
+            // ç§»é™¤æˆ–æ›¿æ¢éæ³•å­—ç¬¦
             char[] invalidChars = Path.GetInvalidFileNameChars();
             string sanitized = fileName;
             
@@ -515,7 +515,7 @@ namespace TheSecondSeat.PersonaGeneration
                 sanitized = sanitized.Replace(c, '_');
             }
             
-            // ÒÆ³ı¿Õ¸ñºÍÌØÊâ×Ö·û
+            // ç§»é™¤ç©ºæ ¼å’Œç‰¹æ®Šå­—ç¬¦
             sanitized = sanitized.Replace(" ", "_");
             sanitized = sanitized.Replace("(", "");
             sanitized = sanitized.Replace(")", "");
@@ -526,7 +526,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// XML×ªÒå
+        /// XMLè½¬ä¹‰
         /// </summary>
         private static string EscapeXml(string text)
         {
@@ -544,7 +544,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ÎÄ±¾Ëõ½ø
+        /// æ–‡æœ¬ç¼©è¿›
         /// </summary>
         private static string IndentText(string text, int spaces)
         {
@@ -568,7 +568,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ´ò¿ªDefsÄ¿Â¼
+        /// æ‰“å¼€Defsç›®å½•
         /// </summary>
         public static void OpenDefsDirectory()
         {
@@ -588,12 +588,12 @@ namespace TheSecondSeat.PersonaGeneration
                     }
                     
                     Application.OpenURL("file://" + defsDir);
-                    Messages.Message($"ÒÑ´ò¿ªÈË¸ñ¶¨ÒåÄ¿Â¼:\n{defsDir}", MessageTypeDefOf.NeutralEvent);
+                    Messages.Message($"å·²æ‰“å¼€äººæ ¼å®šä¹‰ç›®å½•:\n{defsDir}", MessageTypeDefOf.NeutralEvent);
                 }
             }
             catch (Exception ex)
             {
-                Log.Error($"[PersonaDefExporter] ´ò¿ªÄ¿Â¼Ê§°Ü: {ex}");
+                Log.Error($"[PersonaDefExporter] æ‰“å¼€ç›®å½•å¤±è´¥: {ex}");
             }
         }
     }

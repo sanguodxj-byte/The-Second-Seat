@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
@@ -11,38 +11,38 @@ using TheSecondSeat.Settings;
 namespace TheSecondSeat.Events
 {
     /// <summary>
-    /// ŞÈÕßÄ£Ê½ÊÂ¼ş¿ØÖÆÆ÷
-    /// ? ºËĞÄÉè¼Æ£ººÃ¸Ğ¶ÈÓ°ÏìAIµÄ"ÓÎÏ··ç¸ñ"£¬¶ø·Ç¼òµ¥µÄÄÑ¶Èµ÷Õû
-    /// ? ¸ßºÃ¸Ğ¶È£º¸ü¶àÏ·¾çĞÔ/ÓĞÈ¤µÄÊÂ¼ş£¬AIÔ¸Òâ"ÅäºÏÑİ³ö"
-    /// ? µÍºÃ¸Ğ¶È£º¸ü¶àÕë¶ÔĞÔµÄÌôÕ½£¬AI"ÈÏÕæ¶ÔŞÄ"
+    /// å¥•è€…æ¨¡å¼äº‹ä»¶æ§åˆ¶å™¨
+    /// ? æ ¸å¿ƒè®¾è®¡ï¼šå¥½æ„Ÿåº¦å½±å“AIçš„"æ¸¸æˆé£æ ¼"ï¼Œè€Œéç®€å•çš„éš¾åº¦è°ƒæ•´
+    /// ? é«˜å¥½æ„Ÿåº¦ï¼šæ›´å¤šæˆå‰§æ€§/æœ‰è¶£çš„äº‹ä»¶ï¼ŒAIæ„¿æ„"é…åˆæ¼”å‡º"
+    /// ? ä½å¥½æ„Ÿåº¦ï¼šæ›´å¤šé’ˆå¯¹æ€§çš„æŒ‘æˆ˜ï¼ŒAI"è®¤çœŸå¯¹å¼ˆ"
     /// </summary>
     public class OpponentEventController : GameComponent
     {
-        // µ¥Àı·ÃÎÊ
+        // å•ä¾‹è®¿é—®
         private static OpponentEventController? instance;
         public static OpponentEventController? Instance => instance;
         
-        // ÊÂ¼şÉú³É¼ä¸ô£¨ÓÎÏ·ticks£©
+        // äº‹ä»¶ç”Ÿæˆé—´éš”ï¼ˆæ¸¸æˆticksï¼‰
         private int ticksSinceLastEvent = 0;
-        private int baseEventInterval = 60000; // Ô¼1ÓÎÏ·Ìì
+        private int baseEventInterval = 60000; // çº¦1æ¸¸æˆå¤©
         
-        // ÊÂ¼ş¶ÓÁĞ£¨AI¿ÉÒÔÔ¤°²ÅÅÊÂ¼ş£©
+        // äº‹ä»¶é˜Ÿåˆ—ï¼ˆAIå¯ä»¥é¢„å®‰æ’äº‹ä»¶ï¼‰
         private List<ScheduledEvent> scheduledEvents = new List<ScheduledEvent>();
         
-        // ÊÂ¼şÀúÊ·£¨ÓÃÓÚ±ÜÃâÖØ¸´£©
+        // äº‹ä»¶å†å²ï¼ˆç”¨äºé¿å…é‡å¤ï¼‰
         private List<string> recentEvents = new List<string>();
         private const int MaxRecentEvents = 10;
         
-        // ? Ö³ÃñµØÊµÁ¦ÆÀ¹À£¨ÓÃÓÚ¶¯Ì¬ÄÑ¶È£©
+        // ? æ®–æ°‘åœ°å®åŠ›è¯„ä¼°ï¼ˆç”¨äºåŠ¨æ€éš¾åº¦ï¼‰
         private float lastColonyWealth = 0f;
         private int lastColonistCount = 0;
         private float lastMilitaryStrength = 0f;
         
-        // ? ÊÂ¼şÍ³¼Æ
+        // ? äº‹ä»¶ç»Ÿè®¡
         private int positiveEventsTriggered = 0;
         private int negativeEventsTriggered = 0;
         
-        // ÊÇ·ñ½Ó¹ÜĞğÊÂÕß
+        // æ˜¯å¦æ¥ç®¡å™äº‹è€…
         private bool isActive = false;
         
         public bool IsActive => isActive;
@@ -60,7 +60,7 @@ namespace TheSecondSeat.Events
         }
 
         /// <summary>
-        /// ¼ì²éÊÇ·ñÓ¦¸Ã¼¤»îŞÈÕßÄ£Ê½
+        /// æ£€æŸ¥æ˜¯å¦åº”è¯¥æ¿€æ´»å¥•è€…æ¨¡å¼
         /// </summary>
         private void CheckAndActivate()
         {
@@ -78,30 +78,30 @@ namespace TheSecondSeat.Events
         }
 
         /// <summary>
-        /// ¼¤»îŞÈÕßÄ£Ê½
+        /// æ¿€æ´»å¥•è€…æ¨¡å¼
         /// </summary>
         public void Activate()
         {
             isActive = true;
-            Log.Message("[OpponentEventController] ? ŞÈÕßÄ£Ê½ÒÑ¼¤»î - AI½«¿ØÖÆÊÂ¼ş·¢Éú");
+            Log.Message("[OpponentEventController] ? å¥•è€…æ¨¡å¼å·²æ¿€æ´» - AIå°†æ§åˆ¶äº‹ä»¶å‘ç”Ÿ");
         }
 
         /// <summary>
-        /// Í£ÓÃŞÈÕßÄ£Ê½
+        /// åœç”¨å¥•è€…æ¨¡å¼
         /// </summary>
         public void Deactivate()
         {
             isActive = false;
             scheduledEvents.Clear();
-            Log.Message("[OpponentEventController] ŞÈÕßÄ£Ê½ÒÑÍ£ÓÃ - »Ö¸´Ô­°æĞğÊÂÕß");
+            Log.Message("[OpponentEventController] å¥•è€…æ¨¡å¼å·²åœç”¨ - æ¢å¤åŸç‰ˆå™äº‹è€…");
         }
 
         public override void GameComponentTick()
         {
             base.GameComponentTick();
 
-            // ¼ì²éÄ£Ê½±ä»¯
-            if (Find.TickManager.TicksGame % 2500 == 0) // Ã¿·ÖÖÓ¼ì²éÒ»´Î
+            // æ£€æŸ¥æ¨¡å¼å˜åŒ–
+            if (Find.TickManager.TicksGame % 2500 == 0) // æ¯åˆ†é’Ÿæ£€æŸ¥ä¸€æ¬¡
             {
                 CheckAndActivate();
                 UpdateColonyAssessment();
@@ -111,10 +111,10 @@ namespace TheSecondSeat.Events
 
             ticksSinceLastEvent++;
 
-            // ´¦ÀíÔ¤¶¨ÊÂ¼ş
+            // å¤„ç†é¢„å®šäº‹ä»¶
             ProcessScheduledEvents();
 
-            // ¼ì²éÊÇ·ñÓ¦¸ÃÉú³ÉÊÂ¼ş
+            // æ£€æŸ¥æ˜¯å¦åº”è¯¥ç”Ÿæˆäº‹ä»¶
             if (ticksSinceLastEvent >= GetDynamicEventInterval())
             {
                 ticksSinceLastEvent = 0;
@@ -123,7 +123,7 @@ namespace TheSecondSeat.Events
         }
 
         /// <summary>
-        /// ? ¸üĞÂÖ³ÃñµØÊµÁ¦ÆÀ¹À
+        /// ? æ›´æ–°æ®–æ°‘åœ°å®åŠ›è¯„ä¼°
         /// </summary>
         private void UpdateColonyAssessment()
         {
@@ -133,12 +133,12 @@ namespace TheSecondSeat.Events
             lastColonyWealth = map.wealthWatcher.WealthTotal;
             lastColonistCount = map.mapPawns.FreeColonistsSpawnedCount;
             
-            // ? ÆÀ¹À¾üÊÂÊµÁ¦
+            // ? è¯„ä¼°å†›äº‹å®åŠ›
             lastMilitaryStrength = CalculateMilitaryStrength(map);
         }
 
         /// <summary>
-        /// ? ¼ÆËãÖ³ÃñµØ¾üÊÂÊµÁ¦
+        /// ? è®¡ç®—æ®–æ°‘åœ°å†›äº‹å®åŠ›
         /// </summary>
         private float CalculateMilitaryStrength(Map map)
         {
@@ -146,10 +146,10 @@ namespace TheSecondSeat.Events
             
             foreach (var colonist in map.mapPawns.FreeColonistsSpawned)
             {
-                // »ù´¡Õ½¶·Á¦
+                // åŸºç¡€æˆ˜æ–—åŠ›
                 strength += 100f;
                 
-                // ÎäÆ÷¼Ó³É
+                // æ­¦å™¨åŠ æˆ
                 if (colonist.equipment?.Primary != null)
                 {
                     var weapon = colonist.equipment.Primary;
@@ -157,19 +157,19 @@ namespace TheSecondSeat.Events
                     strength += weapon.GetStatValue(StatDefOf.MeleeWeapon_AverageDPS, true) * 30f;
                 }
                 
-                // ¼¼ÄÜ¼Ó³É
+                // æŠ€èƒ½åŠ æˆ
                 var shootingSkill = colonist.skills?.GetSkill(SkillDefOf.Shooting)?.Level ?? 0;
                 var meleeSkill = colonist.skills?.GetSkill(SkillDefOf.Melee)?.Level ?? 0;
                 strength += (shootingSkill + meleeSkill) * 10f;
                 
-                // ½¡¿µ³Í·£
+                // å¥åº·æƒ©ç½š
                 if (colonist.health.summaryHealth.SummaryHealthPercent < 1f)
                 {
                     strength *= colonist.health.summaryHealth.SummaryHealthPercent;
                 }
             }
             
-            // ·ÀÓù½¨Öş¼Ó³É
+            // é˜²å¾¡å»ºç­‘åŠ æˆ
             var turrets = map.listerBuildings.allBuildingsColonist
                 .Where(b => b.def.building?.IsTurret == true)
                 .Count();
@@ -179,14 +179,14 @@ namespace TheSecondSeat.Events
         }
 
         /// <summary>
-        /// ? ÊÂ¼ş¼ä¸ô»ùÓÚÖ³ÃñµØ·¢Õ¹½×¶ÎºÍºÃ¸Ğ¶È
+        /// ? äº‹ä»¶é—´éš”åŸºäºæ®–æ°‘åœ°å‘å±•é˜¶æ®µå’Œå¥½æ„Ÿåº¦
         /// </summary>
         private int GetDynamicEventInterval()
         {
             var agent = GetStorytellerAgent();
             float baseFactor = 1f;
             
-            // Ö³ÃñµØÔ½Ç¿´ó£¬ÊÂ¼şÔ½Æµ·±
+            // æ®–æ°‘åœ°è¶Šå¼ºå¤§ï¼Œäº‹ä»¶è¶Šé¢‘ç¹
             if (lastColonyWealth > 500000f)
                 baseFactor *= 0.7f;
             else if (lastColonyWealth > 200000f)
@@ -194,20 +194,20 @@ namespace TheSecondSeat.Events
             else if (lastColonyWealth < 50000f)
                 baseFactor *= 1.3f;
 
-            // ? ºÃ¸Ğ¶ÈÓ°ÏìÊÂ¼şÆµÂÊ
+            // ? å¥½æ„Ÿåº¦å½±å“äº‹ä»¶é¢‘ç‡
             if (agent != null)
             {
                 if (agent.affinity < -50f)
-                    baseFactor *= 0.8f;  // µÍºÃ¸Ğ¶È£ºÊÂ¼ş¸üÆµ·±
+                    baseFactor *= 0.8f;  // ä½å¥½æ„Ÿåº¦ï¼šäº‹ä»¶æ›´é¢‘ç¹
                 else if (agent.affinity > 60f)
-                    baseFactor *= 1.1f;  // ¸ßºÃ¸Ğ¶È£ºÊÂ¼şÉÔÉÙ
+                    baseFactor *= 1.1f;  // é«˜å¥½æ„Ÿåº¦ï¼šäº‹ä»¶ç¨å°‘
             }
 
             return (int)(baseEventInterval * baseFactor);
         }
 
         /// <summary>
-        /// ´¦ÀíÔ¤¶¨ÊÂ¼ş
+        /// å¤„ç†é¢„å®šäº‹ä»¶
         /// </summary>
         private void ProcessScheduledEvents()
         {
@@ -224,7 +224,7 @@ namespace TheSecondSeat.Events
         }
 
         /// <summary>
-        /// ´¥·¢Ô¤¶¨ÊÂ¼ş
+        /// è§¦å‘é¢„å®šäº‹ä»¶
         /// </summary>
         private void TriggerScheduledEvent(ScheduledEvent evt)
         {
@@ -236,20 +236,20 @@ namespace TheSecondSeat.Events
 
             var eventGenerator = AffinityDrivenEvents.Instance;
             
-            // ? ¼ò»¯£ºÖ±½ÓÊ¹ÓÃTriggerEvent·½·¨
+            // ? ç®€åŒ–ï¼šç›´æ¥ä½¿ç”¨TriggerEventæ–¹æ³•
             eventGenerator.TriggerEvent(map, evt.eventDefName, 0.5f);
             
-            Log.Message($"[OpponentEventController] ´¥·¢Ô¤¶¨ÊÂ¼ş: {evt.eventDefName}");
+            Log.Message($"[OpponentEventController] è§¦å‘é¢„å®šäº‹ä»¶: {evt.eventDefName}");
             RecordRecentEvent(evt.eventDefName);
             
             if (!string.IsNullOrEmpty(evt.aiComment))
             {
-                Messages.Message($"ĞğÊÂÕß£º{evt.aiComment}", MessageTypeDefOf.NeutralEvent);
+                Messages.Message($"å™äº‹è€…ï¼š{evt.aiComment}", MessageTypeDefOf.NeutralEvent);
             }
         }
 
         /// <summary>
-        /// ? ¿¼ÂÇÉú³ÉÊÂ¼ş£¨Ö÷Âß¼­£©
+        /// ? è€ƒè™‘ç”Ÿæˆäº‹ä»¶ï¼ˆä¸»é€»è¾‘ï¼‰
         /// </summary>
         private void ConsiderGeneratingEvent()
         {
@@ -259,12 +259,12 @@ namespace TheSecondSeat.Events
             var agent = GetStorytellerAgent();
             if (agent == null) return;
 
-            // ? ¸ù¾İºÃ¸Ğ¶ÈÑ¡ÔñÊÂ¼ş²ßÂÔ
+            // ? æ ¹æ®å¥½æ„Ÿåº¦é€‰æ‹©äº‹ä»¶ç­–ç•¥
             EventStrategy strategy = DetermineEventStrategy(agent.affinity);
             
             var eventGenerator = AffinityDrivenEvents.Instance;
             
-            // ? ¼ò»¯£º¸ù¾İ²ßÂÔÖ±½Ó´¥·¢ÕıÃæ/¸ºÃæÊÂ¼ş
+            // ? ç®€åŒ–ï¼šæ ¹æ®ç­–ç•¥ç›´æ¥è§¦å‘æ­£é¢/è´Ÿé¢äº‹ä»¶
             bool triggerPositive = strategy == EventStrategy.Dramatic && Rand.Chance(0.6f) ||
                                   strategy == EventStrategy.Balanced && Rand.Chance(0.5f) ||
                                   strategy == EventStrategy.Competitive && Rand.Chance(0.3f);
@@ -274,7 +274,7 @@ namespace TheSecondSeat.Events
                 eventGenerator.TriggerPositiveEvent(map);
                 positiveEventsTriggered++;
                 string aiComment = GenerateStrategyComment(null, strategy, agent);
-                Messages.Message($"ĞğÊÂÕß£º{aiComment}", MessageTypeDefOf.PositiveEvent);
+                Messages.Message($"å™äº‹è€…ï¼š{aiComment}", MessageTypeDefOf.PositiveEvent);
             }
             else
             {
@@ -289,38 +289,38 @@ namespace TheSecondSeat.Events
                 eventGenerator.TriggerNegativeEvent(map, severity);
                 negativeEventsTriggered++;
                 string aiComment = GenerateStrategyComment(null, strategy, agent);
-                Messages.Message($"ĞğÊÂÕß£º{aiComment}", MessageTypeDefOf.NegativeEvent);
+                Messages.Message($"å™äº‹è€…ï¼š{aiComment}", MessageTypeDefOf.NegativeEvent);
             }
             
-            Log.Message($"[OpponentEventController] Éú³ÉÊÂ¼ş ({strategy})");
+            Log.Message($"[OpponentEventController] ç”Ÿæˆäº‹ä»¶ ({strategy})");
         }
 
         /// <summary>
-        /// ? »ñÈ¡ÊÂ¼şÇ¿¶È±¶ÂÊ£¨»ùÓÚºÃ¸Ğ¶È£©
+        /// ? è·å–äº‹ä»¶å¼ºåº¦å€ç‡ï¼ˆåŸºäºå¥½æ„Ÿåº¦ï¼‰
         /// </summary>
         private float GetIntensityMultiplier(float affinity, EventCategory category)
         {
-            // ¸ßºÃ¸Ğ¶È£º¸ºÃæÊÂ¼ş¸üÈõ£¬ÕıÃæÊÂ¼ş¸üÇ¿
+            // é«˜å¥½æ„Ÿåº¦ï¼šè´Ÿé¢äº‹ä»¶æ›´å¼±ï¼Œæ­£é¢äº‹ä»¶æ›´å¼º
             if (affinity >= 60f)
             {
                 return category == EventCategory.Negative ? 0.7f : 1.3f;
             }
-            // ÖĞ¸ßºÃ¸Ğ¶È£ºÇáÎ¢µ÷Õû
+            // ä¸­é«˜å¥½æ„Ÿåº¦ï¼šè½»å¾®è°ƒæ•´
             else if (affinity >= 30f)
             {
                 return category == EventCategory.Negative ? 0.85f : 1.15f;
             }
-            // ÖĞĞÔ
+            // ä¸­æ€§
             else if (affinity >= -30f)
             {
                 return 1.0f;
             }
-            // µÍºÃ¸Ğ¶È£º¸ºÃæÊÂ¼ş¸üÇ¿
+            // ä½å¥½æ„Ÿåº¦ï¼šè´Ÿé¢äº‹ä»¶æ›´å¼º
             else if (affinity >= -70f)
             {
                 return category == EventCategory.Negative ? 1.2f : 0.9f;
             }
-            // ¼«µÍºÃ¸Ğ¶È£º¸ºÃæÊÂ¼şÏÔÖøÔöÇ¿
+            // æä½å¥½æ„Ÿåº¦ï¼šè´Ÿé¢äº‹ä»¶æ˜¾è‘—å¢å¼º
             else
             {
                 return category == EventCategory.Negative ? 1.4f : 0.8f;
@@ -328,7 +328,7 @@ namespace TheSecondSeat.Events
         }
 
         /// <summary>
-        /// ? ´øÇ¿¶Èµ÷ÕûµÄÊÂ¼ş´¥·¢
+        /// ? å¸¦å¼ºåº¦è°ƒæ•´çš„äº‹ä»¶è§¦å‘
         /// </summary>
         private bool TriggerEventWithIntensity(StorytellerEventDef eventDef, Map map, StorytellerAgent agent, float intensityMultiplier, out string comment)
         {
@@ -339,22 +339,22 @@ namespace TheSecondSeat.Events
 
             IncidentParms parms = StorytellerUtility.DefaultParmsNow(eventDef.incidentDef.category, map);
             
-            // ? Ó¦ÓÃÇ¿¶È±¶ÂÊ
+            // ? åº”ç”¨å¼ºåº¦å€ç‡
             parms.points *= intensityMultiplier;
             
-            // ? È·±£²»»áÌ«Èõ»òÌ«Ç¿
-            parms.points = Math.Max(parms.points, 100f);  // ×îµÍ100µã
-            parms.points = Math.Min(parms.points, parms.points * 2f);  // ×î¸ßÔ­Ê¼ÖµµÄ2±¶
+            // ? ç¡®ä¿ä¸ä¼šå¤ªå¼±æˆ–å¤ªå¼º
+            parms.points = Math.Max(parms.points, 100f);  // æœ€ä½100ç‚¹
+            parms.points = Math.Min(parms.points, parms.points * 2f);  // æœ€é«˜åŸå§‹å€¼çš„2å€
 
             bool success = eventDef.incidentDef.Worker.TryExecute(parms);
 
             if (success)
             {
-                comment = $"ÊÂ¼şÇ¿¶È: {intensityMultiplier:P0}";
+                comment = $"äº‹ä»¶å¼ºåº¦: {intensityMultiplier:P0}";
                 
-                // ¼ÇÂ¼µ½¼ÇÒäÏµÍ³
+                // è®°å½•åˆ°è®°å¿†ç³»ç»Ÿ
                 Integration.MemoryContextBuilder.RecordEvent(
-                    $"ŞÈÕßÊÂ¼ş: {eventDef.incidentDef.label}",
+                    $"å¥•è€…äº‹ä»¶: {eventDef.incidentDef.label}",
                     Integration.MemoryImportance.High
                 );
                 
@@ -365,7 +365,7 @@ namespace TheSecondSeat.Events
         }
 
         /// <summary>
-        /// ? ¸üĞÂÊÂ¼şÍ³¼Æ
+        /// ? æ›´æ–°äº‹ä»¶ç»Ÿè®¡
         /// </summary>
         private void UpdateEventStats(StorytellerEventDef eventDef)
         {
@@ -376,24 +376,24 @@ namespace TheSecondSeat.Events
         }
 
         /// <summary>
-        /// ? È·¶¨ÊÂ¼ş²ßÂÔ£¨ºËĞÄÉè¼Æ£©
+        /// ? ç¡®å®šäº‹ä»¶ç­–ç•¥ï¼ˆæ ¸å¿ƒè®¾è®¡ï¼‰
         /// </summary>
         private EventStrategy DetermineEventStrategy(float affinity)
         {
             if (affinity >= 60f)
-                return EventStrategy.Dramatic;    // Ï·¾çĞÔ£ºÓĞÈ¤µÄ×éºÏÊÂ¼ş
+                return EventStrategy.Dramatic;    // æˆå‰§æ€§ï¼šæœ‰è¶£çš„ç»„åˆäº‹ä»¶
             else if (affinity >= 30f)
-                return EventStrategy.Balanced;    // Æ½ºâ£ºÌôÕ½Óë»úÓö²¢´æ
+                return EventStrategy.Balanced;    // å¹³è¡¡ï¼šæŒ‘æˆ˜ä¸æœºé‡å¹¶å­˜
             else if (affinity >= -30f)
-                return EventStrategy.Competitive; // ¾ºÕù£ºÈÏÕæµÄ¶ÔÊÖ
+                return EventStrategy.Competitive; // ç«äº‰ï¼šè®¤çœŸçš„å¯¹æ‰‹
             else if (affinity >= -70f)
-                return EventStrategy.Tactical;    // Õ½Êõ£ºÕë¶ÔĞÔÌôÕ½
+                return EventStrategy.Tactical;    // æˆ˜æœ¯ï¼šé’ˆå¯¹æ€§æŒ‘æˆ˜
             else
-                return EventStrategy.Ruthless;    // ÎŞÇé£ºÈ«Á¦ÒÔ¸°
+                return EventStrategy.Ruthless;    // æ— æƒ…ï¼šå…¨åŠ›ä»¥èµ´
         }
 
         /// <summary>
-        /// ? ¸ù¾İ²ßÂÔÉ¸Ñ¡ÊÂ¼ş
+        /// ? æ ¹æ®ç­–ç•¥ç­›é€‰äº‹ä»¶
         /// </summary>
         private List<StorytellerEventDef> FilterEventsByStrategy(
             List<StorytellerEventDef> allEvents, 
@@ -413,27 +413,27 @@ namespace TheSecondSeat.Events
                 switch (strategy)
                 {
                     case EventStrategy.Dramatic:
-                        // Ï·¾çĞÔ£º¸÷ÖÖÀàĞÍ¶¼Òª
+                        // æˆå‰§æ€§ï¼šå„ç§ç±»å‹éƒ½è¦
                         include = true;
                         break;
                         
                     case EventStrategy.Balanced:
-                        // Æ½ºâ£ºÕı¸ºÃæ¸÷°ë
+                        // å¹³è¡¡ï¼šæ­£è´Ÿé¢å„åŠ
                         include = true;
                         break;
                         
                     case EventStrategy.Competitive:
-                        // ¾ºÕù£ºÉÔÆ«¸ºÃæ
+                        // ç«äº‰ï¼šç¨åè´Ÿé¢
                         include = evt.category != EventCategory.Positive || Rand.Chance(0.4f);
                         break;
                         
                     case EventStrategy.Tactical:
-                        // Õ½Êõ£ºÕë¶ÔÈõµã
+                        // æˆ˜æœ¯ï¼šé’ˆå¯¹å¼±ç‚¹
                         include = IsEventTargetingWeakness(evt, map);
                         break;
                         
                     case EventStrategy.Ruthless:
-                        // ÎŞÇé£ºÖ÷Òª¸ºÃæ
+                        // æ— æƒ…ï¼šä¸»è¦è´Ÿé¢
                         include = evt.category == EventCategory.Negative || Rand.Chance(0.2f);
                         break;
                 }
@@ -446,7 +446,7 @@ namespace TheSecondSeat.Events
         }
 
         /// <summary>
-        /// ? ¼ì²éÊÂ¼şÊÇ·ñÕë¶ÔÖ³ÃñµØÈõµã
+        /// ? æ£€æŸ¥äº‹ä»¶æ˜¯å¦é’ˆå¯¹æ®–æ°‘åœ°å¼±ç‚¹
         /// </summary>
         private bool IsEventTargetingWeakness(StorytellerEventDef evt, Map map)
         {
@@ -456,28 +456,28 @@ namespace TheSecondSeat.Events
             int medicine = map.resourceCounter.GetCount(ThingDefOf.MedicineHerbal) +
                           map.resourceCounter.GetCount(ThingDefOf.MedicineIndustrial);
 
-            // Ê³Îï¶ÌÈ±
+            // é£Ÿç‰©çŸ­ç¼º
             if (food < colonistCount * 10)
             {
                 if (evt.defName == "ToxicFallout" || evt.defName == "Disease")
                     return true;
             }
 
-            // Ò½Ò©¶ÌÈ±
+            // åŒ»è¯çŸ­ç¼º
             if (medicine < colonistCount * 2)
             {
                 if (evt.defName == "Disease")
                     return true;
             }
 
-            // ÈËÉÙ
+            // äººå°‘
             if (colonistCount <= 5)
             {
                 if (evt.defName == "Raid" || evt.defName == "MechanoidRaid")
                     return true;
             }
             
-            // ¾üÊÂÈõ
+            // å†›äº‹å¼±
             if (lastMilitaryStrength < colonistCount * 200)
             {
                 if (evt.defName == "Raid")
@@ -488,7 +488,7 @@ namespace TheSecondSeat.Events
         }
 
         /// <summary>
-        /// ? ¸ù¾İ²ßÂÔÑ¡ÔñÊÂ¼ş
+        /// ? æ ¹æ®ç­–ç•¥é€‰æ‹©äº‹ä»¶
         /// </summary>
         private StorytellerEventDef? SelectEventWithStrategy(
             List<StorytellerEventDef> events, 
@@ -518,7 +518,7 @@ namespace TheSecondSeat.Events
         }
 
         /// <summary>
-        /// ? ¼ÆËã²ßÂÔÈ¨ÖØ
+        /// ? è®¡ç®—ç­–ç•¥æƒé‡
         /// </summary>
         private float CalculateStrategyWeight(StorytellerEventDef evt, EventStrategy strategy, StorytellerAgent agent)
         {
@@ -527,7 +527,7 @@ namespace TheSecondSeat.Events
             switch (strategy)
             {
                 case EventStrategy.Dramatic:
-                    if (evt.baseWeight < 1f) weight *= 2f;  // Ï¡ÓĞÊÂ¼şÈ¨ÖØÔö¼Ó
+                    if (evt.baseWeight < 1f) weight *= 2f;  // ç¨€æœ‰äº‹ä»¶æƒé‡å¢åŠ 
                     break;
                     
                 case EventStrategy.Competitive:
@@ -535,7 +535,7 @@ namespace TheSecondSeat.Events
                     break;
                     
                 case EventStrategy.Tactical:
-                    // ÒÑÔÚÉ¸Ñ¡½×¶Î´¦Àí
+                    // å·²åœ¨ç­›é€‰é˜¶æ®µå¤„ç†
                     break;
                     
                 case EventStrategy.Ruthless:
@@ -543,7 +543,7 @@ namespace TheSecondSeat.Events
                     break;
             }
 
-            // »ìãçÈË¸ñ£ºËæ»úĞÔ
+            // æ··æ²Œäººæ ¼ï¼šéšæœºæ€§
             if (agent.primaryTrait == PersonalityTrait.Chaotic)
                 weight *= Rand.Range(0.5f, 2f);
 
@@ -551,7 +551,7 @@ namespace TheSecondSeat.Events
         }
 
         /// <summary>
-        /// ? Éú³É²ßÂÔÆÀÂÛ
+        /// ? ç”Ÿæˆç­–ç•¥è¯„è®º
         /// </summary>
         private string GenerateStrategyComment(StorytellerEventDef? evt, EventStrategy strategy, StorytellerAgent agent)
         {
@@ -562,35 +562,35 @@ namespace TheSecondSeat.Events
             {
                 case EventStrategy.Dramatic:
                     return isPositive 
-                        ? "¿´À´ÄãĞèÒª×ª»ú...¸øÄãµãÓĞÈ¤µÄ" 
-                        : "Ã¿¸öÎ°´óµÄ¹ÊÊÂ¶¼ĞèÒªÌôÕ½...Õ¹ÏÖÄãµÄÈÍĞÔ°É£¡";
+                        ? "çœ‹æ¥ä½ éœ€è¦è½¬æœº...ç»™ä½ ç‚¹æœ‰è¶£çš„" 
+                        : "æ¯ä¸ªä¼Ÿå¤§çš„æ•…äº‹éƒ½éœ€è¦æŒ‘æˆ˜...å±•ç°ä½ çš„éŸ§æ€§å§ï¼";
                         
                 case EventStrategy.Balanced:
                     return isPositive 
-                        ? "×÷Îª¹«Æ½µÄ¶ÔÊÖ£¬ÎÒ¸øÄãÒ»Ğ©°ïÖú¡£" 
-                        : "ÌôÕ½ÊÇÓÎÏ·µÄÒ»²¿·Ö£¬×¼±¸ºÃÁËÂğ£¿";
+                        ? "ä½œä¸ºå…¬å¹³çš„å¯¹æ‰‹ï¼Œæˆ‘ç»™ä½ ä¸€äº›å¸®åŠ©ã€‚" 
+                        : "æŒ‘æˆ˜æ˜¯æ¸¸æˆçš„ä¸€éƒ¨åˆ†ï¼Œå‡†å¤‡å¥½äº†å—ï¼Ÿ";
                         
                 case EventStrategy.Competitive:
                     return isPositive 
-                        ? "Å¼¶ûµÄ´­Ï¢...²»ÒªÏ°¹ß¡£" 
-                        : "¿¼ÑéÄãµÄÊ±ºòµ½ÁË¡£";
+                        ? "å¶å°”çš„å–˜æ¯...ä¸è¦ä¹ æƒ¯ã€‚" 
+                        : "è€ƒéªŒä½ çš„æ—¶å€™åˆ°äº†ã€‚";
                         
                 case EventStrategy.Tactical:
                     return isNegative 
-                        ? "ÎÒ×¢Òâµ½ÁËÄãµÄÈõµã..." 
-                        : "ÔİÊ±·Å¹ıÄã£¬µ«ÏÂ´Î¿É²»Ò»¶¨¡£";
+                        ? "æˆ‘æ³¨æ„åˆ°äº†ä½ çš„å¼±ç‚¹..." 
+                        : "æš‚æ—¶æ”¾è¿‡ä½ ï¼Œä½†ä¸‹æ¬¡å¯ä¸ä¸€å®šã€‚";
                         
                 case EventStrategy.Ruthless:
                     return isNegative 
-                        ? "²»ÒªÖ¸ÍûÎÒ»áÈÊ´È¡£" 
-                        : "...ÕâÖ»ÊÇ±©·çÓêÇ°µÄÆ½¾²¡£";
+                        ? "ä¸è¦æŒ‡æœ›æˆ‘ä¼šä»æ…ˆã€‚" 
+                        : "...è¿™åªæ˜¯æš´é£é›¨å‰çš„å¹³é™ã€‚";
             }
 
-            return "¿´ÄãÈçºÎÓ¦¶ÔÁË¡£";
+            return "çœ‹ä½ å¦‚ä½•åº”å¯¹äº†ã€‚";
         }
 
         /// <summary>
-        /// ¼ÇÂ¼×î½üÊÂ¼ş
+        /// è®°å½•æœ€è¿‘äº‹ä»¶
         /// </summary>
         private void RecordRecentEvent(string eventDefName)
         {
@@ -600,7 +600,7 @@ namespace TheSecondSeat.Events
         }
 
         /// <summary>
-        /// AI Ö÷¶¯´¥·¢ÊÂ¼ş£¨Í¨¹ı¶Ô»°£©
+        /// AI ä¸»åŠ¨è§¦å‘äº‹ä»¶ï¼ˆé€šè¿‡å¯¹è¯ï¼‰
         /// </summary>
         public bool TriggerEventByAI(string eventType, string aiComment = "")
         {
@@ -614,12 +614,12 @@ namespace TheSecondSeat.Events
 
             var eventGenerator = AffinityDrivenEvents.Instance;
             
-            // ? ¼ò»¯£ºÓ³ÉäÊÂ¼şÀàĞÍµ½ÕıÃæ/¸ºÃæ
+            // ? ç®€åŒ–ï¼šæ˜ å°„äº‹ä»¶ç±»å‹åˆ°æ­£é¢/è´Ÿé¢
             bool isPositive = eventType.ToLower() switch
             {
-                "trader" or "ÉÌ¶Ó" or "Ã³Ò×" => true,
-                "wanderer" or "Á÷ÀËÕß" or "¼ÓÈëÕß" => true,
-                "resource" or "×ÊÔ´" or "¿ÕÍ¶" => true,
+                "trader" or "å•†é˜Ÿ" or "è´¸æ˜“" => true,
+                "wanderer" or "æµæµªè€…" or "åŠ å…¥è€…" => true,
+                "resource" or "èµ„æº" or "ç©ºæŠ•" => true,
                 _ => false
             };
             
@@ -641,35 +641,35 @@ namespace TheSecondSeat.Events
             {
                 RecordRecentEvent(eventType);
                 
-                string finalComment = !string.IsNullOrEmpty(aiComment) ? aiComment : "¿´ÄãÈçºÎÓ¦¶Ô¡£";
-                Messages.Message($"ĞğÊÂÕß£º{finalComment}", MessageTypeDefOf.NeutralEvent);
+                string finalComment = !string.IsNullOrEmpty(aiComment) ? aiComment : "çœ‹ä½ å¦‚ä½•åº”å¯¹ã€‚";
+                Messages.Message($"å™äº‹è€…ï¼š{finalComment}", MessageTypeDefOf.NeutralEvent);
                 
-                Log.Message($"[OpponentEventController] AI´¥·¢ÊÂ¼ş: {eventType}");
+                Log.Message($"[OpponentEventController] AIè§¦å‘äº‹ä»¶: {eventType}");
             }
 
             return success;
         }
 
         /// <summary>
-        /// ? Æ¥ÅäÊÂ¼şÀàĞÍ
+        /// ? åŒ¹é…äº‹ä»¶ç±»å‹
         /// </summary>
         private StorytellerEventDef? MatchEventByType(List<StorytellerEventDef> allEvents, string eventType)
         {
             return eventType.ToLower() switch
             {
-                "raid" or "Ï®»÷" => allEvents.FirstOrDefault(e => e.defName == "Raid"),
-                "trader" or "ÉÌ¶Ó" or "Ã³Ò×" => allEvents.FirstOrDefault(e => e.defName == "TraderCaravanArrival"),
-                "wanderer" or "Á÷ÀËÕß" or "¼ÓÈëÕß" => allEvents.FirstOrDefault(e => e.defName == "WandererJoin"),
-                "disease" or "¼²²¡" or "ÎÁÒß" => allEvents.FirstOrDefault(e => e.defName == "Disease"),
-                "resource" or "×ÊÔ´" or "¿ÕÍ¶" => allEvents.FirstOrDefault(e => e.defName == "ResourcePodCrash"),
-                "eclipse" or "ÈÕÊ´" => allEvents.FirstOrDefault(e => e.defName == "Eclipse"),
-                "toxic" or "¶¾³¾" or "ÓĞ¶¾³Á½µ" => allEvents.FirstOrDefault(e => e.defName == "ToxicFallout"),
+                "raid" or "è¢­å‡»" => allEvents.FirstOrDefault(e => e.defName == "Raid"),
+                "trader" or "å•†é˜Ÿ" or "è´¸æ˜“" => allEvents.FirstOrDefault(e => e.defName == "TraderCaravanArrival"),
+                "wanderer" or "æµæµªè€…" or "åŠ å…¥è€…" => allEvents.FirstOrDefault(e => e.defName == "WandererJoin"),
+                "disease" or "ç–¾ç—…" or "ç˜Ÿç–«" => allEvents.FirstOrDefault(e => e.defName == "Disease"),
+                "resource" or "èµ„æº" or "ç©ºæŠ•" => allEvents.FirstOrDefault(e => e.defName == "ResourcePodCrash"),
+                "eclipse" or "æ—¥èš€" => allEvents.FirstOrDefault(e => e.defName == "Eclipse"),
+                "toxic" or "æ¯’å°˜" or "æœ‰æ¯’æ²‰é™" => allEvents.FirstOrDefault(e => e.defName == "ToxicFallout"),
                 _ => allEvents.FirstOrDefault(e => e.defName.Equals(eventType, StringComparison.OrdinalIgnoreCase))
             };
         }
 
         /// <summary>
-        /// AI °²ÅÅÎ´À´ÊÂ¼ş
+        /// AI å®‰æ’æœªæ¥äº‹ä»¶
         /// </summary>
         public void ScheduleEvent(string eventType, int delayTicks, string aiComment = "")
         {
@@ -682,48 +682,48 @@ namespace TheSecondSeat.Events
                 aiComment = aiComment
             });
             
-            Log.Message($"[OpponentEventController] AI°²ÅÅÊÂ¼ş: {eventType}, {delayTicks / 2500}·ÖÖÓºó´¥·¢");
+            Log.Message($"[OpponentEventController] AIå®‰æ’äº‹ä»¶: {eventType}, {delayTicks / 2500}åˆ†é’Ÿåè§¦å‘");
         }
 
         /// <summary>
-        /// »ñÈ¡¿ÉÓÃÊÂ¼şÁĞ±í
+        /// è·å–å¯ç”¨äº‹ä»¶åˆ—è¡¨
         /// </summary>
         public List<string> GetAvailableEventTypes()
         {
             return new List<string>
             {
-                "raid (Ï®»÷)",
-                "trader (ÉÌ¶Ó)",
-                "wanderer (Á÷ÀËÕß)",
-                "disease (¼²²¡)",
-                "resource (×ÊÔ´¿ÕÍ¶)",
-                "eclipse (ÈÕÊ´)",
-                "toxic (¶¾³¾)"
+                "raid (è¢­å‡»)",
+                "trader (å•†é˜Ÿ)",
+                "wanderer (æµæµªè€…)",
+                "disease (ç–¾ç—…)",
+                "resource (èµ„æºç©ºæŠ•)",
+                "eclipse (æ—¥èš€)",
+                "toxic (æ¯’å°˜)"
             };
         }
 
         /// <summary>
-        /// »ñÈ¡µ±Ç°×´Ì¬ĞÅÏ¢
+        /// è·å–å½“å‰çŠ¶æ€ä¿¡æ¯
         /// </summary>
         public string GetStatusInfo()
         {
             var agent = GetStorytellerAgent();
             
-            string status = $"ŞÈÕßÄ£Ê½: {(isActive ? "¼¤»î" : "Í£ÓÃ")}\n";
-            status += $"´ı´¦ÀíÊÂ¼ş: {scheduledEvents.Count}\n";
-            status += $"¾àÏÂ´ÎÊÂ¼ş: {(GetDynamicEventInterval() - ticksSinceLastEvent) / 2500}·ÖÖÓ\n";
-            status += $"ÕıÃæÊÂ¼ş: {positiveEventsTriggered} | ¸ºÃæÊÂ¼ş: {negativeEventsTriggered}\n";
+            string status = $"å¥•è€…æ¨¡å¼: {(isActive ? "æ¿€æ´»" : "åœç”¨")}\n";
+            status += $"å¾…å¤„ç†äº‹ä»¶: {scheduledEvents.Count}\n";
+            status += $"è·ä¸‹æ¬¡äº‹ä»¶: {(GetDynamicEventInterval() - ticksSinceLastEvent) / 2500}åˆ†é’Ÿ\n";
+            status += $"æ­£é¢äº‹ä»¶: {positiveEventsTriggered} | è´Ÿé¢äº‹ä»¶: {negativeEventsTriggered}\n";
             
             if (agent != null)
             {
                 var strategy = DetermineEventStrategy(agent.affinity);
-                status += $"µ±Ç°ºÃ¸Ğ¶È: {agent.affinity:F0}\n";
-                status += $"µ±Ç°²ßÂÔ: {GetStrategyName(strategy)}\n";
-                status += $"ÊÂ¼şÇ¿¶È±¶ÂÊ: {GetIntensityMultiplier(agent.affinity, EventCategory.Negative):P0}\n";
+                status += $"å½“å‰å¥½æ„Ÿåº¦: {agent.affinity:F0}\n";
+                status += $"å½“å‰ç­–ç•¥: {GetStrategyName(strategy)}\n";
+                status += $"äº‹ä»¶å¼ºåº¦å€ç‡: {GetIntensityMultiplier(agent.affinity, EventCategory.Negative):P0}\n";
             }
             
-            status += $"Ö³ÃñµØ²Æ¸»: {lastColonyWealth:N0}\n";
-            status += $"¾üÊÂÊµÁ¦: {lastMilitaryStrength:N0}\n";
+            status += $"æ®–æ°‘åœ°è´¢å¯Œ: {lastColonyWealth:N0}\n";
+            status += $"å†›äº‹å®åŠ›: {lastMilitaryStrength:N0}\n";
 
             return status;
         }
@@ -732,12 +732,12 @@ namespace TheSecondSeat.Events
         {
             return strategy switch
             {
-                EventStrategy.Dramatic => "Ï·¾çĞÔ£¨ÖÆÔì¾«²Ê¹ÊÊÂ£©",
-                EventStrategy.Balanced => "Æ½ºâ£¨¹«Æ½¶ÔŞÄ£©",
-                EventStrategy.Competitive => "¾ºÕù£¨ÈÏÕæ¶ÔÊÖ£©",
-                EventStrategy.Tactical => "Õ½Êõ£¨Õë¶ÔÈõµã£©",
-                EventStrategy.Ruthless => "ÎŞÇé£¨È«Á¦ÒÔ¸°£©",
-                _ => "Î´Öª"
+                EventStrategy.Dramatic => "æˆå‰§æ€§ï¼ˆåˆ¶é€ ç²¾å½©æ•…äº‹ï¼‰",
+                EventStrategy.Balanced => "å¹³è¡¡ï¼ˆå…¬å¹³å¯¹å¼ˆï¼‰",
+                EventStrategy.Competitive => "ç«äº‰ï¼ˆè®¤çœŸå¯¹æ‰‹ï¼‰",
+                EventStrategy.Tactical => "æˆ˜æœ¯ï¼ˆé’ˆå¯¹å¼±ç‚¹ï¼‰",
+                EventStrategy.Ruthless => "æ— æƒ…ï¼ˆå…¨åŠ›ä»¥èµ´ï¼‰",
+                _ => "æœªçŸ¥"
             };
         }
 
@@ -765,19 +765,19 @@ namespace TheSecondSeat.Events
     }
 
     /// <summary>
-    /// ÊÂ¼ş²ßÂÔÃ¶¾Ù
+    /// äº‹ä»¶ç­–ç•¥æšä¸¾
     /// </summary>
     public enum EventStrategy
     {
-        Dramatic,    // Ï·¾çĞÔ£ºÖÆÔì¾«²Ê¹ÊÊÂ
-        Balanced,    // Æ½ºâ£ºÌôÕ½Óë»úÓö²¢´æ
-        Competitive, // ¾ºÕù£ºÈÏÕæµÄ¶ÔÊÖ
-        Tactical,    // Õ½Êõ£ºÕë¶ÔÖ³ÃñµØÈõµã
-        Ruthless     // ÎŞÇé£ºÈ«Á¦ÒÔ¸°
+        Dramatic,    // æˆå‰§æ€§ï¼šåˆ¶é€ ç²¾å½©æ•…äº‹
+        Balanced,    // å¹³è¡¡ï¼šæŒ‘æˆ˜ä¸æœºé‡å¹¶å­˜
+        Competitive, // ç«äº‰ï¼šè®¤çœŸçš„å¯¹æ‰‹
+        Tactical,    // æˆ˜æœ¯ï¼šé’ˆå¯¹æ®–æ°‘åœ°å¼±ç‚¹
+        Ruthless     // æ— æƒ…ï¼šå…¨åŠ›ä»¥èµ´
     }
 
     /// <summary>
-    /// Ô¤¶¨ÊÂ¼şÊı¾İ
+    /// é¢„å®šäº‹ä»¶æ•°æ®
     /// </summary>
     public class ScheduledEvent : IExposable
     {

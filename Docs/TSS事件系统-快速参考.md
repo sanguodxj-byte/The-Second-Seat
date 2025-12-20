@@ -1,39 +1,39 @@
-# TSSÊÂ¼şÏµÍ³ - ¿ìËÙ²Î¿¼
+ï»¿# TSSäº‹ä»¶ç³»ç»Ÿ - å¿«é€Ÿå‚è€ƒ
 
-## ?? ¸ÅÊö
+## ?? æ¦‚è¿°
 
-**The Second Seat (TSS) ÊÂ¼şÏµÍ³**ÊÇÒ»¸öÍêÈ«Êı¾İÇı¶¯µÄĞğÊÂÕßÊÂ¼ş¿ò¼Ü¡£ËùÓĞÊÂ¼şÂß¼­¶¼Í¨¹ıXML¶¨Òå£¬ÎŞĞè±àĞ´C#´úÂë¡£
+**The Second Seat (TSS) äº‹ä»¶ç³»ç»Ÿ**æ˜¯ä¸€ä¸ªå®Œå…¨æ•°æ®é©±åŠ¨çš„å™äº‹è€…äº‹ä»¶æ¡†æ¶ã€‚æ‰€æœ‰äº‹ä»¶é€»è¾‘éƒ½é€šè¿‡XMLå®šä¹‰ï¼Œæ— éœ€ç¼–å†™C#ä»£ç ã€‚
 
-### ºËĞÄ¸ÅÄî
+### æ ¸å¿ƒæ¦‚å¿µ
 
 ```
-ÊÂ¼ş (NarratorEventDef)
-©À©¤©¤ ´¥·¢Æ÷ (TSSTrigger)  ¡û "ºÎÊ±´¥·¢"
-©¸©¤©¤ ĞĞ¶¯ (TSSAction)     ¡û "×öÊ²Ã´"
+äº‹ä»¶ (NarratorEventDef)
+â”œâ”€â”€ è§¦å‘å™¨ (TSSTrigger)  â† "ä½•æ—¶è§¦å‘"
+â””â”€â”€ è¡ŒåŠ¨ (TSSAction)     â† "åšä»€ä¹ˆ"
 ```
 
 ---
 
-## ?? ¿ìËÙ¿ªÊ¼
+## ?? å¿«é€Ÿå¼€å§‹
 
-### 1. ´´½¨¼òµ¥ÊÂ¼ş
+### 1. åˆ›å»ºç®€å•äº‹ä»¶
 
 ```xml
 <TheSecondSeat.Framework.NarratorEventDef>
   <defName>MyFirstEvent</defName>
-  <eventLabel>ÎÒµÄµÚÒ»¸öÊÂ¼ş</eventLabel>
+  <eventLabel>æˆ‘çš„ç¬¬ä¸€ä¸ªäº‹ä»¶</eventLabel>
   
-  <!-- ´¥·¢Ìõ¼ş£ººÃ¸Ğ¶È>50 -->
+  <!-- è§¦å‘æ¡ä»¶ï¼šå¥½æ„Ÿåº¦>50 -->
   <triggers>
     <li Class="TheSecondSeat.Framework.Triggers.AffinityRangeTrigger">
       <minAffinity>50</minAffinity>
     </li>
   </triggers>
   
-  <!-- Ö´ĞĞ¶¯×÷£ºÏÔÊ¾ÏûÏ¢ -->
+  <!-- æ‰§è¡ŒåŠ¨ä½œï¼šæ˜¾ç¤ºæ¶ˆæ¯ -->
   <actions>
     <li Class="TheSecondSeat.Framework.Actions.ShowDialogueAction">
-      <dialogueText>ÄãºÃ£¡</dialogueText>
+      <dialogueText>ä½ å¥½ï¼</dialogueText>
     </li>
   </actions>
 </TheSecondSeat.Framework.NarratorEventDef>
@@ -41,9 +41,9 @@
 
 ---
 
-## ?? ¿ÉÓÃ´¥·¢Æ÷
+## ?? å¯ç”¨è§¦å‘å™¨
 
-### AffinityRangeTrigger - ºÃ¸Ğ¶È·¶Î§
+### AffinityRangeTrigger - å¥½æ„Ÿåº¦èŒƒå›´
 ```xml
 <li Class="TheSecondSeat.Framework.Triggers.AffinityRangeTrigger">
   <minAffinity>60</minAffinity>
@@ -51,7 +51,7 @@
 </li>
 ```
 
-### ColonistCountTrigger - Ö³ÃñÕßÊıÁ¿
+### ColonistCountTrigger - æ®–æ°‘è€…æ•°é‡
 ```xml
 <li Class="TheSecondSeat.Framework.Triggers.ColonistCountTrigger">
   <minCount>5</minCount>
@@ -59,7 +59,7 @@
 </li>
 ```
 
-### WealthRangeTrigger - ²Æ¸»·¶Î§
+### WealthRangeTrigger - è´¢å¯ŒèŒƒå›´
 ```xml
 <li Class="TheSecondSeat.Framework.Triggers.WealthRangeTrigger">
   <minWealth>50000</minWealth>
@@ -67,7 +67,7 @@
 </li>
 ```
 
-### SeasonTrigger - ¼¾½Ú
+### SeasonTrigger - å­£èŠ‚
 ```xml
 <li Class="TheSecondSeat.Framework.Triggers.SeasonTrigger">
   <allowedSeasons>
@@ -77,7 +77,7 @@
 </li>
 ```
 
-### TimeRangeTrigger - Ê±¼ä¶Î
+### TimeRangeTrigger - æ—¶é—´æ®µ
 ```xml
 <li Class="TheSecondSeat.Framework.Triggers.TimeRangeTrigger">
   <minHour>6</minHour>
@@ -87,25 +87,25 @@
 
 ---
 
-## ? ¿ÉÓÃĞĞ¶¯
+## ? å¯ç”¨è¡ŒåŠ¨
 
-### ModifyAffinityAction - ĞŞ¸ÄºÃ¸Ğ¶È
+### ModifyAffinityAction - ä¿®æ”¹å¥½æ„Ÿåº¦
 ```xml
 <li Class="TheSecondSeat.Framework.Actions.ModifyAffinityAction">
   <delta>10</delta>
-  <reason>Íê³ÉÈÎÎñ</reason>
+  <reason>å®Œæˆä»»åŠ¡</reason>
 </li>
 ```
 
-### ShowDialogueAction - ÏÔÊ¾¶Ô»°
+### ShowDialogueAction - æ˜¾ç¤ºå¯¹è¯
 ```xml
 <li Class="TheSecondSeat.Framework.Actions.ShowDialogueAction">
-  <dialogueText>»¶Ó­»ØÀ´£¡</dialogueText>
+  <dialogueText>æ¬¢è¿å›æ¥ï¼</dialogueText>
   <messageType>PositiveEvent</messageType>
 </li>
 ```
 
-### SpawnResourceAction - Éú³É×ÊÔ´
+### SpawnResourceAction - ç”Ÿæˆèµ„æº
 ```xml
 <li Class="TheSecondSeat.Framework.Actions.SpawnResourceAction">
   <resourceType>Steel</resourceType>
@@ -114,14 +114,14 @@
 </li>
 ```
 
-### TriggerEventAction - ´¥·¢ÆäËûÊÂ¼ş
+### TriggerEventAction - è§¦å‘å…¶ä»–äº‹ä»¶
 ```xml
 <li Class="TheSecondSeat.Framework.Actions.TriggerEventAction">
   <targetEventDefName>AnotherEvent</targetEventDefName>
 </li>
 ```
 
-### PlaySoundAction - ²¥·ÅÒôĞ§
+### PlaySoundAction - æ’­æ”¾éŸ³æ•ˆ
 ```xml
 <li Class="TheSecondSeat.Framework.Actions.PlaySoundAction">
   <sound>ThunderOnMap</sound>
@@ -129,139 +129,139 @@
 </li>
 ```
 
-### ? NarratorSpeakAction - ĞğÊÂÕßÓïÒô£¨ºËĞÄÁª¶¯£©
+### ? NarratorSpeakAction - å™äº‹è€…è¯­éŸ³ï¼ˆæ ¸å¿ƒè”åŠ¨ï¼‰
 ```xml
 <li Class="TheSecondSeat.Framework.Actions.NarratorSpeakAction">
-  <textKey>TSS_Event_DivinePunishment</textKey>  <!-- ·­Òë¼ü£¨ÓÅÏÈ£© -->
-  <text>ÄãµÄËù×÷ËùÎªÈÃÎÒ²»µÃ²»²ÉÈ¡´ëÊ©ÁË...</text>  <!-- Ö±½ÓÎÄ±¾£¨±¸ÓÃ£© -->
-  <personaDefName>Sideria_Default</personaDefName>  <!-- ¿ÉÑ¡£ºÖ¸¶¨ÈË¸ñ -->
-  <showDialogue>true</showDialogue>  <!-- ÊÇ·ñÏÔÊ¾¶Ô»°¿ò -->
+  <textKey>TSS_Event_DivinePunishment</textKey>  <!-- ç¿»è¯‘é”®ï¼ˆä¼˜å…ˆï¼‰ -->
+  <text>ä½ çš„æ‰€ä½œæ‰€ä¸ºè®©æˆ‘ä¸å¾—ä¸é‡‡å–æªæ–½äº†...</text>  <!-- ç›´æ¥æ–‡æœ¬ï¼ˆå¤‡ç”¨ï¼‰ -->
+  <personaDefName>Sideria_Default</personaDefName>  <!-- å¯é€‰ï¼šæŒ‡å®šäººæ ¼ -->
+  <showDialogue>true</showDialogue>  <!-- æ˜¯å¦æ˜¾ç¤ºå¯¹è¯æ¡† -->
 </li>
 ```
 
-**¹¦ÄÜÌØĞÔ**:
-- ? **TTSÓïÒôºÏ³É** - µ÷ÓÃ¿ò¼ÜÄÚÖÃµÄTTSService
-- ? **¶àÄ£Ê½ÎÄ±¾** - Ö§³Ö·­Òë¼ü»òÖ±½ÓÎÄ±¾
-- ? **ÈË¸ñÉùÏß** - ×Ô¶¯Ê¹ÓÃ¶ÔÓ¦ÈË¸ñµÄÓïÒôÅäÖÃ
-- ? **¶Ô»°ÏÔÊ¾** - ¿ÉÑ¡ÔÚ¶Ô»°¿òÏÔÊ¾
-- ? **Òì²½²¥·Å** - ²»×èÈûÓÎÏ·Ö÷Ïß³Ì
+**åŠŸèƒ½ç‰¹æ€§**:
+- ? **TTSè¯­éŸ³åˆæˆ** - è°ƒç”¨æ¡†æ¶å†…ç½®çš„TTSService
+- ? **å¤šæ¨¡å¼æ–‡æœ¬** - æ”¯æŒç¿»è¯‘é”®æˆ–ç›´æ¥æ–‡æœ¬
+- ? **äººæ ¼å£°çº¿** - è‡ªåŠ¨ä½¿ç”¨å¯¹åº”äººæ ¼çš„è¯­éŸ³é…ç½®
+- ? **å¯¹è¯æ˜¾ç¤º** - å¯é€‰åœ¨å¯¹è¯æ¡†æ˜¾ç¤º
+- ? **å¼‚æ­¥æ’­æ”¾** - ä¸é˜»å¡æ¸¸æˆä¸»çº¿ç¨‹
 
-**Ê¹ÓÃ³¡¾°**:
-- ºÃ¸Ğ¶ÈÊÂ¼şµÄÓïÒô·´À¡
-- ½µÁÙÄ£Ê½µÄÓïÒôĞû¸æ
-- ½Ì³ÌÒıµ¼µÄÓïÒôÌáÊ¾
-- ÌØÊâÊÂ¼şµÄÓïÒôÅÔ°×
+**ä½¿ç”¨åœºæ™¯**:
+- å¥½æ„Ÿåº¦äº‹ä»¶çš„è¯­éŸ³åé¦ˆ
+- é™ä¸´æ¨¡å¼çš„è¯­éŸ³å®£å‘Š
+- æ•™ç¨‹å¼•å¯¼çš„è¯­éŸ³æç¤º
+- ç‰¹æ®Šäº‹ä»¶çš„è¯­éŸ³æ—ç™½
 
 ---
 
-## ?? ¸ß½×¶¯×÷£¨ÉÏµÛ¼¶£©
+## ?? é«˜é˜¶åŠ¨ä½œï¼ˆä¸Šå¸çº§ï¼‰
 
-?? **¾¯¸æ£ºÕâĞ©¶¯×÷È¨ÏŞºÜ¸ß£¬Çë½÷É÷Ê¹ÓÃ£¡**
+?? **è­¦å‘Šï¼šè¿™äº›åŠ¨ä½œæƒé™å¾ˆé«˜ï¼Œè¯·è°¨æ…ä½¿ç”¨ï¼**
 
-### StrikeLightningAction - ½µÏÂÀ×Åü
+### StrikeLightningAction - é™ä¸‹é›·åŠˆ
 ```xml
 <li Class="TheSecondSeat.Framework.Actions.StrikeLightningAction">
   <strikeMode>Random</strikeMode>        <!-- Random/MapCenter/NearestEnemy/NearestColonist/Specific -->
-  <strikeCount>3</strikeCount>           <!-- À×»÷´ÎÊı -->
-  <damageAmount>100</damageAmount>       <!-- ÉËº¦Á¿ -->
-  <radius>5</radius>                     <!-- AOE·¶Î§ -->
-  <causesFire>true</causesFire>          <!-- ÊÇ·ñÔì³É»ğÔÖ -->
-  <playSound>true</playSound>            <!-- ÊÇ·ñ²¥·ÅÒôĞ§ -->
+  <strikeCount>3</strikeCount>           <!-- é›·å‡»æ¬¡æ•° -->
+  <damageAmount>100</damageAmount>       <!-- ä¼¤å®³é‡ -->
+  <radius>5</radius>                     <!-- AOEèŒƒå›´ -->
+  <causesFire>true</causesFire>          <!-- æ˜¯å¦é€ æˆç«ç¾ -->
+  <playSound>true</playSound>            <!-- æ˜¯å¦æ’­æ”¾éŸ³æ•ˆ -->
 </li>
 ```
 
-**À×»÷Ä£Ê½**:
-- `Random` - Ëæ»úÎ»ÖÃ
-- `MapCenter` - µØÍ¼ÖĞĞÄ
-- `NearestEnemy` - ×î½üµÄµĞÈË
-- `NearestColonist` - ×î½üµÄÖ³ÃñÕß£¨É÷ÓÃ£¡£©
-- `Specific` - Ö¸¶¨×ø±ê£¨ĞèÉèÖÃtargetCell£©
+**é›·å‡»æ¨¡å¼**:
+- `Random` - éšæœºä½ç½®
+- `MapCenter` - åœ°å›¾ä¸­å¿ƒ
+- `NearestEnemy` - æœ€è¿‘çš„æ•Œäºº
+- `NearestColonist` - æœ€è¿‘çš„æ®–æ°‘è€…ï¼ˆæ…ç”¨ï¼ï¼‰
+- `Specific` - æŒ‡å®šåæ ‡ï¼ˆéœ€è®¾ç½®targetCellï¼‰
 
-### GiveHediffAction - Ìí¼Ó½¡¿µ×´Ì¬
+### GiveHediffAction - æ·»åŠ å¥åº·çŠ¶æ€
 ```xml
 <li Class="TheSecondSeat.Framework.Actions.GiveHediffAction">
-  <hediffDef>Flu</hediffDef>             <!-- ¼²²¡/ÔöÒæDef -->
+  <hediffDef>Flu</hediffDef>             <!-- ç–¾ç—…/å¢ç›ŠDef -->
   <targetMode>Random</targetMode>         <!-- Random/AllColonists/Healthiest/Weakest/RandomEnemy -->
-  <severity>0.5</severity>                <!-- ÑÏÖØ³Ì¶È (0.0-1.0) -->
-  <targetCount>3</targetCount>            <!-- Ä¿±êÊıÁ¿ -->
-  <targetBodyPart>LeftLeg</targetBodyPart><!-- ÉíÌå²¿Î»£¨¿ÉÑ¡£© -->
+  <severity>0.5</severity>                <!-- ä¸¥é‡ç¨‹åº¦ (0.0-1.0) -->
+  <targetCount>3</targetCount>            <!-- ç›®æ ‡æ•°é‡ -->
+  <targetBodyPart>LeftLeg</targetBodyPart><!-- èº«ä½“éƒ¨ä½ï¼ˆå¯é€‰ï¼‰ -->
   <showNotification>true</showNotification>
 </li>
 ```
 
-**Ä¿±êÑ¡ÔñÄ£Ê½**:
-- `Random` - Ëæ»úÖ³ÃñÕß
-- `AllColonists` - ËùÓĞÖ³ÃñÕß
-- `Healthiest` - ×î½¡¿µµÄÖ³ÃñÕß
-- `Weakest` - ×îĞéÈõµÄÖ³ÃñÕß
-- `RandomEnemy` - Ëæ»úµĞÈË
+**ç›®æ ‡é€‰æ‹©æ¨¡å¼**:
+- `Random` - éšæœºæ®–æ°‘è€…
+- `AllColonists` - æ‰€æœ‰æ®–æ°‘è€…
+- `Healthiest` - æœ€å¥åº·çš„æ®–æ°‘è€…
+- `Weakest` - æœ€è™šå¼±çš„æ®–æ°‘è€…
+- `RandomEnemy` - éšæœºæ•Œäºº
 
-**³£ÓÃHediffDef**:
-- ¼²²¡: `Flu`, `Plague`, `WoundInfection`
-- ÔöÒæ: `PsychicHarmonizer`, `PsychicReader`
-- ÒåÌå: `BionicEye`, `BionicArm`
-- ÌØÊâ: `Luciferium` (Ä§¹íËØÒÀÀµ)
+**å¸¸ç”¨HediffDef**:
+- ç–¾ç—…: `Flu`, `Plague`, `WoundInfection`
+- å¢ç›Š: `PsychicHarmonizer`, `PsychicReader`
+- ä¹‰ä½“: `BionicEye`, `BionicArm`
+- ç‰¹æ®Š: `Luciferium` (é­”é¬¼ç´ ä¾èµ–)
 
-### StartIncidentAction - Ç¿ÖÆ´¥·¢Ô­°æÊÂ¼ş
+### StartIncidentAction - å¼ºåˆ¶è§¦å‘åŸç‰ˆäº‹ä»¶
 ```xml
 <li Class="TheSecondSeat.Framework.Actions.StartIncidentAction">
-  <incidentDef>RaidEnemy</incidentDef>   <!-- ÊÂ¼şDef -->
-  <points>500</points>                    <!-- ÊÂ¼şµãÊı£¨-1±íÊ¾Ä¬ÈÏ£© -->
-  <forced>true</forced>                   <!-- ÊÇ·ñÇ¿ÖÆ´¥·¢ -->
-  <targetFaction>Pirate</targetFaction>   <!-- Ä¿±êÅÉÏµ£¨¿ÉÑ¡£© -->
-  <allowBigThreat>true</allowBigThreat>   <!-- ÊÇ·ñÔÊĞí´ó¹æÄ£ÊÂ¼ş -->
+  <incidentDef>RaidEnemy</incidentDef>   <!-- äº‹ä»¶Def -->
+  <points>500</points>                    <!-- äº‹ä»¶ç‚¹æ•°ï¼ˆ-1è¡¨ç¤ºé»˜è®¤ï¼‰ -->
+  <forced>true</forced>                   <!-- æ˜¯å¦å¼ºåˆ¶è§¦å‘ -->
+  <targetFaction>Pirate</targetFaction>   <!-- ç›®æ ‡æ´¾ç³»ï¼ˆå¯é€‰ï¼‰ -->
+  <allowBigThreat>true</allowBigThreat>   <!-- æ˜¯å¦å…è®¸å¤§è§„æ¨¡äº‹ä»¶ -->
 </li>
 ```
 
-**³£ÓÃIncidentDef**:
-- Ï®»÷: `RaidEnemy`, `RaidFriendly`, `MechCluster`
-- ÉÌ¶Ó: `TraderCaravanArrival`, `OrbitalTraderArrival`
-- ×ÔÈ»: `Tornado`, `Flashstorm`, `Eclipse`
-- ¶¯Îï: `ManhunterPack`, `FarmAnimalsWanderIn`
-- ÌØÊâ: `WandererJoin`, `RefugeeChased`, `QuestThreat`
+**å¸¸ç”¨IncidentDef**:
+- è¢­å‡»: `RaidEnemy`, `RaidFriendly`, `MechCluster`
+- å•†é˜Ÿ: `TraderCaravanArrival`, `OrbitalTraderArrival`
+- è‡ªç„¶: `Tornado`, `Flashstorm`, `Eclipse`
+- åŠ¨ç‰©: `ManhunterPack`, `FarmAnimalsWanderIn`
+- ç‰¹æ®Š: `WandererJoin`, `RefugeeChased`, `QuestThreat`
 
 ---
 
-## ?? ÊÂ¼şÅäÖÃ²ÎÊı
+## ?? äº‹ä»¶é…ç½®å‚æ•°
 
-### »ù±¾²ÎÊı
+### åŸºæœ¬å‚æ•°
 ```xml
-<defName>MyEvent</defName>           <!-- Î¨Ò»ID -->
-<eventLabel>ÎÒµÄÊÂ¼ş</eventLabel>    <!-- ÏÔÊ¾Ãû³Æ -->
-<category>Reward</category>          <!-- ·ÖÀà -->
-<priority>50</priority>              <!-- ÓÅÏÈ¼¶£¨Ô½¸ßÔ½Æµ·±¼ì²é£© -->
+<defName>MyEvent</defName>           <!-- å”¯ä¸€ID -->
+<eventLabel>æˆ‘çš„äº‹ä»¶</eventLabel>    <!-- æ˜¾ç¤ºåç§° -->
+<category>Reward</category>          <!-- åˆ†ç±» -->
+<priority>50</priority>              <!-- ä¼˜å…ˆçº§ï¼ˆè¶Šé«˜è¶Šé¢‘ç¹æ£€æŸ¥ï¼‰ -->
 ```
 
-### ´¥·¢¿ØÖÆ
+### è§¦å‘æ§åˆ¶
 ```xml
-<chance>0.5</chance>                 <!-- ´¥·¢¸ÅÂÊ (0.0-1.0) -->
-<cooldownTicks>36000</cooldownTicks> <!-- ÀäÈ´Ê±¼ä£¨Tick£© -->
-<triggerOnce>true</triggerOnce>      <!-- ÊÇ·ñÖ»´¥·¢Ò»´Î -->
-<minIntervalTicks>3600</minIntervalTicks> <!-- ×îĞ¡´¥·¢¼ä¸ô -->
+<chance>0.5</chance>                 <!-- è§¦å‘æ¦‚ç‡ (0.0-1.0) -->
+<cooldownTicks>36000</cooldownTicks> <!-- å†·å´æ—¶é—´ï¼ˆTickï¼‰ -->
+<triggerOnce>true</triggerOnce>      <!-- æ˜¯å¦åªè§¦å‘ä¸€æ¬¡ -->
+<minIntervalTicks>3600</minIntervalTicks> <!-- æœ€å°è§¦å‘é—´éš” -->
 ```
 
-### Ê±¼ä»»Ëã
-- 1Ãë = 60 Tick
-- 1·ÖÖÓ = 3600 Tick
-- 1ÓÎÏ·Ğ¡Ê± = 2500 Tick
-- 1ÓÎÏ·ÈÕ = 60000 Tick
+### æ—¶é—´æ¢ç®—
+- 1ç§’ = 60 Tick
+- 1åˆ†é’Ÿ = 3600 Tick
+- 1æ¸¸æˆå°æ—¶ = 2500 Tick
+- 1æ¸¸æˆæ—¥ = 60000 Tick
 
 ---
 
-## ?? ×éºÏ´¥·¢Æ÷
+## ?? ç»„åˆè§¦å‘å™¨
 
-### ANDÂß¼­£¨Ä¬ÈÏ£©
-ËùÓĞ´¥·¢Æ÷¶¼±ØĞëÂú×ã£º
+### ANDé€»è¾‘ï¼ˆé»˜è®¤ï¼‰
+æ‰€æœ‰è§¦å‘å™¨éƒ½å¿…é¡»æ»¡è¶³ï¼š
 ```xml
 <triggers>
   <li Class="...AffinityRangeTrigger">...</li>
   <li Class="...ColonistCountTrigger">...</li>
-  <!-- Á½Õß¶¼Âú×ã²Å´¥·¢ -->
+  <!-- ä¸¤è€…éƒ½æ»¡è¶³æ‰è§¦å‘ -->
 </triggers>
 ```
 
-### ORÂß¼­
-Ê¹ÓÃCompositeTrigger£º
+### ORé€»è¾‘
+ä½¿ç”¨CompositeTriggerï¼š
 ```xml
 <triggers>
   <li Class="TheSecondSeat.Framework.CompositeTrigger">
@@ -269,7 +269,7 @@
     <subTriggers>
       <li Class="...AffinityRangeTrigger">...</li>
       <li Class="...WealthRangeTrigger">...</li>
-      <!-- ÈÎÒâÒ»¸öÂú×ã¼´¿É -->
+      <!-- ä»»æ„ä¸€ä¸ªæ»¡è¶³å³å¯ -->
     </subTriggers>
   </li>
 </triggers>
@@ -277,48 +277,48 @@
 
 ---
 
-## ?? ÑÓ³ÙÖ´ĞĞ
+## ?? å»¶è¿Ÿæ‰§è¡Œ
 
-### µ¥¸öActionÑÓ³Ù
+### å•ä¸ªActionå»¶è¿Ÿ
 ```xml
 <li Class="...ShowDialogueAction">
-  <delayTicks>180</delayTicks>  <!-- ÑÓ³Ù3Ãë -->
-  <dialogueText>ÑÓ³ÙÏûÏ¢</dialogueText>
+  <delayTicks>180</delayTicks>  <!-- å»¶è¿Ÿ3ç§’ -->
+  <dialogueText>å»¶è¿Ÿæ¶ˆæ¯</dialogueText>
 </li>
 ```
 
-### ´®ĞĞÖ´ĞĞ£¨ÀÛ¼ÓÑÓ³Ù£©
+### ä¸²è¡Œæ‰§è¡Œï¼ˆç´¯åŠ å»¶è¿Ÿï¼‰
 ```xml
 <parallelExecution>false</parallelExecution>
 <actions>
   <li Class="...ShowDialogueAction">
-    <delayTicks>60</delayTicks>   <!-- 1Ãëºó -->
-    <dialogueText>µÚÒ»ÌõÏûÏ¢</dialogueText>
+    <delayTicks>60</delayTicks>   <!-- 1ç§’å -->
+    <dialogueText>ç¬¬ä¸€æ¡æ¶ˆæ¯</dialogueText>
   </li>
   <li Class="...ShowDialogueAction">
-    <delayTicks>60</delayTicks>   <!-- ÔÙÑÓ³Ù1Ãë£¨×Ü¹²2Ãë£© -->
-    <dialogueText>µÚ¶şÌõÏûÏ¢</dialogueText>
+    <delayTicks>60</delayTicks>   <!-- å†å»¶è¿Ÿ1ç§’ï¼ˆæ€»å…±2ç§’ï¼‰ -->
+    <dialogueText>ç¬¬äºŒæ¡æ¶ˆæ¯</dialogueText>
   </li>
 </actions>
 ```
 
-### ²¢ĞĞÖ´ĞĞ
+### å¹¶è¡Œæ‰§è¡Œ
 ```xml
 <parallelExecution>true</parallelExecution>
 <actions>
   <li Class="...">...</li>
   <li Class="...">...</li>
-  <!-- ËùÓĞActionÍ¬Ê±¿ªÊ¼Ö´ĞĞ -->
+  <!-- æ‰€æœ‰ActionåŒæ—¶å¼€å§‹æ‰§è¡Œ -->
 </actions>
 ```
 
 ---
 
-## ?? À©Õ¹·½·¨
+## ?? æ‰©å±•æ–¹æ³•
 
-### ´´½¨×Ô¶¨ÒåTrigger
+### åˆ›å»ºè‡ªå®šä¹‰Trigger
 
-1. ´´½¨C#Àà£º
+1. åˆ›å»ºC#ç±»ï¼š
 ```csharp
 namespace YourMod.Triggers
 {
@@ -328,23 +328,23 @@ namespace YourMod.Triggers
         
         public override bool IsSatisfied(Map map, Dictionary<string, object> context)
         {
-            // ÄãµÄ¼ì²éÂß¼­
+            // ä½ çš„æ£€æŸ¥é€»è¾‘
             return true;
         }
     }
 }
 ```
 
-2. ÔÚXMLÖĞÊ¹ÓÃ£º
+2. åœ¨XMLä¸­ä½¿ç”¨ï¼š
 ```xml
 <li Class="YourMod.Triggers.CustomTrigger">
   <customValue>42</customValue>
 </li>
 ```
 
-### ´´½¨×Ô¶¨ÒåAction
+### åˆ›å»ºè‡ªå®šä¹‰Action
 
-1. ´´½¨C#Àà£º
+1. åˆ›å»ºC#ç±»ï¼š
 ```csharp
 namespace YourMod.Actions
 {
@@ -354,13 +354,13 @@ namespace YourMod.Actions
         
         public override void Execute(Map map, Dictionary<string, object> context)
         {
-            // ÄãµÄÖ´ĞĞÂß¼­
+            // ä½ çš„æ‰§è¡Œé€»è¾‘
         }
     }
 }
 ```
 
-2. ÔÚXMLÖĞÊ¹ÓÃ£º
+2. åœ¨XMLä¸­ä½¿ç”¨ï¼š
 ```xml
 <li Class="YourMod.Actions.CustomAction">
   <customParameter>value</customParameter>
@@ -369,75 +369,75 @@ namespace YourMod.Actions
 
 ---
 
-## ?? µ÷ÊÔ¼¼ÇÉ
+## ?? è°ƒè¯•æŠ€å·§
 
-### 1. ÆôÓÃ¿ª·¢ÕßÄ£Ê½
-ÓÎÏ·ÖĞ°´ `F12` ÆôÓÃDevMode£¬²é¿´ÏêÏ¸ÈÕÖ¾
+### 1. å¯ç”¨å¼€å‘è€…æ¨¡å¼
+æ¸¸æˆä¸­æŒ‰ `F12` å¯ç”¨DevModeï¼ŒæŸ¥çœ‹è¯¦ç»†æ—¥å¿—
 
-### 2. ÊÖ¶¯´¥·¢ÊÂ¼ş
-¿ª·¢Õß¿ØÖÆÌ¨Ö´ĞĞ£º
+### 2. æ‰‹åŠ¨è§¦å‘äº‹ä»¶
+å¼€å‘è€…æ§åˆ¶å°æ‰§è¡Œï¼š
 ```csharp
 TheSecondSeat.Framework.NarratorEventManager.Instance.ForceTriggerEvent("MyEvent");
 ```
 
-### 3. ÖØÖÃËùÓĞÊÂ¼ş×´Ì¬
+### 3. é‡ç½®æ‰€æœ‰äº‹ä»¶çŠ¶æ€
 ```csharp
 TheSecondSeat.Framework.NarratorEventManager.Instance.ResetAllEventStates();
 ```
 
-### 4. ²é¿´ÊÂ¼şÖ´ĞĞÍ³¼Æ
+### 4. æŸ¥çœ‹äº‹ä»¶æ‰§è¡Œç»Ÿè®¡
 ```csharp
 var stats = TheSecondSeat.Framework.NarratorEventManager.Instance.GetAllEventStats();
 ```
 
 ---
 
-## ?? Ê¾ÀıÎÄ¼ş
+## ?? ç¤ºä¾‹æ–‡ä»¶
 
-ÍêÕûÊ¾Àı²Î¼û£º`Defs/NarratorEventDefs.xml`
+å®Œæ•´ç¤ºä¾‹å‚è§ï¼š`Defs/NarratorEventDefs.xml`
 
-°üº¬ÒÔÏÂÊ¾ÀıÊÂ¼ş£º
-- `HighAffinityReward` - ¸ßºÃ¸Ğ¶È½±Àø
-- `LowAffinityWarning` - µÍºÃ¸Ğ¶È¾¯¸æ
-- `SpringGreeting` - ¼¾½ÚĞÔÎÊºò
-- `WealthMilestone` - ²Æ¸»Àï³Ì±®
-- `EventChainStart` - Á´Ê½ÊÂ¼ş´¥·¢
-
----
-
-## ?? ĞÔÄÜÌáÊ¾
-
-1. **ÓÅÏÈ¼¶ÉèÖÃ**£º¸ßÓÅÏÈ¼¶ÊÂ¼ş£¨¡İ100£©¼ì²é¸üÆµ·±£¬½÷É÷Ê¹ÓÃ
-2. **ÀäÈ´Ê±¼ä**£ºÉèÖÃºÏÀíµÄÀäÈ´Ê±¼ä±ÜÃâÆµ·±´¥·¢
-3. **´¥·¢Æ÷ÊıÁ¿**£ºµ¥¸öÊÂ¼ş½¨Òé²»³¬¹ı5¸ö´¥·¢Æ÷
-4. **ÑÓ³ÙÖ´ĞĞ**£º´óÁ¿Action½¨ÒéÊ¹ÓÃÑÓ³ÙÖ´ĞĞ·ÖÉ¢¸ºÔØ
+åŒ…å«ä»¥ä¸‹ç¤ºä¾‹äº‹ä»¶ï¼š
+- `HighAffinityReward` - é«˜å¥½æ„Ÿåº¦å¥–åŠ±
+- `LowAffinityWarning` - ä½å¥½æ„Ÿåº¦è­¦å‘Š
+- `SpringGreeting` - å­£èŠ‚æ€§é—®å€™
+- `WealthMilestone` - è´¢å¯Œé‡Œç¨‹ç¢‘
+- `EventChainStart` - é“¾å¼äº‹ä»¶è§¦å‘
 
 ---
 
-## ? ³£¼ûÎÊÌâ
+## ?? æ€§èƒ½æç¤º
 
-**Q: ÊÂ¼şÃ»ÓĞ´¥·¢£¿**
-A: ¼ì²éÈÕÖ¾ÖĞµÄ `[NarratorEventDef]` ºÍ `[TSSTrigger]` ÏûÏ¢
-
-**Q: ÈçºÎ½ûÓÃÄ³¸öÊÂ¼ş£¿**
-A: ÔÚÊÂ¼şDefÖĞÌí¼Ó `<enabled>false</enabled>`
-
-**Q: ´¥·¢Æ÷µÄinvert²ÎÊıÊÇÊ²Ã´£¿**
-A: ·´×ªÌõ¼ş£¬ÀıÈçºÃ¸Ğ¶È>50±äÎªºÃ¸Ğ¶È¡Ü50
-
-**Q: ¿ÉÒÔÔÚÔËĞĞÊ±¶¯Ì¬´´½¨ÊÂ¼şÂğ£¿**
-A: ²»Ö§³Ö¡£ËùÓĞÊÂ¼ş±ØĞëÍ¨¹ıXML¶¨Òå
+1. **ä¼˜å…ˆçº§è®¾ç½®**ï¼šé«˜ä¼˜å…ˆçº§äº‹ä»¶ï¼ˆâ‰¥100ï¼‰æ£€æŸ¥æ›´é¢‘ç¹ï¼Œè°¨æ…ä½¿ç”¨
+2. **å†·å´æ—¶é—´**ï¼šè®¾ç½®åˆç†çš„å†·å´æ—¶é—´é¿å…é¢‘ç¹è§¦å‘
+3. **è§¦å‘å™¨æ•°é‡**ï¼šå•ä¸ªäº‹ä»¶å»ºè®®ä¸è¶…è¿‡5ä¸ªè§¦å‘å™¨
+4. **å»¶è¿Ÿæ‰§è¡Œ**ï¼šå¤§é‡Actionå»ºè®®ä½¿ç”¨å»¶è¿Ÿæ‰§è¡Œåˆ†æ•£è´Ÿè½½
 
 ---
 
-## ?? ¼¼ÊõÖ§³Ö
+## ? å¸¸è§é—®é¢˜
 
-- ÍêÕûÎÄµµ£º²é¿´´úÂë×¢ÊÍ
-- Ê¾ÀıÊÂ¼ş£º`Defs/NarratorEventDefs.xml`
-- »ù´¡Trigger£º`Framework/Triggers/BasicTriggers.cs`
-- »ù´¡Action£º`Framework/Actions/BasicActions.cs`
+**Q: äº‹ä»¶æ²¡æœ‰è§¦å‘ï¼Ÿ**
+A: æ£€æŸ¥æ—¥å¿—ä¸­çš„ `[NarratorEventDef]` å’Œ `[TSSTrigger]` æ¶ˆæ¯
+
+**Q: å¦‚ä½•ç¦ç”¨æŸä¸ªäº‹ä»¶ï¼Ÿ**
+A: åœ¨äº‹ä»¶Defä¸­æ·»åŠ  `<enabled>false</enabled>`
+
+**Q: è§¦å‘å™¨çš„invertå‚æ•°æ˜¯ä»€ä¹ˆï¼Ÿ**
+A: åè½¬æ¡ä»¶ï¼Œä¾‹å¦‚å¥½æ„Ÿåº¦>50å˜ä¸ºå¥½æ„Ÿåº¦â‰¤50
+
+**Q: å¯ä»¥åœ¨è¿è¡Œæ—¶åŠ¨æ€åˆ›å»ºäº‹ä»¶å—ï¼Ÿ**
+A: ä¸æ”¯æŒã€‚æ‰€æœ‰äº‹ä»¶å¿…é¡»é€šè¿‡XMLå®šä¹‰
 
 ---
 
-**¿ò¼Ü°æ±¾**: v1.0.0  
-**×îºó¸üĞÂ**: 2025-01-XX
+## ?? æŠ€æœ¯æ”¯æŒ
+
+- å®Œæ•´æ–‡æ¡£ï¼šæŸ¥çœ‹ä»£ç æ³¨é‡Š
+- ç¤ºä¾‹äº‹ä»¶ï¼š`Defs/NarratorEventDefs.xml`
+- åŸºç¡€Triggerï¼š`Framework/Triggers/BasicTriggers.cs`
+- åŸºç¡€Actionï¼š`Framework/Actions/BasicActions.cs`
+
+---
+
+**æ¡†æ¶ç‰ˆæœ¬**: v1.0.0  
+**æœ€åæ›´æ–°**: 2025-01-XX

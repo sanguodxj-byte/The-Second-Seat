@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,27 +8,27 @@ using Verse;
 namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
-    /// ·ş×°µÈ¼¶Ã¶¾Ù£¨¸ù¾İºÃ¸Ğ¶È£©
+    /// æœè£…ç­‰çº§æšä¸¾ï¼ˆæ ¹æ®å¥½æ„Ÿåº¦ï¼‰
     /// </summary>
     public enum OutfitTier
     {
-        Hostile,    // -100 ~ -50: µĞÒâ£¬Àä¾şÊèÀë
-        Cold,       // -50 ~ -10: ÀäÄ®£¬ÕıÊ½¾àÀë
-        Neutral,    // -10 ~ +30: ÖĞĞÔ£¬ÈÕ³£×¨Òµ
-        Warm,       // +30 ~ +60: ÎÂÅ¯£¬Ç×ÇĞÊæÊÊ
-        Intimate,   // +60 ~ +85: Ç×ÃÜ£¬·ÅËÉË½ÃÜ
-        Devoted     // +85 ~ +100: Ï×Éí£¬¼«¶ÈÇ×ÃÜ
+        Hostile,    // -100 ~ -50: æ•Œæ„ï¼Œå†·å³»ç–ç¦»
+        Cold,       // -50 ~ -10: å†·æ¼ ï¼Œæ­£å¼è·ç¦»
+        Neutral,    // -10 ~ +30: ä¸­æ€§ï¼Œæ—¥å¸¸ä¸“ä¸š
+        Warm,       // +30 ~ +60: æ¸©æš–ï¼Œäº²åˆ‡èˆ’é€‚
+        Intimate,   // +60 ~ +85: äº²å¯†ï¼Œæ”¾æ¾ç§å¯†
+        Devoted     // +85 ~ +100: çŒ®èº«ï¼Œæåº¦äº²å¯†
     }
     
     /// <summary>
-    /// ·ş×°×´Ì¬£¨Ã¿¸öÈË¸ñ¶ÀÁ¢£©
+    /// æœè£…çŠ¶æ€ï¼ˆæ¯ä¸ªäººæ ¼ç‹¬ç«‹ï¼‰
     /// </summary>
     public class OutfitState : IExposable
     {
         public OutfitTier currentTier = OutfitTier.Neutral;
         public string currentOutfitPath = "";
         public int lastChangeTimestamp = 0;
-        public int changeIntervalTicks = 30000; // 12Ğ¡Ê± = 30,000 ticks
+        public int changeIntervalTicks = 30000; // 12å°æ—¶ = 30,000 ticks
         
         public void ExposeData()
         {
@@ -40,8 +40,8 @@ namespace TheSecondSeat.PersonaGeneration
     }
     
     /// <summary>
-    /// ·ş×°²î·ÖÏµÍ³
-    /// ? ¸ù¾İºÃ¸Ğ¶ÈºÍÊ±¼ä¶¯Ì¬¸ü»»ÈË¸ñµÄ·ş×°Á¢»æ
+    /// æœè£…å·®åˆ†ç³»ç»Ÿ
+    /// ? æ ¹æ®å¥½æ„Ÿåº¦å’Œæ—¶é—´åŠ¨æ€æ›´æ¢äººæ ¼çš„æœè£…ç«‹ç»˜
     /// </summary>
     public static class OutfitSystem
     {
@@ -50,7 +50,7 @@ namespace TheSecondSeat.PersonaGeneration
         private const string OUTFITS_PATH = "UI/Narrators/9x16/{0}/Outfits/";
         
         /// <summary>
-        /// »ñÈ¡·ş×°×´Ì¬
+        /// è·å–æœè£…çŠ¶æ€
         /// </summary>
         public static OutfitState GetOutfitState(string personaDefName)
         {
@@ -62,8 +62,8 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ¸ù¾İºÃ¸Ğ¶È»ñÈ¡·ş×°µÈ¼¶
-        /// ? ×¢Òâ£ºaffinity ÊÇ StorytellerAgent µÄ -100 µ½ +100 ·¶Î§
+        /// æ ¹æ®å¥½æ„Ÿåº¦è·å–æœè£…ç­‰çº§
+        /// ? æ³¨æ„ï¼šaffinity æ˜¯ StorytellerAgent çš„ -100 åˆ° +100 èŒƒå›´
         /// </summary>
         public static OutfitTier GetOutfitTierByAffinity(float affinity)
         {
@@ -76,27 +76,27 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ¼ì²éÊÇ·ñĞèÒª¸ü»»·ş×°
+        /// æ£€æŸ¥æ˜¯å¦éœ€è¦æ›´æ¢æœè£…
         /// </summary>
         public static bool ShouldChangeOutfit(string personaDefName, float currentAffinity)
         {
             var state = GetOutfitState(personaDefName);
             
-            // ¼ì²é1: ºÃ¸Ğ¶ÈµÈ¼¶±ä»¯£¨Á¢¼´¸ü»»£©
+            // æ£€æŸ¥1: å¥½æ„Ÿåº¦ç­‰çº§å˜åŒ–ï¼ˆç«‹å³æ›´æ¢ï¼‰
             var newTier = GetOutfitTierByAffinity(currentAffinity);
             if (newTier != state.currentTier)
             {
-                Log.Message($"[OutfitSystem] {personaDefName} ºÃ¸Ğ¶ÈµÈ¼¶±ä»¯: {state.currentTier} ¡ú {newTier}");
+                Log.Message($"[OutfitSystem] {personaDefName} å¥½æ„Ÿåº¦ç­‰çº§å˜åŒ–: {state.currentTier} â†’ {newTier}");
                 return true;
             }
             
-            // ¼ì²é2: Ê±¼ä¼ä¸ô£¨12Ğ¡Ê±£©
+            // æ£€æŸ¥2: æ—¶é—´é—´éš”ï¼ˆ12å°æ—¶ï¼‰
             int currentTick = Find.TickManager.TicksGame;
             int elapsedTicks = currentTick - state.lastChangeTimestamp;
             
             if (elapsedTicks >= state.changeIntervalTicks)
             {
-                Log.Message($"[OutfitSystem] {personaDefName} ·ş×°¶¨Ê±¸ü»»: {elapsedTicks} ticks ({elapsedTicks / 2500}Ğ¡Ê±)");
+                Log.Message($"[OutfitSystem] {personaDefName} æœè£…å®šæ—¶æ›´æ¢: {elapsedTicks} ticks ({elapsedTicks / 2500}å°æ—¶)");
                 return true;
             }
             
@@ -104,26 +104,26 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ¸ü»»·ş×°
+        /// æ›´æ¢æœè£…
         /// </summary>
         public static string ChangeOutfit(string personaDefName, float affinity)
         {
             var state = GetOutfitState(personaDefName);
             var newTier = GetOutfitTierByAffinity(affinity);
             
-            // »ñÈ¡¸ÃµÈ¼¶µÄËùÓĞ¿ÉÓÃ·ş×°
+            // è·å–è¯¥ç­‰çº§çš„æ‰€æœ‰å¯ç”¨æœè£…
             var availableOutfits = GetAvailableOutfits(personaDefName, newTier);
             
             if (availableOutfits.Count == 0)
             {
-                // Ã»ÓĞ·ş×°²î·Ö£¬Çå¿Õµ±Ç°·ş×°
+                // æ²¡æœ‰æœè£…å·®åˆ†ï¼Œæ¸…ç©ºå½“å‰æœè£…
                 state.currentOutfitPath = "";
                 state.currentTier = newTier;
-                Log.Message($"[OutfitSystem] {personaDefName} Ã»ÓĞ {newTier} µÈ¼¶µÄ·ş×°²î·Ö");
+                Log.Message($"[OutfitSystem] {personaDefName} æ²¡æœ‰ {newTier} ç­‰çº§çš„æœè£…å·®åˆ†");
                 return null;
             }
             
-            // Ëæ»úÑ¡ÔñÒ»¸ö£¨¾¡Á¿±ÜÃâÖØ¸´£©
+            // éšæœºé€‰æ‹©ä¸€ä¸ªï¼ˆå°½é‡é¿å…é‡å¤ï¼‰
             string newOutfit;
             if (availableOutfits.Count == 1)
             {
@@ -131,7 +131,7 @@ namespace TheSecondSeat.PersonaGeneration
             }
             else
             {
-                // ÅÅ³ıµ±Ç°·ş×°£¬±ÜÃâÁ¬ĞøÏàÍ¬
+                // æ’é™¤å½“å‰æœè£…ï¼Œé¿å…è¿ç»­ç›¸åŒ
                 var candidates = availableOutfits
                     .Where(o => o != state.currentOutfitPath)
                     .ToList();
@@ -146,18 +146,18 @@ namespace TheSecondSeat.PersonaGeneration
                 }
             }
             
-            // ¸üĞÂ×´Ì¬
+            // æ›´æ–°çŠ¶æ€
             state.currentTier = newTier;
             state.currentOutfitPath = newOutfit;
             state.lastChangeTimestamp = Find.TickManager.TicksGame;
             
-            Log.Message($"[OutfitSystem] ? {personaDefName} ¸ü»»·ş×°: {newTier} - {Path.GetFileNameWithoutExtension(newOutfit)}");
+            Log.Message($"[OutfitSystem] ? {personaDefName} æ›´æ¢æœè£…: {newTier} - {Path.GetFileNameWithoutExtension(newOutfit)}");
             
             return newOutfit;
         }
         
         /// <summary>
-        /// »ñÈ¡Ö¸¶¨µÈ¼¶µÄËùÓĞ¿ÉÓÃ·ş×°
+        /// è·å–æŒ‡å®šç­‰çº§çš„æ‰€æœ‰å¯ç”¨æœè£…
         /// </summary>
         private static List<string> GetAvailableOutfits(string personaDefName, OutfitTier tier)
         {
@@ -165,7 +165,7 @@ namespace TheSecondSeat.PersonaGeneration
             string tierName = tier.ToString().ToLower();
             string basePath = string.Format(OUTFITS_PATH, personaDefName);
             
-            // ¼ì²éËùÓĞ±äÌå£¨1-9£©
+            // æ£€æŸ¥æ‰€æœ‰å˜ä½“ï¼ˆ1-9ï¼‰
             for (int i = 1; i <= 9; i++)
             {
                 string path = basePath + $"{tierName}_{i}";
@@ -181,7 +181,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// »ñÈ¡µ±Ç°·ş×°Â·¾¶
+        /// è·å–å½“å‰æœè£…è·¯å¾„
         /// </summary>
         public static string GetCurrentOutfitPath(string personaDefName)
         {
@@ -190,7 +190,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ÊÖ¶¯ÉèÖÃ·ş×°
+        /// æ‰‹åŠ¨è®¾ç½®æœè£…
         /// </summary>
         public static void SetOutfit(string personaDefName, string outfitPath)
         {
@@ -198,20 +198,20 @@ namespace TheSecondSeat.PersonaGeneration
             state.currentOutfitPath = outfitPath;
             state.lastChangeTimestamp = Find.TickManager.TicksGame;
             
-            Log.Message($"[OutfitSystem] ÊÖ¶¯ÉèÖÃ·ş×°: {personaDefName} - {outfitPath}");
+            Log.Message($"[OutfitSystem] æ‰‹åŠ¨è®¾ç½®æœè£…: {personaDefName} - {outfitPath}");
         }
         
         /// <summary>
-        /// Çå¿ÕËùÓĞ·ş×°×´Ì¬
+        /// æ¸…ç©ºæ‰€æœ‰æœè£…çŠ¶æ€
         /// </summary>
         public static void ClearAllStates()
         {
             outfitStates.Clear();
-            Log.Message("[OutfitSystem] Çå¿ÕËùÓĞ·ş×°×´Ì¬");
+            Log.Message("[OutfitSystem] æ¸…ç©ºæ‰€æœ‰æœè£…çŠ¶æ€");
         }
         
         /// <summary>
-        /// »ñÈ¡ÏÂ´Î¸ü»»µ¹¼ÆÊ±£¨ÓÎÏ·Ğ¡Ê±£©
+        /// è·å–ä¸‹æ¬¡æ›´æ¢å€’è®¡æ—¶ï¼ˆæ¸¸æˆå°æ—¶ï¼‰
         /// </summary>
         public static float GetTimeUntilNextChange(string personaDefName)
         {
@@ -225,16 +225,16 @@ namespace TheSecondSeat.PersonaGeneration
                 return 0f;
             }
             
-            // ×ª»»ÎªÓÎÏ·Ğ¡Ê±£¨1Ğ¡Ê± = 2500 ticks£©
+            // è½¬æ¢ä¸ºæ¸¸æˆå°æ—¶ï¼ˆ1å°æ—¶ = 2500 ticksï¼‰
             return remainingTicks / 2500f;
         }
         
         /// <summary>
-        /// »ñÈ¡µ÷ÊÔĞÅÏ¢
+        /// è·å–è°ƒè¯•ä¿¡æ¯
         /// </summary>
         public static string GetDebugInfo()
         {
-            var info = $"[OutfitSystem] ·ş×°×´Ì¬ÊıÁ¿: {outfitStates.Count}\n";
+            var info = $"[OutfitSystem] æœè£…çŠ¶æ€æ•°é‡: {outfitStates.Count}\n";
             
             foreach (var kvp in outfitStates)
             {
@@ -242,16 +242,16 @@ namespace TheSecondSeat.PersonaGeneration
                 float hoursUntilChange = GetTimeUntilNextChange(kvp.Key);
                 
                 info += $"  {kvp.Key}:\n";
-                info += $"    ·ş×°µÈ¼¶: {state.currentTier}\n";
-                info += $"    µ±Ç°·ş×°: {Path.GetFileNameWithoutExtension(state.currentOutfitPath)}\n";
-                info += $"    ÏÂ´Î¸ü»»: {hoursUntilChange:F1} Ğ¡Ê±ºó\n";
+                info += $"    æœè£…ç­‰çº§: {state.currentTier}\n";
+                info += $"    å½“å‰æœè£…: {Path.GetFileNameWithoutExtension(state.currentOutfitPath)}\n";
+                info += $"    ä¸‹æ¬¡æ›´æ¢: {hoursUntilChange:F1} å°æ—¶å\n";
             }
             
             return info;
         }
         
         /// <summary>
-        /// ±£´æËùÓĞ·ş×°×´Ì¬
+        /// ä¿å­˜æ‰€æœ‰æœè£…çŠ¶æ€
         /// </summary>
         public static void ExposeData()
         {

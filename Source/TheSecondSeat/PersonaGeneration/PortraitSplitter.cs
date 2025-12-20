@@ -1,80 +1,80 @@
-using System;
+ï»¿using System;
 using UnityEngine;
 using Verse;
 
 namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
-    /// Á¢»æ·Ö¸îÅäÖÃ
-    /// ¶¨ÒåÈçºÎ´ÓÌØ¶¨Î»ÖÃ·Ö¸îÁ¢»æ£¨Èç´Ó²±×Ó·Ö¸îÍ·²¿ºÍÉíÌå£©
+    /// ç«‹ç»˜åˆ†å‰²é…ç½®
+    /// å®šä¹‰å¦‚ä½•ä»ç‰¹å®šä½ç½®åˆ†å‰²ç«‹ç»˜ï¼ˆå¦‚ä»è„–å­åˆ†å‰²å¤´éƒ¨å’Œèº«ä½“ï¼‰
     /// </summary>
     public class PortraitSplitConfig
     {
         /// <summary>
-        /// ÈË¸ñÃû³Æ
+        /// äººæ ¼åç§°
         /// </summary>
         public string personaName;
         
         /// <summary>
-        /// ·Ö¸îÀàĞÍ
+        /// åˆ†å‰²ç±»å‹
         /// </summary>
         public SplitType splitType;
         
         /// <summary>
-        /// Ë®Æ½·Ö¸îÏßÎ»ÖÃ£¨Y×ø±ê£¬´Ó¶¥²¿¿ªÊ¼£¬0-1·¶Î§£©
-        /// ÀıÈç£º0.3 ±íÊ¾´Ó¶¥²¿30%µÄÎ»ÖÃ·Ö¸î
+        /// æ°´å¹³åˆ†å‰²çº¿ä½ç½®ï¼ˆYåæ ‡ï¼Œä»é¡¶éƒ¨å¼€å§‹ï¼Œ0-1èŒƒå›´ï¼‰
+        /// ä¾‹å¦‚ï¼š0.3 è¡¨ç¤ºä»é¡¶éƒ¨30%çš„ä½ç½®åˆ†å‰²
         /// </summary>
         public float horizontalSplitY = 0.3f;
         
         /// <summary>
-        /// ´¹Ö±·Ö¸îÏßÎ»ÖÃ£¨X×ø±ê£¬´Ó×ó±ß¿ªÊ¼£¬0-1·¶Î§£©
+        /// å‚ç›´åˆ†å‰²çº¿ä½ç½®ï¼ˆXåæ ‡ï¼Œä»å·¦è¾¹å¼€å§‹ï¼Œ0-1èŒƒå›´ï¼‰
         /// </summary>
         public float verticalSplitX = 0.5f;
         
         /// <summary>
-        /// Óğ»¯±ßÔµ¿í¶È£¨ÏñËØ£©
-        /// ÓÃÓÚÆ½»¬¹ı¶É£¬±ÜÃâÉúÓ²µÄÇĞ¸îÏß
+        /// ç¾½åŒ–è¾¹ç¼˜å®½åº¦ï¼ˆåƒç´ ï¼‰
+        /// ç”¨äºå¹³æ»‘è¿‡æ¸¡ï¼Œé¿å…ç”Ÿç¡¬çš„åˆ‡å‰²çº¿
         /// </summary>
         public int featherWidth = 5;
         
         /// <summary>
-        /// ÊÇ·ñÆôÓÃÓğ»¯
+        /// æ˜¯å¦å¯ç”¨ç¾½åŒ–
         /// </summary>
         public bool enableFeathering = true;
     }
     
     /// <summary>
-    /// ·Ö¸îÀàĞÍ
+    /// åˆ†å‰²ç±»å‹
     /// </summary>
     public enum SplitType
     {
-        Horizontal,     // Ë®Æ½·Ö¸î£¨ÓÃÓÚ·ÖÀëÍ·²¿ºÍÉíÌå£©
-        Vertical,       // ´¹Ö±·Ö¸î£¨ÓÃÓÚ·ÖÀë×óÓÒ°ëÉí£©
-        Custom          // ×Ô¶¨Òå·Ö¸îÏß
+        Horizontal,     // æ°´å¹³åˆ†å‰²ï¼ˆç”¨äºåˆ†ç¦»å¤´éƒ¨å’Œèº«ä½“ï¼‰
+        Vertical,       // å‚ç›´åˆ†å‰²ï¼ˆç”¨äºåˆ†ç¦»å·¦å³åŠèº«ï¼‰
+        Custom          // è‡ªå®šä¹‰åˆ†å‰²çº¿
     }
     
     /// <summary>
-    /// Á¢»æ×Ô¶¯·Ö¸îºÍ×éºÏÏµÍ³
+    /// ç«‹ç»˜è‡ªåŠ¨åˆ†å‰²å’Œç»„åˆç³»ç»Ÿ
     /// 
-    /// ºËĞÄ¹¦ÄÜ£º
-    /// 1. ´Ó²±×ÓÎ»ÖÃ×Ô¶¯·Ö¸îÍ·²¿ºÍÉíÌå
-    /// 2. Í·²¿ÇøÓòÊ¹ÓÃ±íÇé²î·Ö
-    /// 3. ÉíÌåÇøÓòÊ¹ÓÃ·ş×°²î·Ö
-    /// 4. ×Ô¶¯ºÏ³É×îÖÕÁ¢»æ
+    /// æ ¸å¿ƒåŠŸèƒ½ï¼š
+    /// 1. ä»è„–å­ä½ç½®è‡ªåŠ¨åˆ†å‰²å¤´éƒ¨å’Œèº«ä½“
+    /// 2. å¤´éƒ¨åŒºåŸŸä½¿ç”¨è¡¨æƒ…å·®åˆ†
+    /// 3. èº«ä½“åŒºåŸŸä½¿ç”¨æœè£…å·®åˆ†
+    /// 4. è‡ªåŠ¨åˆæˆæœ€ç»ˆç«‹ç»˜
     /// 
-    /// Ê¹ÓÃ³¡¾°£º
-    /// - base.png£¨ÍêÕûÁ¢»æ£©
-    /// - expression_happy.png£¨ÍêÕûÁ¢»æ£¬Ö»ÓĞÍ·²¿±íÇé²»Í¬£©
-    /// - outfit_warm.png£¨ÍêÕûÁ¢»æ£¬Ö»ÓĞ·ş×°²»Í¬£©
+    /// ä½¿ç”¨åœºæ™¯ï¼š
+    /// - base.pngï¼ˆå®Œæ•´ç«‹ç»˜ï¼‰
+    /// - expression_happy.pngï¼ˆå®Œæ•´ç«‹ç»˜ï¼Œåªæœ‰å¤´éƒ¨è¡¨æƒ…ä¸åŒï¼‰
+    /// - outfit_warm.pngï¼ˆå®Œæ•´ç«‹ç»˜ï¼Œåªæœ‰æœè£…ä¸åŒï¼‰
     /// 
-    /// ×îÖÕĞ§¹û£º
-    /// base.png µÄÉíÌå + expression_happy.png µÄÍ·²¿ + outfit_warm.png µÄ·ş×°
+    /// æœ€ç»ˆæ•ˆæœï¼š
+    /// base.png çš„èº«ä½“ + expression_happy.png çš„å¤´éƒ¨ + outfit_warm.png çš„æœè£…
     /// </summary>
     public static class PortraitSplitter
     {
         /// <summary>
-        /// Ä¬ÈÏ·Ö¸îÅäÖÃ
-        /// Í·²¿·¶Î§£º¶¥²¿0% - 30%£¨²±×ÓÎ»ÖÃ£©
+        /// é»˜è®¤åˆ†å‰²é…ç½®
+        /// å¤´éƒ¨èŒƒå›´ï¼šé¡¶éƒ¨0% - 30%ï¼ˆè„–å­ä½ç½®ï¼‰
         /// </summary>
         private static PortraitSplitConfig GetDefaultConfig(string personaName)
         {
@@ -82,18 +82,18 @@ namespace TheSecondSeat.PersonaGeneration
             {
                 personaName = personaName,
                 splitType = SplitType.Horizontal,
-                horizontalSplitY = 0.30f,  // ´Ó¶¥²¿30%µÄÎ»ÖÃ·Ö¸î£¨²±×Ó£©
-                featherWidth = 10,         // 10ÏñËØÓğ»¯
+                horizontalSplitY = 0.30f,  // ä»é¡¶éƒ¨30%çš„ä½ç½®åˆ†å‰²ï¼ˆè„–å­ï¼‰
+                featherWidth = 10,         // 10åƒç´ ç¾½åŒ–
                 enableFeathering = true
             };
         }
         
         /// <summary>
-        /// ×Ô¶¨Òå·Ö¸îÅäÖÃ£¨Ã¿¸ö½ÇÉ«¿ÉÄÜ²»Í¬£©
+        /// è‡ªå®šä¹‰åˆ†å‰²é…ç½®ï¼ˆæ¯ä¸ªè§’è‰²å¯èƒ½ä¸åŒï¼‰
         /// </summary>
         private static PortraitSplitConfig GetPersonaConfig(string personaName)
         {
-            // ¿ÉÒÔÎª²»Í¬½ÇÉ«¶¨Òå²»Í¬µÄ·Ö¸îÎ»ÖÃ
+            // å¯ä»¥ä¸ºä¸åŒè§’è‰²å®šä¹‰ä¸åŒçš„åˆ†å‰²ä½ç½®
             switch (personaName)
             {
                 case "Cassandra_Classic":
@@ -101,7 +101,7 @@ namespace TheSecondSeat.PersonaGeneration
                     {
                         personaName = personaName,
                         splitType = SplitType.Horizontal,
-                        horizontalSplitY = 0.28f,  // Cassandra ²±×ÓÎ»ÖÃÉÔ¸ß
+                        horizontalSplitY = 0.28f,  // Cassandra è„–å­ä½ç½®ç¨é«˜
                         featherWidth = 12,
                         enableFeathering = true
                     };
@@ -111,7 +111,7 @@ namespace TheSecondSeat.PersonaGeneration
                     {
                         personaName = personaName,
                         splitType = SplitType.Horizontal,
-                        horizontalSplitY = 0.32f,  // Phoebe ²±×ÓÎ»ÖÃÉÔµÍ
+                        horizontalSplitY = 0.32f,  // Phoebe è„–å­ä½ç½®ç¨ä½
                         featherWidth = 10,
                         enableFeathering = true
                     };
@@ -122,47 +122,47 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ×éºÏÍêÕûÁ¢»æ£º»ù´¡Á¢»æ + ±íÇé²î·Ö + ·ş×°²î·Ö
+        /// ç»„åˆå®Œæ•´ç«‹ç»˜ï¼šåŸºç¡€ç«‹ç»˜ + è¡¨æƒ…å·®åˆ† + æœè£…å·®åˆ†
         /// 
-        /// Á÷³Ì£º
-        /// 1. ´Ó base.png ÌáÈ¡ÉíÌå£¨²±×ÓÒÔÏÂ£©
-        /// 2. ´Ó expression.png ÌáÈ¡Í·²¿£¨²±×ÓÒÔÉÏ£©
-        /// 3. ´Ó outfit.png ÌáÈ¡·ş×°£¨²±×ÓÒÔÏÂ£¬¸²¸ÇÉíÌå£©
-        /// 4. ºÏ³É£ºÉíÌå + ·ş×° + Í·²¿
+        /// æµç¨‹ï¼š
+        /// 1. ä» base.png æå–èº«ä½“ï¼ˆè„–å­ä»¥ä¸‹ï¼‰
+        /// 2. ä» expression.png æå–å¤´éƒ¨ï¼ˆè„–å­ä»¥ä¸Šï¼‰
+        /// 3. ä» outfit.png æå–æœè£…ï¼ˆè„–å­ä»¥ä¸‹ï¼Œè¦†ç›–èº«ä½“ï¼‰
+        /// 4. åˆæˆï¼šèº«ä½“ + æœè£… + å¤´éƒ¨
         /// </summary>
         public static Texture2D ComposePortrait(
-            Texture2D baseTexture,          // »ù´¡Á¢»æ£¨ÍêÕû£©
-            Texture2D expressionTexture,    // ±íÇé²î·Ö£¨ÍêÕû£¬Í·²¿²»Í¬£©
-            Texture2D outfitTexture,        // ·ş×°²î·Ö£¨ÍêÕû£¬·ş×°²»Í¬£©
+            Texture2D baseTexture,          // åŸºç¡€ç«‹ç»˜ï¼ˆå®Œæ•´ï¼‰
+            Texture2D expressionTexture,    // è¡¨æƒ…å·®åˆ†ï¼ˆå®Œæ•´ï¼Œå¤´éƒ¨ä¸åŒï¼‰
+            Texture2D outfitTexture,        // æœè£…å·®åˆ†ï¼ˆå®Œæ•´ï¼Œæœè£…ä¸åŒï¼‰
             string personaName)
         {
             try
             {
                 var config = GetPersonaConfig(personaName);
                 
-                // È·±£ËùÓĞÎÆÀí³ß´çÒ»ÖÂ
+                // ç¡®ä¿æ‰€æœ‰çº¹ç†å°ºå¯¸ä¸€è‡´
                 if (!ValidateTextureSizes(baseTexture, expressionTexture, outfitTexture))
                 {
-                    Log.Error("[PortraitSplitter] ÎÆÀí³ß´ç²»Ò»ÖÂ");
+                    Log.Error("[PortraitSplitter] çº¹ç†å°ºå¯¸ä¸ä¸€è‡´");
                     return baseTexture;
                 }
                 
                 int width = baseTexture.width;
                 int height = baseTexture.height;
                 
-                // ¼ÆËã·Ö¸îÏßÎ»ÖÃ£¨ÏñËØ£©
+                // è®¡ç®—åˆ†å‰²çº¿ä½ç½®ï¼ˆåƒç´ ï¼‰
                 int splitLineY = Mathf.RoundToInt(height * config.horizontalSplitY);
                 
-                // ´´½¨½á¹ûÎÆÀí
+                // åˆ›å»ºç»“æœçº¹ç†
                 Texture2D result = new Texture2D(width, height, TextureFormat.RGBA32, false);
                 
-                // »ñÈ¡ÏñËØÊı¾İ
+                // è·å–åƒç´ æ•°æ®
                 Color[] basePixels = MakeReadable(baseTexture).GetPixels();
                 Color[] expressionPixels = expressionTexture != null ? MakeReadable(expressionTexture).GetPixels() : null;
                 Color[] outfitPixels = outfitTexture != null ? MakeReadable(outfitTexture).GetPixels() : null;
                 Color[] resultPixels = new Color[basePixels.Length];
                 
-                // ÖğÏñËØºÏ³É
+                // é€åƒç´ åˆæˆ
                 for (int y = 0; y < height; y++)
                 {
                     for (int x = 0; x < width; x++)
@@ -171,7 +171,7 @@ namespace TheSecondSeat.PersonaGeneration
                         
                         if (y < splitLineY)
                         {
-                            // Í·²¿ÇøÓò£ºÊ¹ÓÃ±íÇé²î·Ö
+                            // å¤´éƒ¨åŒºåŸŸï¼šä½¿ç”¨è¡¨æƒ…å·®åˆ†
                             if (expressionPixels != null)
                             {
                                 resultPixels[index] = BlendWithFeathering(
@@ -190,12 +190,12 @@ namespace TheSecondSeat.PersonaGeneration
                         }
                         else
                         {
-                            // ÉíÌåÇøÓò£ºÏÈÓÃ»ù´¡£¬ÔÙµş¼Ó·ş×°
+                            // èº«ä½“åŒºåŸŸï¼šå…ˆç”¨åŸºç¡€ï¼Œå†å åŠ æœè£…
                             Color bodyColor = basePixels[index];
                             
                             if (outfitPixels != null)
                             {
-                                // µş¼Ó·ş×°£¨Ê¹ÓÃ Alpha »ìºÏ£©
+                                // å åŠ æœè£…ï¼ˆä½¿ç”¨ Alpha æ··åˆï¼‰
                                 bodyColor = BlendWithFeathering(
                                     bodyColor,
                                     outfitPixels[index],
@@ -214,20 +214,20 @@ namespace TheSecondSeat.PersonaGeneration
                 result.SetPixels(resultPixels);
                 result.Apply();
                 
-                Log.Message($"[PortraitSplitter] ? ºÏ³ÉÍê³É: {personaName} (·Ö¸îÏß: {splitLineY}px)");
+                Log.Message($"[PortraitSplitter] ? åˆæˆå®Œæˆ: {personaName} (åˆ†å‰²çº¿: {splitLineY}px)");
                 
                 return result;
             }
             catch (Exception ex)
             {
-                Log.Error($"[PortraitSplitter] ºÏ³ÉÊ§°Ü: {ex}");
+                Log.Error($"[PortraitSplitter] åˆæˆå¤±è´¥: {ex}");
                 return baseTexture;
             }
         }
         
         /// <summary>
-        /// ´øÓğ»¯µÄ»ìºÏ
-        /// ÔÚ·Ö¸îÏß¸½½ü½øĞĞÆ½»¬¹ı¶É£¬±ÜÃâÉúÓ²µÄÇĞ¸îÏß
+        /// å¸¦ç¾½åŒ–çš„æ··åˆ
+        /// åœ¨åˆ†å‰²çº¿é™„è¿‘è¿›è¡Œå¹³æ»‘è¿‡æ¸¡ï¼Œé¿å…ç”Ÿç¡¬çš„åˆ‡å‰²çº¿
         /// </summary>
         private static Color BlendWithFeathering(
             Color bottom,
@@ -239,34 +239,34 @@ namespace TheSecondSeat.PersonaGeneration
         {
             if (!config.enableFeathering)
             {
-                // ²»ÆôÓÃÓğ»¯£¬Ö±½ÓÊ¹ÓÃ¶¥²ãÑÕÉ«
+                // ä¸å¯ç”¨ç¾½åŒ–ï¼Œç›´æ¥ä½¿ç”¨é¡¶å±‚é¢œè‰²
                 return top;
             }
             
-            // ¼ÆËã¾àÀë·Ö¸îÏßµÄ¾àÀë
+            // è®¡ç®—è·ç¦»åˆ†å‰²çº¿çš„è·ç¦»
             int distanceFromSplit = Mathf.Abs(currentY - splitLineY);
             
             if (distanceFromSplit >= config.featherWidth)
             {
-                // Ô¶Àë·Ö¸îÏß£¬Ö±½ÓÊ¹ÓÃ¶ÔÓ¦ÇøÓòµÄÑÕÉ«
+                // è¿œç¦»åˆ†å‰²çº¿ï¼Œç›´æ¥ä½¿ç”¨å¯¹åº”åŒºåŸŸçš„é¢œè‰²
                 return top;
             }
             
-            // ÔÚÓğ»¯·¶Î§ÄÚ£¬½øĞĞÆ½»¬»ìºÏ
+            // åœ¨ç¾½åŒ–èŒƒå›´å†…ï¼Œè¿›è¡Œå¹³æ»‘æ··åˆ
             float blendFactor = (float)distanceFromSplit / config.featherWidth;
             
             if (isHead)
             {
-                // Í·²¿ÇøÓò£º¾àÀë·Ö¸îÏßÔ½½ü£¬Ô½¶àÊ¹ÓÃ»ù´¡ÎÆÀí
+                // å¤´éƒ¨åŒºåŸŸï¼šè·ç¦»åˆ†å‰²çº¿è¶Šè¿‘ï¼Œè¶Šå¤šä½¿ç”¨åŸºç¡€çº¹ç†
                 blendFactor = 1f - blendFactor;
             }
             
-            // Alpha »ìºÏ
+            // Alpha æ··åˆ
             return Color.Lerp(bottom, top, blendFactor);
         }
         
         /// <summary>
-        /// ÑéÖ¤ÎÆÀí³ß´çÊÇ·ñÒ»ÖÂ
+        /// éªŒè¯çº¹ç†å°ºå¯¸æ˜¯å¦ä¸€è‡´
         /// </summary>
         private static bool ValidateTextureSizes(params Texture2D[] textures)
         {
@@ -283,7 +283,7 @@ namespace TheSecondSeat.PersonaGeneration
                     
                 if (tex.width != width || tex.height != height)
                 {
-                    Log.Warning($"[PortraitSplitter] ÎÆÀí³ß´ç²»Ò»ÖÂ: {tex.width}x{tex.height} vs {width}x{height}");
+                    Log.Warning($"[PortraitSplitter] çº¹ç†å°ºå¯¸ä¸ä¸€è‡´: {tex.width}x{tex.height} vs {width}x{height}");
                     return false;
                 }
             }
@@ -292,11 +292,11 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ½«ÎÆÀí×ª»»Îª¿É¶Á¸ñÊ½
+        /// å°†çº¹ç†è½¬æ¢ä¸ºå¯è¯»æ ¼å¼
         /// </summary>
         private static Texture2D MakeReadable(Texture2D source)
         {
-            // Èç¹ûÎÆÀíÒÑ¾­¿É¶Á£¬Ö±½Ó·µ»Ø
+            // å¦‚æœçº¹ç†å·²ç»å¯è¯»ï¼Œç›´æ¥è¿”å›
             try
             {
                 source.GetPixel(0, 0);
@@ -304,7 +304,7 @@ namespace TheSecondSeat.PersonaGeneration
             }
             catch
             {
-                // ĞèÒª×ª»»
+                // éœ€è¦è½¬æ¢
             }
             
             RenderTexture renderTex = RenderTexture.GetTemporary(
@@ -330,7 +330,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// µ÷ÊÔ£º±£´æ·Ö¸îÔ¤ÀÀ£¨ÓÃÓÚµ÷ÊÔ·Ö¸îÏßÎ»ÖÃ£©
+        /// è°ƒè¯•ï¼šä¿å­˜åˆ†å‰²é¢„è§ˆï¼ˆç”¨äºè°ƒè¯•åˆ†å‰²çº¿ä½ç½®ï¼‰
         /// </summary>
         public static void SaveSplitPreview(Texture2D texture, string personaName)
         {
@@ -340,7 +340,7 @@ namespace TheSecondSeat.PersonaGeneration
             var preview = MakeReadable(texture);
             var pixels = preview.GetPixels();
             
-            // ÔÚ·Ö¸îÏßÎ»ÖÃ»­Ò»ÌõºìÏß
+            // åœ¨åˆ†å‰²çº¿ä½ç½®ç”»ä¸€æ¡çº¢çº¿
             for (int x = 0; x < preview.width; x++)
             {
                 for (int offset = -2; offset <= 2; offset++)
@@ -357,7 +357,7 @@ namespace TheSecondSeat.PersonaGeneration
             preview.SetPixels(pixels);
             preview.Apply();
             
-            // ±£´æµ½ÁÙÊ±ÎÄ¼ş
+            // ä¿å­˜åˆ°ä¸´æ—¶æ–‡ä»¶
             byte[] bytes = preview.EncodeToPNG();
             string path = System.IO.Path.Combine(
                 Verse.GenFilePaths.SaveDataFolderPath,
@@ -366,7 +366,7 @@ namespace TheSecondSeat.PersonaGeneration
             );
             
             System.IO.File.WriteAllBytes(path, bytes);
-            Log.Message($"[PortraitSplitter] ·Ö¸îÔ¤ÀÀÒÑ±£´æ: {path}");
+            Log.Message($"[PortraitSplitter] åˆ†å‰²é¢„è§ˆå·²ä¿å­˜: {path}");
         }
     }
 }

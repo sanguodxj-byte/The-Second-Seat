@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -10,15 +10,15 @@ using TheSecondSeat.PersonaGeneration;
 namespace TheSecondSeat.UI
 {
     /// <summary>
-    /// ºÃ¸Ğ¶Èµ÷ÊÔ´°¿Ú
-    /// ? ¿ìËÙµ÷ÕûºÃ¸Ğ¶È£¬²âÊÔ²»Í¬µÈ¼¶µÄ±íÏÖ
+    /// å¥½æ„Ÿåº¦è°ƒè¯•çª—å£
+    /// ? å¿«é€Ÿè°ƒæ•´å¥½æ„Ÿåº¦ï¼Œæµ‹è¯•ä¸åŒç­‰çº§çš„è¡¨ç°
     /// </summary>
     public class Dialog_FavorabilityDebug : Window
     {
         private NarratorManager manager;
         private float targetFavorability;
 
-        public override Vector2 InitialSize => new Vector2(520f, 650f); // ? Ôö¼Ó¸ß¶È£º400¡ú650
+        public override Vector2 InitialSize => new Vector2(520f, 650f); // ? å¢åŠ é«˜åº¦ï¼š400â†’650
 
         public Dialog_FavorabilityDebug(NarratorManager manager)
         {
@@ -36,31 +36,31 @@ namespace TheSecondSeat.UI
         {
             float curY = 0f;
 
-            // ±êÌâ£¨ÒÆ³ıemoji£©
+            // æ ‡é¢˜ï¼ˆç§»é™¤emojiï¼‰
             Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(0f, curY, inRect.width, 40f), "[µ÷ÊÔ] ºÃ¸Ğ¶È¹¤¾ß");
+            Widgets.Label(new Rect(0f, curY, inRect.width, 40f), "[è°ƒè¯•] å¥½æ„Ÿåº¦å·¥å…·");
             Text.Font = GameFont.Small;
             curY += 50f;
 
-            // µ±Ç°ºÃ¸Ğ¶ÈÏÔÊ¾
+            // å½“å‰å¥½æ„Ÿåº¦æ˜¾ç¤º
             var currentTier = manager.CurrentTier;
             var tierColor = GetTierColor(currentTier);
             
             GUI.color = tierColor;
             Text.Font = GameFont.Medium;
             Widgets.Label(new Rect(0f, curY, inRect.width, 30f), 
-                $"µ±Ç°ºÃ¸Ğ¶È£º{manager.Favorability:F0} ({GetTierName(currentTier)})");
+                $"å½“å‰å¥½æ„Ÿåº¦ï¼š{manager.Favorability:F0} ({GetTierName(currentTier)})");
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
             curY += 40f;
 
-            // ºÃ¸Ğ¶ÈÌõ¿ÉÊÓ»¯
+            // å¥½æ„Ÿåº¦æ¡å¯è§†åŒ–
             DrawFavorabilityBar(new Rect(0f, curY, inRect.width, 30f), manager.Favorability);
             curY += 40f;
 
-            // ¿ìËÙµ÷Õû°´Å¥
+            // å¿«é€Ÿè°ƒæ•´æŒ‰é’®
             Text.Font = GameFont.Small;
-            Widgets.Label(new Rect(0f, curY, inRect.width, 25f), "¿ìËÙµ÷Õû£º");
+            Widgets.Label(new Rect(0f, curY, inRect.width, 25f), "å¿«é€Ÿè°ƒæ•´ï¼š");
             curY += 30f;
 
             float buttonWidth = (inRect.width - 30f) / 4f;
@@ -68,34 +68,34 @@ namespace TheSecondSeat.UI
 
             if (Widgets.ButtonText(new Rect(buttonX, curY, buttonWidth, 35f), "-100"))
             {
-                manager.ModifyFavorability(-100f, "µ÷ÊÔ£º¿ìËÙ¼õÉÙ");
+                manager.ModifyFavorability(-100f, "è°ƒè¯•ï¼šå¿«é€Ÿå‡å°‘");
                 targetFavorability = manager.Favorability;
             }
             buttonX += buttonWidth + 10f;
 
             if (Widgets.ButtonText(new Rect(buttonX, curY, buttonWidth, 35f), "-10"))
             {
-                manager.ModifyFavorability(-10f, "µ÷ÊÔ£º¼õÉÙ");
+                manager.ModifyFavorability(-10f, "è°ƒè¯•ï¼šå‡å°‘");
                 targetFavorability = manager.Favorability;
             }
             buttonX += buttonWidth + 10f;
 
             if (Widgets.ButtonText(new Rect(buttonX, curY, buttonWidth, 35f), "+10"))
             {
-                manager.ModifyFavorability(10f, "µ÷ÊÔ£ºÔö¼Ó");
+                manager.ModifyFavorability(10f, "è°ƒè¯•ï¼šå¢åŠ ");
                 targetFavorability = manager.Favorability;
             }
             buttonX += buttonWidth + 10f;
 
             if (Widgets.ButtonText(new Rect(buttonX, curY, buttonWidth, 35f), "+100"))
             {
-                manager.ModifyFavorability(100f, "µ÷ÊÔ£º¿ìËÙÔö¼Ó");
+                manager.ModifyFavorability(100f, "è°ƒè¯•ï¼šå¿«é€Ÿå¢åŠ ");
                 targetFavorability = manager.Favorability;
             }
             curY += 45f;
 
-            // »¬¶¯Ìõ¾«È·ÉèÖÃ
-            Widgets.Label(new Rect(0f, curY, inRect.width, 25f), "¾«È·ÉèÖÃ£º");
+            // æ»‘åŠ¨æ¡ç²¾ç¡®è®¾ç½®
+            Widgets.Label(new Rect(0f, curY, inRect.width, 25f), "ç²¾ç¡®è®¾ç½®ï¼š");
             curY += 30f;
 
             targetFavorability = Widgets.HorizontalSlider(
@@ -108,15 +108,15 @@ namespace TheSecondSeat.UI
             );
             curY += 35f;
 
-            if (Widgets.ButtonText(new Rect(0f, curY, inRect.width, 35f), $"Ó¦ÓÃ£º{targetFavorability:F0}"))
+            if (Widgets.ButtonText(new Rect(0f, curY, inRect.width, 35f), $"åº”ç”¨ï¼š{targetFavorability:F0}"))
             {
                 float change = targetFavorability - manager.Favorability;
-                manager.ModifyFavorability(change, $"µ÷ÊÔ£ºÉèÖÃÎª {targetFavorability:F0}");
+                manager.ModifyFavorability(change, $"è°ƒè¯•ï¼šè®¾ç½®ä¸º {targetFavorability:F0}");
             }
             curY += 45f;
 
-            // ¿ì½İµÈ¼¶ÉèÖÃ
-            Widgets.Label(new Rect(0f, curY, inRect.width, 25f), "¿ì½İµÈ¼¶£º");
+            // å¿«æ·ç­‰çº§è®¾ç½®
+            Widgets.Label(new Rect(0f, curY, inRect.width, 25f), "å¿«æ·ç­‰çº§ï¼š");
             curY += 30f;
 
             buttonX = 0f;
@@ -124,14 +124,14 @@ namespace TheSecondSeat.UI
 
             var tiers = new[]
             {
-                (AffinityTier.Hatred, -850f, "Ô÷ºŞ"),
-                (AffinityTier.Hostile, -550f, "µĞÒâ"),
-                (AffinityTier.Cold, -250f, "ÊèÔ¶"),
-                (AffinityTier.Indifferent, 0f, "Àäµ­"),
-                (AffinityTier.Warm, 200f, "ÎÂÅ¯"),
-                (AffinityTier.Devoted, 450f, "ÇãĞÄ"),
-                (AffinityTier.Adoration, 725f, "°®Ä½"),
-                (AffinityTier.SoulBound, 925f, "»êÖ®ÓÑ")
+                (AffinityTier.Hatred, -850f, "æ†æ¨"),
+                (AffinityTier.Hostile, -550f, "æ•Œæ„"),
+                (AffinityTier.Cold, -250f, "ç–è¿œ"),
+                (AffinityTier.Indifferent, 0f, "å†·æ·¡"),
+                (AffinityTier.Warm, 200f, "æ¸©æš–"),
+                (AffinityTier.Devoted, 450f, "å€¾å¿ƒ"),
+                (AffinityTier.Adoration, 725f, "çˆ±æ…•"),
+                (AffinityTier.SoulBound, 925f, "é­‚ä¹‹å‹")
             };
 
             for (int i = 0; i < tiers.Length; i++)
@@ -148,7 +148,7 @@ namespace TheSecondSeat.UI
                 if (Widgets.ButtonText(new Rect(buttonX, curY, buttonWidth, 35f), name))
                 {
                     float change = value - manager.Favorability;
-                    manager.ModifyFavorability(change, $"µ÷ÊÔ£ºÉèÖÃÎª {name}");
+                    manager.ModifyFavorability(change, $"è°ƒè¯•ï¼šè®¾ç½®ä¸º {name}");
                     targetFavorability = value;
                 }
                 
@@ -158,8 +158,8 @@ namespace TheSecondSeat.UI
 
             curY += 50f;
 
-            // ¹Ø±Õ°´Å¥
-            if (Widgets.ButtonText(new Rect(inRect.width - 110f, inRect.height - 40f, 100f, 35f), "¹Ø±Õ"))
+            // å…³é—­æŒ‰é’®
+            if (Widgets.ButtonText(new Rect(inRect.width - 110f, inRect.height - 40f, 100f, 35f), "å…³é—­"))
             {
                 Close();
             }
@@ -167,21 +167,21 @@ namespace TheSecondSeat.UI
 
         private void DrawFavorabilityBar(Rect rect, float value)
         {
-            // ¹éÒ»»¯£º-1000~1000 ¡ú 0~1
+            // å½’ä¸€åŒ–ï¼š-1000~1000 â†’ 0~1
             var normalized = (value + 1000f) / 2000f;
             
-            // ±³¾°
+            // èƒŒæ™¯
             Widgets.DrawBoxSolid(rect, new Color(0.08f, 0.08f, 0.08f, 0.9f));
             
-            // Ìî³äÌõ
+            // å¡«å……æ¡
             Color fillColor = GetFavorabilityColor(value);
             var fillRect = new Rect(rect.x, rect.y, rect.width * normalized, rect.height);
             Widgets.DrawBoxSolid(fillRect, fillColor);
             
-            // ±ß¿ò
+            // è¾¹æ¡†
             Widgets.DrawBox(rect, 1);
             
-            // ÖĞĞÄ±ê¼ÇÏß£¨0 µÄÎ»ÖÃ£©
+            // ä¸­å¿ƒæ ‡è®°çº¿ï¼ˆ0 çš„ä½ç½®ï¼‰
             float centerX = rect.x + rect.width * 0.5f;
             Widgets.DrawLine(
                 new Vector2(centerX, rect.y),
@@ -226,8 +226,8 @@ namespace TheSecondSeat.UI
     }
 
     /// <summary>
-    /// ±íÇéµ÷ÊÔ´°¿Ú
-    /// ? ¿ìËÙÇĞ»»±íÇé£¬²âÊÔÁ¢»æ±íÏÖ
+    /// è¡¨æƒ…è°ƒè¯•çª—å£
+    /// ? å¿«é€Ÿåˆ‡æ¢è¡¨æƒ…ï¼Œæµ‹è¯•ç«‹ç»˜è¡¨ç°
     /// </summary>
     public class Dialog_ExpressionDebug : Window
     {
@@ -251,33 +251,33 @@ namespace TheSecondSeat.UI
         {
             float curY = 0f;
 
-            // ±êÌâ£¨ÒÆ³ıemoji£©
+            // æ ‡é¢˜ï¼ˆç§»é™¤emojiï¼‰
             Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(0f, curY, inRect.width, 40f), $"[µ÷ÊÔ] ±íÇé - {persona.narratorName}");
+            Widgets.Label(new Rect(0f, curY, inRect.width, 40f), $"[è°ƒè¯•] è¡¨æƒ… - {persona.narratorName}");
             Text.Font = GameFont.Small;
             curY += 50f;
 
-            // ? Ã¿´Î»æÖÆÊ±ÖØĞÂ»ñÈ¡µ±Ç°±íÇé×´Ì¬£¨È·±£ÊµÊ±¸üĞÂ£©
+            // ? æ¯æ¬¡ç»˜åˆ¶æ—¶é‡æ–°è·å–å½“å‰è¡¨æƒ…çŠ¶æ€ï¼ˆç¡®ä¿å®æ—¶æ›´æ–°ï¼‰
             var expressionState = ExpressionSystem.GetExpressionState(persona.defName);
             ExpressionType currentExpression = expressionState.CurrentExpression;
 
-            // ? µ÷Õû²¼¾Ö£º×ó²àÁ¢»æÔ¤ÀÀ£¬ÓÒ²à±íÇéÁĞ±í
+            // ? è°ƒæ•´å¸ƒå±€ï¼šå·¦ä¾§ç«‹ç»˜é¢„è§ˆï¼Œå³ä¾§è¡¨æƒ…åˆ—è¡¨
             float leftWidth = 250f;
             float rightWidth = inRect.width - leftWidth - 20f;
 
-            // ×ó²àÇøÓò£ºÁ¢»æÔ¤ÀÀ
+            // å·¦ä¾§åŒºåŸŸï¼šç«‹ç»˜é¢„è§ˆ
             Rect leftRect = new Rect(0f, curY, leftWidth, inRect.height - curY - 60f);
             
-            // µ±Ç°±íÇé±êÇ©
-            Widgets.Label(new Rect(leftRect.x, leftRect.y, leftRect.width, 25f), $"µ±Ç°±íÇé£º{GetExpressionDisplayName(currentExpression)}");
+            // å½“å‰è¡¨æƒ…æ ‡ç­¾
+            Widgets.Label(new Rect(leftRect.x, leftRect.y, leftRect.width, 25f), $"å½“å‰è¡¨æƒ…ï¼š{GetExpressionDisplayName(currentExpression)}");
             
-            // Á¢»æÔ¤ÀÀ£¨µ÷Õû´óĞ¡ºÍÎ»ÖÃ£©
+            // ç«‹ç»˜é¢„è§ˆï¼ˆè°ƒæ•´å¤§å°å’Œä½ç½®ï¼‰
             var portraitRect = new Rect(leftRect.x + 10f, leftRect.y + 30f, leftWidth - 20f, leftWidth - 20f);
             
-            // ? Ìí¼Ó¼ÓÔØÈÕÖ¾
-            Log.Message($"[ExpressionDebug] ÕıÔÚ¼ÓÔØÁ¢»æ: {persona.defName}, ±íÇé: {currentExpression}");
+            // ? æ·»åŠ åŠ è½½æ—¥å¿—
+            Log.Message($"[ExpressionDebug] æ­£åœ¨åŠ è½½ç«‹ç»˜: {persona.defName}, è¡¨æƒ…: {currentExpression}");
             var texture = PortraitLoader.LoadPortrait(persona, currentExpression);
-            Log.Message($"[ExpressionDebug] ¼ÓÔØ½á¹û: {(texture != null ? "³É¹¦" : "Ê§°Ü")}");
+            Log.Message($"[ExpressionDebug] åŠ è½½ç»“æœ: {(texture != null ? "æˆåŠŸ" : "å¤±è´¥")}");
             
             if (texture != null)
             {
@@ -289,7 +289,7 @@ namespace TheSecondSeat.UI
             }
             Widgets.DrawBox(portraitRect);
             
-            // ±íÇéËµÃ÷
+            // è¡¨æƒ…è¯´æ˜
             float descY = portraitRect.yMax + 10f;
             Text.Font = GameFont.Tiny;
             GUI.color = new Color(0.8f, 0.8f, 0.8f);
@@ -298,16 +298,16 @@ namespace TheSecondSeat.UI
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
 
-            // ÓÒ²àÇøÓò£º±íÇéÁĞ±í
+            // å³ä¾§åŒºåŸŸï¼šè¡¨æƒ…åˆ—è¡¨
             Rect rightRect = new Rect(leftWidth + 20f, curY, rightWidth, inRect.height - curY - 60f);
             
-            Widgets.Label(new Rect(rightRect.x, rightRect.y, rightRect.width, 25f), "µã»÷ÇĞ»»±íÇé£º");
+            Widgets.Label(new Rect(rightRect.x, rightRect.y, rightRect.width, 25f), "ç‚¹å‡»åˆ‡æ¢è¡¨æƒ…ï¼š");
             
             var listRect = new Rect(rightRect.x, rightRect.y + 30f, rightRect.width, rightRect.height - 30f);
             DrawExpressionList(listRect, currentExpression);
 
-            // ¹Ø±Õ°´Å¥
-            if (Widgets.ButtonText(new Rect(inRect.width - 110f, inRect.height - 40f, 100f, 35f), "¹Ø±Õ"))
+            // å…³é—­æŒ‰é’®
+            if (Widgets.ButtonText(new Rect(inRect.width - 110f, inRect.height - 40f, 100f, 35f), "å…³é—­"))
             {
                 Close();
             }
@@ -337,12 +337,12 @@ namespace TheSecondSeat.UI
 
                 var buttonRect = itemRect.ContractedBy(2f);
                 
-                // ±íÇéÍ¼±ê£¨¿ÉÑ¡£¬Ê¹ÓÃÑÕÉ«¿é£©
+                // è¡¨æƒ…å›¾æ ‡ï¼ˆå¯é€‰ï¼Œä½¿ç”¨é¢œè‰²å—ï¼‰
                 var iconRect = new Rect(buttonRect.x + 5f, buttonRect.y + 5f, 25f, 25f);
                 Widgets.DrawBoxSolid(iconRect, GetExpressionColor(expression));
                 Widgets.DrawBox(iconRect);
 
-                // ±íÇéÃû³Æ
+                // è¡¨æƒ…åç§°
                 var labelRect = new Rect(buttonRect.x + 40f, buttonRect.y, buttonRect.width - 40f, buttonRect.height);
                 Text.Anchor = TextAnchor.MiddleLeft;
                 
@@ -356,16 +356,16 @@ namespace TheSecondSeat.UI
 
                 if (Widgets.ButtonInvisible(itemRect))
                 {
-                    // ? Ìí¼ÓÏêÏ¸ÈÕÖ¾
-                    Log.Message($"[ExpressionDebug] µã»÷±íÇé°´Å¥: {expression}");
-                    Log.Message($"[ExpressionDebug] ÈË¸ñ defName: {persona.defName}");
-                    Log.Message($"[ExpressionDebug] ÈË¸ñ narratorName: {persona.narratorName}");
+                    // ? æ·»åŠ è¯¦ç»†æ—¥å¿—
+                    Log.Message($"[ExpressionDebug] ç‚¹å‡»è¡¨æƒ…æŒ‰é’®: {expression}");
+                    Log.Message($"[ExpressionDebug] äººæ ¼ defName: {persona.defName}");
+                    Log.Message($"[ExpressionDebug] äººæ ¼ narratorName: {persona.narratorName}");
                     
                     ExpressionSystem.SetExpression(persona.defName, expression);
-                    Messages.Message($"ÒÑÇĞ»»ÖÁ±íÇé£º{displayName}", MessageTypeDefOf.NeutralEvent);
+                    Messages.Message($"å·²åˆ‡æ¢è‡³è¡¨æƒ…ï¼š{displayName}", MessageTypeDefOf.NeutralEvent);
                     
-                    // ? Ç¿ÖÆË¢ĞÂ´°¿Ú
-                    Log.Message($"[ExpressionDebug] ±íÇéÇĞ»»Íê³É£¬µ±Ç°×´Ì¬: {ExpressionSystem.GetExpressionState(persona.defName).CurrentExpression}");
+                    // ? å¼ºåˆ¶åˆ·æ–°çª—å£
+                    Log.Message($"[ExpressionDebug] è¡¨æƒ…åˆ‡æ¢å®Œæˆï¼Œå½“å‰çŠ¶æ€: {ExpressionSystem.GetExpressionState(persona.defName).CurrentExpression}");
                 }
 
                 curY += 40f;
@@ -378,16 +378,16 @@ namespace TheSecondSeat.UI
         {
             return expression switch
             {
-                ExpressionType.Neutral => "[=] ÖĞĞÔ",
-                ExpressionType.Happy => "[^_^] ¿ªĞÄ",
-                ExpressionType.Sad => "[T_T] ±¯ÉË",
-                ExpressionType.Angry => "[>_<] ·ßÅ­",
-                ExpressionType.Surprised => "[o_o] ¾ªÑÈ",
-                ExpressionType.Worried => "[-_-] µ£ÓÇ",
-                ExpressionType.Smug => "[^v^] µÃÒâ",
-                ExpressionType.Disappointed => "[u_u] Ê§Íû",
-                ExpressionType.Thoughtful => "[?_?] ³ÁË¼",
-                ExpressionType.Annoyed => "[~_~] ·³Ôê",
+                ExpressionType.Neutral => "[=] ä¸­æ€§",
+                ExpressionType.Happy => "[^_^] å¼€å¿ƒ",
+                ExpressionType.Sad => "[T_T] æ‚²ä¼¤",
+                ExpressionType.Angry => "[>_<] æ„¤æ€’",
+                ExpressionType.Surprised => "[o_o] æƒŠè®¶",
+                ExpressionType.Worried => "[-_-] æ‹…å¿§",
+                ExpressionType.Smug => "[^v^] å¾—æ„",
+                ExpressionType.Disappointed => "[u_u] å¤±æœ›",
+                ExpressionType.Thoughtful => "[?_?] æ²‰æ€",
+                ExpressionType.Annoyed => "[~_~] çƒ¦èº",
                 _ => expression.ToString()
             };
         }
@@ -396,16 +396,16 @@ namespace TheSecondSeat.UI
         {
             return expression switch
             {
-                ExpressionType.Neutral => "(Ä¬ÈÏ)",
-                ExpressionType.Happy => "(Ö³ÃñµØ·±ÈÙ)",
-                ExpressionType.Sad => "(Ö³ÃñÕßËÀÍö)",
-                ExpressionType.Angry => "(±»¹¥»÷)",
-                ExpressionType.Surprised => "(ÒâÍâÊÂ¼ş)",
-                ExpressionType.Worried => "(Î£ÏÕÔ¤¾¯)",
-                ExpressionType.Smug => "(´óÊ¤)",
-                ExpressionType.Disappointed => "(ÈÎÎñÊ§°Ü)",
-                ExpressionType.Thoughtful => "(Õ½ÂÔ¾ö²ß)",
-                ExpressionType.Annoyed => "(Æµ·±ÇëÇó)",
+                ExpressionType.Neutral => "(é»˜è®¤)",
+                ExpressionType.Happy => "(æ®–æ°‘åœ°ç¹è£)",
+                ExpressionType.Sad => "(æ®–æ°‘è€…æ­»äº¡)",
+                ExpressionType.Angry => "(è¢«æ”»å‡»)",
+                ExpressionType.Surprised => "(æ„å¤–äº‹ä»¶)",
+                ExpressionType.Worried => "(å±é™©é¢„è­¦)",
+                ExpressionType.Smug => "(å¤§èƒœ)",
+                ExpressionType.Disappointed => "(ä»»åŠ¡å¤±è´¥)",
+                ExpressionType.Thoughtful => "(æˆ˜ç•¥å†³ç­–)",
+                ExpressionType.Annoyed => "(é¢‘ç¹è¯·æ±‚)",
                 _ => ""
             };
         }

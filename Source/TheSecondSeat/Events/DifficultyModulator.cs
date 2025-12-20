@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Linq;
 using RimWorld;
 using Verse;
@@ -8,71 +8,71 @@ using HarmonyLib;
 namespace TheSecondSeat.Events
 {
     /// <summary>
-    /// ¶Ô»°Çı¶¯µÄÄÑ¶Èµ÷ÕûÆ÷ - ¸ù¾İºÃ¸Ğ¶ÈºÍ¶Ô»°ÀúÊ·¶¯Ì¬µ÷ÕûÔ­°æÊÂ¼şÇ¿¶È
+    /// å¯¹è¯é©±åŠ¨çš„éš¾åº¦è°ƒæ•´å™¨ - æ ¹æ®å¥½æ„Ÿåº¦å’Œå¯¹è¯å†å²åŠ¨æ€è°ƒæ•´åŸç‰ˆäº‹ä»¶å¼ºåº¦
     /// </summary>
     public static class DifficultyModulator
     {
-        // µ÷Õû·¶Î§ÏŞÖÆ
-        private const float MIN_MULTIPLIER = 0.5f;  // ×îµÍ 50%
-        private const float MAX_MULTIPLIER = 1.5f;  // ×î¸ß 150%
+        // è°ƒæ•´èŒƒå›´é™åˆ¶
+        private const float MIN_MULTIPLIER = 0.5f;  // æœ€ä½ 50%
+        private const float MAX_MULTIPLIER = 1.5f;  // æœ€é«˜ 150%
 
         /// <summary>
-        /// µ÷ÕûÊÂ¼ş²ÎÊı£¨µãÊı¡¢Ç¿¶È£©
+        /// è°ƒæ•´äº‹ä»¶å‚æ•°ï¼ˆç‚¹æ•°ã€å¼ºåº¦ï¼‰
         /// </summary>
         public static void AdjustIncidentParams(IncidentParms parms, StorytellerAgent agent)
         {
             if (parms?.target == null) return;
 
-            // »ñÈ¡ÄÑ¶ÈÏµÊı
+            // è·å–éš¾åº¦ç³»æ•°
             float multiplier = GetDifficultyMultiplier(agent, parms.target as Map);
 
-            // Ó¦ÓÃµ½µãÊı
+            // åº”ç”¨åˆ°ç‚¹æ•°
             if (parms.points > 0)
             {
                 float originalPoints = parms.points;
                 parms.points *= multiplier;
                 
-                Log.Message($"[DifficultyModulator] ÊÂ¼şµãÊıµ÷Õû£º{originalPoints:F0} ¡ú {parms.points:F0} (¡Á{multiplier:F2})");
+                Log.Message($"[DifficultyModulator] äº‹ä»¶ç‚¹æ•°è°ƒæ•´ï¼š{originalPoints:F0} â†’ {parms.points:F0} (Ã—{multiplier:F2})");
             }
         }
 
         /// <summary>
-        /// »ñÈ¡ÄÑ¶ÈÏµÊı
+        /// è·å–éš¾åº¦ç³»æ•°
         /// </summary>
         private static float GetDifficultyMultiplier(StorytellerAgent agent, Map map)
         {
             float multiplier = 1f;
 
-            // »ùÓÚºÃ¸Ğ¶Èµ÷Õû
+            // åŸºäºå¥½æ„Ÿåº¦è°ƒæ•´
             if (agent.affinity > 60f)
             {
-                // ºÃ¸Ğ¶È¸ß ¡ú ½µµÍÄÑ¶È
+                // å¥½æ„Ÿåº¦é«˜ â†’ é™ä½éš¾åº¦
                 multiplier = 0.7f; // -30%
             }
             else if (agent.affinity > 30f)
             {
-                // ºÃ¸Ğ¶ÈÖĞµÈÆ«¸ß ¡ú ÇáÎ¢½µµÍ
+                // å¥½æ„Ÿåº¦ä¸­ç­‰åé«˜ â†’ è½»å¾®é™ä½
                 multiplier = 0.85f; // -15%
             }
             else if (agent.affinity < -30f && agent.affinity >= -60f)
             {
-                // ºÃ¸Ğ¶ÈµÍ ¡ú Ôö¼ÓÄÑ¶È
+                // å¥½æ„Ÿåº¦ä½ â†’ å¢åŠ éš¾åº¦
                 multiplier = 1.2f; // +20%
             }
             else if (agent.affinity < -60f)
             {
-                // ºÃ¸Ğ¶È·Ç³£µÍ ¡ú ÏÔÖøÔö¼ÓÄÑ¶È
+                // å¥½æ„Ÿåº¦éå¸¸ä½ â†’ æ˜¾è‘—å¢åŠ éš¾åº¦
                 multiplier = 1.3f; // +30%
             }
 
-            // ÏŞÖÆµ÷Õû·¶Î§
+            // é™åˆ¶è°ƒæ•´èŒƒå›´
             multiplier = Math.Max(MIN_MULTIPLIER, Math.Min(MAX_MULTIPLIER, multiplier));
 
             return multiplier;
         }
 
         /// <summary>
-        /// µ÷ÕûÊÂ¼şÈ¨ÖØ£¨ÕıÃæ/¸ºÃæÊÂ¼ş·¢Éú¸ÅÂÊ£©
+        /// è°ƒæ•´äº‹ä»¶æƒé‡ï¼ˆæ­£é¢/è´Ÿé¢äº‹ä»¶å‘ç”Ÿæ¦‚ç‡ï¼‰
         /// </summary>
         public static float GetEventWeightMultiplier(IncidentDef incident, StorytellerAgent agent)
         {
@@ -84,40 +84,40 @@ namespace TheSecondSeat.Events
             
             float multiplier = 1f;
 
-            // ºÃ¸Ğ¶È¸ß£ºÔö¼ÓÕıÃæÊÂ¼ş£¬¼õÉÙ¸ºÃæÊÂ¼ş
+            // å¥½æ„Ÿåº¦é«˜ï¼šå¢åŠ æ­£é¢äº‹ä»¶ï¼Œå‡å°‘è´Ÿé¢äº‹ä»¶
             if (agent.affinity > 60f)
             {
                 if (isPositive)
-                    multiplier = 1.5f; // ÕıÃæÊÂ¼ş +50%
+                    multiplier = 1.5f; // æ­£é¢äº‹ä»¶ +50%
                 else if (isNegative)
-                    multiplier = 0.7f; // ¸ºÃæÊÂ¼ş -30%
+                    multiplier = 0.7f; // è´Ÿé¢äº‹ä»¶ -30%
             }
-            // ºÃ¸Ğ¶ÈµÍ£º¼õÉÙÕıÃæÊÂ¼ş£¬Ôö¼Ó¸ºÃæÊÂ¼ş
+            // å¥½æ„Ÿåº¦ä½ï¼šå‡å°‘æ­£é¢äº‹ä»¶ï¼Œå¢åŠ è´Ÿé¢äº‹ä»¶
             else if (agent.affinity < -30f)
             {
                 if (isPositive)
-                    multiplier = 0.7f; // ÕıÃæÊÂ¼ş -30%
+                    multiplier = 0.7f; // æ­£é¢äº‹ä»¶ -30%
                 else if (isNegative)
-                    multiplier = 1.3f; // ¸ºÃæÊÂ¼ş +30%
+                    multiplier = 1.3f; // è´Ÿé¢äº‹ä»¶ +30%
             }
 
-            // ÏŞÖÆ·¶Î§
+            // é™åˆ¶èŒƒå›´
             multiplier = Math.Max(MIN_MULTIPLIER, Math.Min(MAX_MULTIPLIER, multiplier));
 
             if (multiplier != 1f)
             {
-                Log.Message($"[DifficultyModulator] ÊÂ¼ş '{incident.defName}' È¨ÖØµ÷Õû£º¡Á{multiplier:F2} (ºÃ¸Ğ¶È: {agent.affinity:F0})");
+                Log.Message($"[DifficultyModulator] äº‹ä»¶ '{incident.defName}' æƒé‡è°ƒæ•´ï¼šÃ—{multiplier:F2} (å¥½æ„Ÿåº¦: {agent.affinity:F0})");
             }
 
             return multiplier;
         }
 
         /// <summary>
-        /// ÅĞ¶ÏÊÇ·ñÎªÕıÃæÊÂ¼ş
+        /// åˆ¤æ–­æ˜¯å¦ä¸ºæ­£é¢äº‹ä»¶
         /// </summary>
         private static bool IsPositiveEvent(IncidentDef incident)
         {
-            // Ã÷È·µÄÕıÃæÊÂ¼ş
+            // æ˜ç¡®çš„æ­£é¢äº‹ä»¶
             if (incident == IncidentDefOf.TraderCaravanArrival ||
                 incident == IncidentDefOf.WandererJoin ||
                 incident == IncidentDefOf.FarmAnimalsWanderIn ||
@@ -132,11 +132,11 @@ namespace TheSecondSeat.Events
         }
 
         /// <summary>
-        /// ÅĞ¶ÏÊÇ·ñÎª¸ºÃæÊÂ¼ş
+        /// åˆ¤æ–­æ˜¯å¦ä¸ºè´Ÿé¢äº‹ä»¶
         /// </summary>
         private static bool IsNegativeEvent(IncidentDef incident)
         {
-            // Ã÷È·µÄ¸ºÃæÊÂ¼ş
+            // æ˜ç¡®çš„è´Ÿé¢äº‹ä»¶
             if (incident == IncidentDefOf.RaidEnemy ||
                 incident == IncidentDefOf.ToxicFallout ||
                 incident == IncidentDefOf.Eclipse ||
@@ -146,7 +146,7 @@ namespace TheSecondSeat.Events
                 return true;
             }
 
-            // Í¨¹ı·ÖÀàÅĞ¶Ï
+            // é€šè¿‡åˆ†ç±»åˆ¤æ–­
             if (incident.category == IncidentCategoryDefOf.ThreatBig ||
                 incident.category == IncidentCategoryDefOf.ThreatSmall ||
                 incident.category == IncidentCategoryDefOf.DiseaseHuman)
@@ -158,30 +158,30 @@ namespace TheSecondSeat.Events
         }
 
         /// <summary>
-        /// ·¢ËÍÄÑ¶Èµ÷ÕûÍ¨Öª
+        /// å‘é€éš¾åº¦è°ƒæ•´é€šçŸ¥
         /// </summary>
         public static void SendDifficultyAdjustmentNotification(StorytellerAgent agent)
         {
             string message = "";
-            string title = "ĞğÊÂÕß";
+            string title = "å™äº‹è€…";
 
             if (agent.affinity > 60f)
             {
-                message = $"¿´µ½ÄãÕâÃ´Å¬Á¦£¬ÎÒ»áÊÊµ±¼õÇáÀ§ÄÑ~\n\n" +
-                         $"µ±Ç°ºÃ¸Ğ¶È£º{agent.affinity:F0}\n" +
-                         $"Ğ§¹û£ºÏ®»÷Ç¿¶È -30%£¬ÕıÃæÊÂ¼ş +50%";
-                title = "ĞğÊÂÕßµÄ¹Ø»³";
+                message = $"çœ‹åˆ°ä½ è¿™ä¹ˆåŠªåŠ›ï¼Œæˆ‘ä¼šé€‚å½“å‡è½»å›°éš¾~\n\n" +
+                         $"å½“å‰å¥½æ„Ÿåº¦ï¼š{agent.affinity:F0}\n" +
+                         $"æ•ˆæœï¼šè¢­å‡»å¼ºåº¦ -30%ï¼Œæ­£é¢äº‹ä»¶ +50%";
+                title = "å™äº‹è€…çš„å…³æ€€";
             }
             else if (agent.affinity < -30f)
             {
-                message = $"¼ÈÈ»Äã²»ÖØÊÓÎÒÃÇµÄ¹ØÏµ£¬ÄÇ¾Í×Ô¼ºÃæ¶ÔÀ§ÄÑ°É¡£\n\n" +
-                         $"µ±Ç°ºÃ¸Ğ¶È£º{agent.affinity:F0}\n" +
-                         $"Ğ§¹û£ºÏ®»÷Ç¿¶È +{(agent.affinity < -60f ? "30" : "20")}%£¬ÕıÃæÊÂ¼ş -30%";
-                title = "ĞğÊÂÕßµÄÀäÄ®";
+                message = $"æ—¢ç„¶ä½ ä¸é‡è§†æˆ‘ä»¬çš„å…³ç³»ï¼Œé‚£å°±è‡ªå·±é¢å¯¹å›°éš¾å§ã€‚\n\n" +
+                         $"å½“å‰å¥½æ„Ÿåº¦ï¼š{agent.affinity:F0}\n" +
+                         $"æ•ˆæœï¼šè¢­å‡»å¼ºåº¦ +{(agent.affinity < -60f ? "30" : "20")}%ï¼Œæ­£é¢äº‹ä»¶ -30%";
+                title = "å™äº‹è€…çš„å†·æ¼ ";
             }
             else
             {
-                // ÖĞĞÔºÃ¸Ğ¶È£¬²»·¢ËÍÍ¨Öª
+                // ä¸­æ€§å¥½æ„Ÿåº¦ï¼Œä¸å‘é€é€šçŸ¥
                 return;
             }
 
@@ -194,7 +194,7 @@ namespace TheSecondSeat.Events
     }
 
     /// <summary>
-    /// Harmony Patch£ºÀ¹½ØÊÂ¼şÖ´ĞĞ£¬µ÷ÕûÇ¿¶È
+    /// Harmony Patchï¼šæ‹¦æˆªäº‹ä»¶æ‰§è¡Œï¼Œè°ƒæ•´å¼ºåº¦
     /// </summary>
     [HarmonyPatch(typeof(IncidentWorker), nameof(IncidentWorker.TryExecute))]
     public static class Patch_IncidentWorker_TryExecute
@@ -207,18 +207,18 @@ namespace TheSecondSeat.Events
                 var agent = Current.Game?.GetComponent<Narrator.NarratorManager>()?.GetStorytellerAgent();
                 if (agent == null) return;
 
-                // µ÷ÕûÊÂ¼ş²ÎÊı
+                // è°ƒæ•´äº‹ä»¶å‚æ•°
                 DifficultyModulator.AdjustIncidentParams(parms, agent);
             }
             catch (Exception ex)
             {
-                Log.Error($"[Patch_IncidentWorker_TryExecute] ´íÎó: {ex.Message}");
+                Log.Error($"[Patch_IncidentWorker_TryExecute] é”™è¯¯: {ex.Message}");
             }
         }
     }
 
     /// <summary>
-    /// Harmony Patch£ºÀ¹½ØÊÂ¼şÈ¨ÖØ¼ÆËã
+    /// Harmony Patchï¼šæ‹¦æˆªäº‹ä»¶æƒé‡è®¡ç®—
     /// </summary>
     [HarmonyPatch(typeof(StorytellerComp), "IncidentChanceFinal")]
     public static class Patch_StorytellerComp_IncidentChanceFinal
@@ -231,13 +231,13 @@ namespace TheSecondSeat.Events
                 var agent = Current.Game?.GetComponent<Narrator.NarratorManager>()?.GetStorytellerAgent();
                 if (agent == null) return;
 
-                // µ÷ÕûÊÂ¼şÈ¨ÖØ
+                // è°ƒæ•´äº‹ä»¶æƒé‡
                 float multiplier = DifficultyModulator.GetEventWeightMultiplier(def, agent);
                 __result *= multiplier;
             }
             catch (Exception ex)
             {
-                Log.Error($"[Patch_StorytellerComp_IncidentChanceFinal] ´íÎó: {ex.Message}");
+                Log.Error($"[Patch_StorytellerComp_IncidentChanceFinal] é”™è¯¯: {ex.Message}");
             }
         }
     }

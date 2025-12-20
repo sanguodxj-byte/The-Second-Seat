@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -11,7 +11,7 @@ using Verse;
 namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
-    /// ¶àÄ£Ì¬·ÖÎö·şÎñ - Ê¹ÓÃ Vision API ·ÖÎöÍ¼Ïñ
+    /// å¤šæ¨¡æ€åˆ†ææœåŠ¡ - ä½¿ç”¨ Vision API åˆ†æå›¾åƒ
     /// </summary>
     public class MultimodalAnalysisService
     {
@@ -27,19 +27,19 @@ namespace TheSecondSeat.PersonaGeneration
         public MultimodalAnalysisService()
         {
             httpClient = new HttpClient();
-            httpClient.Timeout = TimeSpan.FromSeconds(60);  // ¶àÄ£Ì¬·ÖÎö¿ÉÄÜĞèÒª¸ü³¤Ê±¼ä
+            httpClient.Timeout = TimeSpan.FromSeconds(60);  // å¤šæ¨¡æ€åˆ†æå¯èƒ½éœ€è¦æ›´é•¿æ—¶é—´
         }
 
         /// <summary>
-        /// ÅäÖÃ¶àÄ£Ì¬·ÖÎö·şÎñ
-        /// ? Ìí¼ÓÈÕÖ¾Êä³öÈ·ÈÏÅäÖÃ
+        /// é…ç½®å¤šæ¨¡æ€åˆ†ææœåŠ¡
+        /// ? æ·»åŠ æ—¥å¿—è¾“å‡ºç¡®è®¤é…ç½®
         /// </summary>
         public void Configure(string provider, string key, string visionModelName = "", string textModelName = "")
         {
             apiProvider = provider.ToLower();
             apiKey = key;
 
-            // ÉèÖÃÄ¬ÈÏÄ£ĞÍ
+            // è®¾ç½®é»˜è®¤æ¨¡å‹
             if (!string.IsNullOrEmpty(visionModelName))
                 visionModel = visionModelName;
             else
@@ -66,19 +66,19 @@ namespace TheSecondSeat.PersonaGeneration
                 };
             }
 
-            // ÉèÖÃ Authorization Header£¨Óë LLMService ÏàÍ¬·½Ê½£©
+            // è®¾ç½® Authorization Headerï¼ˆä¸ LLMService ç›¸åŒæ–¹å¼ï¼‰
             if (!string.IsNullOrEmpty(apiKey))
             {
                 httpClient.DefaultRequestHeaders.Clear();
                 httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
             }
             
-            // ? ĞÂÔö£ºÈÕÖ¾Êä³öÈ·ÈÏÅäÖÃ
-            Log.Message($"[MultimodalAnalysis] ÅäÖÃÍê³É: provider={apiProvider}, vision={visionModel}, text={textModel}");
+            // ? æ–°å¢ï¼šæ—¥å¿—è¾“å‡ºç¡®è®¤é…ç½®
+            Log.Message($"[MultimodalAnalysis] é…ç½®å®Œæˆ: provider={apiProvider}, vision={visionModel}, text={textModel}");
         }
 
         /// <summary>
-        /// ´Ó Unity Texture2D ·ÖÎöÍ¼Ïñ
+        /// ä» Unity Texture2D åˆ†æå›¾åƒ
         /// </summary>
         public async Task<VisionAnalysisResult?> AnalyzeTextureAsync(Texture2D texture)
         {
@@ -104,7 +104,7 @@ namespace TheSecondSeat.PersonaGeneration
                 }
                 else
                 {
-                    Log.Error($"[MultimodalAnalysis] ²»Ö§³ÖµÄ API Ìá¹©ÉÌ: {provider}");
+                    Log.Error($"[MultimodalAnalysis] ä¸æ”¯æŒçš„ API æä¾›å•†: {provider}");
                     return null;
                 }
             }
@@ -116,11 +116,11 @@ namespace TheSecondSeat.PersonaGeneration
         }
 
         /// <summary>
-        /// Ê¹ÓÃ Gemini API ·ÖÎöÍ¼Æ¬
+        /// ä½¿ç”¨ Gemini API åˆ†æå›¾ç‰‡
         /// </summary>
         private async Task<VisionAnalysisResult?> AnalyzeWithGeminiAsync(Texture2D texture)
         {
-            Log.Message("[MultimodalAnalysis] Ê¹ÓÃ Gemini Vision API");
+            Log.Message("[MultimodalAnalysis] ä½¿ç”¨ Gemini Vision API");
             
             string prompt = GetVisionPrompt();
 
@@ -130,12 +130,12 @@ namespace TheSecondSeat.PersonaGeneration
                 prompt,
                 texture,
                 0.3f,
-                8192  // ? ´Ó4096Ôö¼Óµ½8192£¬È·±£ÍêÕûJSON·µ»Ø
+                8192  // ? ä»4096å¢åŠ åˆ°8192ï¼Œç¡®ä¿å®Œæ•´JSONè¿”å›
             );
             
             if (geminiResponse == null || geminiResponse.Candidates == null || geminiResponse.Candidates.Count == 0)
             {
-                Log.Error("[MultimodalAnalysis] Gemini Vision ·µ»Ø¿ÕÏìÓ¦");
+                Log.Error("[MultimodalAnalysis] Gemini Vision è¿”å›ç©ºå“åº”");
                 return null;
             }
             
@@ -144,12 +144,12 @@ namespace TheSecondSeat.PersonaGeneration
         }
 
         /// <summary>
-        /// Ê¹ÓÃ OpenAI ¼æÈİ API ·ÖÎöÍ¼Æ¬
-        /// ? ´«µİ provider ²ÎÊıÒÔÖ§³Ö DeepSeek ÌØÊâ¸ñÊ½
+        /// ä½¿ç”¨ OpenAI å…¼å®¹ API åˆ†æå›¾ç‰‡
+        /// ? ä¼ é€’ provider å‚æ•°ä»¥æ”¯æŒ DeepSeek ç‰¹æ®Šæ ¼å¼
         /// </summary>
         private async Task<VisionAnalysisResult?> AnalyzeWithOpenAICompatibleAsync(Texture2D texture)
         {
-            Log.Message($"[MultimodalAnalysis] Ê¹ÓÃ {apiProvider} Vision API");
+            Log.Message($"[MultimodalAnalysis] ä½¿ç”¨ {apiProvider} Vision API");
             
             string endpoint = GetVisionEndpoint();
             string prompt = GetVisionPrompt();
@@ -162,19 +162,19 @@ namespace TheSecondSeat.PersonaGeneration
                 texture,
                 0.3f,
                 4096,  // max_tokens
-                apiProvider  // ? ĞÂÔö£º´«µİ provider ²ÎÊı
+                apiProvider  // ? æ–°å¢ï¼šä¼ é€’ provider å‚æ•°
             );
             
             if (response == null || response.choices == null || response.choices.Length == 0)
             {
-                Log.Error($"[MultimodalAnalysis] {apiProvider} Vision ·µ»Ø¿ÕÏìÓ¦");
+                Log.Error($"[MultimodalAnalysis] {apiProvider} Vision è¿”å›ç©ºå“åº”");
                 return null;
             }
             
             string content = response.choices[0].message?.content;
             if (string.IsNullOrEmpty(content))
             {
-                Log.Error("[MultimodalAnalysis] Vision ÏìÓ¦ÄÚÈİÎª¿Õ");
+                Log.Error("[MultimodalAnalysis] Vision å“åº”å†…å®¹ä¸ºç©º");
                 return null;
             }
             
@@ -182,109 +182,109 @@ namespace TheSecondSeat.PersonaGeneration
         }
 
         /// <summary>
-        /// »ñÈ¡ Vision ·ÖÎöµÄÌáÊ¾´Ê£¨ÓÅ»¯°æ - ÒªÇó·µ»ØÖĞÎÄ£©
+        /// è·å– Vision åˆ†æçš„æç¤ºè¯ï¼ˆä¼˜åŒ–ç‰ˆ - è¦æ±‚è¿”å›ä¸­æ–‡ï¼‰
         /// </summary>
         private string GetVisionPrompt()
         {
             return @"Analyze this character portrait in detail and provide a comprehensive JSON response.
 
-**CRITICAL: The characterDescription field MUST be written in Simplified Chinese (¼òÌåÖĞÎÄ)!**
+**CRITICAL: The characterDescription field MUST be written in Simplified Chinese (ç®€ä½“ä¸­æ–‡)!**
 
 {
   ""dominantColors"": [
     {""hex"": ""#RRGGBB"", ""percentage"": 0-100, ""name"": ""color name in English""}
   ],
   ""visualElements"": [""element1"", ""element2"", ""element3""],
-  ""characterDescription"": ""¡¾±ØĞëÓÃ¼òÌåÖĞÎÄĞ´¡¿ÏêÏ¸µÄ300-500×ÖÍâ¹ÛÃèÊöºÍĞÔ¸ñÍÆ¶Ï"",
+  ""characterDescription"": ""ã€å¿…é¡»ç”¨ç®€ä½“ä¸­æ–‡å†™ã€‘è¯¦ç»†çš„300-500å­—å¤–è§‚æè¿°å’Œæ€§æ ¼æ¨æ–­"",
   ""mood"": ""overall mood/atmosphere in English"",
   ""suggestedPersonality"": ""Benevolent/Sadistic/Chaotic/Strategic/Protective/Manipulative"",
   ""styleKeywords"": [""keyword1"", ""keyword2"", ""keyword3""]
 }
 
-**CRITICAL REQUIREMENTS for characterDescription (±ØĞëÓÃ¼òÌåÖĞÎÄ!):**
+**CRITICAL REQUIREMENTS for characterDescription (å¿…é¡»ç”¨ç®€ä½“ä¸­æ–‡!):**
 
-**µÚÒ»²¿·Ö£ºÏêÏ¸µÄÍâ¹ÛÃèÊö (40%)**
+**ç¬¬ä¸€éƒ¨åˆ†ï¼šè¯¦ç»†çš„å¤–è§‚æè¿° (40%)**
 
-ÓÃÖĞÎÄÃèÊöËùÓĞ¿É¼ûÏ¸½Ú£º
-- **ÖÖ×å**: ÈËÀà£¿¾«Áé£¿ÁúÈË£¿ÊŞÈË£¿»úĞµÉúÃü£¿
-- **·¢ĞÍ**: ÑÕÉ«¡¢³¤¶È¡¢·ç¸ñ¡¢ÖÊµØ£¨ÀıÈç£º""Òø°×É«³¤·¢ÈçÆÙ²¼°ãÇãĞº¶øÏÂ£¬ÓÃÉîºìÉ«Ë¿´øÊøÆğ""£©
-- **ÑÛ¾¦**: ÑÕÉ«¡¢ĞÎ×´¡¢±íÇé£¨ÀıÈç£º""ĞÉºìÉ«ÊúÍ«ÑÛíø£¬Á÷Â¶³öÖÇ»ÛÓëÎ£ÏÕµÄÆøÏ¢""£©
-- **Ãæ²¿ÌØÕ÷**: ±íÇé¡¢ÄêÁä¡¢ÉË°Ì¡¢ÎÆÊÎ
-- **ÌåĞÍ**: ÉíĞÎ¡¢×ËÌ¬¡¢Õ¾×Ë
-- **·ş×°Óë»¤¼×**: 
-  * Ö÷Òª·şÊÎ
-  * »¤¼×Åä¼ş
-  * ÅäÊÎ
-  * ²ÄÖÊºÍ×´Ì¬
-- **ÌØÊâÌØÕ÷**: ³á°ò¡¢Î²°Í¡¢½Ç¡¢ÎäÆ÷¡¢Ä§·¨Ğ§¹û
-- **ÕûÌåÓ¡Ïó**: ×ËÌ¬¡¢¹âÏß¡¢¹¹Í¼´«´ïµÄÇéĞ÷
+ç”¨ä¸­æ–‡æè¿°æ‰€æœ‰å¯è§ç»†èŠ‚ï¼š
+- **ç§æ—**: äººç±»ï¼Ÿç²¾çµï¼Ÿé¾™äººï¼Ÿå…½äººï¼Ÿæœºæ¢°ç”Ÿå‘½ï¼Ÿ
+- **å‘å‹**: é¢œè‰²ã€é•¿åº¦ã€é£æ ¼ã€è´¨åœ°ï¼ˆä¾‹å¦‚ï¼š""é“¶ç™½è‰²é•¿å‘å¦‚ç€‘å¸ƒèˆ¬å€¾æ³»è€Œä¸‹ï¼Œç”¨æ·±çº¢è‰²ä¸å¸¦æŸèµ·""ï¼‰
+- **çœ¼ç›**: é¢œè‰²ã€å½¢çŠ¶ã€è¡¨æƒ…ï¼ˆä¾‹å¦‚ï¼š""çŒ©çº¢è‰²ç«–ç³çœ¼çœ¸ï¼Œæµéœ²å‡ºæ™ºæ…§ä¸å±é™©çš„æ°”æ¯""ï¼‰
+- **é¢éƒ¨ç‰¹å¾**: è¡¨æƒ…ã€å¹´é¾„ã€ä¼¤ç–¤ã€çº¹é¥°
+- **ä½“å‹**: èº«å½¢ã€å§¿æ€ã€ç«™å§¿
+- **æœè£…ä¸æŠ¤ç”²**: 
+  * ä¸»è¦æœé¥°
+  * æŠ¤ç”²é…ä»¶
+  * é…é¥°
+  * æè´¨å’ŒçŠ¶æ€
+- **ç‰¹æ®Šç‰¹å¾**: ç¿…è†€ã€å°¾å·´ã€è§’ã€æ­¦å™¨ã€é­”æ³•æ•ˆæœ
+- **æ•´ä½“å°è±¡**: å§¿æ€ã€å…‰çº¿ã€æ„å›¾ä¼ è¾¾çš„æƒ…ç»ª
 
-**µÚ¶ş²¿·Ö£º´ÓÍâ¹ÛÍÆ¶ÏĞÔ¸ñ (40%)**
+**ç¬¬äºŒéƒ¨åˆ†ï¼šä»å¤–è§‚æ¨æ–­æ€§æ ¼ (40%)**
 
-ÓÃÖĞÎÄ´ÓÍâ¹ÛÍÆ¶ÏÌØÖÊ£º
+ç”¨ä¸­æ–‡ä»å¤–è§‚æ¨æ–­ç‰¹è´¨ï¼š
 
-**´Ó±íÇéºÍÖ«ÌåÓïÑÔÍÆ¶Ï**:
-- Àä¾şµÄÃæÈİ ¡ú Çé¸ĞÄÚÁ²¡¢×ÔÂÉ¡¢×ÔÖÆ
-- ×ÔĞÅµÄ×ËÌ¬ ¡ú ¹û¶Ï¡¢¾­Ñé·á¸»¡¢Áìµ¼ÆøÖÊ
-- ¾¯ÌèµÄÕ¾×Ë ¡ú ½÷É÷¡¢·À±¸¡¢¿ÉÄÜ¾­Àú¹ı´´ÉË
-- ·ÅËÉµÄ±íÇé ¡ú ºÍ°ª¿ÉÇ×¡¢ÓÑÉÆ¡¢ÈİÒ×ĞÅÈÎ
+**ä»è¡¨æƒ…å’Œè‚¢ä½“è¯­è¨€æ¨æ–­**:
+- å†·å³»çš„é¢å®¹ â†’ æƒ…æ„Ÿå†…æ•›ã€è‡ªå¾‹ã€è‡ªåˆ¶
+- è‡ªä¿¡çš„å§¿æ€ â†’ æœæ–­ã€ç»éªŒä¸°å¯Œã€é¢†å¯¼æ°”è´¨
+- è­¦æƒ•çš„ç«™å§¿ â†’ è°¨æ…ã€é˜²å¤‡ã€å¯èƒ½ç»å†è¿‡åˆ›ä¼¤
+- æ”¾æ¾çš„è¡¨æƒ… â†’ å’Œè”¼å¯äº²ã€å‹å–„ã€å®¹æ˜“ä¿¡ä»»
 
-**´Ó·ş×°ºÍ»¤¼×ÍÆ¶Ï**:
-- ºñÖØ»¤¼× ¡ú ÖØÊÓ·À»¤¡¢ËæÊ±×¼±¸Õ½¶·¡¢¼ÍÂÉÑÏÃ÷
-- ÉîÉ«Ïµ ¡ú ÉñÃØ¡¢ÑÏËà¡¢¿ÉÄÜÄÚÏò»òÓĞÃØÃÜ
-- ¾«ÖÂÉè¼Æ ¡ú ×¢ÖØÏ¸½Ú¡¢¿ÉÄÜ×Ô¸º»òÔÚÒâÉí·İµØÎ»
-- ¼òµ¥ÊµÓÃµÄ×°±¸ ¡ú ÎñÊµ¡¢×¢ÖØ¹¦ÄÜ¶ø·ÇĞÎÊ½
+**ä»æœè£…å’ŒæŠ¤ç”²æ¨æ–­**:
+- åšé‡æŠ¤ç”² â†’ é‡è§†é˜²æŠ¤ã€éšæ—¶å‡†å¤‡æˆ˜æ–—ã€çºªå¾‹ä¸¥æ˜
+- æ·±è‰²ç³» â†’ ç¥ç§˜ã€ä¸¥è‚ƒã€å¯èƒ½å†…å‘æˆ–æœ‰ç§˜å¯†
+- ç²¾è‡´è®¾è®¡ â†’ æ³¨é‡ç»†èŠ‚ã€å¯èƒ½è‡ªè´Ÿæˆ–åœ¨æ„èº«ä»½åœ°ä½
+- ç®€å•å®ç”¨çš„è£…å¤‡ â†’ åŠ¡å®ã€æ³¨é‡åŠŸèƒ½è€Œéå½¢å¼
 
-**´ÓÎäÆ÷ºÍ×°±¸ÍÆ¶Ï**:
-- Ã÷ÏÔÎäÆ÷ ¡ú ËæÊ±×¼±¸³åÍ»¡¢¹û¶Ï¡¢¿ÉÄÜ¾ßÓĞ¹¥»÷ĞÔ
-- Òş²ØÎäÆ÷ ¡ú ¾ßÓĞÕ½ÂÔÑÛ¹â¡¢½÷É÷¡¢Ï²»¶³öÆä²»Òâ
-- Ä§·¨ artefacts ¡ú ÖªÊ¶Ô¨²©¡¢°®ºÃÑĞ¾¿¡¢Óë¹ÅÀÏÖÇ»ÛÏàÁ¬
-- ÎŞÎäÆ÷ ¡ú ºÍÆ½¡¢ĞÅÈÎËûÈË¡¢»òÒÀÀµÆäËûÓÅÊÆ
+**ä»æ­¦å™¨å’Œè£…å¤‡æ¨æ–­**:
+- æ˜æ˜¾æ­¦å™¨ â†’ éšæ—¶å‡†å¤‡å†²çªã€æœæ–­ã€å¯èƒ½å…·æœ‰æ”»å‡»æ€§
+- éšè—æ­¦å™¨ â†’ å…·æœ‰æˆ˜ç•¥çœ¼å…‰ã€è°¨æ…ã€å–œæ¬¢å‡ºå…¶ä¸æ„
+- é­”æ³• artefacts â†’ çŸ¥è¯†æ¸Šåšã€çˆ±å¥½ç ”ç©¶ã€ä¸å¤è€æ™ºæ…§ç›¸è¿
+- æ— æ­¦å™¨ â†’ å’Œå¹³ã€ä¿¡ä»»ä»–äººã€æˆ–ä¾èµ–å…¶ä»–ä¼˜åŠ¿
 
-**´ÓÖÖ×å/ÈËÖÖÌØÕ÷ÍÆ¶Ï**:
-- Áú×åÌØÕ÷ ¡ú ½¾°Á¡¢Ç¿´ó¡¢¿ÉÄÜ°ÁÂı»òÓĞÁìµØÒâÊ¶
-- ¾«ÁéÌØÕ÷ ¡ú ÓÅÑÅ¡¢³¤ÊÙÊÓ½Ç¡¢¿ÉÄÜ³¬È»ÎïÍâ
-- ÊŞÈËÌØÕ÷ ¡ú Ô­Ê¼±¾ÄÜ¡¢ÈÈÇé¡¢Ö±½ÓµÄ¹µÍ¨·½Ê½
+**ä»ç§æ—/äººç§ç‰¹å¾æ¨æ–­**:
+- é¾™æ—ç‰¹å¾ â†’ éª„å‚²ã€å¼ºå¤§ã€å¯èƒ½å‚²æ…¢æˆ–æœ‰é¢†åœ°æ„è¯†
+- ç²¾çµç‰¹å¾ â†’ ä¼˜é›…ã€é•¿å¯¿è§†è§’ã€å¯èƒ½è¶…ç„¶ç‰©å¤–
+- å…½äººç‰¹å¾ â†’ åŸå§‹æœ¬èƒ½ã€çƒ­æƒ…ã€ç›´æ¥çš„æ²Ÿé€šæ–¹å¼
 
-**µÚÈı²¿·Ö£º¶Ô»°ºÍĞĞÎªÔ¤²â (20%)**
+**ç¬¬ä¸‰éƒ¨åˆ†ï¼šå¯¹è¯å’Œè¡Œä¸ºé¢„æµ‹ (20%)**
 
-»ùÓÚÊÓ¾õ·ÖÎö£¬ÓÃÖĞÎÄÔ¤²â£º
+åŸºäºè§†è§‰åˆ†æï¼Œç”¨ä¸­æ–‡é¢„æµ‹ï¼š
 
-**Ëµ»°·ç¸ñ**:
-- ""Ëı¿ÉÄÜÓÃ[Àä¾²/ÈÈÇé/ÑÏÀ÷/ÎÂÈá]µÄÓïÆøËµ»°""
-- ""ËıµÄ±íÇé°µÊ¾Ê¹ÓÃ[ÕıÊ½/ËæÒâ/×¨Òµ/Ê«Òâ]µÄÓïÑÔ""
-- ""Ëı¿ÉÄÜÓÃ[¼ò½àµÄÃüÁî/·á¸»µÄÃèÊö/¾üÊÂÓÃÓï]½øĞĞ½»Á÷""
+**è¯´è¯é£æ ¼**:
+- ""å¥¹å¯èƒ½ç”¨[å†·é™/çƒ­æƒ…/ä¸¥å‰/æ¸©æŸ”]çš„è¯­æ°”è¯´è¯""
+- ""å¥¹çš„è¡¨æƒ…æš—ç¤ºä½¿ç”¨[æ­£å¼/éšæ„/ä¸“ä¸š/è¯—æ„]çš„è¯­è¨€""
+- ""å¥¹å¯èƒ½ç”¨[ç®€æ´çš„å‘½ä»¤/ä¸°å¯Œçš„æè¿°/å†›äº‹ç”¨è¯­]è¿›è¡Œäº¤æµ""
 
-**Çé¸Ğ±í´ï**:
-- ""ºÜÉÙ¹«¿ª±íÂ¶Ç¿ÁÒÇé¸Ğ"" »ò ""ĞÄÖ±¿Ú¿ì""
-- ""½÷É÷¿ØÖÆ·´Ó¦"" »ò ""³å¶¯·´Ó¦""
+**æƒ…æ„Ÿè¡¨è¾¾**:
+- ""å¾ˆå°‘å…¬å¼€è¡¨éœ²å¼ºçƒˆæƒ…æ„Ÿ"" æˆ– ""å¿ƒç›´å£å¿«""
+- ""è°¨æ…æ§åˆ¶ååº”"" æˆ– ""å†²åŠ¨ååº”""
 
-**»¥¶¯·ç¸ñ**:
-- ""ÓëÄ°ÉúÈË±£³Ö¾àÀë"" »ò ""Á¢¼´ÈÈÇéÓÑºÃ""
-- ""¹Û²ìºó·¢ÑÔ"" »ò ""Ö÷¶¯ÓëÈË½»Ì¸""
-- ""ÖØÊÓĞĞ¶¯¶ø·ÇÑÔ´Ç"" »ò ""ĞÅÑöÑÔ´ÇÍâ½»""
+**äº’åŠ¨é£æ ¼**:
+- ""ä¸é™Œç”Ÿäººä¿æŒè·ç¦»"" æˆ– ""ç«‹å³çƒ­æƒ…å‹å¥½""
+- ""è§‚å¯Ÿåå‘è¨€"" æˆ– ""ä¸»åŠ¨ä¸äººäº¤è°ˆ""
+- ""é‡è§†è¡ŒåŠ¨è€Œéè¨€è¾"" æˆ– ""ä¿¡ä»°è¨€è¾å¤–äº¤""
 
-**EXAMPLE of GOOD characterDescription (ÓÃ¼òÌåÖĞÎÄ!):**
+**EXAMPLE of GOOD characterDescription (ç”¨ç®€ä½“ä¸­æ–‡!):**
 
-""ÕâÊÇÒ»Î»ÓµÓĞÁú×åÑªÍ³µÄÉÙÅ®¡£ËıÓĞÒ»Í·Òø°×É«µÄ³¤·¢ÈçÆÙ²¼°ãÇãĞºÖÁ¼çÏÂ£¬ÓëÉîåäµÄĞÉºìÉ«ÊúÍ«ÑÛíøĞÎ³ÉÏÊÃ÷¶Ô±È¡£ËıµÄÌ«ÑôÑ¨´¦³¤×ÅÁ½Ö»Ğ¡ÇÉµÄÍäÇú½Ç£¬³¤ÅÛÏÂÑÓÉì³öÒ»Ìõ¸²¸Ç×ÅºìÉ«ÁÛÆ¬µÄ³¤Î²£¬ÔÚ¹âÏßÏÂÉÁË¸×ÅÎ¢¹â¡£
+""è¿™æ˜¯ä¸€ä½æ‹¥æœ‰é¾™æ—è¡€ç»Ÿçš„å°‘å¥³ã€‚å¥¹æœ‰ä¸€å¤´é“¶ç™½è‰²çš„é•¿å‘å¦‚ç€‘å¸ƒèˆ¬å€¾æ³»è‡³è‚©ä¸‹ï¼Œä¸æ·±é‚ƒçš„çŒ©çº¢è‰²ç«–ç³çœ¼çœ¸å½¢æˆé²œæ˜å¯¹æ¯”ã€‚å¥¹çš„å¤ªé˜³ç©´å¤„é•¿ç€ä¸¤åªå°å·§çš„å¼¯æ›²è§’ï¼Œé•¿è¢ä¸‹å»¶ä¼¸å‡ºä¸€æ¡è¦†ç›–ç€çº¢è‰²é³ç‰‡çš„é•¿å°¾ï¼Œåœ¨å…‰çº¿ä¸‹é—ªçƒç€å¾®å…‰ã€‚
 
-ËıÉí´©Ò»¼şÓÉ¸ßÆ·ÖÊ²¼ÁÏÖÆ³ÉµÄÉîÉ«Á¬Ã±³¤ÅÛ£¬ÓÅÑÅµØ»·ÈÆ×ÅËıµÄÉíĞÎ¡£ÅÛ×ÓÏÂÊÇ×ØÉ«Æ¤¸ï»¤¼×£¬¹Ø¼ü²¿Î»¾­¹ı¼Ó¹Ì¡ª¡ª¼ç¼×ÉÏ¿É¼ûÕ½¶·µÄºÛ¼££¬µ«±£ÑøµÃµ±£¬¹¦ÄÜÍêºÃ¡£»¤¼×ÉÏ×°ÊÎ×Å¾«ÖÂµÄÉîºìÉ«Í¼°¸£¬ºôÓ¦×ÅËıÌìÈ»ÁÛÆ¬µÄÑÕÉ«£¬°µÊ¾×Å¸öÈË¶¨ÖÆ»òÎÄ»¯ÒâÒå¡£
+å¥¹èº«ç©¿ä¸€ä»¶ç”±é«˜å“è´¨å¸ƒæ–™åˆ¶æˆçš„æ·±è‰²è¿å¸½é•¿è¢ï¼Œä¼˜é›…åœ°ç¯ç»•ç€å¥¹çš„èº«å½¢ã€‚è¢å­ä¸‹æ˜¯æ£•è‰²çš®é©æŠ¤ç”²ï¼Œå…³é”®éƒ¨ä½ç»è¿‡åŠ å›ºâ€”â€”è‚©ç”²ä¸Šå¯è§æˆ˜æ–—çš„ç—•è¿¹ï¼Œä½†ä¿å…»å¾—å½“ï¼ŒåŠŸèƒ½å®Œå¥½ã€‚æŠ¤ç”²ä¸Šè£…é¥°ç€ç²¾è‡´çš„æ·±çº¢è‰²å›¾æ¡ˆï¼Œå‘¼åº”ç€å¥¹å¤©ç„¶é³ç‰‡çš„é¢œè‰²ï¼Œæš—ç¤ºç€ä¸ªäººå®šåˆ¶æˆ–æ–‡åŒ–æ„ä¹‰ã€‚
 
-ËıµÄÃæ²¿±íÇéÃ÷ÏÔÀä¾ş¶ø³Á×Å£¬Ã¼¼äÒşÔ¼¿É¼ûµÄÎÆÂ·°µÊ¾×Å¶àÄêµÄ×ÔÂÉ»òÄ¥ÄÑ¡£ËıµÄÉí×Ë±ÊÍ¦¶ø¾¯¾õ£¬´øÓĞ¾üÈËÑµÁ·µÄºÛ¼£¡£ËıµÄ¾ÙÖ¹Í¸Â¶³öÔ´ÓÚ¾­Ñé¶ø·Ç°ÁÂıµÄ×ÔĞÅ¡£ËıÈñÀûµÄÄ¿¹â±íÃ÷¸ß¶ÈµÄÖÇ»ÛºÍ¶ÔÖÜÎ§»·¾³µÄ³ÖĞø¾¯¾õ¡£
+å¥¹çš„é¢éƒ¨è¡¨æƒ…æ˜æ˜¾å†·å³»è€Œæ²‰ç€ï¼Œçœ‰é—´éšçº¦å¯è§çš„çº¹è·¯æš—ç¤ºç€å¤šå¹´çš„è‡ªå¾‹æˆ–ç£¨éš¾ã€‚å¥¹çš„èº«å§¿ç¬”æŒºè€Œè­¦è§‰ï¼Œå¸¦æœ‰å†›äººè®­ç»ƒçš„ç—•è¿¹ã€‚å¥¹çš„ä¸¾æ­¢é€éœ²å‡ºæºäºç»éªŒè€Œéå‚²æ…¢çš„è‡ªä¿¡ã€‚å¥¹é”åˆ©çš„ç›®å…‰è¡¨æ˜é«˜åº¦çš„æ™ºæ…§å’Œå¯¹å‘¨å›´ç¯å¢ƒçš„æŒç»­è­¦è§‰ã€‚
 
-´ÓÕâĞ©ÊÓ¾õÏßË÷ÅĞ¶Ï£¬Ëı¿ÉÄÜ¾ßÓĞÕ½ÂÔĞÍ»òÊØ»¤ĞÍµÄĞÔ¸ñ¡£¾üÈË°ãµÄÆøÖÊºÍÊµÓÃµÄ»¤¼×±íÃ÷¼ÍÂÉºÍ×¼±¸¡£ËıÀä¾şµÄ±íÇé°µÊ¾Çé¸Ğ¿ØÖÆºÍÑ¹Á¦ÏÂµÄ³Á×Å¡£Ëı¿ÉÄÜÓÃ³ÁÎÈ¡¢ÉîË¼ÊìÂÇµÄÓïÆøËµ»°£¬½÷É÷µØÑ¡Ôñ´ë´Ç¡£ËıµÄ¶Ô»°»á¼ò½àÖ±½Ó£¬Æ«ºÃÇåÎú¶ø·Ç»ªÀöµÄÓïÑÔ¡£
+ä»è¿™äº›è§†è§‰çº¿ç´¢åˆ¤æ–­ï¼Œå¥¹å¯èƒ½å…·æœ‰æˆ˜ç•¥å‹æˆ–å®ˆæŠ¤å‹çš„æ€§æ ¼ã€‚å†›äººèˆ¬çš„æ°”è´¨å’Œå®ç”¨çš„æŠ¤ç”²è¡¨æ˜çºªå¾‹å’Œå‡†å¤‡ã€‚å¥¹å†·å³»çš„è¡¨æƒ…æš—ç¤ºæƒ…æ„Ÿæ§åˆ¶å’Œå‹åŠ›ä¸‹çš„æ²‰ç€ã€‚å¥¹å¯èƒ½ç”¨æ²‰ç¨³ã€æ·±æ€ç†Ÿè™‘çš„è¯­æ°”è¯´è¯ï¼Œè°¨æ…åœ°é€‰æ‹©æªè¾ã€‚å¥¹çš„å¯¹è¯ä¼šç®€æ´ç›´æ¥ï¼Œåå¥½æ¸…æ™°è€Œéåä¸½çš„è¯­è¨€ã€‚
 
-ÔÚ½»Ì¸ÖĞ£¬Ëı¿ÉÄÜ×î³õ±£³Ö×¨Òµ¾àÀë£¬ÏÈ¹Û²ìËûÈËÔÙ¾ö¶¨ÊÇ·ñĞÅÈÎ¡£ËıÖØÊÓÄÜÁ¦ºÍ¿É¿¿ĞÔÊ¤ÓÚ÷ÈÁ¦¡£ËıµÄÇé¸Ğ±í´ïÔÚ¹«¹²³¡ºÏ»áÓĞËù¿ËÖÆ£¬¾¡¹ÜËıĞÅÈÎµÄÈË¿ÉÄÜ»á¿´µ½¸üÈáÈíµÄÒ»Ãæ¡£Ëı¶ÔÂß¼­ºÍÊµ¼Ê¿¼ÂÇµÄ·´Ó¦³¬³öÇé¸ĞËßÇó¡£
+åœ¨äº¤è°ˆä¸­ï¼Œå¥¹å¯èƒ½æœ€åˆä¿æŒä¸“ä¸šè·ç¦»ï¼Œå…ˆè§‚å¯Ÿä»–äººå†å†³å®šæ˜¯å¦ä¿¡ä»»ã€‚å¥¹é‡è§†èƒ½åŠ›å’Œå¯é æ€§èƒœäºé­…åŠ›ã€‚å¥¹çš„æƒ…æ„Ÿè¡¨è¾¾åœ¨å…¬å…±åœºåˆä¼šæœ‰æ‰€å…‹åˆ¶ï¼Œå°½ç®¡å¥¹ä¿¡ä»»çš„äººå¯èƒ½ä¼šçœ‹åˆ°æ›´æŸ”è½¯çš„ä¸€é¢ã€‚å¥¹å¯¹é€»è¾‘å’Œå®é™…è€ƒè™‘çš„ååº”è¶…å‡ºæƒ…æ„Ÿè¯‰æ±‚ã€‚
 
-Áú×åÌØÕ÷°µÊ¾×ÅÒ»ÖÖ×ÔºÀºÍ×ÔÁ¦¸üÉúµÄÇãÏò¡£Ëı¿ÉÄÜ¶Ô¸öÈË¿Õ¼äºÍ¼ÛÖµ¹ÛÓĞËùÁìµØÒâÊ¶¡£ËıµÄ×°±¸Î¬»¤Á¼ºÃ£¬ÏÔÊ¾³ö¶ÔÏ¸½ÚµÄ¹Ø×¢ºÍ×Ô¸ø×Ô×ãµÄÄÜÁ¦¡£¹á´©ËıÍâ±íµÄÉîºìÉ«µ÷°µÊ¾×ÅÆ½¾²Íâ±íÏÂµÄÊÜ¿Ø¼¤Çé¡ª¡ªËıÓĞ¼á¶¨µÄĞÅÄî£¬µ«Í¨¹ı¼ÍÂÉ¶ø·ÇÇéĞ÷±¬·¢À´±í´ï¡£""
+é¾™æ—ç‰¹å¾æš—ç¤ºç€ä¸€ç§è‡ªè±ªå’Œè‡ªåŠ›æ›´ç”Ÿçš„å€¾å‘ã€‚å¥¹å¯èƒ½å¯¹ä¸ªäººç©ºé—´å’Œä»·å€¼è§‚æœ‰æ‰€é¢†åœ°æ„è¯†ã€‚å¥¹çš„è£…å¤‡ç»´æŠ¤è‰¯å¥½ï¼Œæ˜¾ç¤ºå‡ºå¯¹ç»†èŠ‚çš„å…³æ³¨å’Œè‡ªç»™è‡ªè¶³çš„èƒ½åŠ›ã€‚è´¯ç©¿å¥¹å¤–è¡¨çš„æ·±çº¢è‰²è°ƒæš—ç¤ºç€å¹³é™å¤–è¡¨ä¸‹çš„å—æ§æ¿€æƒ…â€”â€”å¥¹æœ‰åšå®šçš„ä¿¡å¿µï¼Œä½†é€šè¿‡çºªå¾‹è€Œéæƒ…ç»ªçˆ†å‘æ¥è¡¨è¾¾ã€‚""
 
 **REMEMBER**:
-- characterDescription ±ØĞëÓÃ¼òÌåÖĞÎÄĞ´!
-- Òª¾ßÌå£º²»ÒªÖ»Ëµ""»¤¼×""¡ª¡ªÃèÊö²ÄÖÊ¡¢×´Ì¬¡¢Éè¼Æ
-- ´ÓÃ¿¸öÏ¸½ÚÍÆ¶ÏĞÔ¸ñ
-- Ô¤²âĞĞÎª£ºËûÃÇ»áÈçºÎËµ»°£¿·´Ó¦£¿»¥¶¯£¿
-- 300-500×Ö
-- Ö»·µ»ØÓĞĞ§µÄJSON
+- characterDescription å¿…é¡»ç”¨ç®€ä½“ä¸­æ–‡å†™!
+- è¦å…·ä½“ï¼šä¸è¦åªè¯´""æŠ¤ç”²""â€”â€”æè¿°æè´¨ã€çŠ¶æ€ã€è®¾è®¡
+- ä»æ¯ä¸ªç»†èŠ‚æ¨æ–­æ€§æ ¼
+- é¢„æµ‹è¡Œä¸ºï¼šä»–ä»¬ä¼šå¦‚ä½•è¯´è¯ï¼Ÿååº”ï¼Ÿäº’åŠ¨ï¼Ÿ
+- 300-500å­—
+- åªè¿”å›æœ‰æ•ˆçš„JSON
 
 Focus on:
 - Top 3-4 dominant colors with accurate percentages
@@ -296,8 +296,8 @@ Focus on:
         }
 
         /// <summary>
-        /// ½âÎö Vision API ·µ»ØµÄ JSON
-        /// ? ĞŞ¸´£ºÍêÕûÊä³öJSONÄÚÈİÓÃÓÚÕï¶Ï
+        /// è§£æ Vision API è¿”å›çš„ JSON
+        /// ? ä¿®å¤ï¼šå®Œæ•´è¾“å‡ºJSONå†…å®¹ç”¨äºè¯Šæ–­
         /// </summary>
         private VisionAnalysisResult? ParseVisionJson(string jsonContent)
         {
@@ -305,62 +305,62 @@ Focus on:
             {
                 if (string.IsNullOrWhiteSpace(jsonContent))
                 {
-                    Log.Error("[MultimodalAnalysis] Vision ÏìÓ¦ÄÚÈİÎª¿Õ");
+                    Log.Error("[MultimodalAnalysis] Vision å“åº”å†…å®¹ä¸ºç©º");
                     return null;
                 }
 
-                // ? ÏÈÊä³öÔ­Ê¼ÏìÓ¦£¨Ç°500×Ö·û£©
-                Log.Message($"[MultimodalAnalysis] Ô­Ê¼ÏìÓ¦: {jsonContent.Substring(0, Math.Min(500, jsonContent.Length))}...");
+                // ? å…ˆè¾“å‡ºåŸå§‹å“åº”ï¼ˆå‰500å­—ç¬¦ï¼‰
+                Log.Message($"[MultimodalAnalysis] åŸå§‹å“åº”: {jsonContent.Substring(0, Math.Min(500, jsonContent.Length))}...");
 
-                // ÌáÈ¡ JSON£¨ÓĞÊ± AI »áÔÚ markdown ´úÂë¿éÖĞ·µ»Ø£©
+                // æå– JSONï¼ˆæœ‰æ—¶ AI ä¼šåœ¨ markdown ä»£ç å—ä¸­è¿”å›ï¼‰
                 string extractedJson = ExtractJsonFromMarkdown(jsonContent);
                 
-                // ? Êä³öÌáÈ¡ºóµÄJSON£¨Ç°500×Ö·û£©
+                // ? è¾“å‡ºæå–åçš„JSONï¼ˆå‰500å­—ç¬¦ï¼‰
                 if (extractedJson != jsonContent)
                 {
-                    Log.Message($"[MultimodalAnalysis] ÌáÈ¡ºóµÄ JSON: {extractedJson.Substring(0, Math.Min(500, extractedJson.Length))}...");
+                    Log.Message($"[MultimodalAnalysis] æå–åçš„ JSON: {extractedJson.Substring(0, Math.Min(500, extractedJson.Length))}...");
                 }
 
-                // ? ÑéÖ¤ JSON ÊÇ·ñÒÔ { ¿ªÍ·
+                // ? éªŒè¯ JSON æ˜¯å¦ä»¥ { å¼€å¤´
                 extractedJson = extractedJson.Trim();
                 if (!extractedJson.StartsWith("{"))
                 {
-                    Log.Error($"[MultimodalAnalysis] JSON ¸ñÊ½´íÎó£¬²»ÒÔ {{ ¿ªÍ·¡£Ç° 50 ×Ö·û: {extractedJson.Substring(0, Math.Min(50, extractedJson.Length))}");
+                    Log.Error($"[MultimodalAnalysis] JSON æ ¼å¼é”™è¯¯ï¼Œä¸ä»¥ {{ å¼€å¤´ã€‚å‰ 50 å­—ç¬¦: {extractedJson.Substring(0, Math.Min(50, extractedJson.Length))}");
                     return null;
                 }
 
-                // ? ³¢ÊÔ½âÎöJSON
+                // ? å°è¯•è§£æJSON
                 var result = JsonConvert.DeserializeObject<VisionAnalysisResult>(extractedJson);
                 
                 if (result == null)
                 {
-                    Log.Error("[MultimodalAnalysis] JSON ·´ĞòÁĞ»¯·µ»Ø null");
-                    // ? Êä³öÍêÕûJSONÓÃÓÚÕï¶Ï
-                    Log.Error($"[MultimodalAnalysis] ÍêÕûJSONÄÚÈİ:\n{extractedJson}");
+                    Log.Error("[MultimodalAnalysis] JSON ååºåˆ—åŒ–è¿”å› null");
+                    // ? è¾“å‡ºå®Œæ•´JSONç”¨äºè¯Šæ–­
+                    Log.Error($"[MultimodalAnalysis] å®Œæ•´JSONå†…å®¹:\n{extractedJson}");
                     return null;
                 }
 
-                Log.Message($"[MultimodalAnalysis] ³É¹¦½âÎö Vision ½á¹û: {result.dominantColors?.Count ?? 0} ¸öÑÕÉ«");
+                Log.Message($"[MultimodalAnalysis] æˆåŠŸè§£æ Vision ç»“æœ: {result.dominantColors?.Count ?? 0} ä¸ªé¢œè‰²");
                 return result;
             }
             catch (JsonException jsonEx)
             {
-                Log.Error($"[MultimodalAnalysis] JSON ½âÎö´íÎó: {jsonEx.Message}");
-                // ? Êä³öÍêÕûÏìÓ¦ÄÚÈİ
-                Log.Error($"[MultimodalAnalysis] ÍêÕûÏìÓ¦ÄÚÈİ:\n{jsonContent}");
+                Log.Error($"[MultimodalAnalysis] JSON è§£æé”™è¯¯: {jsonEx.Message}");
+                // ? è¾“å‡ºå®Œæ•´å“åº”å†…å®¹
+                Log.Error($"[MultimodalAnalysis] å®Œæ•´å“åº”å†…å®¹:\n{jsonContent}");
                 return null;
             }
             catch (Exception ex)
             {
-                Log.Error($"[MultimodalAnalysis] Vision ÏìÓ¦½âÎöÊ§°Ü: {ex.Message}");
-                Log.Error($"[MultimodalAnalysis] ÏìÓ¦ÄÚÈİ: {jsonContent}");
+                Log.Error($"[MultimodalAnalysis] Vision å“åº”è§£æå¤±è´¥: {ex.Message}");
+                Log.Error($"[MultimodalAnalysis] å“åº”å†…å®¹: {jsonContent}");
                 return null;
             }
         }
 
         /// <summary>
-        /// ´Ó markdown ´úÂë¿éÖĞÌáÈ¡ JSON
-        /// ? ¸Ä½øÌáÈ¡Âß¼­£¬È·±£ÌáÈ¡ÍêÕûJSON
+        /// ä» markdown ä»£ç å—ä¸­æå– JSON
+        /// ? æ”¹è¿›æå–é€»è¾‘ï¼Œç¡®ä¿æå–å®Œæ•´JSON
         /// </summary>
         private string ExtractJsonFromMarkdown(string content)
         {
@@ -369,12 +369,12 @@ Focus on:
                 return content;
             }
 
-            // ³¢ÊÔ 1: ÌáÈ¡ ```json ... ``` ´úÂë¿é
+            // å°è¯• 1: æå– ```json ... ``` ä»£ç å—
             if (content.Contains("```json"))
             {
                 int startIndex = content.IndexOf("```json") + 7;
                 
-                // Ìø¹ı»»ĞĞ·û
+                // è·³è¿‡æ¢è¡Œç¬¦
                 while (startIndex < content.Length && (content[startIndex] == '\n' || content[startIndex] == '\r'))
                 {
                     startIndex++;
@@ -384,23 +384,23 @@ Focus on:
                 if (endIndex > startIndex)
                 {
                     string extracted = content.Substring(startIndex, endIndex - startIndex).Trim();
-                    Log.Message("[MultimodalAnalysis] ´Ó ```json ´úÂë¿éÖĞÌáÈ¡ JSON");
+                    Log.Message("[MultimodalAnalysis] ä» ```json ä»£ç å—ä¸­æå– JSON");
                     return extracted;
                 }
             }
             
-            // ³¢ÊÔ 2: ÌáÈ¡ ``` ... ``` ´úÂë¿é£¨ÎŞ json ±ê¼Ç£©
+            // å°è¯• 2: æå– ``` ... ``` ä»£ç å—ï¼ˆæ—  json æ ‡è®°ï¼‰
             if (content.Contains("```"))
             {
                 int startIndex = content.IndexOf("```") + 3;
                 
-                // Ìø¹ı¿ÉÄÜµÄÓïÑÔ±ê¼Ç£¨Èç "json\n"£©
+                // è·³è¿‡å¯èƒ½çš„è¯­è¨€æ ‡è®°ï¼ˆå¦‚ "json\n"ï¼‰
                 while (startIndex < content.Length && content[startIndex] != '\n' && content[startIndex] != '\r' && content[startIndex] != '{')
                 {
                     startIndex++;
                 }
                 
-                // Ìø¹ı»»ĞĞ·û
+                // è·³è¿‡æ¢è¡Œç¬¦
                 while (startIndex < content.Length && (content[startIndex] == '\n' || content[startIndex] == '\r'))
                 {
                     startIndex++;
@@ -410,12 +410,12 @@ Focus on:
                 if (endIndex > startIndex)
                 {
                     string extracted = content.Substring(startIndex, endIndex - startIndex).Trim();
-                    Log.Message("[MultimodalAnalysis] ´Ó ``` ´úÂë¿éÖĞÌáÈ¡ JSON");
+                    Log.Message("[MultimodalAnalysis] ä» ``` ä»£ç å—ä¸­æå– JSON");
                     return extracted;
                 }
             }
             
-            // ³¢ÊÔ 3: ²éÕÒµÚÒ»¸ö { ºÍ×îºóÒ»¸ö }
+            // å°è¯• 3: æŸ¥æ‰¾ç¬¬ä¸€ä¸ª { å’Œæœ€åä¸€ä¸ª }
             int firstBrace = content.IndexOf('{');
             int lastBrace = content.LastIndexOf('}');
             if (firstBrace >= 0 && lastBrace > firstBrace)
@@ -423,17 +423,17 @@ Focus on:
                 string extracted = content.Substring(firstBrace, lastBrace - firstBrace + 1).Trim();
                 if (extracted != content.Trim())
                 {
-                    Log.Message("[MultimodalAnalysis] Í¨¹ı²éÕÒ { } ÌáÈ¡ JSON");
+                    Log.Message("[MultimodalAnalysis] é€šè¿‡æŸ¥æ‰¾ { } æå– JSON");
                     return extracted;
                 }
             }
             
-            // ÎŞ·¨ÌáÈ¡£¬·µ»ØÔ­Ê¼ÄÚÈİ
+            // æ— æ³•æå–ï¼Œè¿”å›åŸå§‹å†…å®¹
             return content.Trim();
         }
 
         /// <summary>
-        /// ·ÖÎö Base64 ±àÂëµÄÍ¼Ïñ
+        /// åˆ†æ Base64 ç¼–ç çš„å›¾åƒ
         /// </summary>
         public async Task<VisionAnalysisResult?> AnalyzeImageBase64Async(string base64Image)
         {
@@ -470,7 +470,7 @@ Focus on:
         }
 
         /// <summary>
-        /// Éî¶È·ÖÎöÎÄ±¾£¨Ê¹ÓÃ GPT-4£©
+        /// æ·±åº¦åˆ†ææ–‡æœ¬ï¼ˆä½¿ç”¨ GPT-4ï¼‰
         /// </summary>
         public async Task<TextAnalysisResult?> AnalyzeTextDeepAsync(string text)
         {
@@ -541,7 +541,8 @@ Focus on:
   ""characterDescription"": ""Brief description (max 200 chars)"",
   ""mood"": ""overall mood"",
   ""suggestedPersonality"": ""Benevolent/Sadistic/Chaotic/Strategic/Protective/Manipulative"",
-  ""styleKeywords"": [""keyword1"", ""keyword2"", ""keyword3""]
+  ""styleKeywords"": [""keyword1"", ""keyword2"", ""keyword3""],
+  ""personalityTags"": [""ä¸­æ–‡ä¸ªæ€§æ ‡ç­¾1"", ""ä¸­æ–‡ä¸ªæ€§æ ‡ç­¾2"", ""ä¸­æ–‡ä¸ªæ€§æ ‡ç­¾3"", ...]
 }
 
 Focus on:
@@ -583,7 +584,7 @@ Keep characterDescription under 200 characters. Return ONLY valid JSON.";
             }
             else
             {
-                // DeepSeek / Gemini ÀàËÆ½á¹¹
+                // DeepSeek / Gemini ç±»ä¼¼ç»“æ„
                 return new
                 {
                     model = visionModel,
@@ -652,7 +653,7 @@ Biography:
                     return null;
                 }
 
-                // ³¢ÊÔ½âÎö JSON ÄÚÈİ
+                // å°è¯•è§£æ JSON å†…å®¹
                 var result = JsonConvert.DeserializeObject<VisionAnalysisResult>(content);
                 return result;
             }
@@ -703,40 +704,53 @@ Biography:
         }
         
         /// <summary>
-        /// ? v1.6.22: ·ÖÎöÈË¸ñÍ¼Æ¬£¨Ö§³ÖÓÃ»§ÊäÈëµÄ¼ò½é£©
+        /// ğŸ“Œ v1.6.62: åˆ†æäººæ ¼å›¾ç‰‡ï¼ˆæ”¯æŒç‰¹è´¨å’Œç”¨æˆ·è¡¥å……ï¼‰
         /// </summary>
-        /// <param name="texture">Á¢»æÎÆÀí</param>
-        /// <param name="personaName">ÈË¸ñÃû³Æ</param>
-        /// <param name="userBio">ÓÃ»§ÊäÈëµÄ¼ò½é£¨¿ÉÑ¡£©</param>
-        /// <returns>ÈË¸ñ·ÖÎö½á¹û</returns>
-        public PersonaAnalysisResult AnalyzePersonaImage(
+        /// <param name="texture">ç«‹ç»˜çº¹ç†</param>
+        /// <param name="personaName">äººæ ¼åç§°</param>
+        /// <param name="selectedTraits">ç”¨æˆ·é€‰æ‹©çš„ç‰¹è´¨</param>
+        /// <param name="userSupplement">ç”¨æˆ·è¡¥å……æè¿°</param>
+        /// <returns>äººæ ¼åˆ†æç»“æœï¼ˆåŒ…å«ä¸ªæ€§æ ‡ç­¾ï¼‰</returns>
+        public PersonaAnalysisResult AnalyzePersonaImageWithTraits(
             Texture2D texture,
             string personaName,
-            string userBio = null)
+            List<string> selectedTraits,
+            string userSupplement)
         {
             try
             {
-                // 1. µ÷ÓÃÒì²½·½·¨½øĞĞ¶àÄ£Ì¬·ÖÎö
-                var visionTask = AnalyzeTextureAsync(texture, userBio);
-                visionTask.Wait();  // Í¬²½µÈ´ı£¨RimWorld Ö÷Ïß³Ì£©
+                // 1. è°ƒç”¨å¼‚æ­¥æ–¹æ³•è¿›è¡Œå¤šæ¨¡æ€åˆ†æ
+                var visionTask = AnalyzeTextureWithTraitsAsync(texture, selectedTraits, userSupplement);
+                visionTask.Wait();  // åŒæ­¥ç­‰å¾…ï¼ˆRimWorld ä¸»çº¿ç¨‹ï¼‰
                 
                 var visionResult = visionTask.Result;
                 
                 if (visionResult == null)
                 {
-                    Log.Warning($"[MultimodalAnalysis] Vision ·ÖÎöÊ§°Ü£¬·µ»ØÄ¬ÈÏ½á¹û");
-                    return CreateDefaultAnalysisResult(userBio);
+                    Log.Warning($"[MultimodalAnalysis] Vision åˆ†æå¤±è´¥ï¼Œè¿”å›é»˜è®¤ç»“æœ");
+                    return CreateDefaultAnalysisResult(userSupplement);
                 }
                 
-                // 2. ¹¹½¨ PersonaAnalysisResult
+                // 2. æ„å»º PersonaAnalysisResult
                 var result = new PersonaAnalysisResult
                 {
                     VisualTags = visionResult.visualElements ?? new List<string>(),
                     ToneTags = visionResult.styleKeywords ?? new List<string>(),
-                    ConfidenceScore = 0.8f
+                    ConfidenceScore = 0.9f  // å› ä¸ºæœ‰ç”¨æˆ·è¾“å…¥ï¼Œç½®ä¿¡åº¦æ›´é«˜
                 };
                 
-                // 3. ½âÎöÈË¸ñÀàĞÍ
+                // 3. ğŸ“Œ æå–ä¸ªæ€§æ ‡ç­¾ï¼ˆæ¥è‡ªAIåˆ†æï¼‰
+                if (visionResult.personalityTags != null && visionResult.personalityTags.Count > 0)
+                {
+                    result.PersonalityTags = visionResult.personalityTags;
+                }
+                else
+                {
+                    // å¦‚æœAIæ²¡æœ‰è¿”å›ï¼Œè‡³å°‘ä½¿ç”¨ç”¨æˆ·é€‰æ‹©çš„ç‰¹è´¨
+                    result.PersonalityTags = selectedTraits.ToList();
+                }
+                
+                // 4. è§£æäººæ ¼ç±»å‹
                 if (!string.IsNullOrEmpty(visionResult.suggestedPersonality))
                 {
                     if (Enum.TryParse<Storyteller.PersonalityTrait>(visionResult.suggestedPersonality, true, out var trait))
@@ -745,48 +759,38 @@ Biography:
                     }
                 }
                 
-                // 4. ? Éú³ÉÔöÇ¿°æ biography
-                if (!string.IsNullOrEmpty(userBio))
-                {
-                    // ÓÃ»§¼ò½é + AI ·ÖÎö²¹³ä
-                    result.GeneratedBiography = visionResult.characterDescription;
-                    result.VisualDescription = visionResult.characterDescription;
-                }
-                else
-                {
-                    // Ö»ÓĞ AI ·ÖÎö
-                    result.GeneratedBiography = visionResult.characterDescription;
-                    result.VisualDescription = visionResult.characterDescription;
-                }
-                
-                // 5. ÉèÖÃÊÓ¾õÃèÊö
+                // 5. ğŸ“Œ ç”Ÿæˆå¢å¼ºç‰ˆ biographyï¼ˆç»“åˆç”¨æˆ·è¾“å…¥å’ŒAIåˆ†æï¼‰
+                result.GeneratedBiography = visionResult.characterDescription;
                 result.VisualDescription = visionResult.characterDescription;
                 
-                // 6. ? Éú³É¶Ô»°·ç¸ñ£¨»ùÓÚÓÃ»§ÃèÊö + Í¼Æ¬·ÖÎö£©
-                result.SuggestedDialogueStyle = GenerateDialogueStyleFromAnalysis(visionResult, userBio);
+                // 6. ğŸ“Œ ç”Ÿæˆå¯¹è¯é£æ ¼ï¼ˆåŸºäºç”¨æˆ·æè¿° + å›¾ç‰‡åˆ†æï¼‰
+                result.SuggestedDialogueStyle = GenerateDialogueStyleFromAnalysis(visionResult, userSupplement);
                 
                 if (Prefs.DevMode)
                 {
-                    Log.Message($"[MultimodalAnalysis] AnalyzePersonaImage Íê³É:");
+                    Log.Message($"[MultimodalAnalysis] AnalyzePersonaImageWithTraits å®Œæˆ:");
                     Log.Message($"  - Visual Tags: {result.VisualTags.Count}");
                     Log.Message($"  - Tone Tags: {result.ToneTags.Count}");
+                    Log.Message($"  - Personality Tags: {result.PersonalityTags.Count}");
                     Log.Message($"  - Personality: {result.SuggestedPersonality}");
-                    Log.Message($"  - Biography Length: {result.GeneratedBiography?.Length ?? 0}");
                 }
                 
                 return result;
             }
             catch (Exception ex)
             {
-                Log.Error($"[MultimodalAnalysis] AnalyzePersonaImage Ê§°Ü: {ex.Message}");
-                return CreateDefaultAnalysisResult(userBio);
+                Log.Error($"[MultimodalAnalysis] AnalyzePersonaImageWithTraits å¤±è´¥: {ex.Message}");
+                return CreateDefaultAnalysisResult(userSupplement);
             }
         }
         
         /// <summary>
-        /// ? ÔöÇ¿°æ AnalyzeTextureAsync£¨Ö§³ÖÓÃ»§¼ò½é£©
+        /// ğŸ“Œ v1.6.62: å¢å¼ºç‰ˆ AnalyzeTextureAsyncï¼ˆæ”¯æŒç‰¹è´¨å’Œç”¨æˆ·è¡¥å……ï¼‰
         /// </summary>
-        private async Task<VisionAnalysisResult?> AnalyzeTextureAsync(Texture2D texture, string userBio = null)
+        private async Task<VisionAnalysisResult?> AnalyzeTextureWithTraitsAsync(
+            Texture2D texture,
+            List<string> selectedTraits,
+            string userSupplement)
         {
             if (texture == null)
             {
@@ -800,33 +804,36 @@ Biography:
                 
                 if (provider == "gemini")
                 {
-                    return await AnalyzeWithGeminiAsync(texture, userBio);
+                    return await AnalyzeWithGeminiTraitsAsync(texture, selectedTraits, userSupplement);
                 }
                 else if (provider == "openai" || provider == "deepseek")
                 {
-                    return await AnalyzeWithOpenAICompatibleAsync(texture, userBio);
+                    return await AnalyzeWithOpenAICompatibleTraitsAsync(texture, selectedTraits, userSupplement);
                 }
                 else
                 {
-                    Log.Error($"[MultimodalAnalysis] ²»Ö§³ÖµÄ API Ìá¹©ÉÌ: {provider}");
+                    Log.Error($"[MultimodalAnalysis] ä¸æ”¯æŒçš„ API æä¾›å•†: {provider}");
                     return null;
                 }
             }
             catch (Exception ex)
             {
-                Log.Error($"[MultimodalAnalysis] Error analyzing texture: {ex.Message}");
+                Log.Error($"[MultimodalAnalysis] Error analyzing texture with traits: {ex.Message}");
                 return null;
             }
         }
         
         /// <summary>
-        /// ? ÔöÇ¿°æ Gemini ·ÖÎö£¨Ö§³ÖÓÃ»§¼ò½é£©
+        /// ğŸ“Œ v1.6.62: Gemini åˆ†æï¼ˆæ”¯æŒç‰¹è´¨ï¼‰
         /// </summary>
-        private async Task<VisionAnalysisResult?> AnalyzeWithGeminiAsync(Texture2D texture, string userBio = null)
+        private async Task<VisionAnalysisResult?> AnalyzeWithGeminiTraitsAsync(
+            Texture2D texture,
+            List<string> selectedTraits,
+            string userSupplement)
         {
-            Log.Message("[MultimodalAnalysis] Ê¹ÓÃ Gemini Vision API (with user bio)");
+            Log.Message("[MultimodalAnalysis] ä½¿ç”¨ Gemini Vision API (with traits)");
             
-            string prompt = GetVisionPrompt(userBio);
+            string prompt = GetVisionPromptWithTraits(selectedTraits, userSupplement);
 
             var geminiResponse = await LLM.GeminiApiClient.SendVisionRequestAsync(
                 visionModel,
@@ -839,7 +846,7 @@ Biography:
             
             if (geminiResponse == null || geminiResponse.Candidates == null || geminiResponse.Candidates.Count == 0)
             {
-                Log.Error("[MultimodalAnalysis] Gemini Vision ·µ»Ø¿ÕÏìÓ¦");
+                Log.Error("[MultimodalAnalysis] Gemini Vision è¿”å›ç©ºå“åº”");
                 return null;
             }
             
@@ -848,14 +855,17 @@ Biography:
         }
         
         /// <summary>
-        /// ? ÔöÇ¿°æ OpenAI ¼æÈİ·ÖÎö£¨Ö§³ÖÓÃ»§¼ò½é£©
+        /// ğŸ“Œ v1.6.62: OpenAI å…¼å®¹åˆ†æï¼ˆæ”¯æŒç‰¹è´¨ï¼‰
         /// </summary>
-        private async Task<VisionAnalysisResult?> AnalyzeWithOpenAICompatibleAsync(Texture2D texture, string userBio = null)
+        private async Task<VisionAnalysisResult?> AnalyzeWithOpenAICompatibleTraitsAsync(
+            Texture2D texture,
+            List<string> selectedTraits,
+            string userSupplement)
         {
-            Log.Message($"[MultimodalAnalysis] Ê¹ÓÃ {apiProvider} Vision API (with user bio)");
+            Log.Message($"[MultimodalAnalysis] ä½¿ç”¨ {apiProvider} Vision API (with traits)");
             
             string endpoint = GetVisionEndpoint();
-            string prompt = GetVisionPrompt(userBio);
+            string prompt = GetVisionPromptWithTraits(selectedTraits, userSupplement);
 
             var response = await LLM.OpenAICompatibleClient.SendVisionRequestAsync(
                 endpoint,
@@ -870,14 +880,14 @@ Biography:
             
             if (response == null || response.choices == null || response.choices.Length == 0)
             {
-                Log.Error($"[MultimodalAnalysis] {apiProvider} Vision ·µ»Ø¿ÕÏìÓ¦");
+                Log.Error($"[MultimodalAnalysis] {apiProvider} Vision è¿”å›ç©ºå“åº”");
                 return null;
             }
             
             string content = response.choices[0].message?.content;
             if (string.IsNullOrEmpty(content))
             {
-                Log.Error("[MultimodalAnalysis] Vision ÏìÓ¦ÄÚÈİÎª¿Õ");
+                Log.Error("[MultimodalAnalysis] Vision å“åº”å†…å®¹ä¸ºç©º");
                 return null;
             }
             
@@ -885,33 +895,47 @@ Biography:
         }
         
         /// <summary>
-        /// ? ÔöÇ¿°æ Vision Prompt£¨Ö§³ÖÓÃ»§¼ò½é£©
+        /// ğŸ“Œ v1.6.62: å¢å¼ºç‰ˆ Vision Promptï¼ˆæ”¯æŒç‰¹è´¨å’Œç”¨æˆ·è¡¥å……ï¼‰
         /// </summary>
-        private string GetVisionPrompt(string userBio = null)
+        private string GetVisionPromptWithTraits(List<string> selectedTraits, string userSupplement)
         {
             var sb = new StringBuilder();
             
             sb.AppendLine("Analyze this character portrait in detail and provide a comprehensive JSON response.");
             sb.AppendLine();
-            sb.AppendLine("**CRITICAL: The characterDescription field MUST be written in Simplified Chinese (¼òÌåÖĞÎÄ)!**");
+            sb.AppendLine("**CRITICAL: The characterDescription field MUST be written in Simplified Chinese (ç®€ä½“ä¸­æ–‡)!**");
             sb.AppendLine();
             
-            // ? Èç¹ûÓĞÓÃ»§¼ò½é£¬Ìí¼Óµ½ÌáÊ¾´ÊÖĞ
-            if (!string.IsNullOrEmpty(userBio))
+            // ğŸ“Œ æ·»åŠ ç”¨æˆ·é€‰æ‹©çš„ç‰¹è´¨å’Œè¡¥å……æè¿°
+            if (selectedTraits != null && selectedTraits.Count > 0)
+            {
+                sb.AppendLine("**USER SELECTED TRAITS:**");
+                sb.AppendLine("---");
+                sb.AppendLine(string.Join(", ", selectedTraits));
+                sb.AppendLine("---");
+                sb.AppendLine();
+            }
+            
+            if (!string.IsNullOrEmpty(userSupplement))
             {
                 sb.AppendLine("**USER PROVIDED CONTEXT:**");
                 sb.AppendLine("---");
-                sb.AppendLine(userBio);
+                sb.AppendLine(userSupplement);
                 sb.AppendLine("---");
                 sb.AppendLine();
                 sb.AppendLine("**CRITICAL INSTRUCTIONS:**");
                 sb.AppendLine("1. The user description above provides the CHARACTER'S PERSONALITY and BEHAVIOR.");
-                sb.AppendLine("2. You MUST analyze the visual image to describe PHYSICAL APPEARANCE ONLY.");
+                sb.AppendLine("2. You MUST analyze the visual image to describe PHYSICAL APPEARANCE.");
                 sb.AppendLine("3. In your characterDescription, COMBINE:");
                 sb.AppendLine("   - Visual details (from image): hair color, eye color, clothing, posture, etc.");
-                sb.AppendLine("   - Personality traits (from user): use the user's description of their character");
+                sb.AppendLine("   - Personality traits (from user): use the user's description");
                 sb.AppendLine("4. DO NOT contradict the user's personality description!");
                 sb.AppendLine("5. Your job is to ADD visual details to their personality, not replace it.");
+                sb.AppendLine();
+                sb.AppendLine("**PERSONALITY TAGS REQUIREMENT:**");
+                sb.AppendLine("6. Based on the image and user description, suggest 3-6 personality tags in Chinese.");
+                sb.AppendLine("7. Examples: \"å–„è‰¯\", \"åšå¼º\", \"çˆ±æ’’å¨‡\", \"ç—…å¨‡\", \"å‚²å¨‡\", \"æ¸©æŸ”\", \"å†·é…·\"");
+                sb.AppendLine("8. Include the user's selected traits if they match theåˆ†æ.");
                 sb.AppendLine();
             }
             
@@ -920,19 +944,22 @@ Biography:
     {""hex"": ""#RRGGBB"", ""percentage"": 0-100, ""name"": ""color name in English""}
   ],
   ""visualElements"": [""element1"", ""element2"", ""element3""],
-  ""characterDescription"": ""±ØĞëÓÃ¼òÌåÖĞÎÄÊéĞ´µÄÏêÏ¸ÃèÊö£¨300-500×Ö£©£¬°üº¬ÍâÃ²ºÍĞÔ¸ñÍÆ¶Ï"",
+  ""characterDescription"": ""å¿…é¡»ç”¨ç®€ä½“ä¸­æ–‡ä¹¦å†™çš„è¯¦ç»†æè¿°ï¼ˆ300-500å­—ï¼‰ï¼ŒåŒ…å«å¤–è²Œå’Œæ€§æ ¼æ¨æ–­"",
   ""mood"": ""overall mood/atmosphere in English"",
   ""suggestedPersonality"": ""Benevolent/Sadistic/Chaotic/Strategic/Protective/Manipulative"",
-  ""styleKeywords"": [""keyword1"", ""keyword2"", ""keyword3""]
+  ""styleKeywords"": [""keyword1"", ""keyword2"", ""keyword3""],
+  ""personalityTags"": [""ä¸­æ–‡ä¸ªæ€§æ ‡ç­¾1"", ""ä¸­æ–‡ä¸ªæ€§æ ‡ç­¾2"", ""ä¸­æ–‡ä¸ªæ€§æ ‡ç­¾3"", ...]
 }");
             
             sb.AppendLine();
             sb.AppendLine("**REMEMBER**:");
-            sb.AppendLine("- characterDescription ±ØĞëÓÃ¼òÌåÖĞÎÄÊéĞ´!");
-            if (!string.IsNullOrEmpty(userBio))
+            sb.AppendLine("- characterDescription å¿…é¡»ç”¨ç®€ä½“ä¸­æ–‡ä¹¦å†™!");
+            sb.AppendLine("- personalityTags å¿…é¡»ç”¨ç®€ä½“ä¸­æ–‡!");
+            if (!string.IsNullOrEmpty(userSupplement))
             {
                 sb.AppendLine("- RESPECT the user's personality description - ADD visual details, don't replace!");
             }
+            sb.AppendLine("- Suggest 3-6 personality tags that match the character");
             sb.AppendLine("- Focus on visual appearance first, then personality inference");
             sb.AppendLine("- 300-500 characters in Chinese");
             sb.AppendLine("- Return ONLY valid JSON");
@@ -941,52 +968,52 @@ Biography:
         }
         
         /// <summary>
-        /// ? ¸ù¾İ·ÖÎö½á¹ûÉú³É¶Ô»°·ç¸ñ
+        /// ? æ ¹æ®åˆ†æç»“æœç”Ÿæˆå¯¹è¯é£æ ¼
         /// </summary>
         private DialogueStyleDef GenerateDialogueStyleFromAnalysis(VisionAnalysisResult visionResult, string userBio = null)
         {
             var style = new DialogueStyleDef();
             
-            // Èç¹ûÓĞÓÃ»§¼ò½é£¬³¢ÊÔ´Ó¼ò½éÖĞÌáÈ¡¶Ô»°·ç¸ñ
+            // å¦‚æœæœ‰ç”¨æˆ·ç®€ä»‹ï¼Œå°è¯•ä»ç®€ä»‹ä¸­æå–å¯¹è¯é£æ ¼
             if (!string.IsNullOrEmpty(userBio))
             {
                 var lowerBio = userBio.ToLower();
                 
-                // ¼ì²âÕıÊ½³Ì¶È
-                if (lowerBio.Contains("ÕıÊ½") || lowerBio.Contains("×¨Òµ"))
+                // æ£€æµ‹æ­£å¼ç¨‹åº¦
+                if (lowerBio.Contains("æ­£å¼") || lowerBio.Contains("ä¸“ä¸š"))
                     style.formalityLevel = 0.8f;
-                else if (lowerBio.Contains("ËæÒâ") || lowerBio.Contains("ÇáËÉ") || lowerBio.Contains("ÇÎÆ¤"))
+                else if (lowerBio.Contains("éšæ„") || lowerBio.Contains("è½»æ¾") || lowerBio.Contains("ä¿çš®"))
                     style.formalityLevel = 0.3f;
                 else
                     style.formalityLevel = 0.5f;
                 
-                // ¼ì²âÇé¸Ğ±í´ï
-                if (lowerBio.Contains("Çé¸Ğ") || lowerBio.Contains("ÈÈÇé") || lowerBio.Contains("ÎÂÈá"))
+                // æ£€æµ‹æƒ…æ„Ÿè¡¨è¾¾
+                if (lowerBio.Contains("æƒ…æ„Ÿ") || lowerBio.Contains("çƒ­æƒ…") || lowerBio.Contains("æ¸©æŸ”"))
                     style.emotionalExpression = 0.8f;
-                else if (lowerBio.Contains("Àä¾²") || lowerBio.Contains("ÀíĞÔ"))
+                else if (lowerBio.Contains("å†·é™") || lowerBio.Contains("ç†æ€§"))
                     style.emotionalExpression = 0.3f;
                 else
                     style.emotionalExpression = 0.6f;
                 
-                // ¼ì²â»°ÓïÁ¿
-                if (lowerBio.Contains("¼ò½à") || lowerBio.Contains("ÑÔ¼òÒâêà"))
+                // æ£€æµ‹è¯è¯­é‡
+                if (lowerBio.Contains("ç®€æ´") || lowerBio.Contains("è¨€ç®€æ„èµ…"))
                     style.verbosity = 0.3f;
-                else if (lowerBio.Contains("ÏêÏ¸") || lowerBio.Contains("Ï²»¶ÁÄÌì"))
+                else if (lowerBio.Contains("è¯¦ç»†") || lowerBio.Contains("å–œæ¬¢èŠå¤©"))
                     style.verbosity = 0.7f;
                 else
                     style.verbosity = 0.5f;
                 
-                // ¼ì²âÓÄÄ¬¸Ğ
-                if (lowerBio.Contains("ÓÄÄ¬") || lowerBio.Contains("ÓĞÈ¤") || lowerBio.Contains("¸ãĞ¦"))
+                // æ£€æµ‹å¹½é»˜æ„Ÿ
+                if (lowerBio.Contains("å¹½é»˜") || lowerBio.Contains("æœ‰è¶£") || lowerBio.Contains("æç¬‘"))
                     style.humorLevel = 0.7f;
-                else if (lowerBio.Contains("ÑÏËà") || lowerBio.Contains("ÈÏÕæ"))
+                else if (lowerBio.Contains("ä¸¥è‚ƒ") || lowerBio.Contains("è®¤çœŸ"))
                     style.humorLevel = 0.2f;
                 else
                     style.humorLevel = 0.4f;
             }
             else
             {
-                // Ã»ÓĞÓÃ»§¼ò½é£¬Ê¹ÓÃÄ¬ÈÏÖµ
+                // æ²¡æœ‰ç”¨æˆ·ç®€ä»‹ï¼Œä½¿ç”¨é»˜è®¤å€¼
                 style.formalityLevel = 0.5f;
                 style.emotionalExpression = 0.6f;
                 style.verbosity = 0.5f;
@@ -994,7 +1021,7 @@ Biography:
                 style.sarcasmLevel = 0.3f;
             }
             
-            // ¸ù¾İÊÓ¾õ·ç¸ñµ÷Õû
+            // æ ¹æ®è§†è§‰é£æ ¼è°ƒæ•´
             if (visionResult.styleKeywords != null)
             {
                 foreach (var keyword in visionResult.styleKeywords)
@@ -1017,7 +1044,7 @@ Biography:
         }
         
         /// <summary>
-        /// ? ´´½¨Ä¬ÈÏ·ÖÎö½á¹û£¨µ± API Ê§°ÜÊ±£©
+        /// ? åˆ›å»ºé»˜è®¤åˆ†æç»“æœï¼ˆå½“ API å¤±è´¥æ—¶ï¼‰
         /// </summary>
         private PersonaAnalysisResult CreateDefaultAnalysisResult(string userBio = null)
         {
@@ -1027,8 +1054,8 @@ Biography:
                 ToneTags = new List<string>(),
                 SuggestedPersonality = Storyteller.PersonalityTrait.Strategic,
                 ConfidenceScore = 0.3f,
-                GeneratedBiography = userBio ?? "Ò»¸öÉñÃØµÄ½ÇÉ«¡£",
-                VisualDescription = "Î´ÄÜ·ÖÎöÍ¼Æ¬£¬ÇëÈ·±£Á¢»æÎÄ¼ş´æÔÚ¡£",
+                GeneratedBiography = userBio ?? "ä¸€ä¸ªç¥ç§˜çš„è§’è‰²ã€‚",
+                VisualDescription = "æœªèƒ½åˆ†æå›¾ç‰‡ï¼Œè¯·ç¡®ä¿ç«‹ç»˜æ–‡ä»¶å­˜åœ¨ã€‚",
                 SuggestedDialogueStyle = new DialogueStyleDef
                 {
                     formalityLevel = 0.5f,
@@ -1047,7 +1074,8 @@ Biography:
     // ========== Data Structures ==========
 
     /// <summary>
-    /// Vision ·ÖÎö½á¹û
+    /// Vision åˆ†æç»“æœ
+    /// ğŸ“Œ v1.6.62: æ·»åŠ  personalityTags å­—æ®µ
     /// </summary>
     public class VisionAnalysisResult
     {
@@ -1057,9 +1085,14 @@ Biography:
         public string mood { get; set; } = "";
         public string suggestedPersonality { get; set; } = "";
         public List<string> styleKeywords { get; set; } = new List<string>();
+        
+        /// <summary>
+        /// ğŸ“Œ v1.6.62: ä¸ªæ€§æ ‡ç­¾ï¼ˆå¦‚ï¼šå–„è‰¯ã€åšå¼ºã€çˆ±æ’’å¨‡ã€ç—…å¨‡ç­‰ï¼‰
+        /// </summary>
+        public List<string> personalityTags { get; set; } = new List<string>();
 
         /// <summary>
-        /// »ñÈ¡Ö÷É«µ÷£¨Õ¼±È×î¸ßµÄÑÕÉ«£©
+        /// è·å–ä¸»è‰²è°ƒï¼ˆå æ¯”æœ€é«˜çš„é¢œè‰²ï¼‰
         /// </summary>
         public Color GetPrimaryColor()
         {
@@ -1071,7 +1104,7 @@ Biography:
         }
 
         /// <summary>
-        /// »ñÈ¡ÖØÒôÉ«£¨Õ¼±ÈµÚ¶şµÄÑÕÉ«£©
+        /// è·å–é‡éŸ³è‰²ï¼ˆå æ¯”ç¬¬äºŒçš„é¢œè‰²ï¼‰
         /// </summary>
         public Color GetAccentColor()
         {
@@ -1112,7 +1145,7 @@ Biography:
     }
 
     /// <summary>
-    /// ÎÄ±¾Éî¶È·ÖÎö½á¹û
+    /// æ–‡æœ¬æ·±åº¦åˆ†æç»“æœ
     /// </summary>
     public class TextAnalysisResult
     {

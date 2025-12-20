@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;
@@ -6,44 +6,44 @@ using Verse;
 namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
-    /// Í·Ïñ¼ÓÔØÆ÷ - ×¨ÃÅÓÃÓÚUI°´Å¥Ğ¡Í·Ïñ
-    /// Óë PortraitLoader£¨È«ÉíÁ¢»æ£©Çø·Ö¿ª
-    /// ? ÓÅ»¯£º¾²Ä¬»ØÍË»úÖÆ£¬±ÜÃâÈÕÖ¾Ë¢ÆÁ
+    /// å¤´åƒåŠ è½½å™¨ - ä¸“é—¨ç”¨äºUIæŒ‰é’®å°å¤´åƒ
+    /// ä¸ PortraitLoaderï¼ˆå…¨èº«ç«‹ç»˜ï¼‰åŒºåˆ†å¼€
+    /// ? ä¼˜åŒ–ï¼šé™é»˜å›é€€æœºåˆ¶ï¼Œé¿å…æ—¥å¿—åˆ·å±
     /// </summary>
     public static class AvatarLoader
     {
         private static Dictionary<string, Texture2D> cache = new Dictionary<string, Texture2D>();
         
-        // Í·ÏñÎÄ¼şÂ·¾¶£¨512x512 Í·Ïñ×ÊÔ´£©
+        // å¤´åƒæ–‡ä»¶è·¯å¾„ï¼ˆ512x512 å¤´åƒèµ„æºï¼‰
         private const string AVATARS_PATH = "UI/Narrators/Avatars/";
         
         /// <summary>
-        /// ¼ÓÔØÍ·Ïñ£¨UI°´Å¥×¨ÓÃ£©
-        /// ? ÓÅ»¯£º¾²Ä¬»ØÍË£¬²»Ë¢ÆÁÈÕÖ¾
-        /// ? Ö§³Ö±íÇé±äÌåÏµÍ³
+        /// åŠ è½½å¤´åƒï¼ˆUIæŒ‰é’®ä¸“ç”¨ï¼‰
+        /// ? ä¼˜åŒ–ï¼šé™é»˜å›é€€ï¼Œä¸åˆ·å±æ—¥å¿—
+        /// ? æ”¯æŒè¡¨æƒ…å˜ä½“ç³»ç»Ÿ
         /// </summary>
-        /// <param name="def">ÈË¸ñ¶¨Òå</param>
-        /// <param name="expression">±íÇéÀàĞÍ</param>
-        /// <returns>Í·ÏñÎÆÀí</returns>
+        /// <param name="def">äººæ ¼å®šä¹‰</param>
+        /// <param name="expression">è¡¨æƒ…ç±»å‹</param>
+        /// <returns>å¤´åƒçº¹ç†</returns>
         public static Texture2D LoadAvatar(NarratorPersonaDef def, ExpressionType? expression = null)
         {
             if (def == null)
             {
-                // Ö»ÔÚÖÂÃü´íÎóÊ±Êä³ö
+                // åªåœ¨è‡´å‘½é”™è¯¯æ—¶è¾“å‡º
                 if (Prefs.DevMode) Log.Warning("[AvatarLoader] PersonaDef is null");
                 return GeneratePlaceholder(Color.gray);
             }
             
-            // ? È·¶¨±íÇéºó×º£¨Ö§³Ö±äÌåÑ¡Ôñ£©
+            // ? ç¡®å®šè¡¨æƒ…åç¼€ï¼ˆæ”¯æŒå˜ä½“é€‰æ‹©ï¼‰
             string expressionSuffix = "";
             if (expression.HasValue && expression.Value != ExpressionType.Neutral)
             {
-                // ? Ê¹ÓÃ ExpressionSystem µÄ»ØÍË»úÖÆ
+                // ? ä½¿ç”¨ ExpressionSystem çš„å›é€€æœºåˆ¶
                 expressionSuffix = ExpressionSystem.GetExpressionSuffix(def.defName, expression.Value);
             }
             
-            // »º´æ¼ì²é
-            // ? v1.6.21: Ìí¼Ó _avatar_ ±êÊ¶£¬±ÜÃâÓë PortraitLoader »º´æ³åÍ»
+            // ç¼“å­˜æ£€æŸ¥
+            // ? v1.6.21: æ·»åŠ  _avatar_ æ ‡è¯†ï¼Œé¿å…ä¸ PortraitLoader ç¼“å­˜å†²çª
             string cacheKey = $"{def.defName}_avatar_{expressionSuffix}";
             if (cache.TryGetValue(cacheKey, out Texture2D cached))
             {
@@ -52,25 +52,25 @@ namespace TheSecondSeat.PersonaGeneration
             
             Texture2D texture = null;
             
-            // 1. ³¢ÊÔ¼ÓÔØ±íÇéÍ·ÏñÎÄ¼ş
+            // 1. å°è¯•åŠ è½½è¡¨æƒ…å¤´åƒæ–‡ä»¶
             string personaName = GetPersonaName(def);
             
             if (expression.HasValue && expression.Value != ExpressionType.Neutral)
             {
-                // ? ´Óºó×ºÖĞ»ñÈ¡ÎÄ¼şÃû£¨ÒÑ¾­°üº¬±äÌåºÅ£©
+                // ? ä»åç¼€ä¸­è·å–æ–‡ä»¶åï¼ˆå·²ç»åŒ…å«å˜ä½“å·ï¼‰
                 string expressionFileName = expressionSuffix.TrimStart('_').ToLower();
                 
                 string avatarPath = $"{AVATARS_PATH}{personaName}/{expressionFileName}";
                 texture = ContentFinder<Texture2D>.Get(avatarPath, false);
                 
-                // ? ÒÆ³ı³É¹¦ÈÕÖ¾£¬Ö»ÔÚDevModeÏÂÊä³ö
+                // ? ç§»é™¤æˆåŠŸæ—¥å¿—ï¼Œåªåœ¨DevModeä¸‹è¾“å‡º
                 if (texture != null && Prefs.DevMode)
                 {
-                    Log.Message($"[AvatarLoader] ? ¼ÓÔØ±íÇéÍ·Ïñ: {avatarPath}");
+                    Log.Message($"[AvatarLoader] ? åŠ è½½è¡¨æƒ…å¤´åƒ: {avatarPath}");
                 }
             }
             
-            // 2. Èç¹ûÃ»ÓĞ±íÇéÍ·Ïñ£¬³¢ÊÔ¼ÓÔØ»ù´¡Í·Ïñ
+            // 2. å¦‚æœæ²¡æœ‰è¡¨æƒ…å¤´åƒï¼Œå°è¯•åŠ è½½åŸºç¡€å¤´åƒ
             if (texture == null)
             {
                 string[] baseFileNames = new[] { "base", "neutral", "Base", "Neutral", "default", "Default" };
@@ -82,10 +82,10 @@ namespace TheSecondSeat.PersonaGeneration
                     
                     if (texture != null)
                     {
-                        // ? ÒÆ³ı³É¹¦ÈÕÖ¾£¬Ö»ÔÚDevModeÏÂÊä³ö
+                        // ? ç§»é™¤æˆåŠŸæ—¥å¿—ï¼Œåªåœ¨DevModeä¸‹è¾“å‡º
                         if (Prefs.DevMode)
                         {
-                            Log.Message($"[AvatarLoader] ? ¼ÓÔØ»ù´¡Í·Ïñ: {baseAvatarPath}");
+                            Log.Message($"[AvatarLoader] ? åŠ è½½åŸºç¡€å¤´åƒ: {baseAvatarPath}");
                         }
                         SetTextureQualitySafe(texture);
                         break;
@@ -93,65 +93,65 @@ namespace TheSecondSeat.PersonaGeneration
                 }
             }
             
-            // 3. ¶µµ×£ºÊ¹ÓÃÁ¢»æ²Ã¼ô
+            // 3. å…œåº•ï¼šä½¿ç”¨ç«‹ç»˜è£å‰ª
             if (texture == null)
             {
                 var portrait = PortraitLoader.LoadPortrait(def, expression);
                 if (portrait != null)
                 {
-                    // ? ÒÆ³ıÈÕÖ¾£¬¾²Ä¬²Ã¼ô
+                    // ? ç§»é™¤æ—¥å¿—ï¼Œé™é»˜è£å‰ª
                     texture = CropHeadFromPortraitSafe(portrait);
                 }
             }
             
-            // 4. ×îÖÕÕ¼Î»·û
+            // 4. æœ€ç»ˆå ä½ç¬¦
             if (texture == null)
             {
-                // ? Ö»ÔÚÍêÈ«Ê§°ÜÊ±Êä³ö¾¯¸æ
-                Log.Warning($"[AvatarLoader] ? ËùÓĞ¼ÓÔØ·½Ê½Ê§°Ü£¬Ê¹ÓÃÕ¼Î»·û: {def.defName}{expressionSuffix}");
+                // ? åªåœ¨å®Œå…¨å¤±è´¥æ—¶è¾“å‡ºè­¦å‘Š
+                Log.Warning($"[AvatarLoader] ? æ‰€æœ‰åŠ è½½æ–¹å¼å¤±è´¥ï¼Œä½¿ç”¨å ä½ç¬¦: {def.defName}{expressionSuffix}");
                 texture = GeneratePlaceholder(def.primaryColor);
             }
             
-            // »º´æ
+            // ç¼“å­˜
             cache[cacheKey] = texture;
             return texture;
         }
         
         /// <summary>
-        /// ? °²È«µØ´ÓÁ¢»æ²Ã¼ôÍ·²¿ÇøÓò£¨´¦Àí²»¿É¶ÁÎÆÀí£©
+        /// ? å®‰å…¨åœ°ä»ç«‹ç»˜è£å‰ªå¤´éƒ¨åŒºåŸŸï¼ˆå¤„ç†ä¸å¯è¯»çº¹ç†ï¼‰
         /// </summary>
         private static Texture2D CropHeadFromPortraitSafe(Texture2D portrait)
         {
             try
             {
-                // ? ÏÈ½«ÎÆÀí×ª»»Îª¿É¶Á¸ñÊ½
+                // ? å…ˆå°†çº¹ç†è½¬æ¢ä¸ºå¯è¯»æ ¼å¼
                 Texture2D readable = MakeReadable(portrait);
                 if (readable == null)
                 {
-                    Log.Warning("[AvatarLoader] ÎŞ·¨Ê¹ÎÆÀí¿É¶Á£¬Ö±½Ó·µ»ØÔ­ÎÆÀí");
+                    Log.Warning("[AvatarLoader] æ— æ³•ä½¿çº¹ç†å¯è¯»ï¼Œç›´æ¥è¿”å›åŸçº¹ç†");
                     return portrait;
                 }
                 
-                // ²Ã¼ôÉÏ°ë²¿·Ö£¨Í·²¿ÇøÓò£©
+                // è£å‰ªä¸ŠåŠéƒ¨åˆ†ï¼ˆå¤´éƒ¨åŒºåŸŸï¼‰
                 int cropSize = Mathf.Min(512, Mathf.Min(readable.width, readable.height));
                 int sourceWidth = readable.width;
                 int sourceHeight = readable.height;
                 
-                // ´Ó¶¥²¿²Ã¼ôÇøÓò£¨¾ÓÖĞ£©
+                // ä»é¡¶éƒ¨è£å‰ªåŒºåŸŸï¼ˆå±…ä¸­ï¼‰
                 int startX = (sourceWidth - cropSize) / 2;
-                int startY = sourceHeight - cropSize; // Unity ÎÆÀí Y Öá´Óµ×²¿¿ªÊ¼
+                int startY = sourceHeight - cropSize; // Unity çº¹ç† Y è½´ä»åº•éƒ¨å¼€å§‹
                 
-                // È·±£²»³¬³ö±ß½ç
+                // ç¡®ä¿ä¸è¶…å‡ºè¾¹ç•Œ
                 startX = Mathf.Clamp(startX, 0, Mathf.Max(0, sourceWidth - cropSize));
                 startY = Mathf.Clamp(startY, 0, Mathf.Max(0, sourceHeight - cropSize));
                 
-                // È·±£²Ã¼ô³ß´çÓĞĞ§
+                // ç¡®ä¿è£å‰ªå°ºå¯¸æœ‰æ•ˆ
                 int actualCropWidth = Mathf.Min(cropSize, sourceWidth - startX);
                 int actualCropHeight = Mathf.Min(cropSize, sourceHeight - startY);
                 
                 if (actualCropWidth <= 0 || actualCropHeight <= 0)
                 {
-                    Log.Warning("[AvatarLoader] ²Ã¼ô³ß´çÎŞĞ§£¬·µ»ØÔ­ÎÆÀí");
+                    Log.Warning("[AvatarLoader] è£å‰ªå°ºå¯¸æ— æ•ˆï¼Œè¿”å›åŸçº¹ç†");
                     return readable;
                 }
                 
@@ -160,7 +160,7 @@ namespace TheSecondSeat.PersonaGeneration
                 cropped.SetPixels(pixels);
                 cropped.Apply();
                 
-                // ÉèÖÃÖÊÁ¿
+                // è®¾ç½®è´¨é‡
                 cropped.filterMode = FilterMode.Bilinear;
                 cropped.anisoLevel = 4;
                 
@@ -168,32 +168,32 @@ namespace TheSecondSeat.PersonaGeneration
             }
             catch (Exception ex)
             {
-                Log.Error($"[AvatarLoader] ²Ã¼ôÍ·ÏñÊ§°Ü: {ex.Message}");
+                Log.Error($"[AvatarLoader] è£å‰ªå¤´åƒå¤±è´¥: {ex.Message}");
                 return portrait;
             }
         }
         
         /// <summary>
-        /// ? ½«ÎÆÀí×ª»»Îª¿É¶Á¸ñÊ½
+        /// ? å°†çº¹ç†è½¬æ¢ä¸ºå¯è¯»æ ¼å¼
         /// </summary>
         private static Texture2D MakeReadable(Texture2D source)
         {
             if (source == null) return null;
             
-            // ÏÈ³¢ÊÔÖ±½Ó¶ÁÈ¡
+            // å…ˆå°è¯•ç›´æ¥è¯»å–
             try
             {
                 source.GetPixel(0, 0);
-                return source; // ÒÑ¾­¿É¶Á
+                return source; // å·²ç»å¯è¯»
             }
             catch
             {
-                // ĞèÒª×ª»»
+                // éœ€è¦è½¬æ¢
             }
             
             try
             {
-                // Ê¹ÓÃ RenderTexture À´¸´ÖÆÎÆÀíÊı¾İ
+                // ä½¿ç”¨ RenderTexture æ¥å¤åˆ¶çº¹ç†æ•°æ®
                 RenderTexture renderTex = RenderTexture.GetTemporary(
                     source.width, 
                     source.height, 
@@ -217,19 +217,19 @@ namespace TheSecondSeat.PersonaGeneration
             }
             catch (Exception ex)
             {
-                Log.Error($"[AvatarLoader] MakeReadable Ê§°Ü: {ex.Message}");
+                Log.Error($"[AvatarLoader] MakeReadable å¤±è´¥: {ex.Message}");
                 return null;
             }
         }
         
         /// <summary>
-        /// »ñÈ¡ÈË¸ñÃû³Æ
+        /// è·å–äººæ ¼åç§°
         /// </summary>
         private static string GetPersonaName(NarratorPersonaDef def)
         {
             if (!string.IsNullOrEmpty(def.narratorName))
             {
-                // È¡µÚÒ»¸öµ¥´Ê£¨Èç "Cassandra Classic" ¡ú "Cassandra"£©
+                // å–ç¬¬ä¸€ä¸ªå•è¯ï¼ˆå¦‚ "Cassandra Classic" â†’ "Cassandra"ï¼‰
                 return def.narratorName.Split(' ')[0].Trim();
             }
             
@@ -247,14 +247,14 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// Éú³ÉÕ¼Î»·û
+        /// ç”Ÿæˆå ä½ç¬¦
         /// </summary>
         private static Texture2D GeneratePlaceholder(Color color)
         {
             int size = 512;
             Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
             
-            // ¼òµ¥½¥±ä
+            // ç®€å•æ¸å˜
             Color darkColor = color * 0.3f;
             Color lightColor = color * 1.2f;
             
@@ -274,25 +274,25 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// Çå¿Õ»º´æ
+        /// æ¸…ç©ºç¼“å­˜
         /// </summary>
         public static void ClearCache()
         {
             cache.Clear();
-            Log.Message("[AvatarLoader] Í·Ïñ»º´æÒÑÇå¿Õ");
+            Log.Message("[AvatarLoader] å¤´åƒç¼“å­˜å·²æ¸…ç©º");
         }
         
         /// <summary>
-        /// ? v1.6.21: Çå¿ÕËùÓĞ»º´æ£¨ÓÃÓÚÄ£Ê½ÇĞ»»£©
+        /// ? v1.6.21: æ¸…ç©ºæ‰€æœ‰ç¼“å­˜ï¼ˆç”¨äºæ¨¡å¼åˆ‡æ¢ï¼‰
         /// </summary>
         public static void ClearAllCache()
         {
             cache.Clear();
-            Log.Message("[AvatarLoader] ËùÓĞÍ·Ïñ»º´æÒÑÇå¿Õ");
+            Log.Message("[AvatarLoader] æ‰€æœ‰å¤´åƒç¼“å­˜å·²æ¸…ç©º");
         }
 
         /// <summary>
-        /// ? Çå³ıÌØ¶¨ÈË¸ñµÄÌØ¶¨±íÇéÍ·Ïñ»º´æ
+        /// ? æ¸…é™¤ç‰¹å®šäººæ ¼çš„ç‰¹å®šè¡¨æƒ…å¤´åƒç¼“å­˜
         /// </summary>
         public static void ClearAvatarCache(string personaDefName, ExpressionType expression)
         {
@@ -307,12 +307,12 @@ namespace TheSecondSeat.PersonaGeneration
             if (cache.ContainsKey(cacheKey))
             {
                 cache.Remove(cacheKey);
-                Log.Message($"[AvatarLoader] Çå³ıÍ·Ïñ»º´æ: {cacheKey}");
+                Log.Message($"[AvatarLoader] æ¸…é™¤å¤´åƒç¼“å­˜: {cacheKey}");
             }
         }
 
         /// <summary>
-        /// ? ÉèÖÃÎÆÀí¸ßÖÊÁ¿²ÎÊı£¨°²È«°æ±¾£©
+        /// ? è®¾ç½®çº¹ç†é«˜è´¨é‡å‚æ•°ï¼ˆå®‰å…¨ç‰ˆæœ¬ï¼‰
         /// </summary>
         private static void SetTextureQualitySafe(Texture2D texture)
         {
@@ -320,14 +320,14 @@ namespace TheSecondSeat.PersonaGeneration
             
             try
             {
-                // Ö»ÉèÖÃ¹ıÂËÄ£Ê½£¬²»µ÷ÓÃ Apply£¨±ÜÃâ²»¿É¶ÁÎÆÀí´íÎó£©
+                // åªè®¾ç½®è¿‡æ»¤æ¨¡å¼ï¼Œä¸è°ƒç”¨ Applyï¼ˆé¿å…ä¸å¯è¯»çº¹ç†é”™è¯¯ï¼‰
                 texture.filterMode = FilterMode.Bilinear;
                 texture.anisoLevel = 4;
-                // ×¢Òâ£º²»µ÷ÓÃ texture.Apply()
+                // æ³¨æ„ï¼šä¸è°ƒç”¨ texture.Apply()
             }
             catch
             {
-                // ¾²Ä¬ºöÂÔ
+                // é™é»˜å¿½ç•¥
             }
         }
     }

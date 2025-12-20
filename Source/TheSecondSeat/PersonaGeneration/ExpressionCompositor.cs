@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;
@@ -6,22 +6,22 @@ using Verse;
 namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
-    /// Ãæ²¿ÇøÓò¶¨Òå
-    /// ? ¶¨Òå±íÇé¸²¸ÇµÄÃæ²¿ÇøÓò·¶Î§
+    /// é¢éƒ¨åŒºåŸŸå®šä¹‰
+    /// ? å®šä¹‰è¡¨æƒ…è¦†ç›–çš„é¢éƒ¨åŒºåŸŸèŒƒå›´
     /// </summary>
     public class FaceRegion
     {
-        // Ãæ²¿ÇøÓòÔÚÍêÕûÁ¢»æÖĞµÄÎ»ÖÃ£¨¹éÒ»»¯×ø±ê 0-1£©
-        public float CenterX { get; set; } = 0.5f;      // Ë®Æ½ÖĞĞÄ£¨0.5 = ÕıÖĞ¼ä£©
-        public float CenterY { get; set; } = 0.35f;     // ´¹Ö±ÖĞĞÄ£¨0.35 = ÂÔÆ«ÉÏ£¬ÊÊºÏ´ó¶àÊıÁ¢»æ£©
-        public float Width { get; set; } = 0.4f;        // ¿í¶ÈÕ¼±È£¨0.4 = 40%£©
-        public float Height { get; set; } = 0.3f;       // ¸ß¶ÈÕ¼±È£¨0.3 = 30%£©
+        // é¢éƒ¨åŒºåŸŸåœ¨å®Œæ•´ç«‹ç»˜ä¸­çš„ä½ç½®ï¼ˆå½’ä¸€åŒ–åæ ‡ 0-1ï¼‰
+        public float CenterX { get; set; } = 0.5f;      // æ°´å¹³ä¸­å¿ƒï¼ˆ0.5 = æ­£ä¸­é—´ï¼‰
+        public float CenterY { get; set; } = 0.35f;     // å‚ç›´ä¸­å¿ƒï¼ˆ0.35 = ç•¥åä¸Šï¼Œé€‚åˆå¤§å¤šæ•°ç«‹ç»˜ï¼‰
+        public float Width { get; set; } = 0.4f;        // å®½åº¦å æ¯”ï¼ˆ0.4 = 40%ï¼‰
+        public float Height { get; set; } = 0.3f;       // é«˜åº¦å æ¯”ï¼ˆ0.3 = 30%ï¼‰
         
-        // Óğ»¯±ßÔµ£¨±ÜÃâÓ²±ß½ç£©
-        public float FeatherRadius { get; set; } = 0.05f;  // 5%µÄÓğ»¯·¶Î§
+        // ç¾½åŒ–è¾¹ç¼˜ï¼ˆé¿å…ç¡¬è¾¹ç•Œï¼‰
+        public float FeatherRadius { get; set; } = 0.05f;  // 5%çš„ç¾½åŒ–èŒƒå›´
         
         /// <summary>
-        /// »ñÈ¡Ãæ²¿ÇøÓòµÄÏñËØ·¶Î§
+        /// è·å–é¢éƒ¨åŒºåŸŸçš„åƒç´ èŒƒå›´
         /// </summary>
         public Rect GetPixelRect(int textureWidth, int textureHeight)
         {
@@ -35,24 +35,24 @@ namespace TheSecondSeat.PersonaGeneration
     }
     
     /// <summary>
-    /// ±íÇéÎÆÀíºÏ³ÉÆ÷
-    /// ? ½«Ãæ²¿±íÇéÎÆÀíµş¼Óµ½»ù´¡Á¢»æÉÏ
+    /// è¡¨æƒ…çº¹ç†åˆæˆå™¨
+    /// ? å°†é¢éƒ¨è¡¨æƒ…çº¹ç†å åŠ åˆ°åŸºç¡€ç«‹ç»˜ä¸Š
     /// </summary>
     public static class ExpressionCompositor
     {
-        // »º´æÒÑºÏ³ÉµÄ±íÇéÎÆÀí
+        // ç¼“å­˜å·²åˆæˆçš„è¡¨æƒ…çº¹ç†
         private static Dictionary<string, Texture2D> compositeCache = new Dictionary<string, Texture2D>();
         
         /// <summary>
-        /// ºÏ³É±íÇé£¨»ù´¡Á¢»æ + Á³²¿²î·Ö£©
-        /// ? ĞÂÔö£ºÖ§³ÖÖÇÄÜ²Ã¼ô£¬¼õÉÙÄÚ´æÕ¼ÓÃ
+        /// åˆæˆè¡¨æƒ…ï¼ˆåŸºç¡€ç«‹ç»˜ + è„¸éƒ¨å·®åˆ†ï¼‰
+        /// ? æ–°å¢ï¼šæ”¯æŒæ™ºèƒ½è£å‰ªï¼Œå‡å°‘å†…å­˜å ç”¨
         /// </summary>
-        /// <param name="baseTexture">»ù´¡Á¢»æ£¨ÍêÕûÉíÌå¡¢ÒÂ·şµÈ£©</param>
-        /// <param name="faceTexture">Á³²¿²î·Ö£¨»òÍêÕû±íÇéÁ¢»æ£©</param>
-        /// <param name="faceRegion">Á³²¿ÇøÓò</param>
-        /// <param name="cacheKey">»º´æ¼ü£¨ÓÃÓÚ±ÜÃâÖØ¸´ºÏ³É£©</param>
-        /// <param name="autoCrop">ÊÇ·ñ×Ô¶¯²Ã¼ô±íÇé²î·Ö£¨Èç¹ûÊÇÍêÕûÁ¢»æ£©</param>
-        /// <returns>ºÏ³ÉºóµÄÁ¢»æÎÆÀí</returns>
+        /// <param name="baseTexture">åŸºç¡€ç«‹ç»˜ï¼ˆå®Œæ•´èº«ä½“ã€è¡£æœç­‰ï¼‰</param>
+        /// <param name="faceTexture">è„¸éƒ¨å·®åˆ†ï¼ˆæˆ–å®Œæ•´è¡¨æƒ…ç«‹ç»˜ï¼‰</param>
+        /// <param name="faceRegion">è„¸éƒ¨åŒºåŸŸ</param>
+        /// <param name="cacheKey">ç¼“å­˜é”®ï¼ˆç”¨äºé¿å…é‡å¤åˆæˆï¼‰</param>
+        /// <param name="autoCrop">æ˜¯å¦è‡ªåŠ¨è£å‰ªè¡¨æƒ…å·®åˆ†ï¼ˆå¦‚æœæ˜¯å®Œæ•´ç«‹ç»˜ï¼‰</param>
+        /// <returns>åˆæˆåçš„ç«‹ç»˜çº¹ç†</returns>
         public static Texture2D CompositeExpression(
             Texture2D baseTexture, 
             Texture2D faceTexture, 
@@ -60,7 +60,7 @@ namespace TheSecondSeat.PersonaGeneration
             string cacheKey = null,
             bool autoCrop = true)
         {
-            // ¼ì²é»º´æ
+            // æ£€æŸ¥ç¼“å­˜
             if (!string.IsNullOrEmpty(cacheKey) && compositeCache.TryGetValue(cacheKey, out Texture2D cached))
             {
                 return cached;
@@ -68,73 +68,73 @@ namespace TheSecondSeat.PersonaGeneration
             
             try
             {
-                // ? ÖÇÄÜ²Ã¼ô£ºÈç¹û±íÇé²î·ÖÊÇÍêÕûÁ¢»æ£¬×Ô¶¯²Ã¼ô³öÃæ²¿ÇøÓò
+                // ? æ™ºèƒ½è£å‰ªï¼šå¦‚æœè¡¨æƒ…å·®åˆ†æ˜¯å®Œæ•´ç«‹ç»˜ï¼Œè‡ªåŠ¨è£å‰ªå‡ºé¢éƒ¨åŒºåŸŸ
                 Texture2D processedFace = faceTexture;
                 if (autoCrop && IsFullPortrait(faceTexture, baseTexture))
                 {
-                    Log.Message($"[ExpressionCompositor] ¼ì²âµ½ÍêÕûÁ¢»æ±íÇé£¬Ö´ĞĞÖÇÄÜ²Ã¼ô");
+                    Log.Message($"[ExpressionCompositor] æ£€æµ‹åˆ°å®Œæ•´ç«‹ç»˜è¡¨æƒ…ï¼Œæ‰§è¡Œæ™ºèƒ½è£å‰ª");
                     processedFace = SmartCropper.CropTexture(faceTexture, SmartCropper.CropType.Expression);
                     
                     if (processedFace == null)
                     {
-                        Log.Warning("[ExpressionCompositor] ²Ã¼ôÊ§°Ü£¬Ê¹ÓÃÔ­Ê¼ÎÆÀí");
+                        Log.Warning("[ExpressionCompositor] è£å‰ªå¤±è´¥ï¼Œä½¿ç”¨åŸå§‹çº¹ç†");
                         processedFace = faceTexture;
                     }
                 }
                 
-                // ´´½¨¿É¶Á°æ±¾ÎÆÀí
+                // åˆ›å»ºå¯è¯»ç‰ˆæœ¬çº¹ç†
                 Texture2D readableBase = MakeReadable(baseTexture);
                 Texture2D readableFace = MakeReadable(processedFace);
                 
-                // ´´½¨½á¹ûÎÆÀí
+                // åˆ›å»ºç»“æœçº¹ç†
                 Texture2D result = new Texture2D(readableBase.width, readableBase.height, TextureFormat.RGBA32, false);
                 
-                // ¸´ÖÆ»ù´¡ÏñËØ
+                // å¤åˆ¶åŸºç¡€åƒç´ 
                 Color[] basePixels = readableBase.GetPixels();
                 result.SetPixels(basePixels);
                 
-                // »ñÈ¡Á³²¿ÇøÓò
+                // è·å–è„¸éƒ¨åŒºåŸŸ
                 Rect faceRect = faceRegion.GetPixelRect(readableBase.width, readableBase.height);
                 
-                // »ìºÏÁ³²¿²î·Ö
+                // æ··åˆè„¸éƒ¨å·®åˆ†
                 BlendFaceRegion(result, readableFace, faceRect, faceRegion.FeatherRadius);
                 
                 result.Apply();
                 
-                // ±£´æ»º´æ
+                // ä¿å­˜ç¼“å­˜
                 if (!string.IsNullOrEmpty(cacheKey))
                 {
                     compositeCache[cacheKey] = result;
                 }
                 
-                // ÇåÀíÁÙÊ±ÎÆÀí
+                // æ¸…ç†ä¸´æ—¶çº¹ç†
                 if (readableBase != baseTexture)
                     UnityEngine.Object.Destroy(readableBase);
                 if (readableFace != faceTexture && readableFace != processedFace)
                     UnityEngine.Object.Destroy(readableFace);
                 
-                Log.Message($"[ExpressionCompositor] ºÏ³É±íÇé³É¹¦: {cacheKey}");
+                Log.Message($"[ExpressionCompositor] åˆæˆè¡¨æƒ…æˆåŠŸ: {cacheKey}");
                 return result;
             }
             catch (Exception ex)
             {
-                Log.Error($"[ExpressionCompositor] ºÏ³É±íÇéÊ§°Ü: {ex}");
-                return baseTexture; // Ê§°ÜÊ±·µ»Ø»ù´¡Á¢»æ
+                Log.Error($"[ExpressionCompositor] åˆæˆè¡¨æƒ…å¤±è´¥: {ex}");
+                return baseTexture; // å¤±è´¥æ—¶è¿”å›åŸºç¡€ç«‹ç»˜
             }
         }
         
         /// <summary>
-        /// ? ¼ì²âÊÇ·ñÎªÍêÕûÁ¢»æ£¨¶ø·ÇÒÑ²Ã¼ôµÄ±íÇé²î·Ö£©
+        /// ? æ£€æµ‹æ˜¯å¦ä¸ºå®Œæ•´ç«‹ç»˜ï¼ˆè€Œéå·²è£å‰ªçš„è¡¨æƒ…å·®åˆ†ï¼‰
         /// </summary>
         private static bool IsFullPortrait(Texture2D texture, Texture2D referenceTexture)
         {
-            // ¼òµ¥Æô·¢Ê½£ºÈç¹û³ß´çÓë»ù´¡Á¢»æÏàÍ¬»ò½Ó½ü£¬ÈÏÎªÊÇÍêÕûÁ¢»æ
+            // ç®€å•å¯å‘å¼ï¼šå¦‚æœå°ºå¯¸ä¸åŸºç¡€ç«‹ç»˜ç›¸åŒæˆ–æ¥è¿‘ï¼Œè®¤ä¸ºæ˜¯å®Œæ•´ç«‹ç»˜
             float sizeRatio = (float)(texture.width * texture.height) / (referenceTexture.width * referenceTexture.height);
-            return sizeRatio > 0.7f; // Ãæ»ı³¬¹ı 70% ÈÏÎªÊÇÍêÕûÁ¢»æ
+            return sizeRatio > 0.7f; // é¢ç§¯è¶…è¿‡ 70% è®¤ä¸ºæ˜¯å®Œæ•´ç«‹ç»˜
         }
         
         /// <summary>
-        /// ½«ÎÆÀí×ª»»Îª¿É¶Á¸ñÊ½
+        /// å°†çº¹ç†è½¬æ¢ä¸ºå¯è¯»æ ¼å¼
         /// </summary>
         private static Texture2D MakeReadable(Texture2D source)
         {
@@ -161,7 +161,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// »ìºÏÃæ²¿ÇøÓò£¨´øÓğ»¯±ßÔµ£©
+        /// æ··åˆé¢éƒ¨åŒºåŸŸï¼ˆå¸¦ç¾½åŒ–è¾¹ç¼˜ï¼‰
         /// </summary>
         private static void BlendFaceRegion(
             Texture2D target, 
@@ -180,14 +180,14 @@ namespace TheSecondSeat.PersonaGeneration
             {
                 for (int x = startX; x < endX; x++)
                 {
-                    // ¼ÆËãÔÚÃæ²¿ÎÆÀíÖĞµÄ¹éÒ»»¯×ø±ê
+                    // è®¡ç®—åœ¨é¢éƒ¨çº¹ç†ä¸­çš„å½’ä¸€åŒ–åæ ‡
                     float u = (x - faceRect.x) / faceRect.width;
                     float v = (y - faceRect.y) / faceRect.height;
                     
-                    // ±ß½ç¼ì²é
+                    // è¾¹ç•Œæ£€æŸ¥
                     if (u < 0 || u > 1 || v < 0 || v > 1) continue;
                     
-                    // ´ÓÃæ²¿ÎÆÀí²ÉÑù
+                    // ä»é¢éƒ¨çº¹ç†é‡‡æ ·
                     int faceX = Mathf.FloorToInt(u * face.width);
                     int faceY = Mathf.FloorToInt(v * face.height);
                     
@@ -195,14 +195,14 @@ namespace TheSecondSeat.PersonaGeneration
                     
                     Color faceColor = face.GetPixel(faceX, faceY);
                     
-                    // Èç¹ûÃæ²¿ÏñËØÊÇÍ¸Ã÷µÄ£¬Ìø¹ı
+                    // å¦‚æœé¢éƒ¨åƒç´ æ˜¯é€æ˜çš„ï¼Œè·³è¿‡
                     if (faceColor.a < 0.01f) continue;
                     
-                    // ¼ÆËãÓğ»¯È¨ÖØ£¨¾àÀë±ßÔµÔ½½üÔ½Í¸Ã÷£©
+                    // è®¡ç®—ç¾½åŒ–æƒé‡ï¼ˆè·ç¦»è¾¹ç¼˜è¶Šè¿‘è¶Šé€æ˜ï¼‰
                     float distToEdge = GetDistanceToEdge(u, v);
                     float featherWeight = Mathf.Clamp01(distToEdge / featherRadius);
                     
-                    // »ìºÏÑÕÉ«
+                    // æ··åˆé¢œè‰²
                     Color baseColor = target.GetPixel(x, y);
                     float alpha = faceColor.a * featherWeight;
                     Color blended = Color.Lerp(baseColor, faceColor, alpha);
@@ -213,7 +213,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ¼ÆËãµãµ½¾ØĞÎ±ßÔµµÄ×îĞ¡¾àÀë£¨¹éÒ»»¯£©
+        /// è®¡ç®—ç‚¹åˆ°çŸ©å½¢è¾¹ç¼˜çš„æœ€å°è·ç¦»ï¼ˆå½’ä¸€åŒ–ï¼‰
         /// </summary>
         private static float GetDistanceToEdge(float u, float v)
         {
@@ -223,7 +223,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// Çå³ıºÏ³É»º´æ
+        /// æ¸…é™¤åˆæˆç¼“å­˜
         /// </summary>
         public static void ClearCache()
         {
@@ -235,21 +235,21 @@ namespace TheSecondSeat.PersonaGeneration
                 }
             }
             compositeCache.Clear();
-            Log.Message("[ExpressionCompositor] ±íÇéºÏ³É»º´æÒÑÇå³ı");
+            Log.Message("[ExpressionCompositor] è¡¨æƒ…åˆæˆç¼“å­˜å·²æ¸…é™¤");
         }
         
         /// <summary>
-        /// »ñÈ¡µ÷ÊÔĞÅÏ¢
+        /// è·å–è°ƒè¯•ä¿¡æ¯
         /// </summary>
         public static string GetDebugInfo()
         {
-            return $"[ExpressionCompositor] »º´æÊıÁ¿: {compositeCache.Count}";
+            return $"[ExpressionCompositor] ç¼“å­˜æ•°é‡: {compositeCache.Count}";
         }
     }
     
     /// <summary>
-    /// ÈË¸ñÃæ²¿ÇøÓòÅäÖÃ
-    /// ? Îª²»Í¬ÈË¸ñ¶¨ÒåÃæ²¿ÇøÓò£¨ÒòÎªÁ¢»æ¹¹Í¼¿ÉÄÜ²»Í¬£©
+    /// äººæ ¼é¢éƒ¨åŒºåŸŸé…ç½®
+    /// ? ä¸ºä¸åŒäººæ ¼å®šä¹‰é¢éƒ¨åŒºåŸŸï¼ˆå› ä¸ºç«‹ç»˜æ„å›¾å¯èƒ½ä¸åŒï¼‰
     /// </summary>
     public static class PersonaFaceRegions
     {
@@ -257,21 +257,21 @@ namespace TheSecondSeat.PersonaGeneration
         
         static PersonaFaceRegions()
         {
-            // Ä¬ÈÏÃæ²¿ÇøÓò£¨ÊÊºÏ´ó¶àÊıÁ¢»æ£©
+            // é»˜è®¤é¢éƒ¨åŒºåŸŸï¼ˆé€‚åˆå¤§å¤šæ•°ç«‹ç»˜ï¼‰
             regions["Default"] = new FaceRegion
             {
-                CenterX = 0.5f,   // Ë®Æ½¾ÓÖĞ
-                CenterY = 0.35f,  // ÂÔÆ«ÉÏ£¨Í·²¿Í¨³£ÔÚÉÏ1/3´¦£©
-                Width = 0.4f,     // ¿í¶È40%
-                Height = 0.3f,    // ¸ß¶È30%
+                CenterX = 0.5f,   // æ°´å¹³å±…ä¸­
+                CenterY = 0.35f,  // ç•¥åä¸Šï¼ˆå¤´éƒ¨é€šå¸¸åœ¨ä¸Š1/3å¤„ï¼‰
+                Width = 0.4f,     // å®½åº¦40%
+                Height = 0.3f,    // é«˜åº¦30%
                 FeatherRadius = 0.05f
             };
             
-            // Ê¾Àı£ºÎªÌØ¶¨ÈË¸ñ×Ô¶¨ÒåÇøÓò
+            // ç¤ºä¾‹ï¼šä¸ºç‰¹å®šäººæ ¼è‡ªå®šä¹‰åŒºåŸŸ
             regions["Cassandra_Classic"] = new FaceRegion
             {
                 CenterX = 0.5f,
-                CenterY = 0.32f,  // CassandraµÄÁ³ÉÔÎ¢¿¿ÉÏ
+                CenterY = 0.32f,  // Cassandraçš„è„¸ç¨å¾®é ä¸Š
                 Width = 0.38f,
                 Height = 0.28f,
                 FeatherRadius = 0.06f
@@ -280,7 +280,7 @@ namespace TheSecondSeat.PersonaGeneration
             regions["Phoebe_Friendly"] = new FaceRegion
             {
                 CenterX = 0.5f,
-                CenterY = 0.37f,  // PhoebeµÄÁ³ÉÔÎ¢¿¿ÏÂ
+                CenterY = 0.37f,  // Phoebeçš„è„¸ç¨å¾®é ä¸‹
                 Width = 0.42f,
                 Height = 0.32f,
                 FeatherRadius = 0.05f
@@ -288,7 +288,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// »ñÈ¡ÈË¸ñµÄÃæ²¿ÇøÓò
+        /// è·å–äººæ ¼çš„é¢éƒ¨åŒºåŸŸ
         /// </summary>
         public static FaceRegion GetFaceRegion(string personaDefName)
         {
@@ -297,17 +297,17 @@ namespace TheSecondSeat.PersonaGeneration
                 return region;
             }
             
-            // »ØÍËµ½Ä¬ÈÏÇøÓò
+            // å›é€€åˆ°é»˜è®¤åŒºåŸŸ
             return regions["Default"];
         }
         
         /// <summary>
-        /// ÉèÖÃÈË¸ñµÄÃæ²¿ÇøÓò
+        /// è®¾ç½®äººæ ¼çš„é¢éƒ¨åŒºåŸŸ
         /// </summary>
         public static void SetFaceRegion(string personaDefName, FaceRegion region)
         {
             regions[personaDefName] = region;
-            Log.Message($"[PersonaFaceRegions] ÒÑÉèÖÃ {personaDefName} µÄÃæ²¿ÇøÓò");
+            Log.Message($"[PersonaFaceRegions] å·²è®¾ç½® {personaDefName} çš„é¢éƒ¨åŒºåŸŸ");
         }
     }
 }

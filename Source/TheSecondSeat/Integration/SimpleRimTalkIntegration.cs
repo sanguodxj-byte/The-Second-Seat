@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,39 +8,39 @@ using RimWorld;
 namespace TheSecondSeat.Integration
 {
     /// <summary>
-    /// ¼ò»¯µÄ RimTalk ¼¯³É - Ö§³ÖĞğÊÂÕß AI (pawn == null) ·ÃÎÊ¹²Í¨ÖªÊ¶¿â
+    /// ç®€åŒ–çš„ RimTalk é›†æˆ - æ”¯æŒå™äº‹è€… AI (pawn == null) è®¿é—®å…±é€šçŸ¥è¯†åº“
     /// </summary>
     public static class SimpleRimTalkIntegration
     {
-        // »º´æ£º±ÜÃâÖØ¸´Éú³ÉÏàÍ¬µÄ Prompt
+        // ç¼“å­˜ï¼šé¿å…é‡å¤ç”Ÿæˆç›¸åŒçš„ Prompt
         private static Dictionary<string, string> PromptCache = new Dictionary<string, string>();
-        private const int CacheDurationTicks = 3000; // »º´æ³ÖĞø 50 Ãë
+        private const int CacheDurationTicks = 3000; // ç¼“å­˜æŒç»­ 50 ç§’
         private static Dictionary<string, int> CacheTimestamp = new Dictionary<string, int>();
 
         /// <summary>
-        /// »ñÈ¡¼ÇÒäÔöÇ¿µÄ Prompt
-        /// ? ½×¶ÎÒ»£ºÒÆ³ı×èÈû£¬Ö§³Ö pawn == null
+        /// è·å–è®°å¿†å¢å¼ºçš„ Prompt
+        /// ? é˜¶æ®µä¸€ï¼šç§»é™¤é˜»å¡ï¼Œæ”¯æŒ pawn == null
         /// </summary>
-        /// <param name="basePrompt">»ù´¡ Prompt</param>
-        /// <param name="pawn">Ä¿±ê Pawn£¨ĞğÊÂÕß AI Ê±Îª null£©</param>
-        /// <param name="maxPersonalMemories">¸öÈË¼ÇÒä×î´óÊıÁ¿£¨pawn != null Ê±£©</param>
-        /// <param name="maxKnowledgeEntries">¹²Í¨ÖªÊ¶×î´óÊıÁ¿</param>
-        /// <returns>ÔöÇ¿ºóµÄ Prompt</returns>
+        /// <param name="basePrompt">åŸºç¡€ Prompt</param>
+        /// <param name="pawn">ç›®æ ‡ Pawnï¼ˆå™äº‹è€… AI æ—¶ä¸º nullï¼‰</param>
+        /// <param name="maxPersonalMemories">ä¸ªäººè®°å¿†æœ€å¤§æ•°é‡ï¼ˆpawn != null æ—¶ï¼‰</param>
+        /// <param name="maxKnowledgeEntries">å…±é€šçŸ¥è¯†æœ€å¤§æ•°é‡</param>
+        /// <returns>å¢å¼ºåçš„ Prompt</returns>
         public static string GetMemoryPrompt(
             string basePrompt,
             Pawn pawn = null,
             int maxPersonalMemories = 5,
             int maxKnowledgeEntries = 3)
         {
-            // ? ½×¶ÎÒ»£ºÒÆ³ı pawn == null µÄ×èÈû
-            // if (pawn == null) return basePrompt; // ? ¾É´úÂë£º×èÈûĞğÊÂÕß AI
+            // ? é˜¶æ®µä¸€ï¼šç§»é™¤ pawn == null çš„é˜»å¡
+            // if (pawn == null) return basePrompt; // ? æ—§ä»£ç ï¼šé˜»å¡å™äº‹è€… AI
 
-            // Éú³É»º´æ¼ü
+            // ç”Ÿæˆç¼“å­˜é”®
             string cacheKey = pawn != null 
                 ? $"{pawn.ThingID}_{maxPersonalMemories}_{maxKnowledgeEntries}" 
-                : $"Storyteller_{maxKnowledgeEntries + 5}"; // ? ĞğÊÂÕßÊ¹ÓÃÌØÊâ¼ü
+                : $"Storyteller_{maxKnowledgeEntries + 5}"; // ? å™äº‹è€…ä½¿ç”¨ç‰¹æ®Šé”®
 
-            // ¼ì²é»º´æÊÇ·ñÓĞĞ§
+            // æ£€æŸ¥ç¼“å­˜æ˜¯å¦æœ‰æ•ˆ
             if (PromptCache.TryGetValue(cacheKey, out string cachedPrompt) &&
                 CacheTimestamp.TryGetValue(cacheKey, out int timestamp))
             {
@@ -50,49 +50,49 @@ namespace TheSecondSeat.Integration
                 }
             }
 
-            // ¹¹½¨ÖªÊ¶ÉÏÏÂÎÄ
+            // æ„å»ºçŸ¥è¯†ä¸Šä¸‹æ–‡
             StringBuilder knowledgeContext = new StringBuilder();
-            knowledgeContext.AppendLine("### ¿ÉÓÃÖªÊ¶¿â");
+            knowledgeContext.AppendLine("### å¯ç”¨çŸ¥è¯†åº“");
             knowledgeContext.AppendLine();
 
             try
             {
-                // ? ½×¶ÎÒ»£º·ÖÀëÂß¼­ - pawn != null Ê±×¢Èë¸öÈË¼ÇÒäºÍ¹²Í¨ÖªÊ¶
+                // ? é˜¶æ®µä¸€ï¼šåˆ†ç¦»é€»è¾‘ - pawn != null æ—¶æ³¨å…¥ä¸ªäººè®°å¿†å’Œå…±é€šçŸ¥è¯†
                 if (pawn != null)
                 {
-                    // 1. ¸öÈË¼ÇÒä£¨Personal Memories£©
+                    // 1. ä¸ªäººè®°å¿†ï¼ˆPersonal Memoriesï¼‰
                     var personalMemories = DynamicMemoryInjection(pawn, maxPersonalMemories);
                     if (!string.IsNullOrEmpty(personalMemories))
                     {
-                        knowledgeContext.AppendLine("#### ¸öÈË¼ÇÒä (Personal Memories)");
+                        knowledgeContext.AppendLine("#### ä¸ªäººè®°å¿† (Personal Memories)");
                         knowledgeContext.AppendLine(personalMemories);
                         knowledgeContext.AppendLine();
                     }
 
-                    // 2. ¹²Í¨ÖªÊ¶£¨Common Knowledge£©
+                    // 2. å…±é€šçŸ¥è¯†ï¼ˆCommon Knowledgeï¼‰
                     var commonKnowledge = CommonKnowledge(maxKnowledgeEntries);
                     if (!string.IsNullOrEmpty(commonKnowledge))
                     {
-                        knowledgeContext.AppendLine("#### ¹²Í¨ÖªÊ¶ (Common Knowledge)");
+                        knowledgeContext.AppendLine("#### å…±é€šçŸ¥è¯† (Common Knowledge)");
                         knowledgeContext.AppendLine(commonKnowledge);
                         knowledgeContext.AppendLine();
                     }
                 }
-                // ? ½×¶ÎÒ»£ºpawn == null Ê±Ö»×¢Èë¹²Í¨ÖªÊ¶
+                // ? é˜¶æ®µä¸€ï¼špawn == null æ—¶åªæ³¨å…¥å…±é€šçŸ¥è¯†
                 else
                 {
-                    // ? ĞğÊÂÕßÄ£Ê½£ºÔö¼Ó¹²Í¨ÖªÊ¶ÊıÁ¿£¨+5£©£¬ÒòÎªÃ»ÓĞ¸öÈË¼ÇÒäÏûºÄ Token
+                    // ? å™äº‹è€…æ¨¡å¼ï¼šå¢åŠ å…±é€šçŸ¥è¯†æ•°é‡ï¼ˆ+5ï¼‰ï¼Œå› ä¸ºæ²¡æœ‰ä¸ªäººè®°å¿†æ¶ˆè€— Token
                     int storytellerKnowledgeCount = maxKnowledgeEntries + 5;
                     var commonKnowledge = CommonKnowledge(storytellerKnowledgeCount);
 
                     if (!string.IsNullOrEmpty(commonKnowledge))
                     {
-                        knowledgeContext.AppendLine("#### ¹²Í¨ÖªÊ¶ (Common Knowledge)");
+                        knowledgeContext.AppendLine("#### å…±é€šçŸ¥è¯† (Common Knowledge)");
                         knowledgeContext.AppendLine(commonKnowledge);
                         knowledgeContext.AppendLine();
                     }
 
-                    // ? ½×¶Î¶ş£º×¢ÈëÈ«¾ÖÓÎÏ·×´Ì¬£¨Global Game State£©
+                    // ? é˜¶æ®µäºŒï¼šæ³¨å…¥å…¨å±€æ¸¸æˆçŠ¶æ€ï¼ˆGlobal Game Stateï¼‰
                     var globalState = GetGlobalGameState();
                     if (!string.IsNullOrEmpty(globalState))
                     {
@@ -104,17 +104,17 @@ namespace TheSecondSeat.Integration
             }
             catch (Exception ex)
             {
-                Log.Error($"[SimpleRimTalkIntegration] GetMemoryPrompt Ê§°Ü: {ex.Message}\n{ex.StackTrace}");
+                Log.Error($"[SimpleRimTalkIntegration] GetMemoryPrompt å¤±è´¥: {ex.Message}\n{ex.StackTrace}");
             }
 
-            // ×éºÏ×îÖÕ Prompt
+            // ç»„åˆæœ€ç»ˆ Prompt
             string finalPrompt = basePrompt;
             if (knowledgeContext.Length > 0)
             {
                 finalPrompt = basePrompt + "\n\n" + knowledgeContext.ToString();
             }
 
-            // ? ¸üĞÂ»º´æ£¨°²È«£ºpawn == null Ê±Ê¹ÓÃÌØÊâ¼ü£©
+            // ? æ›´æ–°ç¼“å­˜ï¼ˆå®‰å…¨ï¼špawn == null æ—¶ä½¿ç”¨ç‰¹æ®Šé”®ï¼‰
             PromptCache[cacheKey] = finalPrompt;
             CacheTimestamp[cacheKey] = Find.TickManager.TicksGame;
 
@@ -122,7 +122,7 @@ namespace TheSecondSeat.Integration
         }
 
         /// <summary>
-        /// ? ½×¶Î¶ş£º»ñÈ¡È«¾ÖÓÎÏ·×´Ì¬£¨½öĞğÊÂÕßÄ£Ê½£©
+        /// ? é˜¶æ®µäºŒï¼šè·å–å…¨å±€æ¸¸æˆçŠ¶æ€ï¼ˆä»…å™äº‹è€…æ¨¡å¼ï¼‰
         /// </summary>
         private static string GetGlobalGameState()
         {
@@ -130,32 +130,32 @@ namespace TheSecondSeat.Integration
 
             try
             {
-                // ? ½×¶ÎÈı£º°²È«¼ì²é - ±ÜÃâ Find.CurrentMap Îª¿ÕÊ±±ÀÀ£
+                // ? é˜¶æ®µä¸‰ï¼šå®‰å…¨æ£€æŸ¥ - é¿å… Find.CurrentMap ä¸ºç©ºæ—¶å´©æºƒ
                 if (Find.World == null)
                 {
                     if (Prefs.DevMode)
-                        Log.Warning("[SimpleRimTalkIntegration] Find.World Îª¿Õ£¬Ìø¹ıÈ«¾Ö×´Ì¬»ñÈ¡");
+                        Log.Warning("[SimpleRimTalkIntegration] Find.World ä¸ºç©ºï¼Œè·³è¿‡å…¨å±€çŠ¶æ€è·å–");
                     return "";
                 }
 
-                // 1. ²Æ¸»£¨Wealth£©
+                // 1. è´¢å¯Œï¼ˆWealthï¼‰
                 try
                 {
                     float wealth = Find.World.PlayerWealthForStoryteller;
-                    string wealthLevel = wealth > 200000 ? "¼«¸ß" :
-                                       wealth > 100000 ? "¸ß" :
-                                       wealth > 50000 ? "ÖĞµÈ" :
-                                       wealth > 20000 ? "µÍ" : "¼«µÍ";
+                    string wealthLevel = wealth > 200000 ? "æé«˜" :
+                                       wealth > 100000 ? "é«˜" :
+                                       wealth > 50000 ? "ä¸­ç­‰" :
+                                       wealth > 20000 ? "ä½" : "æä½";
 
-                    stateBuilder.AppendLine($"- ²Æ¸»: {wealth:F0} ({wealthLevel})");
+                    stateBuilder.AppendLine($"- è´¢å¯Œ: {wealth:F0} ({wealthLevel})");
                 }
                 catch (Exception ex)
                 {
                     if (Prefs.DevMode)
-                        Log.Warning($"[SimpleRimTalkIntegration] »ñÈ¡²Æ¸»Ê§°Ü: {ex.Message}");
+                        Log.Warning($"[SimpleRimTalkIntegration] è·å–è´¢å¯Œå¤±è´¥: {ex.Message}");
                 }
 
-                // 2. ÈË¿Ú£¨Population£©- ? ĞŞ¸´ API µ÷ÓÃ
+                // 2. äººå£ï¼ˆPopulationï¼‰- ? ä¿®å¤ API è°ƒç”¨
                 try
                 {
                     int colonistCount = 0;
@@ -163,15 +163,15 @@ namespace TheSecondSeat.Integration
                     {
                         colonistCount = Find.CurrentMap.mapPawns.FreeColonistsCount;
                     }
-                    stateBuilder.AppendLine($"- Ö³ÃñÕß: {colonistCount} ÈË");
+                    stateBuilder.AppendLine($"- æ®–æ°‘è€…: {colonistCount} äºº");
                 }
                 catch (Exception ex)
                 {
                     if (Prefs.DevMode)
-                        Log.Warning($"[SimpleRimTalkIntegration] »ñÈ¡ÈË¿ÚÊ§°Ü: {ex.Message}");
+                        Log.Warning($"[SimpleRimTalkIntegration] è·å–äººå£å¤±è´¥: {ex.Message}");
                 }
 
-                // 3. ÈÕÆÚ/¼¾½Ú£¨Date/Season£©- ? ĞŞ¸´ API µ÷ÓÃ
+                // 3. æ—¥æœŸ/å­£èŠ‚ï¼ˆDate/Seasonï¼‰- ? ä¿®å¤ API è°ƒç”¨
                 try
                 {
                     if (Find.CurrentMap != null)
@@ -179,45 +179,45 @@ namespace TheSecondSeat.Integration
                         int tile = Find.CurrentMap.Tile;
                         long ticks = Find.TickManager.TicksAbs;
                         
-                        // ? Ê¹ÓÃÕıÈ·µÄ API£ºGenDate.Season(long absTick, int tile)
+                        // ? ä½¿ç”¨æ­£ç¡®çš„ APIï¼šGenDate.Season(long absTick, int tile)
                         Season season = GenDate.Season(ticks, Find.WorldGrid.LongLatOf(tile));
                         string seasonName = season.LabelCap();
-                        stateBuilder.AppendLine($"- ¼¾½Ú: {seasonName}");
+                        stateBuilder.AppendLine($"- å­£èŠ‚: {seasonName}");
                     }
                 }
                 catch (Exception ex)
                 {
                     if (Prefs.DevMode)
-                        Log.Warning($"[SimpleRimTalkIntegration] »ñÈ¡¼¾½ÚÊ§°Ü: {ex.Message}");
+                        Log.Warning($"[SimpleRimTalkIntegration] è·å–å­£èŠ‚å¤±è´¥: {ex.Message}");
                 }
 
-                // 4. ÍşĞ²µãÊı£¨Threat Points£©- ¿ÉÑ¡
+                // 4. å¨èƒç‚¹æ•°ï¼ˆThreat Pointsï¼‰- å¯é€‰
                 try
                 {
                     if (Find.Storyteller != null && Find.CurrentMap != null)
                     {
                         float threatPoints = StorytellerUtility.DefaultThreatPointsNow(Find.CurrentMap);
-                        stateBuilder.AppendLine($"- µ±Ç°ÍşĞ²µãÊı: {threatPoints:F0}");
+                        stateBuilder.AppendLine($"- å½“å‰å¨èƒç‚¹æ•°: {threatPoints:F0}");
                     }
                 }
                 catch (Exception ex)
                 {
                     if (Prefs.DevMode)
-                        Log.Warning($"[SimpleRimTalkIntegration] »ñÈ¡ÍşĞ²µãÊıÊ§°Ü: {ex.Message}");
+                        Log.Warning($"[SimpleRimTalkIntegration] è·å–å¨èƒç‚¹æ•°å¤±è´¥: {ex.Message}");
                 }
             }
             catch (Exception ex)
             {
-                // ? ½×¶ÎÈı£ºÈ«¾Ö°²È«¼ì²é
+                // ? é˜¶æ®µä¸‰ï¼šå…¨å±€å®‰å…¨æ£€æŸ¥
                 if (Prefs.DevMode)
-                    Log.Warning($"[SimpleRimTalkIntegration] GetGlobalGameState Ê§°Ü: {ex.Message}");
+                    Log.Warning($"[SimpleRimTalkIntegration] GetGlobalGameState å¤±è´¥: {ex.Message}");
             }
 
             return stateBuilder.ToString();
         }
 
         /// <summary>
-        /// ¶¯Ì¬¼ÇÒä×¢Èë£¨¸öÈË¼ÇÒä£©
+        /// åŠ¨æ€è®°å¿†æ³¨å…¥ï¼ˆä¸ªäººè®°å¿†ï¼‰
         /// </summary>
         private static string DynamicMemoryInjection(Pawn pawn, int maxCount)
         {
@@ -226,21 +226,21 @@ namespace TheSecondSeat.Integration
 
             try
             {
-                // ? °²È«¼ì²é£ºÈ·±£ RimTalk ¼ÇÒäÏµÍ³¿ÉÓÃ
+                // ? å®‰å…¨æ£€æŸ¥ï¼šç¡®ä¿ RimTalk è®°å¿†ç³»ç»Ÿå¯ç”¨
                 if (Find.World == null)
                 {
                     if (Prefs.DevMode)
-                        Log.Warning("[SimpleRimTalkIntegration] Find.World Îª¿Õ");
+                        Log.Warning("[SimpleRimTalkIntegration] Find.World ä¸ºç©º");
                     return "";
                 }
 
-                // ¼ì²éÊÇ·ñ°²×°ÁË RimTalk À©Õ¹
+                // æ£€æŸ¥æ˜¯å¦å®‰è£…äº† RimTalk æ‰©å±•
                 if (!RimTalkMemoryIntegration.IsRimTalkMemoryAvailable())
                 {
-                    return "£¨Î´°²×° RimTalk ¼ÇÒäÀ©Õ¹£©";
+                    return "ï¼ˆæœªå®‰è£… RimTalk è®°å¿†æ‰©å±•ï¼‰";
                 }
 
-                // »ñÈ¡ Pawn Ïà¹ØµÄ¼ÇÒä
+                // è·å– Pawn ç›¸å…³çš„è®°å¿†
                 var memories = RimTalkMemoryIntegration.RetrieveConversationMemories(
                     pawn.ThingID, 
                     maxCount
@@ -248,7 +248,7 @@ namespace TheSecondSeat.Integration
 
                 if (memories == null || memories.Count == 0)
                 {
-                    return "£¨ÔİÎŞÏà¹Ø¼ÇÒä£©";
+                    return "ï¼ˆæš‚æ— ç›¸å…³è®°å¿†ï¼‰";
                 }
 
                 StringBuilder memoryText = new StringBuilder();
@@ -262,40 +262,40 @@ namespace TheSecondSeat.Integration
             catch (Exception ex)
             {
                 if (Prefs.DevMode)
-                    Log.Warning($"[SimpleRimTalkIntegration] DynamicMemoryInjection Ê§°Ü: {ex.Message}");
+                    Log.Warning($"[SimpleRimTalkIntegration] DynamicMemoryInjection å¤±è´¥: {ex.Message}");
                 return "";
             }
         }
 
         /// <summary>
-        /// ¹²Í¨ÖªÊ¶¿â£¨Common Knowledge£©
+        /// å…±é€šçŸ¥è¯†åº“ï¼ˆCommon Knowledgeï¼‰
         /// </summary>
         private static string CommonKnowledge(int maxCount)
         {
             try
             {
-                // ? °²È«¼ì²é£ºÈ·±£¼ÇÒä¹ÜÀíÆ÷¿ÉÓÃ
+                // ? å®‰å…¨æ£€æŸ¥ï¼šç¡®ä¿è®°å¿†ç®¡ç†å™¨å¯ç”¨
                 if (Find.World == null)
                 {
                     if (Prefs.DevMode)
-                        Log.Warning("[SimpleRimTalkIntegration] Find.World Îª¿Õ£¬ÎŞ·¨·ÃÎÊ¼ÇÒä¹ÜÀíÆ÷");
+                        Log.Warning("[SimpleRimTalkIntegration] Find.World ä¸ºç©ºï¼Œæ— æ³•è®¿é—®è®°å¿†ç®¡ç†å™¨");
                     return "";
                 }
 
-                // »ñÈ¡Í¨ÓÃÖªÊ¶£¨²»ÒÀÀµÌØ¶¨ Pawn£©
+                // è·å–é€šç”¨çŸ¥è¯†ï¼ˆä¸ä¾èµ–ç‰¹å®š Pawnï¼‰
                 var adapter = RimTalkMemoryAdapter.Instance;
                 if (adapter == null)
                 {
                     if (Prefs.DevMode)
-                        Log.Warning("[SimpleRimTalkIntegration] RimTalkMemoryAdapter ²»¿ÉÓÃ");
+                        Log.Warning("[SimpleRimTalkIntegration] RimTalkMemoryAdapter ä¸å¯ç”¨");
                     return "";
                 }
 
-                var memories = adapter.GetRelevantMemories("Í¨ÓÃÖªÊ¶", maxTokens: maxCount * 100);
+                var memories = adapter.GetRelevantMemories("é€šç”¨çŸ¥è¯†", maxTokens: maxCount * 100);
 
                 if (memories == null || memories.Count == 0)
                 {
-                    return "£¨ÔİÎŞ¹²Í¨ÖªÊ¶£©";
+                    return "ï¼ˆæš‚æ— å…±é€šçŸ¥è¯†ï¼‰";
                 }
 
                 StringBuilder knowledgeText = new StringBuilder();
@@ -314,19 +314,19 @@ namespace TheSecondSeat.Integration
             catch (Exception ex)
             {
                 if (Prefs.DevMode)
-                    Log.Warning($"[SimpleRimTalkIntegration] CommonKnowledge Ê§°Ü: {ex.Message}");
+                    Log.Warning($"[SimpleRimTalkIntegration] CommonKnowledge å¤±è´¥: {ex.Message}");
                 return "";
             }
         }
 
         /// <summary>
-        /// Çå³ı»º´æ£¨¹©µ÷ÊÔÊ¹ÓÃ£©
+        /// æ¸…é™¤ç¼“å­˜ï¼ˆä¾›è°ƒè¯•ä½¿ç”¨ï¼‰
         /// </summary>
         public static void ClearCache()
         {
             PromptCache.Clear();
             CacheTimestamp.Clear();
-            Log.Message("[SimpleRimTalkIntegration] Prompt »º´æÒÑÇå¿Õ");
+            Log.Message("[SimpleRimTalkIntegration] Prompt ç¼“å­˜å·²æ¸…ç©º");
         }
     }
 }

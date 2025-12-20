@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -18,44 +18,44 @@ namespace TheSecondSeat.PersonaGeneration
         /// </summary>
         public static PersonalityTrait AnalyzePortraitColor(Color primaryColor)
         {
-            // ×ª»»Îª HSV
+            // è½¬æ¢ä¸º HSV
             Color.RGBToHSV(primaryColor, out float h, out float s, out float v);
 
-            // »ùÓÚÉ«ÏàÍÆ¶ÏÈË¸ñ
+            // åŸºäºè‰²ç›¸æ¨æ–­äººæ ¼
             if (s < 0.2f && v > 0.7f)
             {
-                // µÍ±¥ºÍ¶È£¬¸ßÃ÷¶È ¡ú ÖĞĞÔ¡¢ÀíĞÔ
+                // ä½é¥±å’Œåº¦ï¼Œé«˜æ˜åº¦ â†’ ä¸­æ€§ã€ç†æ€§
                 return PersonalityTrait.Strategic;
             }
             else if (h < 0.05f || h > 0.95f)
             {
-                // ºìÉ«Ïµ ¡ú ¼¤Çé¡¢³åÍ»
+                // çº¢è‰²ç³» â†’ æ¿€æƒ…ã€å†²çª
                 return v > 0.5f ? PersonalityTrait.Chaotic : PersonalityTrait.Sadistic;
             }
             else if (h >= 0.05f && h < 0.15f)
             {
-                // ³ÈÉ«Ïµ ¡ú ÎÂÅ¯¡¢±£»¤
+                // æ©™è‰²ç³» â†’ æ¸©æš–ã€ä¿æŠ¤
                 return PersonalityTrait.Protective;
             }
             else if (h >= 0.15f && h < 0.45f)
             {
-                // »ÆÂÌÉ«Ïµ ¡ú Éú»ú¡¢ÈÊ´È
+                // é»„ç»¿è‰²ç³» â†’ ç”Ÿæœºã€ä»æ…ˆ
                 return PersonalityTrait.Benevolent;
             }
             else if (h >= 0.45f && h < 0.75f)
             {
-                // À¶É«Ïµ ¡ú Àä¾²¡¢Õ½ÂÔ
+                // è“è‰²ç³» â†’ å†·é™ã€æˆ˜ç•¥
                 return v > 0.5f ? PersonalityTrait.Strategic : PersonalityTrait.Manipulative;
             }
             else
             {
-                // ×ÏºìÉ«Ïµ ¡ú ÉñÃØ¡¢²Ù¿Ø
+                // ç´«çº¢è‰²ç³» â†’ ç¥ç§˜ã€æ“æ§
                 return PersonalityTrait.Manipulative;
             }
         }
 
         /// <summary>
-        /// ·ÖÎö¼ò½éÎÄ±¾£¬ÌáÈ¡ÈË¸ñÌØÕ÷
+        /// åˆ†æç®€ä»‹æ–‡æœ¬ï¼Œæå–äººæ ¼ç‰¹å¾
         /// </summary>
         public static PersonaAnalysisResult AnalyzeBiography(string biography)
         {
@@ -68,7 +68,7 @@ namespace TheSecondSeat.PersonaGeneration
 
             var lowerBio = biography.ToLower();
 
-            // ·ÖÎö¹Ø¼ü´Ê£¬ÍÆ¶ÏÈË¸ñÌØÖÊ
+            // åˆ†æå…³é”®è¯ï¼Œæ¨æ–­äººæ ¼ç‰¹è´¨
             var traitScores = new Dictionary<PersonalityTrait, int>
             {
                 { PersonalityTrait.Benevolent, 0 },
@@ -79,98 +79,98 @@ namespace TheSecondSeat.PersonaGeneration
                 { PersonalityTrait.Manipulative, 0 }
             };
 
-            // ÈÊ´È¹Ø¼ü´Ê
-            var benevolentKeywords = new[] { "kindness", "ÈÊ´È", "ÉÆÁ¼", "°ïÖú", "¹Ø»³", "compassion", "caring", "gentle" };
+            // ä»æ…ˆå…³é”®è¯
+            var benevolentKeywords = new[] { "kindness", "ä»æ…ˆ", "å–„è‰¯", "å¸®åŠ©", "å…³æ€€", "compassion", "caring", "gentle" };
             traitScores[PersonalityTrait.Benevolent] += CountKeywords(lowerBio, benevolentKeywords);
 
-            // Ê©Å°¹Ø¼ü´Ê
-            var sadisticKeywords = new[] { "cruel", "²ĞÈÌ", "Í´¿à", "ÕÛÄ¥", "sadistic", "torment", "suffering" };
+            // æ–½è™å…³é”®è¯
+            var sadisticKeywords = new[] { "cruel", "æ®‹å¿", "ç—›è‹¦", "æŠ˜ç£¨", "sadistic", "torment", "suffering" };
             traitScores[PersonalityTrait.Sadistic] += CountKeywords(lowerBio, sadisticKeywords);
 
-            // »ìÂÒ¹Ø¼ü´Ê
-            var chaoticKeywords = new[] { "chaos", "»ìÂÒ", "Ëæ»ú", "unpredictable", "random", "wild", "¿ñÒ°" };
+            // æ··ä¹±å…³é”®è¯
+            var chaoticKeywords = new[] { "chaos", "æ··ä¹±", "éšæœº", "unpredictable", "random", "wild", "ç‹‚é‡" };
             traitScores[PersonalityTrait.Chaotic] += CountKeywords(lowerBio, chaoticKeywords);
 
-            // Õ½ÂÔ¹Ø¼ü´Ê
-            var strategicKeywords = new[] { "strategic", "Õ½ÂÔ", "¼Æ»®", "ÀíĞÔ", "rational", "calculated", "planning" };
+            // æˆ˜ç•¥å…³é”®è¯
+            var strategicKeywords = new[] { "strategic", "æˆ˜ç•¥", "è®¡åˆ’", "ç†æ€§", "rational", "calculated", "planning" };
             traitScores[PersonalityTrait.Strategic] += CountKeywords(lowerBio, strategicKeywords);
 
-            // ±£»¤¹Ø¼ü´Ê
-            var protectiveKeywords = new[] { "protect", "±£»¤", "ÊØ»¤", "guardian", "shield", "defend", "·ÀÓù" };
+            // ä¿æŠ¤å…³é”®è¯
+            var protectiveKeywords = new[] { "protect", "ä¿æŠ¤", "å®ˆæŠ¤", "guardian", "shield", "defend", "é˜²å¾¡" };
             traitScores[PersonalityTrait.Protective] += CountKeywords(lowerBio, protectiveKeywords);
 
-            // ²Ù¿Ø¹Ø¼ü´Ê
-            var manipulativeKeywords = new[] { "manipulate", "²Ù¿Ø", "¿ØÖÆ", "cunning", "½Æ»«", "scheme", "¹î¼Æ" };
+            // æ“æ§å…³é”®è¯
+            var manipulativeKeywords = new[] { "manipulate", "æ“æ§", "æ§åˆ¶", "cunning", "ç‹¡çŒ¾", "scheme", "è¯¡è®¡" };
             traitScores[PersonalityTrait.Manipulative] += CountKeywords(lowerBio, manipulativeKeywords);
 
-            // Ñ¡ÔñµÃ·Ö×î¸ßµÄÈË¸ñ
+            // é€‰æ‹©å¾—åˆ†æœ€é«˜çš„äººæ ¼
             var maxScore = traitScores.Max(x => x.Value);
             if (maxScore > 0)
             {
                 result.SuggestedPersonality = traitScores.First(x => x.Value == maxScore).Key;
             }
 
-            // ·ÖÎö¶Ô»°·ç¸ñ
+            // åˆ†æå¯¹è¯é£æ ¼
             result.DialogueStyle = AnalyzeDialogueStyle(lowerBio);
 
-            // ÌáÈ¡ÓïÆø±êÇ©
+            // æå–è¯­æ°”æ ‡ç­¾
             result.ToneTags = ExtractToneTags(lowerBio);
 
-            // ·ÖÎöÊÂ¼şÆ«ºÃ
+            // åˆ†æäº‹ä»¶åå¥½
             result.EventPreferences = AnalyzeEventPreferences(lowerBio);
 
             return result;
         }
 
         /// <summary>
-        /// ·ÖÎö¶Ô»°·ç¸ñ
+        /// åˆ†æå¯¹è¯é£æ ¼
         /// </summary>
         private static DialogueStyleDef AnalyzeDialogueStyle(string lowerBio)
         {
             var style = new DialogueStyleDef();
 
-            // ÕıÊ½³Ì¶È
-            var formalKeywords = new[] { "formal", "ÕıÊ½", "professional", "×¨Òµ", "proper", "µÃÌå" };
-            var casualKeywords = new[] { "casual", "ËæÒâ", "friendly", "ÓÑºÃ", "relaxed", "ÇáËÉ" };
+            // æ­£å¼ç¨‹åº¦
+            var formalKeywords = new[] { "formal", "æ­£å¼", "professional", "ä¸“ä¸š", "proper", "å¾—ä½“" };
+            var casualKeywords = new[] { "casual", "éšæ„", "friendly", "å‹å¥½", "relaxed", "è½»æ¾" };
             
             int formalCount = CountKeywords(lowerBio, formalKeywords);
             int casualCount = CountKeywords(lowerBio, casualKeywords);
             style.formalityLevel = CalculateRatio(formalCount, casualCount, 0.5f);
 
-            // Çé¸Ğ±í´ï
-            var emotionalKeywords = new[] { "emotional", "ÇéĞ÷", "passionate", "ÈÈÇé", "¸ĞĞÔ", "expressive" };
-            var calmKeywords = new[] { "calm", "Àä¾²", "stoic", "ÀíĞÔ", "composed", "Õò¶¨" };
+            // æƒ…æ„Ÿè¡¨è¾¾
+            var emotionalKeywords = new[] { "emotional", "æƒ…ç»ª", "passionate", "çƒ­æƒ…", "æ„Ÿæ€§", "expressive" };
+            var calmKeywords = new[] { "calm", "å†·é™", "stoic", "ç†æ€§", "composed", "é•‡å®š" };
             
             int emotionalCount = CountKeywords(lowerBio, emotionalKeywords);
             int calmCount = CountKeywords(lowerBio, calmKeywords);
             style.emotionalExpression = CalculateRatio(emotionalCount, calmCount, 0.5f);
 
-            // »°¶à³Ì¶È
-            var verboseKeywords = new[] { "talkative", "»°¶à", "verbose", "Èß³¤", "ÏêÏ¸", "detailed" };
-            var conciseKeywords = new[] { "concise", "¼ò½à", "brief", "¼ò¶Ì", "terse", "¹ÑÑÔ" };
+            // è¯å¤šç¨‹åº¦
+            var verboseKeywords = new[] { "talkative", "è¯å¤š", "verbose", "å†—é•¿", "è¯¦ç»†", "detailed" };
+            var conciseKeywords = new[] { "concise", "ç®€æ´", "brief", "ç®€çŸ­", "terse", "å¯¡è¨€" };
             
             int verboseCount = CountKeywords(lowerBio, verboseKeywords);
             int conciseCount = CountKeywords(lowerBio, conciseKeywords);
             style.verbosity = CalculateRatio(verboseCount, conciseCount, 0.5f);
 
-            // ÓÄÄ¬¸Ğ
-            var humorKeywords = new[] { "humor", "ÓÄÄ¬", "funny", "ÓĞÈ¤", "witty", "»úÖÇ", "playful", "ÇÎÆ¤" };
+            // å¹½é»˜æ„Ÿ
+            var humorKeywords = new[] { "humor", "å¹½é»˜", "funny", "æœ‰è¶£", "witty", "æœºæ™º", "playful", "ä¿çš®" };
             style.humorLevel = Math.Min(1f, CountKeywords(lowerBio, humorKeywords) * 0.2f);
 
-            // ·í´Ì³Ì¶È
-            var sarcasmKeywords = new[] { "sarcasm", "·í´Ì", "cynical", "·ßÊÀ", "sardonic", "³°·í" };
+            // è®½åˆºç¨‹åº¦
+            var sarcasmKeywords = new[] { "sarcasm", "è®½åˆº", "cynical", "æ„¤ä¸–", "sardonic", "å˜²è®½" };
             style.sarcasmLevel = Math.Min(1f, CountKeywords(lowerBio, sarcasmKeywords) * 0.25f);
 
-            // ±êµã·ûºÅÆ«ºÃ
-            style.useEmoticons = lowerBio.Contains("emoticon") || lowerBio.Contains("±íÇé");
-            style.useEllipsis = lowerBio.Contains("...") || lowerBio.Contains("Ê¡ÂÔ");
-            style.useExclamation = lowerBio.Contains("!") || lowerBio.Contains("£¡");
+            // æ ‡ç‚¹ç¬¦å·åå¥½
+            style.useEmoticons = lowerBio.Contains("emoticon") || lowerBio.Contains("è¡¨æƒ…");
+            style.useEllipsis = lowerBio.Contains("...") || lowerBio.Contains("çœç•¥");
+            style.useExclamation = lowerBio.Contains("!") || lowerBio.Contains("ï¼");
 
             return style;
         }
 
         /// <summary>
-        /// ÌáÈ¡ÓïÆø±êÇ©
+        /// æå–è¯­æ°”æ ‡ç­¾
         /// </summary>
         private static List<string> ExtractToneTags(string lowerBio)
         {
@@ -178,14 +178,14 @@ namespace TheSecondSeat.PersonaGeneration
 
             var toneMapping = new Dictionary<string[], string>
             {
-                { new[] { "gentle", "ÎÂÈá", "soft", "ÈáºÍ" }, "gentle" },
-                { new[] { "stern", "ÑÏÀ÷", "strict", "ÑÏ¸ñ" }, "stern" },
-                { new[] { "playful", "ÇÎÆ¤", "mischievous", "ÌÔÆø" }, "playful" },
-                { new[] { "mysterious", "ÉñÃØ", "enigmatic", "ÃÕ" }, "mysterious" },
-                { new[] { "cheerful", "¿ªÀÊ", "upbeat", "ÀÖ¹Û" }, "cheerful" },
-                { new[] { "melancholic", "ÓÇÓô", "somber", "ÒõÓô" }, "melancholic" },
-                { new[] { "authoritative", "È¨Íş", "commanding", "ÍşÑÏ" }, "authoritative" },
-                { new[] { "nurturing", "´È°®", "motherly", "Ä¸ĞÔ" }, "nurturing" }
+                { new[] { "gentle", "æ¸©æŸ”", "soft", "æŸ”å’Œ" }, "gentle" },
+                { new[] { "stern", "ä¸¥å‰", "strict", "ä¸¥æ ¼" }, "stern" },
+                { new[] { "playful", "ä¿çš®", "mischievous", "æ·˜æ°”" }, "playful" },
+                { new[] { "mysterious", "ç¥ç§˜", "enigmatic", "è°œ" }, "mysterious" },
+                { new[] { "cheerful", "å¼€æœ—", "upbeat", "ä¹è§‚" }, "cheerful" },
+                { new[] { "melancholic", "å¿§éƒ", "somber", "é˜´éƒ" }, "melancholic" },
+                { new[] { "authoritative", "æƒå¨", "commanding", "å¨ä¸¥" }, "authoritative" },
+                { new[] { "nurturing", "æ…ˆçˆ±", "motherly", "æ¯æ€§" }, "nurturing" }
             };
 
             foreach (var mapping in toneMapping)
@@ -200,15 +200,15 @@ namespace TheSecondSeat.PersonaGeneration
         }
 
         /// <summary>
-        /// ·ÖÎöÊÂ¼şÆ«ºÃ
+        /// åˆ†æäº‹ä»¶åå¥½
         /// </summary>
         private static EventPreferencesDef AnalyzeEventPreferences(string lowerBio)
         {
             var prefs = new EventPreferencesDef();
 
-            // ÕıÃæÊÂ¼şÇãÏò
-            var positiveKeywords = new[] { "reward", "½±Àø", "gift", "ÀñÎï", "blessing", "×£¸£", "prosperity", "·±ÈÙ" };
-            var negativeKeywords = new[] { "challenge", "ÌôÕ½", "trial", "¿¼Ñé", "hardship", "À§ÄÑ", "struggle", "ÕõÔú" };
+            // æ­£é¢äº‹ä»¶å€¾å‘
+            var positiveKeywords = new[] { "reward", "å¥–åŠ±", "gift", "ç¤¼ç‰©", "blessing", "ç¥ç¦", "prosperity", "ç¹è£" };
+            var negativeKeywords = new[] { "challenge", "æŒ‘æˆ˜", "trial", "è€ƒéªŒ", "hardship", "å›°éš¾", "struggle", "æŒ£æ‰" };
             
             int positiveCount = CountKeywords(lowerBio, positiveKeywords);
             int negativeCount = CountKeywords(lowerBio, negativeKeywords);
@@ -216,13 +216,13 @@ namespace TheSecondSeat.PersonaGeneration
             prefs.positiveEventBias = CalculateRatio(positiveCount, negativeCount, 0f);
             prefs.negativeEventBias = -prefs.positiveEventBias;
 
-            // »ìÂÒ³Ì¶È
-            var chaosKeywords = new[] { "chaos", "»ìÂÒ", "entropy", "ìØ", "disorder", "ÎŞĞò", "unpredictable", "²»¿ÉÔ¤²â" };
+            // æ··ä¹±ç¨‹åº¦
+            var chaosKeywords = new[] { "chaos", "æ··ä¹±", "entropy", "ç†µ", "disorder", "æ— åº", "unpredictable", "ä¸å¯é¢„æµ‹" };
             prefs.chaosLevel = Math.Min(1f, CountKeywords(lowerBio, chaosKeywords) * 0.25f);
 
-            // ¸ÉÔ¤ÆµÂÊ
-            var activeKeywords = new[] { "active", "Ö÷¶¯", "intervene", "¸ÉÔ¤", "involved", "²ÎÓë" };
-            var passiveKeywords = new[] { "passive", "±»¶¯", "observe", "¹Û²ì", "distant", "ÊèÔ¶" };
+            // å¹²é¢„é¢‘ç‡
+            var activeKeywords = new[] { "active", "ä¸»åŠ¨", "intervene", "å¹²é¢„", "involved", "å‚ä¸" };
+            var passiveKeywords = new[] { "passive", "è¢«åŠ¨", "observe", "è§‚å¯Ÿ", "distant", "ç–è¿œ" };
             
             int activeCount = CountKeywords(lowerBio, activeKeywords);
             int passiveCount = CountKeywords(lowerBio, passiveKeywords);
@@ -231,7 +231,7 @@ namespace TheSecondSeat.PersonaGeneration
             return prefs;
         }
 
-        // ¸¨Öú·½·¨
+        // è¾…åŠ©æ–¹æ³•
         private static int CountKeywords(string text, string[] keywords)
         {
             return keywords.Sum(keyword => 
@@ -247,14 +247,14 @@ namespace TheSecondSeat.PersonaGeneration
         }
 
         /// <summary>
-        /// ÍêÕû·ÖÎöÈË¸ñ¶¨Òå£¨Ö§³Ö¶àÄ£Ì¬ AI£©
-        /// ? v1.6.27: ¾²Ä¬´¦ÀíÈÕÖ¾£¬Ö»ÔÚDevModeÏÂÊä³ö
+        /// å®Œæ•´åˆ†æäººæ ¼å®šä¹‰ï¼ˆæ”¯æŒå¤šæ¨¡æ€ AIï¼‰
+        /// ? v1.6.27: é™é»˜å¤„ç†æ—¥å¿—ï¼Œåªåœ¨DevModeä¸‹è¾“å‡º
         /// </summary>
         public static async Task<PersonaAnalysisResult> AnalyzePersonaDefAsync(NarratorPersonaDef def, Texture2D? portraitTexture = null)
         {
             var result = new PersonaAnalysisResult();
 
-            // 1. ³¢ÊÔÊ¹ÓÃ¶àÄ£Ì¬·ÖÎö£¨Èç¹ûÆôÓÃÇÒÓĞÎÆÀí£©
+            // 1. å°è¯•ä½¿ç”¨å¤šæ¨¡æ€åˆ†æï¼ˆå¦‚æœå¯ç”¨ä¸”æœ‰çº¹ç†ï¼‰
             VisionAnalysisResult? visionResult = null;
             if (portraitTexture != null)
             {
@@ -267,17 +267,17 @@ namespace TheSecondSeat.PersonaGeneration
                         
                         if (visionResult != null)
                         {
-                            // ? Ö»ÔÚDevModeÏÂÊä³ö
+                            // ? åªåœ¨DevModeä¸‹è¾“å‡º
                             if (Prefs.DevMode)
                             {
-                                Log.Message($"[PersonaAnalyzer] ¶àÄ£Ì¬·ÖÎö³É¹¦: {visionResult.suggestedPersonality}");
+                                Log.Message($"[PersonaAnalyzer] å¤šæ¨¡æ€åˆ†ææˆåŠŸ: {visionResult.suggestedPersonality}");
                             }
                             
-                            // Ê¹ÓÃ AI ÌáÈ¡µÄÑÕÉ«
+                            // ä½¿ç”¨ AI æå–çš„é¢œè‰²
                             def.primaryColor = visionResult.GetPrimaryColor();
                             def.accentColor = visionResult.GetAccentColor();
                             
-                            // Èç¹ûÃ»ÓĞ¼ò½é£¬Ê¹ÓÃ AI Éú³ÉµÄÃèÊö
+                            // å¦‚æœæ²¡æœ‰ç®€ä»‹ï¼Œä½¿ç”¨ AI ç”Ÿæˆçš„æè¿°
                             if (string.IsNullOrEmpty(def.biography))
                             {
                                 def.biography = visionResult.characterDescription;
@@ -286,22 +286,22 @@ namespace TheSecondSeat.PersonaGeneration
                     }
                     catch (Exception ex)
                     {
-                        // ? Ö»ÔÚDevModeÏÂÊä³ö¾¯¸æ
+                        // ? åªåœ¨DevModeä¸‹è¾“å‡ºè­¦å‘Š
                         if (Prefs.DevMode)
                         {
-                            Log.Warning($"[PersonaAnalyzer] ¶àÄ£Ì¬·ÖÎöÊ§°Ü£¬»ØÍËµ½±¾µØ·ÖÎö: {ex.Message}");
+                            Log.Warning($"[PersonaAnalyzer] å¤šæ¨¡æ€åˆ†æå¤±è´¥ï¼Œå›é€€åˆ°æœ¬åœ°åˆ†æ: {ex.Message}");
                         }
                     }
                 }
             }
 
-            // 2. ·ÖÎöÁ¢»æÑÕÉ«£¨Ê¹ÓÃ AI ÌáÈ¡µÄ»òÊÖ¶¯Ö¸¶¨µÄ£©
+            // 2. åˆ†æç«‹ç»˜é¢œè‰²ï¼ˆä½¿ç”¨ AI æå–çš„æˆ–æ‰‹åŠ¨æŒ‡å®šçš„ï¼‰
             var colorPersonality = AnalyzePortraitColor(def.primaryColor);
 
-            // 3. ·ÖÎö¼ò½éÎÄ±¾
+            // 3. åˆ†æç®€ä»‹æ–‡æœ¬
             var bioResult = AnalyzeBiography(def.biography);
 
-            // 4. ÕûºÏ½á¹û£¨ÓÅÏÈ¼¶£ºÊÖ¶¯Ö¸¶¨ > AI ½¨Òé > ¼ò½é·ÖÎö > ÑÕÉ«·ÖÎö£©
+            // 4. æ•´åˆç»“æœï¼ˆä¼˜å…ˆçº§ï¼šæ‰‹åŠ¨æŒ‡å®š > AI å»ºè®® > ç®€ä»‹åˆ†æ > é¢œè‰²åˆ†æï¼‰
             if (!string.IsNullOrEmpty(def.overridePersonality))
             {
                 result.SuggestedPersonality = ParsePersonality(def.overridePersonality);
@@ -323,32 +323,32 @@ namespace TheSecondSeat.PersonaGeneration
             result.ToneTags = bioResult.ToneTags;
             result.EventPreferences = bioResult.EventPreferences;
 
-            // 5. Èç¹ûÓĞ Vision ·ÖÎö½á¹û£¬ºÏ²¢¹Ø¼ü´Ê
+            // 5. å¦‚æœæœ‰ Vision åˆ†æç»“æœï¼Œåˆå¹¶å…³é”®è¯
             if (visionResult != null && visionResult.styleKeywords.Count > 0)
             {
                 result.ToneTags = result.ToneTags.Union(visionResult.styleKeywords).ToList();
             }
 
-            // 6. ¸ù¾İÈË¸ñµ÷Õû²ÎÊı
+            // 6. æ ¹æ®äººæ ¼è°ƒæ•´å‚æ•°
             AdjustByPersonality(result);
 
             return result;
         }
 
         /// <summary>
-        /// Í¬²½°æ±¾£¨¼æÈİ¾É´úÂë£©
+        /// åŒæ­¥ç‰ˆæœ¬ï¼ˆå…¼å®¹æ—§ä»£ç ï¼‰
         /// </summary>
         public static PersonaAnalysisResult AnalyzePersonaDef(NarratorPersonaDef def)
         {
             var result = new PersonaAnalysisResult();
 
-            // 1. ·ÖÎöÁ¢»æÑÕÉ«
+            // 1. åˆ†æç«‹ç»˜é¢œè‰²
             var colorPersonality = AnalyzePortraitColor(def.primaryColor);
 
-            // 2. ·ÖÎö¼ò½éÎÄ±¾
+            // 2. åˆ†æç®€ä»‹æ–‡æœ¬
             var bioResult = AnalyzeBiography(def.biography);
 
-            // 3. ÕûºÏ½á¹û£¨¼ò½éÓÅÏÈ£¬ÑÕÉ«×÷Îª²Î¿¼£©
+            // 3. æ•´åˆç»“æœï¼ˆç®€ä»‹ä¼˜å…ˆï¼Œé¢œè‰²ä½œä¸ºå‚è€ƒï¼‰
             result.SuggestedPersonality = def.overridePersonality != null && !string.IsNullOrEmpty(def.overridePersonality)
                 ? ParsePersonality(def.overridePersonality)
                 : bioResult.SuggestedPersonality 
@@ -358,7 +358,7 @@ namespace TheSecondSeat.PersonaGeneration
             result.ToneTags = bioResult.ToneTags;
             result.EventPreferences = bioResult.EventPreferences;
 
-            // 4. ¸ù¾İÈË¸ñµ÷Õû²ÎÊı
+            // 4. æ ¹æ®äººæ ¼è°ƒæ•´å‚æ•°
             AdjustByPersonality(result);
 
             return result;
@@ -371,7 +371,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
 
         /// <summary>
-        /// ¸ù¾İÈË¸ñÌØÖÊÎ¢µ÷²ÎÊı
+        /// æ ¹æ®äººæ ¼ç‰¹è´¨å¾®è°ƒå‚æ•°
         /// </summary>
         private static void AdjustByPersonality(PersonaAnalysisResult result)
         {
@@ -411,7 +411,8 @@ namespace TheSecondSeat.PersonaGeneration
     }
 
     /// <summary>
-    /// ÈË¸ñ·ÖÎö½á¹û
+    /// äººæ ¼åˆ†æç»“æœ
+    /// ğŸ“Œ v1.6.62: æ·»åŠ ä¸ªæ€§æ ‡ç­¾å’Œç”¨æˆ·é€‰æ‹©çš„ç‰¹è´¨
     /// </summary>
     public class PersonaAnalysisResult
     {
@@ -422,28 +423,34 @@ namespace TheSecondSeat.PersonaGeneration
         public float ConfidenceScore { get; set; } = 0.5f;
         public EventPreferencesDef EventPreferences { get; set; } = new EventPreferencesDef();
         
-        // ? v1.6.22: ĞÂÔö×Ö¶Î£¬Ö§³Ö¶àÄ£Ì¬·ÖÎö
+        // ğŸ“Œ v1.6.22: æ–°å¢å­—æ®µï¼Œæ”¯æŒå¤šæ¨¡æ€åˆ†æ
         /// <summary>
-        /// AI Éú³ÉµÄ´«¼Ç£¨»ùÓÚÍ¼Æ¬·ÖÎö£©
+        /// AI ç”Ÿæˆçš„ä¼ è®°ï¼ˆåŸºäºå›¾ç‰‡åˆ†æï¼‰
         /// </summary>
         public string GeneratedBiography { get; set; } = "";
         
         /// <summary>
-        /// ÊÓ¾õÃèÊö£¨´ÓÍ¼Æ¬ÌáÈ¡£©
+        /// è§†è§‰æè¿°ï¼ˆä»å›¾ç‰‡æå–ï¼‰
         /// </summary>
         public string VisualDescription { get; set; } = "";
         
         /// <summary>
-        /// AI ½¨ÒéµÄ¶Ô»°·ç¸ñ£¨»ùÓÚÓÃ»§ÃèÊö + Í¼Æ¬·ÖÎö£©
+        /// AI å»ºè®®çš„å¯¹è¯é£æ ¼ï¼ˆåŸºäºç”¨æˆ·æè¿° + å›¾ç‰‡åˆ†æï¼‰
         /// </summary>
         public DialogueStyleDef SuggestedDialogueStyle { get; set; } = new DialogueStyleDef();
         
         /// <summary>
-        /// ? v1.6.23: ¹¹Ôìº¯Êı£¬È·±£ËùÓĞ¶ÔÏó¶¼±»ÕıÈ·³õÊ¼»¯
+        /// ğŸ“Œ v1.6.62: ä¸ªæ€§æ ‡ç­¾ï¼ˆå¦‚ï¼šå–„è‰¯ã€åšå¼ºã€çˆ±æ’’å¨‡ã€ç—…å¨‡ç­‰ï¼‰
+        /// æ¥è‡ªAIåˆ†ææˆ–ç”¨æˆ·é€‰æ‹©
+        /// </summary>
+        public List<string> PersonalityTags { get; set; } = new List<string>();
+        
+        /// <summary>
+        /// ğŸ“Œ v1.6.23: æ„é€ å‡½æ•°ï¼Œç¡®ä¿æ‰€æœ‰å¯¹è±¡éƒ½è¢«æ­£ç¡®åˆå§‹åŒ–
         /// </summary>
         public PersonaAnalysisResult()
         {
-            // È·±£ËùÓĞ¼¯ºÏºÍ¶ÔÏó×Ö¶Î¶¼±»³õÊ¼»¯
+            // ç¡®ä¿æ‰€æœ‰é›†åˆå’Œå¯¹è±¡å­—æ®µéƒ½è¢«åˆå§‹åŒ–
             ToneTags = new List<string>();
             VisualTags = new List<string>();
             DialogueStyle = new DialogueStyleDef();
@@ -452,6 +459,7 @@ namespace TheSecondSeat.PersonaGeneration
             GeneratedBiography = "";
             VisualDescription = "";
             ConfidenceScore = 0.5f;
+            PersonalityTags = new List<string>();  // ğŸ“Œ v1.6.62: åˆå§‹åŒ–ä¸ªæ€§æ ‡ç­¾
         }
     }
 }

@@ -1,10 +1,10 @@
-using System;
+ï»¿using System;
 
 namespace TheSecondSeat
 {
     /// <summary>
     /// Main mod static initializer (separate from the Mod class)
-    /// ? ÖØÃüÃûÎª TheSecondSeatInit ±ÜÃâÓë Settings.TheSecondSeatMod ³åÍ»
+    /// ? é‡å‘½åä¸º TheSecondSeatInit é¿å…ä¸ Settings.TheSecondSeatMod å†²çª
     /// </summary>
     [Verse.StaticConstructorOnStartup]
     public static class TheSecondSeatInit

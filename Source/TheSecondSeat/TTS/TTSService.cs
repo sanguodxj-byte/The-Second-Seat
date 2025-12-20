@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
@@ -10,9 +10,9 @@ using Verse;
 namespace TheSecondSeat.TTS
 {
     /// <summary>
-    /// TTS£¨ÎÄ±¾×ªÓïÒô£©·şÎñ
-    /// Ö§³Ö¶à¸ö TTS Ìá¹©ÉÌ£ºAzure TTS, Edge TTS, Local TTS
-    /// ×¢Òâ£ºRimWorld ²»Ö±½ÓÖ§³ÖÒôÆµ²¥·Å£¬TTS ÒôÆµ½«±£´æÎªÎÄ¼ş
+    /// TTSï¼ˆæ–‡æœ¬è½¬è¯­éŸ³ï¼‰æœåŠ¡
+    /// æ”¯æŒå¤šä¸ª TTS æä¾›å•†ï¼šAzure TTS, Edge TTS, Local TTS
+    /// æ³¨æ„ï¼šRimWorld ä¸ç›´æ¥æ”¯æŒéŸ³é¢‘æ’­æ”¾ï¼ŒTTS éŸ³é¢‘å°†ä¿å­˜ä¸ºæ–‡ä»¶
     /// </summary>
     public class TTSService
     {
@@ -23,17 +23,17 @@ namespace TheSecondSeat.TTS
         private string ttsProvider = "edge"; // "azure", "edge", "local", "openai"
         private string apiKey = "";
         private string apiRegion = "eastus";
-        private string voiceName = "zh-CN-XiaoxiaoNeural"; // Ä¬ÈÏÖĞÎÄÅ®Éù
+        private string voiceName = "zh-CN-XiaoxiaoNeural"; // é»˜è®¤ä¸­æ–‡å¥³å£°
         private float speechRate = 1.0f;
         private float volume = 1.0f;
 
-        // ? ĞÂÔö£ºOpenAI ¼æÈİ½Ó¿ÚÅäÖÃ
-        private string openAI_ApiUrl = "http://127.0.0.1:9880/v1/audio/speech"; // Ä¬ÈÏ±¾µØ GPT-SoVITS
-        private string openAI_Model = "gpt-sovits"; // Ä£ĞÍÃû³Æ
+        // ? æ–°å¢ï¼šOpenAI å…¼å®¹æ¥å£é…ç½®
+        private string openAI_ApiUrl = "http://127.0.0.1:9880/v1/audio/speech"; // é»˜è®¤æœ¬åœ° GPT-SoVITS
+        private string openAI_Model = "gpt-sovits"; // æ¨¡å‹åç§°
 
         private string audioOutputDir = "";
         
-        // ? ÓïÒô²¥·Å×´Ì¬£¨ÓÃÓÚ´½ĞÎÍ¬²½£©
+        // ? è¯­éŸ³æ’­æ”¾çŠ¶æ€ï¼ˆç”¨äºå”‡å½¢åŒæ­¥ï¼‰
         public bool IsSpeaking { get; private set; } = false;
 
         public TTSService()
@@ -41,7 +41,7 @@ namespace TheSecondSeat.TTS
             httpClient = new HttpClient();
             httpClient.Timeout = TimeSpan.FromSeconds(30);
             
-            // ´´½¨ÒôÆµÊä³öÄ¿Â¼
+            // åˆ›å»ºéŸ³é¢‘è¾“å‡ºç›®å½•
             audioOutputDir = Path.Combine(GenFilePaths.SaveDataFolderPath, "TheSecondSeat", "TTS");
             if (!Directory.Exists(audioOutputDir))
             {
@@ -50,17 +50,17 @@ namespace TheSecondSeat.TTS
         }
 
         /// <summary>
-        /// ÅäÖÃ TTS ·şÎñ
-        /// ? v2.0.1: ĞÂÔö apiUrl ºÍ modelName ²ÎÊı£¬Ö§³Ö OpenAI ¼æÈİ½Ó¿Ú
+        /// é…ç½® TTS æœåŠ¡
+        /// ? v2.0.1: æ–°å¢ apiUrl å’Œ modelName å‚æ•°ï¼Œæ”¯æŒ OpenAI å…¼å®¹æ¥å£
         /// </summary>
-        /// <param name="provider">TTS Ìá¹©ÉÌ: "azure", "edge", "local", "openai"</param>
-        /// <param name="key">API ÃÜÔ¿£¨¿ÉÑ¡£©</param>
-        /// <param name="region">ÇøÓò£¨Azure ×¨ÓÃ£©</param>
-        /// <param name="voice">ÓïÒôÃû³Æ</param>
-        /// <param name="rate">ÓïËÙ£¨0.5-2.0£©</param>
-        /// <param name="vol">ÒôÁ¿£¨0.0-1.0£©</param>
-        /// <param name="apiUrl">API ¶Ëµã URL£¨OpenAI ×¨ÓÃ£¬¿ÉÑ¡£©</param>
-        /// <param name="modelName">Ä£ĞÍÃû³Æ£¨OpenAI ×¨ÓÃ£¬¿ÉÑ¡£©</param>
+        /// <param name="provider">TTS æä¾›å•†: "azure", "edge", "local", "openai"</param>
+        /// <param name="key">API å¯†é’¥ï¼ˆå¯é€‰ï¼‰</param>
+        /// <param name="region">åŒºåŸŸï¼ˆAzure ä¸“ç”¨ï¼‰</param>
+        /// <param name="voice">è¯­éŸ³åç§°</param>
+        /// <param name="rate">è¯­é€Ÿï¼ˆ0.5-2.0ï¼‰</param>
+        /// <param name="vol">éŸ³é‡ï¼ˆ0.0-1.0ï¼‰</param>
+        /// <param name="apiUrl">API ç«¯ç‚¹ URLï¼ˆOpenAI ä¸“ç”¨ï¼Œå¯é€‰ï¼‰</param>
+        /// <param name="modelName">æ¨¡å‹åç§°ï¼ˆOpenAI ä¸“ç”¨ï¼Œå¯é€‰ï¼‰</param>
         public void Configure(
             string provider, 
             string key = "", 
@@ -78,7 +78,7 @@ namespace TheSecondSeat.TTS
             speechRate = UnityEngine.Mathf.Clamp(rate, 0.5f, 2.0f);
             volume = UnityEngine.Mathf.Clamp(vol, 0.0f, 1.0f);
 
-            // ? ÅäÖÃ OpenAI ¼æÈİ½Ó¿Ú
+            // ? é…ç½® OpenAI å…¼å®¹æ¥å£
             if (ttsProvider == "openai")
             {
                 if (!string.IsNullOrEmpty(apiUrl))
@@ -91,7 +91,7 @@ namespace TheSecondSeat.TTS
                     openAI_Model = modelName;
                 }
                 
-                // ? Èç¹ûÓĞ API Key£¬×¼±¸ Authorization Header
+                // ? å¦‚æœæœ‰ API Keyï¼Œå‡†å¤‡ Authorization Header
                 httpClient.DefaultRequestHeaders.Clear();
                 if (!string.IsNullOrEmpty(apiKey))
                 {
@@ -100,7 +100,7 @@ namespace TheSecondSeat.TTS
                 
                 Log.Message($"[TTSService] Configured OpenAI-compatible TTS: {openAI_ApiUrl}, model: {openAI_Model}");
             }
-            // ÅäÖÃ Azure TTS µÄ Authorization Header
+            // é…ç½® Azure TTS çš„ Authorization Header
             else if (ttsProvider == "azure" && !string.IsNullOrEmpty(apiKey))
             {
                 httpClient.DefaultRequestHeaders.Clear();
@@ -109,12 +109,12 @@ namespace TheSecondSeat.TTS
         }
 
         /// <summary>
-        /// ½«ÎÄ±¾×ª»»ÎªÓïÒô²¢±£´æÎªÎÄ¼ş
-        /// ? v1.6.30: Ìí¼Ó personaDefName ²ÎÊı£¬ÓÃÓÚ¿ÚĞÍÍ¬²½×·×Ù
+        /// å°†æ–‡æœ¬è½¬æ¢ä¸ºè¯­éŸ³å¹¶ä¿å­˜ä¸ºæ–‡ä»¶
+        /// ? v1.6.30: æ·»åŠ  personaDefName å‚æ•°ï¼Œç”¨äºå£å‹åŒæ­¥è¿½è¸ª
         /// </summary>
-        /// <param name="text">Òª×ª»»µÄÎÄ±¾</param>
-        /// <param name="personaDefName">ÈË¸ñ DefName£¨ÓÃÓÚ×´Ì¬×·×Ù£¬¿ÉÑ¡£©</param>
-        /// <returns>Éú³ÉµÄÒôÆµÎÄ¼şÂ·¾¶£¬Ê§°ÜÔò·µ»Ø null</returns>
+        /// <param name="text">è¦è½¬æ¢çš„æ–‡æœ¬</param>
+        /// <param name="personaDefName">äººæ ¼ DefNameï¼ˆç”¨äºçŠ¶æ€è¿½è¸ªï¼Œå¯é€‰ï¼‰</param>
+        /// <returns>ç”Ÿæˆçš„éŸ³é¢‘æ–‡ä»¶è·¯å¾„ï¼Œå¤±è´¥åˆ™è¿”å› null</returns>
         public async Task<string?> SpeakAsync(string text, string personaDefName = "")
         {
             if (string.IsNullOrWhiteSpace(text))
@@ -125,7 +125,7 @@ namespace TheSecondSeat.TTS
 
             try
             {
-                // ? ÇåÀíÎÄ±¾£ºÒÆ³ıÀ¨ºÅÄÚµÄ¶¯×÷ºÍ±íÇéÃèĞ´
+                // ? æ¸…ç†æ–‡æœ¬ï¼šç§»é™¤æ‹¬å·å†…çš„åŠ¨ä½œå’Œè¡¨æƒ…æå†™
                 string cleanText = CleanTextForTTS(text);
                 
                 if (string.IsNullOrWhiteSpace(cleanText))
@@ -134,13 +134,13 @@ namespace TheSecondSeat.TTS
                     return null;
                 }
                 
-                // ? Éú³É WAV ÎÄ¼şÃû
+                // ? ç”Ÿæˆ WAV æ–‡ä»¶å
                 string fileName = $"tts_{DateTime.Now:yyyyMMdd_HHmmss}.wav";
                 string filePath = Path.Combine(audioOutputDir, fileName);
 
                 byte[]? audioData = null;
 
-                // ? ¸ù¾İÌá¹©ÉÌÑ¡ÔñÉú³É·½Ê½
+                // ? æ ¹æ®æä¾›å•†é€‰æ‹©ç”Ÿæˆæ–¹å¼
                 switch (ttsProvider.ToLower())
                 {
                     case "azure":
@@ -166,12 +166,12 @@ namespace TheSecondSeat.TTS
                     return null;
                 }
 
-                // ±£´æÒôÆµÎÄ¼ş
+                // ä¿å­˜éŸ³é¢‘æ–‡ä»¶
                 File.WriteAllBytes(filePath, audioData);
                 Log.Message($"[TTSService] Audio saved to: {filePath}");
 
-                // ? ÔÚÖ÷Ïß³Ì×Ô¶¯´ò¿ªÒôÆµ²¥·ÅÆ÷£¨´«µİ personaDefName£©
-                string capturedPersonaDefName = personaDefName;  // ²¶»ñ±äÁ¿ÓÃÓÚ±Õ°ü
+                // ? åœ¨ä¸»çº¿ç¨‹è‡ªåŠ¨æ‰“å¼€éŸ³é¢‘æ’­æ”¾å™¨ï¼ˆä¼ é€’ personaDefNameï¼‰
+                string capturedPersonaDefName = personaDefName;  // æ•è·å˜é‡ç”¨äºé—­åŒ…
                 Verse.LongEventHandler.ExecuteWhenFinished(() => 
                 {
                     AutoPlayAudioFile(filePath, capturedPersonaDefName);
@@ -187,7 +187,7 @@ namespace TheSecondSeat.TTS
         }
 
         /// <summary>
-        /// ? Éú³É±¾µØ TTS (Ê¹ÓÃ System.Speech)
+        /// ? ç”Ÿæˆæœ¬åœ° TTS (ä½¿ç”¨ System.Speech)
         /// </summary>
         private Task<byte[]?> GenerateLocalTTSAsync(string text)
         {
@@ -195,25 +195,25 @@ namespace TheSecondSeat.TTS
             {
                 try
                 {
-                    // Ê¹ÓÃ·´Éä¼ÓÔØ System.Speech£¬±ÜÃâÓ²ÒÀÀµ
+                    // ä½¿ç”¨åå°„åŠ è½½ System.Speechï¼Œé¿å…ç¡¬ä¾èµ–
                     var assembly = System.Reflection.Assembly.Load("System.Speech, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
                     var synthesizerType = assembly.GetType("System.Speech.Synthesis.SpeechSynthesizer");
                     var synthesizer = Activator.CreateInstance(synthesizerType);
 
                     using (var stream = new MemoryStream())
                     {
-                        // ÉèÖÃÊä³öµ½Á÷
+                        // è®¾ç½®è¾“å‡ºåˆ°æµ
                         synthesizerType.GetMethod("SetOutputToWaveStream", new[] { typeof(Stream) })
                             .Invoke(synthesizer, new object[] { stream });
 
-                        // ÉèÖÃÒôÁ¿ (0-100)
+                        // è®¾ç½®éŸ³é‡ (0-100)
                         synthesizerType.GetMethod("set_Volume").Invoke(synthesizer, new object[] { (int)(volume * 100) });
 
-                        // ÉèÖÃÓïËÙ (-10 to 10)
+                        // è®¾ç½®è¯­é€Ÿ (-10 to 10)
                         int rate = (int)((speechRate - 1.0f) * 10);
                         synthesizerType.GetMethod("set_Rate").Invoke(synthesizer, new object[] { rate });
 
-                        // ºÏ³ÉÓïÒô
+                        // åˆæˆè¯­éŸ³
                         synthesizerType.GetMethod("Speak", new[] { typeof(string) })
                             .Invoke(synthesizer, new object[] { text });
 
@@ -229,49 +229,49 @@ namespace TheSecondSeat.TTS
         }
 
         /// <summary>
-        /// ? Éú³É Edge TTS (Õ¼Î»·û/¼òµ¥ÊµÏÖ)
+        /// ? ç”Ÿæˆ Edge TTS (å ä½ç¬¦/ç®€å•å®ç°)
         /// </summary>
         private Task<byte[]?> GenerateEdgeTTSAsync(string text)
         {
-            // Edge TTS Í¨³£ĞèÒª WebSocket£¬ÕâÀïÔİÊ±·µ»Ø null ²¢ÌáÊ¾
+            // Edge TTS é€šå¸¸éœ€è¦ WebSocketï¼Œè¿™é‡Œæš‚æ—¶è¿”å› null å¹¶æç¤º
             Log.Warning("[TTSService] Edge TTS implementation requires WebSocket support which is complex to embed.");
             Log.Warning("[TTSService] Please use Azure TTS or Local TTS for now.");
             return Task.FromResult<byte[]?>(null);
         }
 
         /// <summary>
-        /// ? Éú³É OpenAI ¼æÈİµÄ TTS (Èç GPT-SoVITS)
-        /// Ê¹ÓÃ OpenAI Speech API ¸ñÊ½£º
+        /// ? ç”Ÿæˆ OpenAI å…¼å®¹çš„ TTS (å¦‚ GPT-SoVITS)
+        /// ä½¿ç”¨ OpenAI Speech API æ ¼å¼ï¼š
         /// POST /v1/audio/speech
-        /// Body: { "model": "gpt-sovits", "input": "ÎÄ±¾", "voice": "zh-CN-XiaoxiaoNeural", "response_format": "wav" }
+        /// Body: { "model": "gpt-sovits", "input": "æ–‡æœ¬", "voice": "zh-CN-XiaoxiaoNeural", "response_format": "wav" }
         /// </summary>
         private async Task<byte[]?> GenerateOpenAITTSAsync(string text)
         {
             try
             {
-                // ? µ÷ÊÔ£º¼ÇÂ¼ÇëÇóĞÅÏ¢
+                // ? è°ƒè¯•ï¼šè®°å½•è¯·æ±‚ä¿¡æ¯
                 Log.Message($"[TTSService] Sending request to OpenAI TTS API: {openAI_ApiUrl}");
                 Log.Message($"[TTSService] Model: {openAI_Model}, Voice: {voiceName}");
 
-                // ? ¹¹½¨ OpenAI Speech API ¼æÈİµÄÇëÇóÌå
+                // ? æ„å»º OpenAI Speech API å…¼å®¹çš„è¯·æ±‚ä½“
                 var requestBody = new
                 {
-                    model = openAI_Model,           // Ä£ĞÍÃû³Æ£¨Èç "gpt-sovits"£©
-                    input = text,                   // ÒªºÏ³ÉµÄÎÄ±¾
-                    voice = voiceName,              // ÓïÒôÃû³Æ
-                    response_format = "wav",        // Êä³ö¸ñÊ½£¨WAV£©
-                    speed = speechRate              // ÓïËÙ£¨¿ÉÑ¡£©
+                    model = openAI_Model,           // æ¨¡å‹åç§°ï¼ˆå¦‚ "gpt-sovits"ï¼‰
+                    input = text,                   // è¦åˆæˆçš„æ–‡æœ¬
+                    voice = voiceName,              // è¯­éŸ³åç§°
+                    response_format = "wav",        // è¾“å‡ºæ ¼å¼ï¼ˆWAVï¼‰
+                    speed = speechRate              // è¯­é€Ÿï¼ˆå¯é€‰ï¼‰
                 };
 
                 string jsonBody = JsonConvert.SerializeObject(requestBody);
                 
-                // ? µ÷ÊÔ£º¼ÇÂ¼ÇëÇóÌå
+                // ? è°ƒè¯•ï¼šè®°å½•è¯·æ±‚ä½“
                 if (Prefs.DevMode)
                 {
                     Log.Message($"[TTSService] Request body: {jsonBody}");
                 }
 
-                // ? ·¢ËÍ POST ÇëÇó
+                // ? å‘é€ POST è¯·æ±‚
                 var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
                 var response = await httpClient.PostAsync(openAI_ApiUrl, content);
 
@@ -285,7 +285,7 @@ namespace TheSecondSeat.TTS
                     return null;
                 }
 
-                // ? ¶ÁÈ¡ÒôÆµÊı¾İ£¨Ó¦¸ÃÊÇ WAV ¸ñÊ½£©
+                // ? è¯»å–éŸ³é¢‘æ•°æ®ï¼ˆåº”è¯¥æ˜¯ WAV æ ¼å¼ï¼‰
                 byte[] audioData = await response.Content.ReadAsByteArrayAsync();
                 Log.Message($"[TTSService] OpenAI TTS audio generated: {audioData.Length} bytes");
                 
@@ -300,19 +300,19 @@ namespace TheSecondSeat.TTS
         }
 
         /// <summary>
-        /// ×Ô¶¯´ò¿ªÒôÆµ²¥·ÅÆ÷²¥·ÅÎÄ¼ş
-        /// ? v1.6.30: Ìí¼Ó personaDefName ²ÎÊı£¬ÓÃÓÚ¿ÚĞÍÍ¬²½×·×Ù
+        /// è‡ªåŠ¨æ‰“å¼€éŸ³é¢‘æ’­æ”¾å™¨æ’­æ”¾æ–‡ä»¶
+        /// ? v1.6.30: æ·»åŠ  personaDefName å‚æ•°ï¼Œç”¨äºå£å‹åŒæ­¥è¿½è¸ª
         /// </summary>
         private void AutoPlayAudioFile(string filePath, string personaDefName = "")
         {
             try
             {
-                // ¼ì²éÊÇ·ñÆôÓÃ×Ô¶¯²¥·Å
+                // æ£€æŸ¥æ˜¯å¦å¯ç”¨è‡ªåŠ¨æ’­æ”¾
                 var modSettings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
                 
                 if (modSettings == null || !modSettings.autoPlayTTS)
                 {
-                    return; // Î´ÆôÓÃ×Ô¶¯²¥·Å
+                    return; // æœªå¯ç”¨è‡ªåŠ¨æ’­æ”¾
                 }
                 
                 if (!File.Exists(filePath))
@@ -321,15 +321,15 @@ namespace TheSecondSeat.TTS
                     return;
                 }
 
-                // ? ¶ÁÈ¡ÒôÆµÎÄ¼ş×Ö½Ú
+                // ? è¯»å–éŸ³é¢‘æ–‡ä»¶å­—èŠ‚
                 byte[] audioData = File.ReadAllBytes(filePath);
                 
-                // ? ²¥·ÅÇ°£ºÉèÖÃÕıÔÚËµ»°×´Ì¬
+                // ? æ’­æ”¾å‰ï¼šè®¾ç½®æ­£åœ¨è¯´è¯çŠ¶æ€
                 IsSpeaking = true;
                 
-                // ? v1.6.30: Ê¹ÓÃ Unity AudioSource ²¥·Å£¬²¢´«µİ personaDefName
+                // ? v1.6.30: ä½¿ç”¨ Unity AudioSource æ’­æ”¾ï¼Œå¹¶ä¼ é€’ personaDefName
                 TTSAudioPlayer.Instance.PlayFromBytes(audioData, personaDefName, () => {
-                    // ? ²¥·Å½áÊø£ºÇå³ıÕıÔÚËµ»°×´Ì¬
+                    // ? æ’­æ”¾ç»“æŸï¼šæ¸…é™¤æ­£åœ¨è¯´è¯çŠ¶æ€
                     IsSpeaking = false;
                     Log.Message("[TTSService] Audio playback finished");
                 });
@@ -339,13 +339,13 @@ namespace TheSecondSeat.TTS
             catch (Exception ex)
             {
                 Log.Warning($"[TTSService] Failed to auto-play audio: {ex.Message}");
-                // ? Òì³£Ê±Ò²ÒªÖØÖÃ×´Ì¬
+                // ? å¼‚å¸¸æ—¶ä¹Ÿè¦é‡ç½®çŠ¶æ€
                 IsSpeaking = false;
             }
         }
 
         /// <summary>
-        /// ÇåÀíÎÄ±¾ÓÃÓÚ TTS£ºÒÆ³ıÀ¨ºÅÄÚµÄ¶¯×÷ºÍ±íÇéÃèĞ´
+        /// æ¸…ç†æ–‡æœ¬ç”¨äº TTSï¼šç§»é™¤æ‹¬å·å†…çš„åŠ¨ä½œå’Œè¡¨æƒ…æå†™
         /// </summary>
         private string CleanTextForTTS(string text)
         {
@@ -354,25 +354,25 @@ namespace TheSecondSeat.TTS
                 return text;
             }
 
-            // ? ÒÆ³ıËùÓĞÀàĞÍµÄÀ¨ºÅÄÚÈİ
-            // (¶¯×÷ÃèĞ´)¡¢£¨ÖĞÎÄÀ¨ºÅ£©¡¢[ÅÔ°×]¡¢¡¾×¢ÊÍ¡¿¡¢<±ê¼Ç>
-            text = System.Text.RegularExpressions.Regex.Replace(text, @"\([^)]*\)", "");      // (Ó¢ÎÄÀ¨ºÅ)
-            text = System.Text.RegularExpressions.Regex.Replace(text, @"£¨[^£©]*£©", "");      // £¨ÖĞÎÄÀ¨ºÅ£©
-            text = System.Text.RegularExpressions.Regex.Replace(text, @"\[[^\]]*\]", "");     // [·½À¨ºÅ]
-            text = System.Text.RegularExpressions.Regex.Replace(text, @"¡¾[^¡¿]*¡¿", "");      // ¡¾ÖĞÎÄ·½À¨ºÅ¡¿
-            text = System.Text.RegularExpressions.Regex.Replace(text, @"<[^>]*>", "");        // <¼âÀ¨ºÅ>
+            // ? ç§»é™¤æ‰€æœ‰ç±»å‹çš„æ‹¬å·å†…å®¹
+            // (åŠ¨ä½œæå†™)ã€ï¼ˆä¸­æ–‡æ‹¬å·ï¼‰ã€[æ—ç™½]ã€ã€æ³¨é‡Šã€‘ã€<æ ‡è®°>
+            text = System.Text.RegularExpressions.Regex.Replace(text, @"\([^)]*\)", "");      // (è‹±æ–‡æ‹¬å·)
+            text = System.Text.RegularExpressions.Regex.Replace(text, @"ï¼ˆ[^ï¼‰]*ï¼‰", "");      // ï¼ˆä¸­æ–‡æ‹¬å·ï¼‰
+            text = System.Text.RegularExpressions.Regex.Replace(text, @"\[[^\]]*\]", "");     // [æ–¹æ‹¬å·]
+            text = System.Text.RegularExpressions.Regex.Replace(text, @"ã€[^ã€‘]*ã€‘", "");      // ã€ä¸­æ–‡æ–¹æ‹¬å·ã€‘
+            text = System.Text.RegularExpressions.Regex.Replace(text, @"<[^>]*>", "");        // <å°–æ‹¬å·>
             
-            // ? ÒÆ³ı¶àÓàµÄ¿Õ¸ñºÍ»»ĞĞ
+            // ? ç§»é™¤å¤šä½™çš„ç©ºæ ¼å’Œæ¢è¡Œ
             text = System.Text.RegularExpressions.Regex.Replace(text, @"\s+", " ");
             
-            // ? ÒÆ³ıÊ×Î²¿Õ¸ñ
+            // ? ç§»é™¤é¦–å°¾ç©ºæ ¼
             text = text.Trim();
             
             return text;
         }
 
         /// <summary>
-        /// Ê¹ÓÃ Azure TTS Éú³ÉÓïÒô
+        /// ä½¿ç”¨ Azure TTS ç”Ÿæˆè¯­éŸ³
         /// </summary>
         private async Task<byte[]?> GenerateAzureTTSAsync(string text)
         {
@@ -386,26 +386,26 @@ namespace TheSecondSeat.TTS
             {
                 string endpoint = $"https://{apiRegion}.tts.speech.microsoft.com/cognitiveservices/v1";
 
-                // ¹¹½¨ SSML
+                // æ„å»º SSML
                 string ssml = BuildSSML(text, voiceName, speechRate);
                 
-                // ? µ÷ÊÔ£º¼ÇÂ¼ÍêÕûµÄ SSML
+                // ? è°ƒè¯•ï¼šè®°å½•å®Œæ•´çš„ SSML
                 Log.Message($"[TTSService] SSML:\n{ssml}");
                 Log.Message($"[TTSService] Endpoint: {endpoint}");
                 Log.Message($"[TTSService] Voice: {voiceName}");
 
-                // ? ĞŞ¸´£ºÉèÖÃÕıÈ·µÄ Content-Type ºÍÊä³ö¸ñÊ½
+                // ? ä¿®å¤ï¼šè®¾ç½®æ­£ç¡®çš„ Content-Type å’Œè¾“å‡ºæ ¼å¼
                 var content = new StringContent(ssml, Encoding.UTF8, "application/ssml+xml");
                 
-                // ? È·±£ÇëÇóÍ·ÕıÈ·£¨ÒÆ³ı¾ÉµÄ£¬ÖØĞÂÌí¼Ó£©
+                // ? ç¡®ä¿è¯·æ±‚å¤´æ­£ç¡®ï¼ˆç§»é™¤æ—§çš„ï¼Œé‡æ–°æ·»åŠ ï¼‰
                 httpClient.DefaultRequestHeaders.Remove("Ocp-Apim-Subscription-Key");
                 httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", apiKey);
                 
-                // ? ÉèÖÃÊä³ö¸ñÊ½£¨WAV PCM£©
+                // ? è®¾ç½®è¾“å‡ºæ ¼å¼ï¼ˆWAV PCMï¼‰
                 httpClient.DefaultRequestHeaders.Remove("X-Microsoft-OutputFormat");
                 httpClient.DefaultRequestHeaders.Add("X-Microsoft-OutputFormat", "riff-48khz-16bit-mono-pcm");
                 
-                // ? Ìí¼Ó User-Agent£¨Ä³Ğ© API ÒªÇó£©
+                // ? æ·»åŠ  User-Agentï¼ˆæŸäº› API è¦æ±‚ï¼‰
                 httpClient.DefaultRequestHeaders.Remove("User-Agent");
                 httpClient.DefaultRequestHeaders.Add("User-Agent", "RimWorld-TheSecondSeat-TTS");
 
@@ -415,7 +415,7 @@ namespace TheSecondSeat.TTS
                 {
                     var error = await response.Content.ReadAsStringAsync();
                     
-                    // ? ÏêÏ¸´íÎóÈÕÖ¾
+                    // ? è¯¦ç»†é”™è¯¯æ—¥å¿—
                     Log.Error($"[TTSService] Azure TTS error: {response.StatusCode}");
                     Log.Error($"[TTSService] Error details: {error}");
                     Log.Error($"[TTSService] Region: {apiRegion}");
@@ -439,12 +439,12 @@ namespace TheSecondSeat.TTS
         }
 
         /// <summary>
-        /// ¹¹½¨ SSML£¨Azure TTS Ê¹ÓÃ£©
-        /// ? Ö§³ÖÇé¸Ğ±í´ï£¨mstts:express-as£©
+        /// æ„å»º SSMLï¼ˆAzure TTS ä½¿ç”¨ï¼‰
+        /// ? æ”¯æŒæƒ…æ„Ÿè¡¨è¾¾ï¼ˆmstts:express-asï¼‰
         /// </summary>
         private string BuildSSML(string text, string voice, float rate)
         {
-            // ? ĞŞ¸´£ºËÙÂÊ¸ñÊ½»¯£¨Azure ÒªÇó¾«È·¸ñÊ½£©
+            // ? ä¿®å¤ï¼šé€Ÿç‡æ ¼å¼åŒ–ï¼ˆAzure è¦æ±‚ç²¾ç¡®æ ¼å¼ï¼‰
             string rateStr;
             if (rate >= 1.0f)
             {
@@ -457,19 +457,19 @@ namespace TheSecondSeat.TTS
                 rateStr = $"{percent}%";
             }
             
-            // ? ĞŞ¸´£º×ªÒåÎÄ±¾£¨·ÀÖ¹ XML ×¢Èë£©
+            // ? ä¿®å¤ï¼šè½¬ä¹‰æ–‡æœ¬ï¼ˆé˜²æ­¢ XML æ³¨å…¥ï¼‰
             string escapedText = System.Security.SecurityElement.Escape(text);
             
-            // ? ĞÂÔö£º»ñÈ¡µ±Ç°Çé¸Ğ·ç¸ñ
+            // ? æ–°å¢ï¼šè·å–å½“å‰æƒ…æ„Ÿé£æ ¼
             EmotionStyle emotion = GetCurrentEmotion();
             
-            // ? ¹¹½¨ SSML£¨´øÇé¸Ğ£©
+            // ? æ„å»º SSMLï¼ˆå¸¦æƒ…æ„Ÿï¼‰
             string ssml;
             
-            // ¼ì²éÓïÒôÊÇ·ñÖ§³ÖÇé¸Ğ£¨Neural ÓïÒô²ÅÖ§³Ö£©
+            // æ£€æŸ¥è¯­éŸ³æ˜¯å¦æ”¯æŒæƒ…æ„Ÿï¼ˆNeural è¯­éŸ³æ‰æ”¯æŒï¼‰
             if (voice.Contains("Neural") && emotion.StyleName != "chat")
             {
-                // ´øÇé¸ĞµÄ SSML
+                // å¸¦æƒ…æ„Ÿçš„ SSML
                 ssml = $@"<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='https://www.w3.org/2001/mstts' xml:lang='zh-CN'>
     <voice name='{voice}'>
         <mstts:express-as style='{emotion.StyleName}' styledegree='{emotion.StyleDegree:F2}'>
@@ -482,7 +482,7 @@ namespace TheSecondSeat.TTS
             }
             else
             {
-                // ²»´øÇé¸ĞµÄ SSML£¨¼æÈİ¾ÉÓïÒô£©
+                // ä¸å¸¦æƒ…æ„Ÿçš„ SSMLï¼ˆå…¼å®¹æ—§è¯­éŸ³ï¼‰
                 ssml = $@"<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='https://www.w3.org/2001/mstts' xml:lang='zh-CN'>
     <voice name='{voice}'>
         <prosody rate='{rateStr}'>
@@ -496,13 +496,13 @@ namespace TheSecondSeat.TTS
         }
 
         /// <summary>
-        /// »ñÈ¡µ±Ç°Çé¸Ğ·ç¸ñ£¨´Ó±íÇéÏµÍ³£©
+        /// è·å–å½“å‰æƒ…æ„Ÿé£æ ¼ï¼ˆä»è¡¨æƒ…ç³»ç»Ÿï¼‰
         /// </summary>
         private EmotionStyle GetCurrentEmotion()
         {
             try
             {
-                // »ñÈ¡µ±Ç°ÈË¸ñ
+                // è·å–å½“å‰äººæ ¼
                 var narratorManager = Verse.Current.Game?.GetComponent<Narrator.NarratorManager>();
                 if (narratorManager == null)
                 {
@@ -515,7 +515,7 @@ namespace TheSecondSeat.TTS
                     return new EmotionStyle("chat", 1.0f);
                 }
 
-                // ´Ó±íÇéÏµÍ³»ñÈ¡Çé¸Ğ
+                // ä»è¡¨æƒ…ç³»ç»Ÿè·å–æƒ…æ„Ÿ
                 return EmotionMapper.GetCurrentEmotionStyle(persona.defName);
             }
             catch (Exception ex)
@@ -526,7 +526,7 @@ namespace TheSecondSeat.TTS
         }
 
         /// <summary>
-        /// »ñÈ¡ÒôÆµÊä³öÄ¿Â¼
+        /// è·å–éŸ³é¢‘è¾“å‡ºç›®å½•
         /// </summary>
         public string GetAudioOutputDirectory()
         {
@@ -534,7 +534,7 @@ namespace TheSecondSeat.TTS
         }
 
         /// <summary>
-        /// ´ò¿ªÒôÆµÊä³öÄ¿Â¼
+        /// æ‰“å¼€éŸ³é¢‘è¾“å‡ºç›®å½•
         /// </summary>
         public void OpenAudioDirectory()
         {
@@ -545,7 +545,7 @@ namespace TheSecondSeat.TTS
         }
 
         /// <summary>
-        /// Çå¿ÕÒôÆµ»º´æ
+        /// æ¸…ç©ºéŸ³é¢‘ç¼“å­˜
         /// </summary>
         public void ClearCache()
         {
@@ -568,143 +568,143 @@ namespace TheSecondSeat.TTS
         }
 
         /// <summary>
-        /// »ñÈ¡¿ÉÓÃµÄÓïÒôÁĞ±í
+        /// è·å–å¯ç”¨çš„è¯­éŸ³åˆ—è¡¨
         /// </summary>
         public static List<string> GetAvailableVoices()
         {
             return new List<string>
             {
-                // ? ÖĞÎÄÓïÒô£¨ÆÕÍ¨»°£©
-                "zh-CN-XiaoxiaoNeural",      // Å®Éù£¨Í¨ÓÃ£¬ÎÂÅ¯£©? Ä¬ÈÏ
-                "zh-CN-XiaoyiNeural",        // Å®Éù£¨¶ùÍ¯£¬»îÆÃ£©
-                "zh-CN-YunjianNeural",       // ÄĞÉù£¨ÌåÓı½âËµ£¬¼¤Çé£©
-                "zh-CN-YunxiNeural",         // ÄĞÉù£¨Í¨ÓÃ£¬×ÔÈ»£©
-                "zh-CN-YunxiaNeural",        // ÄĞÉù£¨¶ùÍ¯£¬¿É°®£©
-                "zh-CN-YunyangNeural",       // ÄĞÉù£¨ĞÂÎÅ²¥±¨£¬×¨Òµ£©
-                "zh-CN-liaoning-XiaobeiNeural", // Å®Éù£¨¶«±±·½ÑÔ£©
-                "zh-CN-shaanxi-XiaoniNeural",   // Å®Éù£¨ÉÂÎ÷·½ÑÔ£©
+                // ? ä¸­æ–‡è¯­éŸ³ï¼ˆæ™®é€šè¯ï¼‰
+                "zh-CN-XiaoxiaoNeural",      // å¥³å£°ï¼ˆé€šç”¨ï¼Œæ¸©æš–ï¼‰? é»˜è®¤
+                "zh-CN-XiaoyiNeural",        // å¥³å£°ï¼ˆå„¿ç«¥ï¼Œæ´»æ³¼ï¼‰
+                "zh-CN-YunjianNeural",       // ç”·å£°ï¼ˆä½“è‚²è§£è¯´ï¼Œæ¿€æƒ…ï¼‰
+                "zh-CN-YunxiNeural",         // ç”·å£°ï¼ˆé€šç”¨ï¼Œè‡ªç„¶ï¼‰
+                "zh-CN-YunxiaNeural",        // ç”·å£°ï¼ˆå„¿ç«¥ï¼Œå¯çˆ±ï¼‰
+                "zh-CN-YunyangNeural",       // ç”·å£°ï¼ˆæ–°é—»æ’­æŠ¥ï¼Œä¸“ä¸šï¼‰
+                "zh-CN-liaoning-XiaobeiNeural", // å¥³å£°ï¼ˆä¸œåŒ—æ–¹è¨€ï¼‰
+                "zh-CN-shaanxi-XiaoniNeural",   // å¥³å£°ï¼ˆé™•è¥¿æ–¹è¨€ï¼‰
                 
-                // ? ÖĞÎÄÓïÒô£¨¶à·ç¸ñ - ÏşÏşÔöÇ¿°æ£©
-                "zh-CN-XiaoxiaoMultilingualNeural", // Å®Éù£¨¶àÓïÑÔ£¬Á÷³©£©
-                "zh-CN-XiaochenNeural",      // Å®Éù£¨¿Í·ş£¬ÎÂÈá£©
-                "zh-CN-XiaohanNeural",       // Å®Éù£¨Í¨ÓÃ£¬×ÔÈ»£©
-                "zh-CN-XiaomengNeural",      // Å®Éù£¨¶ùÍ¯£¬»îÆÃ£©
-                "zh-CN-XiaomoNeural",        // Å®Éù£¨Í¨ÓÃ£¬ÇåÎú£©
-                "zh-CN-XiaoqiuNeural",       // Å®Éù£¨Í¨ÓÃ£¬ÎÂºÍ£©
-                "zh-CN-XiaoruiNeural",       // Å®Éù£¨Í¨ÓÃ£¬×ÔĞÅ£©
-                "zh-CN-XiaoshuangNeural",    // Å®Éù£¨¶ùÍ¯£¬¿É°®£©
-                "zh-CN-XiaoxuanNeural",      // Å®Éù£¨Í¨ÓÃ£¬ÓÅÑÅ£©
-                "zh-CN-XiaoyanNeural",       // Å®Éù£¨Í¨ÓÃ£¬ÈáºÍ£©
-                "zh-CN-XiaoyouNeural",       // Å®Éù£¨¶ùÍ¯£¬»îÆÃ£©
-                "zh-CN-XiaozhenNeural",      // Å®Éù£¨·½ÑÔ£©
-                "zh-CN-YunfengNeural",       // ÄĞÉù£¨Í¨ÓÃ£¬³ÁÎÈ£©
-                "zh-CN-YunhaoNeural",        // ÄĞÉù£¨Í¨ÓÃ£¬×ÔÈ»£©
-                "zh-CN-YunjieNeural",        // ÄĞÉù£¨Í¨ÓÃ£¬Ñô¹â£©
-                "zh-CN-YunzeNeural",         // ÄĞÉù£¨Í¨ÓÃ£¬³ÉÊì£©
+                // ? ä¸­æ–‡è¯­éŸ³ï¼ˆå¤šé£æ ¼ - æ™“æ™“å¢å¼ºç‰ˆï¼‰
+                "zh-CN-XiaoxiaoMultilingualNeural", // å¥³å£°ï¼ˆå¤šè¯­è¨€ï¼Œæµç•…ï¼‰
+                "zh-CN-XiaochenNeural",      // å¥³å£°ï¼ˆå®¢æœï¼Œæ¸©æŸ”ï¼‰
+                "zh-CN-XiaohanNeural",       // å¥³å£°ï¼ˆé€šç”¨ï¼Œè‡ªç„¶ï¼‰
+                "zh-CN-XiaomengNeural",      // å¥³å£°ï¼ˆå„¿ç«¥ï¼Œæ´»æ³¼ï¼‰
+                "zh-CN-XiaomoNeural",        // å¥³å£°ï¼ˆé€šç”¨ï¼Œæ¸…æ™°ï¼‰
+                "zh-CN-XiaoqiuNeural",       // å¥³å£°ï¼ˆé€šç”¨ï¼Œæ¸©å’Œï¼‰
+                "zh-CN-XiaoruiNeural",       // å¥³å£°ï¼ˆé€šç”¨ï¼Œè‡ªä¿¡ï¼‰
+                "zh-CN-XiaoshuangNeural",    // å¥³å£°ï¼ˆå„¿ç«¥ï¼Œå¯çˆ±ï¼‰
+                "zh-CN-XiaoxuanNeural",      // å¥³å£°ï¼ˆé€šç”¨ï¼Œä¼˜é›…ï¼‰
+                "zh-CN-XiaoyanNeural",       // å¥³å£°ï¼ˆé€šç”¨ï¼ŒæŸ”å’Œï¼‰
+                "zh-CN-XiaoyouNeural",       // å¥³å£°ï¼ˆå„¿ç«¥ï¼Œæ´»æ³¼ï¼‰
+                "zh-CN-XiaozhenNeural",      // å¥³å£°ï¼ˆæ–¹è¨€ï¼‰
+                "zh-CN-YunfengNeural",       // ç”·å£°ï¼ˆé€šç”¨ï¼Œæ²‰ç¨³ï¼‰
+                "zh-CN-YunhaoNeural",        // ç”·å£°ï¼ˆé€šç”¨ï¼Œè‡ªç„¶ï¼‰
+                "zh-CN-YunjieNeural",        // ç”·å£°ï¼ˆé€šç”¨ï¼Œé˜³å…‰ï¼‰
+                "zh-CN-YunzeNeural",         // ç”·å£°ï¼ˆé€šç”¨ï¼Œæˆç†Ÿï¼‰
                 
-                // ? ÔÁÓï£¨¹ã¶«»°£©
-                "zh-HK-HiuMaanNeural",       // Å®Éù£¨Ïã¸ÛÔÁÓï£©
-                "zh-HK-HiuGaaiNeural",       // Å®Éù£¨Ïã¸ÛÔÁÓï£¬ÎÂÈá£©
-                "zh-HK-WanLungNeural",       // ÄĞÉù£¨Ïã¸ÛÔÁÓï£©
+                // ? ç²¤è¯­ï¼ˆå¹¿ä¸œè¯ï¼‰
+                "zh-HK-HiuMaanNeural",       // å¥³å£°ï¼ˆé¦™æ¸¯ç²¤è¯­ï¼‰
+                "zh-HK-HiuGaaiNeural",       // å¥³å£°ï¼ˆé¦™æ¸¯ç²¤è¯­ï¼Œæ¸©æŸ”ï¼‰
+                "zh-HK-WanLungNeural",       // ç”·å£°ï¼ˆé¦™æ¸¯ç²¤è¯­ï¼‰
                 
-                // ? Ì¨Íå¹úÓï
-                "zh-TW-HsiaoChenNeural",     // Å®Éù£¨Ì¨Íå¹úÓï£©
-                "zh-TW-HsiaoYuNeural",       // Å®Éù£¨Ì¨Íå¹úÓï£¬ÎÂÈá£©
-                "zh-TW-YunJheNeural",        // ÄĞÉù£¨Ì¨Íå¹úÓï£©
+                // ? å°æ¹¾å›½è¯­
+                "zh-TW-HsiaoChenNeural",     // å¥³å£°ï¼ˆå°æ¹¾å›½è¯­ï¼‰
+                "zh-TW-HsiaoYuNeural",       // å¥³å£°ï¼ˆå°æ¹¾å›½è¯­ï¼Œæ¸©æŸ”ï¼‰
+                "zh-TW-YunJheNeural",        // ç”·å£°ï¼ˆå°æ¹¾å›½è¯­ï¼‰
                 
-                // ? Ó¢ÎÄÓïÒô£¨ÃÀÊ½£©
-                "en-US-JennyNeural",         // Å®Éù£¨Í¨ÓÃ£©
-                "en-US-JennyMultilingualNeural", // Å®Éù£¨¶àÓïÑÔ£©
-                "en-US-GuyNeural",           // ÄĞÉù£¨Í¨ÓÃ£©
-                "en-US-AriaNeural",          // Å®Éù£¨ĞÂÎÅ£©
-                "en-US-DavisNeural",         // ÄĞÉù£¨³ÉÊì£©
-                "en-US-AmberNeural",         // Å®Éù£¨ÄêÇá£©
-                "en-US-AshleyNeural",        // Å®Éù£¨»îÆÃ£©
-                "en-US-BrandonNeural",       // ÄĞÉù£¨ÄêÇá£©
-                "en-US-ChristopherNeural",   // ÄĞÉù£¨³ÁÎÈ£©
-                "en-US-CoraNeural",          // Å®Éù£¨ÎÂºÍ£©
-                "en-US-ElizabethNeural",     // Å®Éù£¨ÓÅÑÅ£©
-                "en-US-EricNeural",          // ÄĞÉù£¨×ÔÈ»£©
-                "en-US-JacobNeural",         // ÄĞÉù£¨Ñô¹â£©
-                "en-US-MichelleNeural",      // Å®Éù£¨×¨Òµ£©
-                "en-US-MonicaNeural",        // Å®Éù£¨ÓÑºÃ£©
-                "en-US-SaraNeural",          // Å®Éù£¨ÎÂÈá£©
-                "en-US-TonyNeural",          // ÄĞÉù£¨²¥±¨£©
+                // ? è‹±æ–‡è¯­éŸ³ï¼ˆç¾å¼ï¼‰
+                "en-US-JennyNeural",         // å¥³å£°ï¼ˆé€šç”¨ï¼‰
+                "en-US-JennyMultilingualNeural", // å¥³å£°ï¼ˆå¤šè¯­è¨€ï¼‰
+                "en-US-GuyNeural",           // ç”·å£°ï¼ˆé€šç”¨ï¼‰
+                "en-US-AriaNeural",          // å¥³å£°ï¼ˆæ–°é—»ï¼‰
+                "en-US-DavisNeural",         // ç”·å£°ï¼ˆæˆç†Ÿï¼‰
+                "en-US-AmberNeural",         // å¥³å£°ï¼ˆå¹´è½»ï¼‰
+                "en-US-AshleyNeural",        // å¥³å£°ï¼ˆæ´»æ³¼ï¼‰
+                "en-US-BrandonNeural",       // ç”·å£°ï¼ˆå¹´è½»ï¼‰
+                "en-US-ChristopherNeural",   // ç”·å£°ï¼ˆæ²‰ç¨³ï¼‰
+                "en-US-CoraNeural",          // å¥³å£°ï¼ˆæ¸©å’Œï¼‰
+                "en-US-ElizabethNeural",     // å¥³å£°ï¼ˆä¼˜é›…ï¼‰
+                "en-US-EricNeural",          // ç”·å£°ï¼ˆè‡ªç„¶ï¼‰
+                "en-US-JacobNeural",         // ç”·å£°ï¼ˆé˜³å…‰ï¼‰
+                "en-US-MichelleNeural",      // å¥³å£°ï¼ˆä¸“ä¸šï¼‰
+                "en-US-MonicaNeural",        // å¥³å£°ï¼ˆå‹å¥½ï¼‰
+                "en-US-SaraNeural",          // å¥³å£°ï¼ˆæ¸©æŸ”ï¼‰
+                "en-US-TonyNeural",          // ç”·å£°ï¼ˆæ’­æŠ¥ï¼‰
                 
-                // ? Ó¢ÎÄÓïÒô£¨Ó¢Ê½£©
-                "en-GB-SoniaNeural",         // Å®Éù£¨Ó¢Ê½£¬Í¨ÓÃ£©
-                "en-GB-RyanNeural",          // ÄĞÉù£¨Ó¢Ê½£¬Í¨ÓÃ£©
-                "en-GB-LibbyNeural",         // Å®Éù£¨Ó¢Ê½£¬ÎÂÈá£©
-                "en-GB-AbbiNeural",          // Å®Éù£¨Ó¢Ê½£¬ÄêÇá£©
-                "en-GB-AlfieNeural",         // ÄĞÉù£¨Ó¢Ê½£¬»îÆÃ£©
-                "en-GB-BellaNeural",         // Å®Éù£¨Ó¢Ê½£¬ÓÅÑÅ£©
-                "en-GB-ElliotNeural",        // ÄĞÉù£¨Ó¢Ê½£¬×ÔÈ»£©
-                "en-GB-EthanNeural",         // ÄĞÉù£¨Ó¢Ê½£¬³ÁÎÈ£©
-                "en-GB-HollieNeural",        // Å®Éù£¨Ó¢Ê½£¬ÓÑºÃ£©
-                "en-GB-MaisieNeural",        // Å®Éù£¨Ó¢Ê½£¬¿É°®£©
-                "en-GB-NoahNeural",          // ÄĞÉù£¨Ó¢Ê½£¬×ÔĞÅ£©
-                "en-GB-OliverNeural",        // ÄĞÉù£¨Ó¢Ê½£¬³ÉÊì£©
-                "en-GB-OliviaNeural",        // Å®Éù£¨Ó¢Ê½£¬×¨Òµ£©
-                "en-GB-ThomasNeural",        // ÄĞÉù£¨Ó¢Ê½£¬²¥±¨£©
+                // ? è‹±æ–‡è¯­éŸ³ï¼ˆè‹±å¼ï¼‰
+                "en-GB-SoniaNeural",         // å¥³å£°ï¼ˆè‹±å¼ï¼Œé€šç”¨ï¼‰
+                "en-GB-RyanNeural",          // ç”·å£°ï¼ˆè‹±å¼ï¼Œé€šç”¨ï¼‰
+                "en-GB-LibbyNeural",         // å¥³å£°ï¼ˆè‹±å¼ï¼Œæ¸©æŸ”ï¼‰
+                "en-GB-AbbiNeural",          // å¥³å£°ï¼ˆè‹±å¼ï¼Œå¹´è½»ï¼‰
+                "en-GB-AlfieNeural",         // ç”·å£°ï¼ˆè‹±å¼ï¼Œæ´»æ³¼ï¼‰
+                "en-GB-BellaNeural",         // å¥³å£°ï¼ˆè‹±å¼ï¼Œä¼˜é›…ï¼‰
+                "en-GB-ElliotNeural",        // ç”·å£°ï¼ˆè‹±å¼ï¼Œè‡ªç„¶ï¼‰
+                "en-GB-EthanNeural",         // ç”·å£°ï¼ˆè‹±å¼ï¼Œæ²‰ç¨³ï¼‰
+                "en-GB-HollieNeural",        // å¥³å£°ï¼ˆè‹±å¼ï¼Œå‹å¥½ï¼‰
+                "en-GB-MaisieNeural",        // å¥³å£°ï¼ˆè‹±å¼ï¼Œå¯çˆ±ï¼‰
+                "en-GB-NoahNeural",          // ç”·å£°ï¼ˆè‹±å¼ï¼Œè‡ªä¿¡ï¼‰
+                "en-GB-OliverNeural",        // ç”·å£°ï¼ˆè‹±å¼ï¼Œæˆç†Ÿï¼‰
+                "en-GB-OliviaNeural",        // å¥³å£°ï¼ˆè‹±å¼ï¼Œä¸“ä¸šï¼‰
+                "en-GB-ThomasNeural",        // ç”·å£°ï¼ˆè‹±å¼ï¼Œæ’­æŠ¥ï¼‰
                 
-                // ? ÈÕÎÄÓïÒô
-                "ja-JP-NanamiNeural",        // Å®Éù£¨Í¨ÓÃ£¬×ÔÈ»£©
-                "ja-JP-KeitaNeural",         // ÄĞÉù£¨Í¨ÓÃ£¬×ÔÈ»£©
-                "ja-JP-AoiNeural",           // Å®Éù£¨¿É°®£©
-                "ja-JP-DaichiNeural",        // ÄĞÉù£¨Ñô¹â£©
-                "ja-JP-MayuNeural",          // Å®Éù£¨ÎÂÈá£©
-                "ja-JP-NaokiNeural",         // ÄĞÉù£¨³ÉÊì£©
-                "ja-JP-ShioriNeural",        // Å®Éù£¨ÓÅÑÅ£©
+                // ? æ—¥æ–‡è¯­éŸ³
+                "ja-JP-NanamiNeural",        // å¥³å£°ï¼ˆé€šç”¨ï¼Œè‡ªç„¶ï¼‰
+                "ja-JP-KeitaNeural",         // ç”·å£°ï¼ˆé€šç”¨ï¼Œè‡ªç„¶ï¼‰
+                "ja-JP-AoiNeural",           // å¥³å£°ï¼ˆå¯çˆ±ï¼‰
+                "ja-JP-DaichiNeural",        // ç”·å£°ï¼ˆé˜³å…‰ï¼‰
+                "ja-JP-MayuNeural",          // å¥³å£°ï¼ˆæ¸©æŸ”ï¼‰
+                "ja-JP-NaokiNeural",         // ç”·å£°ï¼ˆæˆç†Ÿï¼‰
+                "ja-JP-ShioriNeural",        // å¥³å£°ï¼ˆä¼˜é›…ï¼‰
                 
-                // ? º«ÎÄÓïÒô
-                "ko-KR-SunHiNeural",         // Å®Éù£¨Í¨ÓÃ£©
-                "ko-KR-InJoonNeural",        // ÄĞÉù£¨Í¨ÓÃ£©
-                "ko-KR-BongJinNeural",       // ÄĞÉù£¨²¥±¨£©
-                "ko-KR-GookMinNeural",       // ÄĞÉù£¨×ÔÈ»£©
-                "ko-KR-JiMinNeural",         // Å®Éù£¨ÎÂÈá£©
-                "ko-KR-SeoHyeonNeural",      // Å®Éù£¨ÄêÇá£©
-                "ko-KR-SoonBokNeural",       // Å®Éù£¨³ÉÊì£©
-                "ko-KR-YuJinNeural",         // Å®Éù£¨»îÆÃ£©
+                // ? éŸ©æ–‡è¯­éŸ³
+                "ko-KR-SunHiNeural",         // å¥³å£°ï¼ˆé€šç”¨ï¼‰
+                "ko-KR-InJoonNeural",        // ç”·å£°ï¼ˆé€šç”¨ï¼‰
+                "ko-KR-BongJinNeural",       // ç”·å£°ï¼ˆæ’­æŠ¥ï¼‰
+                "ko-KR-GookMinNeural",       // ç”·å£°ï¼ˆè‡ªç„¶ï¼‰
+                "ko-KR-JiMinNeural",         // å¥³å£°ï¼ˆæ¸©æŸ”ï¼‰
+                "ko-KR-SeoHyeonNeural",      // å¥³å£°ï¼ˆå¹´è½»ï¼‰
+                "ko-KR-SoonBokNeural",       // å¥³å£°ï¼ˆæˆç†Ÿï¼‰
+                "ko-KR-YuJinNeural",         // å¥³å£°ï¼ˆæ´»æ³¼ï¼‰
                 
-                // ? ·¨Óï
-                "fr-FR-DeniseNeural",        // Å®Éù£¨·¨Ê½£©
-                "fr-FR-HenriNeural",         // ÄĞÉù£¨·¨Ê½£©
-                "fr-FR-AlainNeural",         // ÄĞÉù£¨²¥±¨£©
-                "fr-FR-BrigitteNeural",      // Å®Éù£¨ÓÅÑÅ£©
-                "fr-FR-CelesteNeural",       // Å®Éù£¨ÎÂÈá£©
-                "fr-FR-ClaudeNeural",        // ÄĞÉù£¨³ÉÊì£©
-                "fr-FR-CoralieNeural",       // Å®Éù£¨»îÆÃ£©
+                // ? æ³•è¯­
+                "fr-FR-DeniseNeural",        // å¥³å£°ï¼ˆæ³•å¼ï¼‰
+                "fr-FR-HenriNeural",         // ç”·å£°ï¼ˆæ³•å¼ï¼‰
+                "fr-FR-AlainNeural",         // ç”·å£°ï¼ˆæ’­æŠ¥ï¼‰
+                "fr-FR-BrigitteNeural",      // å¥³å£°ï¼ˆä¼˜é›…ï¼‰
+                "fr-FR-CelesteNeural",       // å¥³å£°ï¼ˆæ¸©æŸ”ï¼‰
+                "fr-FR-ClaudeNeural",        // ç”·å£°ï¼ˆæˆç†Ÿï¼‰
+                "fr-FR-CoralieNeural",       // å¥³å£°ï¼ˆæ´»æ³¼ï¼‰
                 
-                // ? µÂÓï
-                "de-DE-KatjaNeural",         // Å®Éù£¨µÂÊ½£©
-                "de-DE-ConradNeural",        // ÄĞÉù£¨µÂÊ½£©
-                "de-DE-AmalaNeural",         // Å®Éù£¨ÎÂÈá£©
-                "de-DE-BerndNeural",         // ÄĞÉù£¨²¥±¨£©
-                "de-DE-ChristophNeural",     // ÄĞÉù£¨×ÔÈ»£©
-                "de-DE-ElkeNeural",          // Å®Éù£¨³ÉÊì£©
-                "de-DE-GiselaNeural",        // Å®Éù£¨ÓÑºÃ£©
+                // ? å¾·è¯­
+                "de-DE-KatjaNeural",         // å¥³å£°ï¼ˆå¾·å¼ï¼‰
+                "de-DE-ConradNeural",        // ç”·å£°ï¼ˆå¾·å¼ï¼‰
+                "de-DE-AmalaNeural",         // å¥³å£°ï¼ˆæ¸©æŸ”ï¼‰
+                "de-DE-BerndNeural",         // ç”·å£°ï¼ˆæ’­æŠ¥ï¼‰
+                "de-DE-ChristophNeural",     // ç”·å£°ï¼ˆè‡ªç„¶ï¼‰
+                "de-DE-ElkeNeural",          // å¥³å£°ï¼ˆæˆç†Ÿï¼‰
+                "de-DE-GiselaNeural",        // å¥³å£°ï¼ˆå‹å¥½ï¼‰
                 
-                // ? Î÷°àÑÀÓï
-                "es-ES-ElviraNeural",        // Å®Éù£¨Î÷°àÑÀ£©
-                "es-ES-AlvaroNeural",        // ÄĞÉù£¨Î÷°àÑÀ£©
-                "es-MX-DaliaNeural",         // Å®Éù£¨Ä«Î÷¸ç£©
-                "es-MX-JorgeNeural",         // ÄĞÉù£¨Ä«Î÷¸ç£©
+                // ? è¥¿ç­ç‰™è¯­
+                "es-ES-ElviraNeural",        // å¥³å£°ï¼ˆè¥¿ç­ç‰™ï¼‰
+                "es-ES-AlvaroNeural",        // ç”·å£°ï¼ˆè¥¿ç­ç‰™ï¼‰
+                "es-MX-DaliaNeural",         // å¥³å£°ï¼ˆå¢¨è¥¿å“¥ï¼‰
+                "es-MX-JorgeNeural",         // ç”·å£°ï¼ˆå¢¨è¥¿å“¥ï¼‰
                 
-                // ? ¶íÓï
-                "ru-RU-SvetlanaNeural",      // Å®Éù£¨¶íÊ½£©
-                "ru-RU-DmitryNeural",        // ÄĞÉù£¨¶íÊ½£©
-                "ru-RU-DariyaNeural",        // Å®Éù£¨ÎÂÈá£©
+                // ? ä¿„è¯­
+                "ru-RU-SvetlanaNeural",      // å¥³å£°ï¼ˆä¿„å¼ï¼‰
+                "ru-RU-DmitryNeural",        // ç”·å£°ï¼ˆä¿„å¼ï¼‰
+                "ru-RU-DariyaNeural",        // å¥³å£°ï¼ˆæ¸©æŸ”ï¼‰
                 
-                // ? Òâ´óÀûÓï
-                "it-IT-ElsaNeural",          // Å®Éù£¨ÒâÊ½£©
-                "it-IT-IsabellaNeural",      // Å®Éù£¨ÎÂÈá£©
-                "it-IT-DiegoNeural",         // ÄĞÉù£¨ÒâÊ½£©
+                // ? æ„å¤§åˆ©è¯­
+                "it-IT-ElsaNeural",          // å¥³å£°ï¼ˆæ„å¼ï¼‰
+                "it-IT-IsabellaNeural",      // å¥³å£°ï¼ˆæ¸©æŸ”ï¼‰
+                "it-IT-DiegoNeural",         // ç”·å£°ï¼ˆæ„å¼ï¼‰
                 
-                // ? ÆÏÌÑÑÀÓï
-                "pt-BR-FranciscaNeural",     // Å®Éù£¨°ÍÎ÷£©
-                "pt-BR-AntonioNeural",       // ÄĞÉù£¨°ÍÎ÷£©
-                "pt-PT-RaquelNeural",        // Å®Éù£¨ÆÏÌÑÑÀ£©
-                "pt-PT-DuarteNeural",        // ÄĞÉù£¨ÆÏÌÑÑÀ£©
+                // ? è‘¡è„ç‰™è¯­
+                "pt-BR-FranciscaNeural",     // å¥³å£°ï¼ˆå·´è¥¿ï¼‰
+                "pt-BR-AntonioNeural",       // ç”·å£°ï¼ˆå·´è¥¿ï¼‰
+                "pt-PT-RaquelNeural",        // å¥³å£°ï¼ˆè‘¡è„ç‰™ï¼‰
+                "pt-PT-DuarteNeural",        // ç”·å£°ï¼ˆè‘¡è„ç‰™ï¼‰
             };
         }
     }

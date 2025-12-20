@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,32 +8,32 @@ using Verse;
 namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
-    /// ·Ö²ãÁ¢»æºÏ³ÉÆ÷
-    /// ¸ºÔğ½«¶à¸öÍ¼²ãÎÆÀíºÏ³ÉÎª×îÖÕÁ¢»æ
-    /// ? v1.6.27: Ê¹ÓÃbase_body.png×÷Îªµ×Í¼£¬ÆäËû²¿¼ş¸²¸Ç
+    /// åˆ†å±‚ç«‹ç»˜åˆæˆå™¨
+    /// è´Ÿè´£å°†å¤šä¸ªå›¾å±‚çº¹ç†åˆæˆä¸ºæœ€ç»ˆç«‹ç»˜
+    /// ? v1.6.27: ä½¿ç”¨base_body.pngä½œä¸ºåº•å›¾ï¼Œå…¶ä»–éƒ¨ä»¶è¦†ç›–
     /// </summary>
     public static class LayeredPortraitCompositor
     {
-        // ºÏ³É»º´æ£¨±ÜÃâÖØ¸´ºÏ³ÉÏàÍ¬ÅäÖÃ£©
+        // åˆæˆç¼“å­˜ï¼ˆé¿å…é‡å¤åˆæˆç›¸åŒé…ç½®ï¼‰
         private static Dictionary<string, Texture2D> compositeCache = new Dictionary<string, Texture2D>();
         
-        // »ù´¡ÎÆÀíÂ·¾¶
+        // åŸºç¡€çº¹ç†è·¯å¾„
         private const string LAYERED_BASE_PATH = "UI/Narrators/9x16/Layered/";
 
         /// <summary>
-        /// ºÏ³É·Ö²ãÁ¢»æ£¨Òì²½°æ±¾£©
-        /// ? v1.6.27: Ê¹ÓÃbase_body×÷Îªµ×Í¼£¬ÆäËû²¿¼ş¸²¸Ç£»Òì²½ºÏ³É±ÜÃâ¿¨¶Ù
-        /// ? v1.6.29: Neutral±íÇéÖ±½ÓÊ¹ÓÃbase_body£¨µ×Í¼ÒÑ°üº¬ÕöÑÛ±Õ×ì£©
+        /// åˆæˆåˆ†å±‚ç«‹ç»˜ï¼ˆå¼‚æ­¥ç‰ˆæœ¬ï¼‰
+        /// ? v1.6.27: ä½¿ç”¨base_bodyä½œä¸ºåº•å›¾ï¼Œå…¶ä»–éƒ¨ä»¶è¦†ç›–ï¼›å¼‚æ­¥åˆæˆé¿å…å¡é¡¿
+        /// ? v1.6.29: Neutralè¡¨æƒ…ç›´æ¥ä½¿ç”¨base_bodyï¼ˆåº•å›¾å·²åŒ…å«ççœ¼é—­å˜´ï¼‰
         /// </summary>
         public static async Task<Texture2D> CompositeLayersAsync(
             LayeredPortraitConfig config, 
             ExpressionType expression = ExpressionType.Neutral, 
             string outfit = "default")
         {
-            // 1. Éú³É»º´æ¼ü
+            // 1. ç”Ÿæˆç¼“å­˜é”®
             string cacheKey = $"{config.PersonaDefName}_{expression}_default";
             
-            // 2. ¼ì²é»º´æ
+            // 2. æ£€æŸ¥ç¼“å­˜
             if (compositeCache.TryGetValue(cacheKey, out Texture2D cachedTexture))
             {
                 return cachedTexture;
@@ -41,15 +41,15 @@ namespace TheSecondSeat.PersonaGeneration
 
             try
             {
-                // ? v1.6.27: Ê¹ÓÃ PersonaName ¶ø²»ÊÇ PersonaDefName
+                // ? v1.6.27: ä½¿ç”¨ PersonaName è€Œä¸æ˜¯ PersonaDefName
                 string personaName = config.PersonaName;
                 
-                // 3. ? ¼ÓÔØbase_body×÷Îªµ×Í¼
+                // 3. ? åŠ è½½base_bodyä½œä¸ºåº•å›¾
                 var baseBodyTexture = LoadLayerTexture(personaName, "base_body");
                 
                 if (baseBodyTexture == null)
                 {
-                    // ? Ö»ÔÚDevModeÏÂÊä³ö¾¯¸æ
+                    // ? åªåœ¨DevModeä¸‹è¾“å‡ºè­¦å‘Š
                     if (Prefs.DevMode)
                     {
                         Log.Warning($"[LayeredPortraitCompositor] base_body.png not found for {personaName}");
@@ -57,22 +57,22 @@ namespace TheSecondSeat.PersonaGeneration
                     return null;
                 }
 
-                // ? v1.6.29: Èç¹ûÊÇNeutral±íÇé£¬Ö±½Ó·µ»Øµ×Í¼£¨µ×Í¼ÒÑ°üº¬ÕöÑÛ±Õ×ì£©
+                // ? v1.6.29: å¦‚æœæ˜¯Neutralè¡¨æƒ…ï¼Œç›´æ¥è¿”å›åº•å›¾ï¼ˆåº•å›¾å·²åŒ…å«ççœ¼é—­å˜´ï¼‰
                 if (expression == ExpressionType.Neutral)
                 {
                     compositeCache[cacheKey] = baseBodyTexture;
                     return baseBodyTexture;
                 }
 
-                // ´´½¨Í¼²ãÁĞ±í£¬base_body×÷ÎªµÚÒ»²ã
+                // åˆ›å»ºå›¾å±‚åˆ—è¡¨ï¼Œbase_bodyä½œä¸ºç¬¬ä¸€å±‚
                 List<Texture2D> layers = new List<Texture2D>();
                 layers.Add(baseBodyTexture);
                 
-                // 4. ? ¸ù¾İ±íÇéÑ¡ÔñĞèÒª¸²¸ÇµÄ²¿¼ş£¨ÑÛ¾¦ºÍ×ì°Í£©
+                // 4. ? æ ¹æ®è¡¨æƒ…é€‰æ‹©éœ€è¦è¦†ç›–çš„éƒ¨ä»¶ï¼ˆçœ¼ç›å’Œå˜´å·´ï¼‰
                 string eyesLayerName = GetEyesLayerName(expression);
                 string mouthLayerName = GetMouthLayerName(expression);
                 
-                // ? Ö»¼ÓÔØ·ÇÄ¬ÈÏµÄ²¿¼ş£¨±ÜÃâ¼ÓÔØopened_eyesºÍopened_mouth£©
+                // ? åªåŠ è½½éé»˜è®¤çš„éƒ¨ä»¶ï¼ˆé¿å…åŠ è½½opened_eyeså’Œopened_mouthï¼‰
                 if (eyesLayerName != "opened_eyes")
                 {
                     var eyesTexture = LoadLayerTexture(personaName, eyesLayerName);
@@ -91,17 +91,17 @@ namespace TheSecondSeat.PersonaGeneration
                     }
                 }
                 
-                // 5. ? ¿ÉÑ¡£ºÈùºì/ÌØĞ§²ã
+                // 5. ? å¯é€‰ï¼šè…®çº¢/ç‰¹æ•ˆå±‚
                 var flushTexture = LoadLayerTexture(personaName, $"{GetExpressionPrefix(expression)}_flush");
                 if (flushTexture != null)
                 {
                     layers.Add(flushTexture);
                 }
                 
-                // 6. ? Òì²½ºÏ³ÉËùÓĞ²ã£¨ÔÚºóÌ¨Ïß³Ì£©
+                // 6. ? å¼‚æ­¥åˆæˆæ‰€æœ‰å±‚ï¼ˆåœ¨åå°çº¿ç¨‹ï¼‰
                 Texture2D composite = await Task.Run(() => CompositeAllLayers(layers));
                 
-                // 7. »º´æ½á¹û
+                // 7. ç¼“å­˜ç»“æœ
                 if (composite != null)
                 {
                     compositeCache[cacheKey] = composite;
@@ -111,7 +111,7 @@ namespace TheSecondSeat.PersonaGeneration
             }
             catch (Exception ex)
             {
-                // ? Ö»ÔÚDevModeÏÂÊä³ö´íÎó
+                // ? åªåœ¨DevModeä¸‹è¾“å‡ºé”™è¯¯
                 if (Prefs.DevMode)
                 {
                     Log.Error($"[LayeredPortraitCompositor] Composite failed: {ex}");
@@ -121,9 +121,9 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ºÏ³É·Ö²ãÁ¢»æ£¨Í¬²½°æ±¾£¬ÒÑ·ÏÆú£©
-        /// ?? ¾¯¸æ£º´Ë·½·¨»á¿¨Ö÷Ïß³Ì£¬ÇëÊ¹ÓÃ CompositeLayersAsync
-        /// ? v1.6.29: Neutral±íÇéÖ±½ÓÊ¹ÓÃbase_body£¨µ×Í¼ÒÑ°üº¬ÕöÑÛ±Õ×ì£©
+        /// åˆæˆåˆ†å±‚ç«‹ç»˜ï¼ˆåŒæ­¥ç‰ˆæœ¬ï¼Œå·²åºŸå¼ƒï¼‰
+        /// ?? è­¦å‘Šï¼šæ­¤æ–¹æ³•ä¼šå¡ä¸»çº¿ç¨‹ï¼Œè¯·ä½¿ç”¨ CompositeLayersAsync
+        /// ? v1.6.29: Neutralè¡¨æƒ…ç›´æ¥ä½¿ç”¨base_bodyï¼ˆåº•å›¾å·²åŒ…å«ççœ¼é—­å˜´ï¼‰
         /// </summary>
         [Obsolete("Use CompositeLayersAsync instead to avoid blocking the main thread")]
         public static Texture2D CompositeLayers(
@@ -131,10 +131,10 @@ namespace TheSecondSeat.PersonaGeneration
             ExpressionType expression = ExpressionType.Neutral, 
             string outfit = "default")
         {
-            // 1. Éú³É»º´æ¼ü
+            // 1. ç”Ÿæˆç¼“å­˜é”®
             string cacheKey = $"{config.PersonaDefName}_{expression}_default";
             
-            // 2. ¼ì²é»º´æ
+            // 2. æ£€æŸ¥ç¼“å­˜
             if (compositeCache.TryGetValue(cacheKey, out Texture2D cachedTexture))
             {
                 return cachedTexture;
@@ -142,15 +142,15 @@ namespace TheSecondSeat.PersonaGeneration
 
             try
             {
-                // ? v1.6.27: Ê¹ÓÃ PersonaName ¶ø²»ÊÇ PersonaDefName
+                // ? v1.6.27: ä½¿ç”¨ PersonaName è€Œä¸æ˜¯ PersonaDefName
                 string personaName = config.PersonaName;
                 
-                // 3. ? ¼ÓÔØbase_body×÷Îªµ×Í¼
+                // 3. ? åŠ è½½base_bodyä½œä¸ºåº•å›¾
                 var baseBodyTexture = LoadLayerTexture(personaName, "base_body");
                 
                 if (baseBodyTexture == null)
                 {
-                    // ? Ö»ÔÚDevModeÏÂÊä³ö¾¯¸æ
+                    // ? åªåœ¨DevModeä¸‹è¾“å‡ºè­¦å‘Š
                     if (Prefs.DevMode)
                     {
                         Log.Warning($"[LayeredPortraitCompositor] base_body.png not found for {personaName}");
@@ -158,22 +158,22 @@ namespace TheSecondSeat.PersonaGeneration
                     return null;
                 }
 
-                // ? v1.6.29: Èç¹ûÊÇNeutral±íÇé£¬Ö±½Ó·µ»Øµ×Í¼£¨µ×Í¼ÒÑ°üº¬ÕöÑÛ±Õ×ì£©
+                // ? v1.6.29: å¦‚æœæ˜¯Neutralè¡¨æƒ…ï¼Œç›´æ¥è¿”å›åº•å›¾ï¼ˆåº•å›¾å·²åŒ…å«ççœ¼é—­å˜´ï¼‰
                 if (expression == ExpressionType.Neutral)
                 {
                     compositeCache[cacheKey] = baseBodyTexture;
                     return baseBodyTexture;
                 }
                 
-                // ´´½¨Í¼²ãÁĞ±í£¬base_body×÷ÎªµÚÒ»²ã
+                // åˆ›å»ºå›¾å±‚åˆ—è¡¨ï¼Œbase_bodyä½œä¸ºç¬¬ä¸€å±‚
                 List<Texture2D> layers = new List<Texture2D>();
                 layers.Add(baseBodyTexture);
                 
-                // 4. ? ¸ù¾İ±íÇéÑ¡ÔñĞèÒª¸²¸ÇµÄ²¿¼ş£¨ÑÛ¾¦ºÍ×ì°Í£©
+                // 4. ? æ ¹æ®è¡¨æƒ…é€‰æ‹©éœ€è¦è¦†ç›–çš„éƒ¨ä»¶ï¼ˆçœ¼ç›å’Œå˜´å·´ï¼‰
                 string eyesLayerName = GetEyesLayerName(expression);
                 string mouthLayerName = GetMouthLayerName(expression);
                 
-                // ? Ö»¼ÓÔØ·ÇÄ¬ÈÏµÄ²¿¼ş£¨±ÜÃâ¼ÓÔØopened_eyesºÍopened_mouth£©
+                // ? åªåŠ è½½éé»˜è®¤çš„éƒ¨ä»¶ï¼ˆé¿å…åŠ è½½opened_eyeså’Œopened_mouthï¼‰
                 if (eyesLayerName != "opened_eyes")
                 {
                     var eyesTexture = LoadLayerTexture(personaName, eyesLayerName);
@@ -192,17 +192,17 @@ namespace TheSecondSeat.PersonaGeneration
                     }
                 }
                 
-                // 5. ? ¿ÉÑ¡£ºÈùºì/ÌØĞ§²ã
+                // 5. ? å¯é€‰ï¼šè…®çº¢/ç‰¹æ•ˆå±‚
                 var flushTexture = LoadLayerTexture(personaName, $"{GetExpressionPrefix(expression)}_flush");
                 if (flushTexture != null)
                 {
                     layers.Add(flushTexture);
                 }
                 
-                // 6. ºÏ³ÉËùÓĞ²ã
+                // 6. åˆæˆæ‰€æœ‰å±‚
                 Texture2D composite = CompositeAllLayers(layers);
                 
-                // 7. »º´æ½á¹û
+                // 7. ç¼“å­˜ç»“æœ
                 if (composite != null)
                 {
                     compositeCache[cacheKey] = composite;
@@ -212,7 +212,7 @@ namespace TheSecondSeat.PersonaGeneration
             }
             catch (Exception ex)
             {
-                // ? Ö»ÔÚDevModeÏÂÊä³ö´íÎó
+                // ? åªåœ¨DevModeä¸‹è¾“å‡ºé”™è¯¯
                 if (Prefs.DevMode)
                 {
                     Log.Error($"[LayeredPortraitCompositor] Composite failed: {ex}");
@@ -222,47 +222,47 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ? ¸ù¾İ±íÇéÀàĞÍ»ñÈ¡ÑÛ¾¦²ãÃû³Æ
-        /// ? v1.6.29: ĞŞ¸´NeutralÊ¹ÓÃopened_eyes£¨ÕöÑÛ£©
+        /// ? æ ¹æ®è¡¨æƒ…ç±»å‹è·å–çœ¼ç›å±‚åç§°
+        /// ? v1.6.29: ä¿®å¤Neutralä½¿ç”¨opened_eyesï¼ˆççœ¼ï¼‰
         /// </summary>
         private static string GetEyesLayerName(ExpressionType expression)
         {
             return expression switch
             {
-                ExpressionType.Neutral => "opened_eyes",  // ? ĞŞ¸´£ºÖĞĞÔ±íÇéÓ¦¸ÃÕöÑÛ
-                ExpressionType.Happy => "happy_eyes",     // ? Èç¹ûÃ»ÓĞÔò»ØÍËµ½opened_eyes
+                ExpressionType.Neutral => "opened_eyes",  // ? ä¿®å¤ï¼šä¸­æ€§è¡¨æƒ…åº”è¯¥ççœ¼
+                ExpressionType.Happy => "happy_eyes",     // ? å¦‚æœæ²¡æœ‰åˆ™å›é€€åˆ°opened_eyes
                 ExpressionType.Sad => "sad_eyes",
                 ExpressionType.Angry => "angry_eyes",
-                ExpressionType.Surprised => "opened_eyes", // ¾ªÑÈÕö´óÑÛ¾¦
-                ExpressionType.Confused => "opened_eyes",  // À§»óÕöÑÛ
-                ExpressionType.Smug => "opened_eyes",      // µÃÒâÕöÑÛ
-                ExpressionType.Shy => "opened_eyes",       // º¦ĞßÕöÑÛ
+                ExpressionType.Surprised => "opened_eyes", // æƒŠè®¶çå¤§çœ¼ç›
+                ExpressionType.Confused => "opened_eyes",  // å›°æƒ‘ççœ¼
+                ExpressionType.Smug => "opened_eyes",      // å¾—æ„ççœ¼
+                ExpressionType.Shy => "opened_eyes",       // å®³ç¾ççœ¼
                 _ => "opened_eyes"
             };
         }
 
         /// <summary>
-        /// ? ¸ù¾İ±íÇéÀàĞÍ»ñÈ¡×ì°Í²ãÃû³Æ
-        /// ? v1.6.29: ĞŞ¸´NeutralÊ¹ÓÃopened_mouth£¨±Õ×ì£©
+        /// ? æ ¹æ®è¡¨æƒ…ç±»å‹è·å–å˜´å·´å±‚åç§°
+        /// ? v1.6.29: ä¿®å¤Neutralä½¿ç”¨opened_mouthï¼ˆé—­å˜´ï¼‰
         /// </summary>
         private static string GetMouthLayerName(ExpressionType expression)
         {
             return expression switch
             {
-                ExpressionType.Neutral => "opened_mouth",   // ? ĞŞ¸´£ºÖĞĞÔ±íÇéÓ¦¸Ã±Õ×ì
-                ExpressionType.Happy => "larger_mouth",     // ? ¿ªĞÄÓÃ´ó×ì
+                ExpressionType.Neutral => "opened_mouth",   // ? ä¿®å¤ï¼šä¸­æ€§è¡¨æƒ…åº”è¯¥é—­å˜´
+                ExpressionType.Happy => "larger_mouth",     // ? å¼€å¿ƒç”¨å¤§å˜´
                 ExpressionType.Sad => "sad_mouth",
                 ExpressionType.Angry => "angry_mouth",
-                ExpressionType.Surprised => "larger_mouth", // ¾ªÑÈÕÅ´ó×ì
-                ExpressionType.Confused => "opened_mouth",  // À§»ó±Õ×ì
-                ExpressionType.Smug => "small1_mouth",      // Ê¹ÓÃĞ¡×ì±äÌå
-                ExpressionType.Shy => "opened_mouth",       // º¦Ğß±Õ×ì
+                ExpressionType.Surprised => "larger_mouth", // æƒŠè®¶å¼ å¤§å˜´
+                ExpressionType.Confused => "opened_mouth",  // å›°æƒ‘é—­å˜´
+                ExpressionType.Smug => "small1_mouth",      // ä½¿ç”¨å°å˜´å˜ä½“
+                ExpressionType.Shy => "opened_mouth",       // å®³ç¾é—­å˜´
                 _ => "opened_mouth"
             };
         }
         
         /// <summary>
-        /// ? »ñÈ¡±íÇéÇ°×º£¨ÓÃÓÚ²éÕÒÌØĞ§²ã£©
+        /// ? è·å–è¡¨æƒ…å‰ç¼€ï¼ˆç”¨äºæŸ¥æ‰¾ç‰¹æ•ˆå±‚ï¼‰
         /// </summary>
         private static string GetExpressionPrefix(ExpressionType expression)
         {
@@ -275,23 +275,23 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ¼ÓÔØµ¥¸öÍ¼²ãÎÆÀí
-        /// ? v1.6.27: ÍêÈ«¾²Ä¬£¬²»Êä³öÈÎºÎÈÕÖ¾
-        /// ? v1.6.27: Ö±½ÓÊ¹ÓÃ personaName£¨Èç "Sideria"£©
+        /// åŠ è½½å•ä¸ªå›¾å±‚çº¹ç†
+        /// ? v1.6.27: å®Œå…¨é™é»˜ï¼Œä¸è¾“å‡ºä»»ä½•æ—¥å¿—
+        /// ? v1.6.27: ç›´æ¥ä½¿ç”¨ personaNameï¼ˆå¦‚ "Sideria"ï¼‰
         /// </summary>
         private static Texture2D LoadLayerTexture(string personaName, string layerName)
         {
             string texturePath = $"{LAYERED_BASE_PATH}{personaName}/{layerName}";
             var texture = ContentFinder<Texture2D>.Get(texturePath, false);
             
-            // ? v1.6.27: ÍêÈ«¾²Ä¬£¬³É¹¦ºÍÊ§°Ü¶¼²»Êä³ö
+            // ? v1.6.27: å®Œå…¨é™é»˜ï¼ŒæˆåŠŸå’Œå¤±è´¥éƒ½ä¸è¾“å‡º
             
             return texture;
         }
         
         /// <summary>
-        /// ? v1.6.27: ´Ó defName ÌáÈ¡ÈË¸ñÎÄ¼ş¼ĞÃû³Æ
-        /// ÀıÈç£ºSideria_Default ¡ú Sideria, Cassandra_Classic ¡ú Cassandra
+        /// ? v1.6.27: ä» defName æå–äººæ ¼æ–‡ä»¶å¤¹åç§°
+        /// ä¾‹å¦‚ï¼šSideria_Default â†’ Sideria, Cassandra_Classic â†’ Cassandra
         /// </summary>
         private static string GetPersonaFolderName(string defName)
         {
@@ -300,7 +300,7 @@ namespace TheSecondSeat.PersonaGeneration
                 return defName;
             }
             
-            // ÒÆ³ı³£¼ûºó×º
+            // ç§»é™¤å¸¸è§åç¼€
             string[] suffixesToRemove = new[] { "_Default", "_Classic", "_Custom", "_Persona", "_Chillax", "_Random", "_Invader", "_Protector" };
             
             foreach (var suffix in suffixesToRemove)
@@ -315,8 +315,8 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ºÏ³ÉËùÓĞÍ¼²ã
-        /// ? v1.6.27: ¾²Ä¬´¦Àí³ß´ç²»Æ¥Åä
+        /// åˆæˆæ‰€æœ‰å›¾å±‚
+        /// ? v1.6.27: é™é»˜å¤„ç†å°ºå¯¸ä¸åŒ¹é…
         /// </summary>
         private static Texture2D CompositeAllLayers(List<Texture2D> layers)
         {
@@ -325,30 +325,30 @@ namespace TheSecondSeat.PersonaGeneration
                 return null;
             }
             
-            // Ê¹ÓÃµÚÒ»¸öÍ¼²ã×÷Îª»ù´¡
+            // ä½¿ç”¨ç¬¬ä¸€ä¸ªå›¾å±‚ä½œä¸ºåŸºç¡€
             Texture2D baseLayer = layers[0];
             int width = baseLayer.width;
             int height = baseLayer.height;
             
-            // ´´½¨×îÖÕÎÆÀí
+            // åˆ›å»ºæœ€ç»ˆçº¹ç†
             Texture2D result = new Texture2D(width, height, TextureFormat.RGBA32, false);
             
-            // ³õÊ¼»¯ÎªÍ¸Ã÷
+            // åˆå§‹åŒ–ä¸ºé€æ˜
             Color[] pixels = new Color[width * height];
             for (int i = 0; i < pixels.Length; i++)
             {
                 pixels[i] = Color.clear;
             }
             
-            // Öğ²ã»ìºÏ
+            // é€å±‚æ··åˆ
             foreach (var layer in layers)
             {
                 if (layer == null) continue;
                 
-                // È·±£³ß´çÒ»ÖÂ
+                // ç¡®ä¿å°ºå¯¸ä¸€è‡´
                 if (layer.width != width || layer.height != height)
                 {
-                    // ? Ö»ÔÚDevModeÏÂÊä³ö¾¯¸æ
+                    // ? åªåœ¨DevModeä¸‹è¾“å‡ºè­¦å‘Š
                     if (Prefs.DevMode)
                     {
                         Log.Warning($"[LayeredPortraitCompositor] Layer size mismatch: {layer.width}x{layer.height} vs {width}x{height}");
@@ -358,16 +358,16 @@ namespace TheSecondSeat.PersonaGeneration
                 
                 try
                 {
-                    // »ñÈ¡Í¼²ãÏñËØ£¨Ê¹ÓÃ RenderTexture ±ÜÃâ "not readable" ´íÎó£©
+                    // è·å–å›¾å±‚åƒç´ ï¼ˆä½¿ç”¨ RenderTexture é¿å… "not readable" é”™è¯¯ï¼‰
                     Color[] layerPixels = GetReadablePixels(layer);
                     
-                    // Alpha »ìºÏ
+                    // Alpha æ··åˆ
                     for (int i = 0; i < pixels.Length; i++)
                     {
                         Color srcColor = pixels[i];
                         Color dstColor = layerPixels[i];
                         
-                        // ±ê×¼ Alpha »ìºÏ¹«Ê½
+                        // æ ‡å‡† Alpha æ··åˆå…¬å¼
                         float alpha = dstColor.a;
                         pixels[i] = new Color(
                             srcColor.r * (1 - alpha) + dstColor.r * alpha,
@@ -379,7 +379,7 @@ namespace TheSecondSeat.PersonaGeneration
                 }
                 catch (Exception ex)
                 {
-                    // ? Ö»ÔÚDevModeÏÂÊä³ö´íÎó
+                    // ? åªåœ¨DevModeä¸‹è¾“å‡ºé”™è¯¯
                     if (Prefs.DevMode)
                     {
                         Log.Error($"[LayeredPortraitCompositor] Failed to blend layer: {ex}");
@@ -387,7 +387,7 @@ namespace TheSecondSeat.PersonaGeneration
                 }
             }
             
-            // Ó¦ÓÃ×îÖÕÏñËØ
+            // åº”ç”¨æœ€ç»ˆåƒç´ 
             result.SetPixels(pixels);
             result.Apply();
             
@@ -395,18 +395,18 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// »ñÈ¡ÎÆÀíµÄ¿É¶ÁÏñËØ£¨±ÜÃâ "not readable" ´íÎó£©
+        /// è·å–çº¹ç†çš„å¯è¯»åƒç´ ï¼ˆé¿å… "not readable" é”™è¯¯ï¼‰
         /// </summary>
         private static Color[] GetReadablePixels(Texture2D texture)
         {
-            // ³¢ÊÔÖ±½Ó¶ÁÈ¡
+            // å°è¯•ç›´æ¥è¯»å–
             try
             {
                 return texture.GetPixels();
             }
             catch
             {
-                // Èç¹ûÊ§°Ü£¬Ê¹ÓÃ RenderTexture ×ª»»
+                // å¦‚æœå¤±è´¥ï¼Œä½¿ç”¨ RenderTexture è½¬æ¢
                 RenderTexture renderTex = RenderTexture.GetTemporary(
                     texture.width, 
                     texture.height, 
@@ -433,7 +433,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ? v1.6.27: Ô¤¼ÓÔØËùÓĞ±íÇéµ½»º´æ£¨¼ÓÔØ´æµµÊ±µ÷ÓÃ£©
+        /// ? v1.6.27: é¢„åŠ è½½æ‰€æœ‰è¡¨æƒ…åˆ°ç¼“å­˜ï¼ˆåŠ è½½å­˜æ¡£æ—¶è°ƒç”¨ï¼‰
         /// </summary>
         public static void PreloadAllExpressions(LayeredPortraitConfig config)
         {
@@ -446,7 +446,7 @@ namespace TheSecondSeat.PersonaGeneration
             {
                 string cacheKey = $"{config.PersonaDefName}_{expression}_default";
                 
-                // Èç¹ûÒÑ»º´æ£¬Ìø¹ı
+                // å¦‚æœå·²ç¼“å­˜ï¼Œè·³è¿‡
                 if (compositeCache.ContainsKey(cacheKey))
                 {
                     continue;
@@ -454,8 +454,8 @@ namespace TheSecondSeat.PersonaGeneration
                 
                 try
                 {
-                    // Í¬²½ºÏ³É²¢»º´æ
-                    #pragma warning disable CS0618  // ÔÊĞíÊ¹ÓÃÒÑ·ÏÆúµÄ·½·¨£¨ÄÚ²¿µ÷ÓÃ£©
+                    // åŒæ­¥åˆæˆå¹¶ç¼“å­˜
+                    #pragma warning disable CS0618  // å…è®¸ä½¿ç”¨å·²åºŸå¼ƒçš„æ–¹æ³•ï¼ˆå†…éƒ¨è°ƒç”¨ï¼‰
                     var composite = CompositeLayers(config, expression, "default");
                     #pragma warning restore CS0618
                     
@@ -480,7 +480,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// Çå³ıÌØ¶¨ÈË¸ñºÍ±íÇéµÄ»º´æ
+        /// æ¸…é™¤ç‰¹å®šäººæ ¼å’Œè¡¨æƒ…çš„ç¼“å­˜
         /// </summary>
         public static void ClearCache(string personaDefName, ExpressionType expression)
         {
@@ -496,7 +496,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// Çå³ıËùÓĞ»º´æ
+        /// æ¸…é™¤æ‰€æœ‰ç¼“å­˜
         /// </summary>
         public static void ClearAllCache()
         {

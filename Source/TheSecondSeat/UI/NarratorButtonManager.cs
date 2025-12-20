@@ -1,9 +1,9 @@
-using Verse;
+ï»¿using Verse;
 
 namespace TheSecondSeat.UI
 {
     /// <summary>
-    /// ¹ÜÀíÆÁÄ»°´Å¥µÄÏÔÊ¾
+    /// ç®¡ç†å±å¹•æŒ‰é’®çš„æ˜¾ç¤º
     /// </summary>
     public class NarratorButtonManager : MapComponent
     {
@@ -17,7 +17,7 @@ namespace TheSecondSeat.UI
         {
             base.MapComponentOnGUI();
             
-            // È·±£°´Å¥Ê¼ÖÕÏÔÊ¾
+            // ç¡®ä¿æŒ‰é’®å§‹ç»ˆæ˜¾ç¤º
             if (screenButton == null || !Find.WindowStack.IsOpen(screenButton))
             {
                 ShowButton();
@@ -37,7 +37,7 @@ namespace TheSecondSeat.UI
         {
             base.MapRemoved();
             
-            // µØÍ¼ÒÆ³ıÊ±¹Ø±Õ°´Å¥
+            // åœ°å›¾ç§»é™¤æ—¶å…³é—­æŒ‰é’®
             if (screenButton != null)
             {
                 Find.WindowStack.TryRemove(screenButton);

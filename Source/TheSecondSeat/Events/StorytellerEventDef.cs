@@ -1,35 +1,35 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using Verse;
 using RimWorld;
 
 namespace TheSecondSeat.Events
 {
     /// <summary>
-    /// ÊÂ¼şÀà±ğÃ¶¾Ù
+    /// äº‹ä»¶ç±»åˆ«æšä¸¾
     /// </summary>
     public enum EventCategory
     {
-        Positive,      // ÕıÃæÊÂ¼ş
-        Negative,      // ¸ºÃæÊÂ¼ş
-        Neutral,       // ÖĞĞÔÊÂ¼ş
-        Challenge,     // ÌôÕ½ÊÂ¼ş
-        Reward,        // ½±ÀøÊÂ¼ş
-        Story          // ¾çÇéÊÂ¼ş
+        Positive,      // æ­£é¢äº‹ä»¶
+        Negative,      // è´Ÿé¢äº‹ä»¶
+        Neutral,       // ä¸­æ€§äº‹ä»¶
+        Challenge,     // æŒ‘æˆ˜äº‹ä»¶
+        Reward,        // å¥–åŠ±äº‹ä»¶
+        Story          // å‰§æƒ…äº‹ä»¶
     }
 
     /// <summary>
-    /// ĞğÊÂÕßÊÂ¼ş¶¨Òå
-    /// ÓÃÓÚ¶¨Òå¿É´¥·¢µÄ×Ô¶¨ÒåÓÎÏ·ÊÂ¼ş
+    /// å™äº‹è€…äº‹ä»¶å®šä¹‰
+    /// ç”¨äºå®šä¹‰å¯è§¦å‘çš„è‡ªå®šä¹‰æ¸¸æˆäº‹ä»¶
     /// </summary>
     public class StorytellerEventDef : Def
     {
         public string eventName = "Unknown Event";
-        public new string description = "";  // ? Ìí¼Ónew¹Ø¼ü×ÖÒş²Ø»ùÀà³ÉÔ±
+        public new string description = "";  // ? æ·»åŠ newå…³é”®å­—éšè—åŸºç±»æˆå‘˜
         public EventCategory category = EventCategory.Neutral;
         public float baseWeight = 1.0f;
         public int minDaysSinceStart = 0;
         public List<string> requiredMods = new List<string>();
-        public IncidentDef incidentDef = null;  // ? Ìí¼ÓÈ±Ê§µÄ×Ö¶Î
+        public IncidentDef incidentDef = null;  // ? æ·»åŠ ç¼ºå¤±çš„å­—æ®µ
         
         public StorytellerEventDef()
         {

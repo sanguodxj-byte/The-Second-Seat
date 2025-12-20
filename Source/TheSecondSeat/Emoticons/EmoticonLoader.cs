@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,16 +8,16 @@ using Verse;
 namespace TheSecondSeat.Emoticons
 {
     /// <summary>
-    /// ±íÇé°üÊı¾İ
+    /// è¡¨æƒ…åŒ…æ•°æ®
     /// </summary>
     public class EmoticonData
     {
-        public string id;              // ±íÇé°üID£¨ÎÄ¼şÃû²»º¬À©Õ¹Ãû£©
-        public string displayName;     // ÏÔÊ¾Ãû³Æ
-        public string filePath;        // ÍêÕûÎÄ¼şÂ·¾¶
-        public Texture2D texture;      // ¼ÓÔØµÄÎÆÀí
-        public List<string> tags;      // Çé¸Ğ±êÇ©£¨happy, sad, angry, surprisedµÈ£©
-        public string description;     // ÃèÊö£¨¿ÉÑ¡£©
+        public string id;              // è¡¨æƒ…åŒ…IDï¼ˆæ–‡ä»¶åä¸å«æ‰©å±•åï¼‰
+        public string displayName;     // æ˜¾ç¤ºåç§°
+        public string filePath;        // å®Œæ•´æ–‡ä»¶è·¯å¾„
+        public Texture2D texture;      // åŠ è½½çš„çº¹ç†
+        public List<string> tags;      // æƒ…æ„Ÿæ ‡ç­¾ï¼ˆhappy, sad, angry, surprisedç­‰ï¼‰
+        public string description;     // æè¿°ï¼ˆå¯é€‰ï¼‰
 
         public EmoticonData(string id, string filePath)
         {
@@ -30,15 +30,15 @@ namespace TheSecondSeat.Emoticons
     }
 
     /// <summary>
-    /// ±íÇé°ü¼ÓÔØÆ÷ - ´ÓÖ¸¶¨ÎÄ¼ş¼Ğ¼ÓÔØÓÃ»§×Ô¶¨Òå±íÇé°ü
+    /// è¡¨æƒ…åŒ…åŠ è½½å™¨ - ä»æŒ‡å®šæ–‡ä»¶å¤¹åŠ è½½ç”¨æˆ·è‡ªå®šä¹‰è¡¨æƒ…åŒ…
     /// </summary>
     public static class EmoticonLoader
     {
-        private const string EMOTICON_FOLDER = "Emoticons";  // ±íÇé°üÎÄ¼ş¼ĞÃû
-        private const string METADATA_FILE = "emoticons.txt"; // ÔªÊı¾İÎÄ¼ş
+        private const string EMOTICON_FOLDER = "Emoticons";  // è¡¨æƒ…åŒ…æ–‡ä»¶å¤¹å
+        private const string METADATA_FILE = "emoticons.txt"; // å…ƒæ•°æ®æ–‡ä»¶
 
         /// <summary>
-        /// ´ÓÄ£×éÄ¿Â¼¼ÓÔØËùÓĞ±íÇé°ü
+        /// ä»æ¨¡ç»„ç›®å½•åŠ è½½æ‰€æœ‰è¡¨æƒ…åŒ…
         /// </summary>
         public static List<EmoticonData> LoadAllEmoticons()
         {
@@ -46,33 +46,33 @@ namespace TheSecondSeat.Emoticons
 
             try
             {
-                // »ñÈ¡Ä£×é¸ùÄ¿Â¼
+                // è·å–æ¨¡ç»„æ ¹ç›®å½•
                 string modRootPath = GetModRootPath();
                 if (string.IsNullOrEmpty(modRootPath))
                 {
-                    Log.Warning("[EmoticonLoader] ÎŞ·¨ÕÒµ½Ä£×é¸ùÄ¿Â¼");
+                    Log.Warning("[EmoticonLoader] æ— æ³•æ‰¾åˆ°æ¨¡ç»„æ ¹ç›®å½•");
                     return emoticons;
                 }
 
-                // ±íÇé°üÎÄ¼ş¼ĞÂ·¾¶
+                // è¡¨æƒ…åŒ…æ–‡ä»¶å¤¹è·¯å¾„
                 string emoticonPath = Path.Combine(modRootPath, EMOTICON_FOLDER);
 
-                // Èç¹ûÎÄ¼ş¼Ğ²»´æÔÚ£¬´´½¨Ëü
+                // å¦‚æœæ–‡ä»¶å¤¹ä¸å­˜åœ¨ï¼Œåˆ›å»ºå®ƒ
                 if (!Directory.Exists(emoticonPath))
                 {
                     Directory.CreateDirectory(emoticonPath);
-                    Log.Message($"[EmoticonLoader] ÒÑ´´½¨±íÇé°üÎÄ¼ş¼Ğ: {emoticonPath}");
+                    Log.Message($"[EmoticonLoader] å·²åˆ›å»ºè¡¨æƒ…åŒ…æ–‡ä»¶å¤¹: {emoticonPath}");
                     CreateSampleMetadataFile(emoticonPath);
                     return emoticons;
                 }
 
-                // ¼ÓÔØÔªÊı¾İ£¨Èç¹û´æÔÚ£©
+                // åŠ è½½å…ƒæ•°æ®ï¼ˆå¦‚æœå­˜åœ¨ï¼‰
                 var metadata = LoadMetadata(emoticonPath);
 
-                // Ö§³ÖµÄÍ¼Æ¬¸ñÊ½
+                // æ”¯æŒçš„å›¾ç‰‡æ ¼å¼
                 string[] supportedExtensions = { "*.png", "*.jpg", "*.jpeg" };
 
-                // É¨ÃèËùÓĞÍ¼Æ¬ÎÄ¼ş
+                // æ‰«ææ‰€æœ‰å›¾ç‰‡æ–‡ä»¶
                 foreach (string ext in supportedExtensions)
                 {
                     var files = Directory.GetFiles(emoticonPath, ext, SearchOption.TopDirectoryOnly);
@@ -83,13 +83,13 @@ namespace TheSecondSeat.Emoticons
                         {
                             string fileName = Path.GetFileNameWithoutExtension(file);
                             
-                            // Ìø¹ıÔªÊı¾İÎÄ¼ş
+                            // è·³è¿‡å…ƒæ•°æ®æ–‡ä»¶
                             if (fileName.Equals("emoticons", StringComparison.OrdinalIgnoreCase))
                                 continue;
 
                             var emoticon = new EmoticonData(fileName, file);
 
-                            // Ó¦ÓÃÔªÊı¾İ£¨Èç¹ûÓĞ£©
+                            // åº”ç”¨å…ƒæ•°æ®ï¼ˆå¦‚æœæœ‰ï¼‰
                             if (metadata.ContainsKey(fileName))
                             {
                                 var meta = metadata[fileName];
@@ -98,34 +98,34 @@ namespace TheSecondSeat.Emoticons
                                 emoticon.description = meta.description ?? "";
                             }
 
-                            // ¼ÓÔØÎÆÀí
+                            // åŠ è½½çº¹ç†
                             emoticon.texture = LoadTextureFromFile(file);
 
                             if (emoticon.texture != null)
                             {
                                 emoticons.Add(emoticon);
-                                Log.Message($"[EmoticonLoader] ÒÑ¼ÓÔØ±íÇé°ü: {emoticon.id} (±êÇ©: {string.Join(", ", emoticon.tags)})");
+                                Log.Message($"[EmoticonLoader] å·²åŠ è½½è¡¨æƒ…åŒ…: {emoticon.id} (æ ‡ç­¾: {string.Join(", ", emoticon.tags)})");
                             }
                         }
                         catch (Exception ex)
                         {
-                            Log.Error($"[EmoticonLoader] ¼ÓÔØ±íÇé°üÊ§°Ü {file}: {ex.Message}");
+                            Log.Error($"[EmoticonLoader] åŠ è½½è¡¨æƒ…åŒ…å¤±è´¥ {file}: {ex.Message}");
                         }
                     }
                 }
 
-                Log.Message($"[EmoticonLoader] ³É¹¦¼ÓÔØ {emoticons.Count} ¸ö±íÇé°ü");
+                Log.Message($"[EmoticonLoader] æˆåŠŸåŠ è½½ {emoticons.Count} ä¸ªè¡¨æƒ…åŒ…");
             }
             catch (Exception ex)
             {
-                Log.Error($"[EmoticonLoader] ¼ÓÔØ±íÇé°üÊ±·¢Éú´íÎó: {ex}");
+                Log.Error($"[EmoticonLoader] åŠ è½½è¡¨æƒ…åŒ…æ—¶å‘ç”Ÿé”™è¯¯: {ex}");
             }
 
             return emoticons;
         }
 
         /// <summary>
-        /// ´ÓÎÄ¼ş¼ÓÔØÎÆÀí
+        /// ä»æ–‡ä»¶åŠ è½½çº¹ç†
         /// </summary>
         private static Texture2D LoadTextureFromFile(string filePath)
         {
@@ -133,10 +133,10 @@ namespace TheSecondSeat.Emoticons
             {
                 byte[] fileData = File.ReadAllBytes(filePath);
                 
-                // ´´½¨ÎÆÀí
+                // åˆ›å»ºçº¹ç†
                 Texture2D texture = new Texture2D(2, 2);
                 
-                // ¼ÓÔØÍ¼Æ¬Êı¾İ
+                // åŠ è½½å›¾ç‰‡æ•°æ®
                 if (texture.LoadImage(fileData))
                 {
                     texture.name = Path.GetFileNameWithoutExtension(filePath);
@@ -144,19 +144,19 @@ namespace TheSecondSeat.Emoticons
                 }
                 else
                 {
-                    Log.Error($"[EmoticonLoader] ÎŞ·¨½âÎöÍ¼Æ¬: {filePath}");
+                    Log.Error($"[EmoticonLoader] æ— æ³•è§£æå›¾ç‰‡: {filePath}");
                     return null;
                 }
             }
             catch (Exception ex)
             {
-                Log.Error($"[EmoticonLoader] ¼ÓÔØÎÆÀíÊ§°Ü {filePath}: {ex.Message}");
+                Log.Error($"[EmoticonLoader] åŠ è½½çº¹ç†å¤±è´¥ {filePath}: {ex.Message}");
                 return null;
             }
         }
 
         /// <summary>
-        /// ¼ÓÔØÔªÊı¾İÎÄ¼ş
+        /// åŠ è½½å…ƒæ•°æ®æ–‡ä»¶
         /// </summary>
         private static Dictionary<string, EmoticonMetadata> LoadMetadata(string emoticonPath)
         {
@@ -177,11 +177,11 @@ namespace TheSecondSeat.Emoticons
                 {
                     string trimmed = line.Trim();
 
-                    // Ìø¹ı¿ÕĞĞºÍ×¢ÊÍ
+                    // è·³è¿‡ç©ºè¡Œå’Œæ³¨é‡Š
                     if (string.IsNullOrEmpty(trimmed) || trimmed.StartsWith("#"))
                         continue;
 
-                    // ĞÂ±íÇé°ü¶¨Òå
+                    // æ–°è¡¨æƒ…åŒ…å®šä¹‰
                     if (trimmed.StartsWith("[") && trimmed.EndsWith("]"))
                     {
                         string id = trimmed.Substring(1, trimmed.Length - 2);
@@ -190,7 +190,7 @@ namespace TheSecondSeat.Emoticons
                     }
                     else if (currentMeta != null && trimmed.Contains("="))
                     {
-                        // ÊôĞÔ¶¨Òå
+                        // å±æ€§å®šä¹‰
                         string[] parts = trimmed.Split(new[] { '=' }, 2);
                         string key = parts[0].Trim().ToLower();
                         string value = parts.Length > 1 ? parts[1].Trim() : "";
@@ -213,18 +213,18 @@ namespace TheSecondSeat.Emoticons
                     }
                 }
 
-                Log.Message($"[EmoticonLoader] ÒÑ¼ÓÔØ {metadata.Count} ¸ö±íÇé°üÔªÊı¾İ");
+                Log.Message($"[EmoticonLoader] å·²åŠ è½½ {metadata.Count} ä¸ªè¡¨æƒ…åŒ…å…ƒæ•°æ®");
             }
             catch (Exception ex)
             {
-                Log.Error($"[EmoticonLoader] ¼ÓÔØÔªÊı¾İÊ§°Ü: {ex.Message}");
+                Log.Error($"[EmoticonLoader] åŠ è½½å…ƒæ•°æ®å¤±è´¥: {ex.Message}");
             }
 
             return metadata;
         }
 
         /// <summary>
-        /// ´´½¨Ê¾ÀıÔªÊı¾İÎÄ¼ş
+        /// åˆ›å»ºç¤ºä¾‹å…ƒæ•°æ®æ–‡ä»¶
         /// </summary>
         private static void CreateSampleMetadataFile(string emoticonPath)
         {
@@ -232,59 +232,59 @@ namespace TheSecondSeat.Emoticons
 
             try
             {
-                string sampleContent = @"# ±íÇé°üÔªÊı¾İÎÄ¼ş
-# ¸ñÊ½ËµÃ÷£º
-# [±íÇé°üID]  - ±ØĞëÓëÎÄ¼şÃû£¨²»º¬À©Õ¹Ãû£©Ò»ÖÂ
-# name = ÏÔÊ¾Ãû³Æ
-# tags = ±êÇ©1, ±êÇ©2, ±êÇ©3  - ÓÃ¶ººÅ·Ö¸ô
-# description = ÃèÊöÎÄ×Ö
+                string sampleContent = @"# è¡¨æƒ…åŒ…å…ƒæ•°æ®æ–‡ä»¶
+# æ ¼å¼è¯´æ˜ï¼š
+# [è¡¨æƒ…åŒ…ID]  - å¿…é¡»ä¸æ–‡ä»¶åï¼ˆä¸å«æ‰©å±•åï¼‰ä¸€è‡´
+# name = æ˜¾ç¤ºåç§°
+# tags = æ ‡ç­¾1, æ ‡ç­¾2, æ ‡ç­¾3  - ç”¨é€—å·åˆ†éš”
+# description = æè¿°æ–‡å­—
 
-# ¿ÉÓÃ±êÇ©£º
-# happy, joy, excited - ¿ªĞÄ¡¢Ï²ÔÃ
-# sad, disappointed, crying - ÄÑ¹ı¡¢Ê§Íû
-# angry, frustrated - ÉúÆø¡¢¾ÚÉ¥
-# surprised, shocked - ¾ªÑÈ¡¢Õğ¾ª
-# confused, thinking - À§»ó¡¢Ë¼¿¼
-# love, affection - °®¡¢Ç×êÇ
-# neutral, calm - ÖĞĞÔ¡¢Æ½¾²
-# smug, proud - µÃÒâ¡¢×ÔºÀ
-# embarrassed, shy - ŞÏŞÎ¡¢º¦Ğß
-# tired, sleepy - Æ£±¹¡¢À§¾ë
+# å¯ç”¨æ ‡ç­¾ï¼š
+# happy, joy, excited - å¼€å¿ƒã€å–œæ‚¦
+# sad, disappointed, crying - éš¾è¿‡ã€å¤±æœ›
+# angry, frustrated - ç”Ÿæ°”ã€æ²®ä¸§
+# surprised, shocked - æƒŠè®¶ã€éœ‡æƒŠ
+# confused, thinking - å›°æƒ‘ã€æ€è€ƒ
+# love, affection - çˆ±ã€äº²æ˜µ
+# neutral, calm - ä¸­æ€§ã€å¹³é™
+# smug, proud - å¾—æ„ã€è‡ªè±ª
+# embarrassed, shy - å°´å°¬ã€å®³ç¾
+# tired, sleepy - ç–²æƒ«ã€å›°å€¦
 
-# Ê¾Àı£¨Çë¸ù¾İÊµ¼ÊÎÄ¼şÃûĞŞ¸Ä£©£º
+# ç¤ºä¾‹ï¼ˆè¯·æ ¹æ®å®é™…æ–‡ä»¶åä¿®æ”¹ï¼‰ï¼š
 # [smile]
-# name = Î¢Ğ¦
+# name = å¾®ç¬‘
 # tags = happy, joy
-# description = ¿ªĞÄµÄÎ¢Ğ¦
+# description = å¼€å¿ƒçš„å¾®ç¬‘
 
 # [cry]
-# name = ¿ŞÆü
+# name = å“­æ³£
 # tags = sad, crying
-# description = ÉËĞÄµØ¿ŞÆü
+# description = ä¼¤å¿ƒåœ°å“­æ³£
 
 # [think]
-# name = Ë¼¿¼
+# name = æ€è€ƒ
 # tags = thinking, confused
-# description = ÏİÈëË¼¿¼
+# description = é™·å…¥æ€è€ƒ
 ";
 
                 File.WriteAllText(metaFile, sampleContent);
-                Log.Message($"[EmoticonLoader] ÒÑ´´½¨Ê¾ÀıÔªÊı¾İÎÄ¼ş: {metaFile}");
+                Log.Message($"[EmoticonLoader] å·²åˆ›å»ºç¤ºä¾‹å…ƒæ•°æ®æ–‡ä»¶: {metaFile}");
             }
             catch (Exception ex)
             {
-                Log.Error($"[EmoticonLoader] ´´½¨ÔªÊı¾İÎÄ¼şÊ§°Ü: {ex.Message}");
+                Log.Error($"[EmoticonLoader] åˆ›å»ºå…ƒæ•°æ®æ–‡ä»¶å¤±è´¥: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// »ñÈ¡Ä£×é¸ùÄ¿Â¼
+        /// è·å–æ¨¡ç»„æ ¹ç›®å½•
         /// </summary>
         private static string GetModRootPath()
         {
             try
             {
-                // Í¨¹ı ModContentPack »ñÈ¡
+                // é€šè¿‡ ModContentPack è·å–
                 var mod = LoadedModManager.RunningMods.FirstOrDefault(m => 
                     m.PackageId.ToLower().Contains("thesecondseat") || 
                     m.Name.Contains("The Second Seat"));
@@ -294,9 +294,9 @@ namespace TheSecondSeat.Emoticons
                     return mod.RootDir;
                 }
 
-                Log.Warning("[EmoticonLoader] ÎŞ·¨Í¨¹ı PackageId ÕÒµ½Ä£×é");
+                Log.Warning("[EmoticonLoader] æ— æ³•é€šè¿‡ PackageId æ‰¾åˆ°æ¨¡ç»„");
 
-                // ±¸ÓÃ·½°¸£º´Ó Assembly Î»ÖÃÍÆ¶Ï
+                // å¤‡ç”¨æ–¹æ¡ˆï¼šä» Assembly ä½ç½®æ¨æ–­
                 string assemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
                 string modRoot = Path.GetDirectoryName(Path.GetDirectoryName(assemblyPath));
                 
@@ -304,13 +304,13 @@ namespace TheSecondSeat.Emoticons
             }
             catch (Exception ex)
             {
-                Log.Error($"[EmoticonLoader] »ñÈ¡Ä£×éÂ·¾¶Ê§°Ü: {ex.Message}");
+                Log.Error($"[EmoticonLoader] è·å–æ¨¡ç»„è·¯å¾„å¤±è´¥: {ex.Message}");
                 return null;
             }
         }
 
         /// <summary>
-        /// ÔªÊı¾İ½á¹¹
+        /// å…ƒæ•°æ®ç»“æ„
         /// </summary>
         private class EmoticonMetadata
         {

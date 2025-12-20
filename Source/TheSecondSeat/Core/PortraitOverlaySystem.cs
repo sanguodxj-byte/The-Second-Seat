@@ -1,4 +1,4 @@
-using HarmonyLib;
+ï»¿using HarmonyLib;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -7,8 +7,8 @@ using TheSecondSeat.UI;
 namespace TheSecondSeat.Core
 {
     /// <summary>
-    /// ? v1.6.42: Á¢»æäÖÈ¾µş²ãÏµÍ³
-    /// Í¨¹ı Harmony ÔÚ OnGUI ºóÖ±½Ó»æÖÆÁ¢»æ£¬¶ÀÁ¢ÓÚ Window ÏµÍ³£¨±ÜÃâÕÚµ²Îï¡¢Í¼²ãÎÊÌâ£©
+    /// ? v1.6.42: ç«‹ç»˜æ¸²æŸ“å å±‚ç³»ç»Ÿ
+    /// é€šè¿‡ Harmony åœ¨ OnGUI åç›´æ¥ç»˜åˆ¶ç«‹ç»˜ï¼Œç‹¬ç«‹äº Window ç³»ç»Ÿï¼ˆé¿å…é®æŒ¡ç‰©ã€å›¾å±‚é—®é¢˜ï¼‰
     /// </summary>
     [StaticConstructorOnStartup]
     public static class PortraitOverlaySystem
@@ -18,19 +18,19 @@ namespace TheSecondSeat.Core
         
         static PortraitOverlaySystem()
         {
-            // Ó¦ÓÃ Harmony ²¹¶¡
+            // åº”ç”¨ Harmony è¡¥ä¸
             var harmony = new Harmony("TheSecondSeat.PortraitOverlay");
             harmony.PatchAll();
             
-            // ? ÒÆ³ıÈÕÖ¾Êä³ö
+            // ? ç§»é™¤æ—¥å¿—è¾“å‡º
             // if (Prefs.DevMode)
             // {
-            //     Log.Message("[PortraitOverlaySystem] Harmony ²¹¶¡ÒÑÓ¦ÓÃ");
+            //     Log.Message("[PortraitOverlaySystem] Harmony è¡¥ä¸å·²åº”ç”¨");
             // }
         }
         
         /// <summary>
-        /// ³õÊ¼»¯Á¢»æÃæ°åÊµÀı
+        /// åˆå§‹åŒ–ç«‹ç»˜é¢æ¿å®ä¾‹
         /// </summary>
         public static void Initialize()
         {
@@ -38,16 +38,16 @@ namespace TheSecondSeat.Core
             {
                 portraitPanel = new FullBodyPortraitPanel();
                 
-                // ? ÒÆ³ıÈÕÖ¾Êä³ö
+                // ? ç§»é™¤æ—¥å¿—è¾“å‡º
                 // if (Prefs.DevMode)
                 // {
-                //     Log.Message("[PortraitOverlaySystem] Á¢»æÃæ°åÒÑ³õÊ¼»¯");
+                //     Log.Message("[PortraitOverlaySystem] ç«‹ç»˜é¢æ¿å·²åˆå§‹åŒ–");
                 // }
             }
         }
         
         /// <summary>
-        /// ÇĞ»»Á¢»æÏÔÊ¾×´Ì¬
+        /// åˆ‡æ¢ç«‹ç»˜æ˜¾ç¤ºçŠ¶æ€
         /// </summary>
         public static void Toggle(bool show)
         {
@@ -58,15 +58,15 @@ namespace TheSecondSeat.Core
                 Initialize();
             }
             
-            // ? ÒÆ³ıÈÕÖ¾Êä³ö
+            // ? ç§»é™¤æ—¥å¿—è¾“å‡º
             // if (Prefs.DevMode)
             // {
-            //     Log.Message($"[PortraitOverlaySystem] Á¢»æÏÔÊ¾×´Ì¬: {(isEnabled ? "¿ªÆô" : "¹Ø±Õ")}");
+            //     Log.Message($"[PortraitOverlaySystem] ç«‹ç»˜æ˜¾ç¤ºçŠ¶æ€: {(isEnabled ? "å¼€å¯" : "å…³é—­")}");
             // }
         }
         
         /// <summary>
-        /// »ñÈ¡µ±Ç°ÏÔÊ¾×´Ì¬
+        /// è·å–å½“å‰æ˜¾ç¤ºçŠ¶æ€
         /// </summary>
         public static bool IsEnabled()
         {
@@ -74,7 +74,7 @@ namespace TheSecondSeat.Core
         }
         
         /// <summary>
-        /// »ñÈ¡Á¢»æÃæ°åÊµÀı£¨¹©Íâ²¿µ÷ÓÃ£©
+        /// è·å–ç«‹ç»˜é¢æ¿å®ä¾‹ï¼ˆä¾›å¤–éƒ¨è°ƒç”¨ï¼‰
         /// </summary>
         public static FullBodyPortraitPanel GetPanel()
         {
@@ -82,7 +82,7 @@ namespace TheSecondSeat.Core
         }
         
         /// <summary>
-        /// ? Harmony ²¹¶¡£ºÔÚ UIRoot_Play.UIRootOnGUI ºó»æÖÆÁ¢»æ
+        /// ? Harmony è¡¥ä¸ï¼šåœ¨ UIRoot_Play.UIRootOnGUI åç»˜åˆ¶ç«‹ç»˜
         /// </summary>
         [HarmonyPatch(typeof(UIRoot_Play), "UIRootOnGUI")]
         public static class UIRoot_Play_UIRootOnGUI_Patch
@@ -90,38 +90,38 @@ namespace TheSecondSeat.Core
             [HarmonyPostfix]
             public static void Postfix()
             {
-                // ? 1. ¼ì²éÓÎÏ·×´Ì¬
+                // ? 1. æ£€æŸ¥æ¸¸æˆçŠ¶æ€
                 if (Current.ProgramState != ProgramState.Playing)
                 {
                     return;
                 }
                 
-                // ? 2. ¼ì²éÁ¢»æÊÇ·ñÆôÓÃ
+                // ? 2. æ£€æŸ¥ç«‹ç»˜æ˜¯å¦å¯ç”¨
                 if (!isEnabled || portraitPanel == null)
                 {
                     return;
                 }
                 
-                // ? 3. ¼ì²éÊÇ·ñÓĞÈ«ÆÁ UI ´ò¿ª£¨ÈçÖ÷²Ëµ¥¡¢ÉèÖÃ£©
+                // ? 3. æ£€æŸ¥æ˜¯å¦æœ‰å…¨å± UI æ‰“å¼€ï¼ˆå¦‚ä¸»èœå•ã€è®¾ç½®ï¼‰
                 if (Find.WindowStack.IsOpen<Page>())
                 {
                     return;
                 }
                 
-                // ? 4. ¼ì²éÊÇ·ñÓĞÄ£Ì¬¶Ô»°¿ò
+                // ? 4. æ£€æŸ¥æ˜¯å¦æœ‰æ¨¡æ€å¯¹è¯æ¡†
                 if (Find.WindowStack.IsOpen<Dialog_MessageBox>())
                 {
                     return;
                 }
                 
-                // ? 5. »æÖÆÁ¢»æÃæ°å
+                // ? 5. ç»˜åˆ¶ç«‹ç»˜é¢æ¿
                 try
                 {
                     portraitPanel.Draw();
                 }
                 catch (System.Exception ex)
                 {
-                    Log.Error($"[PortraitOverlaySystem] »æÖÆÁ¢»æÊ±·¢Éú´íÎó: {ex.Message}\n{ex.StackTrace}");
+                    Log.Error($"[PortraitOverlaySystem] ç»˜åˆ¶ç«‹ç»˜æ—¶å‘ç”Ÿé”™è¯¯: {ex.Message}\n{ex.StackTrace}");
                 }
             }
         }

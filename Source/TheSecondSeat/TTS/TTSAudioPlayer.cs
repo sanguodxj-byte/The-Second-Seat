@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -9,20 +9,20 @@ using Verse;
 namespace TheSecondSeat.TTS
 {
     /// <summary>
-    /// TTS ÒôÆµ²¥·ÅÆ÷£¨»ùÓÚ Unity AudioSource£©
-    /// ? v1.6.27: ÊµÏÖ"²¥·ÅºóÉ¾³ı"ÉúÃüÖÜÆÚ¹ÜÀí
-    /// ? v1.6.30: Ìí¼Ó²¥·Å×´Ì¬×·×Ù£¨Ö§³Ö¿ÚĞÍÍ¬²½£©
-    /// - ÏÔÊ½Ïú»Ù AudioClip ÊÍ·ÅÄÚ´æºÍÎÄ¼şËø
-    /// - Ìí¼Ó»º³åÊ±¼äÈ·±£²¥·ÅÍêÈ«½áÊø
-    /// - ÊµÏÖÖØÊÔÉ¾³ı»úÖÆ
-    /// - ×·×Ùµ±Ç°²¥·ÅµÄÈË¸ñDefName
+    /// TTS éŸ³é¢‘æ’­æ”¾å™¨ï¼ˆåŸºäº Unity AudioSourceï¼‰
+    /// ? v1.6.27: å®ç°"æ’­æ”¾ååˆ é™¤"ç”Ÿå‘½å‘¨æœŸç®¡ç†
+    /// ? v1.6.30: æ·»åŠ æ’­æ”¾çŠ¶æ€è¿½è¸ªï¼ˆæ”¯æŒå£å‹åŒæ­¥ï¼‰
+    /// - æ˜¾å¼é”€æ¯ AudioClip é‡Šæ”¾å†…å­˜å’Œæ–‡ä»¶é”
+    /// - æ·»åŠ ç¼“å†²æ—¶é—´ç¡®ä¿æ’­æ”¾å®Œå…¨ç»“æŸ
+    /// - å®ç°é‡è¯•åˆ é™¤æœºåˆ¶
+    /// - è¿½è¸ªå½“å‰æ’­æ”¾çš„äººæ ¼DefName
     /// </summary>
     public class TTSAudioPlayer : MonoBehaviour
     {
         private static TTSAudioPlayer? instance;
         
         /// <summary>
-        /// µ¥ÀıÊµÀı
+        /// å•ä¾‹å®ä¾‹
         /// </summary>
         public static TTSAudioPlayer Instance
         {
@@ -30,10 +30,10 @@ namespace TheSecondSeat.TTS
             {
                 if (instance == null)
                 {
-                    // Ö÷Ïß³Ì´´½¨ GameObject
+                    // ä¸»çº¿ç¨‹åˆ›å»º GameObject
                     var go = new GameObject("TTSAudioPlayer");
                     instance = go.AddComponent<TTSAudioPlayer>();
-                    DontDestroyOnLoad(go); // ³Ö¾Ã»¯
+                    DontDestroyOnLoad(go); // æŒä¹…åŒ–
                     Log.Message("[TTSAudioPlayer] Instance created");
                 }
                 return instance;
@@ -41,19 +41,19 @@ namespace TheSecondSeat.TTS
         }
 
         private AudioSource? currentAudioSource;
-        private const float BUFFER_TIME = 0.5f; // ²¥·Å½áÊøºóµÄ»º³åÊ±¼ä
-        private const int MAX_DELETE_RETRIES = 3; // ×î´óÉ¾³ıÖØÊÔ´ÎÊı
-        private const float DELETE_RETRY_DELAY = 0.2f; // É¾³ıÖØÊÔÑÓ³Ù
+        private const float BUFFER_TIME = 0.5f; // æ’­æ”¾ç»“æŸåçš„ç¼“å†²æ—¶é—´
+        private const int MAX_DELETE_RETRIES = 3; // æœ€å¤§åˆ é™¤é‡è¯•æ¬¡æ•°
+        private const float DELETE_RETRY_DELAY = 0.2f; // åˆ é™¤é‡è¯•å»¶è¿Ÿ
 
-        // ? v1.6.30: ²¥·Å×´Ì¬×·×Ù
+        // ? v1.6.30: æ’­æ”¾çŠ¶æ€è¿½è¸ª
         private static readonly Dictionary<string, bool> speakingStates = new Dictionary<string, bool>();
         private static string currentSpeakingPersona = string.Empty;
 
         /// <summary>
-        /// ? v1.6.30: ¼ì²éÖ¸¶¨ÈË¸ñÊÇ·ñÕıÔÚËµ»°£¨ÓÃÓÚ¿ÚĞÍÍ¬²½£©
+        /// ? v1.6.30: æ£€æŸ¥æŒ‡å®šäººæ ¼æ˜¯å¦æ­£åœ¨è¯´è¯ï¼ˆç”¨äºå£å‹åŒæ­¥ï¼‰
         /// </summary>
-        /// <param name="personaDefName">ÈË¸ñ DefName</param>
-        /// <returns>ÊÇ·ñÕıÔÚËµ»°</returns>
+        /// <param name="personaDefName">äººæ ¼ DefName</param>
+        /// <returns>æ˜¯å¦æ­£åœ¨è¯´è¯</returns>
         public static bool IsSpeaking(string personaDefName)
         {
             if (string.IsNullOrEmpty(personaDefName))
@@ -61,30 +61,30 @@ namespace TheSecondSeat.TTS
                 return false;
             }
 
-            // ¼ì²éÊÇ·ñÕıÔÚ²¥·Å¸ÃÈË¸ñµÄÒôÆµ
+            // æ£€æŸ¥æ˜¯å¦æ­£åœ¨æ’­æ”¾è¯¥äººæ ¼çš„éŸ³é¢‘
             return speakingStates.TryGetValue(personaDefName, out bool isSpeaking) && isSpeaking;
         }
 
         /// <summary>
-        /// ? v1.6.30: ¼ì²éÊÇ·ñÓĞÈÎºÎÈË¸ñÕıÔÚËµ»°
+        /// ? v1.6.30: æ£€æŸ¥æ˜¯å¦æœ‰ä»»ä½•äººæ ¼æ­£åœ¨è¯´è¯
         /// </summary>
-        /// <returns>ÊÇ·ñÓĞÒôÆµÕıÔÚ²¥·Å</returns>
+        /// <returns>æ˜¯å¦æœ‰éŸ³é¢‘æ­£åœ¨æ’­æ”¾</returns>
         public static bool IsAnyoneSpeaking()
         {
             return !string.IsNullOrEmpty(currentSpeakingPersona);
         }
 
         /// <summary>
-        /// ? v1.6.30: »ñÈ¡µ±Ç°ÕıÔÚËµ»°µÄÈË¸ñDefName
+        /// ? v1.6.30: è·å–å½“å‰æ­£åœ¨è¯´è¯çš„äººæ ¼DefName
         /// </summary>
-        /// <returns>ÈË¸ñDefName£¬Èç¹ûÃ»ÓĞÔò·µ»Ø¿Õ×Ö·û´®</returns>
+        /// <returns>äººæ ¼DefNameï¼Œå¦‚æœæ²¡æœ‰åˆ™è¿”å›ç©ºå­—ç¬¦ä¸²</returns>
         public static string GetCurrentSpeaker()
         {
             return currentSpeakingPersona;
         }
 
         /// <summary>
-        /// ? v1.6.30: ÉèÖÃ²¥·Å×´Ì¬
+        /// ? v1.6.30: è®¾ç½®æ’­æ”¾çŠ¶æ€
         /// </summary>
         private static void SetSpeakingState(string personaDefName, bool isSpeaking)
         {
@@ -106,22 +106,22 @@ namespace TheSecondSeat.TTS
         }
 
         /// <summary>
-        /// ´Ó×Ö½ÚÊı×é²¥·ÅÒôÆµ
-        /// ±ØĞëÔÚÖ÷Ïß³Ìµ÷ÓÃ
+        /// ä»å­—èŠ‚æ•°ç»„æ’­æ”¾éŸ³é¢‘
+        /// å¿…é¡»åœ¨ä¸»çº¿ç¨‹è°ƒç”¨
         /// </summary>
-        /// <param name="audioData">ÒôÆµÊı¾İ</param>
-        /// <param name="onComplete">²¥·ÅÍê³É»Øµ÷£¨¿ÉÑ¡£©</param>
+        /// <param name="audioData">éŸ³é¢‘æ•°æ®</param>
+        /// <param name="onComplete">æ’­æ”¾å®Œæˆå›è°ƒï¼ˆå¯é€‰ï¼‰</param>
         public void PlayFromBytes(byte[] audioData, Action? onComplete = null)
         {
             PlayFromBytes(audioData, string.Empty, onComplete);
         }
 
         /// <summary>
-        /// ? v1.6.30: ´Ó×Ö½ÚÊı×é²¥·ÅÒôÆµ£¨Ö§³ÖÈË¸ñ×·×Ù£©
+        /// ? v1.6.30: ä»å­—èŠ‚æ•°ç»„æ’­æ”¾éŸ³é¢‘ï¼ˆæ”¯æŒäººæ ¼è¿½è¸ªï¼‰
         /// </summary>
-        /// <param name="audioData">ÒôÆµÊı¾İ</param>
-        /// <param name="personaDefName">ÈË¸ñ DefName£¨ÓÃÓÚ×´Ì¬×·×Ù£©</param>
-        /// <param name="onComplete">²¥·ÅÍê³É»Øµ÷£¨¿ÉÑ¡£©</param>
+        /// <param name="audioData">éŸ³é¢‘æ•°æ®</param>
+        /// <param name="personaDefName">äººæ ¼ DefNameï¼ˆç”¨äºçŠ¶æ€è¿½è¸ªï¼‰</param>
+        /// <param name="onComplete">æ’­æ”¾å®Œæˆå›è°ƒï¼ˆå¯é€‰ï¼‰</param>
         public void PlayFromBytes(byte[] audioData, string personaDefName, Action? onComplete = null)
         {
             if (audioData == null || audioData.Length == 0)
@@ -133,7 +133,7 @@ namespace TheSecondSeat.TTS
 
             try
             {
-                // 1. ±£´æÎªÁÙÊ±ÎÄ¼ş
+                // 1. ä¿å­˜ä¸ºä¸´æ—¶æ–‡ä»¶
                 string tempFilePath = SaveToTempFile(audioData);
                 
                 if (string.IsNullOrEmpty(tempFilePath))
@@ -143,7 +143,7 @@ namespace TheSecondSeat.TTS
                     return;
                 }
 
-                // 2. Ê¹ÓÃ"²¥·ÅºóÉ¾³ı"Ä£Ê½
+                // 2. ä½¿ç”¨"æ’­æ”¾ååˆ é™¤"æ¨¡å¼
                 PlayAndDelete(tempFilePath, personaDefName, onComplete);
             }
             catch (Exception ex)
@@ -154,21 +154,21 @@ namespace TheSecondSeat.TTS
         }
 
         /// <summary>
-        /// ? ²¥·ÅÒôÆµ²¢ÔÚÍê³ÉºóÉ¾³ıÎÄ¼ş
+        /// ? æ’­æ”¾éŸ³é¢‘å¹¶åœ¨å®Œæˆååˆ é™¤æ–‡ä»¶
         /// </summary>
-        /// <param name="filePath">ÒôÆµÎÄ¼şÂ·¾¶</param>
-        /// <param name="onComplete">²¥·ÅÍê³É»Øµ÷£¨¿ÉÑ¡£©</param>
+        /// <param name="filePath">éŸ³é¢‘æ–‡ä»¶è·¯å¾„</param>
+        /// <param name="onComplete">æ’­æ”¾å®Œæˆå›è°ƒï¼ˆå¯é€‰ï¼‰</param>
         public void PlayAndDelete(string filePath, Action? onComplete = null)
         {
             PlayAndDelete(filePath, string.Empty, onComplete);
         }
 
         /// <summary>
-        /// ? v1.6.30: ²¥·ÅÒôÆµ²¢ÔÚÍê³ÉºóÉ¾³ıÎÄ¼ş£¨Ö§³ÖÈË¸ñ×·×Ù£©
+        /// ? v1.6.30: æ’­æ”¾éŸ³é¢‘å¹¶åœ¨å®Œæˆååˆ é™¤æ–‡ä»¶ï¼ˆæ”¯æŒäººæ ¼è¿½è¸ªï¼‰
         /// </summary>
-        /// <param name="filePath">ÒôÆµÎÄ¼şÂ·¾¶</param>
-        /// <param name="personaDefName">ÈË¸ñ DefName£¨ÓÃÓÚ×´Ì¬×·×Ù£©</param>
-        /// <param name="onComplete">²¥·ÅÍê³É»Øµ÷£¨¿ÉÑ¡£©</param>
+        /// <param name="filePath">éŸ³é¢‘æ–‡ä»¶è·¯å¾„</param>
+        /// <param name="personaDefName">äººæ ¼ DefNameï¼ˆç”¨äºçŠ¶æ€è¿½è¸ªï¼‰</param>
+        /// <param name="onComplete">æ’­æ”¾å®Œæˆå›è°ƒï¼ˆå¯é€‰ï¼‰</param>
         public void PlayAndDelete(string filePath, string personaDefName, Action? onComplete = null)
         {
             if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
@@ -178,12 +178,12 @@ namespace TheSecondSeat.TTS
                 return;
             }
 
-            // Æô¶¯"¼ÓÔØ-²¥·Å-É¾³ı"Ğ­³Ì
+            // å¯åŠ¨"åŠ è½½-æ’­æ”¾-åˆ é™¤"åç¨‹
             StartCoroutine(LoadPlayDeleteCoroutine(filePath, personaDefName, onComplete));
         }
 
         /// <summary>
-        /// ±£´æ×Ö½ÚÊı×éµ½ÁÙÊ± WAV ÎÄ¼ş
+        /// ä¿å­˜å­—èŠ‚æ•°ç»„åˆ°ä¸´æ—¶ WAV æ–‡ä»¶
         /// </summary>
         private string SaveToTempFile(byte[] data)
         {
@@ -202,8 +202,8 @@ namespace TheSecondSeat.TTS
         }
 
         /// <summary>
-        /// ? Ğ­³Ì£º¼ÓÔØÒôÆµ ¡ú ²¥·Å ¡ú ÏÔÊ½Ïú»Ù AudioClip ¡ú É¾³ıÎÄ¼ş
-        /// ? v1.6.30: ×·×Ù²¥·Å×´Ì¬£¨Ö§³Ö¿ÚĞÍÍ¬²½£©
+        /// ? åç¨‹ï¼šåŠ è½½éŸ³é¢‘ â†’ æ’­æ”¾ â†’ æ˜¾å¼é”€æ¯ AudioClip â†’ åˆ é™¤æ–‡ä»¶
+        /// ? v1.6.30: è¿½è¸ªæ’­æ”¾çŠ¶æ€ï¼ˆæ”¯æŒå£å‹åŒæ­¥ï¼‰
         /// </summary>
         private IEnumerator LoadPlayDeleteCoroutine(string filePath, string personaDefName, Action? onComplete = null)
         {
@@ -211,34 +211,34 @@ namespace TheSecondSeat.TTS
             GameObject? tempGO = null;
             bool success = false;
 
-            // === 1. Ê¹ÓÃ UnityWebRequest ¼ÓÔØÒôÆµ ===
+            // === 1. ä½¿ç”¨ UnityWebRequest åŠ è½½éŸ³é¢‘ ===
             string fileUri = "file://" + filePath.Replace("\\", "/");
             
             using (UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip(fileUri, AudioType.WAV))
             {
                 Log.Message($"[TTSAudioPlayer] Loading audio: {fileUri}");
                 
-                // ·¢ËÍÇëÇó
+                // å‘é€è¯·æ±‚
                 yield return www.SendWebRequest();
 
-                // ¼ì²é´íÎó
+                // æ£€æŸ¥é”™è¯¯
                 if (www.result != UnityWebRequest.Result.Success)
                 {
                     Log.Error($"[TTSAudioPlayer] Failed to load audio: {www.error}");
                     onComplete?.Invoke();
-                    // É¾³ıÎÄ¼ş²¢ÍË³ö
+                    // åˆ é™¤æ–‡ä»¶å¹¶é€€å‡º
                     StartCoroutine(DeleteFileWithRetry(filePath));
                     yield break;
                 }
 
-                // »ñÈ¡ AudioClip
+                // è·å– AudioClip
                 clip = DownloadHandlerAudioClip.GetContent(www);
                 
                 if (clip == null)
                 {
                     Log.Error("[TTSAudioPlayer] AudioClip is null");
                     onComplete?.Invoke();
-                    // É¾³ıÎÄ¼ş²¢ÍË³ö
+                    // åˆ é™¤æ–‡ä»¶å¹¶é€€å‡º
                     StartCoroutine(DeleteFileWithRetry(filePath));
                     yield break;
                 }
@@ -246,42 +246,42 @@ namespace TheSecondSeat.TTS
                 Log.Message($"[TTSAudioPlayer] AudioClip loaded: {clip.length} seconds");
             }
 
-            // === 2. ´´½¨ÁÙÊ± GameObject ºÍ AudioSource ===
+            // === 2. åˆ›å»ºä¸´æ—¶ GameObject å’Œ AudioSource ===
             tempGO = new GameObject("TempAudioPlayer");
             currentAudioSource = tempGO.AddComponent<AudioSource>();
             
-            // ÅäÖÃ AudioSource
+            // é…ç½® AudioSource
             currentAudioSource.clip = clip;
             currentAudioSource.volume = 1.0f;
             currentAudioSource.playOnAwake = false;
             
-            // === 3. ÉèÖÃ²¥·Å×´Ì¬£¨¿ªÊ¼Ëµ»°£© ===
+            // === 3. è®¾ç½®æ’­æ”¾çŠ¶æ€ï¼ˆå¼€å§‹è¯´è¯ï¼‰ ===
             if (!string.IsNullOrEmpty(personaDefName))
             {
                 SetSpeakingState(personaDefName, true);
                 Log.Message($"[TTSAudioPlayer] Speaking started: {personaDefName}");
             }
 
-            // === 4. ²¥·ÅÒôÆµ ===
+            // === 4. æ’­æ”¾éŸ³é¢‘ ===
             currentAudioSource.Play();
             Log.Message("[TTSAudioPlayer] Playing audio...");
 
-            // === 5. µÈ´ı²¥·ÅÍê³É£¨Ìí¼Ó»º³åÊ±¼ä£© ===
+            // === 5. ç­‰å¾…æ’­æ”¾å®Œæˆï¼ˆæ·»åŠ ç¼“å†²æ—¶é—´ï¼‰ ===
             float totalWaitTime = clip.length + BUFFER_TIME;
             yield return new WaitForSeconds(totalWaitTime);
 
             Log.Message("[TTSAudioPlayer] Playback finished");
             success = true;
 
-            // === 6. Çå³ı²¥·Å×´Ì¬£¨Í£Ö¹Ëµ»°£© ===
+            // === 6. æ¸…é™¤æ’­æ”¾çŠ¶æ€ï¼ˆåœæ­¢è¯´è¯ï¼‰ ===
             if (!string.IsNullOrEmpty(personaDefName))
             {
                 SetSpeakingState(personaDefName, false);
                 Log.Message($"[TTSAudioPlayer] Speaking finished: {personaDefName}");
             }
 
-            // === 7. ÇåÀí AudioClip ºÍ GameObject ===
-            // ? ÏÔÊ½Ïú»Ù AudioClip ÊÍ·ÅÄÚ´æºÍÎÄ¼ş¾ä±ú
+            // === 7. æ¸…ç† AudioClip å’Œ GameObject ===
+            // ? æ˜¾å¼é”€æ¯ AudioClip é‡Šæ”¾å†…å­˜å’Œæ–‡ä»¶å¥æŸ„
             if (clip != null)
             {
                 Destroy(clip);
@@ -289,7 +289,7 @@ namespace TheSecondSeat.TTS
                 Log.Message("[TTSAudioPlayer] AudioClip destroyed");
             }
 
-            // Ïú»ÙÁÙÊ± GameObject
+            // é”€æ¯ä¸´æ—¶ GameObject
             if (tempGO != null)
             {
                 Destroy(tempGO);
@@ -298,16 +298,16 @@ namespace TheSecondSeat.TTS
 
             currentAudioSource = null;
 
-            // === 8. µ÷ÓÃ²¥·ÅÍê³É»Øµ÷ ===
+            // === 8. è°ƒç”¨æ’­æ”¾å®Œæˆå›è°ƒ ===
             onComplete?.Invoke();
 
-            // === 9. É¾³ıÁÙÊ±ÎÄ¼ş£¨´øÖØÊÔ»úÖÆ£© ===
-            // ? Æô¶¯¶ÀÁ¢Ğ­³ÌÉ¾³ıÎÄ¼ş£¬±ÜÃâ×èÈû
+            // === 9. åˆ é™¤ä¸´æ—¶æ–‡ä»¶ï¼ˆå¸¦é‡è¯•æœºåˆ¶ï¼‰ ===
+            // ? å¯åŠ¨ç‹¬ç«‹åç¨‹åˆ é™¤æ–‡ä»¶ï¼Œé¿å…é˜»å¡
             StartCoroutine(DeleteFileWithRetry(filePath));
         }
 
         /// <summary>
-        /// ? ´øÖØÊÔ»úÖÆµÄÎÄ¼şÉ¾³ı
+        /// ? å¸¦é‡è¯•æœºåˆ¶çš„æ–‡ä»¶åˆ é™¤
         /// </summary>
         private IEnumerator DeleteFileWithRetry(string filePath)
         {
@@ -341,10 +341,10 @@ namespace TheSecondSeat.TTS
                 catch (Exception ex)
                 {
                     Log.Error($"[TTSAudioPlayer] Failed to delete temp file: {ex.Message}");
-                    break; // ·ÇIOÒì³££¬Ö±½ÓÍË³ö
+                    break; // éIOå¼‚å¸¸ï¼Œç›´æ¥é€€å‡º
                 }
 
-                // ? ÔÚtry-catchÍâ²¿´¦ÀíµÈ´ı
+                // ? åœ¨try-catchå¤–éƒ¨å¤„ç†ç­‰å¾…
                 if (shouldRetry && !deleted)
                 {
                     yield return new WaitForSeconds(DELETE_RETRY_DELAY);
@@ -358,8 +358,8 @@ namespace TheSecondSeat.TTS
         }
 
         /// <summary>
-        /// Í£Ö¹µ±Ç°²¥·Å
-        /// ? v1.6.30: Çå³ı²¥·Å×´Ì¬
+        /// åœæ­¢å½“å‰æ’­æ”¾
+        /// ? v1.6.30: æ¸…é™¤æ’­æ”¾çŠ¶æ€
         /// </summary>
         public void Stop()
         {
@@ -367,7 +367,7 @@ namespace TheSecondSeat.TTS
             {
                 currentAudioSource.Stop();
                 
-                // Çå³ı²¥·Å×´Ì¬
+                // æ¸…é™¤æ’­æ”¾çŠ¶æ€
                 if (!string.IsNullOrEmpty(currentSpeakingPersona))
                 {
                     SetSpeakingState(currentSpeakingPersona, false);
@@ -378,7 +378,7 @@ namespace TheSecondSeat.TTS
         }
 
         /// <summary>
-        /// Ïú»ÙÊ±ÇåÀí
+        /// é”€æ¯æ—¶æ¸…ç†
         /// </summary>
         private void OnDestroy()
         {
@@ -389,7 +389,7 @@ namespace TheSecondSeat.TTS
         }
 
         /// <summary>
-        /// ? ÇåÀíËùÓĞÁÙÊ±ÒôÆµÎÄ¼ş
+        /// ? æ¸…ç†æ‰€æœ‰ä¸´æ—¶éŸ³é¢‘æ–‡ä»¶
         /// </summary>
         public void CleanupTempFiles()
         {

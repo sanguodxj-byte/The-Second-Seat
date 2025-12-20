@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Verse;
@@ -10,31 +10,31 @@ using TheSecondSeat.NaturalLanguage;
 namespace TheSecondSeat.Commands.Implementations
 {
     /// <summary>
-    /// ÅúÁ¿ÃüÁîµÄ¸¨Öú·½·¨¼¯ºÏ
+    /// æ‰¹é‡å‘½ä»¤çš„è¾…åŠ©æ–¹æ³•é›†åˆ
     /// </summary>
     public static class BatchCommandHelpers
     {
         /// <summary>
-        /// »ñÈ¡ÖÇÄÜ½¹µã£¬ÓÃÓÚproximity-based operations.
-        /// ÓÅÏÈ¼¶: Êó±êÎ»ÖÃ > ¾µÍ·Î»ÖÃ > µØÍ¼ÖĞĞÄ
+        /// è·å–æ™ºèƒ½ç„¦ç‚¹ï¼Œç”¨äºproximity-based operations.
+        /// ä¼˜å…ˆçº§: é¼ æ ‡ä½ç½® > é•œå¤´ä½ç½® > åœ°å›¾ä¸­å¿ƒ
         /// </summary>
         public static IntVec3 GetSmartFocusPoint(Map map)
         {
-            // 1. ÓÅÏÈÊ¹ÓÃÊó±êÎ»ÖÃ
+            // 1. ä¼˜å…ˆä½¿ç”¨é¼ æ ‡ä½ç½®
             IntVec3 mouseCell = Verse.UI.MouseCell();
             if (mouseCell.IsValid && mouseCell.InBounds(map))
             {
                 return mouseCell;
             }
 
-            // 2. »ØÍËµ½¾µÍ·Î»ÖÃ
+            // 2. å›é€€åˆ°é•œå¤´ä½ç½®
             IntVec3 cameraCell = Find.CameraDriver.MapPosition;
             if (cameraCell.IsValid && cameraCell.InBounds(map))
             {
                 return cameraCell;
             }
 
-            // 3. ×îºóÊ¹ÓÃµØÍ¼ÖĞĞÄ
+            // 3. æœ€åä½¿ç”¨åœ°å›¾ä¸­å¿ƒ
             return map.Center;
         }
     }
@@ -221,7 +221,7 @@ namespace TheSecondSeat.Commands.Implementations
                            t.def.building != null)
                 .ToList();
 
-            // °²È«»ñÈ¡ Repair designation
+            // å®‰å…¨è·å– Repair designation
             var repairDef = DefDatabase<DesignationDef>.GetNamedSilentFail("Repair");
             if (repairDef == null)
             {
@@ -375,11 +375,11 @@ namespace TheSecondSeat.Commands.Implementations
                 return false;
             }
 
-            // °²È«»ñÈ¡ Capture designation
+            // å®‰å…¨è·å– Capture designation
             var captureDef = DefDatabase<DesignationDef>.GetNamedSilentFail("Capture");
             if (captureDef == null)
             {
-                captureDef = DefDatabase<DesignationDef>.GetNamedSilentFail("Tame"); // ±¸ÓÃ
+                captureDef = DefDatabase<DesignationDef>.GetNamedSilentFail("Tame"); // å¤‡ç”¨
             }
             
             if (captureDef == null)
@@ -789,8 +789,8 @@ namespace TheSecondSeat.Commands.Implementations
     }
 
     /// <summary>
-    /// ? ´¥·¢ÓÎÏ·ÊÂ¼ş£¨¶ÔŞÄÕßÄ£Ê½×¨ÓÃ£©
-    /// AI¿ÉÒÔÍ¨¹ı´ËÃüÁî´¥·¢Ï®»÷¡¢ÉÌ¶Ó¡¢×ÊÔ´¿ÕÍ¶µÈÊÂ¼ş
+    /// ? è§¦å‘æ¸¸æˆäº‹ä»¶ï¼ˆå¯¹å¼ˆè€…æ¨¡å¼ä¸“ç”¨ï¼‰
+    /// AIå¯ä»¥é€šè¿‡æ­¤å‘½ä»¤è§¦å‘è¢­å‡»ã€å•†é˜Ÿã€èµ„æºç©ºæŠ•ç­‰äº‹ä»¶
     /// </summary>
     public class TriggerEventCommand : BaseAICommand
     {
@@ -813,7 +813,7 @@ namespace TheSecondSeat.Commands.Implementations
 
             if (!eventController.IsActive)
             {
-                LogExecution("¶ÔŞÄÕßÄ£Ê½Î´¼¤»î£¬ÎŞ·¨´¥·¢ÊÂ¼ş");
+                LogExecution("å¯¹å¼ˆè€…æ¨¡å¼æœªæ¿€æ´»ï¼Œæ— æ³•è§¦å‘äº‹ä»¶");
                 Messages.Message("TSS_Command_TriggerEvent_NotActive".Translate(), MessageTypeDefOf.RejectInput);
                 return false;
             }
@@ -825,7 +825,7 @@ namespace TheSecondSeat.Commands.Implementations
                 return false;
             }
 
-            // ´Ó parameters »ñÈ¡ AI ÆÀÂÛ
+            // ä» parameters è·å– AI è¯„è®º
             string aiComment = "";
             if (parameters is Dictionary<string, object> paramsDict)
             {
@@ -855,8 +855,8 @@ namespace TheSecondSeat.Commands.Implementations
     }
 
     /// <summary>
-    /// ? °²ÅÅÎ´À´ÊÂ¼ş£¨¶ÔŞÄÕßÄ£Ê½×¨ÓÃ£©
-    /// AI¿ÉÒÔÔ¤ÏÈ°²ÅÅÊÂ¼şÔÚÎ´À´Ä³¸öÊ±¼äµã·¢Éú
+    /// ? å®‰æ’æœªæ¥äº‹ä»¶ï¼ˆå¯¹å¼ˆè€…æ¨¡å¼ä¸“ç”¨ï¼‰
+    /// AIå¯ä»¥é¢„å…ˆå®‰æ’äº‹ä»¶åœ¨æœªæ¥æŸä¸ªæ—¶é—´ç‚¹å‘ç”Ÿ
     /// </summary>
     public class ScheduleEventCommand : BaseAICommand
     {
@@ -879,7 +879,7 @@ namespace TheSecondSeat.Commands.Implementations
 
             if (!eventController.IsActive)
             {
-                LogExecution("¶ÔŞÄÕßÄ£Ê½Î´¼¤»î£¬ÎŞ·¨°²ÅÅÊÂ¼ş");
+                LogExecution("å¯¹å¼ˆè€…æ¨¡å¼æœªæ¿€æ´»ï¼Œæ— æ³•å®‰æ’äº‹ä»¶");
                 Messages.Message("TSS_Command_ScheduleEvent_NotActive".Translate(), MessageTypeDefOf.RejectInput);
                 return false;
             }
@@ -890,7 +890,7 @@ namespace TheSecondSeat.Commands.Implementations
                 return false;
             }
 
-            // ½âÎöÑÓ³ÙÊ±¼ä£¨Ä¬ÈÏ10·ÖÖÓ£©
+            // è§£æå»¶è¿Ÿæ—¶é—´ï¼ˆé»˜è®¤10åˆ†é’Ÿï¼‰
             int delayMinutes = 10;
             string aiComment = "";
 
@@ -909,22 +909,22 @@ namespace TheSecondSeat.Commands.Implementations
                 }
             }
 
-            // ×ª»»Îª ticks£¨1ÓÎÏ··ÖÖÓ = 2500 ticks£©
+            // è½¬æ¢ä¸º ticksï¼ˆ1æ¸¸æˆåˆ†é’Ÿ = 2500 ticksï¼‰
             int delayTicks = delayMinutes * 2500;
 
             eventController.ScheduleEvent(target, delayTicks, aiComment);
 
             LogExecution($"AI scheduled event: {target} in {delayMinutes} minutes");
-            Messages.Message($"¡¾¶ÔŞÄÕß¡¿{delayMinutes}·ÖÖÓºó½«ÓĞÊÂ¼ş·¢Éú...", MessageTypeDefOf.NeutralEvent);
+            Messages.Message($"ã€å¯¹å¼ˆè€…ã€‘{delayMinutes}åˆ†é’Ÿåå°†æœ‰äº‹ä»¶å‘ç”Ÿ...", MessageTypeDefOf.NeutralEvent);
             
             return true;
         }
     }
 
-    #region ? v1.6.40: Ö³ÃñÕß¹ÜÀíÃüÁî£¨´Ó GameActionExecutor Ç¨ÒÆ£©
+    #region ? v1.6.40: æ®–æ°‘è€…ç®¡ç†å‘½ä»¤ï¼ˆä» GameActionExecutor è¿ç§»ï¼‰
 
     /// <summary>
-    /// ? Õ÷ÕÙ/½â³ıÕ÷ÕÙÖ³ÃñÕß
+    /// ? å¾å¬/è§£é™¤å¾å¬æ®–æ°‘è€…
     /// </summary>
     public class DraftPawnCommand : BaseAICommand
     {
@@ -944,7 +944,7 @@ namespace TheSecondSeat.Commands.Implementations
                 return false;
             }
 
-            // ½âÎö²ÎÊı
+            // è§£æå‚æ•°
             bool shouldDraft = target?.ToLower() != "false" && target?.ToLower() != "undraft";
             string pawnName = "";
 
@@ -961,7 +961,7 @@ namespace TheSecondSeat.Commands.Implementations
 
             foreach (var colonist in colonists)
             {
-                // Èç¹ûÖ¸¶¨ÁËÃû×Ö£¬Ö»´¦ÀíÆ¥ÅäµÄÖ³ÃñÕß
+                // å¦‚æœæŒ‡å®šäº†åå­—ï¼Œåªå¤„ç†åŒ¹é…çš„æ®–æ°‘è€…
                 if (!string.IsNullOrEmpty(pawnName) && pawnName != "All")
                 {
                     if (!colonist.Name.ToStringShort.Contains(pawnName) && 
@@ -984,12 +984,12 @@ namespace TheSecondSeat.Commands.Implementations
                 }
             }
 
-            string action = shouldDraft ? "Õ÷ÕÙ" : "½â³ıÕ÷ÕÙ";
-            LogExecution($"{action} {count} ÃûÖ³ÃñÕß");
+            string action = shouldDraft ? "å¾å¬" : "è§£é™¤å¾å¬";
+            LogExecution($"{action} {count} åæ®–æ°‘è€…");
 
             if (count > 0)
             {
-                Messages.Message($"ÒÑ{action} {count} ÃûÖ³ÃñÕß", MessageTypeDefOf.NeutralEvent);
+                Messages.Message($"å·²{action} {count} åæ®–æ°‘è€…", MessageTypeDefOf.NeutralEvent);
                 return true;
             }
 
@@ -998,7 +998,7 @@ namespace TheSecondSeat.Commands.Implementations
     }
 
     /// <summary>
-    /// ? ÒÆ¶¯Ö³ÃñÕßµ½Ö¸¶¨Î»ÖÃ
+    /// ? ç§»åŠ¨æ®–æ°‘è€…åˆ°æŒ‡å®šä½ç½®
     /// </summary>
     public class MovePawnCommand : BaseAICommand
     {
@@ -1021,11 +1021,11 @@ namespace TheSecondSeat.Commands.Implementations
             string pawnName = target ?? "";
             if (string.IsNullOrEmpty(pawnName))
             {
-                LogError("Î´Ö¸¶¨Ö³ÃñÕßÃû³Æ");
+                LogError("æœªæŒ‡å®šæ®–æ°‘è€…åç§°");
                 return false;
             }
 
-            // ´Ó parameters ½âÎö×ø±ê
+            // ä» parameters è§£æåæ ‡
             int x = 0, z = 0;
             if (parameters is Dictionary<string, object> paramsDict)
             {
@@ -1037,52 +1037,52 @@ namespace TheSecondSeat.Commands.Implementations
 
             if (x == 0 && z == 0)
             {
-                LogError("Î´Ö¸¶¨Ä¿±ê×ø±ê£¨ĞèÒªxºÍz²ÎÊı£©");
+                LogError("æœªæŒ‡å®šç›®æ ‡åæ ‡ï¼ˆéœ€è¦xå’Œzå‚æ•°ï¼‰");
                 return false;
             }
 
             var targetPos = new IntVec3(x, 0, z);
             if (!targetPos.InBounds(map) || !targetPos.Walkable(map))
             {
-                LogError($"Ä¿±êÎ»ÖÃ ({x}, {z}) ²»¿Éµ½´ï");
+                LogError($"ç›®æ ‡ä½ç½® ({x}, {z}) ä¸å¯åˆ°è¾¾");
                 return false;
             }
 
-            // ²éÕÒÖ³ÃñÕß
+            // æŸ¥æ‰¾æ®–æ°‘è€…
             var colonist = map.mapPawns.FreeColonistsSpawned
                 .FirstOrDefault(p => p.Name.ToStringShort.Contains(pawnName) || 
                                     p.LabelShort.Contains(pawnName));
 
             if (colonist == null)
             {
-                LogError($"ÕÒ²»µ½ÃûÎª '{pawnName}' µÄÖ³ÃñÕß");
+                LogError($"æ‰¾ä¸åˆ°åä¸º '{pawnName}' çš„æ®–æ°‘è€…");
                 return false;
             }
 
-            // È·±£ÒÑÕ÷ÕÙ
+            // ç¡®ä¿å·²å¾å¬
             if (colonist.drafter == null || !colonist.drafter.Drafted)
             {
                 if (colonist.drafter != null)
                     colonist.drafter.Drafted = true;
                 else
                 {
-                    LogError($"{pawnName} ÎŞ·¨±»Õ÷ÕÙ");
+                    LogError($"{pawnName} æ— æ³•è¢«å¾å¬");
                     return false;
                 }
             }
 
-            // ÏÂ´ïÒÆ¶¯ÃüÁî
+            // ä¸‹è¾¾ç§»åŠ¨å‘½ä»¤
             var job = JobMaker.MakeJob(JobDefOf.Goto, targetPos);
             colonist.jobs?.TryTakeOrderedJob(job, JobTag.DraftedOrder);
 
-            LogExecution($"ÒÑÃüÁî {colonist.LabelShort} ÒÆ¶¯µ½ ({x}, {z})");
-            Messages.Message($"ÒÑÃüÁî {colonist.LabelShort} ÒÆ¶¯µ½ ({x}, {z})", MessageTypeDefOf.NeutralEvent);
+            LogExecution($"å·²å‘½ä»¤ {colonist.LabelShort} ç§»åŠ¨åˆ° ({x}, {z})");
+            Messages.Message($"å·²å‘½ä»¤ {colonist.LabelShort} ç§»åŠ¨åˆ° ({x}, {z})", MessageTypeDefOf.NeutralEvent);
             return true;
         }
     }
 
     /// <summary>
-    /// ? ÖÎÁÆÖ³ÃñÕß
+    /// ? æ²»ç–—æ®–æ°‘è€…
     /// </summary>
     public class HealPawnCommand : BaseAICommand
     {
@@ -1105,7 +1105,7 @@ namespace TheSecondSeat.Commands.Implementations
             string pawnName = target;
             int count = 0;
 
-            // »ñÈ¡ËùÓĞĞèÒªÖÎÁÆµÄÖ³ÃñÕß
+            // è·å–æ‰€æœ‰éœ€è¦æ²»ç–—çš„æ®–æ°‘è€…
             var injuredColonists = map.mapPawns.FreeColonistsSpawned
                 .Where(p => p.health.HasHediffsNeedingTend())
                 .ToList();
@@ -1120,12 +1120,12 @@ namespace TheSecondSeat.Commands.Implementations
 
             if (injuredColonists.Count == 0)
             {
-                LogExecution("ÎŞĞèÒªÖÎÁÆµÄÖ³ÃñÕß");
-                Messages.Message("ÎŞĞèÒªÖÎÁÆµÄÖ³ÃñÕß", MessageTypeDefOf.RejectInput);
+                LogExecution("æ— éœ€è¦æ²»ç–—çš„æ®–æ°‘è€…");
+                Messages.Message("æ— éœ€è¦æ²»ç–—çš„æ®–æ°‘è€…", MessageTypeDefOf.RejectInput);
                 return false;
             }
 
-            // ²éÕÒ¿ÉÓÃµÄÒ½Éú
+            // æŸ¥æ‰¾å¯ç”¨çš„åŒ»ç”Ÿ
             var doctors = map.mapPawns.FreeColonistsSpawned
                 .Where(p => !p.Downed && 
                            !p.Dead && 
@@ -1135,14 +1135,14 @@ namespace TheSecondSeat.Commands.Implementations
 
             if (doctors.Count == 0)
             {
-                LogError("ÎŞ¿ÉÓÃµÄÒ½Éú");
-                Messages.Message("ÎŞ¿ÉÓÃµÄÒ½Éú", MessageTypeDefOf.RejectInput);
+                LogError("æ— å¯ç”¨çš„åŒ»ç”Ÿ");
+                Messages.Message("æ— å¯ç”¨çš„åŒ»ç”Ÿ", MessageTypeDefOf.RejectInput);
                 return false;
             }
 
             foreach (var patient in injuredColonists)
             {
-                // ÕÒ×î½üµÄÒ½Éú
+                // æ‰¾æœ€è¿‘çš„åŒ»ç”Ÿ
                 var doctor = doctors
                     .Where(d => d != patient)
                     .OrderBy(d => d.Position.DistanceTo(patient.Position))
@@ -1156,11 +1156,11 @@ namespace TheSecondSeat.Commands.Implementations
                 }
             }
 
-            LogExecution($"ÒÑ°²ÅÅÖÎÁÆ {count} ÃûÉËÔ±");
+            LogExecution($"å·²å®‰æ’æ²»ç–— {count} åä¼¤å‘˜");
 
             if (count > 0)
             {
-                Messages.Message($"ÒÑ°²ÅÅÖÎÁÆ {count} ÃûÉËÔ±", MessageTypeDefOf.PositiveEvent);
+                Messages.Message($"å·²å®‰æ’æ²»ç–— {count} åä¼¤å‘˜", MessageTypeDefOf.PositiveEvent);
                 return true;
             }
 
@@ -1169,7 +1169,7 @@ namespace TheSecondSeat.Commands.Implementations
     }
 
     /// <summary>
-    /// ? ÉèÖÃ¹¤×÷ÓÅÏÈ¼¶
+    /// ? è®¾ç½®å·¥ä½œä¼˜å…ˆçº§
     /// </summary>
     public class SetWorkPriorityCommand : BaseAICommand
     {
@@ -1192,11 +1192,11 @@ namespace TheSecondSeat.Commands.Implementations
             string pawnName = target ?? "";
             if (string.IsNullOrEmpty(pawnName))
             {
-                LogError("Î´Ö¸¶¨Ö³ÃñÕßÃû³Æ");
+                LogError("æœªæŒ‡å®šæ®–æ°‘è€…åç§°");
                 return false;
             }
 
-            // ´Ó parameters ½âÎö¹¤×÷ÀàĞÍºÍÓÅÏÈ¼¶
+            // ä» parameters è§£æå·¥ä½œç±»å‹å’Œä¼˜å…ˆçº§
             string workTypeName = "";
             int priority = 1;
             
@@ -1212,11 +1212,11 @@ namespace TheSecondSeat.Commands.Implementations
 
             if (string.IsNullOrEmpty(workTypeName))
             {
-                LogError("Î´Ö¸¶¨¹¤×÷ÀàĞÍ£¨ĞèÒªworkType²ÎÊı£©");
+                LogError("æœªæŒ‡å®šå·¥ä½œç±»å‹ï¼ˆéœ€è¦workTypeå‚æ•°ï¼‰");
                 return false;
             }
 
-            // ²éÕÒ¹¤×÷ÀàĞÍ
+            // æŸ¥æ‰¾å·¥ä½œç±»å‹
             var workTypeDef = DefDatabase<WorkTypeDef>.AllDefs
                 .FirstOrDefault(w => w.defName.Equals(workTypeName, StringComparison.OrdinalIgnoreCase) ||
                                     (w.labelShort != null && w.labelShort.Equals(workTypeName, StringComparison.OrdinalIgnoreCase)) ||
@@ -1224,11 +1224,11 @@ namespace TheSecondSeat.Commands.Implementations
 
             if (workTypeDef == null)
             {
-                LogError($"ÕÒ²»µ½¹¤×÷ÀàĞÍ: {workTypeName}");
+                LogError($"æ‰¾ä¸åˆ°å·¥ä½œç±»å‹: {workTypeName}");
                 return false;
             }
 
-            // ²éÕÒÖ³ÃñÕß
+            // æŸ¥æ‰¾æ®–æ°‘è€…
             var colonists = map.mapPawns.FreeColonistsSpawned
                 .Where(p => pawnName == "All" || 
                            p.Name.ToStringShort.Contains(pawnName) || 
@@ -1237,7 +1237,7 @@ namespace TheSecondSeat.Commands.Implementations
 
             if (colonists.Count == 0)
             {
-                LogError($"ÕÒ²»µ½ÃûÎª '{pawnName}' µÄÖ³ÃñÕß");
+                LogError($"æ‰¾ä¸åˆ°åä¸º '{pawnName}' çš„æ®–æ°‘è€…");
                 return false;
             }
 
@@ -1251,12 +1251,12 @@ namespace TheSecondSeat.Commands.Implementations
                 }
             }
 
-            string priorityText = priority == 0 ? "½ûÓÃ" : $"ÓÅÏÈ¼¶{priority}";
-            LogExecution($"ÒÑ½« {count} ÃûÖ³ÃñÕßµÄ {workTypeDef.labelShort} ÉèÎª{priorityText}");
+            string priorityText = priority == 0 ? "ç¦ç”¨" : $"ä¼˜å…ˆçº§{priority}";
+            LogExecution($"å·²å°† {count} åæ®–æ°‘è€…çš„ {workTypeDef.labelShort} è®¾ä¸º{priorityText}");
 
             if (count > 0)
             {
-                Messages.Message($"ÒÑ½« {count} ÃûÖ³ÃñÕßµÄ {workTypeDef.labelShort} ÉèÎª{priorityText}", 
+                Messages.Message($"å·²å°† {count} åæ®–æ°‘è€…çš„ {workTypeDef.labelShort} è®¾ä¸º{priorityText}", 
                     MessageTypeDefOf.NeutralEvent);
                 return true;
             }
@@ -1266,10 +1266,10 @@ namespace TheSecondSeat.Commands.Implementations
     }
 
     /// <summary>
-    /// ? ×°±¸ÎäÆ÷£¨µ¥¸öÖ³ÃñÕß£©
-    /// ×¢Òâ£ºÕâ¸öÃüÁîÓë BatchEquipCommand ²»Í¬
-    /// - EquipWeaponCommand: µ¥¸öÖ³ÃñÕß×°±¸Ö¸¶¨ÎäÆ÷
-    /// - BatchEquipCommand: ËùÓĞÖ³ÃñÕß×Ô¶¯×°±¸×î¼ÑÎäÆ÷
+    /// ? è£…å¤‡æ­¦å™¨ï¼ˆå•ä¸ªæ®–æ°‘è€…ï¼‰
+    /// æ³¨æ„ï¼šè¿™ä¸ªå‘½ä»¤ä¸ BatchEquipCommand ä¸åŒ
+    /// - EquipWeaponCommand: å•ä¸ªæ®–æ°‘è€…è£…å¤‡æŒ‡å®šæ­¦å™¨
+    /// - BatchEquipCommand: æ‰€æœ‰æ®–æ°‘è€…è‡ªåŠ¨è£…å¤‡æœ€ä½³æ­¦å™¨
     /// </summary>
     public class EquipWeaponCommand : BaseAICommand
     {
@@ -1292,22 +1292,22 @@ namespace TheSecondSeat.Commands.Implementations
             string pawnName = target ?? "";
             if (string.IsNullOrEmpty(pawnName))
             {
-                LogError("Î´Ö¸¶¨Ö³ÃñÕßÃû³Æ");
+                LogError("æœªæŒ‡å®šæ®–æ°‘è€…åç§°");
                 return false;
             }
 
-            // ²éÕÒÖ³ÃñÕß
+            // æŸ¥æ‰¾æ®–æ°‘è€…
             var colonist = map.mapPawns.FreeColonistsSpawned
                 .FirstOrDefault(p => p.Name.ToStringShort.Contains(pawnName) || 
                                     p.LabelShort.Contains(pawnName));
 
             if (colonist == null)
             {
-                LogError($"ÕÒ²»µ½ÃûÎª '{pawnName}' µÄÖ³ÃñÕß");
+                LogError($"æ‰¾ä¸åˆ°åä¸º '{pawnName}' çš„æ®–æ°‘è€…");
                 return false;
             }
 
-            // ´Ó parameters »ñÈ¡ÎäÆ÷DefName£¨Èç¹ûÖ¸¶¨£©
+            // ä» parameters è·å–æ­¦å™¨DefNameï¼ˆå¦‚æœæŒ‡å®šï¼‰
             string weaponDefName = "";
             if (parameters is Dictionary<string, object> paramsDict)
             {
@@ -1317,7 +1317,7 @@ namespace TheSecondSeat.Commands.Implementations
                     weaponDefName = scopeObj?.ToString() ?? "";
             }
 
-            // ²éÕÒÎäÆ÷
+            // æŸ¥æ‰¾æ­¦å™¨
             Thing? weapon = null;
             var availableWeapons = map.listerThings.ThingsInGroup(ThingRequestGroup.Weapon)
                 .Where(w => !w.IsForbidden(Faction.OfPlayer) &&
@@ -1332,40 +1332,40 @@ namespace TheSecondSeat.Commands.Implementations
                 
                 if (weapon == null)
                 {
-                    LogError($"ÕÒ²»µ½¿ÉÓÃµÄÎäÆ÷: {weaponDefName}");
+                    LogError($"æ‰¾ä¸åˆ°å¯ç”¨çš„æ­¦å™¨: {weaponDefName}");
                     return false;
                 }
             }
             else
             {
-                // ×Ô¶¯Ñ¡Ôñ×î¼ÑÎäÆ÷
+                // è‡ªåŠ¨é€‰æ‹©æœ€ä½³æ­¦å™¨
                 weapon = availableWeapons
                     .OrderByDescending(w => w.GetStatValue(StatDefOf.RangedWeapon_DamageMultiplier, true))
                     .FirstOrDefault();
                 
                 if (weapon == null)
                 {
-                    LogError("ÎŞ¿ÉÓÃÎäÆ÷");
+                    LogError("æ— å¯ç”¨æ­¦å™¨");
                     return false;
                 }
             }
 
-            // ÏÂ´ï×°±¸ÃüÁî
+            // ä¸‹è¾¾è£…å¤‡å‘½ä»¤
             var job = JobMaker.MakeJob(JobDefOf.Equip, weapon);
             colonist.jobs?.TryTakeOrderedJob(job);
 
-            LogExecution($"ÒÑÃüÁî {colonist.LabelShort} ×°±¸ {weapon.LabelShort}");
-            Messages.Message($"ÒÑÃüÁî {colonist.LabelShort} ×°±¸ {weapon.LabelShort}", MessageTypeDefOf.NeutralEvent);
+            LogExecution($"å·²å‘½ä»¤ {colonist.LabelShort} è£…å¤‡ {weapon.LabelShort}");
+            Messages.Message($"å·²å‘½ä»¤ {colonist.LabelShort} è£…å¤‡ {weapon.LabelShort}", MessageTypeDefOf.NeutralEvent);
             return true;
         }
     }
 
     #endregion
 
-    #region ? v1.6.40: ×ÊÔ´¹ÜÀíÃüÁî£¨´Ó GameActionExecutor Ç¨ÒÆ£©
+    #region ? v1.6.40: èµ„æºç®¡ç†å‘½ä»¤ï¼ˆä» GameActionExecutor è¿ç§»ï¼‰
 
     /// <summary>
-    /// ? ½ûÖ¹ÎïÆ·
+    /// ? ç¦æ­¢ç‰©å“
     /// </summary>
     public class ForbidItemsCommand : BaseAICommand
     {
@@ -1385,7 +1385,7 @@ namespace TheSecondSeat.Commands.Implementations
                 return false;
             }
 
-            // ½âÎö limit ²ÎÊı
+            // è§£æ limit å‚æ•°
             int limit = -1;
             if (parameters is Dictionary<string, object> paramsDict)
             {
@@ -1406,11 +1406,11 @@ namespace TheSecondSeat.Commands.Implementations
                     break;
             }
 
-            LogExecution($"ÒÑ½ûÖ¹ {count} ¸öÎïÆ·");
+            LogExecution($"å·²ç¦æ­¢ {count} ä¸ªç‰©å“");
 
             if (count > 0)
             {
-                Messages.Message($"ÒÑ½ûÖ¹ {count} ¸öÎïÆ·", MessageTypeDefOf.NeutralEvent);
+                Messages.Message($"å·²ç¦æ­¢ {count} ä¸ªç‰©å“", MessageTypeDefOf.NeutralEvent);
                 return true;
             }
 
@@ -1419,7 +1419,7 @@ namespace TheSecondSeat.Commands.Implementations
     }
 
     /// <summary>
-    /// ? ÔÊĞíÎïÆ·
+    /// ? å…è®¸ç‰©å“
     /// </summary>
     public class AllowItemsCommand : BaseAICommand
     {
@@ -1439,7 +1439,7 @@ namespace TheSecondSeat.Commands.Implementations
                 return false;
             }
 
-            // ½âÎö limit ²ÎÊı
+            // è§£æ limit å‚æ•°
             int limit = -1;
             if (parameters is Dictionary<string, object> paramsDict)
             {
@@ -1460,11 +1460,11 @@ namespace TheSecondSeat.Commands.Implementations
                     break;
             }
 
-            LogExecution($"ÒÑ½â³ı {count} ¸öÎïÆ·");
+            LogExecution($"å·²è§£é™¤ {count} ä¸ªç‰©å“");
 
             if (count > 0)
             {
-                Messages.Message($"ÒÑ½â³ı {count} ¸öÎïÆ·", MessageTypeDefOf.NeutralEvent);
+                Messages.Message($"å·²è§£é™¤ {count} ä¸ªç‰©å“", MessageTypeDefOf.NeutralEvent);
                 return true;
             }
 
@@ -1474,10 +1474,10 @@ namespace TheSecondSeat.Commands.Implementations
 
     #endregion
 
-    #region ? v1.6.40: Õş²ßĞŞ¸ÄÃüÁî£¨´Ó GameActionExecutor Ç¨ÒÆ£©
+    #region ? v1.6.40: æ”¿ç­–ä¿®æ”¹å‘½ä»¤ï¼ˆä» GameActionExecutor è¿ç§»ï¼‰
 
     /// <summary>
-    /// ? ĞŞ¸ÄÕş²ß£¨Ä¿Ç°ÎªÍ¨ÖªÊµÏÖ£©
+    /// ? ä¿®æ”¹æ”¿ç­–ï¼ˆç›®å‰ä¸ºé€šçŸ¥å®ç°ï¼‰
     /// </summary>
     public class ChangePolicyCommand_New : BaseAICommand
     {
@@ -1493,7 +1493,7 @@ namespace TheSecondSeat.Commands.Implementations
             string policyName = target ?? "";
             if (string.IsNullOrEmpty(policyName))
             {
-                LogError("Î´Ö¸¶¨Õş²ßÃû³Æ");
+                LogError("æœªæŒ‡å®šæ”¿ç­–åç§°");
                 return false;
             }
 
@@ -1506,14 +1506,14 @@ namespace TheSecondSeat.Commands.Implementations
                     description = scopeObj?.ToString() ?? "";
             }
 
-            string message = $"ÊÕµ½Õş²ßĞŞ¸ÄÇëÇó: {policyName}";
+            string message = $"æ”¶åˆ°æ”¿ç­–ä¿®æ”¹è¯·æ±‚: {policyName}";
             if (!string.IsNullOrEmpty(description))
             {
                 message += $" ({description})";
             }
 
             Messages.Message(message, MessageTypeDefOf.NeutralEvent);
-            LogExecution($"Õş²ßĞŞ¸ÄÇëÇó: {policyName}");
+            LogExecution($"æ”¿ç­–ä¿®æ”¹è¯·æ±‚: {policyName}");
 
             return true;
         }

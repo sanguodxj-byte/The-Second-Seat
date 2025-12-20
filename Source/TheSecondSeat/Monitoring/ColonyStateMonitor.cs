@@ -1,26 +1,26 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Verse;
 using RimWorld;
 using TheSecondSeat.Narrator;
 using TheSecondSeat.Integration;
-// ? v1.6.46: ÁÙÊ±×¢ÊÍµô GameStateSnapshot ÒıÓÃ£¨¸ÃÀà¿ÉÄÜ²»´æÔÚ»òÔÚÆäËûÃüÃû¿Õ¼ä£©
+// ? v1.6.46: ä¸´æ—¶æ³¨é‡Šæ‰ GameStateSnapshot å¼•ç”¨ï¼ˆè¯¥ç±»å¯èƒ½ä¸å­˜åœ¨æˆ–åœ¨å…¶ä»–å‘½åç©ºé—´ï¼‰
 /// using TheSecondSeat.Core;  
 
 namespace TheSecondSeat.Monitoring
 {
     /// <summary>
-    /// ??????????? - ???????£????§Ø?
+    /// ??????????? - ???????ä»¯????Ğ¶?
     /// ? v1.6.42: ?????????????????????????????
-    /// ? v1.6.46: ÁÙÊ±½ûÓÃ£¨GameStateSnapshot Àà²»´æÔÚ£©
+    /// ? v1.6.46: ä¸´æ—¶ç¦ç”¨ï¼ˆGameStateSnapshot ç±»ä¸å­˜åœ¨ï¼‰
     /// </summary>
     public class ColonyStateMonitor : GameComponent
     {
         private int ticksSinceLastCheck = 0;
         private const int CheckInterval = 6000; // ?100???????
         
-        // ??¦Ì??????
+        // ??Î¼??????
         private int lastColonistCount = 0;
         private float lastWealth = 0f;
         private int lastFoodAmount = 0;
@@ -41,14 +41,14 @@ namespace TheSecondSeat.Monitoring
             if (ticksSinceLastCheck >= CheckInterval)
             {
                 ticksSinceLastCheck = 0;
-                // ? v1.6.46: ÁÙÊ±½ûÓÃ£¨GameStateSnapshot ²»¿ÉÓÃ£©
+                // ? v1.6.46: ä¸´æ—¶ç¦ç”¨ï¼ˆGameStateSnapshot ä¸å¯ç”¨ï¼‰
                 // CheckColonyState();
             }
         }
 
         /// <summary>
         /// ? v1.6.42: ?????????????
-        /// ? v1.6.46: ÁÙÊ±½ûÓÃ
+        /// ? v1.6.46: ä¸´æ—¶ç¦ç”¨
         /// </summary>
         private void CheckColonyState()
         {
@@ -74,7 +74,7 @@ namespace TheSecondSeat.Monitoring
             */
         }
 
-        // ? v1.6.46: ÁÙÊ±×¢ÊÍµôËùÓĞÒÀÀµ GameStateSnapshot µÄ·½·¨
+        // ? v1.6.46: ä¸´æ—¶æ³¨é‡Šæ‰æ‰€æœ‰ä¾èµ– GameStateSnapshot çš„æ–¹æ³•
 
         public override void ExposeData()
         {
@@ -89,7 +89,7 @@ namespace TheSecondSeat.Monitoring
     }
 
     /// <summary>
-    /// ??????????? - ?????????????§Ø?
+    /// ??????????? - ?????????????Ğ¶?
     /// </summary>
     public class PlayerInteractionMonitor : GameComponent
     {
@@ -111,15 +111,15 @@ namespace TheSecondSeat.Monitoring
             var narrator = Current.Game?.GetComponent<NarratorManager>();
             if (narrator == null) return;
 
-            // ??????????????10?¦Æ????
+            // ??????????????10?Î¶????
             if (totalConversations % 10 == 0 && hasUserMessage)
             {
                 narrator.ModifyFavorability(1f, "???????????");
             }
 
-            // ?????¦Ä????????????
+            // ?????Î´????????????
             int ticksSinceLastConversation = Find.TickManager.TicksGame - lastConversationTick;
-            if (ticksSinceLastConversation > 360000) // >6§³?
+            if (ticksSinceLastConversation > 360000) // >6Ğ¡?
             {
                 narrator.ModifyFavorability(-1f, "???????????");
             }
@@ -140,7 +140,7 @@ namespace TheSecondSeat.Monitoring
             // ????????
             if (ignoredSuggestions >= 5)
             {
-                narrator.ModifyFavorability(-3f, "??¦Ê?????????");
+                narrator.ModifyFavorability(-3f, "??Îº?????????");
                 ignoredSuggestions = 0;
             }
         }

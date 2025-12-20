@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;
@@ -6,116 +6,116 @@ using Verse;
 namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
-    /// Í¼²ãÀàĞÍÃ¶¾Ù
-    /// ¶¨Òå·Ö²ãÁ¢»æÏµÍ³Ö§³ÖµÄËùÓĞÍ¼²ãÀàĞÍ
+    /// å›¾å±‚ç±»å‹æšä¸¾
+    /// å®šä¹‰åˆ†å±‚ç«‹ç»˜ç³»ç»Ÿæ”¯æŒçš„æ‰€æœ‰å›¾å±‚ç±»å‹
     /// </summary>
     public enum LayerType
     {
-        Background,     // ±³¾°²ã£¨×îµ×²ã£¬Èç±³¾°¹âÔÎ£©
-        Body,           // ÉíÌå²ã£¨»ù´¡ÈËÎïÂÖÀª£©
-        Outfit,         // ·ş×°²ã£¨¿É¸ü»»£©
-        Face,           // Ãæ²¿²ã£¨±íÇé×¨ÓÃ£©
-        Eyes,           // ? ĞÂÔö£ºÑÛ¾¦²ã£¨Õ£ÑÛ¶¯»­×¨ÓÃ£©
-        Mouth,          // ? ĞÂÔö£º×ì°Í²ã£¨ÕÅ×ì¶¯»­×¨ÓÃ£©
-        Hair,           // Í··¢²ã
-        Accessories,    // ÅäÊÎ²ã£¨ÑÛ¾µ¡¢Ã±×ÓµÈ£©
-        ForegroundFX,   // Ç°¾°ÌØĞ§²ã£¨ÈçÄ§·¨¹âĞ§£©
-        Overlay         // ¸²¸Ç²ã£¨×î¶¥²ã£¬ÈçUI±ß¿ò£©
+        Background,     // èƒŒæ™¯å±‚ï¼ˆæœ€åº•å±‚ï¼Œå¦‚èƒŒæ™¯å…‰æ™•ï¼‰
+        Body,           // èº«ä½“å±‚ï¼ˆåŸºç¡€äººç‰©è½®å»“ï¼‰
+        Outfit,         // æœè£…å±‚ï¼ˆå¯æ›´æ¢ï¼‰
+        Face,           // é¢éƒ¨å±‚ï¼ˆè¡¨æƒ…ä¸“ç”¨ï¼‰
+        Eyes,           // ? æ–°å¢ï¼šçœ¼ç›å±‚ï¼ˆçœ¨çœ¼åŠ¨ç”»ä¸“ç”¨ï¼‰
+        Mouth,          // ? æ–°å¢ï¼šå˜´å·´å±‚ï¼ˆå¼ å˜´åŠ¨ç”»ä¸“ç”¨ï¼‰
+        Hair,           // å¤´å‘å±‚
+        Accessories,    // é…é¥°å±‚ï¼ˆçœ¼é•œã€å¸½å­ç­‰ï¼‰
+        ForegroundFX,   // å‰æ™¯ç‰¹æ•ˆå±‚ï¼ˆå¦‚é­”æ³•å…‰æ•ˆï¼‰
+        Overlay         // è¦†ç›–å±‚ï¼ˆæœ€é¡¶å±‚ï¼Œå¦‚UIè¾¹æ¡†ï¼‰
     }
 
     /// <summary>
-    /// Í¼²ã»ìºÏÄ£Ê½
-    /// ¿ØÖÆÍ¼²ãÈçºÎÓëÏÂ²ã»ìºÏ
+    /// å›¾å±‚æ··åˆæ¨¡å¼
+    /// æ§åˆ¶å›¾å±‚å¦‚ä½•ä¸ä¸‹å±‚æ··åˆ
     /// </summary>
     public enum BlendMode
     {
-        Normal,         // ±ê×¼ Alpha »ìºÏ
-        Multiply,       // ÕıÆ¬µşµ×£¨ÑÕÉ«±ä°µ£©
-        Screen,         // ÂËÉ«£¨ÑÕÉ«±äÁÁ£©
-        Overlay,        // µş¼Ó£¨±£ÁôÃ÷°µ¶Ô±È£©
-        Additive        // ¼Ó·¨»ìºÏ£¨¹âĞ§×¨ÓÃ£©
+        Normal,         // æ ‡å‡† Alpha æ··åˆ
+        Multiply,       // æ­£ç‰‡å åº•ï¼ˆé¢œè‰²å˜æš—ï¼‰
+        Screen,         // æ»¤è‰²ï¼ˆé¢œè‰²å˜äº®ï¼‰
+        Overlay,        // å åŠ ï¼ˆä¿ç•™æ˜æš—å¯¹æ¯”ï¼‰
+        Additive        // åŠ æ³•æ··åˆï¼ˆå…‰æ•ˆä¸“ç”¨ï¼‰
     }
 
     /// <summary>
-    /// µ¥¸öÍ¼²ã¶¨Òå
-    /// ÃèÊöÒ»¸öÍ¼²ãµÄËùÓĞÊôĞÔºÍ¼ÓÔØ¹æÔò
+    /// å•ä¸ªå›¾å±‚å®šä¹‰
+    /// æè¿°ä¸€ä¸ªå›¾å±‚çš„æ‰€æœ‰å±æ€§å’ŒåŠ è½½è§„åˆ™
     /// </summary>
     public class LayerDefinition
     {
         /// <summary>
-        /// Í¼²ãÀàĞÍ
+        /// å›¾å±‚ç±»å‹
         /// </summary>
         public LayerType Type { get; set; } = LayerType.Body;
 
         /// <summary>
-        /// Í¼²ãÃû³Æ£¨ÓÃÓÚÊ¶±ğºÍÈÕÖ¾£©
+        /// å›¾å±‚åç§°ï¼ˆç”¨äºè¯†åˆ«å’Œæ—¥å¿—ï¼‰
         /// </summary>
         public string Name { get; set; } = "";
 
         /// <summary>
-        /// Í¼²ãÓÅÏÈ¼¶£¨0-100£¬Êı×ÖÔ½´óÔ½¿¿Ç°£©
+        /// å›¾å±‚ä¼˜å…ˆçº§ï¼ˆ0-100ï¼Œæ•°å­—è¶Šå¤§è¶Šé å‰ï¼‰
         /// </summary>
         public int Priority { get; set; } = 0;
 
         /// <summary>
-        /// ÎÆÀíÂ·¾¶Ä£°å
-        /// ¿ÉÒÔÊ¹ÓÃÕ¼Î»·û£º{persona}, {expression}, {outfit}
-        /// ÀıÈç£ºUI/Narrators/9x16/Layered/{persona}/face_{expression}.png
+        /// çº¹ç†è·¯å¾„æ¨¡æ¿
+        /// å¯ä»¥ä½¿ç”¨å ä½ç¬¦ï¼š{persona}, {expression}, {outfit}
+        /// ä¾‹å¦‚ï¼šUI/Narrators/9x16/Layered/{persona}/face_{expression}.png
         /// </summary>
         public string TexturePath { get; set; } = "";
 
         /// <summary>
-        /// »ìºÏÄ£Ê½
+        /// æ··åˆæ¨¡å¼
         /// </summary>
         public BlendMode Blend { get; set; } = BlendMode.Normal;
 
         /// <summary>
-        /// ²»Í¸Ã÷¶È£¨0.0-1.0£©
+        /// ä¸é€æ˜åº¦ï¼ˆ0.0-1.0ï¼‰
         /// </summary>
         public float Opacity { get; set; } = 1.0f;
 
         /// <summary>
-        /// ÊÇ·ñ±ØĞè£¨Èç¹ûÍ¼²ãÈ±Ê§ÊÇ·ñÖĞÖ¹¼ÓÔØ£©
+        /// æ˜¯å¦å¿…éœ€ï¼ˆå¦‚æœå›¾å±‚ç¼ºå¤±æ˜¯å¦ä¸­æ­¢åŠ è½½ï¼‰
         /// </summary>
         public bool Required { get; set; } = false;
 
         /// <summary>
-        /// ÊÇ·ñÆôÓÃ£¨¿ÉÓÃÓÚÁÙÊ±½ûÓÃÄ³Ğ©Í¼²ã£©
+        /// æ˜¯å¦å¯ç”¨ï¼ˆå¯ç”¨äºä¸´æ—¶ç¦ç”¨æŸäº›å›¾å±‚ï¼‰
         /// </summary>
         public bool Enabled { get; set; } = true;
 
         /// <summary>
-        /// ÒÀÀµµÄ±íÇéÀàĞÍ£¨Èç¹ûÖ¸¶¨£¬½öÔÚ¸Ã±íÇéÊ±¼ÓÔØ£©
-        /// null ±íÊ¾ËùÓĞ±íÇé¶¼¼ÓÔØ
+        /// ä¾èµ–çš„è¡¨æƒ…ç±»å‹ï¼ˆå¦‚æœæŒ‡å®šï¼Œä»…åœ¨è¯¥è¡¨æƒ…æ—¶åŠ è½½ï¼‰
+        /// null è¡¨ç¤ºæ‰€æœ‰è¡¨æƒ…éƒ½åŠ è½½
         /// </summary>
         public ExpressionType? ExpressionFilter { get; set; } = null;
 
         /// <summary>
-        /// ÒÀÀµµÄ·ş×° ID£¨Èç¹ûÖ¸¶¨£¬½öÔÚ¸Ã·ş×°Ê±¼ÓÔØ£©
-        /// null ±íÊ¾ËùÓĞ·ş×°¶¼¼ÓÔØ
+        /// ä¾èµ–çš„æœè£… IDï¼ˆå¦‚æœæŒ‡å®šï¼Œä»…åœ¨è¯¥æœè£…æ—¶åŠ è½½ï¼‰
+        /// null è¡¨ç¤ºæ‰€æœ‰æœè£…éƒ½åŠ è½½
         /// </summary>
         public string? OutfitFilter { get; set; } = null;
 
         /// <summary>
-        /// Æ«ÒÆÁ¿£¨ÏñËØ£©
-        /// ÓÃÓÚÎ¢µ÷Í¼²ãÎ»ÖÃ
+        /// åç§»é‡ï¼ˆåƒç´ ï¼‰
+        /// ç”¨äºå¾®è°ƒå›¾å±‚ä½ç½®
         /// </summary>
         public Vector2 Offset { get; set; } = Vector2.zero;
 
         /// <summary>
-        /// Ëõ·ÅÏµÊı
-        /// Ä¬ÈÏ 1.0£¬¿ÉÓÃÓÚµ÷ÕûÌØ¶¨Í¼²ã´óĞ¡
+        /// ç¼©æ”¾ç³»æ•°
+        /// é»˜è®¤ 1.0ï¼Œå¯ç”¨äºè°ƒæ•´ç‰¹å®šå›¾å±‚å¤§å°
         /// </summary>
         public float Scale { get; set; } = 1.0f;
 
         /// <summary>
-        /// É«µ÷µ÷Õû£¨RGBA ³ËÊı£©
-        /// Ä¬ÈÏ (1,1,1,1)£¬¿ÉÓÃÓÚÈ¾É«
+        /// è‰²è°ƒè°ƒæ•´ï¼ˆRGBA ä¹˜æ•°ï¼‰
+        /// é»˜è®¤ (1,1,1,1)ï¼Œå¯ç”¨äºæŸ“è‰²
         /// </summary>
         public Color Tint { get; set; } = Color.white;
 
         /// <summary>
-        /// ½âÎöÎÆÀíÂ·¾¶ÖĞµÄ±äÁ¿
+        /// è§£æçº¹ç†è·¯å¾„ä¸­çš„å˜é‡
         /// </summary>
         public string ResolveTexturePath(string personaName, ExpressionType expression, string outfit = "default")
         {
@@ -133,7 +133,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
 
         /// <summary>
-        /// ¼ì²éÍ¼²ãÊÇ·ñÓ¦¸ÃÔÚµ±Ç°Ìõ¼şÏÂ¼ÓÔØ
+        /// æ£€æŸ¥å›¾å±‚æ˜¯å¦åº”è¯¥åœ¨å½“å‰æ¡ä»¶ä¸‹åŠ è½½
         /// </summary>
         public bool ShouldLoad(ExpressionType expression, string outfit)
         {
@@ -156,7 +156,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
 
         /// <summary>
-        /// ¿ËÂ¡Í¼²ã¶¨Òå
+        /// å…‹éš†å›¾å±‚å®šä¹‰
         /// </summary>
         public LayerDefinition Clone()
         {
@@ -180,40 +180,40 @@ namespace TheSecondSeat.PersonaGeneration
     }
 
     /// <summary>
-    /// ·Ö²ãÁ¢»æÅäÖÃ
-    /// ¶¨ÒåÒ»¸öÈË¸ñµÄÍêÕûÍ¼²ã¶ÑÕ»
+    /// åˆ†å±‚ç«‹ç»˜é…ç½®
+    /// å®šä¹‰ä¸€ä¸ªäººæ ¼çš„å®Œæ•´å›¾å±‚å †æ ˆ
     /// </summary>
     public class LayeredPortraitConfig
     {
         /// <summary>
-        /// ÈË¸ñ defName£¨Èç "Sideria_Default", "CustomPersona_7a8e00b9"£©
+        /// äººæ ¼ defNameï¼ˆå¦‚ "Sideria_Default", "CustomPersona_7a8e00b9"ï¼‰
         /// </summary>
         public string PersonaDefName { get; set; } = "";
         
         /// <summary>
-        /// ? v1.6.27: ÈË¸ñÃû³Æ£¨ÓÃ»§Ö¸¶¨µÄÃû³Æ£¬Èç "Sideria"£©
-        /// ÓÃÓÚ¹¹½¨ÎÆÀíÂ·¾¶
+        /// ? v1.6.27: äººæ ¼åç§°ï¼ˆç”¨æˆ·æŒ‡å®šçš„åç§°ï¼Œå¦‚ "Sideria"ï¼‰
+        /// ç”¨äºæ„å»ºçº¹ç†è·¯å¾„
         /// </summary>
         public string PersonaName { get; set; } = "";
 
         /// <summary>
-        /// Í¼²ãÁĞ±í£¨°´ÓÅÏÈ¼¶×Ô¶¯ÅÅĞò£©
+        /// å›¾å±‚åˆ—è¡¨ï¼ˆæŒ‰ä¼˜å…ˆçº§è‡ªåŠ¨æ’åºï¼‰
         /// </summary>
         public List<LayerDefinition> Layers { get; set; } = new List<LayerDefinition>();
 
         /// <summary>
-        /// Êä³ö³ß´ç£¨ÏñËØ£©
+        /// è¾“å‡ºå°ºå¯¸ï¼ˆåƒç´ ï¼‰
         /// </summary>
         public Vector2Int OutputSize { get; set; } = new Vector2Int(1024, 1572);
 
         /// <summary>
-        /// ÊÇ·ñÆôÓÃÍ¼²ã»º´æ
-        /// ÆôÓÃºó£¬ÏàÍ¬ÅäÖÃµÄÍ¼²ã×éºÏ»á±»»º´æ
+        /// æ˜¯å¦å¯ç”¨å›¾å±‚ç¼“å­˜
+        /// å¯ç”¨åï¼Œç›¸åŒé…ç½®çš„å›¾å±‚ç»„åˆä¼šè¢«ç¼“å­˜
         /// </summary>
         public bool EnableCache { get; set; } = true;
 
         /// <summary>
-        /// Ìí¼ÓÍ¼²ã
+        /// æ·»åŠ å›¾å±‚
         /// </summary>
         public void AddLayer(LayerDefinition layer)
         {
@@ -222,7 +222,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
 
         /// <summary>
-        /// ÒÆ³ıÍ¼²ã
+        /// ç§»é™¤å›¾å±‚
         /// </summary>
         public void RemoveLayer(string layerName)
         {
@@ -230,7 +230,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
 
         /// <summary>
-        /// °´ÓÅÏÈ¼¶ÅÅĞòÍ¼²ã
+        /// æŒ‰ä¼˜å…ˆçº§æ’åºå›¾å±‚
         /// </summary>
         public void SortLayers()
         {
@@ -238,7 +238,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
 
         /// <summary>
-        /// »ñÈ¡µ±Ç°Ìõ¼şÏÂÓ¦¼ÓÔØµÄÍ¼²ã
+        /// è·å–å½“å‰æ¡ä»¶ä¸‹åº”åŠ è½½çš„å›¾å±‚
         /// </summary>
         public List<LayerDefinition> GetActiveLayersForCondition(ExpressionType expression, string outfit = "default")
         {
@@ -256,15 +256,15 @@ namespace TheSecondSeat.PersonaGeneration
         }
 
         /// <summary>
-        /// ´´½¨Ä¬ÈÏ·Ö²ãÅäÖÃ
-        /// ? v1.6.27: ½ÓÊÕ NarratorPersonaDef ²ÎÊı£¬Ê¹ÓÃ narratorName ×÷ÎªÂ·¾¶
-        /// ? ĞÂÂß¼­£ºbase_body.png ×÷Îªµ×Í¼£¨°üº¬ÉíÌå+Ä¬ÈÏ±íÇé£©
-        /// ? ±íÇé²ğ·ÖÎª eyes/mouth/flush Èı¸ö¶ÀÁ¢²¿¼ş½øĞĞÆ´½Ó
-        /// ? Õ£ÑÛºÍ×ì°Í¶¯»­Ê¹ÓÃÍ¨ÓÃ²¿¼ş£¬¿ÉÓëÈÎºÎ±íÇé»ì´î
+        /// åˆ›å»ºé»˜è®¤åˆ†å±‚é…ç½®
+        /// ? v1.6.27: æ¥æ”¶ NarratorPersonaDef å‚æ•°ï¼Œä½¿ç”¨ narratorName ä½œä¸ºè·¯å¾„
+        /// ? æ–°é€»è¾‘ï¼šbase_body.png ä½œä¸ºåº•å›¾ï¼ˆåŒ…å«èº«ä½“+é»˜è®¤è¡¨æƒ…ï¼‰
+        /// ? è¡¨æƒ…æ‹†åˆ†ä¸º eyes/mouth/flush ä¸‰ä¸ªç‹¬ç«‹éƒ¨ä»¶è¿›è¡Œæ‹¼æ¥
+        /// ? çœ¨çœ¼å’Œå˜´å·´åŠ¨ç”»ä½¿ç”¨é€šç”¨éƒ¨ä»¶ï¼Œå¯ä¸ä»»ä½•è¡¨æƒ…æ··æ­
         /// </summary>
         public static LayeredPortraitConfig CreateDefault(string personaDefName, string personaName = null)
         {
-            // ? v1.6.27: Èç¹ûÃ»ÓĞÌá¹© personaName£¬´Ó defName ÖĞÌáÈ¡
+            // ? v1.6.27: å¦‚æœæ²¡æœ‰æä¾› personaNameï¼Œä» defName ä¸­æå–
             if (string.IsNullOrEmpty(personaName))
             {
                 personaName = ExtractPersonaName(personaDefName);
@@ -273,22 +273,22 @@ namespace TheSecondSeat.PersonaGeneration
             return new LayeredPortraitConfig
             {
                 PersonaDefName = personaDefName,
-                PersonaName = personaName,  // ? v1.6.27: ÉèÖÃÈË¸ñÃû³Æ
+                PersonaName = personaName,  // ? v1.6.27: è®¾ç½®äººæ ¼åç§°
                 Layers = new List<LayerDefinition>
                 {
-                    // ? 1. µ×Í¼²ã£ºbase_body.png£¨°üº¬ÉíÌå+Ä¬ÈÏ±íÇé£©
+                    // ? 1. åº•å›¾å±‚ï¼šbase_body.pngï¼ˆåŒ…å«èº«ä½“+é»˜è®¤è¡¨æƒ…ï¼‰
                     new LayerDefinition
                     {
                         Name = "base_body",
                         Type = LayerType.Body,
-                        Priority = 0,  // ×îµ×²ã
+                        Priority = 0,  // æœ€åº•å±‚
                         TexturePath = "UI/Narrators/9x16/Layered/{persona}/base_body.png",
                         Blend = BlendMode.Normal,
                         Opacity = 1.0f,
                         Required = true
                     },
                     
-                    // 2. ±³¾°²ã£¨¿ÉÑ¡£©
+                    // 2. èƒŒæ™¯å±‚ï¼ˆå¯é€‰ï¼‰
                     new LayerDefinition
                     {
                         Name = "background",
@@ -300,7 +300,7 @@ namespace TheSecondSeat.PersonaGeneration
                         Required = false
                     },
                     
-                    // 3. ·ş×°²ã£¨¸²¸ÇÔÚÉíÌåÉÏ£©
+                    // 3. æœè£…å±‚ï¼ˆè¦†ç›–åœ¨èº«ä½“ä¸Šï¼‰
                     new LayerDefinition
                     {
                         Name = "outfit",
@@ -312,7 +312,7 @@ namespace TheSecondSeat.PersonaGeneration
                         Required = false
                     },
                     
-                    // ? 4. Á³ºì²ã£¨±íÇé²¿¼ş1 - ¿ÉÑ¡£©
+                    // ? 4. è„¸çº¢å±‚ï¼ˆè¡¨æƒ…éƒ¨ä»¶1 - å¯é€‰ï¼‰
                     new LayerDefinition
                     {
                         Name = "flush",
@@ -324,8 +324,8 @@ namespace TheSecondSeat.PersonaGeneration
                         Required = false
                     },
                     
-                    // ? 5. ÑÛ¾¦²ã£¨±íÇé²¿¼ş2 - ±ØĞè£©
-                    // ×¢Òâ£ºÕ£ÑÛ¶¯»­»á¶¯Ì¬Ìæ»»Îª closed_eyes.png£¨Í¨ÓÃ²¿¼ş£©
+                    // ? 5. çœ¼ç›å±‚ï¼ˆè¡¨æƒ…éƒ¨ä»¶2 - å¿…éœ€ï¼‰
+                    // æ³¨æ„ï¼šçœ¨çœ¼åŠ¨ç”»ä¼šåŠ¨æ€æ›¿æ¢ä¸º closed_eyes.pngï¼ˆé€šç”¨éƒ¨ä»¶ï¼‰
                     new LayerDefinition
                     {
                         Name = "eyes",
@@ -337,8 +337,8 @@ namespace TheSecondSeat.PersonaGeneration
                         Required = true
                     },
                     
-                    // ? 6. ×ì°Í²ã£¨±íÇé²¿¼ş3 - ±ØĞè£©
-                    // ×¢Òâ£ºÕÅ×ì¶¯»­»á¶¯Ì¬Ìæ»»Îª small_mouth.png / larger_mouth.png£¨Í¨ÓÃ²¿¼ş£©
+                    // ? 6. å˜´å·´å±‚ï¼ˆè¡¨æƒ…éƒ¨ä»¶3 - å¿…éœ€ï¼‰
+                    // æ³¨æ„ï¼šå¼ å˜´åŠ¨ç”»ä¼šåŠ¨æ€æ›¿æ¢ä¸º small_mouth.png / larger_mouth.pngï¼ˆé€šç”¨éƒ¨ä»¶ï¼‰
                     new LayerDefinition
                     {
                         Name = "mouth",
@@ -350,7 +350,7 @@ namespace TheSecondSeat.PersonaGeneration
                         Required = true
                     },
                     
-                    // 7. Í··¢²ã£¨¸²¸ÇÔÚ±íÇéÉÏ£©
+                    // 7. å¤´å‘å±‚ï¼ˆè¦†ç›–åœ¨è¡¨æƒ…ä¸Šï¼‰
                     new LayerDefinition
                     {
                         Name = "hair",
@@ -362,7 +362,7 @@ namespace TheSecondSeat.PersonaGeneration
                         Required = false
                     },
                     
-                    // 8. ÅäÊÎ²ã
+                    // 8. é…é¥°å±‚
                     new LayerDefinition
                     {
                         Name = "accessories",
@@ -374,7 +374,7 @@ namespace TheSecondSeat.PersonaGeneration
                         Required = false
                     },
                     
-                    // 9. ÌØĞ§²ã£¨¿ÉÑ¡£©
+                    // 9. ç‰¹æ•ˆå±‚ï¼ˆå¯é€‰ï¼‰
                     new LayerDefinition
                     {
                         Name = "fx",
@@ -390,9 +390,9 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ? v1.6.27: ´Ó defName ÌáÈ¡ÈË¸ñÃû³Æ
-        /// Sideria_Default ¡ú Sideria
-        /// CustomPersona_7a8e00b9 ¡ú CustomPersona_7a8e00b9 (±£³Ö²»±ä)
+        /// ? v1.6.27: ä» defName æå–äººæ ¼åç§°
+        /// Sideria_Default â†’ Sideria
+        /// CustomPersona_7a8e00b9 â†’ CustomPersona_7a8e00b9 (ä¿æŒä¸å˜)
         /// </summary>
         private static string ExtractPersonaName(string defName)
         {
@@ -401,7 +401,7 @@ namespace TheSecondSeat.PersonaGeneration
                 return defName;
             }
             
-            // ÒÆ³ı³£¼ûºó×º
+            // ç§»é™¤å¸¸è§åç¼€
             string[] suffixesToRemove = new[] { 
                 "_Default", "_Classic", "_Custom", "_Persona", 
                 "_Chillax", "_Random", "_Invader", "_Protector" 
@@ -419,7 +419,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
 
         /// <summary>
-        /// ÑéÖ¤ÅäÖÃÍêÕûĞÔ
+        /// éªŒè¯é…ç½®å®Œæ•´æ€§
         /// </summary>
         public bool Validate(out string error)
         {
@@ -435,7 +435,7 @@ namespace TheSecondSeat.PersonaGeneration
                 return false;
             }
 
-            // ¼ì²éÊÇ·ñÖÁÉÙÓĞÒ»¸ö±ØĞèÍ¼²ã
+            // æ£€æŸ¥æ˜¯å¦è‡³å°‘æœ‰ä¸€ä¸ªå¿…éœ€å›¾å±‚
             bool hasRequiredLayer = Layers.Exists(l => l.Required);
             if (!hasRequiredLayer)
             {
@@ -448,12 +448,12 @@ namespace TheSecondSeat.PersonaGeneration
         }
 
         /// <summary>
-        /// »ñÈ¡µ÷ÊÔĞÅÏ¢
+        /// è·å–è°ƒè¯•ä¿¡æ¯
         /// </summary>
         public string GetDebugInfo()
         {
             var info = $"[LayeredPortraitConfig] {PersonaDefName}\n";
-            info += $"  Output Size: {OutputSize.x}¡Á{OutputSize.y}\n";
+            info += $"  Output Size: {OutputSize.x}Ã—{OutputSize.y}\n";
             info += $"  Total Layers: {Layers.Count}\n";
             info += $"  Cache Enabled: {EnableCache}\n";
             info += "  Layers:\n";

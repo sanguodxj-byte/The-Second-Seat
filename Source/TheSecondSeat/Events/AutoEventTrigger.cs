@@ -1,16 +1,16 @@
-using System;
+ï»¿using System;
 using Verse;
 
 namespace TheSecondSeat.Events
 {
     /// <summary>
-    /// ×Ô¶¯ÊÂ¼ş´¥·¢Æ÷
-    /// ÓÃÓÚ¸ù¾İºÃ¸Ğ¶È×Ô¶¯´¥·¢ÊÂ¼ş
+    /// è‡ªåŠ¨äº‹ä»¶è§¦å‘å™¨
+    /// ç”¨äºæ ¹æ®å¥½æ„Ÿåº¦è‡ªåŠ¨è§¦å‘äº‹ä»¶
     /// </summary>
     public class AutoEventTrigger : GameComponent
     {
         private int ticksSinceLastCheck = 0;
-        private const int CHECK_INTERVAL = 2500; // ¼ì²é¼ä¸ô£¨Ô¼1·ÖÖÓ£©
+        private const int CHECK_INTERVAL = 2500; // æ£€æŸ¥é—´éš”ï¼ˆçº¦1åˆ†é’Ÿï¼‰
         
         public AutoEventTrigger(Game game) : base()
         {
@@ -31,8 +31,8 @@ namespace TheSecondSeat.Events
         
         private void CheckAndTriggerEvents()
         {
-            // ÊµÏÖ×Ô¶¯ÊÂ¼ş´¥·¢Âß¼­
-            // ÕâÀï¿ÉÒÔ¸ù¾İºÃ¸Ğ¶È¡¢Ö³ÃñµØ×´Ì¬µÈ´¥·¢ÊÂ¼ş
+            // å®ç°è‡ªåŠ¨äº‹ä»¶è§¦å‘é€»è¾‘
+            // è¿™é‡Œå¯ä»¥æ ¹æ®å¥½æ„Ÿåº¦ã€æ®–æ°‘åœ°çŠ¶æ€ç­‰è§¦å‘äº‹ä»¶
         }
         
         public override void ExposeData()

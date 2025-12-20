@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using Verse;
 using RimWorld;
@@ -6,14 +6,14 @@ using RimWorld;
 namespace TheSecondSeat.Framework
 {
     /// <summary>
-    /// TSS´¥·¢Æ÷»ùÀà - ¶¨Òå"ºÎÊ±×ö"
+    /// TSSè§¦å‘å™¨åŸºç±» - å®šä¹‰"ä½•æ—¶åš"
     /// 
-    /// Éè¼ÆÔ­Ôò£º
-    /// 1. µ¥Ò»Ö°Ôğ£ºÃ¿¸öTriggerÖ»¼ì²éÒ»ÖÖÌõ¼ş
-    /// 2. ¿É×éºÏ£º¶à¸öTrigger¿ÉÍ¨¹ıAND/ORÂß¼­×éºÏ
-    /// 3. ¸ßĞÔÄÜ£ºIsSatisfied·½·¨Ó¦¾¡¿ÉÄÜ¿ìËÙ
+    /// è®¾è®¡åŸåˆ™ï¼š
+    /// 1. å•ä¸€èŒè´£ï¼šæ¯ä¸ªTriggeråªæ£€æŸ¥ä¸€ç§æ¡ä»¶
+    /// 2. å¯ç»„åˆï¼šå¤šä¸ªTriggerå¯é€šè¿‡AND/ORé€»è¾‘ç»„åˆ
+    /// 3. é«˜æ€§èƒ½ï¼šIsSatisfiedæ–¹æ³•åº”å°½å¯èƒ½å¿«é€Ÿ
     /// 
-    /// XMLÅäÖÃÊ¾Àı£º
+    /// XMLé…ç½®ç¤ºä¾‹ï¼š
     /// <![CDATA[
     /// <triggers>
     ///   <li Class="TheSecondSeat.Framework.Triggers.AffinityRangeTrigger">
@@ -29,44 +29,44 @@ namespace TheSecondSeat.Framework
     public abstract class TSSTrigger
     {
         // ============================================
-        // XML¿ÉÅäÖÃ×Ö¶Î
+        // XMLå¯é…ç½®å­—æ®µ
         // ============================================
         
         /// <summary>
-        /// ´¥·¢Æ÷Î¨Ò»±êÊ¶£¨ÓÃÓÚµ÷ÊÔºÍÈÕÖ¾£©
+        /// è§¦å‘å™¨å”¯ä¸€æ ‡è¯†ï¼ˆç”¨äºè°ƒè¯•å’Œæ—¥å¿—ï¼‰
         /// </summary>
         public string triggerId = "";
         
         /// <summary>
-        /// ÊÇ·ñÆôÓÃ´Ë´¥·¢Æ÷
+        /// æ˜¯å¦å¯ç”¨æ­¤è§¦å‘å™¨
         /// </summary>
         public bool enabled = true;
         
         /// <summary>
-        /// ÊÇ·ñ·´×ªÌõ¼ş£¨NOTÂß¼­£©
+        /// æ˜¯å¦åè½¬æ¡ä»¶ï¼ˆNOTé€»è¾‘ï¼‰
         /// </summary>
         public bool invert = false;
         
         /// <summary>
-        /// ´¥·¢Æ÷È¨ÖØ£¨ÓÃÓÚ¶à´¥·¢Æ÷ÓÅÏÈ¼¶ÅÅĞò£©
+        /// è§¦å‘å™¨æƒé‡ï¼ˆç”¨äºå¤šè§¦å‘å™¨ä¼˜å…ˆçº§æ’åºï¼‰
         /// </summary>
         public float weight = 1.0f;
         
         // ============================================
-        // ºËĞÄ·½·¨
+        // æ ¸å¿ƒæ–¹æ³•
         // ============================================
         
         /// <summary>
-        /// ¼ì²é´¥·¢Ìõ¼şÊÇ·ñÂú×ã£¨³éÏó·½·¨£¬ÓÉ×ÓÀàÊµÏÖ£©
+        /// æ£€æŸ¥è§¦å‘æ¡ä»¶æ˜¯å¦æ»¡è¶³ï¼ˆæŠ½è±¡æ–¹æ³•ï¼Œç”±å­ç±»å®ç°ï¼‰
         /// </summary>
-        /// <param name="map">Ä¿±êµØÍ¼</param>
-        /// <param name="context">ÉÏÏÂÎÄÊı¾İ</param>
-        /// <returns>true = Ìõ¼şÂú×ã£¬false = Ìõ¼ş²»Âú×ã</returns>
+        /// <param name="map">ç›®æ ‡åœ°å›¾</param>
+        /// <param name="context">ä¸Šä¸‹æ–‡æ•°æ®</param>
+        /// <returns>true = æ¡ä»¶æ»¡è¶³ï¼Œfalse = æ¡ä»¶ä¸æ»¡è¶³</returns>
         public abstract bool IsSatisfied(Map map, Dictionary<string, object> context);
         
         /// <summary>
-        /// °²È«¼ì²é°ü×°Æ÷£¨´øÒì³£´¦Àí£©
-        /// Íâ²¿µ÷ÓÃÓ¦Ê¹ÓÃ´Ë·½·¨¶ø·ÇÖ±½Óµ÷ÓÃIsSatisfied
+        /// å®‰å…¨æ£€æŸ¥åŒ…è£…å™¨ï¼ˆå¸¦å¼‚å¸¸å¤„ç†ï¼‰
+        /// å¤–éƒ¨è°ƒç”¨åº”ä½¿ç”¨æ­¤æ–¹æ³•è€Œéç›´æ¥è°ƒç”¨IsSatisfied
         /// </summary>
         public bool CheckSafe(Map map, Dictionary<string, object> context)
         {
@@ -83,7 +83,7 @@ namespace TheSecondSeat.Framework
             {
                 bool result = IsSatisfied(map, context);
                 
-                // Ó¦ÓÃ·´×ªÂß¼­
+                // åº”ç”¨åè½¬é€»è¾‘
                 if (invert)
                 {
                     result = !result;
@@ -99,12 +99,12 @@ namespace TheSecondSeat.Framework
             catch (Exception ex)
             {
                 Log.Error($"[TSSTrigger] Trigger '{triggerId}' ({GetType().Name}) check failed: {ex.Message}\n{ex.StackTrace}");
-                return false; // ³ö´íÊ±Ä¬ÈÏ·µ»Øfalse£¨°²È«Ê§°Ü£©
+                return false; // å‡ºé”™æ—¶é»˜è®¤è¿”å›falseï¼ˆå®‰å…¨å¤±è´¥ï¼‰
             }
         }
         
         /// <summary>
-        /// »ñÈ¡´¥·¢Æ÷ÃèÊö£¨ÓÃÓÚUIÏÔÊ¾ºÍµ÷ÊÔ£©
+        /// è·å–è§¦å‘å™¨æè¿°ï¼ˆç”¨äºUIæ˜¾ç¤ºå’Œè°ƒè¯•ï¼‰
         /// </summary>
         public virtual string GetDescription()
         {
@@ -113,7 +113,7 @@ namespace TheSecondSeat.Framework
         }
         
         /// <summary>
-        /// ÑéÖ¤ÅäÖÃÊÇ·ñÓĞĞ§£¨ÔÚ¼ÓÔØÊ±µ÷ÓÃ£©
+        /// éªŒè¯é…ç½®æ˜¯å¦æœ‰æ•ˆï¼ˆåœ¨åŠ è½½æ—¶è°ƒç”¨ï¼‰
         /// </summary>
         public virtual bool Validate(out string error)
         {
@@ -129,7 +129,7 @@ namespace TheSecondSeat.Framework
         }
         
         /// <summary>
-        /// »ñÈ¡´¥·¢Æ÷ÒÀÀµµÄÉÏÏÂÎÄ¼üÁĞ±í£¨ÓÃÓÚÓÅ»¯¼ì²éË³Ğò£©
+        /// è·å–è§¦å‘å™¨ä¾èµ–çš„ä¸Šä¸‹æ–‡é”®åˆ—è¡¨ï¼ˆç”¨äºä¼˜åŒ–æ£€æŸ¥é¡ºåºï¼‰
         /// </summary>
         public virtual List<string> GetRequiredContextKeys()
         {
@@ -138,34 +138,34 @@ namespace TheSecondSeat.Framework
     }
     
     // ============================================
-    // ´¥·¢Æ÷×éºÏÂß¼­
+    // è§¦å‘å™¨ç»„åˆé€»è¾‘
     // ============================================
     
     /// <summary>
-    /// ´¥·¢Æ÷×éºÏÄ£Ê½
+    /// è§¦å‘å™¨ç»„åˆæ¨¡å¼
     /// </summary>
     public enum TriggerCombineMode
     {
-        /// <summary>ËùÓĞ´¥·¢Æ÷¶¼±ØĞëÂú×ã£¨AND£©</summary>
+        /// <summary>æ‰€æœ‰è§¦å‘å™¨éƒ½å¿…é¡»æ»¡è¶³ï¼ˆANDï¼‰</summary>
         All,
         
-        /// <summary>ÈÎÒâÒ»¸ö´¥·¢Æ÷Âú×ã¼´¿É£¨OR£©</summary>
+        /// <summary>ä»»æ„ä¸€ä¸ªè§¦å‘å™¨æ»¡è¶³å³å¯ï¼ˆORï¼‰</summary>
         Any,
         
-        /// <summary>×Ô¶¨ÒåÂß¼­£¨Ğè×ÓÀàÊµÏÖ£©</summary>
+        /// <summary>è‡ªå®šä¹‰é€»è¾‘ï¼ˆéœ€å­ç±»å®ç°ï¼‰</summary>
         Custom
     }
     
     /// <summary>
-    /// ´¥·¢Æ÷×éºÏÆ÷ - ÓÃÓÚ×éºÏ¶à¸ö´¥·¢Æ÷
-    /// ÕâÊÇÒ»¸öÌØÊâµÄTrigger£¬°üº¬×Ó´¥·¢Æ÷ÁĞ±í
+    /// è§¦å‘å™¨ç»„åˆå™¨ - ç”¨äºç»„åˆå¤šä¸ªè§¦å‘å™¨
+    /// è¿™æ˜¯ä¸€ä¸ªç‰¹æ®Šçš„Triggerï¼ŒåŒ…å«å­è§¦å‘å™¨åˆ—è¡¨
     /// </summary>
     public class CompositeTrigger : TSSTrigger
     {
-        /// <summary>×Ó´¥·¢Æ÷ÁĞ±í</summary>
+        /// <summary>å­è§¦å‘å™¨åˆ—è¡¨</summary>
         public List<TSSTrigger> subTriggers = new List<TSSTrigger>();
         
-        /// <summary>×éºÏÄ£Ê½</summary>
+        /// <summary>ç»„åˆæ¨¡å¼</summary>
         public TriggerCombineMode combineMode = TriggerCombineMode.All;
         
         public override bool IsSatisfied(Map map, Dictionary<string, object> context)
@@ -178,7 +178,7 @@ namespace TheSecondSeat.Framework
             switch (combineMode)
             {
                 case TriggerCombineMode.All:
-                    // ËùÓĞ×Ó´¥·¢Æ÷¶¼±ØĞëÂú×ã
+                    // æ‰€æœ‰å­è§¦å‘å™¨éƒ½å¿…é¡»æ»¡è¶³
                     foreach (var trigger in subTriggers)
                     {
                         if (!trigger.CheckSafe(map, context))
@@ -189,7 +189,7 @@ namespace TheSecondSeat.Framework
                     return true;
                     
                 case TriggerCombineMode.Any:
-                    // ÈÎÒâÒ»¸ö×Ó´¥·¢Æ÷Âú×ã¼´¿É
+                    // ä»»æ„ä¸€ä¸ªå­è§¦å‘å™¨æ»¡è¶³å³å¯
                     foreach (var trigger in subTriggers)
                     {
                         if (trigger.CheckSafe(map, context))
@@ -200,7 +200,7 @@ namespace TheSecondSeat.Framework
                     return false;
                     
                 case TriggerCombineMode.Custom:
-                    // ÓÉ×ÓÀàÊµÏÖ×Ô¶¨ÒåÂß¼­
+                    // ç”±å­ç±»å®ç°è‡ªå®šä¹‰é€»è¾‘
                     return EvaluateCustomLogic(map, context);
                     
                 default:
@@ -209,7 +209,7 @@ namespace TheSecondSeat.Framework
         }
         
         /// <summary>
-        /// ×Ô¶¨Òå×éºÏÂß¼­£¨×ÓÀà¿ÉÖØĞ´£©
+        /// è‡ªå®šä¹‰ç»„åˆé€»è¾‘ï¼ˆå­ç±»å¯é‡å†™ï¼‰
         /// </summary>
         protected virtual bool EvaluateCustomLogic(Map map, Dictionary<string, object> context)
         {

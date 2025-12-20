@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;
@@ -7,87 +7,87 @@ using RimWorld;
 namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
-    /// ±íÇéÀàĞÍÃ¶¾Ù
-    /// ? Ã¿¸ö±íÇéÖ§³Ö1-5¸ö±äÌå£¨Í¨¹ıÔËĞĞÊ±Ëæ»úÑ¡Ôñ£©
+    /// è¡¨æƒ…ç±»å‹æšä¸¾
+    /// ? æ¯ä¸ªè¡¨æƒ…æ”¯æŒ1-5ä¸ªå˜ä½“ï¼ˆé€šè¿‡è¿è¡Œæ—¶éšæœºé€‰æ‹©ï¼‰
     /// </summary>
     public enum ExpressionType
     {
-        Neutral,      // ÖĞÁ¢
-        Happy,        // ¿ªĞÄ£¨Ö§³Ö happy1-happy5£©
-        Sad,          // ±¯ÉË£¨Ö§³Ö sad1-sad5£©
-        Angry,        // ·ßÅ­£¨Ö§³Ö angry1-angry5£©
-        Surprised,    // ¾ªÑÈ£¨Ö§³Ö surprised1-surprised5£©
-        Worried,      // µ£ÓÇ£¨Ö§³Ö worried1-worried5£©
-        Smug,         // µÃÒâ£¨Ö§³Ö smug1-smug5£©
-        Disappointed, // Ê§Íû£¨Ö§³Ö disappointed1-disappointed5£©
-        Thoughtful,   // ³ÁË¼£¨Ö§³Ö thoughtful1-thoughtful5£©
-        Annoyed,      // ÄÕÅ­£¨Ö§³Ö annoyed1-annoyed5£©
-        Playful,      // µ÷Æ¤£¨Ö§³Ö playful1-playful5£©
-        Shy,          // º¦Ğß£¨Ö§³Ö shy1-shy5£©
-        Confused      // ÒÉ»ó£¨Ö§³Ö confused1-confused5£©- ´¥ÃşÄ£Ê½×¨ÓÃ
+        Neutral,      // ä¸­ç«‹
+        Happy,        // å¼€å¿ƒï¼ˆæ”¯æŒ happy1-happy5ï¼‰
+        Sad,          // æ‚²ä¼¤ï¼ˆæ”¯æŒ sad1-sad5ï¼‰
+        Angry,        // æ„¤æ€’ï¼ˆæ”¯æŒ angry1-angry5ï¼‰
+        Surprised,    // æƒŠè®¶ï¼ˆæ”¯æŒ surprised1-surprised5ï¼‰
+        Worried,      // æ‹…å¿§ï¼ˆæ”¯æŒ worried1-worried5ï¼‰
+        Smug,         // å¾—æ„ï¼ˆæ”¯æŒ smug1-smug5ï¼‰
+        Disappointed, // å¤±æœ›ï¼ˆæ”¯æŒ disappointed1-disappointed5ï¼‰
+        Thoughtful,   // æ²‰æ€ï¼ˆæ”¯æŒ thoughtful1-thoughtful5ï¼‰
+        Annoyed,      // æ¼æ€’ï¼ˆæ”¯æŒ annoyed1-annoyed5ï¼‰
+        Playful,      // è°ƒçš®ï¼ˆæ”¯æŒ playful1-playful5ï¼‰
+        Shy,          // å®³ç¾ï¼ˆæ”¯æŒ shy1-shy5ï¼‰
+        Confused      // ç–‘æƒ‘ï¼ˆæ”¯æŒ confused1-confused5ï¼‰- è§¦æ‘¸æ¨¡å¼ä¸“ç”¨
     }
 
     /// <summary>
-    /// ±íÇé±ä»¯´¥·¢Æ÷
+    /// è¡¨æƒ…å˜åŒ–è§¦å‘å™¨
     /// </summary>
     public enum ExpressionTrigger
     {
-        Manual,           // ÊÖ¶¯Ö¸¶¨
-        Affinity,         // ºÃ¸Ğ¶È±ä»¯
-        DialogueTone,     // ¶Ô»°ÓïÆø
-        GameEvent,        // ÓÎÏ·ÊÂ¼ş
-        RandomVariation,  // Ëæ»ú±ä»¯
-        Processing        // ? ĞÂÔö£ºAI´¦ÀíÖĞ
+        Manual,           // æ‰‹åŠ¨æŒ‡å®š
+        Affinity,         // å¥½æ„Ÿåº¦å˜åŒ–
+        DialogueTone,     // å¯¹è¯è¯­æ°”
+        GameEvent,        // æ¸¸æˆäº‹ä»¶
+        RandomVariation,  // éšæœºå˜åŒ–
+        Processing        // ? æ–°å¢ï¼šAIå¤„ç†ä¸­
     }
 
     /// <summary>
-    /// ±íÇé×´Ì¬Êı¾İ
+    /// è¡¨æƒ…çŠ¶æ€æ•°æ®
     /// </summary>
     public class ExpressionState
     {
         public ExpressionType CurrentExpression { get; set; } = ExpressionType.Neutral;
         public ExpressionType PreviousExpression { get; set; } = ExpressionType.Neutral;
-        public float TransitionProgress { get; set; } = 1f; // 1=Íê³É£¬0=¿ªÊ¼
+        public float TransitionProgress { get; set; } = 1f; // 1=å®Œæˆï¼Œ0=å¼€å§‹
         public int TransitionTicks { get; set; } = 0;
         public ExpressionTrigger LastTrigger { get; set; } = ExpressionTrigger.Manual;
         
-        // ±íÇé³ÖĞøÊ±¼ä£¨Ãë£©
+        // è¡¨æƒ…æŒç»­æ—¶é—´ï¼ˆç§’ï¼‰
         public float ExpressionDuration { get; set; } = 3f;
         public int ExpressionStartTick { get; set; } = 0;
         
-        // ÊÇ·ñËø¶¨±íÇé£¨Ä³Ğ©ÖØÒª³¡¾°£©
+        // æ˜¯å¦é”å®šè¡¨æƒ…ï¼ˆæŸäº›é‡è¦åœºæ™¯ï¼‰
         public bool IsLocked { get; set; } = false;
         
-        // ? ĞÂÔö£ºµ±Ç°Ñ¡ÔñµÄ±äÌå±àºÅ£¨0=»ù´¡°æ±¾£¬1-5=±äÌå£©
+        // ? æ–°å¢ï¼šå½“å‰é€‰æ‹©çš„å˜ä½“ç¼–å·ï¼ˆ0=åŸºç¡€ç‰ˆæœ¬ï¼Œ1-5=å˜ä½“ï¼‰
         public int CurrentVariant { get; set; } = 0;
     }
 
     /// <summary>
-    /// Á¢»æ±íÇéÏµÍ³
-    /// ? ¸ù¾İºÃ¸Ğ¶È¡¢¶Ô»°ÄÚÈİ¡¢ÓÎÏ·ÊÂ¼ş¶¯Ì¬ÇĞ»»±íÇé
+    /// ç«‹ç»˜è¡¨æƒ…ç³»ç»Ÿ
+    /// ? æ ¹æ®å¥½æ„Ÿåº¦ã€å¯¹è¯å†…å®¹ã€æ¸¸æˆäº‹ä»¶åŠ¨æ€åˆ‡æ¢è¡¨æƒ…
     /// </summary>
     public static class ExpressionSystem
     {
         private static Dictionary<string, ExpressionState> expressionStates = new Dictionary<string, ExpressionState>();
-        private static Dictionary<string, BreathingState> breathingStates = new Dictionary<string, BreathingState>(); // ? ĞÂÔö£ººôÎü¶¯»­×´Ì¬
+        private static Dictionary<string, BreathingState> breathingStates = new Dictionary<string, BreathingState>(); // ? æ–°å¢ï¼šå‘¼å¸åŠ¨ç”»çŠ¶æ€
         
-        // ±íÇé¹ı¶É³ÖĞøÊ±¼ä£¨ÓÎÏ·tick£©
-        private const int TRANSITION_DURATION_TICKS = 30; // Ô¼0.5Ãë
+        // è¡¨æƒ…è¿‡æ¸¡æŒç»­æ—¶é—´ï¼ˆæ¸¸æˆtickï¼‰
+        private const int TRANSITION_DURATION_TICKS = 30; // çº¦0.5ç§’
         
-        // ? ±íÇé³ÖĞøÊ±¼ä£¨ÓÎÏ·tick£©- 30Ãë
+        // ? è¡¨æƒ…æŒç»­æ—¶é—´ï¼ˆæ¸¸æˆtickï¼‰- 30ç§’
         private const int EXPRESSION_DURATION_TICKS = 1800;
         
-        // ? ĞÂÔö£ººôÎü¶¯»­×´Ì¬Àà
+        // ? æ–°å¢ï¼šå‘¼å¸åŠ¨ç”»çŠ¶æ€ç±»
         private class BreathingState
         {
-            public float phase;        // µ±Ç°ÏàÎ»£¨»¡¶È£©
-            public float speed;        // ºôÎüËÙ¶È
-            public float amplitude;    // ºôÎüÕñ·ù£¨ÏñËØ£©
-            public long lastUpdateTime; // ÉÏ´Î¸üĞÂÊ±¼ä£¨ºÁÃë£©
+            public float phase;        // å½“å‰ç›¸ä½ï¼ˆå¼§åº¦ï¼‰
+            public float speed;        // å‘¼å¸é€Ÿåº¦
+            public float amplitude;    // å‘¼å¸æŒ¯å¹…ï¼ˆåƒç´ ï¼‰
+            public long lastUpdateTime; // ä¸Šæ¬¡æ›´æ–°æ—¶é—´ï¼ˆæ¯«ç§’ï¼‰
         }
         
         /// <summary>
-        /// »ñÈ¡ÈË¸ñµÄµ±Ç°±íÇé×´Ì¬
+        /// è·å–äººæ ¼çš„å½“å‰è¡¨æƒ…çŠ¶æ€
         /// </summary>
         public static ExpressionState GetExpressionState(string personaDefName)
         {
@@ -99,45 +99,45 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ÉèÖÃ±íÇé£¨´øÆ½»¬¹ı¶É£©
-        /// ? ×Ô¶¯ÎªËùÓĞ±íÇéÀàĞÍËæ»úÑ¡Ôñ±äÌå£¨1-5£©
-        /// ? v1.6.20: Çå³ı·Ö²ãÁ¢»æ»º´æ£¬Ç¿ÖÆÖØĞÂºÏ³É
-        /// ? v1.6.30: Ó¦ÓÃ¸ĞÇéÇı¶¯¶¯»­
+        /// è®¾ç½®è¡¨æƒ…ï¼ˆå¸¦å¹³æ»‘è¿‡æ¸¡ï¼‰
+        /// ? è‡ªåŠ¨ä¸ºæ‰€æœ‰è¡¨æƒ…ç±»å‹éšæœºé€‰æ‹©å˜ä½“ï¼ˆ1-5ï¼‰
+        /// ? v1.6.20: æ¸…é™¤åˆ†å±‚ç«‹ç»˜ç¼“å­˜ï¼Œå¼ºåˆ¶é‡æ–°åˆæˆ
+        /// ? v1.6.30: åº”ç”¨æ„Ÿæƒ…é©±åŠ¨åŠ¨ç”»
         /// </summary>
         public static void SetExpression(string personaDefName, ExpressionType expression, int durationTicks = EXPRESSION_DURATION_TICKS, string reason = "")
         {
             var state = GetExpressionState(personaDefName);
             
-            // Èç¹û±íÇé±»Ëø¶¨£¬Ìø¹ıÇĞ»»
+            // å¦‚æœè¡¨æƒ…è¢«é”å®šï¼Œè·³è¿‡åˆ‡æ¢
             if (state.IsLocked)
             {
                 if (Prefs.DevMode)
                 {
-                    Log.Message($"[ExpressionSystem] ±íÇé±»Ëø¶¨£¬Ìø¹ıÇĞ»»: {personaDefName}");
+                    Log.Message($"[ExpressionSystem] è¡¨æƒ…è¢«é”å®šï¼Œè·³è¿‡åˆ‡æ¢: {personaDefName}");
                 }
                 return;
             }
             
-            // Èç¹û±íÇéÏàÍ¬£¬Ìø¹ı
+            // å¦‚æœè¡¨æƒ…ç›¸åŒï¼Œè·³è¿‡
             if (state.CurrentExpression == expression)
             {
                 return;
             }
             
-            // ? Çå³ı¾É±íÇéµÄ»º´æ£¨Á¢¼´ÊÍ·Å£©
+            // ? æ¸…é™¤æ—§è¡¨æƒ…çš„ç¼“å­˜ï¼ˆç«‹å³é‡Šæ”¾ï¼‰
             PortraitLoader.ClearPortraitCache(personaDefName, state.CurrentExpression);
             AvatarLoader.ClearAvatarCache(personaDefName, state.CurrentExpression);
             
-            // ? v1.6.20: Çå³ı·Ö²ãÁ¢»æ»º´æ£¨Ç¿ÖÆÖØĞÂºÏ³ÉĞÂ±íÇé£©
+            // ? v1.6.20: æ¸…é™¤åˆ†å±‚ç«‹ç»˜ç¼“å­˜ï¼ˆå¼ºåˆ¶é‡æ–°åˆæˆæ–°è¡¨æƒ…ï¼‰
             LayeredPortraitCompositor.ClearCache(personaDefName, state.CurrentExpression);
             LayeredPortraitCompositor.ClearCache(personaDefName, expression);
             
-            // ? Çå³ıĞÂ±íÇéµÄ»º´æ£¬È·±£ÖØĞÂ¼ÓÔØ
+            // ? æ¸…é™¤æ–°è¡¨æƒ…çš„ç¼“å­˜ï¼Œç¡®ä¿é‡æ–°åŠ è½½
             PortraitLoader.ClearPortraitCache(personaDefName, expression);
             AvatarLoader.ClearAvatarCache(personaDefName, expression);
             
-            // ? Ëæ»úÑ¡Ôñ±äÌå±àºÅ£¨1-5£©
-            // Neutral ±íÇé²»Ê¹ÓÃ±äÌå£¨variant = 0£©
+            // ? éšæœºé€‰æ‹©å˜ä½“ç¼–å·ï¼ˆ1-5ï¼‰
+            // Neutral è¡¨æƒ…ä¸ä½¿ç”¨å˜ä½“ï¼ˆvariant = 0ï¼‰
             if (expression == ExpressionType.Neutral)
             {
                 state.CurrentVariant = 0;
@@ -147,36 +147,36 @@ namespace TheSecondSeat.PersonaGeneration
                 state.CurrentVariant = UnityEngine.Random.Range(1, 6); // 1-5
             }
             
-            // ¿ªÊ¼¹ı¶É
+            // å¼€å§‹è¿‡æ¸¡
             state.PreviousExpression = state.CurrentExpression;
             state.CurrentExpression = expression;
             state.TransitionProgress = 0f;
             state.TransitionTicks = 0;
             state.ExpressionStartTick = Find.TickManager.TicksGame;
             
-            // ? v1.6.30: Ó¦ÓÃ¸ĞÇéÇı¶¯¶¯»­£¨×Ô¶¯µ÷ÕûÕ£ÑÛ¡¢ºôÎüµÈ£©
+            // ? v1.6.30: åº”ç”¨æ„Ÿæƒ…é©±åŠ¨åŠ¨ç”»ï¼ˆè‡ªåŠ¨è°ƒæ•´çœ¨çœ¼ã€å‘¼å¸ç­‰ï¼‰
             ApplyEmotionDrivenAnimation(personaDefName);
             
             if (Prefs.DevMode)
             {
-                string reasonText = string.IsNullOrEmpty(reason) ? "Î´Ö¸¶¨" : reason;
-                Log.Message($"[ExpressionSystem] ? {personaDefName} ±íÇéÇĞ»»: {state.PreviousExpression} ¡ú {expression} (±äÌå: {state.CurrentVariant}, Ô­Òò: {reasonText})");
+                string reasonText = string.IsNullOrEmpty(reason) ? "æœªæŒ‡å®š" : reason;
+                Log.Message($"[ExpressionSystem] ? {personaDefName} è¡¨æƒ…åˆ‡æ¢: {state.PreviousExpression} â†’ {expression} (å˜ä½“: {state.CurrentVariant}, åŸå› : {reasonText})");
             }
         }
         
         /// <summary>
-        /// ? SetExpressionÖØÔØ - ½ÓÊÜExpressionTrigger²ÎÊı
+        /// ? SetExpressioné‡è½½ - æ¥å—ExpressionTriggerå‚æ•°
         /// </summary>
         public static void SetExpression(string personaDefName, ExpressionType expression, ExpressionTrigger trigger, int durationTicks = EXPRESSION_DURATION_TICKS)
         {
             var state = GetExpressionState(personaDefName);
-            state.LastTrigger = trigger;  // ÉèÖÃ´¥·¢Æ÷ÀàĞÍ
+            state.LastTrigger = trigger;  // è®¾ç½®è§¦å‘å™¨ç±»å‹
             
             SetExpression(personaDefName, expression, durationTicks, trigger.ToString());
         }
         
         /// <summary>
-        /// ? ÉèÖÃÎªË¼¿¼±íÇé£¨AI´¦ÀíÖĞ£©
+        /// ? è®¾ç½®ä¸ºæ€è€ƒè¡¨æƒ…ï¼ˆAIå¤„ç†ä¸­ï¼‰
         /// </summary>
         public static void SetThinkingExpression(string personaDefName)
         {
@@ -184,16 +184,16 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ? ¸ù¾İºÃ¸Ğ¶È×Ô¶¯ÉèÖÃ±íÇé£¨ĞŞ¸Ä£º30ÒÔÉÏÎªHappy£©
+        /// ? æ ¹æ®å¥½æ„Ÿåº¦è‡ªåŠ¨è®¾ç½®è¡¨æƒ…ï¼ˆä¿®æ”¹ï¼š30ä»¥ä¸Šä¸ºHappyï¼‰
         /// </summary>
         public static void UpdateExpressionByAffinity(string personaDefName, float affinity)
         {
             ExpressionType expression;
             
-            // ? ĞŞ¸Ä£º30ÒÔÉÏºÃ¸Ğ¶ÈÄ¬ÈÏÎªHappy
+            // ? ä¿®æ”¹ï¼š30ä»¥ä¸Šå¥½æ„Ÿåº¦é»˜è®¤ä¸ºHappy
             if (affinity >= 80f)
             {
-                expression = ExpressionType.Happy; // Î´À´¿ÉÒÔÓÃ Happy2 »ò Happy3
+                expression = ExpressionType.Happy; // æœªæ¥å¯ä»¥ç”¨ Happy2 æˆ– Happy3
             }
             else if (affinity >= 60f)
             {
@@ -201,7 +201,7 @@ namespace TheSecondSeat.PersonaGeneration
             }
             else if (affinity >= 30f)
             {
-                expression = ExpressionType.Happy; // ? 30ÒÔÉÏÒ²ÊÇHappy
+                expression = ExpressionType.Happy; // ? 30ä»¥ä¸Šä¹Ÿæ˜¯Happy
             }
             else if (affinity >= 0f)
             {
@@ -224,7 +224,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ? ¸ù¾İ¶Ô»°ÓïÆøÉèÖÃ±íÇé£¨À©Õ¹¹Ø¼ü´Ê£©
+        /// ? æ ¹æ®å¯¹è¯è¯­æ°”è®¾ç½®è¡¨æƒ…ï¼ˆæ‰©å±•å…³é”®è¯ï¼‰
         /// </summary>
         public static void UpdateExpressionByDialogueTone(string personaDefName, string dialogueText)
         {
@@ -233,18 +233,18 @@ namespace TheSecondSeat.PersonaGeneration
                 return;
             }
             
-            // ·ÖÎö¶Ô»°ÎÄ±¾ÖĞµÄÇé¸Ğ¹Ø¼ü´Ê
+            // åˆ†æå¯¹è¯æ–‡æœ¬ä¸­çš„æƒ…æ„Ÿå…³é”®è¯
             ExpressionType expression = ExpressionType.Neutral;
             
-            // ? ¿ªĞÄ¹Ø¼ü´Ê£¨´ó·ùÀ©Õ¹£©
+            // ? å¼€å¿ƒå…³é”®è¯ï¼ˆå¤§å¹…æ‰©å±•ï¼‰
             if (ContainsKeywords(dialogueText, new[] { 
-                // ÖĞÎÄ
-                "¹ş¹ş", "ÎûÎû", "¹ş", "ÕæºÃ", "Ì«°ô", "¿ªĞÄ", "¸ßĞË", "Ï²»¶", "²»´í", "ºÜºÃ", 
-                "ºÃµÄ", "¿ÉÒÔ", "µ±È»", "Ã»ÎÊÌâ", "ÀÖÒâ", "Óä¿ì", "¿ìÀÖ", "»¶Ó­", "¹§Ï²", 
-                "×£ºØ", "ÔŞ", "À÷º¦", "ÓÅĞã", "ÍêÃÀ", "Ì«ºÃÁË", "ºÃ¼«ÁË", "Ãî", "¾ø", 
-                "°ô", "ÃÀ", "¿á", "Ë§", "°®", "Ï²", "ÀÖ", "Ğ¦", "àÅàÅ", "ºÃßÕ", "Ã´Ã´",
-                "ºÙºÙ", "ºÇºÇ", "hiahia", "2333", "233", "666", "nice",
-                // Ó¢ÎÄ
+                // ä¸­æ–‡
+                "å“ˆå“ˆ", "å˜»å˜»", "å“ˆ", "çœŸå¥½", "å¤ªæ£’", "å¼€å¿ƒ", "é«˜å…´", "å–œæ¬¢", "ä¸é”™", "å¾ˆå¥½", 
+                "å¥½çš„", "å¯ä»¥", "å½“ç„¶", "æ²¡é—®é¢˜", "ä¹æ„", "æ„‰å¿«", "å¿«ä¹", "æ¬¢è¿", "æ­å–œ", 
+                "ç¥è´º", "èµ", "å‰å®³", "ä¼˜ç§€", "å®Œç¾", "å¤ªå¥½äº†", "å¥½æäº†", "å¦™", "ç»", 
+                "æ£’", "ç¾", "é…·", "å¸…", "çˆ±", "å–œ", "ä¹", "ç¬‘", "å—¯å—¯", "å¥½å“’", "ä¹ˆä¹ˆ",
+                "å˜¿å˜¿", "å‘µå‘µ", "hiahia", "2333", "233", "666", "nice",
+                // è‹±æ–‡
                 "fantastic", "great", "wonderful", "happy", "haha", "good", "nice", 
                 "excellent", "amazing", "awesome", "perfect", "love", "like", "enjoy",
                 "glad", "pleased", "delighted", "cheerful", "joyful", "yay", "yeah",
@@ -253,140 +253,140 @@ namespace TheSecondSeat.PersonaGeneration
             {
                 expression = ExpressionType.Happy;
             }
-            // ? ·ßÅ­¹Ø¼ü´Ê£¨À©Õ¹£©
+            // ? æ„¤æ€’å…³é”®è¯ï¼ˆæ‰©å±•ï¼‰
             else if (ContainsKeywords(dialogueText, new[] { 
-                // ÖĞÎÄ
-                "¿É¶ñ", "¸ÃËÀ", "»ìµ°", "·ßÅ­", "ÉúÆø", "ÌÖÑá", "·³", "¹ö", "±Õ×ì", 
-                "·ÏÎï", "´À", "±¿", "Éµ", "°×³Õ", "¿ÉºŞ", "ÄÕ»ğ", "»ğ´ó", "ÆøËÀ",
-                "²»ĞĞ", "¾ø¶Ô²»", "ĞİÏë", "±ğÏë", "²»¿ÉÄÜ", "¾Ü¾ø",
-                // Ó¢ÎÄ
+                // ä¸­æ–‡
+                "å¯æ¶", "è¯¥æ­»", "æ··è›‹", "æ„¤æ€’", "ç”Ÿæ°”", "è®¨åŒ", "çƒ¦", "æ»š", "é—­å˜´", 
+                "åºŸç‰©", "è ¢", "ç¬¨", "å‚»", "ç™½ç—´", "å¯æ¨", "æ¼ç«", "ç«å¤§", "æ°”æ­»",
+                "ä¸è¡Œ", "ç»å¯¹ä¸", "ä¼‘æƒ³", "åˆ«æƒ³", "ä¸å¯èƒ½", "æ‹’ç»",
+                // è‹±æ–‡
                 "damn", "angry", "furious", "irritated", "hate", "stupid", "idiot",
                 "shut up", "annoying", "rage", "mad", "pissed", "disgusting"
             }))
             {
                 expression = ExpressionType.Angry;
             }
-            // ? ±¯ÉË¹Ø¼ü´Ê£¨À©Õ¹£©
+            // ? æ‚²ä¼¤å…³é”®è¯ï¼ˆæ‰©å±•ï¼‰
             else if (ContainsKeywords(dialogueText, new[] { 
-                // ÖĞÎÄ
-                "±¯ÉË", "ÄÑ¹ı", "¿ÉÁ¯", "ÒÅº¶", "ÉËĞÄ", "¿Ş", "Àá", "±¯", "²Ò", 
-                "²»ĞÒ", "¿ÉÏ§", "°¦", "ÎØ", "°¥", "ÉË¸Ğ", "ÆàÁ¹", "ĞÄÍ´", "Í´¿à",
-                "±§Ç¸", "¶Ô²»Æğ", "Ê§È¥", "Àë¿ª", "ËÀ", "ÊÅ",
-                // Ó¢ÎÄ
+                // ä¸­æ–‡
+                "æ‚²ä¼¤", "éš¾è¿‡", "å¯æ€œ", "é—æ†¾", "ä¼¤å¿ƒ", "å“­", "æ³ª", "æ‚²", "æƒ¨", 
+                "ä¸å¹¸", "å¯æƒœ", "å”‰", "å‘œ", "å“", "ä¼¤æ„Ÿ", "å‡„å‡‰", "å¿ƒç—›", "ç—›è‹¦",
+                "æŠ±æ­‰", "å¯¹ä¸èµ·", "å¤±å»", "ç¦»å¼€", "æ­»", "é€",
+                // è‹±æ–‡
                 "sad", "unfortunate", "regret", "pity", "cry", "tears", "sorrow",
                 "sorry", "miss", "loss", "grief", "mourn", "tragic", "painful"
             }))
             {
                 expression = ExpressionType.Sad;
             }
-            // ? ¾ªÑÈ¹Ø¼ü´Ê£¨À©Õ¹£©
+            // ? æƒŠè®¶å…³é”®è¯ï¼ˆæ‰©å±•ï¼‰
             else if (ContainsKeywords(dialogueText, new[] { 
-                // ÖĞÎÄ
-                "Ê²Ã´", "²»»á°É", "ÕæµÄ", "Ìì°¡", "ÍÛ", "°¡", "Ñ½", "Å¶", "ß×", 
-                "¾ÓÈ»", "¾¹È»", "ÔõÃ´", "ÎªÊ²Ã´", "¾ª", "Õğ¾ª", "ÒâÍâ", "Ã»Ïëµ½",
-                "²»¸ÒÏàĞÅ", "ÏÅ", "ÎÒµÄÌì", "ÌìÄÄ", "ÎÒÈ¥", "ÎÔ²Û", "woc",
-                // Ó¢ÎÄ  
+                // ä¸­æ–‡
+                "ä»€ä¹ˆ", "ä¸ä¼šå§", "çœŸçš„", "å¤©å•Š", "å“‡", "å•Š", "å‘€", "å“¦", "å’¦", 
+                "å±…ç„¶", "ç«Ÿç„¶", "æ€ä¹ˆ", "ä¸ºä»€ä¹ˆ", "æƒŠ", "éœ‡æƒŠ", "æ„å¤–", "æ²¡æƒ³åˆ°",
+                "ä¸æ•¢ç›¸ä¿¡", "å“", "æˆ‘çš„å¤©", "å¤©å“ª", "æˆ‘å»", "å§æ§½", "woc",
+                // è‹±æ–‡  
                 "what", "really", "wow", "omg", "surprising", "shocked", "amazing",
                 "unbelievable", "incredible", "unexpected", "seriously", "no way"
             }))
             {
                 expression = ExpressionType.Surprised;
             }
-            // ? µ£ÓÇ¹Ø¼ü´Ê£¨À©Õ¹£©
+            // ? æ‹…å¿§å…³é”®è¯ï¼ˆæ‰©å±•ï¼‰
             else if (ContainsKeywords(dialogueText, new[] { 
-                // ÖĞÎÄ
-                "µ£ĞÄ", "ÓÇÂÇ", "Î£ÏÕ", "Ğ¡ĞÄ", "×¢Òâ", "¾¯Ìè", "º¦ÅÂ", "¿Ö¾å", 
-                "½ôÕÅ", "½¹ÂÇ", "²»°²", "¿ÉÄÜ»á", "Ò²Ğí", "·çÏÕ", "ÍşĞ²", "ÎÊÌâ",
-                "Ôã¸â", "²»Ãî", "Âé·³", "À§ÄÑ", "¼¬ÊÖ",
-                // Ó¢ÎÄ
+                // ä¸­æ–‡
+                "æ‹…å¿ƒ", "å¿§è™‘", "å±é™©", "å°å¿ƒ", "æ³¨æ„", "è­¦æƒ•", "å®³æ€•", "ææƒ§", 
+                "ç´§å¼ ", "ç„¦è™‘", "ä¸å®‰", "å¯èƒ½ä¼š", "ä¹Ÿè®¸", "é£é™©", "å¨èƒ", "é—®é¢˜",
+                "ç³Ÿç³•", "ä¸å¦™", "éº»çƒ¦", "å›°éš¾", "æ£˜æ‰‹",
+                // è‹±æ–‡
                 "worried", "concerned", "careful", "beware", "afraid", "fear",
                 "nervous", "anxious", "danger", "risk", "threat", "trouble", "problem"
             }))
             {
                 expression = ExpressionType.Worried;
             }
-            // ? µ÷Æ¤¹Ø¼ü´Ê£¨À©Õ¹£©
+            // ? è°ƒçš®å…³é”®è¯ï¼ˆæ‰©å±•ï¼‰
             else if (ContainsKeywords(dialogueText, new[] { 
-                // ÖĞÎÄ
-                "ºÙºÙ", "ÎûÎû", "¶ºÄã", "¿ªÍæĞ¦", "×½Åª", "µ÷Æ¤", "»µĞ¦", "ÍµĞ¦",
-                "ºÙ", "ºßºß", "ºÇºÇ", "ÂÔÂÔÂÔ", "Îû", "Æ¤", "Æ­ÄãµÄ", "¶ºÄãÍæ",
-                // Ó¢ÎÄ
+                // ä¸­æ–‡
+                "å˜¿å˜¿", "å˜»å˜»", "é€—ä½ ", "å¼€ç©ç¬‘", "æ‰å¼„", "è°ƒçš®", "åç¬‘", "å·ç¬‘",
+                "å˜¿", "å“¼å“¼", "å‘µå‘µ", "ç•¥ç•¥ç•¥", "å˜»", "çš®", "éª—ä½ çš„", "é€—ä½ ç©",
+                // è‹±æ–‡
                 "playful", "teasing", "mischievous", "hehe", "hihi", "kidding",
                 "joking", "prank", "naughty", "trick"
             }))
             {
                 expression = ExpressionType.Playful;
             }
-            // ? µÃÒâ¹Ø¼ü´Ê£¨À©Õ¹£©
+            // ? å¾—æ„å…³é”®è¯ï¼ˆæ‰©å±•ï¼‰
             else if (ContainsKeywords(dialogueText, new[] { 
-                // ÖĞÎÄ
-                "¿´°É", "ÎÒËµ", "¹ûÈ»", "²»³öËùÁÏ", "¾ÍÖªµÀ", "µ±È»", "±ØÈ»", 
-                "ÇáËÉ", "¼òµ¥", "Ğ¡ÒâË¼", "²»ÔÚ»°ÏÂ", "Ò»°ã°ã", "»¹ĞĞ°É", "ºß",
-                "±¾´óÈË", "±¾Ğ¡½ã", "±¾×ğ", "ëŞ",
-                // Ó¢ÎÄ
+                // ä¸­æ–‡
+                "çœ‹å§", "æˆ‘è¯´", "æœç„¶", "ä¸å‡ºæ‰€æ–™", "å°±çŸ¥é“", "å½“ç„¶", "å¿…ç„¶", 
+                "è½»æ¾", "ç®€å•", "å°æ„æ€", "ä¸åœ¨è¯ä¸‹", "ä¸€èˆ¬èˆ¬", "è¿˜è¡Œå§", "å“¼",
+                "æœ¬å¤§äºº", "æœ¬å°å§", "æœ¬å°Š", "æœ•",
+                // è‹±æ–‡
                 "told you", "as expected", "obviously", "of course", "naturally",
                 "easy", "simple", "knew it", "predicted"
             }))
             {
                 expression = ExpressionType.Smug;
             }
-            // ? Ê§Íû¹Ø¼ü´Ê£¨À©Õ¹£©
+            // ? å¤±æœ›å…³é”®è¯ï¼ˆæ‰©å±•ï¼‰
             else if (ContainsKeywords(dialogueText, new[] { 
-                // ÖĞÎÄ
-                "Ê§Íû", "ËãÁË", "°¦", "ÎŞÄÎ", "·ÅÆú", "Ã»°ì·¨", "Ã»ÓÃ", "ÎŞÓï",
-                "ÎŞÁ¦", "Æ£±¹", "ÀÛ", "·³", "ÀÁµÃ", "²»Ïë", "Ëæ±ã", "whatever",
-                // Ó¢ÎÄ
+                // ä¸­æ–‡
+                "å¤±æœ›", "ç®—äº†", "å”‰", "æ— å¥ˆ", "æ”¾å¼ƒ", "æ²¡åŠæ³•", "æ²¡ç”¨", "æ— è¯­",
+                "æ— åŠ›", "ç–²æƒ«", "ç´¯", "çƒ¦", "æ‡’å¾—", "ä¸æƒ³", "éšä¾¿", "whatever",
+                // è‹±æ–‡
                 "disappointed", "sigh", "alas", "whatever", "give up", "useless",
                 "hopeless", "tired", "exhausted", "boring"
             }))
             {
                 expression = ExpressionType.Disappointed;
             }
-            // ? ³ÁË¼¹Ø¼ü´Ê£¨À©Õ¹£©
+            // ? æ²‰æ€å…³é”®è¯ï¼ˆæ‰©å±•ï¼‰
             else if (ContainsKeywords(dialogueText, new[] { 
-                // ÖĞÎÄ
-                "àÅ", "ÈÃÎÒÏëÏë", "»òĞí", "Ò²Ğí", "¿ÉÄÜ", "Ë¼¿¼", "¿¼ÂÇ", "·ÖÎö",
-                "ÑĞ¾¿", "×ÁÄ¥", "ÍÆ²â", "ÅĞ¶Ï", "ÈÏÎª", "¾õµÃ", "ÎÒÏë", "Ó¦¸Ã",
-                "´ó¸Å", "¹À¼Æ", "¿´À´", "ËÆºõ", "ºÃÏñ", "...", "¡­¡­",
-                // Ó¢ÎÄ
+                // ä¸­æ–‡
+                "å—¯", "è®©æˆ‘æƒ³æƒ³", "æˆ–è®¸", "ä¹Ÿè®¸", "å¯èƒ½", "æ€è€ƒ", "è€ƒè™‘", "åˆ†æ",
+                "ç ”ç©¶", "ç¢ç£¨", "æ¨æµ‹", "åˆ¤æ–­", "è®¤ä¸º", "è§‰å¾—", "æˆ‘æƒ³", "åº”è¯¥",
+                "å¤§æ¦‚", "ä¼°è®¡", "çœ‹æ¥", "ä¼¼ä¹", "å¥½åƒ", "...", "â€¦â€¦",
+                // è‹±æ–‡
                 "hmm", "perhaps", "maybe", "consider", "think", "analyze", "ponder",
                 "suppose", "guess", "probably", "seems", "apparently", "let me see"
             }))
             {
                 expression = ExpressionType.Thoughtful;
             }
-            // ? ·³Ôê¹Ø¼ü´Ê£¨À©Õ¹£©
+            // ? çƒ¦èºå…³é”®è¯ï¼ˆæ‰©å±•ï¼‰
             else if (ContainsKeywords(dialogueText, new[] { 
-                // ÖĞÎÄ
-                "·³", "³³", "¹»ÁË", "ĞĞÁË", "ÖªµÀÁË", "ºÃÁËºÃÁË", "±ğËµÁË", 
-                "±Õ×ì", "°²¾²", "²»Òª", "Í£", "µÈµÈ", "Âı×Å", "´òÈÅ",
-                // Ó¢ÎÄ
+                // ä¸­æ–‡
+                "çƒ¦", "åµ", "å¤Ÿäº†", "è¡Œäº†", "çŸ¥é“äº†", "å¥½äº†å¥½äº†", "åˆ«è¯´äº†", 
+                "é—­å˜´", "å®‰é™", "ä¸è¦", "åœ", "ç­‰ç­‰", "æ…¢ç€", "æ‰“æ‰°",
+                // è‹±æ–‡
                 "annoyed", "bothered", "enough", "stop", "quiet", "shut", "leave me"
             }))
             {
                 expression = ExpressionType.Annoyed;
             }
-            // ? ĞÂÔö£ºº¦Ğß¹Ø¼ü´Ê
+            // ? æ–°å¢ï¼šå®³ç¾å…³é”®è¯
             else if (ContainsKeywords(dialogueText, new[] { 
-                // ÖĞÎÄ
-                "º¦Ğß", "²»ºÃÒâË¼", "Ğß", "Á³ºì", "ĞßÉ¬", "ÄÑÎªÇé", "²»¸Ò", 
-                "...", "¡­¡­", "ÄÇ¸ö", "àÅàÅ", "ßí", "ÚÀ", "°¡Õâ", "emmm",
-                "ŞÏŞÎ", "²»Ì«ºÃ", "ÓĞµã", "¸ĞĞ»", "Ğ»Ğ»Äã", "Ì«¿ÍÆøÁË",
-                "²»ÓÃ", "Ã»Ê²Ã´", "±ğÕâÑù", "²»ÒªÕâÑù", "ÄãÕæÊÇ",
-                // Ó¢ÎÄ
+                // ä¸­æ–‡
+                "å®³ç¾", "ä¸å¥½æ„æ€", "ç¾", "è„¸çº¢", "ç¾æ¶©", "éš¾ä¸ºæƒ…", "ä¸æ•¢", 
+                "...", "â€¦â€¦", "é‚£ä¸ª", "å—¯å—¯", "å””", "è¯¶", "å•Šè¿™", "emmm",
+                "å°´å°¬", "ä¸å¤ªå¥½", "æœ‰ç‚¹", "æ„Ÿè°¢", "è°¢è°¢ä½ ", "å¤ªå®¢æ°”äº†",
+                "ä¸ç”¨", "æ²¡ä»€ä¹ˆ", "åˆ«è¿™æ ·", "ä¸è¦è¿™æ ·", "ä½ çœŸæ˜¯",
+                // è‹±æ–‡
                 "shy", "embarrassed", "blush", "awkward", "umm", "uh", "er",
                 "thank you", "thanks", "appreciate", "grateful", "sorry"
             }))
             {
                 expression = ExpressionType.Shy;
             }
-            // ? ÒÉ»ó¹Ø¼ü´Ê£¨´¥ÃşÄ£Ê½×¨ÓÃ£©
+            // ? ç–‘æƒ‘å…³é”®è¯ï¼ˆè§¦æ‘¸æ¨¡å¼ä¸“ç”¨ï¼‰
             else if (ContainsKeywords(dialogueText, new[] {
-                // ÖĞÎÄ
-                "°¡", "Ê²Ã´", "ÔõÃ´", "ÎªºÎ", "ÕâÊÇ", "ÄÇÊÇ", "ÄãÊÇ", "ÎÒÊÇ", "ËûÊÇ",
-                "ËıÊÇ", "ËüÊÇ", "Ë­ÊÇ", "ÔÚÄÄÀï", "Ê²Ã´Ê±ºò", "ÎªÊ²Ã´", "ÔõÃ´Ñù",
-                "ÓĞÊ²Ã´", "Ã»Ê²Ã´", "Ö»²»¹ı", "ÄÑµÀ", "Æñ²»ÊÇ", "Äª·Ç",
-                // Ó¢ÎÄ
+                // ä¸­æ–‡
+                "å•Š", "ä»€ä¹ˆ", "æ€ä¹ˆ", "ä¸ºä½•", "è¿™æ˜¯", "é‚£æ˜¯", "ä½ æ˜¯", "æˆ‘æ˜¯", "ä»–æ˜¯",
+                "å¥¹æ˜¯", "å®ƒæ˜¯", "è°æ˜¯", "åœ¨å“ªé‡Œ", "ä»€ä¹ˆæ—¶å€™", "ä¸ºä»€ä¹ˆ", "æ€ä¹ˆæ ·",
+                "æœ‰ä»€ä¹ˆ", "æ²¡ä»€ä¹ˆ", "åªä¸è¿‡", "éš¾é“", "å²‚ä¸æ˜¯", "è«é",
+                // è‹±æ–‡
                 "ah", "what", "how", "why", "this is", "that is", "you are", "i am",
                 "he is", "she is", "it is", "who is", "where is", "when", "why",
                 "what is", "nothing", "just", "did", "could", "couldn't",
@@ -404,7 +404,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ¸ù¾İÓÎÏ·ÊÂ¼şÉèÖÃ±íÇé
+        /// æ ¹æ®æ¸¸æˆäº‹ä»¶è®¾ç½®è¡¨æƒ…
         /// </summary>
         public static void UpdateExpressionByEvent(string personaDefName, string eventType, bool isPositive)
         {
@@ -445,51 +445,51 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ¸üĞÂ±íÇé¹ı¶É¶¯»­
+        /// æ›´æ–°è¡¨æƒ…è¿‡æ¸¡åŠ¨ç”»
         /// </summary>
         public static void UpdateTransition(string personaDefName)
         {
             var state = GetExpressionState(personaDefName);
             
-            // Èç¹û¹ı¶ÉÎ´Íê³É
+            // å¦‚æœè¿‡æ¸¡æœªå®Œæˆ
             if (state.TransitionProgress < 1f)
             {
                 state.TransitionTicks++;
                 state.TransitionProgress = Mathf.Clamp01((float)state.TransitionTicks / TRANSITION_DURATION_TICKS);
             }
             
-            // ¼ì²é±íÇéÊÇ·ñ¹ıÆÚ£¨×Ô¶¯»Ö¸´µ½ÖĞĞÔ£©
-            // ? Processing ´¥·¢Æ÷²»»á×Ô¶¯¹ıÆÚ£¨µÈ´ıAIÏìÓ¦Íê³É£©
+            // æ£€æŸ¥è¡¨æƒ…æ˜¯å¦è¿‡æœŸï¼ˆè‡ªåŠ¨æ¢å¤åˆ°ä¸­æ€§ï¼‰
+            // ? Processing è§¦å‘å™¨ä¸ä¼šè‡ªåŠ¨è¿‡æœŸï¼ˆç­‰å¾…AIå“åº”å®Œæˆï¼‰
             if (!state.IsLocked && state.TransitionProgress >= 1f && state.LastTrigger != ExpressionTrigger.Processing)
             {
                 int elapsedTicks = Find.TickManager.TicksGame - state.ExpressionStartTick;
                 
                 if (elapsedTicks > EXPRESSION_DURATION_TICKS && state.CurrentExpression != ExpressionType.Neutral)
                 {
-                    // ±íÇé¹ıÆÚ£¬»Ö¸´µ½ÖĞĞÔ
+                    // è¡¨æƒ…è¿‡æœŸï¼Œæ¢å¤åˆ°ä¸­æ€§
                     SetExpression(personaDefName, ExpressionType.Neutral, ExpressionTrigger.RandomVariation);
                 }
             }
         }
         
         /// <summary>
-        /// Ëø¶¨/½âËø±íÇé
+        /// é”å®š/è§£é”è¡¨æƒ…
         /// </summary>
         public static void LockExpression(string personaDefName, bool locked)
         {
             var state = GetExpressionState(personaDefName);
             state.IsLocked = locked;
-            Log.Message($"[ExpressionSystem] {personaDefName} ±íÇéËø¶¨×´Ì¬: {locked}");
+            Log.Message($"[ExpressionSystem] {personaDefName} è¡¨æƒ…é”å®šçŠ¶æ€: {locked}");
         }
         
         /// <summary>
-        /// »ñÈ¡±íÇé¶ÔÓ¦µÄÎÄ¼şÃûºó×º
-        /// ? Ö§³ÖËùÓĞ±íÇéÀàĞÍµÄ±äÌå£¨1-5£©
-        /// ? ¸ù¾İ»º´æµÄ±äÌå±àºÅ·µ»ØÒ»ÖÂµÄºó×º
+        /// è·å–è¡¨æƒ…å¯¹åº”çš„æ–‡ä»¶ååç¼€
+        /// ? æ”¯æŒæ‰€æœ‰è¡¨æƒ…ç±»å‹çš„å˜ä½“ï¼ˆ1-5ï¼‰
+        /// ? æ ¹æ®ç¼“å­˜çš„å˜ä½“ç¼–å·è¿”å›ä¸€è‡´çš„åç¼€
         /// </summary>
         public static string GetExpressionSuffix(string personaDefName, ExpressionType expression)
         {
-            // »ù´¡ºó×ºÓ³Éä
+            // åŸºç¡€åç¼€æ˜ å°„
             string baseSuffix = expression switch
             {
                 ExpressionType.Neutral => "",
@@ -508,30 +508,30 @@ namespace TheSecondSeat.PersonaGeneration
                 _ => ""
             };
 
-            // ? Ê¹ÓÃ»º´æµÄ±äÌå±àºÅ
+            // ? ä½¿ç”¨ç¼“å­˜çš„å˜ä½“ç¼–å·
             var state = GetExpressionState(personaDefName);
             int variant = state.CurrentVariant;
             
-            // Èç¹ûÊÇ±äÌå 0£¨»ù´¡°æ±¾£©£¬Ö±½Ó·µ»Ø»ù´¡ºó×º
+            // å¦‚æœæ˜¯å˜ä½“ 0ï¼ˆåŸºç¡€ç‰ˆæœ¬ï¼‰ï¼Œç›´æ¥è¿”å›åŸºç¡€åç¼€
             if (variant == 0 || string.IsNullOrEmpty(baseSuffix))
             {
                 return baseSuffix;
             }
             
-            // ·µ»Ø´ø±äÌå±àºÅµÄºó×º£¨Èç _happy1, _happy2, _sad3...£©
+            // è¿”å›å¸¦å˜ä½“ç¼–å·çš„åç¼€ï¼ˆå¦‚ _happy1, _happy2, _sad3...ï¼‰
             return $"{baseSuffix}{variant}";
         }
 
         /// <summary>
-        /// ÖØÖÃËùÓĞ±íÇé×´Ì¬
+        /// é‡ç½®æ‰€æœ‰è¡¨æƒ…çŠ¶æ€
         /// </summary>
         public static void ResetAllExpressions()
         {
             expressionStates.Clear();
-            Log.Message("[ExpressionSystem] ËùÓĞ±íÇé×´Ì¬ÒÑÖØÖÃ");
+            Log.Message("[ExpressionSystem] æ‰€æœ‰è¡¨æƒ…çŠ¶æ€å·²é‡ç½®");
         }
         
-        // ¸¨Öú·½·¨£º¼ì²éÎÄ±¾ÊÇ·ñ°üº¬¹Ø¼ü´Ê
+        // è¾…åŠ©æ–¹æ³•ï¼šæ£€æŸ¥æ–‡æœ¬æ˜¯å¦åŒ…å«å…³é”®è¯
         private static bool ContainsKeywords(string text, string[] keywords)
         {
             text = text.ToLowerInvariant();
@@ -546,27 +546,27 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// »ñÈ¡µ÷ÊÔĞÅÏ¢
+        /// è·å–è°ƒè¯•ä¿¡æ¯
         /// </summary>
         public static string GetDebugInfo()
         {
-            var info = $"[ExpressionSystem] ±íÇé×´Ì¬ÊıÁ¿: {expressionStates.Count}\n";
+            var info = $"[ExpressionSystem] è¡¨æƒ…çŠ¶æ€æ•°é‡: {expressionStates.Count}\n";
             
             foreach (var kvp in expressionStates)
             {
                 var state = kvp.Value;
                 info += $"  {kvp.Key}:\n";
-                info += $"    µ±Ç°±íÇé: {state.CurrentExpression}\n";
-                info += $"    ¹ı¶É½ø¶È: {state.TransitionProgress:P0}\n";
-                info += $"    Ëø¶¨×´Ì¬: {state.IsLocked}\n";
-                info += $"    ´¥·¢Æ÷: {state.LastTrigger}\n";
+                info += $"    å½“å‰è¡¨æƒ…: {state.CurrentExpression}\n";
+                info += $"    è¿‡æ¸¡è¿›åº¦: {state.TransitionProgress:P0}\n";
+                info += $"    é”å®šçŠ¶æ€: {state.IsLocked}\n";
+                info += $"    è§¦å‘å™¨: {state.LastTrigger}\n";
             }
             
             return info;
         }
         
         /// <summary>
-        /// ? ²âÊÔ·½·¨£ºÊÖ¶¯´¥·¢±íÇéÇĞ»»£¨ÓÃÓÚµ÷ÊÔ£©
+        /// ? æµ‹è¯•æ–¹æ³•ï¼šæ‰‹åŠ¨è§¦å‘è¡¨æƒ…åˆ‡æ¢ï¼ˆç”¨äºè°ƒè¯•ï¼‰
         /// </summary>
         public static void TestExpressionChange(string personaDefName)
         {
@@ -583,8 +583,8 @@ namespace TheSecondSeat.PersonaGeneration
                 ExpressionType.Thoughtful,
                 ExpressionType.Annoyed,
                 ExpressionType.Playful,
-                ExpressionType.Shy,          // ĞÂÔö
-                ExpressionType.Confused      // ĞÂÔöÒÉ»ó
+                ExpressionType.Shy,          // æ–°å¢
+                ExpressionType.Confused      // æ–°å¢ç–‘æƒ‘
             };
             
             var state = GetExpressionState(personaDefName);
@@ -594,101 +594,101 @@ namespace TheSecondSeat.PersonaGeneration
             ExpressionType nextExpression = allExpressions[nextIndex];
             SetExpression(personaDefName, nextExpression, ExpressionTrigger.Manual);
             
-            Messages.Message($"[²âÊÔ] ±íÇéÇĞ»»: {state.CurrentExpression} ¡ú {nextExpression}", MessageTypeDefOf.NeutralEvent);
+            Messages.Message($"[æµ‹è¯•] è¡¨æƒ…åˆ‡æ¢: {state.CurrentExpression} â†’ {nextExpression}", MessageTypeDefOf.NeutralEvent);
         }
         
         /// <summary>
-        /// ? »ñÈ¡ºôÎü¶¯»­Æ«ÒÆ£¨ÍêÕû°æ±¾£©
-        /// »ùÓÚÕıÏÒ²¨ÊµÏÖÆ½»¬µÄºôÎü¶¯»­Ğ§¹û
+        /// ? è·å–å‘¼å¸åŠ¨ç”»åç§»ï¼ˆå®Œæ•´ç‰ˆæœ¬ï¼‰
+        /// åŸºäºæ­£å¼¦æ³¢å®ç°å¹³æ»‘çš„å‘¼å¸åŠ¨ç”»æ•ˆæœ
         /// </summary>
         public static float GetBreathingOffset(string personaDefName)
         {
-            // ³õÊ¼»¯ºôÎü×´Ì¬
+            // åˆå§‹åŒ–å‘¼å¸çŠ¶æ€
             if (!breathingStates.ContainsKey(personaDefName))
             {
                 breathingStates[personaDefName] = new BreathingState
                 {
-                    phase = UnityEngine.Random.Range(0f, Mathf.PI * 2f),     // Ëæ»ú³õÊ¼ÏàÎ»
-                    speed = UnityEngine.Random.Range(0.4f, 0.6f),            // ºôÎüËÙ¶È£º0.4-0.6 Ãë/ÖÜÆÚ
-                    amplitude = UnityEngine.Random.Range(1.5f, 2.5f),        // Õñ·ù£º1.5-2.5 ÏñËØ
+                    phase = UnityEngine.Random.Range(0f, Mathf.PI * 2f),     // éšæœºåˆå§‹ç›¸ä½
+                    speed = UnityEngine.Random.Range(0.4f, 0.6f),            // å‘¼å¸é€Ÿåº¦ï¼š0.4-0.6 ç§’/å‘¨æœŸ
+                    amplitude = UnityEngine.Random.Range(1.5f, 2.5f),        // æŒ¯å¹…ï¼š1.5-2.5 åƒç´ 
                     lastUpdateTime = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond
                 };
             }
             
             var state = breathingStates[personaDefName];
             
-            // ¼ÆËãÊ±¼äÔöÁ¿£¨Ãë£©
+            // è®¡ç®—æ—¶é—´å¢é‡ï¼ˆç§’ï¼‰
             long currentTime = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
             float deltaTime = (currentTime - state.lastUpdateTime) / 1000f;
             state.lastUpdateTime = currentTime;
             
-            // ¸üĞÂÏàÎ»
+            // æ›´æ–°ç›¸ä½
             state.phase += deltaTime * state.speed;
             
-            // ÏàÎ»¹éÒ»»¯£¨±£³ÖÔÚ0-2¦Ğ·¶Î§ÄÚ£©
+            // ç›¸ä½å½’ä¸€åŒ–ï¼ˆä¿æŒåœ¨0-2Ï€èŒƒå›´å†…ï¼‰
             if (state.phase > Mathf.PI * 2f)
             {
                 state.phase -= Mathf.PI * 2f;
             }
             
-            // ¼ÆËãºôÎüÆ«ÒÆ£¨ÕıÏÒ²¨£©
+            // è®¡ç®—å‘¼å¸åç§»ï¼ˆæ­£å¼¦æ³¢ï¼‰
             float offset = Mathf.Sin(state.phase) * state.amplitude;
             
             return offset;
         }
         
         /// <summary>
-        /// ? ¸ù¾İÇéĞ÷µ÷ÕûºôÎüËÙ¶È
-        /// ²»Í¬ÇéĞ÷ÓĞ²»Í¬µÄºôÎüÄ£Ê½
+        /// ? æ ¹æ®æƒ…ç»ªè°ƒæ•´å‘¼å¸é€Ÿåº¦
+        /// ä¸åŒæƒ…ç»ªæœ‰ä¸åŒçš„å‘¼å¸æ¨¡å¼
         /// </summary>
         public static void AdjustBreathingByEmotion(string personaDefName, ExpressionType emotion)
         {
             if (!breathingStates.ContainsKey(personaDefName))
             {
-                // Èç¹û²»´æÔÚ£¬ÏÈµ÷ÓÃÒ»´Î GetBreathingOffset À´³õÊ¼»¯
+                // å¦‚æœä¸å­˜åœ¨ï¼Œå…ˆè°ƒç”¨ä¸€æ¬¡ GetBreathingOffset æ¥åˆå§‹åŒ–
                 GetBreathingOffset(personaDefName);
             }
             
             var state = breathingStates[personaDefName];
             
-            // ¸ù¾İÇéĞ÷ÉèÖÃ²»Í¬µÄºôÎü²ÎÊı
+            // æ ¹æ®æƒ…ç»ªè®¾ç½®ä¸åŒçš„å‘¼å¸å‚æ•°
             switch (emotion)
             {
                 case ExpressionType.Happy:
                 case ExpressionType.Playful:
-                    // ¿ªĞÄÊ±ºôÎüÇá¿ì
+                    // å¼€å¿ƒæ—¶å‘¼å¸è½»å¿«
                     state.speed = UnityEngine.Random.Range(0.6f, 0.8f);
                     state.amplitude = UnityEngine.Random.Range(2.0f, 3.0f);
                     break;
                     
                 case ExpressionType.Worried:
-                    // µ£ĞÄÊ±ºôÎü¼±´Ù
+                    // æ‹…å¿ƒæ—¶å‘¼å¸æ€¥ä¿ƒ
                     state.speed = UnityEngine.Random.Range(0.8f, 1.2f);
                     state.amplitude = UnityEngine.Random.Range(2.5f, 3.5f);
                     break;
                     
                 case ExpressionType.Sad:
                 case ExpressionType.Disappointed:
-                    // ±¯ÉËÊ±ºôÎü»ºÂı
+                    // æ‚²ä¼¤æ—¶å‘¼å¸ç¼“æ…¢
                     state.speed = UnityEngine.Random.Range(0.3f, 0.4f);
                     state.amplitude = UnityEngine.Random.Range(1.0f, 1.5f);
                     break;
                     
                 case ExpressionType.Angry:
                 case ExpressionType.Annoyed:
-                    // ÉúÆøÊ±ºôÎü¼±´ÙÇÒ¾çÁÒ
+                    // ç”Ÿæ°”æ—¶å‘¼å¸æ€¥ä¿ƒä¸”å‰§çƒˆ
                     state.speed = UnityEngine.Random.Range(1.0f, 1.5f);
                     state.amplitude = UnityEngine.Random.Range(3.0f, 4.0f);
                     break;
                     
                 case ExpressionType.Thoughtful:
-                    // Ë¼¿¼Ê±ºôÎüÆ½ÎÈ
+                    // æ€è€ƒæ—¶å‘¼å¸å¹³ç¨³
                     state.speed = UnityEngine.Random.Range(0.4f, 0.5f);
                     state.amplitude = UnityEngine.Random.Range(1.5f, 2.0f);
                     break;
                     
                 default:
-                    // ÖĞĞÔ/ÆäËûÇéĞ÷£¬»Ö¸´Ä¬ÈÏ
+                    // ä¸­æ€§/å…¶ä»–æƒ…ç»ªï¼Œæ¢å¤é»˜è®¤
                     state.speed = UnityEngine.Random.Range(0.4f, 0.6f);
                     state.amplitude = UnityEngine.Random.Range(1.5f, 2.5f);
                     break;
@@ -696,7 +696,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ? Çå³ıºôÎü×´Ì¬£¨ÓÃÓÚÖØÖÃ»òÇåÀí£©
+        /// ? æ¸…é™¤å‘¼å¸çŠ¶æ€ï¼ˆç”¨äºé‡ç½®æˆ–æ¸…ç†ï¼‰
         /// </summary>
         public static void ClearBreathingState(string personaDefName)
         {
@@ -707,7 +707,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ? Çå³ıËùÓĞºôÎü×´Ì¬
+        /// ? æ¸…é™¤æ‰€æœ‰å‘¼å¸çŠ¶æ€
         /// </summary>
         public static void ClearAllBreathingStates()
         {
@@ -715,7 +715,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ? v1.6.30: ¸ĞÇé¶¯»­²ÎÊı
+        /// ? v1.6.30: æ„Ÿæƒ…åŠ¨ç”»å‚æ•°
         /// </summary>
         public class EmotionAnimationParams
         {
@@ -740,59 +740,59 @@ namespace TheSecondSeat.PersonaGeneration
             }
         }
         
-        // ? v1.6.30: ¸ĞÇéÇı¶¯¶¯»­²ÎÊıÅäÖÃ
+        // ? v1.6.30: æ„Ÿæƒ…é©±åŠ¨åŠ¨ç”»å‚æ•°é…ç½®
         private static readonly Dictionary<ExpressionType, EmotionAnimationParams> emotionAnimationParams = new Dictionary<ExpressionType, EmotionAnimationParams>
         {
-            // ÖĞĞÔ£ºÕı³£¶¯»­
+            // ä¸­æ€§ï¼šæ­£å¸¸åŠ¨ç”»
             { ExpressionType.Neutral, new EmotionAnimationParams(
                 blinkIntervalMin: 3.0f, blinkIntervalMax: 6.0f,
                 breathingSpeed: 1.0f, breathingAmplitude: 1.0f,
                 defaultMouthShape: "opened_mouth"
             )},
             
-            // ¿ªĞÄ£ºÕ£ÑÛÕı³££¬ºôÎüÇá¿ì£¬Î¢Ğ¦
+            // å¼€å¿ƒï¼šçœ¨çœ¼æ­£å¸¸ï¼Œå‘¼å¸è½»å¿«ï¼Œå¾®ç¬‘
             { ExpressionType.Happy, new EmotionAnimationParams(
                 blinkIntervalMin: 2.5f, blinkIntervalMax: 5.0f,
                 breathingSpeed: 1.2f, breathingAmplitude: 0.8f,
                 defaultMouthShape: "larger_mouth"
             )},
             
-            // ¾ªÑÈ£ºÕ£ÑÛÆµ·±£¬ºôÎü¼Ó¿ì£¬Î¢ÕÅ×ì
+            // æƒŠè®¶ï¼šçœ¨çœ¼é¢‘ç¹ï¼Œå‘¼å¸åŠ å¿«ï¼Œå¾®å¼ å˜´
             { ExpressionType.Surprised, new EmotionAnimationParams(
                 blinkIntervalMin: 1.5f, blinkIntervalMax: 3.0f,
                 breathingSpeed: 1.5f, breathingAmplitude: 1.2f,
                 defaultMouthShape: "larger_mouth"
             )},
             
-            // ±¯ÉË£ºÕ£ÑÛ»ºÂı£¬ºôÎüÉî³Á£¬×ì½ÇÏÂ´¹
+            // æ‚²ä¼¤ï¼šçœ¨çœ¼ç¼“æ…¢ï¼Œå‘¼å¸æ·±æ²‰ï¼Œå˜´è§’ä¸‹å‚
             { ExpressionType.Sad, new EmotionAnimationParams(
                 blinkIntervalMin: 4.0f, blinkIntervalMax: 7.0f,
                 breathingSpeed: 0.7f, breathingAmplitude: 1.3f,
                 defaultMouthShape: "sad_mouth"
             )},
             
-            // ·ßÅ­£ºÕ£ÑÛÂı£¬ºôÎü¼±´Ù£¬½ô±Õ×ì°Í
+            // æ„¤æ€’ï¼šçœ¨çœ¼æ…¢ï¼Œå‘¼å¸æ€¥ä¿ƒï¼Œç´§é—­å˜´å·´
             { ExpressionType.Angry, new EmotionAnimationParams(
                 blinkIntervalMin: 4.0f, blinkIntervalMax: 8.0f,
                 breathingSpeed: 1.3f, breathingAmplitude: 1.1f,
                 defaultMouthShape: "angry_mouth"
             )},
             
-            // ÒÉ»ó£ºÕ£ÑÛÕı³££¬ºôÎüÕı³££¬Î¢ÕÅ×ì
+            // ç–‘æƒ‘ï¼šçœ¨çœ¼æ­£å¸¸ï¼Œå‘¼å¸æ­£å¸¸ï¼Œå¾®å¼ å˜´
             { ExpressionType.Confused, new EmotionAnimationParams(
                 blinkIntervalMin: 2.0f, blinkIntervalMax: 4.0f,
                 breathingSpeed: 1.0f, breathingAmplitude: 1.0f,
                 defaultMouthShape: "small_mouth"
             )},
             
-            // µÃÒâ£ºÕ£ÑÛÂı£¬ºôÎüÇá¿ì£¬Î¢Ğ¦
+            // å¾—æ„ï¼šçœ¨çœ¼æ…¢ï¼Œå‘¼å¸è½»å¿«ï¼Œå¾®ç¬‘
             { ExpressionType.Smug, new EmotionAnimationParams(
                 blinkIntervalMin: 3.5f, blinkIntervalMax: 6.5f,
                 breathingSpeed: 0.9f, breathingAmplitude: 0.9f,
                 defaultMouthShape: "small1_mouth"
             )},
             
-            // º¦Ğß£ºÕ£ÑÛÆµ·±£¬ºôÎü¼Ó¿ì£¬±Õ×ì
+            // å®³ç¾ï¼šçœ¨çœ¼é¢‘ç¹ï¼Œå‘¼å¸åŠ å¿«ï¼Œé—­å˜´
             { ExpressionType.Shy, new EmotionAnimationParams(
                 blinkIntervalMin: 2.0f, blinkIntervalMax: 4.0f,
                 breathingSpeed: 1.1f, breathingAmplitude: 0.9f,
@@ -801,10 +801,10 @@ namespace TheSecondSeat.PersonaGeneration
         };
         
         /// <summary>
-        /// ? v1.6.30: »ñÈ¡¸ĞÇé¶¯»­²ÎÊı
+        /// ? v1.6.30: è·å–æ„Ÿæƒ…åŠ¨ç”»å‚æ•°
         /// </summary>
-        /// <param name="expression">±íÇéÀàĞÍ</param>
-        /// <returns>¶¯»­²ÎÊı</returns>
+        /// <param name="expression">è¡¨æƒ…ç±»å‹</param>
+        /// <returns>åŠ¨ç”»å‚æ•°</returns>
         public static EmotionAnimationParams GetEmotionAnimationParams(ExpressionType expression)
         {
             if (emotionAnimationParams.TryGetValue(expression, out var params_))
@@ -812,23 +812,23 @@ namespace TheSecondSeat.PersonaGeneration
                 return params_;
             }
             
-            // Ä¬ÈÏ²ÎÊı£¨ÖĞĞÔ£©
+            // é»˜è®¤å‚æ•°ï¼ˆä¸­æ€§ï¼‰
             return emotionAnimationParams[ExpressionType.Neutral];
         }
         
         /// <summary>
-        /// ? v1.6.30: Ó¦ÓÃ¸ĞÇéÇı¶¯¶¯»­£¨×Ô¶¯µ÷ÕûËùÓĞ¶¯»­²ÎÊı£©
+        /// ? v1.6.30: åº”ç”¨æ„Ÿæƒ…é©±åŠ¨åŠ¨ç”»ï¼ˆè‡ªåŠ¨è°ƒæ•´æ‰€æœ‰åŠ¨ç”»å‚æ•°ï¼‰
         /// </summary>
-        /// <param name="personaDefName">ÈË¸ñ DefName</param>
+        /// <param name="personaDefName">äººæ ¼ DefName</param>
         public static void ApplyEmotionDrivenAnimation(string personaDefName)
         {
             var state = GetExpressionState(personaDefName);
             var animParams = GetEmotionAnimationParams(state.CurrentExpression);
             
-            // 1. µ÷ÕûÕ£ÑÛÆµÂÊ
+            // 1. è°ƒæ•´çœ¨çœ¼é¢‘ç‡
             BlinkAnimationSystem.SetBlinkInterval(personaDefName, animParams.BlinkIntervalMin, animParams.BlinkIntervalMax);
             
-            // 2. µ÷ÕûºôÎü¶¯»­
+            // 2. è°ƒæ•´å‘¼å¸åŠ¨ç”»
             AdjustBreathingByEmotion(personaDefName, state.CurrentExpression);
         }
     }

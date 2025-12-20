@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Verse;
@@ -11,43 +11,43 @@ namespace TheSecondSeat.Narrator
 {
     /// <summary>
     /// Manages the AI narrator's favorability and state
-    /// ? ºÃ¸Ğ¶È·¶Î§£º-1000 (Ô÷ºŞ) µ½ +1000 (°®Ä½/»êÖ®ÓÑ/Ö÷)
-    /// ? ÆğÊ¼Î»ÖÃ£º0 (Àäµ­)
+    /// ? å¥½æ„Ÿåº¦èŒƒå›´ï¼š-1000 (æ†æ¨) åˆ° +1000 (çˆ±æ…•/é­‚ä¹‹å‹/ä¸»)
+    /// ? èµ·å§‹ä½ç½®ï¼š0 (å†·æ·¡)
     /// </summary>
     public class NarratorManager : GameComponent
     {
-        // ? ºÃ¸Ğ¶ÈÏµÍ³±äÁ¿
-        private float favorability = 0f; // -1000 (³ğºŞ) µ½ +1000 (Ö¿°®/Áé»ê°ó¶¨/Æõ)
+        // ? å¥½æ„Ÿåº¦ç³»ç»Ÿå˜é‡
+        private float favorability = 0f; // -1000 (ä»‡æ¨) åˆ° +1000 (æŒšçˆ±/çµé­‚ç»‘å®š/å¥‘)
         private List<FavorabilityEvent> recentEvents = new List<FavorabilityEvent>();
         private const int MaxRecentEvents = 20;
 
         // Storyteller agent
         private StorytellerAgent? storytellerAgent;
 
-        // µ±Ç°ÈË¸ñÏà¹Ø
+        // å½“å‰äººæ ¼ç›¸å…³
         private NarratorPersonaDef? currentPersonaDef;
         private PersonaAnalysisResult? currentAnalysis;
         
-        // ? ĞÂÔö£ºÓÃÓÚ´æµµ±£´æµÄÈË¸ñ defName
+        // ? æ–°å¢ï¼šç”¨äºå­˜æ¡£ä¿å­˜çš„äººæ ¼ defName
         private string savedPersonaDefName = "Cassandra_Classic";
         
-        // ? ĞÂÔö£º×Ô¶¯ÎÊºò±ê¼Ç
+        // ? æ–°å¢ï¼šè‡ªåŠ¨é—®å€™æ ‡è®°
         private bool hasGreetedThisSession = false;
         private int ticksSinceLoad = 0;
-        private const int GreetingDelayTicks = 60; // 1ÃëºóÎÊºò£¨60 ticks£©
+        private const int GreetingDelayTicks = 60; // 1ç§’åé—®å€™ï¼ˆ60 ticksï¼‰
 
         public float Favorability => favorability;
         public List<FavorabilityEvent> RecentEvents => recentEvents;
 
         public NarratorManager(Game game) : base()
         {
-            // ? ³õÊ¼ºÃ¸Ğ¶ÈÎª 0£¨Àäµ­£©
+            // ? åˆå§‹å¥½æ„Ÿåº¦ä¸º 0ï¼ˆå†·æ·¡ï¼‰
             favorability = 0f;
             InitializeDefaultPersona();
         }
 
         /// <summary>
-        /// ³õÊ¼»¯Ä¬ÈÏÈË¸ñ£¨Cassandra Classic£©
+        /// åˆå§‹åŒ–é»˜è®¤äººæ ¼ï¼ˆCassandra Classicï¼‰
         /// </summary>
         private void InitializeDefaultPersona()
         {
@@ -59,19 +59,19 @@ namespace TheSecondSeat.Narrator
             else
             {
                 storytellerAgent = new StorytellerAgent();
-                Log.Warning("[NarratorManager] Cassandra_Classic ÈË¸ñ¶¨ÒåÎ´ÕÒµ½£¬Ê¹ÓÃÄ¬ÈÏÅäÖÃ");
+                Log.Warning("[NarratorManager] Cassandra_Classic äººæ ¼å®šä¹‰æœªæ‰¾åˆ°ï¼Œä½¿ç”¨é»˜è®¤é…ç½®");
             }
         }
 
         /// <summary>
-        /// ¼ÓÔØÖ¸¶¨ÈË¸ñ
+        /// åŠ è½½æŒ‡å®šäººæ ¼
         /// </summary>
         public void LoadPersona(NarratorPersonaDef personaDef)
         {
             currentPersonaDef = personaDef;
             currentAnalysis = PersonaAnalyzer.AnalyzePersonaDef(personaDef);
             
-            // ? ±£´æ defName ÓÃÓÚ´æµµ
+            // ? ä¿å­˜ defName ç”¨äºå­˜æ¡£
             savedPersonaDefName = personaDef.defName;
             
             if (storytellerAgent == null)
@@ -82,30 +82,30 @@ namespace TheSecondSeat.Narrator
             storytellerAgent.name = personaDef.narratorName;
             storytellerAgent.primaryTrait = currentAnalysis.SuggestedPersonality ?? PersonalityTrait.Strategic;
             
-            // ¸´ÖÆ¶Ô»°·ç¸ñ´ÓÈË¸ñ·ÖÎö½á¹û
+            // å¤åˆ¶å¯¹è¯é£æ ¼ä»äººæ ¼åˆ†æç»“æœ
             if (currentAnalysis.DialogueStyle != null)
             {
                 storytellerAgent.dialogueStyle = currentAnalysis.DialogueStyle;
             }
             
-            // ? ÉèÖÃ³õÊ¼ºÃ¸Ğ¶È£¨-500 ~ 500£©
+            // ? è®¾ç½®åˆå§‹å¥½æ„Ÿåº¦ï¼ˆ-500 ~ 500ï¼‰
             if (personaDef.baseAffinityBias != 0f)
             {
                 favorability = personaDef.baseAffinityBias * 500f;
                 
-                // ? ×ª»»µ½ StorytellerAgent µÄ -100~100 ·¶Î§
+                // ? è½¬æ¢åˆ° StorytellerAgent çš„ -100~100 èŒƒå›´
                 float normalizedAffinity = favorability / 10f;
                 storytellerAgent.affinity = normalizedAffinity;
             }
             
-            // ? **¹Ø¼üĞŞ¸´**£ºÁ¢¼´¸ù¾İºÃ¸Ğ¶Èµ÷Õû¶Ô»°·ç¸ñ
+            // ? **å…³é”®ä¿®å¤**ï¼šç«‹å³æ ¹æ®å¥½æ„Ÿåº¦è°ƒæ•´å¯¹è¯é£æ ¼
             storytellerAgent.AdjustDialogueStyleByAffinity();
 
-            Log.Message($"[NarratorManager] ÒÑ¼ÓÔØÈË¸ñ: {personaDef.narratorName} ({storytellerAgent.primaryTrait}), ºÃ¸Ğ¶È: {favorability:F0}, ¶Ô»°·ç¸ñÒÑµ÷Õû");
+            Log.Message($"[NarratorManager] å·²åŠ è½½äººæ ¼: {personaDef.narratorName} ({storytellerAgent.primaryTrait}), å¥½æ„Ÿåº¦: {favorability:F0}, å¯¹è¯é£æ ¼å·²è°ƒæ•´");
         }
 
         /// <summary>
-        /// »ñÈ¡ËùÓĞ¿ÉÓÃµÄÈË¸ñ¶¨Òå
+        /// è·å–æ‰€æœ‰å¯ç”¨çš„äººæ ¼å®šä¹‰
         /// </summary>
         public static List<NarratorPersonaDef> GetAllPersonas()
         {
@@ -113,7 +113,7 @@ namespace TheSecondSeat.Narrator
         }
 
         /// <summary>
-        /// ÇĞ»»ÈË¸ñ
+        /// åˆ‡æ¢äººæ ¼
         /// </summary>
         public void SwitchPersona(string defName)
         {
@@ -121,16 +121,16 @@ namespace TheSecondSeat.Narrator
             if (personaDef != null)
             {
                 LoadPersona(personaDef);
-                Messages.Message($"ĞğÊÂÕßÒÑÇĞ»»Îª£º{personaDef.narratorName}", MessageTypeDefOf.PositiveEvent);
+                Messages.Message($"å™äº‹è€…å·²åˆ‡æ¢ä¸ºï¼š{personaDef.narratorName}", MessageTypeDefOf.PositiveEvent);
             }
             else
             {
-                Log.Error($"[NarratorManager] Î´ÕÒµ½ÈË¸ñ¶¨Òå: {defName}");
+                Log.Error($"[NarratorManager] æœªæ‰¾åˆ°äººæ ¼å®šä¹‰: {defName}");
             }
         }
 
         /// <summary>
-        /// ? ĞŞ¸ÄºÃ¸Ğ¶È£¨-1000 µ½ +1000£©
+        /// ? ä¿®æ”¹å¥½æ„Ÿåº¦ï¼ˆ-1000 åˆ° +1000ï¼‰
         /// </summary>
         public void ModifyFavorability(float amount, string reason)
         {
@@ -150,10 +150,10 @@ namespace TheSecondSeat.Narrator
                 recentEvents.RemoveAt(0);
             }
 
-            // ? ¸üĞÂ StorytellerAgent£¨×ª»»µ½ -100~100 ·¶Î§£©
+            // ? æ›´æ–° StorytellerAgentï¼ˆè½¬æ¢åˆ° -100~100 èŒƒå›´ï¼‰
             if (storytellerAgent != null)
             {
-                float normalizedAmount = amount / 10f; // -1000~1000 ¡ú -100~100
+                float normalizedAmount = amount / 10f; // -1000~1000 â†’ -100~100
                 storytellerAgent.ModifyAffinity(normalizedAmount, reason);
             }
 
@@ -172,26 +172,26 @@ namespace TheSecondSeat.Narrator
         }
 
         /// <summary>
-        /// ? ÖØĞÂ¶¨ÒåºÃ¸Ğ¶ÈµÈ¼¶£¨ÒÆ³ı"ÖĞÁ¢"£©
+        /// ? é‡æ–°å®šä¹‰å¥½æ„Ÿåº¦ç­‰çº§ï¼ˆç§»é™¤"ä¸­ç«‹"ï¼‰
         /// </summary>
         public AffinityTier CurrentTier
         {
             get
             {
-                if (favorability >= 850f) return AffinityTier.SoulBound;      // »êÖ®ÓÑ/Ö÷ (850~1000)
-                if (favorability >= 600f) return AffinityTier.Adoration;      // °®Ä½ (600~849)
-                if (favorability >= 300f) return AffinityTier.Devoted;        // ÇãĞÄ (300~599)
-                if (favorability >= 100f) return AffinityTier.Warm;           // ÎÂÅ¯ (100~299)
-                if (favorability >= -100f) return AffinityTier.Indifferent;   // Àäµ­ (-100~99)
-                if (favorability >= -400f) return AffinityTier.Cold;          // ÊèÔ¶ (-400~-101)
-                if (favorability >= -700f) return AffinityTier.Hostile;       // µĞÒâ (-700~-401)
-                return AffinityTier.Hatred;                                   // Ô÷ºŞ (-1000~-701)
+                if (favorability >= 850f) return AffinityTier.SoulBound;      // é­‚ä¹‹å‹/ä¸» (850~1000)
+                if (favorability >= 600f) return AffinityTier.Adoration;      // çˆ±æ…• (600~849)
+                if (favorability >= 300f) return AffinityTier.Devoted;        // å€¾å¿ƒ (300~599)
+                if (favorability >= 100f) return AffinityTier.Warm;           // æ¸©æš– (100~299)
+                if (favorability >= -100f) return AffinityTier.Indifferent;   // å†·æ·¡ (-100~99)
+                if (favorability >= -400f) return AffinityTier.Cold;          // ç–è¿œ (-400~-101)
+                if (favorability >= -700f) return AffinityTier.Hostile;       // æ•Œæ„ (-700~-401)
+                return AffinityTier.Hatred;                                   // æ†æ¨ (-1000~-701)
             }
         }
 
         /// <summary>
-        /// »ñÈ¡¶¯Ì¬ System Prompt£¨»ùÓÚµ±Ç°ÈË¸ñ£©
-        /// ? Ö§³Ö¾«¼òÄ£Ê½ÒÔ¼Ó¿ìÏìÓ¦ËÙ¶È
+        /// è·å–åŠ¨æ€ System Promptï¼ˆåŸºäºå½“å‰äººæ ¼ï¼‰
+        /// ? æ”¯æŒç²¾ç®€æ¨¡å¼ä»¥åŠ å¿«å“åº”é€Ÿåº¦
         /// </summary>
         public string GetDynamicSystemPrompt()
         {
@@ -200,13 +200,13 @@ namespace TheSecondSeat.Narrator
                 return GetFallbackSystemPrompt();
             }
 
-            // ? »ñÈ¡ÉèÖÃ
+            // ? è·å–è®¾ç½®
             var modSettings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?
                 .GetSettings<Settings.TheSecondSeatSettings>();
             var difficultyMode = modSettings?.difficultyMode ?? PersonaGeneration.AIDifficultyMode.Assistant;
-            bool useCompact = modSettings?.useCompactPrompt ?? true;  // Ä¬ÈÏÊ¹ÓÃ¾«¼ò°æ
+            bool useCompact = modSettings?.useCompactPrompt ?? true;  // é»˜è®¤ä½¿ç”¨ç²¾ç®€ç‰ˆ
 
-            // ? ¸ù¾İÉèÖÃÑ¡Ôñ¾«¼ò°æ»òÍêÕû°æ
+            // ? æ ¹æ®è®¾ç½®é€‰æ‹©ç²¾ç®€ç‰ˆæˆ–å®Œæ•´ç‰ˆ
             if (useCompact)
             {
                 return SystemPromptGenerator.GenerateCompactSystemPrompt(
@@ -228,7 +228,7 @@ namespace TheSecondSeat.Narrator
         }
 
         /// <summary>
-        /// »ñÈ¡½ô´Õ°æ System Prompt£¨½ÚÊ¡ Token£©
+        /// è·å–ç´§å‡‘ç‰ˆ System Promptï¼ˆèŠ‚çœ Tokenï¼‰
         /// </summary>
         public string GetCompactSystemPrompt()
         {
@@ -293,7 +293,7 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
                     storytellerAgent = new StorytellerAgent();
                 }
                 
-                // ? ±£´æÇ°È·±£ defName ÊÇ×îĞÂµÄ
+                // ? ä¿å­˜å‰ç¡®ä¿ defName æ˜¯æœ€æ–°çš„
                 if (currentPersonaDef != null)
                 {
                     savedPersonaDefName = currentPersonaDef.defName;
@@ -306,66 +306,66 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
             {
                 if (storytellerAgent == null)
                 {
-                    Log.Warning("[NarratorManager] storytellerAgent Îª null£¬´´½¨Ä¬ÈÏÊµÀı");
+                    Log.Warning("[NarratorManager] storytellerAgent ä¸º nullï¼Œåˆ›å»ºé»˜è®¤å®ä¾‹");
                     storytellerAgent = new StorytellerAgent();
                 }
             }
             
-            // ? Ê¹ÓÃ³ÉÔ±±äÁ¿±£´æÈË¸ñ defName
+            // ? ä½¿ç”¨æˆå‘˜å˜é‡ä¿å­˜äººæ ¼ defName
             Scribe_Values.Look(ref savedPersonaDefName, "currentPersonaDefName", "Cassandra_Classic");
             
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
-                // ¼ÓÔØÊ±£¬¸ù¾İ±£´æµÄ defName »Ö¸´ÈË¸ñ
-                Log.Message($"[NarratorManager] ÕıÔÚ¼ÓÔØÈË¸ñ: {savedPersonaDefName}");
+                // åŠ è½½æ—¶ï¼Œæ ¹æ®ä¿å­˜çš„ defName æ¢å¤äººæ ¼
+                Log.Message($"[NarratorManager] æ­£åœ¨åŠ è½½äººæ ¼: {savedPersonaDefName}");
                 
                 if (!string.IsNullOrEmpty(savedPersonaDefName))
                 {
                     var personaDef = DefDatabase<NarratorPersonaDef>.GetNamedSilentFail(savedPersonaDefName);
                     if (personaDef != null)
                     {
-                        // ? Ö±½Ó¼ÓÔØ£¬²»Ê¹ÓÃ LongEventHandler£¨¿ÉÄÜµ¼ÖÂÊ±»úÎÊÌâ£©
+                        // ? ç›´æ¥åŠ è½½ï¼Œä¸ä½¿ç”¨ LongEventHandlerï¼ˆå¯èƒ½å¯¼è‡´æ—¶æœºé—®é¢˜ï¼‰
                         LoadPersona(personaDef);
-                        Log.Message($"[NarratorManager] ? ³É¹¦»Ö¸´ÈË¸ñ: {personaDef.narratorName}");
+                        Log.Message($"[NarratorManager] ? æˆåŠŸæ¢å¤äººæ ¼: {personaDef.narratorName}");
                     }
                     else
                     {
-                        Log.Warning($"[NarratorManager] ? Î´ÕÒµ½ÈË¸ñ {savedPersonaDefName}£¬Ê¹ÓÃÄ¬ÈÏÈË¸ñ");
+                        Log.Warning($"[NarratorManager] ? æœªæ‰¾åˆ°äººæ ¼ {savedPersonaDefName}ï¼Œä½¿ç”¨é»˜è®¤äººæ ¼");
                         InitializeDefaultPersona();
                     }
                 }
                 else
                 {
-                    Log.Warning("[NarratorManager] savedPersonaDefName Îª¿Õ£¬Ê¹ÓÃÄ¬ÈÏÈË¸ñ");
+                    Log.Warning("[NarratorManager] savedPersonaDefName ä¸ºç©ºï¼Œä½¿ç”¨é»˜è®¤äººæ ¼");
                     InitializeDefaultPersona();
                 }
                 
-                // ? **¹Ø¼üĞŞ¸´**£º¼ÓÔØ´æµµºó£¬¸ù¾İºÃ¸Ğ¶Èµ÷Õû¶Ô»°·ç¸ñ
+                // ? **å…³é”®ä¿®å¤**ï¼šåŠ è½½å­˜æ¡£åï¼Œæ ¹æ®å¥½æ„Ÿåº¦è°ƒæ•´å¯¹è¯é£æ ¼
                 if (storytellerAgent != null)
                 {
                     storytellerAgent.AdjustDialogueStyleByAffinity();
                 }
                 
-                // ? ÖØÖÃ×Ô¶¯ÎÊºò±ê¼Ç£¬ÔÊĞí×Ô¶¯ÎÊºò
+                // ? é‡ç½®è‡ªåŠ¨é—®å€™æ ‡è®°ï¼Œå…è®¸è‡ªåŠ¨é—®å€™
                 hasGreetedThisSession = false;
                 ticksSinceLoad = 0;
             }
         }
         
         /// <summary>
-        /// ? ĞÂÔö£ºGameComponent Tick - ÓÃÓÚ×Ô¶¯ÎÊºòºÍ±íÇéÏµÍ³¸üĞÂ
+        /// ? æ–°å¢ï¼šGameComponent Tick - ç”¨äºè‡ªåŠ¨é—®å€™å’Œè¡¨æƒ…ç³»ç»Ÿæ›´æ–°
         /// </summary>
         public override void GameComponentTick()
         {
             base.GameComponentTick();
             
-            // ? ĞÂÔö£º¸üĞÂµ±Ç°ÈË¸ñµÄ±íÇé¹ı¶É
+            // ? æ–°å¢ï¼šæ›´æ–°å½“å‰äººæ ¼çš„è¡¨æƒ…è¿‡æ¸¡
             if (currentPersonaDef != null)
             {
                 ExpressionSystem.UpdateTransition(currentPersonaDef.defName);
             }
             
-            // ¼ì²éÊÇ·ñĞèÒª×Ô¶¯ÎÊºò
+            // æ£€æŸ¥æ˜¯å¦éœ€è¦è‡ªåŠ¨é—®å€™
             if (!hasGreetedThisSession && Current.ProgramState == ProgramState.Playing)
             {
                 ticksSinceLoad++;
@@ -379,7 +379,7 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
         }
         
         /// <summary>
-        /// ? ´¥·¢×Ô¶¯ÎÊºò£¨´øÈÕÖ¾´íÎó¼ì²é£©
+        /// ? è§¦å‘è‡ªåŠ¨é—®å€™ï¼ˆå¸¦æ—¥å¿—é”™è¯¯æ£€æŸ¥ï¼‰
         /// </summary>
         private void TriggerAutoGreeting()
         {
@@ -388,28 +388,28 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
                 var controller = Current.Game?.GetComponent<Core.NarratorController>();
                 if (controller != null && !controller.IsProcessing)
                 {
-                    // ¹¹½¨ÎÊºòÏûÏ¢£¨´øÊ±¼äÉÏÏÂÎÄ£©
+                    // æ„å»ºé—®å€™æ¶ˆæ¯ï¼ˆå¸¦æ—¶é—´ä¸Šä¸‹æ–‡ï¼‰
                     DateTime now = DateTime.Now;
                     
-                    // ? ĞÂÔö£º¼ì²éÈÕÖ¾´íÎó
+                    // ? æ–°å¢ï¼šæ£€æŸ¥æ—¥å¿—é”™è¯¯
                     var logErrors = CheckRecentLogErrors();
                     
                     string greetingContext = BuildGreetingContext(now, logErrors);
                     
-                    Log.Message($"[NarratorManager] ´¥·¢×Ô¶¯ÎÊºò£¨Ê±¼ä£º{now:HH:mm}£¬´íÎóÊı£º{logErrors.Count}£©");
+                    Log.Message($"[NarratorManager] è§¦å‘è‡ªåŠ¨é—®å€™ï¼ˆæ—¶é—´ï¼š{now:HH:mm}ï¼Œé”™è¯¯æ•°ï¼š{logErrors.Count}ï¼‰");
                     
-                    // ´¥·¢ AI ÎÊºò
+                    // è§¦å‘ AI é—®å€™
                     controller.TriggerNarratorUpdate(greetingContext);
                 }
             }
             catch (Exception ex)
             {
-                Log.Error($"[NarratorManager] ×Ô¶¯ÎÊºòÊ§°Ü: {ex.Message}");
+                Log.Error($"[NarratorManager] è‡ªåŠ¨é—®å€™å¤±è´¥: {ex.Message}");
             }
         }
         
         /// <summary>
-        /// ? ĞÂÔö£º¼ì²é×î½üµÄÈÕÖ¾´íÎó
+        /// ? æ–°å¢ï¼šæ£€æŸ¥æœ€è¿‘çš„æ—¥å¿—é”™è¯¯
         /// </summary>
         private List<LogError> CheckRecentLogErrors()
         {
@@ -417,14 +417,14 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
             
             try
             {
-                // Ê¹ÓÃ·´Éä»ñÈ¡ RimWorld ÈÕÖ¾ÏûÏ¢¶ÓÁĞ
+                // ä½¿ç”¨åå°„è·å– RimWorld æ—¥å¿—æ¶ˆæ¯é˜Ÿåˆ—
                 var logType = typeof(Log);
                 var messageQueueField = logType.GetField("messageQueue", 
                     System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
                 
                 if (messageQueueField == null)
                 {
-                    Log.Warning("[NarratorManager] ÎŞ·¨·ÃÎÊÈÕÖ¾¶ÓÁĞ");
+                    Log.Warning("[NarratorManager] æ— æ³•è®¿é—®æ—¥å¿—é˜Ÿåˆ—");
                     return errors;
                 }
                 
@@ -432,11 +432,11 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
                 if (messageQueue == null)
                     return errors;
                 
-                // ³¢ÊÔ»ñÈ¡ÏûÏ¢ÁĞ±í
+                // å°è¯•è·å–æ¶ˆæ¯åˆ—è¡¨
                 var messagesProperty = messageQueue.GetType().GetProperty("Messages");
                 if (messagesProperty == null)
                 {
-                    // ³¢ÊÔÆäËû·½Ê½£ºÖ±½Ó×ªÎª IEnumerable
+                    // å°è¯•å…¶ä»–æ–¹å¼ï¼šç›´æ¥è½¬ä¸º IEnumerable
                     var enumerableQueue = messageQueue as System.Collections.IEnumerable;
                     if (enumerableQueue == null)
                         return errors;
@@ -465,21 +465,21 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
             }
             catch (Exception ex)
             {
-                Log.Warning($"[NarratorManager] ¼ì²éÈÕÖ¾´íÎóÊ±³ö´í: {ex.Message}");
+                Log.Warning($"[NarratorManager] æ£€æŸ¥æ—¥å¿—é”™è¯¯æ—¶å‡ºé”™: {ex.Message}");
             }
             
             return errors;
         }
         
         /// <summary>
-        /// ? ´¦ÀíÈÕÖ¾ÏûÏ¢ÁĞ±í
+        /// ? å¤„ç†æ—¥å¿—æ¶ˆæ¯åˆ—è¡¨
         /// </summary>
         private void ProcessLogMessages(List<object> logMessages, List<LogError> errors)
         {
             if (logMessages.Count == 0)
                 return;
             
-            // Ö»¼ì²é×î½üµÄ 50 ÌõÈÕÖ¾
+            // åªæ£€æŸ¥æœ€è¿‘çš„ 50 æ¡æ—¥å¿—
             int startIndex = Math.Max(0, logMessages.Count - 50);
             
             for (int i = startIndex; i < logMessages.Count; i++)
@@ -487,12 +487,12 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
                 var msg = logMessages[i];
                 if (msg == null) continue;
                 
-                // Ê¹ÓÃ·´Éä»ñÈ¡ÏûÏ¢ÀàĞÍºÍÄÚÈİ
+                // ä½¿ç”¨åå°„è·å–æ¶ˆæ¯ç±»å‹å’Œå†…å®¹
                 var msgType = msg.GetType();
                 var typeProperty = msgType.GetProperty("type") ?? msgType.GetField("type")?.GetValue(msg) as System.Reflection.PropertyInfo;
                 var textProperty = msgType.GetProperty("text") ?? msgType.GetField("text")?.GetValue(msg) as System.Reflection.PropertyInfo;
                 
-                // ³¢ÊÔÖ±½Ó·ÃÎÊ×Ö¶Î
+                // å°è¯•ç›´æ¥è®¿é—®å­—æ®µ
                 var typeField = msgType.GetField("type");
                 var textField = msgType.GetField("text");
                 var stackTraceField = msgType.GetField("stackTrace");
@@ -514,17 +514,17 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
                 if (stackTraceField != null)
                     stackTraceValue = stackTraceField.GetValue(msg) as string;
                 
-                // ¼ì²éÊÇ·ñÎª´íÎóÀàĞÍ
+                // æ£€æŸ¥æ˜¯å¦ä¸ºé”™è¯¯ç±»å‹
                 bool isError = false;
                 if (typeValue != null)
                 {
                     string typeStr = typeValue.ToString() ?? "";
-                    isError = typeStr.Contains("Error") || typeStr == "2"; // LogMessageType.Error µÄÖµ
+                    isError = typeStr.Contains("Error") || typeStr == "2"; // LogMessageType.Error çš„å€¼
                 }
                 
                 if (isError && !string.IsNullOrEmpty(textValue))
                 {
-                    // ÅÅ³ıÒ»Ğ©³£¼ûµÄÎŞº¦´íÎó
+                    // æ’é™¤ä¸€äº›å¸¸è§çš„æ— å®³é”™è¯¯
                     if (ShouldIgnoreError(textValue))
                         continue;
                     
@@ -535,7 +535,7 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
                         IsException = textValue.Contains("Exception") || textValue.Contains("NullReference")
                     });
                     
-                    // ×î¶àÊÕ¼¯ 5 ¸ö´íÎó
+                    // æœ€å¤šæ”¶é›† 5 ä¸ªé”™è¯¯
                     if (errors.Count >= 5)
                         break;
                 }
@@ -543,19 +543,19 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
         }
         
         /// <summary>
-        /// ? ÅĞ¶ÏÊÇ·ñÓ¦¸ÃºöÂÔÄ³Ğ©³£¼ûÎŞº¦´íÎó
+        /// ? åˆ¤æ–­æ˜¯å¦åº”è¯¥å¿½ç•¥æŸäº›å¸¸è§æ— å®³é”™è¯¯
         /// </summary>
         private bool ShouldIgnoreError(string errorText)
         {
-            // ºöÂÔµÄ´íÎóÄ£Ê½
+            // å¿½ç•¥çš„é”™è¯¯æ¨¡å¼
             string[] ignorePatterns = new[]
             {
-                "MissingMethodException: Default constructor",  // ³£¼ûµÄMod¼æÈİÎÊÌâ
-                "Shader",  // ×ÅÉ«Æ÷¾¯¸æ
-                "ÒôÆµ",
+                "MissingMethodException: Default constructor",  // å¸¸è§çš„Modå…¼å®¹é—®é¢˜
+                "Shader",  // ç€è‰²å™¨è­¦å‘Š
+                "éŸ³é¢‘",
                 "Audio",
-                "Font",  // ×ÖÌåÎÊÌâ
-                "Could not load UnityEngine.Texture2D",  // ÎÆÀí¼ÓÔØÎÊÌâ£¨Í¨³£ÎŞº¦£©
+                "Font",  // å­—ä½“é—®é¢˜
+                "Could not load UnityEngine.Texture2D",  // çº¹ç†åŠ è½½é—®é¢˜ï¼ˆé€šå¸¸æ— å®³ï¼‰
             };
             
             foreach (var pattern in ignorePatterns)
@@ -568,7 +568,7 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
         }
         
         /// <summary>
-        /// ? ½Ø¶ÏÏûÏ¢³¤¶È
+        /// ? æˆªæ–­æ¶ˆæ¯é•¿åº¦
         /// </summary>
         private string TruncateMessage(string message, int maxLength)
         {
@@ -582,7 +582,7 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
         }
         
         /// <summary>
-        /// ? ¹¹½¨ÎÊºòÉÏÏÂÎÄ£¨´ø´íÎó¼ì²é£©
+        /// ? æ„å»ºé—®å€™ä¸Šä¸‹æ–‡ï¼ˆå¸¦é”™è¯¯æ£€æŸ¥ï¼‰
         /// </summary>
         private string BuildGreetingContext(DateTime now, List<LogError> logErrors)
         {
@@ -590,56 +590,56 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
             string dayOfWeek = now.ToString("dddd", System.Globalization.CultureInfo.GetCultureInfo("zh-CN"));
             bool isWeekend = now.DayOfWeek == DayOfWeek.Saturday || now.DayOfWeek == DayOfWeek.Sunday;
             
-            // ¹¹½¨×ÔÈ»ÓïÑÔµÄÎÊºòÇëÇó
-            var context = "[Íæ¼Ò¸Õ¸Õ¼ÓÔØÁË´æµµ£¬ÇëÖ÷¶¯ÏòÍæ¼Ò´òÕĞºô]\n";
-            context += $"µ±Ç°ÕæÊµÊ±¼ä: {now:yyyyÄêMMÔÂddÈÕ HH:mm} {dayOfWeek}";
-            if (isWeekend) context += "£¨ÖÜÄ©£©";
-            context += $"\nÊ±¶Î: {timePeriod}\n";
+            // æ„å»ºè‡ªç„¶è¯­è¨€çš„é—®å€™è¯·æ±‚
+            var context = "[ç©å®¶åˆšåˆšåŠ è½½äº†å­˜æ¡£ï¼Œè¯·ä¸»åŠ¨å‘ç©å®¶æ‰“æ‹›å‘¼]\n";
+            context += $"å½“å‰çœŸå®æ—¶é—´: {now:yyyyå¹´MMæœˆddæ—¥ HH:mm} {dayOfWeek}";
+            if (isWeekend) context += "ï¼ˆå‘¨æœ«ï¼‰";
+            context += $"\næ—¶æ®µ: {timePeriod}\n";
             
-            // ? ĞÂÔö£ºÈç¹ûÓĞÑÏÖØ´íÎó£¬ÔÚÎÊºòÖĞÌá¼°
+            // ? æ–°å¢ï¼šå¦‚æœæœ‰ä¸¥é‡é”™è¯¯ï¼Œåœ¨é—®å€™ä¸­æåŠ
             if (logErrors.Count > 0)
             {
-                context += "\n?? **¼ì²âµ½ÓÎÏ·ÈÕÖ¾ÖĞ´æÔÚÑÏÖØ´íÎó£¡**\n";
-                context += $"·¢ÏÖ {logErrors.Count} ¸ö´íÎó/Òì³££º\n";
+                context += "\n?? **æ£€æµ‹åˆ°æ¸¸æˆæ—¥å¿—ä¸­å­˜åœ¨ä¸¥é‡é”™è¯¯ï¼**\n";
+                context += $"å‘ç° {logErrors.Count} ä¸ªé”™è¯¯/å¼‚å¸¸ï¼š\n";
                 
                 for (int i = 0; i < logErrors.Count; i++)
                 {
                     var error = logErrors[i];
-                    context += $"\n¡¾´íÎó {i + 1}¡¿\n";
-                    context += $"ÏûÏ¢: {error.Message}\n";
+                    context += $"\nã€é”™è¯¯ {i + 1}ã€‘\n";
+                    context += $"æ¶ˆæ¯: {error.Message}\n";
                     if (!string.IsNullOrEmpty(error.StackTrace))
                     {
-                        context += $"¶ÑÕ»: {error.StackTrace}\n";
+                        context += $"å †æ ˆ: {error.StackTrace}\n";
                     }
                 }
                 
-                context += "\n**ÇëÔÚÎÊºòÍæ¼Òºó£¬Ñ¯ÎÊÍæ¼ÒÊÇ·ñĞèÒª°ïÖú´¦ÀíÕâĞ©´íÎó¡£**\n";
-                context += "Èç¹ûÍæ¼ÒÍ¬Òâ£¬Äã¿ÉÒÔ£º\n";
-                context += "1. ¸ù¾İ´íÎóĞÅÏ¢·ÖÎö¿ÉÄÜµÄÔ­Òò\n";
-                context += "2. Ê¹ÓÃÁªÍøËÑË÷¹¦ÄÜ²éÕÒ½â¾ö·½°¸\n";
-                context += "3. Ìá¹©¾ßÌåµÄĞŞ¸´½¨Òé\n";
+                context += "\n**è¯·åœ¨é—®å€™ç©å®¶åï¼Œè¯¢é—®ç©å®¶æ˜¯å¦éœ€è¦å¸®åŠ©å¤„ç†è¿™äº›é”™è¯¯ã€‚**\n";
+                context += "å¦‚æœç©å®¶åŒæ„ï¼Œä½ å¯ä»¥ï¼š\n";
+                context += "1. æ ¹æ®é”™è¯¯ä¿¡æ¯åˆ†æå¯èƒ½çš„åŸå› \n";
+                context += "2. ä½¿ç”¨è”ç½‘æœç´¢åŠŸèƒ½æŸ¥æ‰¾è§£å†³æ–¹æ¡ˆ\n";
+                context += "3. æä¾›å…·ä½“çš„ä¿®å¤å»ºè®®\n";
             }
             else
             {
-                context += "Çë¸ù¾İµ±Ç°Ê±¼äºÍºÃ¸Ğ¶È£¬ÓÃºÏÊÊµÄÓïÆøÏòÍæ¼ÒÎÊºò¡£¿ÉÒÔÌá¼°Ê±¼ä¡¢¹ØĞÄÍæ¼Ò×´Ì¬¡¢»òÕß¼òµ¥´ò¸öÕĞºô¡£";
+                context += "è¯·æ ¹æ®å½“å‰æ—¶é—´å’Œå¥½æ„Ÿåº¦ï¼Œç”¨åˆé€‚çš„è¯­æ°”å‘ç©å®¶é—®å€™ã€‚å¯ä»¥æåŠæ—¶é—´ã€å…³å¿ƒç©å®¶çŠ¶æ€ã€æˆ–è€…ç®€å•æ‰“ä¸ªæ‹›å‘¼ã€‚";
             }
             
             return context;
         }
         
         /// <summary>
-        /// ? »ñÈ¡Ê±¼ä¶ÎÃèÊö
+        /// ? è·å–æ—¶é—´æ®µæè¿°
         /// </summary>
         private string GetTimePeriod(int hour)
         {
-            if (hour >= 0 && hour < 6) return "ÉîÒ¹";
-            else if (hour >= 6 && hour < 9) return "Çå³¿";
-            else if (hour >= 9 && hour < 12) return "ÉÏÎç";
-            else if (hour >= 12 && hour < 14) return "ÖĞÎç";
-            else if (hour >= 14 && hour < 18) return "ÏÂÎç";
-            else if (hour >= 18 && hour < 20) return "°øÍí";
-            else if (hour >= 20 && hour < 22) return "ÍíÉÏ";
-            else return "ÉîÒ¹";
+            if (hour >= 0 && hour < 6) return "æ·±å¤œ";
+            else if (hour >= 6 && hour < 9) return "æ¸…æ™¨";
+            else if (hour >= 9 && hour < 12) return "ä¸Šåˆ";
+            else if (hour >= 12 && hour < 14) return "ä¸­åˆ";
+            else if (hour >= 14 && hour < 18) return "ä¸‹åˆ";
+            else if (hour >= 18 && hour < 20) return "å‚æ™š";
+            else if (hour >= 20 && hour < 22) return "æ™šä¸Š";
+            else return "æ·±å¤œ";
         }
     }
 
@@ -670,22 +670,22 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
     }
 
     /// <summary>
-    /// ? ÖØĞÂ¶¨ÒåºÃ¸Ğ¶ÈµÈ¼¶£¨ÒÆ³ı"ÖĞÁ¢"£¬¸²¸Ç -1000 µ½ +1000£©
+    /// ? é‡æ–°å®šä¹‰å¥½æ„Ÿåº¦ç­‰çº§ï¼ˆç§»é™¤"ä¸­ç«‹"ï¼Œè¦†ç›– -1000 åˆ° +1000ï¼‰
     /// </summary>
     public enum AffinityTier
     {
-        Hatred,        // Ô÷ºŞ (-1000 ~ -701)
-        Hostile,       // µĞÒâ (-700 ~ -401)
-        Cold,          // ÊèÔ¶ (-400 ~ -101)
-        Indifferent,   // Àäµ­ (-100 ~ 99)  ¡û ÆğÊ¼µã 0
-        Warm,          // ÎÂÅ¯ (100 ~ 299)
-        Devoted,       // ÇãĞÄ (300 ~ 599)
-        Adoration,     // °®Ä½ (600 ~ 849)
-        SoulBound      // »êÖ®ÓÑ/Ö÷ (850 ~ 1000)
+        Hatred,        // æ†æ¨ (-1000 ~ -701)
+        Hostile,       // æ•Œæ„ (-700 ~ -401)
+        Cold,          // ç–è¿œ (-400 ~ -101)
+        Indifferent,   // å†·æ·¡ (-100 ~ 99)  â† èµ·å§‹ç‚¹ 0
+        Warm,          // æ¸©æš– (100 ~ 299)
+        Devoted,       // å€¾å¿ƒ (300 ~ 599)
+        Adoration,     // çˆ±æ…• (600 ~ 849)
+        SoulBound      // é­‚ä¹‹å‹/ä¸» (850 ~ 1000)
     }
     
     /// <summary>
-    /// ? ĞÂÔö£ºÈÕÖ¾´íÎóĞÅÏ¢
+    /// ? æ–°å¢ï¼šæ—¥å¿—é”™è¯¯ä¿¡æ¯
     /// </summary>
     public class LogError
     {

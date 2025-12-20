@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Verse;
@@ -6,7 +6,7 @@ using Verse;
 namespace TheSecondSeat.Emoticons
 {
     /// <summary>
-    /// ±íÇé°ü¹ÜÀíÆ÷ - ¹ÜÀíËùÓĞ¼ÓÔØµÄ±íÇé°ü£¬Ìá¹©²éÑ¯ºÍÑ¡Ôñ¹¦ÄÜ
+    /// è¡¨æƒ…åŒ…ç®¡ç†å™¨ - ç®¡ç†æ‰€æœ‰åŠ è½½çš„è¡¨æƒ…åŒ…ï¼Œæä¾›æŸ¥è¯¢å’Œé€‰æ‹©åŠŸèƒ½
     /// </summary>
     public class EmoticonManager
     {
@@ -23,41 +23,41 @@ namespace TheSecondSeat.Emoticons
             }
         }
 
-        // ËùÓĞ±íÇé°ü
+        // æ‰€æœ‰è¡¨æƒ…åŒ…
         private List<EmoticonData> allEmoticons = new List<EmoticonData>();
 
-        // °´±êÇ©Ë÷Òı
+        // æŒ‰æ ‡ç­¾ç´¢å¼•
         private Dictionary<string, List<EmoticonData>> emoticonsByTag = new Dictionary<string, List<EmoticonData>>();
 
-        // ÊÇ·ñÒÑ³õÊ¼»¯
+        // æ˜¯å¦å·²åˆå§‹åŒ–
         private bool initialized = false;
 
         /// <summary>
-        /// ³õÊ¼»¯±íÇé°ü¹ÜÀíÆ÷
+        /// åˆå§‹åŒ–è¡¨æƒ…åŒ…ç®¡ç†å™¨
         /// </summary>
         public void Initialize()
         {
             if (initialized)
             {
-                Log.Warning("[EmoticonManager] ÒÑ¾­³õÊ¼»¯¹ıÁË");
+                Log.Warning("[EmoticonManager] å·²ç»åˆå§‹åŒ–è¿‡äº†");
                 return;
             }
 
-            Log.Message("[EmoticonManager] ¿ªÊ¼¼ÓÔØ±íÇé°ü...");
+            Log.Message("[EmoticonManager] å¼€å§‹åŠ è½½è¡¨æƒ…åŒ…...");
 
-            // ¼ÓÔØËùÓĞ±íÇé°ü
+            // åŠ è½½æ‰€æœ‰è¡¨æƒ…åŒ…
             allEmoticons = EmoticonLoader.LoadAllEmoticons();
 
-            // ½¨Á¢±êÇ©Ë÷Òı
+            // å»ºç«‹æ ‡ç­¾ç´¢å¼•
             BuildTagIndex();
 
             initialized = true;
 
-            Log.Message($"[EmoticonManager] ³õÊ¼»¯Íê³É£¬¹² {allEmoticons.Count} ¸ö±íÇé°ü£¬{emoticonsByTag.Count} ¸ö±êÇ©");
+            Log.Message($"[EmoticonManager] åˆå§‹åŒ–å®Œæˆï¼Œå…± {allEmoticons.Count} ä¸ªè¡¨æƒ…åŒ…ï¼Œ{emoticonsByTag.Count} ä¸ªæ ‡ç­¾");
         }
 
         /// <summary>
-        /// ½¨Á¢±êÇ©Ë÷Òı
+        /// å»ºç«‹æ ‡ç­¾ç´¢å¼•
         /// </summary>
         private void BuildTagIndex()
         {
@@ -80,7 +80,7 @@ namespace TheSecondSeat.Emoticons
         }
 
         /// <summary>
-        /// ¸ù¾İ±êÇ©»ñÈ¡±íÇé°ü£¨µ¥¸ö£©
+        /// æ ¹æ®æ ‡ç­¾è·å–è¡¨æƒ…åŒ…ï¼ˆå•ä¸ªï¼‰
         /// </summary>
         public EmoticonData GetEmoticonByTag(string tag)
         {
@@ -96,7 +96,7 @@ namespace TheSecondSeat.Emoticons
                 var candidates = emoticonsByTag[normalizedTag];
                 if (candidates.Count > 0)
                 {
-                    // Ëæ»úÑ¡ÔñÒ»¸ö
+                    // éšæœºé€‰æ‹©ä¸€ä¸ª
                     return candidates.RandomElement();
                 }
             }
@@ -105,7 +105,7 @@ namespace TheSecondSeat.Emoticons
         }
 
         /// <summary>
-        /// ¸ù¾İ±êÇ©»ñÈ¡±íÇé°ü£¨ËùÓĞ£©
+        /// æ ¹æ®æ ‡ç­¾è·å–è¡¨æƒ…åŒ…ï¼ˆæ‰€æœ‰ï¼‰
         /// </summary>
         public List<EmoticonData> GetAllEmoticonsByTag(string tag)
         {
@@ -125,7 +125,7 @@ namespace TheSecondSeat.Emoticons
         }
 
         /// <summary>
-        /// ¸ù¾İID»ñÈ¡±íÇé°ü
+        /// æ ¹æ®IDè·å–è¡¨æƒ…åŒ…
         /// </summary>
         public EmoticonData GetEmoticonById(string id)
         {
@@ -138,7 +138,7 @@ namespace TheSecondSeat.Emoticons
         }
 
         /// <summary>
-        /// »ñÈ¡ËùÓĞ±íÇé°ü
+        /// è·å–æ‰€æœ‰è¡¨æƒ…åŒ…
         /// </summary>
         public List<EmoticonData> GetAllEmoticons()
         {
@@ -151,7 +151,7 @@ namespace TheSecondSeat.Emoticons
         }
 
         /// <summary>
-        /// »ñÈ¡ËùÓĞ¿ÉÓÃ±êÇ©
+        /// è·å–æ‰€æœ‰å¯ç”¨æ ‡ç­¾
         /// </summary>
         public List<string> GetAllTags()
         {
@@ -164,7 +164,7 @@ namespace TheSecondSeat.Emoticons
         }
 
         /// <summary>
-        /// »ñÈ¡±íÇé°üÊıÁ¿
+        /// è·å–è¡¨æƒ…åŒ…æ•°é‡
         /// </summary>
         public int GetEmoticonCount()
         {
@@ -177,7 +177,7 @@ namespace TheSecondSeat.Emoticons
         }
 
         /// <summary>
-        /// ¸ù¾İÇé¸Ğ·ÖÎöÑ¡ÔñºÏÊÊµÄ±íÇé°ü
+        /// æ ¹æ®æƒ…æ„Ÿåˆ†æé€‰æ‹©åˆé€‚çš„è¡¨æƒ…åŒ…
         /// </summary>
         public EmoticonData SelectEmoticonBySentiment(string dialogue, float affinity, string mood)
         {
@@ -186,16 +186,16 @@ namespace TheSecondSeat.Emoticons
                 Initialize();
             }
 
-            // Èç¹ûÃ»ÓĞ±íÇé°ü£¬·µ»Ønull
+            // å¦‚æœæ²¡æœ‰è¡¨æƒ…åŒ…ï¼Œè¿”å›null
             if (allEmoticons.Count == 0)
             {
                 return null;
             }
 
-            // ¼òµ¥µÄÇé¸Ğ·ÖÎö
+            // ç®€å•çš„æƒ…æ„Ÿåˆ†æ
             var selectedTags = new List<string>();
 
-            // ¸ù¾İºÃ¸Ğ¶È
+            // æ ¹æ®å¥½æ„Ÿåº¦
             if (affinity >= 60f)
             {
                 selectedTags.AddRange(new[] { "happy", "joy", "love", "affection" });
@@ -217,83 +217,83 @@ namespace TheSecondSeat.Emoticons
                 selectedTags.AddRange(new[] { "angry", "frustrated", "smug" });
             }
 
-            // ¸ù¾İÇéĞ÷
+            // æ ¹æ®æƒ…ç»ª
             if (mood != null)
             {
                 string lowerMood = mood.ToLower();
-                if (lowerMood.Contains("joy") || lowerMood.Contains("Ï²"))
+                if (lowerMood.Contains("joy") || lowerMood.Contains("å–œ"))
                 {
                     selectedTags.Add("happy");
                     selectedTags.Add("joy");
                 }
-                else if (lowerMood.Contains("angry") || lowerMood.Contains("Å­"))
+                else if (lowerMood.Contains("angry") || lowerMood.Contains("æ€’"))
                 {
                     selectedTags.Add("angry");
                     selectedTags.Add("frustrated");
                 }
-                else if (lowerMood.Contains("sad") || lowerMood.Contains("ÓÇ"))
+                else if (lowerMood.Contains("sad") || lowerMood.Contains("å¿§"))
                 {
                     selectedTags.Add("sad");
                     selectedTags.Add("disappointed");
                 }
             }
 
-            // ¸ù¾İ¶Ô»°ÄÚÈİ¹Ø¼ü´Ê
+            // æ ¹æ®å¯¹è¯å†…å®¹å…³é”®è¯
             string lowerDialogue = dialogue.ToLower();
             
-            // ¿ªĞÄÏà¹Ø
-            if (lowerDialogue.Contains("¹ş¹ş") || lowerDialogue.Contains("haha") || 
-                lowerDialogue.Contains("Ì«ºÃÁË") || lowerDialogue.Contains("great") ||
-                lowerDialogue.Contains("°ô") || lowerDialogue.Contains("excellent"))
+            // å¼€å¿ƒç›¸å…³
+            if (lowerDialogue.Contains("å“ˆå“ˆ") || lowerDialogue.Contains("haha") || 
+                lowerDialogue.Contains("å¤ªå¥½äº†") || lowerDialogue.Contains("great") ||
+                lowerDialogue.Contains("æ£’") || lowerDialogue.Contains("excellent"))
             {
                 selectedTags.Add("happy");
                 selectedTags.Add("joy");
                 selectedTags.Add("excited");
             }
 
-            // ¾ªÑÈÏà¹Ø
-            if (lowerDialogue.Contains("£¡£¡") || lowerDialogue.Contains("!") ||
-                lowerDialogue.Contains("ÌìÄÄ") || lowerDialogue.Contains("oh my") ||
-                lowerDialogue.Contains("Ê²Ã´") || lowerDialogue.Contains("what"))
+            // æƒŠè®¶ç›¸å…³
+            if (lowerDialogue.Contains("ï¼ï¼") || lowerDialogue.Contains("!") ||
+                lowerDialogue.Contains("å¤©å“ª") || lowerDialogue.Contains("oh my") ||
+                lowerDialogue.Contains("ä»€ä¹ˆ") || lowerDialogue.Contains("what"))
             {
                 selectedTags.Add("surprised");
                 selectedTags.Add("shocked");
             }
 
-            // Ë¼¿¼Ïà¹Ø
-            if (lowerDialogue.Contains("...") || lowerDialogue.Contains("àÅ") ||
-                lowerDialogue.Contains("hmm") || lowerDialogue.Contains("Ë¼¿¼") ||
+            // æ€è€ƒç›¸å…³
+            if (lowerDialogue.Contains("...") || lowerDialogue.Contains("å—¯") ||
+                lowerDialogue.Contains("hmm") || lowerDialogue.Contains("æ€è€ƒ") ||
                 lowerDialogue.Contains("think"))
             {
                 selectedTags.Add("thinking");
                 selectedTags.Add("confused");
             }
 
-            // ±¯ÉËÏà¹Ø
-            if (lowerDialogue.Contains("°¦") || lowerDialogue.Contains("sigh") ||
-                lowerDialogue.Contains("ÒÅº¶") || lowerDialogue.Contains("sorry") ||
-                lowerDialogue.Contains("¿ÉÏ§") || lowerDialogue.Contains("unfortunately"))
+            // æ‚²ä¼¤ç›¸å…³
+            if (lowerDialogue.Contains("å”‰") || lowerDialogue.Contains("sigh") ||
+                lowerDialogue.Contains("é—æ†¾") || lowerDialogue.Contains("sorry") ||
+                lowerDialogue.Contains("å¯æƒœ") || lowerDialogue.Contains("unfortunately"))
             {
                 selectedTags.Add("sad");
                 selectedTags.Add("disappointed");
             }
 
-            // ³¢ÊÔ¸ù¾İÊÕ¼¯µÄ±êÇ©ÕÒ±íÇé°ü
+            // å°è¯•æ ¹æ®æ”¶é›†çš„æ ‡ç­¾æ‰¾è¡¨æƒ…åŒ…
             foreach (var tag in selectedTags)
             {
                 var emoticon = GetEmoticonByTag(tag);
                 if (emoticon != null)
                 {
-                    Log.Message($"[EmoticonManager] Ñ¡Ôñ±íÇé°ü: {emoticon.id} (±êÇ©: {tag})");
+                    Log.Message($"[EmoticonManager] é€‰æ‹©è¡¨æƒ…åŒ…: {emoticon.id} (æ ‡ç­¾: {tag})");
                     return emoticon;
                 }
             }
 
-            // Èç¹û¶¼Ã»ÕÒµ½£¬Ëæ»ú·µ»ØÒ»¸ö
+            // å¦‚æœéƒ½æ²¡æ‰¾åˆ°ï¼Œéšæœºè¿”å›ä¸€ä¸ª
             if (allEmoticons.Count > 0)
             {
                 var randomEmoticon = allEmoticons.RandomElement();
-                Log.Message($"[EmoticonManager] Ëæ»úÑ¡Ôñ±íÇé°ü: {randomEmoticon.id}");
+                Log.Message($"[EmoticonManager] éšæœºé€‰æ‹©è¡¨æƒ…åŒ…: {randomEmoticon.id}");
                 return randomEmoticon;
             }
 
@@ -301,7 +301,7 @@ namespace TheSecondSeat.Emoticons
         }
 
         /// <summary>
-        /// Éú³É±íÇé°üÁĞ±í¹©LLMÑ¡Ôñ£¨ÓÃÓÚSystem Prompt£©
+        /// ç”Ÿæˆè¡¨æƒ…åŒ…åˆ—è¡¨ä¾›LLMé€‰æ‹©ï¼ˆç”¨äºSystem Promptï¼‰
         /// </summary>
         public string GenerateEmoticonListForPrompt()
         {
@@ -318,7 +318,7 @@ namespace TheSecondSeat.Emoticons
             var sb = new System.Text.StringBuilder();
             sb.AppendLine("Available emoticons (optional, choose ONE if appropriate):");
 
-            // °´±êÇ©·Ö×é
+            // æŒ‰æ ‡ç­¾åˆ†ç»„
             var groupedByTag = new Dictionary<string, List<string>>();
 
             foreach (var emoticon in allEmoticons)
@@ -333,7 +333,7 @@ namespace TheSecondSeat.Emoticons
                 }
             }
 
-            // ÏŞÖÆÁĞ±í³¤¶È£¨±ÜÃâPrompt¹ı³¤£©
+            // é™åˆ¶åˆ—è¡¨é•¿åº¦ï¼ˆé¿å…Promptè¿‡é•¿ï¼‰
             int maxTags = 10;
             int count = 0;
 

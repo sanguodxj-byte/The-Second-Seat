@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 
 namespace TheSecondSeat.LLM
 {
@@ -11,10 +11,10 @@ namespace TheSecondSeat.LLM
         public string thought { get; set; } = "";
         public string dialogue { get; set; } = "";
         
-        // ? ĞÂÔö£º±íÇé×Ö¶Î£¨ÍÆ¼ö AI Ìá¹©£©
+        // ? æ–°å¢ï¼šè¡¨æƒ…å­—æ®µï¼ˆæ¨è AI æä¾›ï¼‰
         public string expression { get; set; } = "";
         
-        // ? ±íÇé·ûºÅID£¨¿ÉÑ¡£©
+        // ? è¡¨æƒ…ç¬¦å·IDï¼ˆå¯é€‰ï¼‰
         public string emoticon { get; set; } = "";
         
         public LLMCommand? command { get; set; }

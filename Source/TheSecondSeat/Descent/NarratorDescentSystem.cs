@@ -1,6 +1,6 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
-using System.Linq; // ? Ìí¼Ó Linq ÃüÃû¿Õ¼ä
+using System.Linq; // ? æ·»åŠ  Linq å‘½åç©ºé—´
 using UnityEngine;
 using Verse;
 using RimWorld;
@@ -10,20 +10,20 @@ using TheSecondSeat.PersonaGeneration;
 namespace TheSecondSeat.Descent
 {
     /// <summary>
-    /// ? v2.0.0: ĞğÊÂÕß½µÁÙÏµÍ³ - ºËĞÄ¹ÜÀíÆ÷
+    /// ? v2.0.0: å™äº‹è€…é™ä¸´ç³»ç»Ÿ - æ ¸å¿ƒç®¡ç†å™¨
     /// 
-    /// ¹¦ÄÜ£º
-    /// - ´¥·¢½µÁÙÄ£Ê½£¨Ô®Öú/Ï®»÷£©
-    /// - Ğ­µ÷Á¢»æÇĞ»»¡¢ÌØĞ§²¥·Å¡¢¶¯»­²¥·Å
-    /// - Éú³É½µÁÙºóµÄĞ¡ÈËºÍÕÙ»½Îï
-    /// - ¹ÜÀí½µÁÙ×´Ì¬ºÍÀäÈ´
+    /// åŠŸèƒ½ï¼š
+    /// - è§¦å‘é™ä¸´æ¨¡å¼ï¼ˆæ´åŠ©/è¢­å‡»ï¼‰
+    /// - åè°ƒç«‹ç»˜åˆ‡æ¢ã€ç‰¹æ•ˆæ’­æ”¾ã€åŠ¨ç”»æ’­æ”¾
+    /// - ç”Ÿæˆé™ä¸´åçš„å°äººå’Œå¬å”¤ç‰©
+    /// - ç®¡ç†é™ä¸´çŠ¶æ€å’Œå†·å´
     /// 
-    /// Ê¹ÓÃ£º
+    /// ä½¿ç”¨ï¼š
     /// - NarratorDescentSystem.Instance.TriggerDescent(DescentMode.Assist)
     /// </summary>
     public class NarratorDescentSystem : GameComponent
     {
-        // ==================== µ¥ÀıÄ£Ê½ ====================
+        // ==================== å•ä¾‹æ¨¡å¼ ====================
         
         private static NarratorDescentSystem? instance;
         public static NarratorDescentSystem Instance
@@ -38,62 +38,62 @@ namespace TheSecondSeat.Descent
             }
         }
         
-        // ==================== ×´Ì¬×Ö¶Î ====================
+        // ==================== çŠ¶æ€å­—æ®µ ====================
         
         private DescentState currentState = DescentState.Idle;
         private DescentMode lastDescentMode = DescentMode.Assist;
         private int lastDescentTick = 0;
-        private const int DESCENT_COOLDOWN_TICKS = 36000; // 10·ÖÖÓÀäÈ´£¨60Ãë/·Ö * 60Ö¡/Ãë * 10£©
+        private const int DESCENT_COOLDOWN_TICKS = 36000; // 10åˆ†é’Ÿå†·å´ï¼ˆ60ç§’/åˆ† * 60å¸§/ç§’ * 10ï¼‰
         
         private DescentAnimationController? animationController;
         private DescentEffectRenderer? effectRenderer;
         private IntVec3 targetDescentLocation;
         
-        // ==================== ÅäÖÃ²ÎÊı ====================
+        // ==================== é…ç½®å‚æ•° ====================
         
-        public const float MIN_AFFINITY_FOR_ASSIST = 40f;    // Ô®ÖúÄ£Ê½×îµÍºÃ¸Ğ¶È
-        public const float MIN_AFFINITY_FOR_ATTACK = -100f;  // Ï®»÷Ä£Ê½×îµÍºÃ¸Ğ¶È£¨×ÜÊÇ¿ÉÓÃ£©
-        public const int DESCENT_RANGE = 30;                 // ½µÁÙ·¶Î§£¨¸ñ×Ó£©
+        public const float MIN_AFFINITY_FOR_ASSIST = 40f;    // æ´åŠ©æ¨¡å¼æœ€ä½å¥½æ„Ÿåº¦
+        public const float MIN_AFFINITY_FOR_ATTACK = -100f;  // è¢­å‡»æ¨¡å¼æœ€ä½å¥½æ„Ÿåº¦ï¼ˆæ€»æ˜¯å¯ç”¨ï¼‰
+        public const int DESCENT_RANGE = 30;                 // é™ä¸´èŒƒå›´ï¼ˆæ ¼å­ï¼‰
         
-        // ==================== ¹¹Ôìº¯Êı ====================
+        // ==================== æ„é€ å‡½æ•° ====================
         
         public NarratorDescentSystem(Game game) : base()
         {
             instance = this;
         }
         
-        // ==================== ¹«¹²API ====================
+        // ==================== å…¬å…±API ====================
         
         /// <summary>
-        /// ´¥·¢½µÁÙÄ£Ê½
+        /// è§¦å‘é™ä¸´æ¨¡å¼
         /// </summary>
-        /// <param name="mode">½µÁÙÄ£Ê½£¨Ô®Öú/Ï®»÷£©</param>
-        /// <param name="targetLoc">Ä¿±ê½µÁÙµØµã£¨¿ÉÑ¡£¬×Ô¶¯Ñ¡Ôñ£©</param>
-        /// <returns>ÊÇ·ñ³É¹¦´¥·¢</returns>
+        /// <param name="mode">é™ä¸´æ¨¡å¼ï¼ˆæ´åŠ©/è¢­å‡»ï¼‰</param>
+        /// <param name="targetLoc">ç›®æ ‡é™ä¸´åœ°ç‚¹ï¼ˆå¯é€‰ï¼Œè‡ªåŠ¨é€‰æ‹©ï¼‰</param>
+        /// <returns>æ˜¯å¦æˆåŠŸè§¦å‘</returns>
         public bool TriggerDescent(DescentMode mode, IntVec3? targetLoc = null)
         {
-            // 1. ¼ì²éÊÇ·ñ¿ÉÒÔ´¥·¢
+            // 1. æ£€æŸ¥æ˜¯å¦å¯ä»¥è§¦å‘
             if (!CanTriggerDescent(mode, out string reason))
             {
-                Messages.Message($"ÎŞ·¨´¥·¢½µÁÙ: {reason}", MessageTypeDefOf.RejectInput);
+                Messages.Message($"æ— æ³•è§¦å‘é™ä¸´: {reason}", MessageTypeDefOf.RejectInput);
                 Log.Warning($"[NarratorDescentSystem] Cannot trigger descent: {reason}");
                 return false;
             }
             
-            // 2. ¼ì²é×´Ì¬
+            // 2. æ£€æŸ¥çŠ¶æ€
             if (currentState != DescentState.Idle)
             {
-                Messages.Message("½µÁÙÕıÔÚ½øĞĞÖĞ£¬ÇëÉÔºò...", MessageTypeDefOf.RejectInput);
+                Messages.Message("é™ä¸´æ­£åœ¨è¿›è¡Œä¸­ï¼Œè¯·ç¨å€™...", MessageTypeDefOf.RejectInput);
                 return false;
             }
             
-            // 3. Ñ¡Ôñ½µÁÙµØµã
+            // 3. é€‰æ‹©é™ä¸´åœ°ç‚¹
             if (targetLoc == null)
             {
                 targetLoc = SelectDescentLocation(mode);
                 if (targetLoc == null || !targetLoc.Value.IsValid)
                 {
-                    Messages.Message("ÕÒ²»µ½ºÏÊÊµÄ½µÁÙµØµã£¡", MessageTypeDefOf.RejectInput);
+                    Messages.Message("æ‰¾ä¸åˆ°åˆé€‚çš„é™ä¸´åœ°ç‚¹ï¼", MessageTypeDefOf.RejectInput);
                     return false;
                 }
             }
@@ -101,7 +101,7 @@ namespace TheSecondSeat.Descent
             targetDescentLocation = targetLoc.Value;
             lastDescentMode = mode;
             
-            // 4. ¿ªÊ¼½µÁÙĞòÁĞ
+            // 4. å¼€å§‹é™ä¸´åºåˆ—
             Log.Message($"[NarratorDescentSystem] Triggering descent: Mode={mode}, Location={targetDescentLocation}");
             StartDescentSequence(mode);
             
@@ -109,29 +109,29 @@ namespace TheSecondSeat.Descent
         }
         
         /// <summary>
-        /// ¼ì²éÊÇ·ñ¿ÉÒÔ´¥·¢½µÁÙ
+        /// æ£€æŸ¥æ˜¯å¦å¯ä»¥è§¦å‘é™ä¸´
         /// </summary>
         public bool CanTriggerDescent(DescentMode mode, out string reason)
         {
             reason = "";
             
-            // 1. ¼ì²éÀäÈ´Ê±¼ä
+            // 1. æ£€æŸ¥å†·å´æ—¶é—´
             int ticksSinceLastDescent = Find.TickManager.TicksGame - lastDescentTick;
             if (ticksSinceLastDescent < DESCENT_COOLDOWN_TICKS)
             {
                 int remainingMinutes = (DESCENT_COOLDOWN_TICKS - ticksSinceLastDescent) / 3600;
-                reason = $"ÀäÈ´ÖĞ£¬»¹Ğè {remainingMinutes} ·ÖÖÓ";
+                reason = $"å†·å´ä¸­ï¼Œè¿˜éœ€ {remainingMinutes} åˆ†é’Ÿ";
                 return false;
             }
             
-            // 2. ¼ì²éÊÇ·ñÒÑÓĞĞğÊÂÕßĞ¡ÈË
+            // 2. æ£€æŸ¥æ˜¯å¦å·²æœ‰å™äº‹è€…å°äºº
             if (HasNarratorPawnOnMap())
             {
-                reason = "ĞğÊÂÕßÒÑ¾­ÔÚ³¡£¬ÎŞ·¨ÖØ¸´½µÁÙ";
+                reason = "å™äº‹è€…å·²ç»åœ¨åœºï¼Œæ— æ³•é‡å¤é™ä¸´";
                 return false;
             }
             
-            // 3. ¼ì²éºÃ¸Ğ¶È
+            // 3. æ£€æŸ¥å¥½æ„Ÿåº¦
             var agent = Current.Game?.GetComponent<Storyteller.StorytellerAgent>();
             if (agent != null)
             {
@@ -139,22 +139,22 @@ namespace TheSecondSeat.Descent
                 
                 if (mode == DescentMode.Assist && affinity < MIN_AFFINITY_FOR_ASSIST)
                 {
-                    reason = $"Ô®ÖúÄ£Ê½ĞèÒªºÃ¸Ğ¶È {MIN_AFFINITY_FOR_ASSIST}+£¬µ±Ç° {affinity:F0}";
+                    reason = $"æ´åŠ©æ¨¡å¼éœ€è¦å¥½æ„Ÿåº¦ {MIN_AFFINITY_FOR_ASSIST}+ï¼Œå½“å‰ {affinity:F0}";
                     return false;
                 }
                 
-                // Ï®»÷Ä£Ê½×ÜÊÇ¿ÉÓÃ£¬µ«¸ßºÃ¸Ğ¶ÈÊ±ÌáÊ¾
+                // è¢­å‡»æ¨¡å¼æ€»æ˜¯å¯ç”¨ï¼Œä½†é«˜å¥½æ„Ÿåº¦æ—¶æç¤º
                 if (mode == DescentMode.Attack && affinity > 60f)
                 {
-                    // ÔÊĞí´¥·¢£¬µ«¼ÇÂ¼¾¯¸æ
+                    // å…è®¸è§¦å‘ï¼Œä½†è®°å½•è­¦å‘Š
                     Log.Warning($"[NarratorDescentSystem] Triggering attack descent at high affinity ({affinity:F0})");
                 }
             }
             
-            // 4. ¼ì²éÊÇ·ñÓĞÓĞĞ§µØÍ¼
+            // 4. æ£€æŸ¥æ˜¯å¦æœ‰æœ‰æ•ˆåœ°å›¾
             if (Find.CurrentMap == null)
             {
-                reason = "µ±Ç°Ã»ÓĞÓĞĞ§µØÍ¼";
+                reason = "å½“å‰æ²¡æœ‰æœ‰æ•ˆåœ°å›¾";
                 return false;
             }
             
@@ -162,17 +162,17 @@ namespace TheSecondSeat.Descent
         }
         
         /// <summary>
-        /// »ñÈ¡½µÁÙÀäÈ´Ê£ÓàÊ±¼ä£¨Ãë£©
+        /// è·å–é™ä¸´å†·å´å‰©ä½™æ—¶é—´ï¼ˆç§’ï¼‰
         /// </summary>
         public int GetCooldownRemaining()
         {
             int ticksSinceLastDescent = Find.TickManager.TicksGame - lastDescentTick;
             int remainingTicks = Math.Max(0, DESCENT_COOLDOWN_TICKS - ticksSinceLastDescent);
-            return remainingTicks / 60; // ×ª»»ÎªÃë
+            return remainingTicks / 60; // è½¬æ¢ä¸ºç§’
         }
         
         /// <summary>
-        /// ¼ì²éÊÇ·ñÓĞĞğÊÂÕßĞ¡ÈËÔÚµØÍ¼ÉÏ
+        /// æ£€æŸ¥æ˜¯å¦æœ‰å™äº‹è€…å°äººåœ¨åœ°å›¾ä¸Š
         /// </summary>
         public bool HasNarratorPawnOnMap()
         {
@@ -180,9 +180,9 @@ namespace TheSecondSeat.Descent
             
             foreach (Pawn pawn in Find.CurrentMap.mapPawns.FreeColonists)
             {
-                // ¼ì²éÊÇ·ñÊÇĞğÊÂÕßĞ¡ÈË£¨Í¨¹ı±ê¼Ç»òÌØÊâÊôĞÔ£©
+                // æ£€æŸ¥æ˜¯å¦æ˜¯å™äº‹è€…å°äººï¼ˆé€šè¿‡æ ‡è®°æˆ–ç‰¹æ®Šå±æ€§ï¼‰
                 if (pawn.def.defName.Contains("Narrator") || 
-                    pawn.LabelShort.Contains("ĞğÊÂÕß"))
+                    pawn.LabelShort.Contains("å™äº‹è€…"))
                 {
                     return true;
                 }
@@ -191,10 +191,10 @@ namespace TheSecondSeat.Descent
             return false;
         }
         
-        // ==================== Ë½ÓĞ·½·¨ ====================
+        // ==================== ç§æœ‰æ–¹æ³• ====================
         
         /// <summary>
-        /// ¿ªÊ¼½µÁÙĞòÁĞ
+        /// å¼€å§‹é™ä¸´åºåˆ—
         /// </summary>
         private void StartDescentSequence(DescentMode mode)
         {
@@ -203,7 +203,7 @@ namespace TheSecondSeat.Descent
                 currentState = DescentState.PreparingPosture;
                 lastDescentTick = Find.TickManager.TicksGame;
                 
-                // 1. ³õÊ¼»¯¿ØÖÆÆ÷
+                // 1. åˆå§‹åŒ–æ§åˆ¶å™¨
                 if (animationController == null)
                 {
                     animationController = new DescentAnimationController();
@@ -214,15 +214,15 @@ namespace TheSecondSeat.Descent
                     effectRenderer = new DescentEffectRenderer();
                 }
                 
-                // 2. ¿ªÊ¼×ËÊÆÇĞ»»¶¯»­
+                // 2. å¼€å§‹å§¿åŠ¿åˆ‡æ¢åŠ¨ç”»
                 animationController.StartPostureSequence(mode, OnPostureSequenceComplete);
                 
-                // 3. ²¥·ÅÒôĞ§£¨¿ÉÑ¡£©
+                // 3. æ’­æ”¾éŸ³æ•ˆï¼ˆå¯é€‰ï¼‰
                 PlayDescentSound(mode, DescentSoundType.Preparation);
                 
-                // 4. ÏÔÊ¾ÏûÏ¢
-                string modeText = mode == DescentMode.Assist ? "Ô®Öú" : "Ï®»÷";
-                Messages.Message($"?? ĞğÊÂÕß½µÁÙ - {modeText}Ä£Ê½Æô¶¯£¡", MessageTypeDefOf.PositiveEvent);
+                // 4. æ˜¾ç¤ºæ¶ˆæ¯
+                string modeText = mode == DescentMode.Assist ? "æ´åŠ©" : "è¢­å‡»";
+                Messages.Message($"?? å™äº‹è€…é™ä¸´ - {modeText}æ¨¡å¼å¯åŠ¨ï¼", MessageTypeDefOf.PositiveEvent);
                 
                 Log.Message($"[NarratorDescentSystem] Descent sequence started: {mode}");
             }
@@ -234,20 +234,20 @@ namespace TheSecondSeat.Descent
         }
         
         /// <summary>
-        /// ×ËÊÆĞòÁĞÍê³É»Øµ÷
+        /// å§¿åŠ¿åºåˆ—å®Œæˆå›è°ƒ
         /// </summary>
         private void OnPostureSequenceComplete()
         {
             currentState = DescentState.PlayingCinematic;
             
-            // ¿ªÊ¼¹ı³¡¶¯»­
+            // å¼€å§‹è¿‡åœºåŠ¨ç”»
             animationController?.StartCinematic(lastDescentMode, targetDescentLocation, OnCinematicComplete);
             
             Log.Message("[NarratorDescentSystem] Posture sequence completed, starting cinematic");
         }
         
         /// <summary>
-        /// ¹ı³¡¶¯»­Íê³É»Øµ÷
+        /// è¿‡åœºåŠ¨ç”»å®Œæˆå›è°ƒ
         /// </summary>
         private void OnCinematicComplete()
         {
@@ -255,26 +255,26 @@ namespace TheSecondSeat.Descent
             
             try
             {
-                // 1. Éú³ÉĞğÊÂÕßĞ¡ÈË
+                // 1. ç”Ÿæˆå™äº‹è€…å°äºº
                 Pawn narratorPawn = SpawnNarratorPawn(targetDescentLocation);
                 
-                // 2. Éú³ÉÕÙ»½Îï
+                // 2. ç”Ÿæˆå¬å”¤ç‰©
                 Pawn summonPawn = SpawnSummonCreature(targetDescentLocation, lastDescentMode);
                 
-                // 3. ²¥·Å½µÂäÌØĞ§
+                // 3. æ’­æ”¾é™è½ç‰¹æ•ˆ
                 effectRenderer?.PlayImpactEffect(targetDescentLocation, lastDescentMode);
                 
-                // 4. ²¥·ÅÒôĞ§
+                // 4. æ’­æ”¾éŸ³æ•ˆ
                 PlayDescentSound(lastDescentMode, DescentSoundType.Impact);
                 
-                // 5. Ó¦ÓÃ½µÁÙĞ§¹û
+                // 5. åº”ç”¨é™ä¸´æ•ˆæœ
                 ApplyDescentEffects(targetDescentLocation, lastDescentMode);
                 
-                // 6. Íê³É½µÁÙ
+                // 6. å®Œæˆé™ä¸´
                 currentState = DescentState.Idle;
                 
-                string modeText = lastDescentMode == DescentMode.Assist ? "Ô®Öú" : "Ï®»÷";
-                Messages.Message($"? ĞğÊÂÕß½µÁÙÍê³É£¡{modeText}¿ªÊ¼£¡", MessageTypeDefOf.PositiveEvent);
+                string modeText = lastDescentMode == DescentMode.Assist ? "æ´åŠ©" : "è¢­å‡»";
+                Messages.Message($"? å™äº‹è€…é™ä¸´å®Œæˆï¼{modeText}å¼€å§‹ï¼", MessageTypeDefOf.PositiveEvent);
                 
                 Log.Message("[NarratorDescentSystem] Descent completed successfully");
             }
@@ -286,7 +286,7 @@ namespace TheSecondSeat.Descent
         }
         
         /// <summary>
-        /// Ñ¡Ôñ½µÁÙµØµã
+        /// é€‰æ‹©é™ä¸´åœ°ç‚¹
         /// </summary>
         private IntVec3? SelectDescentLocation(DescentMode mode)
         {
@@ -295,27 +295,27 @@ namespace TheSecondSeat.Descent
                 Map map = Find.CurrentMap;
                 if (map == null) return null;
                 
-                // »ñÈ¡Íæ¼ÒÖ³ÃñµØÖĞĞÄ
+                // è·å–ç©å®¶æ®–æ°‘åœ°ä¸­å¿ƒ
                 IntVec3 colonyCenter = map.Center;
                 
-                // Ñ°ÕÒºÏÊÊµÄ½µÁÙµã
-                for (int i = 0; i < 50; i++) // ×î¶à³¢ÊÔ50´Î
+                // å¯»æ‰¾åˆé€‚çš„é™ä¸´ç‚¹
+                for (int i = 0; i < 50; i++) // æœ€å¤šå°è¯•50æ¬¡
                 {
-                    // ÔÚÖ³ÃñµØÖÜÎ§Ëæ»úÑ¡µã
+                    // åœ¨æ®–æ°‘åœ°å‘¨å›´éšæœºé€‰ç‚¹
                     IntVec3 candidate = colonyCenter + new IntVec3(
                         Rand.Range(-DESCENT_RANGE, DESCENT_RANGE),
                         0,
                         Rand.Range(-DESCENT_RANGE, DESCENT_RANGE)
                     );
                     
-                    // ¼ì²éµØµãÊÇ·ñºÏÊÊ
+                    // æ£€æŸ¥åœ°ç‚¹æ˜¯å¦åˆé€‚
                     if (IsValidDescentLocation(candidate, map))
                     {
                         return candidate;
                     }
                 }
                 
-                // Èç¹ûÕÒ²»µ½£¬·µ»ØÖ³ÃñµØÖĞĞÄ¸½½ü
+                // å¦‚æœæ‰¾ä¸åˆ°ï¼Œè¿”å›æ®–æ°‘åœ°ä¸­å¿ƒé™„è¿‘
                 return CellFinder.TryFindRandomCellNear(colonyCenter, map, 20, 
                     (IntVec3 c) => IsValidDescentLocation(c, map), 
                     out IntVec3 result) ? result : (IntVec3?)null;
@@ -328,15 +328,15 @@ namespace TheSecondSeat.Descent
         }
         
         /// <summary>
-        /// ¼ì²éµØµãÊÇ·ñÊÊºÏ½µÁÙ
+        /// æ£€æŸ¥åœ°ç‚¹æ˜¯å¦é€‚åˆé™ä¸´
         /// </summary>
         private bool IsValidDescentLocation(IntVec3 loc, Map map)
         {
             if (!loc.InBounds(map)) return false;
             if (!loc.Standable(map)) return false;
-            if (loc.Roofed(map)) return false; // ²»ÄÜÔÚÎİ¶¥ÏÂ
+            if (loc.Roofed(map)) return false; // ä¸èƒ½åœ¨å±‹é¡¶ä¸‹
             
-            // ¼ì²éÖÜÎ§ÊÇ·ñÓĞ×ã¹»¿Õ¼ä£¨3x3ÇøÓò£©
+            // æ£€æŸ¥å‘¨å›´æ˜¯å¦æœ‰è¶³å¤Ÿç©ºé—´ï¼ˆ3x3åŒºåŸŸï¼‰
             for (int x = -1; x <= 1; x++)
             {
                 for (int z = -1; z <= 1; z++)
@@ -353,13 +353,13 @@ namespace TheSecondSeat.Descent
         }
         
         /// <summary>
-        /// Éú³ÉĞğÊÂÕßĞ¡ÈË
+        /// ç”Ÿæˆå™äº‹è€…å°äºº
         /// </summary>
         private Pawn SpawnNarratorPawn(IntVec3 location)
         {
             try
             {
-                // »ñÈ¡µ±Ç°ÈË¸ñ
+                // è·å–å½“å‰äººæ ¼
                 var manager = Current.Game?.GetComponent<NarratorManager>();
                 var persona = manager?.GetCurrentPersona();
                 
@@ -369,19 +369,19 @@ namespace TheSecondSeat.Descent
                     return null;
                 }
                 
-                // TODO: ´´½¨ĞğÊÂÕßĞ¡ÈË Def£¨²Î¿¼ DescentPawnDef.cs£©
+                // TODO: åˆ›å»ºå™äº‹è€…å°äºº Defï¼ˆå‚è€ƒ DescentPawnDef.csï¼‰
                 // PawnKindDef pawnKindDef = DefDatabase<PawnKindDef>.GetNamed($"Narrator_{persona.defName}";
                 
-                // ÁÙÊ±£ºÊ¹ÓÃÄ¬ÈÏĞ¡ÈË
+                // ä¸´æ—¶ï¼šä½¿ç”¨é»˜è®¤å°äºº
                 PawnKindDef pawnKindDef = PawnKindDefOf.Colonist;
                 
-                // Éú³ÉĞ¡ÈË
+                // ç”Ÿæˆå°äºº
                 Pawn pawn = PawnGenerator.GeneratePawn(pawnKindDef, Faction.OfPlayer);
                 
-                // ÉèÖÃÃû³Æ
+                // è®¾ç½®åç§°
                 pawn.Name = new NameTriple("", persona.narratorName, "");
                 
-                // Éú³Éµ½µØÍ¼
+                // ç”Ÿæˆåˆ°åœ°å›¾
                 GenSpawn.Spawn(pawn, location, Find.CurrentMap);
                 
                 Log.Message($"[NarratorDescentSystem] Spawned narrator pawn: {pawn.LabelShort} at {location}");
@@ -396,29 +396,29 @@ namespace TheSecondSeat.Descent
         }
         
         /// <summary>
-        /// Éú³ÉÕÙ»½Îï
+        /// ç”Ÿæˆå¬å”¤ç‰©
         /// </summary>
         private Pawn SpawnSummonCreature(IntVec3 location, DescentMode mode)
         {
             try
             {
-                // TODO: ´´½¨¾ŞÁúÕÙ»½Îï Def£¨²Î¿¼ DescentPawnDef.cs£©
+                // TODO: åˆ›å»ºå·¨é¾™å¬å”¤ç‰© Defï¼ˆå‚è€ƒ DescentPawnDef.csï¼‰
                 // PawnKindDef summonDef = DefDatabase<PawnKindDef>.GetNamed("NarratorDragon");
                 
-                // ? ĞŞ¸´£ºÊ¹ÓÃ´æÔÚµÄPawnKindDef
+                // ? ä¿®å¤ï¼šä½¿ç”¨å­˜åœ¨çš„PawnKindDef
                 PawnKindDef summonDef = DefDatabase<PawnKindDef>.AllDefsListForReading.FirstOrDefault(
                     pk => pk.defName.Contains("Wolf") || pk.defName.Contains("Warg")
                 );
                 
                 if (summonDef == null)
                 {
-                    summonDef = PawnKindDefOf.Colonist; // »ØÍËµ½Ö³ÃñÕß
+                    summonDef = PawnKindDefOf.Colonist; // å›é€€åˆ°æ®–æ°‘è€…
                 }
                 
-                // Éú³ÉÕÙ»½Îï
+                // ç”Ÿæˆå¬å”¤ç‰©
                 Pawn summon = PawnGenerator.GeneratePawn(summonDef, Faction.OfPlayer);
                 
-                // µ÷ÕûÎ»ÖÃ£¨ÔÚĞğÊÂÕßÅÔ±ß£©
+                // è°ƒæ•´ä½ç½®ï¼ˆåœ¨å™äº‹è€…æ—è¾¹ï¼‰
                 IntVec3 summonLoc = location + new IntVec3(2, 0, 0);
                 GenSpawn.Spawn(summon, summonLoc, Find.CurrentMap);
                 
@@ -434,7 +434,7 @@ namespace TheSecondSeat.Descent
         }
         
         /// <summary>
-        /// Ó¦ÓÃ½µÁÙĞ§¹û
+        /// åº”ç”¨é™ä¸´æ•ˆæœ
         /// </summary>
         private void ApplyDescentEffects(IntVec3 location, DescentMode mode)
         {
@@ -443,7 +443,7 @@ namespace TheSecondSeat.Descent
                 Map map = Find.CurrentMap;
                 if (map == null) return;
                 
-                // ¸ù¾İÄ£Ê½Ó¦ÓÃ²»Í¬Ğ§¹û
+                // æ ¹æ®æ¨¡å¼åº”ç”¨ä¸åŒæ•ˆæœ
                 if (mode == DescentMode.Assist)
                 {
                     ApplyAssistEffects(location, map);
@@ -460,16 +460,16 @@ namespace TheSecondSeat.Descent
         }
         
         /// <summary>
-        /// Ó¦ÓÃÔ®ÖúĞ§¹û
+        /// åº”ç”¨æ´åŠ©æ•ˆæœ
         /// </summary>
         private void ApplyAssistEffects(IntVec3 location, Map map)
         {
-            // 1. ÖÎÓúÖÜÎ§µÄÖ³ÃñÕß
+            // 1. æ²»æ„ˆå‘¨å›´çš„æ®–æ°‘è€…
             foreach (Pawn pawn in GenRadial.RadialDistinctThingsAround(location, map, 10f, true).OfType<Pawn>())
             {
                 if (pawn.IsColonist && pawn.health != null)
                 {
-                    // ? ĞŞ¸´£ºÊ¹ÓÃÕıÈ·µÄGetHediffs·½·¨Ç©Ãû
+                    // ? ä¿®å¤ï¼šä½¿ç”¨æ­£ç¡®çš„GetHediffsæ–¹æ³•ç­¾å
                     List<Hediff_Injury> injuries = new List<Hediff_Injury>();
                     pawn.health.hediffSet.GetHediffs(ref injuries);
                     
@@ -482,45 +482,45 @@ namespace TheSecondSeat.Descent
                 }
             }
             
-            // 2. ÌáÉıĞÄÇé
-            // TODO: Ìí¼ÓĞÄÇéBuff
+            // 2. æå‡å¿ƒæƒ…
+            // TODO: æ·»åŠ å¿ƒæƒ…Buff
             
-            // 3. ²¥·ÅÖÎÓúÌØĞ§
+            // 3. æ’­æ”¾æ²»æ„ˆç‰¹æ•ˆ
             effectRenderer?.PlayAuraEffect(location, DescentMode.Assist, 5f);
         }
         
         /// <summary>
-        /// Ó¦ÓÃÏ®»÷Ğ§¹û
+        /// åº”ç”¨è¢­å‡»æ•ˆæœ
         /// </summary>
         private void ApplyAttackEffects(IntVec3 location, Map map)
         {
-            // 1. ¶ÔÖÜÎ§µĞÈËÔì³ÉÉËº¦
+            // 1. å¯¹å‘¨å›´æ•Œäººé€ æˆä¼¤å®³
             foreach (Pawn pawn in GenRadial.RadialDistinctThingsAround(location, map, 10f, true).OfType<Pawn>())
             {
                 if (pawn.HostileTo(Faction.OfPlayer))
                 {
-                    // Ôì³ÉÉËº¦
+                    // é€ æˆä¼¤å®³
                     pawn.TakeDamage(new DamageInfo(DamageDefOf.Burn, 50f));
                     
                     Log.Message($"[NarratorDescentSystem] Damaged enemy: {pawn.LabelShort}");
                 }
             }
             
-            // 2. ÖÆÔì¿Ö»Å
-            // TODO: Ìí¼Ó¿Ö»ÅĞ§¹û
+            // 2. åˆ¶é€ ææ…Œ
+            // TODO: æ·»åŠ ææ…Œæ•ˆæœ
             
-            // 3. ²¥·Å¹¥»÷ÌØĞ§
+            // 3. æ’­æ”¾æ”»å‡»ç‰¹æ•ˆ
             effectRenderer?.PlayAuraEffect(location, DescentMode.Attack, 5f);
         }
         
         /// <summary>
-        /// ²¥·Å½µÁÙÒôĞ§
+        /// æ’­æ”¾é™ä¸´éŸ³æ•ˆ
         /// </summary>
         private void PlayDescentSound(DescentMode mode, DescentSoundType type)
         {
             try
             {
-                // TODO: ÊµÏÖÒôĞ§²¥·Å
+                // TODO: å®ç°éŸ³æ•ˆæ’­æ”¾
                 // SoundDef soundDef = GetDescentSound(mode, type);
                 // soundDef.PlayOneShot(new TargetInfo(targetDescentLocation, Find.CurrentMap));
                 
@@ -532,7 +532,7 @@ namespace TheSecondSeat.Descent
             }
         }
         
-        // ==================== ´æµµÏà¹Ø ====================
+        // ==================== å­˜æ¡£ç›¸å…³ ====================
         
         public override void ExposeData()
         {
@@ -544,39 +544,39 @@ namespace TheSecondSeat.Descent
         }
     }
     
-    // ==================== Ã¶¾Ù¶¨Òå ====================
+    // ==================== æšä¸¾å®šä¹‰ ====================
     
     /// <summary>
-    /// ½µÁÙÄ£Ê½
+    /// é™ä¸´æ¨¡å¼
     /// </summary>
     public enum DescentMode
     {
-        Assist,  // Ô®ÖúÄ£Ê½£¨ÖÎÓú¡¢×£¸££©
-        Attack   // Ï®»÷Ä£Ê½£¨ÉËº¦¡¢×çÖä£©
+        Assist,  // æ´åŠ©æ¨¡å¼ï¼ˆæ²»æ„ˆã€ç¥ç¦ï¼‰
+        Attack   // è¢­å‡»æ¨¡å¼ï¼ˆä¼¤å®³ã€è¯…å’’ï¼‰
     }
     
     /// <summary>
-    /// ½µÁÙ×´Ì¬
+    /// é™ä¸´çŠ¶æ€
     /// </summary>
     public enum DescentState
     {
-        Idle,               // ¿ÕÏĞ
-        PreparingPosture,   // ×¼±¸×ËÊÆ
-        PlayingCinematic,   // ²¥·Å¹ı³¡¶¯»­
-        SpawningEntities,   // Éú³ÉÊµÌå
-        Completed           // Íê³É
+        Idle,               // ç©ºé—²
+        PreparingPosture,   // å‡†å¤‡å§¿åŠ¿
+        PlayingCinematic,   // æ’­æ”¾è¿‡åœºåŠ¨ç”»
+        SpawningEntities,   // ç”Ÿæˆå®ä½“
+        Completed           // å®Œæˆ
     }
     
     /// <summary>
-    /// ½µÁÙÒôĞ§ÀàĞÍ
+    /// é™ä¸´éŸ³æ•ˆç±»å‹
     /// </summary>
     public enum DescentSoundType
     {
-        Preparation,  // ×¼±¸
-        Charging,     // ĞîÁ¦
-        Casting,      // Ê©·¨
-        Flight,       // ·ÉĞĞ
-        Impact,       // ³å»÷
-        Completion    // Íê³É
+        Preparation,  // å‡†å¤‡
+        Charging,     // è“„åŠ›
+        Casting,      // æ–½æ³•
+        Flight,       // é£è¡Œ
+        Impact,       // å†²å‡»
+        Completion    // å®Œæˆ
     }
 }

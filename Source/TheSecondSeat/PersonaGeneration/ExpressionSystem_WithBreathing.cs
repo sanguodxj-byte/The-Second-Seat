@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;
@@ -6,26 +6,26 @@ using Verse;
 namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
-    /// ºôÎüÄ£Ê½Ã¶¾Ù
-    /// ¶¨Òå²»Í¬Çé¾³ÏÂµÄºôÎüÑùÊ½
+    /// å‘¼å¸æ¨¡å¼æšä¸¾
+    /// å®šä¹‰ä¸åŒæƒ…å¢ƒä¸‹çš„å‘¼å¸æ ·å¼
     /// </summary>
     public enum BreathingMode
     {
-        Calm,        // Æ½¾² - ÂıËÙ¡¢Ğ¡Õñ·ù
-        Normal,      // Õı³£ - ÖĞËÙ¡¢ÖĞÕñ·ù
-        Excited,     // ĞË·Ü - ¿ìËÙ¡¢´óÕñ·ù
-        Nervous,     // ½ôÕÅ - ·Ç³£¿ìËÙ¡¢ÖĞµÈÕñ·ù
-        Relaxed,     // ·ÅËÉ - ºÜÂı¡¢ºÜĞ¡Õñ·ù
-        Intense      // Ç¿ÁÒ - ·Ç³£¿ìËÙ¡¢·Ç³£´óÕñ·ù
+        Calm,        // å¹³é™ - æ…¢é€Ÿã€å°æŒ¯å¹…
+        Normal,      // æ­£å¸¸ - ä¸­é€Ÿã€ä¸­æŒ¯å¹…
+        Excited,     // å…´å¥‹ - å¿«é€Ÿã€å¤§æŒ¯å¹…
+        Nervous,     // ç´§å¼  - éå¸¸å¿«é€Ÿã€ä¸­ç­‰æŒ¯å¹…
+        Relaxed,     // æ”¾æ¾ - å¾ˆæ…¢ã€å¾ˆå°æŒ¯å¹…
+        Intense      // å¼ºçƒˆ - éå¸¸å¿«é€Ÿã€éå¸¸å¤§æŒ¯å¹…
     }
 
     /// <summary>
-    /// ¸ß¼¶ºôÎü¶¯»­ÏµÍ³
-    /// Ìá¹©¸ü·á¸»µÄºôÎü¶¯»­¿ØÖÆ£¬°üÀ¨¶àÖÖÔ¤ÉèÄ£Ê½¡¢Æ½»¬¹ı¶ÉºÍÇéĞ÷Í¬²½
+    /// é«˜çº§å‘¼å¸åŠ¨ç”»ç³»ç»Ÿ
+    /// æä¾›æ›´ä¸°å¯Œçš„å‘¼å¸åŠ¨ç”»æ§åˆ¶ï¼ŒåŒ…æ‹¬å¤šç§é¢„è®¾æ¨¡å¼ã€å¹³æ»‘è¿‡æ¸¡å’Œæƒ…ç»ªåŒæ­¥
     /// </summary>
     public static class ExpressionSystem_WithBreathing
     {
-        // ºôÎüÄ£Ê½µÄ²ÎÊıÅäÖÃ
+        // å‘¼å¸æ¨¡å¼çš„å‚æ•°é…ç½®
         private static readonly Dictionary<BreathingMode, BreathingParameters> breathingPresets = new Dictionary<BreathingMode, BreathingParameters>
         {
             {
@@ -35,7 +35,7 @@ namespace TheSecondSeat.PersonaGeneration
                     speed = 0.35f,
                     amplitude = 1.2f,
                     smoothness = 0.9f,
-                    description = "Æ½¾²ºôÎü"
+                    description = "å¹³é™å‘¼å¸"
                 }
             },
             {
@@ -45,7 +45,7 @@ namespace TheSecondSeat.PersonaGeneration
                     speed = 0.5f,
                     amplitude = 2.0f,
                     smoothness = 0.8f,
-                    description = "Õı³£ºôÎü"
+                    description = "æ­£å¸¸å‘¼å¸"
                 }
             },
             {
@@ -55,7 +55,7 @@ namespace TheSecondSeat.PersonaGeneration
                     speed = 0.9f,
                     amplitude = 3.2f,
                     smoothness = 0.6f,
-                    description = "ĞË·ÜºôÎü"
+                    description = "å…´å¥‹å‘¼å¸"
                 }
             },
             {
@@ -65,7 +65,7 @@ namespace TheSecondSeat.PersonaGeneration
                     speed = 1.2f,
                     amplitude = 2.8f,
                     smoothness = 0.5f,
-                    description = "½ôÕÅºôÎü"
+                    description = "ç´§å¼ å‘¼å¸"
                 }
             },
             {
@@ -75,7 +75,7 @@ namespace TheSecondSeat.PersonaGeneration
                     speed = 0.25f,
                     amplitude = 0.8f,
                     smoothness = 0.95f,
-                    description = "·ÅËÉºôÎü"
+                    description = "æ”¾æ¾å‘¼å¸"
                 }
             },
             {
@@ -85,30 +85,30 @@ namespace TheSecondSeat.PersonaGeneration
                     speed = 1.5f,
                     amplitude = 4.0f,
                     smoothness = 0.4f,
-                    description = "Ç¿ÁÒºôÎü"
+                    description = "å¼ºçƒˆå‘¼å¸"
                 }
             }
         };
 
         /// <summary>
-        /// ºôÎü²ÎÊı½á¹¹
+        /// å‘¼å¸å‚æ•°ç»“æ„
         /// </summary>
         private class BreathingParameters
         {
-            public float speed;        // ºôÎüËÙ¶È£¨Ãë/ÖÜÆÚ£©
-            public float amplitude;    // ºôÎüÕñ·ù£¨ÏñËØ£©
-            public float smoothness;   // Æ½»¬¶È£¨0-1£¬Ô½¸ßÔ½Æ½»¬£©
-            public string description; // ÃèÊö
+            public float speed;        // å‘¼å¸é€Ÿåº¦ï¼ˆç§’/å‘¨æœŸï¼‰
+            public float amplitude;    // å‘¼å¸æŒ¯å¹…ï¼ˆåƒç´ ï¼‰
+            public float smoothness;   // å¹³æ»‘åº¦ï¼ˆ0-1ï¼Œè¶Šé«˜è¶Šå¹³æ»‘ï¼‰
+            public string description; // æè¿°
         }
 
         /// <summary>
-        /// ¸ß¼¶ºôÎü×´Ì¬
+        /// é«˜çº§å‘¼å¸çŠ¶æ€
         /// </summary>
         private class AdvancedBreathingState
         {
             public BreathingMode currentMode = BreathingMode.Normal;
             public BreathingMode targetMode = BreathingMode.Normal;
-            public float modeTransitionProgress = 1f;  // Ä£Ê½¹ı¶É½ø¶È£¨0-1£©
+            public float modeTransitionProgress = 1f;  // æ¨¡å¼è¿‡æ¸¡è¿›åº¦ï¼ˆ0-1ï¼‰
             public float currentSpeed;
             public float currentAmplitude;
             public float targetSpeed;
@@ -118,13 +118,13 @@ namespace TheSecondSeat.PersonaGeneration
         private static Dictionary<string, AdvancedBreathingState> advancedStates = new Dictionary<string, AdvancedBreathingState>();
 
         /// <summary>
-        /// ? ÉèÖÃºôÎüÄ£Ê½£¨´øÆ½»¬¹ı¶É£©
+        /// ? è®¾ç½®å‘¼å¸æ¨¡å¼ï¼ˆå¸¦å¹³æ»‘è¿‡æ¸¡ï¼‰
         /// </summary>
         public static void SetBreathingMode(string personaDefName, BreathingMode mode)
         {
             if (!advancedStates.ContainsKey(personaDefName))
             {
-                // ³õÊ¼»¯¸ß¼¶×´Ì¬
+                // åˆå§‹åŒ–é«˜çº§çŠ¶æ€
                 var preset = breathingPresets[mode];
                 advancedStates[personaDefName] = new AdvancedBreathingState
                 {
@@ -139,20 +139,20 @@ namespace TheSecondSeat.PersonaGeneration
 
                 if (Prefs.DevMode)
                 {
-                    Log.Message($"[ExpressionSystem_WithBreathing] {personaDefName} ³õÊ¼»¯ºôÎüÄ£Ê½: {preset.description}");
+                    Log.Message($"[ExpressionSystem_WithBreathing] {personaDefName} åˆå§‹åŒ–å‘¼å¸æ¨¡å¼: {preset.description}");
                 }
                 return;
             }
 
             var state = advancedStates[personaDefName];
 
-            // Èç¹ûÄ£Ê½ÏàÍ¬£¬Ìø¹ı
+            // å¦‚æœæ¨¡å¼ç›¸åŒï¼Œè·³è¿‡
             if (state.targetMode == mode && state.modeTransitionProgress >= 1f)
             {
                 return;
             }
 
-            // ¿ªÊ¼¹ı¶Éµ½ĞÂÄ£Ê½
+            // å¼€å§‹è¿‡æ¸¡åˆ°æ–°æ¨¡å¼
             state.currentMode = state.targetMode;
             state.targetMode = mode;
             state.modeTransitionProgress = 0f;
@@ -163,12 +163,12 @@ namespace TheSecondSeat.PersonaGeneration
 
             if (Prefs.DevMode)
             {
-                Log.Message($"[ExpressionSystem_WithBreathing] {personaDefName} ÇĞ»»ºôÎüÄ£Ê½: {breathingPresets[state.currentMode].description} ¡ú {targetPreset.description}");
+                Log.Message($"[ExpressionSystem_WithBreathing] {personaDefName} åˆ‡æ¢å‘¼å¸æ¨¡å¼: {breathingPresets[state.currentMode].description} â†’ {targetPreset.description}");
             }
         }
 
         /// <summary>
-        /// ? ¸ù¾İ±íÇé×Ô¶¯Ñ¡ÔñºôÎüÄ£Ê½
+        /// ? æ ¹æ®è¡¨æƒ…è‡ªåŠ¨é€‰æ‹©å‘¼å¸æ¨¡å¼
         /// </summary>
         public static void SyncBreathingWithExpression(string personaDefName, ExpressionType expression)
         {
@@ -193,8 +193,8 @@ namespace TheSecondSeat.PersonaGeneration
         }
 
         /// <summary>
-        /// ? ¸üĞÂºôÎüÄ£Ê½¹ı¶É
-        /// Ó¦¸ÃÔÚÃ¿Ö¡µ÷ÓÃ£¬ÒÔÊµÏÖÆ½»¬µÄÄ£Ê½¹ı¶É
+        /// ? æ›´æ–°å‘¼å¸æ¨¡å¼è¿‡æ¸¡
+        /// åº”è¯¥åœ¨æ¯å¸§è°ƒç”¨ï¼Œä»¥å®ç°å¹³æ»‘çš„æ¨¡å¼è¿‡æ¸¡
         /// </summary>
         public static void UpdateBreathingTransition(string personaDefName, float deltaTime)
         {
@@ -205,32 +205,32 @@ namespace TheSecondSeat.PersonaGeneration
 
             var state = advancedStates[personaDefName];
 
-            // Èç¹ûÕıÔÚ¹ı¶É
+            // å¦‚æœæ­£åœ¨è¿‡æ¸¡
             if (state.modeTransitionProgress < 1f)
             {
-                // ¸ù¾İÆ½»¬¶È¼ÆËã¹ı¶ÉËÙ¶È
+                // æ ¹æ®å¹³æ»‘åº¦è®¡ç®—è¿‡æ¸¡é€Ÿåº¦
                 var currentPreset = breathingPresets[state.currentMode];
                 var targetPreset = breathingPresets[state.targetMode];
                 float transitionSpeed = Mathf.Lerp(currentPreset.smoothness, targetPreset.smoothness, state.modeTransitionProgress);
 
-                // ¸üĞÂ¹ı¶É½ø¶È
+                // æ›´æ–°è¿‡æ¸¡è¿›åº¦
                 state.modeTransitionProgress += deltaTime * transitionSpeed;
                 state.modeTransitionProgress = Mathf.Clamp01(state.modeTransitionProgress);
 
-                // Æ½»¬²åÖµ²ÎÊı
+                // å¹³æ»‘æ’å€¼å‚æ•°
                 state.currentSpeed = Mathf.Lerp(currentPreset.speed, state.targetSpeed, state.modeTransitionProgress);
                 state.currentAmplitude = Mathf.Lerp(currentPreset.amplitude, state.targetAmplitude, state.modeTransitionProgress);
             }
         }
 
         /// <summary>
-        /// ? »ñÈ¡µ±Ç°ºôÎüÄ£Ê½µÄÃèÊö
+        /// ? è·å–å½“å‰å‘¼å¸æ¨¡å¼çš„æè¿°
         /// </summary>
         public static string GetCurrentBreathingDescription(string personaDefName)
         {
             if (!advancedStates.ContainsKey(personaDefName))
             {
-                return "Î´³õÊ¼»¯";
+                return "æœªåˆå§‹åŒ–";
             }
 
             var state = advancedStates[personaDefName];
@@ -239,14 +239,14 @@ namespace TheSecondSeat.PersonaGeneration
             if (state.modeTransitionProgress < 1f)
             {
                 var targetPreset = breathingPresets[state.targetMode];
-                return $"{currentPreset.description} ¡ú {targetPreset.description} ({state.modeTransitionProgress:P0})";
+                return $"{currentPreset.description} â†’ {targetPreset.description} ({state.modeTransitionProgress:P0})";
             }
 
             return currentPreset.description;
         }
 
         /// <summary>
-        /// ? »ñÈ¡ËùÓĞ¿ÉÓÃµÄºôÎüÄ£Ê½
+        /// ? è·å–æ‰€æœ‰å¯ç”¨çš„å‘¼å¸æ¨¡å¼
         /// </summary>
         public static List<BreathingMode> GetAllBreathingModes()
         {
@@ -254,7 +254,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
 
         /// <summary>
-        /// ? Çå³ı¸ß¼¶ºôÎü×´Ì¬
+        /// ? æ¸…é™¤é«˜çº§å‘¼å¸çŠ¶æ€
         /// </summary>
         public static void ClearAdvancedBreathingState(string personaDefName)
         {
@@ -265,7 +265,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
 
         /// <summary>
-        /// ? Çå³ıËùÓĞ¸ß¼¶ºôÎü×´Ì¬
+        /// ? æ¸…é™¤æ‰€æœ‰é«˜çº§å‘¼å¸çŠ¶æ€
         /// </summary>
         public static void ClearAllAdvancedBreathingStates()
         {
@@ -273,19 +273,19 @@ namespace TheSecondSeat.PersonaGeneration
         }
 
         /// <summary>
-        /// ? »ñÈ¡µ÷ÊÔĞÅÏ¢
+        /// ? è·å–è°ƒè¯•ä¿¡æ¯
         /// </summary>
         public static string GetDebugInfo()
         {
-            var info = $"[ExpressionSystem_WithBreathing] ¸ß¼¶ºôÎü×´Ì¬ÊıÁ¿: {advancedStates.Count}\n";
+            var info = $"[ExpressionSystem_WithBreathing] é«˜çº§å‘¼å¸çŠ¶æ€æ•°é‡: {advancedStates.Count}\n";
 
             foreach (var kvp in advancedStates)
             {
                 var state = kvp.Value;
                 info += $"  {kvp.Key}:\n";
-                info += $"    µ±Ç°Ä£Ê½: {GetCurrentBreathingDescription(kvp.Key)}\n";
-                info += $"    ËÙ¶È: {state.currentSpeed:F2}\n";
-                info += $"    Õñ·ù: {state.currentAmplitude:F2}\n";
+                info += $"    å½“å‰æ¨¡å¼: {GetCurrentBreathingDescription(kvp.Key)}\n";
+                info += $"    é€Ÿåº¦: {state.currentSpeed:F2}\n";
+                info += $"    æŒ¯å¹…: {state.currentAmplitude:F2}\n";
             }
 
             return info;

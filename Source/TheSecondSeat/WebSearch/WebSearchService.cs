@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -10,8 +10,8 @@ using Verse;
 namespace TheSecondSeat.WebSearch
 {
     /// <summary>
-    /// ÍøÂçËÑË÷·şÎñ - Ö§³Ö¶àÖÖËÑË÷ÒıÇæ
-    /// ? Ìí¼ÓÑÓÊ±¿ØÖÆ£¬·ÀÖ¹ÇëÇó¹ı¿ì
+    /// ç½‘ç»œæœç´¢æœåŠ¡ - æ”¯æŒå¤šç§æœç´¢å¼•æ“
+    /// ? æ·»åŠ å»¶æ—¶æ§åˆ¶ï¼Œé˜²æ­¢è¯·æ±‚è¿‡å¿«
     /// </summary>
     public class WebSearchService
     {
@@ -23,12 +23,12 @@ namespace TheSecondSeat.WebSearch
         private const int CacheExpirationMinutes = 60;
         private const int MaxCacheEntries = 100;
         
-        // ? ÇëÇóÏŞÁ÷
+        // ? è¯·æ±‚é™æµ
         private DateTime lastRequestTime = DateTime.MinValue;
-        private const int MinRequestIntervalMs = 1000; // ×îĞ¡ÇëÇó¼ä¸ô£¨ºÁÃë£©
-        private int requestDelayMs = 1000; // Ä¬ÈÏÑÓÊ± 1 Ãë
+        private const int MinRequestIntervalMs = 1000; // æœ€å°è¯·æ±‚é—´éš”ï¼ˆæ¯«ç§’ï¼‰
+        private int requestDelayMs = 1000; // é»˜è®¤å»¶æ—¶ 1 ç§’
 
-        // ÅäÖÃ
+        // é…ç½®
         private string searchEngine = "bing"; // "bing", "google", "duckduckgo"
         private string? bingApiKey;
         private string? googleApiKey;
@@ -38,19 +38,19 @@ namespace TheSecondSeat.WebSearch
         {
             httpClient = new HttpClient
             {
-                Timeout = TimeSpan.FromSeconds(30) // ? 15Ãë ¡ú 30Ãë
+                Timeout = TimeSpan.FromSeconds(30) // ? 15ç§’ â†’ 30ç§’
             };
             httpClient.DefaultRequestHeaders.Add("User-Agent", "TheSecondSeat-RimWorld-Mod/1.0");
             searchCache = new Dictionary<string, SearchResultCache>();
         }
 
         /// <summary>
-        /// ÅäÖÃËÑË÷·şÎñ
+        /// é…ç½®æœç´¢æœåŠ¡
         /// </summary>
         public void Configure(string engine, string? apiKey = null, string? searchEngineId = null, int delayMs = 1000)
         {
             searchEngine = engine.ToLower();
-            requestDelayMs = Math.Max(MinRequestIntervalMs, delayMs); // È·±£ÖÁÉÙ 1 Ãë
+            requestDelayMs = Math.Max(MinRequestIntervalMs, delayMs); // ç¡®ä¿è‡³å°‘ 1 ç§’
             
             switch (searchEngine)
             {
@@ -62,19 +62,19 @@ namespace TheSecondSeat.WebSearch
                     googleSearchEngineId = searchEngineId;
                     break;
                 case "duckduckgo":
-                    // DuckDuckGo ²»ĞèÒª API Key
+                    // DuckDuckGo ä¸éœ€è¦ API Key
                     break;
                 default:
-                    Log.Warning($"[WebSearch] Î´ÖªËÑË÷ÒıÇæ: {engine}£¬Ê¹ÓÃ DuckDuckGo");
+                    Log.Warning($"[WebSearch] æœªçŸ¥æœç´¢å¼•æ“: {engine}ï¼Œä½¿ç”¨ DuckDuckGo");
                     searchEngine = "duckduckgo";
                     break;
             }
 
-            Log.Message($"[WebSearch] ËÑË÷ÒıÇæÒÑÅäÖÃ: {searchEngine}, ÑÓÊ±: {requestDelayMs}ms");
+            Log.Message($"[WebSearch] æœç´¢å¼•æ“å·²é…ç½®: {searchEngine}, å»¶æ—¶: {requestDelayMs}ms");
         }
 
         /// <summary>
-        /// ? ÇëÇóÏŞÁ÷£ºÈ·±£ÇëÇó¼ä¸ô²»Ğ¡ÓÚÉè¶¨Öµ
+        /// ? è¯·æ±‚é™æµï¼šç¡®ä¿è¯·æ±‚é—´éš”ä¸å°äºè®¾å®šå€¼
         /// </summary>
         private async Task EnsureRequestDelay()
         {
@@ -84,7 +84,7 @@ namespace TheSecondSeat.WebSearch
             if (timeSinceLastRequest < requiredDelay)
             {
                 var waitTime = requiredDelay - timeSinceLastRequest;
-                Log.Message($"[WebSearch] ÏŞÁ÷µÈ´ı {waitTime.TotalMilliseconds:F0}ms");
+                Log.Message($"[WebSearch] é™æµç­‰å¾… {waitTime.TotalMilliseconds:F0}ms");
                 await Task.Delay(waitTime);
             }
             
@@ -92,8 +92,8 @@ namespace TheSecondSeat.WebSearch
         }
 
         /// <summary>
-        /// Ö´ĞĞËÑË÷
-        /// ? Ìí¼ÓÑÓÊ±±£»¤
+        /// æ‰§è¡Œæœç´¢
+        /// ? æ·»åŠ å»¶æ—¶ä¿æŠ¤
         /// </summary>
         public async Task<SearchResult?> SearchAsync(string query, int maxResults = 5)
         {
@@ -102,16 +102,16 @@ namespace TheSecondSeat.WebSearch
                 return null;
             }
 
-            // ¼ì²é»º´æ
+            // æ£€æŸ¥ç¼“å­˜
             if (TryGetFromCache(query, out var cachedResult))
             {
-                Log.Message($"[WebSearch] Ê¹ÓÃ»º´æ½á¹û: {query}");
+                Log.Message($"[WebSearch] ä½¿ç”¨ç¼“å­˜ç»“æœ: {query}");
                 return cachedResult;
             }
 
             try
             {
-                // ? ÇëÇóÇ°ÑÓÊ±
+                // ? è¯·æ±‚å‰å»¶æ—¶
                 await EnsureRequestDelay();
                 
                 SearchResult? result = searchEngine switch
@@ -122,7 +122,7 @@ namespace TheSecondSeat.WebSearch
                     _ => await SearchDuckDuckGoAsync(query, maxResults)
                 };
 
-                // »º´æ½á¹û
+                // ç¼“å­˜ç»“æœ
                 if (result != null && result.Results.Count > 0)
                 {
                     AddToCache(query, result);
@@ -132,19 +132,19 @@ namespace TheSecondSeat.WebSearch
             }
             catch (Exception ex)
             {
-                Log.Error($"[WebSearch] ËÑË÷Ê§°Ü: {ex.Message}");
+                Log.Error($"[WebSearch] æœç´¢å¤±è´¥: {ex.Message}");
                 return null;
             }
         }
 
         /// <summary>
-        /// Bing ËÑË÷
+        /// Bing æœç´¢
         /// </summary>
         private async Task<SearchResult?> SearchBingAsync(string query, int maxResults)
         {
             if (string.IsNullOrEmpty(bingApiKey))
             {
-                Log.Warning("[WebSearch] Bing API Key Î´ÅäÖÃ");
+                Log.Warning("[WebSearch] Bing API Key æœªé…ç½®");
                 return null;
             }
 
@@ -180,18 +180,18 @@ namespace TheSecondSeat.WebSearch
                 }
             }
 
-            Log.Message($"[WebSearch] Bing ËÑË÷Íê³É: {query} - {result.Results.Count} ¸ö½á¹û");
+            Log.Message($"[WebSearch] Bing æœç´¢å®Œæˆ: {query} - {result.Results.Count} ä¸ªç»“æœ");
             return result;
         }
 
         /// <summary>
-        /// Google ËÑË÷
+        /// Google æœç´¢
         /// </summary>
         private async Task<SearchResult?> SearchGoogleAsync(string query, int maxResults)
         {
             if (string.IsNullOrEmpty(googleApiKey) || string.IsNullOrEmpty(googleSearchEngineId))
             {
-                Log.Warning("[WebSearch] Google API Key »ò Search Engine ID Î´ÅäÖÃ");
+                Log.Warning("[WebSearch] Google API Key æˆ– Search Engine ID æœªé…ç½®");
                 return null;
             }
 
@@ -224,12 +224,12 @@ namespace TheSecondSeat.WebSearch
                 }
             }
 
-            Log.Message($"[WebSearch] Google ËÑË÷Íê³É: {query} - {result.Results.Count} ¸ö½á¹û");
+            Log.Message($"[WebSearch] Google æœç´¢å®Œæˆ: {query} - {result.Results.Count} ä¸ªç»“æœ");
             return result;
         }
 
         /// <summary>
-        /// DuckDuckGo ¼´Ê±»Ø´ğ API£¨Ãâ·Ñ£¬ÎŞĞè API Key£©
+        /// DuckDuckGo å³æ—¶å›ç­” APIï¼ˆå…è´¹ï¼Œæ— éœ€ API Keyï¼‰
         /// </summary>
         private async Task<SearchResult?> SearchDuckDuckGoAsync(string query, int maxResults)
         {
@@ -248,7 +248,7 @@ namespace TheSecondSeat.WebSearch
                 Timestamp = DateTime.Now
             };
 
-            // ¼´Ê±»Ø´ğ
+            // å³æ—¶å›ç­”
             var abstractText = json["Abstract"]?.ToString();
             var abstractUrl = json["AbstractURL"]?.ToString();
             
@@ -262,7 +262,7 @@ namespace TheSecondSeat.WebSearch
                 });
             }
 
-            // Ïà¹Ø»°Ìâ
+            // ç›¸å…³è¯é¢˜
             var relatedTopics = json["RelatedTopics"] as JArray;
             if (relatedTopics != null)
             {
@@ -280,12 +280,12 @@ namespace TheSecondSeat.WebSearch
                 }
             }
 
-            Log.Message($"[WebSearch] DuckDuckGo ËÑË÷Íê³É: {query} - {result.Results.Count} ¸ö½á¹û");
+            Log.Message($"[WebSearch] DuckDuckGo æœç´¢å®Œæˆ: {query} - {result.Results.Count} ä¸ªç»“æœ");
             return result;
         }
 
         /// <summary>
-        /// ¼ì²â²éÑ¯ÊÇ·ñĞèÒªÁªÍøËÑË÷
+        /// æ£€æµ‹æŸ¥è¯¢æ˜¯å¦éœ€è¦è”ç½‘æœç´¢
         /// </summary>
         public static bool ShouldSearch(string query)
         {
@@ -294,11 +294,11 @@ namespace TheSecondSeat.WebSearch
 
             var lowerQuery = query.ToLower();
 
-            // ¼ì²â¹Ø¼ü´Ê
+            // æ£€æµ‹å…³é”®è¯
             var searchTriggers = new[]
             {
-                "ËÑË÷", "²éÕÒ", "Ê²Ã´ÊÇ", "Ë­ÊÇ", "ÈçºÎ", "ÔõÃ´",
-                "×îĞÂ", "ĞÂÎÅ", "µ±Ç°", "ÏÖÔÚ",
+                "æœç´¢", "æŸ¥æ‰¾", "ä»€ä¹ˆæ˜¯", "è°æ˜¯", "å¦‚ä½•", "æ€ä¹ˆ",
+                "æœ€æ–°", "æ–°é—»", "å½“å‰", "ç°åœ¨",
                 "search", "find", "what is", "who is", "how to",
                 "latest", "news", "current", "recent"
             };
@@ -307,7 +307,7 @@ namespace TheSecondSeat.WebSearch
         }
 
         /// <summary>
-        /// ½«ËÑË÷½á¹û¸ñÊ½»¯ÎªÉÏÏÂÎÄ
+        /// å°†æœç´¢ç»“æœæ ¼å¼åŒ–ä¸ºä¸Šä¸‹æ–‡
         /// </summary>
         public static string FormatResultsForContext(SearchResult searchResult, int maxLength = 800)
         {
@@ -316,12 +316,12 @@ namespace TheSecondSeat.WebSearch
                 return "";
             }
 
-            var context = $"=== ÍøÂçËÑË÷½á¹û: \"{searchResult.Query}\" ({searchResult.Engine}) ===\n";
+            var context = $"=== ç½‘ç»œæœç´¢ç»“æœ: \"{searchResult.Query}\" ({searchResult.Engine}) ===\n";
             int currentLength = context.Length;
 
             foreach (var result in searchResult.Results)
             {
-                var entry = $"\n¡¾{result.Title}¡¿\n{result.Snippet}\nÀ´Ô´: {result.Url}\n";
+                var entry = $"\nã€{result.Title}ã€‘\n{result.Snippet}\næ¥æº: {result.Url}\n";
                 
                 if (currentLength + entry.Length > maxLength)
                 {
@@ -332,11 +332,11 @@ namespace TheSecondSeat.WebSearch
                 currentLength += entry.Length;
             }
 
-            context += "=== ËÑË÷½á¹û½áÊø ===\n\n";
+            context += "=== æœç´¢ç»“æœç»“æŸ ===\n\n";
             return context;
         }
 
-        // »º´æ¹ÜÀí
+        // ç¼“å­˜ç®¡ç†
         private bool TryGetFromCache(string query, out SearchResult? result)
         {
             if (searchCache.TryGetValue(query, out var cache))
@@ -360,7 +360,7 @@ namespace TheSecondSeat.WebSearch
         {
             if (searchCache.Count >= MaxCacheEntries)
             {
-                // ÒÆ³ı×î¾ÉµÄÌõÄ¿
+                // ç§»é™¤æœ€æ—§çš„æ¡ç›®
                 var oldest = searchCache.OrderBy(x => x.Value.Timestamp).First();
                 searchCache.Remove(oldest.Key);
             }
@@ -375,12 +375,12 @@ namespace TheSecondSeat.WebSearch
         public void ClearCache()
         {
             searchCache.Clear();
-            Log.Message("[WebSearch] ËÑË÷»º´æÒÑÇå¿Õ");
+            Log.Message("[WebSearch] æœç´¢ç¼“å­˜å·²æ¸…ç©º");
         }
     }
 
     /// <summary>
-    /// ËÑË÷½á¹û
+    /// æœç´¢ç»“æœ
     /// </summary>
     public class SearchResult
     {
@@ -391,7 +391,7 @@ namespace TheSecondSeat.WebSearch
     }
 
     /// <summary>
-    /// µ¥¸öËÑË÷½á¹ûÏî
+    /// å•ä¸ªæœç´¢ç»“æœé¡¹
     /// </summary>
     public class SearchResultItem
     {
@@ -401,7 +401,7 @@ namespace TheSecondSeat.WebSearch
     }
 
     /// <summary>
-    /// ËÑË÷½á¹û»º´æ
+    /// æœç´¢ç»“æœç¼“å­˜
     /// </summary>
     internal class SearchResultCache
     {

@@ -1,43 +1,43 @@
-using System;
+ï»¿using System;
 using UnityEngine;
 using Verse;
 
 namespace TheSecondSeat.Descent
 {
     /// <summary>
-    /// ? v2.0.0: ½µÁÙÌØĞ§äÖÈ¾Æ÷
+    /// ? v2.0.0: é™ä¸´ç‰¹æ•ˆæ¸²æŸ“å™¨
     /// 
-    /// ¹¦ÄÜ£º
-    /// - äÖÈ¾½µÁÙ³å»÷²¨ÌØĞ§
-    /// - äÖÈ¾¹â»·ÌØĞ§£¨Ô®Öú/Ï®»÷£©
-    /// - äÖÈ¾Á£×ÓĞ§¹û
-    /// - äÖÈ¾Ä§·¨Õó
+    /// åŠŸèƒ½ï¼š
+    /// - æ¸²æŸ“é™ä¸´å†²å‡»æ³¢ç‰¹æ•ˆ
+    /// - æ¸²æŸ“å…‰ç¯ç‰¹æ•ˆï¼ˆæ´åŠ©/è¢­å‡»ï¼‰
+    /// - æ¸²æŸ“ç²’å­æ•ˆæœ
+    /// - æ¸²æŸ“é­”æ³•é˜µ
     /// </summary>
     public class DescentEffectRenderer
     {
-        // ==================== ÅäÖÃ²ÎÊı ====================
+        // ==================== é…ç½®å‚æ•° ====================
         
-        private const float AURA_DURATION = 5.0f;        // ¹â»·³ÖĞøÊ±¼ä
-        private const float IMPACT_DURATION = 1.5f;      // ³å»÷²¨³ÖĞøÊ±¼ä
-        private const float PARTICLE_DURATION = 3.0f;    // Á£×Ó³ÖĞøÊ±¼ä
+        private const float AURA_DURATION = 5.0f;        // å…‰ç¯æŒç»­æ—¶é—´
+        private const float IMPACT_DURATION = 1.5f;      // å†²å‡»æ³¢æŒç»­æ—¶é—´
+        private const float PARTICLE_DURATION = 3.0f;    // ç²’å­æŒç»­æ—¶é—´
         
-        // ==================== ¹«¹²·½·¨ ====================
+        // ==================== å…¬å…±æ–¹æ³• ====================
         
         /// <summary>
-        /// ²¥·Å³å»÷²¨ÌØĞ§
+        /// æ’­æ”¾å†²å‡»æ³¢ç‰¹æ•ˆ
         /// </summary>
         public void PlayImpactEffect(IntVec3 location, DescentMode mode)
         {
             try
             {
-                // ¼ÓÔØ³å»÷²¨ÎÆÀí
+                // åŠ è½½å†²å‡»æ³¢çº¹ç†
                 string effectPath = "UI/Narrators/Descent/Effects/Common/impact_ground";
                 Texture2D impactTexture = ContentFinder<Texture2D>.Get(effectPath, false);
                 
                 if (impactTexture != null)
                 {
-                    // TODO: Ê¹ÓÃ Mote ÏµÍ³äÖÈ¾ÌØĞ§
-                    // »òÊ¹ÓÃ×Ô¶¨ÒåäÖÈ¾Æ÷ÔÚµØÍ¼ÉÏ»æÖÆ
+                    // TODO: ä½¿ç”¨ Mote ç³»ç»Ÿæ¸²æŸ“ç‰¹æ•ˆ
+                    // æˆ–ä½¿ç”¨è‡ªå®šä¹‰æ¸²æŸ“å™¨åœ¨åœ°å›¾ä¸Šç»˜åˆ¶
                     
                     Log.Message($"[DescentEffectRenderer] Playing impact effect at {location}");
                 }
@@ -49,13 +49,13 @@ namespace TheSecondSeat.Descent
         }
         
         /// <summary>
-        /// ²¥·Å¹â»·ÌØĞ§
+        /// æ’­æ”¾å…‰ç¯ç‰¹æ•ˆ
         /// </summary>
         public void PlayAuraEffect(IntVec3 location, DescentMode mode, float duration)
         {
             try
             {
-                // ¸ù¾İÄ£Ê½Ñ¡Ôñ¹â»·ÎÆÀí
+                // æ ¹æ®æ¨¡å¼é€‰æ‹©å…‰ç¯çº¹ç†
                 string auraPath = mode == DescentMode.Assist
                     ? "UI/Narrators/Descent/Effects/Assist/aura_healing_01"
                     : "UI/Narrators/Descent/Effects/Attack/aura_wrath_01";
@@ -64,7 +64,7 @@ namespace TheSecondSeat.Descent
                 
                 if (auraTexture != null)
                 {
-                    // TODO: äÖÈ¾Ğı×ª¹â»·
+                    // TODO: æ¸²æŸ“æ—‹è½¬å…‰ç¯
                     Log.Message($"[DescentEffectRenderer] Playing aura effect: {mode} at {location}");
                 }
             }
@@ -75,7 +75,7 @@ namespace TheSecondSeat.Descent
         }
         
         /// <summary>
-        /// ²¥·ÅÄ§·¨ÕóÌØĞ§
+        /// æ’­æ”¾é­”æ³•é˜µç‰¹æ•ˆ
         /// </summary>
         public void PlayMagicCircle(IntVec3 location, DescentMode mode)
         {
@@ -89,7 +89,7 @@ namespace TheSecondSeat.Descent
                 
                 if (circleTexture != null)
                 {
-                    // TODO: äÖÈ¾µØÃæÄ§·¨Õó
+                    // TODO: æ¸²æŸ“åœ°é¢é­”æ³•é˜µ
                     Log.Message($"[DescentEffectRenderer] Playing magic circle: {mode}");
                 }
             }

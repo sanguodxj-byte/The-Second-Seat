@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -9,14 +9,14 @@ using TheSecondSeat.Commands;
 namespace TheSecondSeat.UI
 {
     /// <summary>
-    /// ÏÔÊ¾ËùÓĞ¿ÉÓÃAIÖ¸ÁîµÄ´°¿Ú
-    /// ? µã»÷ÃüÁîĞĞ×Ô¶¯ÊäÈëµ½ÁÄÌì´°¿Ú
+    /// æ˜¾ç¤ºæ‰€æœ‰å¯ç”¨AIæŒ‡ä»¤çš„çª—å£
+    /// ? ç‚¹å‡»å‘½ä»¤è¡Œè‡ªåŠ¨è¾“å…¥åˆ°èŠå¤©çª—å£
     /// </summary>
     public class CommandListWindow : Window
     {
         private Vector2 scrollPosition = Vector2.zero;
         private string searchFilter = "";
-        private string selectedCategory = "È«²¿";
+        private string selectedCategory = "å…¨éƒ¨";
         
         private static readonly Color HeaderColor = new Color(0.15f, 0.60f, 0.70f, 1f);
         private static readonly Color RowColor1 = new Color(0.12f, 0.13f, 0.14f, 0.8f);
@@ -25,7 +25,7 @@ namespace TheSecondSeat.UI
         private static readonly Color ImplementedColor = new Color(0.4f, 0.8f, 0.4f);
         private static readonly Color NotImplementedColor = new Color(0.8f, 0.4f, 0.4f);
 
-        // ? »Øµ÷£ºÊäÈëµ½ÁÄÌì´°¿Ú
+        // ? å›è°ƒï¼šè¾“å…¥åˆ°èŠå¤©çª—å£
         public static Action<string>? OnCommandSelected;
 
         public override Vector2 InitialSize => new Vector2(900f, 650f);
@@ -44,30 +44,30 @@ namespace TheSecondSeat.UI
         {
             float curY = 0f;
             
-            // ±êÌâ
+            // æ ‡é¢˜
             Text.Font = GameFont.Medium;
             GUI.color = HeaderColor;
-            Widgets.Label(new Rect(0f, curY, inRect.width, 35f), "AI ¿ÉÓÃÖ¸ÁîÁĞ±í (µã»÷ÃüÁî×Ô¶¯ÊäÈë)");
+            Widgets.Label(new Rect(0f, curY, inRect.width, 35f), "AI å¯ç”¨æŒ‡ä»¤åˆ—è¡¨ (ç‚¹å‡»å‘½ä»¤è‡ªåŠ¨è¾“å…¥)");
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
             curY += 40f;
             
-            // ËÑË÷ºÍÉ¸Ñ¡
+            // æœç´¢å’Œç­›é€‰
             DrawSearchAndFilter(new Rect(0f, curY, inRect.width, 30f));
             curY += 35f;
             
-            // ÌáÊ¾
+            // æç¤º
             GUI.color = new Color(0.6f, 0.8f, 0.6f);
             Text.Font = GameFont.Tiny;
-            Widgets.Label(new Rect(0f, curY, inRect.width, 20f), "[ÌáÊ¾] µã»÷ÈÎÒâÃüÁîĞĞ£¬½«×Ô¶¯ÊäÈëµ½ÁÄÌì´°¿Ú¡£ÂÌÉ«=ÒÑÊµÏÖ£¬ºìÉ«=Î´ÊµÏÖ");
+            Widgets.Label(new Rect(0f, curY, inRect.width, 20f), "[æç¤º] ç‚¹å‡»ä»»æ„å‘½ä»¤è¡Œï¼Œå°†è‡ªåŠ¨è¾“å…¥åˆ°èŠå¤©çª—å£ã€‚ç»¿è‰²=å·²å®ç°ï¼Œçº¢è‰²=æœªå®ç°");
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
             curY += 25f;
 
-            // Ö¸ÁîÁĞ±í
+            // æŒ‡ä»¤åˆ—è¡¨
             var commands = GetAllCommands();
             
-            // Ó¦ÓÃÉ¸Ñ¡
+            // åº”ç”¨ç­›é€‰
             if (!string.IsNullOrEmpty(searchFilter))
             {
                 commands = commands.Where(c => 
@@ -78,7 +78,7 @@ namespace TheSecondSeat.UI
                 ).ToList();
             }
             
-            if (selectedCategory != "È«²¿")
+            if (selectedCategory != "å…¨éƒ¨")
             {
                 commands = commands.Where(c => c.Category == selectedCategory).ToList();
             }
@@ -89,19 +89,19 @@ namespace TheSecondSeat.UI
         
         private void DrawSearchAndFilter(Rect rect)
         {
-            // ËÑË÷¿ò
+            // æœç´¢æ¡†
             var searchRect = new Rect(rect.x, rect.y, 250f, rect.height);
             GUI.SetNextControlName("CommandSearch");
             searchFilter = Widgets.TextField(searchRect, searchFilter);
             if (string.IsNullOrEmpty(searchFilter) && GUI.GetNameOfFocusedControl() != "CommandSearch")
             {
                 GUI.color = new Color(0.5f, 0.5f, 0.5f);
-                Widgets.Label(new Rect(searchRect.x + 5f, searchRect.y, searchRect.width, searchRect.height), "ËÑË÷ÃüÁî...");
+                Widgets.Label(new Rect(searchRect.x + 5f, searchRect.y, searchRect.width, searchRect.height), "æœç´¢å‘½ä»¤...");
                 GUI.color = Color.white;
             }
             
-            // ·ÖÀàÉ¸Ñ¡
-            var categories = new List<string> { "È«²¿", "ÅúÁ¿²Ù×÷", "µ¥Î»¹ÜÀí", "×ÊÔ´¹ÜÀí", "ÊÂ¼ş¿ØÖÆ", "²éÑ¯" };
+            // åˆ†ç±»ç­›é€‰
+            var categories = new List<string> { "å…¨éƒ¨", "æ‰¹é‡æ“ä½œ", "å•ä½ç®¡ç†", "èµ„æºç®¡ç†", "äº‹ä»¶æ§åˆ¶", "äº‹ä»¶è°ƒè¯•", "æŸ¥è¯¢" };
             float btnWidth = 70f;
             float startX = rect.x + 260f;
             
@@ -128,126 +128,152 @@ namespace TheSecondSeat.UI
         {
             return new List<CommandInfo>
             {
-                // === ÅúÁ¿²Ù×÷£¨ÒÑÊµÏÖ£©===
-                new CommandInfo("BatchHarvest", "ÅúÁ¿ÊÕ»ñ", "ÅúÁ¿²Ù×÷",
-                    "Ö¸¶¨ËùÓĞ³ÉÊì×÷Îï½øĞĞÊÕ»ñ", 
-                    "°ïÎÒÊÕ»ñËùÓĞ³ÉÊìµÄ×÷Îï",
+                // === æ‰¹é‡æ“ä½œï¼ˆå·²å®ç°ï¼‰===
+                new CommandInfo("BatchHarvest", "æ‰¹é‡æ”¶è·", "æ‰¹é‡æ“ä½œ",
+                    "æŒ‡å®šæ‰€æœ‰æˆç†Ÿä½œç‰©è¿›è¡Œæ”¶è·", 
+                    "æ‰¹é‡æ”¶è·æ‰€æœ‰æˆç†Ÿä½œç‰©",
                     "All/Mature/Blighted", true),
                 
-                new CommandInfo("BatchMine", "ÅúÁ¿²É¿ó", "ÅúÁ¿²Ù×÷",
-                    "Ö¸¶¨ËùÓĞ¿É²É¿ó×ÊÔ´½øĞĞ¿ª²É", 
-                    "°ïÎÒ°ÑËùÓĞ½ğÊô¿ó¶¼±ê¼Ç²É¿ó",
+                new CommandInfo("BatchMine", "æ‰¹é‡é‡‡çŸ¿", "æ‰¹é‡æ“ä½œ",
+                    "æŒ‡å®šæ‰€æœ‰å¯é‡‡çŸ¿èµ„æºè¿›è¡Œå¼€é‡‡", 
+                    "æŠŠé‡å¤–æ‰€æœ‰é‡‘å±çŸ¿éƒ½æ ‡è®°é‡‡çŸ¿",
                     "all/metal/stone/components", true),
                 
-                new CommandInfo("BatchLogging", "ÅúÁ¿·¥Ä¾", "ÅúÁ¿²Ù×÷",
-                    "Ö¸¶¨ËùÓĞ³ÉÊìÊ÷Ä¾½øĞĞ¿³·¥", 
-                    "°ïÎÒ¿³·¥ËùÓĞ³ÉÊìµÄÊ÷",
-                    "ÎŞ²ÎÊı£¨¡İ90%³ÉÊì£©", true),
+                new CommandInfo("BatchLogging", "æ‰¹é‡ä¼æœ¨", "æ‰¹é‡æ“ä½œ",
+                    "æŒ‡å®šæ‰€æœ‰æˆå¹´æ ‘æœ¨è¿›è¡Œå¼€é‡‡", 
+                    "ç æ‰åœ°å›¾ä¸Šæ‰€æœ‰æ ‘æœ¨",
+                    "æ— å‚æ•°ï¼ˆé»˜è®¤90%æˆç†Ÿï¼‰", true),
                 
-                new CommandInfo("BatchEquip", "ÅúÁ¿×°±¸", "ÅúÁ¿²Ù×÷",
-                    "ÎªËùÓĞÎŞÎäÆ÷Ö³ÃñÕß×°±¸×î¼ÑÎäÆ÷", 
-                    "¸øËùÓĞÖ³ÃñÕß×°±¸ÎäÆ÷",
+                new CommandInfo("BatchEquip", "æ‰¹é‡è£…å¤‡", "æ‰¹é‡æ“ä½œ",
+                    "ä¸ºæ‰€æœ‰é€‚åˆçš„æ®–æ°‘è€…è£…å¤‡æ­¦å™¨æˆ–æŠ¤ç”²", 
+                    "è®©æ‰€æœ‰æ®–æ°‘è€…è£…å¤‡æœ€å¥½æ­¦å™¨",
                     "Weapon/Armor", true),
                 
-                new CommandInfo("BatchCapture", "ÅúÁ¿·ı»ñ", "ÅúÁ¿²Ù×÷",
-                    "·ı»ñËùÓĞµ¹µØµÄµĞ·½ÈËĞÎµ¥Î»", 
-                    "·ı»ñËùÓĞµ¹µØµÄµĞÈË",
-                    "ÎŞ²ÎÊı£¨ĞèÒª¿´ÊØ£©", true),
+                new CommandInfo("BatchCapture", "æ‰¹é‡ä¿˜è™", "æ‰¹é‡æ“ä½œ",
+                    "ä¿˜è™æ‰€æœ‰å‡»å€’çš„æ•Œæ–¹å•ä½", 
+                    "ä¿˜è™æ‰€æœ‰å‡»å€’çš„æ•Œäºº",
+                    "æ— å‚æ•°ï¼ˆè‡ªåŠ¨ä¿˜è™ï¼‰", true),
                 
-                new CommandInfo("PriorityRepair", "ÓÅÏÈĞŞ¸´", "ÅúÁ¿²Ù×÷",
-                    "Ö¸¶¨ËùÓĞÊÜËğ½¨Öş½øĞĞĞŞ¸´", 
-                    "ĞŞ¸´ËùÓĞËğ»µµÄ½¨Öş",
+                new CommandInfo("PriorityRepair", "ä¼˜å…ˆä¿®å¤", "æ‰¹é‡æ“ä½œ",
+                    "æŒ‡å®šæ‰€æœ‰å—æŸå»ºç­‘è¿›è¡Œä¿®å¤", 
+                    "ä¿®å¤æ‰€æœ‰ç ´æŸçš„å»ºç­‘",
                     "All/Damaged(<80%)", true),
                 
-                new CommandInfo("EmergencyRetreat", "½ô¼±³·ÍË", "ÅúÁ¿²Ù×÷",
-                    "Õ÷ÕÙËùÓĞÎ´Õ÷ÕÙµÄÖ³ÃñÕß", 
-                    "½ô¼±³·ÍË£¡Õ÷ÕÙËùÓĞÈË",
-                    "ÎŞ²ÎÊı", true),
+                new CommandInfo("EmergencyRetreat", "ç´§æ€¥æ’¤é€€", "æ‰¹é‡æ“ä½œ",
+                    "å‘½ä»¤æ‰€æœ‰æœªå—ä¼¤çš„æ®–æ°‘è€…æ’¤é€€", 
+                    "æ‰€æœ‰äººæ’¤é€€ï¼Œå¿«è·‘",
+                    "æ— å‚æ•°", true),
                 
-                new CommandInfo("DesignatePlantCut", "ÇåÀíÖ²Îï", "ÅúÁ¿²Ù×÷",
-                    "Ö¸¶¨Ö²Îï½øĞĞ¿³·¥ÇåÀí", 
-                    "ÇåÀíËùÓĞ¿İÎ®µÄÖ²Îï",
+                new CommandInfo("DesignatePlantCut", "æ‰¹é‡æ¤ç‰©", "æ‰¹é‡æ“ä½œ",
+                    "æŒ‡å®šæ¤ç‰©è¿›è¡Œå¼€é‡‡æ¸…ç†", 
+                    "æ¸…ç†æ‰€æœ‰æ¯èæ¤ç‰©",
                     "All/Blighted/Trees/Wild", true),
                 
-                // === Ö³ÃñÕß¹ÜÀí£¨? ÒÑÊµÏÖ£©===
-                new CommandInfo("DraftPawn", "Õ÷ÕÙÖ³ÃñÕß", "µ¥Î»¹ÜÀí",
-                    "½«Ö¸¶¨Ö³ÃñÕßÉèÎªÕ÷ÕÙ×´Ì¬", 
-                    "Õ÷ÕÙÕÅÈı",
+                // === æ®–æ°‘è€…ç®¡ç†ï¼ˆå·²å®ç°ï¼‰===
+                new CommandInfo("DraftPawn", "å¾å¬æ®–æ°‘è€…", "å•ä½ç®¡ç†",
+                    "å°†æŒ‡å®šæ®–æ°‘è€…è®¾ä¸ºå¾å¬çŠ¶æ€", 
+                    "å¾å¬æ‰€æœ‰äºº",
                     "pawnName/drafted(bool)", true),
                 
-                new CommandInfo("MovePawn", "ÒÆ¶¯Ö³ÃñÕß", "µ¥Î»¹ÜÀí",
-                    "ÃüÁîÒÑÕ÷ÕÙÖ³ÃñÕßÒÆ¶¯µ½Ö¸¶¨Î»ÖÃ", 
-                    "ÈÃÕÅÈıÒÆ¶¯µ½×ø±ê50,50",
-                    "pawnName + x,z×ø±ê", true),
+                new CommandInfo("MovePawn", "ç§»åŠ¨æ®–æ°‘è€…", "å•ä½ç®¡ç†",
+                    "å‘½ä»¤æˆ˜æ–—ä¸­çš„æ®–æ°‘è€…ç§»åŠ¨åˆ°æŒ‡å®šä½ç½®", 
+                    "è®©å¼ ä¸‰ç§»åŠ¨åˆ°åæ ‡50,50",
+                    "pawnName + x,zåæ ‡", true),
                 
-                new CommandInfo("HealPawn", "ÖÎÁÆÖ³ÃñÕß", "µ¥Î»¹ÜÀí",
-                    "ÓÅÏÈÎªÖ¸¶¨Ö³ÃñÕß°²ÅÅÒ½ÁÆ", 
-                    "ÖÎÁÆÀîËÄ",
-                    "pawnName(¿Õ=È«²¿ÉËÔ±)", true),
+                new CommandInfo("HealPawn", "æ²»ç–—æ®–æ°‘è€…", "å•ä½ç®¡ç†",
+                    "ä¼˜å…ˆä¸ºæŒ‡å®šæ®–æ°‘è€…å®‰æ’åŒ»ç–—", 
+                    "æ²»ç–—å¼ ä¸‰",
+                    "pawnName(ç©º=å…¨ä½“æˆå‘˜)", true),
                 
-                new CommandInfo("SetWorkPriority", "ÉèÖÃ¹¤×÷ÓÅÏÈ¼¶", "µ¥Î»¹ÜÀí",
-                    "µ÷ÕûÖ³ÃñÕß¹¤×÷ÓÅÏÈ¼¶", 
-                    "°ÑÕÅÈıµÄÒ½ÁÆÉèÎª×î¸ßÓÅÏÈ",
+                new CommandInfo("SetWorkPriority", "è®¾ç½®å·¥ä½œä¼˜å…ˆçº§", "å•ä½ç®¡ç†",
+                    "è°ƒæ•´æ®–æ°‘è€…å·¥ä½œä¼˜å…ˆçº§", 
+                    "æŠŠå¼ ä¸‰çš„åŒ»ç–—è®¾ä¸ºæœ€ä¼˜å…ˆ",
                     "pawnName+workType+priority", true),
                 
-                new CommandInfo("EquipWeapon", "×°±¸ÎäÆ÷", "µ¥Î»¹ÜÀí",
-                    "ÃüÁîÖ³ÃñÕß×°±¸Ö¸¶¨ÎäÆ÷", 
-                    "ÈÃÕÅÈı×°±¸Í»»÷²½Ç¹",
-                    "pawnName/weaponDef(¿ÉÑ¡)", true),
+                new CommandInfo("EquipWeapon", "è£…å¤‡æ­¦å™¨", "å•ä½ç®¡ç†",
+                    "è®©æ®–æ°‘è€…è£…å¤‡æŒ‡å®šæ­¦å™¨", 
+                    "è®©å¼ ä¸‰è£…å¤‡çªå‡»æ­¥æª",
+                    "pawnName/weaponDef(å¯é€‰)", true),
                 
-                // === ×ÊÔ´¹ÜÀí£¨ÒÑÊµÏÖ£©===
-                new CommandInfo("ForbidItems", "½ûÖ¹ÎïÆ·", "×ÊÔ´¹ÜÀí",
-                    "½ûÖ¹µØÍ¼ÉÏµÄ¿É°áÔËÎïÆ·", 
-                    "½ûÖ¹ËùÓĞµôÂäµÄÎïÆ·",
-                    "ÎŞ²ÎÊı/¿ÉÑ¡count", true),
+                // === èµ„æºç®¡ç†ï¼ˆå·²å®ç°ï¼‰===
+                new CommandInfo("ForbidItems", "ç¦æ­¢ç‰©å“", "èµ„æºç®¡ç†",
+                    "ç¦æ­¢åœ°å›¾ä¸Šçš„å¯æ¬è¿ç‰©å“", 
+                    "ç¦æ­¢æ‰€æœ‰çš„è…çƒ‚ç‰©å“",
+                    "æ— å‚æ•°/å¯é€‰count", true),
                 
-                new CommandInfo("AllowItems", "½â½ûÎïÆ·", "×ÊÔ´¹ÜÀí",
-                    "½â³ıËùÓĞ±»½ûÖ¹µÄÎïÆ·", 
-                    "½â½ûËùÓĞÎïÆ·",
-                    "ÎŞ²ÎÊı/¿ÉÑ¡count", true),
+                new CommandInfo("AllowItems", "å…è®¸ç‰©å“", "èµ„æºç®¡ç†",
+                    "å…è®¸æ‰€æœ‰è¢«ç¦æ­¢çš„ç‰©å“", 
+                    "å…è®¸æ‰€æœ‰ç‰©å“",
+                    "æ— å‚æ•°/å¯é€‰count", true),
                 
-                // === ÊÂ¼ş¿ØÖÆ£¨¶ÔŞÄÕßÄ£Ê½£©===
-                new CommandInfo("TriggerEvent", "´¥·¢ÊÂ¼ş", "ÊÂ¼ş¿ØÖÆ",
-                    "Á¢¼´´¥·¢ÓÎÏ·ÊÂ¼ş£¨½ö¶ÔŞÄÕßÄ£Ê½£©", 
-                    "·¢¶¯Ò»´ÎÏ®»÷",
+                // === äº‹ä»¶æ§åˆ¶ï¼ˆå¯¹å¼ˆè€…æ¨¡å¼ï¼‰===
+                new CommandInfo("TriggerEvent", "è§¦å‘äº‹ä»¶", "äº‹ä»¶æ§åˆ¶",
+                    "è§¦å‘æŒ‡å®šæ¸¸æˆäº‹ä»¶ï¼ˆå¯¹å¼ˆè€…æ¨¡å¼ï¼‰", 
+                    "è§¦å‘ä¸€åœºè¢­å‡»",
                     "raid/trader/wanderer/disease/resource/eclipse/toxic", true),
                 
-                new CommandInfo("ScheduleEvent", "°²ÅÅÊÂ¼ş", "ÊÂ¼ş¿ØÖÆ",
-                    "ÔÚÎ´À´Ä³Ê±¿Ì´¥·¢ÊÂ¼ş", 
-                    "10·ÖÖÓºó·¢¶¯Ï®»÷",
-                    "ÊÂ¼şÀàĞÍ + delayMinutes", true),
+                new CommandInfo("ScheduleEvent", "é¢„çº¦äº‹ä»¶", "äº‹ä»¶æ§åˆ¶",
+                    "åœ¨æœªæ¥æŸæ—¶åˆ»è§¦å‘äº‹ä»¶", 
+                    "10åˆ†é’Ÿåå‘åŠ¨è¢­å‡»",
+                    "äº‹ä»¶ç±»å‹ + delayMinutes", true),
                 
-                new CommandInfo("ChangeWeather", "ĞŞ¸ÄÌìÆø", "ÊÂ¼ş¿ØÖÆ",
-                    "¸Ä±äµ±Ç°µØÍ¼ÌìÆø£¨½ö¶ÔŞÄÕßÄ£Ê½£©", 
-                    "°ÑÌìÆø¸Ä³ÉÏÂÓê",
-                    "Clear/Rain/Fog/SnowµÈ", false),
+                new CommandInfo("ChangeWeather", "ä¿®æ”¹å¤©æ°”", "äº‹ä»¶æ§åˆ¶",
+                    "æ”¹å˜å½“å‰åœ°å›¾çš„å¤©æ°”ï¼ˆå¯¹å¼ˆè€…æ¨¡å¼ï¼‰", 
+                    "æŠŠå¤©æ°”æ”¹æˆæ™´å¤©",
+                    "Clear/Rain/Fog/Snowç­‰", false),
                 
-                // === ²éÑ¯ÃüÁî£¨Í¨¹ı¶Ô»°ÊµÏÖ£©===
-                new CommandInfo("GetColonists", "»ñÈ¡Ö³ÃñÕß", "²éÑ¯",
-                    "»ñÈ¡ËùÓĞÖ³ÃñÕßĞÅÏ¢£¨Í¨¹ı¶Ô»°£©", 
-                    "¸æËßÎÒÖ³ÃñµØÓĞÄÄĞ©ÈË",
-                    "Ö±½ÓÑ¯ÎÊAI¼´¿É", true),
+                // === ? äº‹ä»¶è°ƒè¯•ï¼ˆå¼€å‘è€…å·¥å…·ï¼‰===
+                new CommandInfo("TSS_TestWelcomeGift", "?? è§¦å‘è§é¢ç¤¼", "äº‹ä»¶è°ƒè¯•",
+                    "ã€æµ‹è¯•ã€‘è§¦å‘è§é¢ç¤¼äº‹ä»¶ï¼ˆ+500é“¶ +10å¥½æ„Ÿï¼‰", 
+                    "è§¦å‘è§é¢ç¤¼äº‹ä»¶",
+                    "æ— å‚æ•°", true),
                 
-                new CommandInfo("GetResources", "»ñÈ¡×ÊÔ´", "²éÑ¯",
-                    "»ñÈ¡Ö³ÃñµØ×ÊÔ´¿â´æ£¨Í¨¹ı¶Ô»°£©", 
-                    "ÎÒÃÇ»¹ÓĞ¶àÉÙÊ³Îï£¿",
-                    "Ö±½ÓÑ¯ÎÊAI¼´¿É", true),
+                new CommandInfo("TSS_TestDivineWrath", "? è§¦å‘ç¥ç½š", "äº‹ä»¶è°ƒè¯•",
+                    "ã€æµ‹è¯•ã€‘è§¦å‘ç¥ç½šäº‹ä»¶ï¼ˆé›·å‡» ä¸­æ¯’ -20å¥½æ„Ÿï¼‰", 
+                    "è§¦å‘ç¥ç½šäº‹ä»¶",
+                    "æ— å‚æ•°", true),
                 
-                new CommandInfo("GetThreats", "»ñÈ¡ÍşĞ²", "²éÑ¯",
-                    "»ñÈ¡µ±Ç°µØÍ¼ÍşĞ²ĞÅÏ¢£¨Í¨¹ı¶Ô»°£©", 
-                    "ÓĞµĞÈËÂğ£¿",
-                    "Ö±½ÓÑ¯ÎÊAI¼´¿É", true),
+                new CommandInfo("TSS_TestMechRaid", "?? è§¦å‘æ•Œè¢­", "äº‹ä»¶è°ƒè¯•",
+                    "ã€æµ‹è¯•ã€‘è§¦å‘æ•Œè¢­è­¦æŠ¥äº‹ä»¶ï¼ˆ5ç§’åè¢­å‡»ï¼‰", 
+                    "è§¦å‘æ•Œè¢­è­¦æŠ¥",
+                    "æ— å‚æ•°", true),
                 
-                new CommandInfo("GetColonyStatus", "Ö³ÃñµØ×´Ì¬", "²éÑ¯",
-                    "»ñÈ¡Ö³ÃñµØÕûÌå×´Ì¬£¨Í¨¹ı¶Ô»°£©", 
-                    "Ö³ÃñµØÏÖÔÚÔõÃ´Ñù£¿",
-                    "Ö±½ÓÑ¯ÎÊAI¼´¿É", true),
+                new CommandInfo("TSS_ListAllEvents", "?? åˆ—å‡ºæ‰€æœ‰äº‹ä»¶", "äº‹ä»¶è°ƒè¯•",
+                    "ã€æµ‹è¯•ã€‘åˆ—å‡ºæ‰€æœ‰å·²åŠ è½½çš„è‡ªå®šä¹‰äº‹ä»¶", 
+                    "åˆ—å‡ºæ‰€æœ‰äº‹ä»¶",
+                    "æ— å‚æ•°", true),
                 
-                // === Ôİ²»Ö§³Ö ===
-                new CommandInfo("DesignateConstruction", "Ö¸¶¨½¨Ôì", "×ÊÔ´¹ÜÀí",
-                    "¡¾Ôİ²»Ö§³Ö¡¿ĞèÒª¸´ÔÓµÄ½¨ÖşÀ¶Í¼", 
-                    "ÔÚ(10,10)½¨Ò»¶ÂÇ½",
-                    "ĞèÒª×ø±ê+½¨ÖşÀàĞÍ+²ÄÁÏ", false),
+                new CommandInfo("TSS_CheckEventSystem", "?? æ£€æŸ¥äº‹ä»¶ç³»ç»Ÿ", "äº‹ä»¶è°ƒè¯•",
+                    "ã€æµ‹è¯•ã€‘æ£€æŸ¥äº‹ä»¶ç³»ç»ŸçŠ¶æ€å’Œå®Œæ•´æ€§", 
+                    "æ£€æŸ¥äº‹ä»¶ç³»ç»Ÿ",
+                    "æ— å‚æ•°", true),
+                
+                // === æŸ¥è¯¢ï¼ˆé€šè¿‡å¯¹è¯å®ç°ï¼‰===
+                new CommandInfo("GetColonists", "è·å–æ®–æ°‘è€…", "æŸ¥è¯¢",
+                    "è·å–æ‰€æœ‰æ®–æ°‘è€…ä¿¡æ¯ï¼ˆé€šè¿‡å¯¹è¯ï¼‰", 
+                    "æˆ‘ä»¬æœ‰å“ªäº›æ®–æ°‘è€…",
+                    "ç›´æ¥è¯¢é—®AIå³å¯", true),
+                
+                new CommandInfo("GetResources", "è·å–èµ„æº", "æŸ¥è¯¢",
+                    "è·å–æ®–æ°‘åœ°èµ„æºåº“å­˜ï¼ˆé€šè¿‡å¯¹è¯ï¼‰", 
+                    "æˆ‘ä»¬è¿˜æœ‰å¤šå°‘é£Ÿç‰©",
+                    "ç›´æ¥è¯¢é—®AIå³å¯", true),
+                
+                new CommandInfo("GetThreats", "è·å–å¨èƒ", "æŸ¥è¯¢",
+                    "è·å–å½“å‰åœ°å›¾å¨èƒä¿¡æ¯ï¼ˆé€šè¿‡å¯¹è¯ï¼‰", 
+                    "æœ‰æ•Œäººå—",
+                    "ç›´æ¥è¯¢é—®AIå³å¯", true),
+                
+                new CommandInfo("GetColonyStatus", "æ®–æ°‘åœ°çŠ¶æ€", "æŸ¥è¯¢",
+                    "è·å–æ®–æ°‘åœ°æ€»ä½“çŠ¶æ€ï¼ˆé€šè¿‡å¯¹è¯ï¼‰", 
+                    "æ®–æ°‘åœ°ç°åœ¨æ€ä¹ˆæ ·",
+                    "ç›´æ¥è¯¢é—®AIå³å¯", true),
+                
+                // === æš‚ä¸æ”¯æŒ ===
+                new CommandInfo("DesignateConstruction", "æŒ‡å®šå»ºé€ ", "èµ„æºç®¡ç†",
+                    "ã€æš‚ä¸æ”¯æŒã€‘éœ€è¦æ·»åŠ çš„å»ºé€ è“å›¾", 
+                    "åœ¨(10,10)å»ºä¸€å µå¢™",
+                    "éœ€è¦åæ ‡+å»ºç­‘ç±»å‹+æœå‘", false),
             };
         }
 
@@ -255,7 +281,7 @@ namespace TheSecondSeat.UI
         {
             var innerRect = rect.ContractedBy(5f);
             
-            // ¼ÆËãÄÚÈİ¸ß¶È
+            // è®¡ç®—å†…å®¹é«˜åº¦
             float contentHeight = 40f + commands.Count * 75f;
             var viewRect = new Rect(0f, 0f, innerRect.width - 20f, contentHeight);
 
@@ -263,17 +289,17 @@ namespace TheSecondSeat.UI
 
             float curY = 0f;
 
-            // ±íÍ·
+            // è¡¨å¤´
             DrawTableHeader(new Rect(0f, curY, viewRect.width, 35f));
             curY += 40f;
 
-            // Êı¾İĞĞ
+            // æ•°æ®è¡Œ
             for (int i = 0; i < commands.Count; i++)
             {
                 var rowColor = i % 2 == 0 ? RowColor1 : RowColor2;
                 var rowRect = new Rect(0f, curY, viewRect.width, 70f);
                 
-                // ? Êó±êĞüÍ£Ğ§¹û
+                // ? é¼ æ ‡æ‚¬åœæ•ˆæœ
                 if (Mouse.IsOver(rowRect))
                 {
                     rowColor = RowHoverColor;
@@ -281,7 +307,7 @@ namespace TheSecondSeat.UI
                 
                 DrawCommandRow(rowRect, commands[i], rowColor, i);
                 
-                // ? µã»÷ÊÂ¼ş£ºÊäÈëµ½ÁÄÌì´°¿Ú
+                // ? ç‚¹å‡»äº‹ä»¶ï¼šè¾“å…¥åˆ°èŠå¤©çª—å£
                 if (Widgets.ButtonInvisible(rowRect))
                 {
                     OnCommandClicked(commands[i]);
@@ -303,7 +329,7 @@ namespace TheSecondSeat.UI
             GUI.color = HeaderColor;
 
             float[] colWidths = { 130f, 80f, 80f, 200f, 200f, 100f };
-            string[] headers = { "ÃüÁîID", "ÏÔÊ¾Ãû", "·ÖÀà", "ÃèÊö", "Ê¾ÀıÌáÊ¾´Ê", "²ÎÊı¸ñÊ½" };
+            string[] headers = { "å‘½ä»¤ID", "æ˜¾ç¤ºå", "åˆ†ç±»", "æè¿°", "ç¤ºä¾‹æç¤ºè¯", "å‚æ•°æ ¼å¼" };
             float x = rect.x + 10f;
             
             for (int i = 0; i < headers.Length; i++)
@@ -320,7 +346,7 @@ namespace TheSecondSeat.UI
         {
             Widgets.DrawBoxSolid(rect, bgColor);
             
-            // ×´Ì¬Ö¸Ê¾Ìõ
+            // çŠ¶æ€æŒ‡ç¤ºæ¡
             var statusColor = command.IsImplemented ? ImplementedColor : NotImplementedColor;
             Widgets.DrawBoxSolid(new Rect(rect.x, rect.y, 4f, rect.height), statusColor);
 
@@ -330,33 +356,33 @@ namespace TheSecondSeat.UI
             float[] colWidths = { 130f, 80f, 80f, 200f, 200f, 100f };
             float x = rect.x + 14f;
 
-            // ÃüÁîÃû£¨»ÆÉ«¸ßÁÁ£©
+            // å‘½ä»¤åï¼ˆé»„è‰²é«˜äº®ï¼‰
             GUI.color = new Color(0.95f, 0.90f, 0.50f);
             Widgets.Label(new Rect(x, rect.y + 5f, colWidths[0], 25f), command.CommandName);
             x += colWidths[0] + 10f;
 
-            // ÏÔÊ¾Ãû
+            // æ˜¾ç¤ºå
             GUI.color = Color.white;
             Widgets.Label(new Rect(x, rect.y + 5f, colWidths[1], 25f), command.DisplayName);
             x += colWidths[1] + 10f;
 
-            // ·ÖÀà
+            // åˆ†ç±»
             GUI.color = new Color(0.7f, 0.8f, 0.9f);
             Widgets.Label(new Rect(x, rect.y + 5f, colWidths[2], 25f), command.Category);
             x += colWidths[2] + 10f;
 
-            // ÃèÊö
+            // æè¿°
             Text.Anchor = TextAnchor.UpperLeft;
             GUI.color = new Color(0.85f, 0.85f, 0.85f);
             Widgets.Label(new Rect(x, rect.y + 5f, colWidths[3], 60f), command.Description);
             x += colWidths[3] + 10f;
 
-            // Ê¾ÀıÌáÊ¾´Ê£¨ÂÌÉ«¸ßÁÁ£¬¿Éµã»÷£©
+            // ç¤ºä¾‹æç¤ºè¯ï¼ˆç»¿è‰²é«˜äº®ï¼Œå¯ç‚¹å‡»ï¼‰
             GUI.color = new Color(0.5f, 0.9f, 0.5f);
-            Widgets.Label(new Rect(x, rect.y + 5f, colWidths[4], 60f), $"¡¸{command.ExamplePrompt}¡¹");
+            Widgets.Label(new Rect(x, rect.y + 5f, colWidths[4], 60f), $"ã€Œ{command.ExamplePrompt}ã€");
             x += colWidths[4] + 10f;
 
-            // ²ÎÊı¸ñÊ½
+            // å‚æ•°æ ¼å¼
             GUI.color = new Color(0.70f, 0.80f, 0.90f);
             Widgets.Label(new Rect(x, rect.y + 5f, colWidths[5], 60f), command.TargetFormat);
 
@@ -365,60 +391,112 @@ namespace TheSecondSeat.UI
         }
 
         /// <summary>
-        /// ? µã»÷ÃüÁîÊ±µÄ´¦Àí
+        /// ç‚¹å‡»å‘½ä»¤æ—¶çš„å¤„ç†
         /// </summary>
         private void OnCommandClicked(CommandInfo command)
         {
-            // ¸´ÖÆÊ¾ÀıÌáÊ¾´Êµ½¼ôÌù°å£¨±¸ÓÃ£©
+            // ? æ£€æŸ¥æ˜¯å¦ä¸ºäº‹ä»¶è°ƒè¯•å‘½ä»¤
+            if (command.CommandName.StartsWith("TSS_Test") || command.CommandName.StartsWith("TSS_List") || command.CommandName.StartsWith("TSS_Check"))
+            {
+                // ç›´æ¥è°ƒç”¨ EventTester çš„æ–¹æ³•
+                HandleEventDebugCommand(command.CommandName);
+                return;
+            }
+            
+            // å¤åˆ¶ç¤ºä¾‹æç¤ºè¯åˆ°å‰ªè´´æ¿ï¼ˆå¯é€‰ï¼‰
             GUIUtility.systemCopyBuffer = command.ExamplePrompt;
             
-            // ? Ö±½Ó·¢ËÍµ½ AI£¨²»ĞèÒªÊÖ¶¯È·ÈÏ£©
+            // ç›´æ¥å‘é€åˆ° AIï¼ˆä¸éœ€è¦æ‰‹åŠ¨ç¡®è®¤ï¼‰
             TryInputAndSendToNarratorWindow(command.ExamplePrompt);
         }
         
         /// <summary>
-        /// ? ÊäÈëÎÄ±¾²¢×Ô¶¯·¢ËÍµ½ĞğÊÂÕß´°¿Ú
+        /// ? å¤„ç†äº‹ä»¶è°ƒè¯•å‘½ä»¤
+        /// </summary>
+        private void HandleEventDebugCommand(string commandName)
+        {
+            try
+            {
+                switch (commandName)
+                {
+                    case "TSS_TestWelcomeGift":
+                        Testing.EventTester.TriggerWelcomeGift();
+                        break;
+                    
+                    case "TSS_TestDivineWrath":
+                        Testing.EventTester.TriggerDivineWrath();
+                        break;
+                    
+                    case "TSS_TestMechRaid":
+                        Testing.EventTester.TriggerMechRaid();
+                        break;
+                    
+                    case "TSS_ListAllEvents":
+                        Testing.EventTester.ListAllEvents();
+                        break;
+                    
+                    case "TSS_CheckEventSystem":
+                        Testing.EventTester.CheckEventSystem();
+                        break;
+                    
+                    default:
+                        Messages.Message($"æœªçŸ¥çš„äº‹ä»¶è°ƒè¯•å‘½ä»¤: {commandName}", MessageTypeDefOf.RejectInput);
+                        break;
+                }
+                
+                // å…³é—­æŒ‡ä»¤åˆ—è¡¨çª—å£
+                this.Close();
+            }
+            catch (System.Exception ex)
+            {
+                Log.Error($"[CommandListWindow] æ‰§è¡Œäº‹ä»¶è°ƒè¯•å‘½ä»¤å¤±è´¥: {ex.Message}");
+                Messages.Message($"æ‰§è¡Œå¤±è´¥: {ex.Message}", MessageTypeDefOf.RejectInput);
+            }
+        }
+
+        /// <summary>
+        /// ? è¾“å…¥æ–‡æœ¬å¹¶è‡ªåŠ¨å‘é€åˆ°å™äº‹è€…çª—å£
         /// </summary>
         private void TryInputAndSendToNarratorWindow(string text)
         {
-            // ²éÕÒÒÑ´ò¿ªµÄ NarratorWindow
+            // æŸ¥æ‰¾å·²æ‰“å¼€çš„ NarratorWindow
             var narratorWindow = Find.WindowStack?.Windows
                 .OfType<NarratorWindow>()
                 .FirstOrDefault();
             
             if (narratorWindow != null)
             {
-                // ? Ö±½Ó·¢ËÍ£¨²»ĞèÒªÊÖ¶¯µã»÷·¢ËÍ°´Å¥£©
+                // ? ç›´æ¥å‘é€ï¼ˆä¸éœ€è¦æ‰‹åŠ¨ç‚¹å‡»å‘é€æŒ‰é’®ï¼‰
                 NarratorWindow.SetInputTextAndSend(text);
-                Log.Message($"[CommandListWindow] ÒÑ×Ô¶¯·¢ËÍÃüÁî: {text}");
+                Log.Message($"[CommandListWindow] å·²è‡ªåŠ¨å‘é€å‘½ä»¤: {text}");
                 
-                // ÏÔÊ¾È·ÈÏÏûÏ¢
-                Messages.Message($"? ÒÑ·¢ËÍ: {text}", MessageTypeDefOf.PositiveEvent);
+                // æ˜¾ç¤ºç¡®è®¤æ¶ˆæ¯
+                Messages.Message($"? å·²å‘é€: {text}", MessageTypeDefOf.PositiveEvent);
                 
-                // ? ¹Ø±ÕÃüÁîÁĞ±í´°¿Ú£¨¿ÉÑ¡£©
+                // ? å…³é—­å‘½ä»¤åˆ—è¡¨çª—å£ï¼ˆå¯é€‰ï¼‰
                 this.Close();
             }
             else
             {
-                // Èç¹û´°¿ÚÎ´´ò¿ª£¬ÏÈ´ò¿ª´°¿ÚÔÙ·¢ËÍ
+                // å¦‚æœçª—å£æœªæ‰“å¼€ï¼Œå…ˆæ‰“å¼€çª—å£å†å‘é€
                 Find.WindowStack.Add(new NarratorWindow());
                 
-                // ÑÓ³ÙÒ»Ö¡ºó·¢ËÍ£¨È·±£´°¿ÚÒÑ³õÊ¼»¯£©
+                // å»¶è¿Ÿä¸€å¸§åå‘é€ï¼ˆç¡®ä¿çª—å£å·²åˆå§‹åŒ–ï¼‰
                 Verse.LongEventHandler.ExecuteWhenFinished(() => 
                 {
                     NarratorWindow.SetInputTextAndSend(text);
-                    Messages.Message($"? ÒÑ·¢ËÍ: {text}", MessageTypeDefOf.PositiveEvent);
+                    Messages.Message($"? å·²å‘é€: {text}", MessageTypeDefOf.PositiveEvent);
                 });
                 
-                Log.Message($"[CommandListWindow] ÒÑ´ò¿ª¶Ô»°´°¿Ú²¢·¢ËÍÃüÁî: {text}");
+                Log.Message($"[CommandListWindow] å·²æ‰“å¼€å¯¹è¯çª—å£å¹¶å‘é€å‘½ä»¤: {text}");
                 
-                // ¹Ø±ÕÃüÁîÁĞ±í´°¿Ú
+                // å…³é—­å‘½ä»¤åˆ—è¡¨çª—å£
                 this.Close();
             }
         }
 
         /// <summary>
-        /// ÃüÁîĞÅÏ¢½á¹¹
+        /// å‘½ä»¤ä¿¡æ¯ç»“æ„
         /// </summary>
         private class CommandInfo
         {
@@ -426,9 +504,9 @@ namespace TheSecondSeat.UI
             public string DisplayName;
             public string Category;
             public string Description;
-            public string ExamplePrompt;  // ? Ê¾ÀıÌáÊ¾´Ê
+            public string ExamplePrompt;  // ? ç¤ºä¾‹æç¤ºè¯
             public string TargetFormat;
-            public bool IsImplemented;    // ? ÊÇ·ñÒÑÊµÏÖ
+            public bool IsImplemented;    // ? æ˜¯å¦å·²å®ç°
 
             public CommandInfo(string commandName, string displayName, string category,
                 string description, string examplePrompt, string targetFormat, bool isImplemented)
@@ -445,14 +523,14 @@ namespace TheSecondSeat.UI
     }
 
     /// <summary>
-    /// ´ò¿ªÖ¸ÁîÁĞ±íµÄ Gizmo
+    /// æ‰“å¼€æŒ‡ä»¤åˆ—è¡¨çš„ Gizmo
     /// </summary>
     public class Command_OpenCommandList : Command
     {
         public Command_OpenCommandList()
         {
-            defaultLabel = "²é¿´Ö¸ÁîÁĞ±í";
-            defaultDesc = "ÏÔÊ¾ËùÓĞ¿ÉÓÃµÄAIÖ¸Áî";
+            defaultLabel = "æŸ¥çœ‹æŒ‡ä»¤åˆ—è¡¨";
+            defaultDesc = "æ˜¾ç¤ºæ‰€æœ‰å¯ç”¨çš„AIæŒ‡ä»¤";
             icon = ContentFinder<Texture2D>.Get("UI/Commands/InfoButton", false);
         }
 

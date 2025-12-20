@@ -1,111 +1,111 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 
 namespace TheSecondSeat.Commands
 {
     /// <summary>
-    /// ÃüÁî¹¤¾ß¿â - ÅúÁ¿ÃüÁî²¿·Ö
+    /// å‘½ä»¤å·¥å…·åº“ - æ‰¹é‡å‘½ä»¤éƒ¨åˆ†
     /// </summary>
     public static partial class CommandToolLibrary
     {
         /// <summary>
-        /// ×¢²áÅúÁ¿²Ù×÷ÃüÁî
-        /// ? v1.6.27: Ìí¼Ó limit ºÍ nearFocus ²ÎÊı
+        /// æ³¨å†Œæ‰¹é‡æ“ä½œå‘½ä»¤
+        /// ? v1.6.27: æ·»åŠ  limit å’Œ nearFocus å‚æ•°
         /// </summary>
         private static void RegisterBatchCommands()
         {
-            // 6.1 ÅúÁ¿ÊÕ»ñ
+            // 6.1 æ‰¹é‡æ”¶è·
             Register(new CommandDefinition
             {
                 commandId = "BatchHarvest",
                 category = "Batch",
-                displayName = "ÅúÁ¿ÊÕ»ñ",
-                description = "Ö¸ÅÉËùÓĞ³ÉÊìµÄ×÷Îï½øĞĞÊÕ»ñ",
+                displayName = "æ‰¹é‡æ”¶è·",
+                description = "æŒ‡æ´¾æ‰€æœ‰æˆç†Ÿçš„ä½œç‰©è¿›è¡Œæ”¶è·",
                 parameters = new List<ParameterDef>
                 {
-                    new ParameterDef { name = "limit", type = "int", required = false, defaultValue = "-1", description = "ÏŞÖÆÊıÁ¿£¨-1=È«²¿£©" },
-                    new ParameterDef { name = "nearFocus", type = "bool", required = false, defaultValue = "false", description = "ÓÅÏÈÑ¡Ôñ¿¿½üÊó±ê/¾µÍ·µÄÄ¿±ê" }
+                    new ParameterDef { name = "limit", type = "int", required = false, defaultValue = "-1", description = "é™åˆ¶æ•°é‡ï¼ˆ-1=å…¨éƒ¨ï¼‰" },
+                    new ParameterDef { name = "nearFocus", type = "bool", required = false, defaultValue = "false", description = "ä¼˜å…ˆé€‰æ‹©é è¿‘é¼ æ ‡/é•œå¤´çš„ç›®æ ‡" }
                 },
                 example = "{ \"action\": \"BatchHarvest\", \"limit\": 10, \"nearFocus\": true }",
-                notes = "×Ô¶¯Ñ¡Ôñ×î½üµÄ10¸ö³ÉÊì×÷ÎïÊÕ»ñ"
+                notes = "è‡ªåŠ¨é€‰æ‹©æœ€è¿‘çš„10ä¸ªæˆç†Ÿä½œç‰©æ”¶è·"
             });
             
-            // 6.2 ÅúÁ¿×°±¸
+            // 6.2 æ‰¹é‡è£…å¤‡
             Register(new CommandDefinition
             {
                 commandId = "BatchEquip",
                 category = "Batch",
-                displayName = "ÅúÁ¿×°±¸",
-                description = "ÎªËùÓĞÎ´×°±¸µÄÖ³ÃñÕß×°±¸×î¼ÑÎäÆ÷",
+                displayName = "æ‰¹é‡è£…å¤‡",
+                description = "ä¸ºæ‰€æœ‰æœªè£…å¤‡çš„æ®–æ°‘è€…è£…å¤‡æœ€ä½³æ­¦å™¨",
                 parameters = new List<ParameterDef>(),
                 example = "{ \"action\": \"BatchEquip\" }",
                 notes = ""
             });
             
-            // 6.3 ÅúÁ¿²É¿ó
+            // 6.3 æ‰¹é‡é‡‡çŸ¿
             Register(new CommandDefinition
             {
                 commandId = "BatchMine",
                 category = "Batch",
-                displayName = "ÅúÁ¿²É¿ó",
-                description = "Ö¸ÅÉËùÓĞ¿É²É¿ó×ÊÔ´",
+                displayName = "æ‰¹é‡é‡‡çŸ¿",
+                description = "æŒ‡æ´¾æ‰€æœ‰å¯é‡‡çŸ¿èµ„æº",
                 parameters = new List<ParameterDef>
                 {
                     new ParameterDef { name = "target", type = "string", required = false, defaultValue = "all",
-                        validValues = new List<string> { "all", "metal", "stone", "components" }, description = "²É¿óÄ¿±êÀàĞÍ" },
-                    new ParameterDef { name = "limit", type = "int", required = false, defaultValue = "-1", description = "ÏŞÖÆÊıÁ¿£¨-1=È«²¿£©" },
-                    new ParameterDef { name = "nearFocus", type = "bool", required = false, defaultValue = "false", description = "ÓÅÏÈÑ¡Ôñ¿¿½üÊó±ê/¾µÍ·µÄÄ¿±ê" }
+                        validValues = new List<string> { "all", "metal", "stone", "components" }, description = "é‡‡çŸ¿ç›®æ ‡ç±»å‹" },
+                    new ParameterDef { name = "limit", type = "int", required = false, defaultValue = "-1", description = "é™åˆ¶æ•°é‡ï¼ˆ-1=å…¨éƒ¨ï¼‰" },
+                    new ParameterDef { name = "nearFocus", type = "bool", required = false, defaultValue = "false", description = "ä¼˜å…ˆé€‰æ‹©é è¿‘é¼ æ ‡/é•œå¤´çš„ç›®æ ‡" }
                 },
                 example = "{ \"action\": \"BatchMine\", \"target\": \"metal\", \"limit\": 5, \"nearFocus\": true }",
-                notes = "²É¿ó×î½üµÄ5¸ö½ğÊô¿ó"
+                notes = "é‡‡çŸ¿æœ€è¿‘çš„5ä¸ªé‡‘å±çŸ¿"
             });
             
-            // 6.4 ÅúÁ¿·¥Ä¾
+            // 6.4 æ‰¹é‡ä¼æœ¨
             Register(new CommandDefinition
             {
                 commandId = "BatchLogging",
                 category = "Batch",
-                displayName = "ÅúÁ¿·¥Ä¾",
-                description = "Ö¸ÅÉËùÓĞ³ÉÊìÊ÷Ä¾½øĞĞ¿³·¥",
+                displayName = "æ‰¹é‡ä¼æœ¨",
+                description = "æŒ‡æ´¾æ‰€æœ‰æˆç†Ÿæ ‘æœ¨è¿›è¡Œç ä¼",
                 parameters = new List<ParameterDef>
                 {
-                    new ParameterDef { name = "limit", type = "int", required = false, defaultValue = "-1", description = "ÏŞÖÆÊıÁ¿£¨-1=È«²¿£©" },
-                    new ParameterDef { name = "nearFocus", type = "bool", required = false, defaultValue = "false", description = "ÓÅÏÈÑ¡Ôñ¿¿½üÊó±ê/¾µÍ·µÄÄ¿±ê" }
+                    new ParameterDef { name = "limit", type = "int", required = false, defaultValue = "-1", description = "é™åˆ¶æ•°é‡ï¼ˆ-1=å…¨éƒ¨ï¼‰" },
+                    new ParameterDef { name = "nearFocus", type = "bool", required = false, defaultValue = "false", description = "ä¼˜å…ˆé€‰æ‹©é è¿‘é¼ æ ‡/é•œå¤´çš„ç›®æ ‡" }
                 },
                 example = "{ \"action\": \"BatchLogging\", \"limit\": 20, \"nearFocus\": true }",
-                notes = "Ö»¿³·¥90%ÒÔÉÏ³ÉÊìµÄÊ÷Ä¾£¬ÓÅÏÈ¿³·¥×î½üµÄ20¿Ã"
+                notes = "åªç ä¼90%ä»¥ä¸Šæˆç†Ÿçš„æ ‘æœ¨ï¼Œä¼˜å…ˆç ä¼æœ€è¿‘çš„20æ£µ"
             });
             
-            // 6.5 ÅúÁ¿·ıÂ²
+            // 6.5 æ‰¹é‡ä¿˜è™
             Register(new CommandDefinition
             {
                 commandId = "BatchCapture",
                 category = "Batch",
-                displayName = "ÅúÁ¿·ıÂ²",
-                description = "Ö¸ÅÉËùÓĞµ¹µØµĞÈË½øĞĞ·ıÂ²",
+                displayName = "æ‰¹é‡ä¿˜è™",
+                description = "æŒ‡æ´¾æ‰€æœ‰å€’åœ°æ•Œäººè¿›è¡Œä¿˜è™",
                 parameters = new List<ParameterDef>(),
                 example = "{ \"action\": \"BatchCapture\" }",
-                notes = "ĞèÒªÓĞ¿ÉÓÃµÄ¿´ÊØÔ±"
+                notes = "éœ€è¦æœ‰å¯ç”¨çš„çœ‹å®ˆå‘˜"
             });
             
-            // 6.6 ½ô¼±³·ÍË
+            // 6.6 ç´§æ€¥æ’¤é€€
             Register(new CommandDefinition
             {
                 commandId = "EmergencyRetreat",
                 category = "Batch",
-                displayName = "½ô¼±³·ÍË",
-                description = "Õ÷ÕÙËùÓĞÖ³ÃñÕß×¼±¸³·ÍË",
+                displayName = "ç´§æ€¥æ’¤é€€",
+                description = "å¾å¬æ‰€æœ‰æ®–æ°‘è€…å‡†å¤‡æ’¤é€€",
                 parameters = new List<ParameterDef>(),
                 example = "{ \"action\": \"EmergencyRetreat\" }",
-                notes = "»á½«ËùÓĞÖ³ÃñÕßÉèÖÃÎªÕ÷ÕÙ×´Ì¬"
+                notes = "ä¼šå°†æ‰€æœ‰æ®–æ°‘è€…è®¾ç½®ä¸ºå¾å¬çŠ¶æ€"
             });
             
-            // 6.7 ÓÅÏÈĞŞ¸´
+            // 6.7 ä¼˜å…ˆä¿®å¤
             Register(new CommandDefinition
             {
                 commandId = "PriorityRepair",
                 category = "Batch",
-                displayName = "ÓÅÏÈĞŞ¸´",
-                description = "Ö¸ÅÉËùÓĞÊÜËğ½¨Öş½øĞĞĞŞ¸´",
+                displayName = "ä¼˜å…ˆä¿®å¤",
+                description = "æŒ‡æ´¾æ‰€æœ‰å—æŸå»ºç­‘è¿›è¡Œä¿®å¤",
                 parameters = new List<ParameterDef>(),
                 example = "{ \"action\": \"PriorityRepair\" }",
                 notes = ""

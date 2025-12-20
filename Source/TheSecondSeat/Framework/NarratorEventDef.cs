@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using Verse;
 using RimWorld;
@@ -6,26 +6,26 @@ using RimWorld;
 namespace TheSecondSeat.Framework
 {
     /// <summary>
-    /// ĞğÊÂÕßÊÂ¼ş¶¨Òå - TSS¿ò¼ÜºËĞÄDef
+    /// å™äº‹è€…äº‹ä»¶å®šä¹‰ - TSSæ¡†æ¶æ ¸å¿ƒDef
     /// 
-    /// Éè¼ÆÀíÄî£º
-    /// 1. Êı¾İÇı¶¯£ºËùÓĞÊÂ¼şÂß¼­Í¨¹ıXML¶¨Òå
-    /// 2. ½âñîºÏ£ºÓëÔ­°æIncidentWorkerÆ½ĞĞ£¬¶ÀÁ¢ÔË×÷
-    /// 3. ¿ÉÀ©Õ¹£ºÍ¨¹ı¼Ì³ĞTSSTriggerºÍTSSActionÊµÏÖĞÂ¹¦ÄÜ
+    /// è®¾è®¡ç†å¿µï¼š
+    /// 1. æ•°æ®é©±åŠ¨ï¼šæ‰€æœ‰äº‹ä»¶é€»è¾‘é€šè¿‡XMLå®šä¹‰
+    /// 2. è§£è€¦åˆï¼šä¸åŸç‰ˆIncidentWorkerå¹³è¡Œï¼Œç‹¬ç«‹è¿ä½œ
+    /// 3. å¯æ‰©å±•ï¼šé€šè¿‡ç»§æ‰¿TSSTriggerå’ŒTSSActionå®ç°æ–°åŠŸèƒ½
     /// 
-    /// ¹¤×÷Á÷³Ì£º
-    /// 1. NarratorEventManager¶¨ÆÚ¼ì²éËùÓĞNarratorEventDef
-    /// 2. ¼ì²étriggersÊÇ·ñÈ«²¿Âú×ã
-    /// 3. ¼ì²échanceºÍcooldown
-    /// 4. Ö´ĞĞactionsÁĞ±í
-    /// 5. ¸üĞÂcooldown
+    /// å·¥ä½œæµç¨‹ï¼š
+    /// 1. NarratorEventManagerå®šæœŸæ£€æŸ¥æ‰€æœ‰NarratorEventDef
+    /// 2. æ£€æŸ¥triggersæ˜¯å¦å…¨éƒ¨æ»¡è¶³
+    /// 3. æ£€æŸ¥chanceå’Œcooldown
+    /// 4. æ‰§è¡Œactionsåˆ—è¡¨
+    /// 5. æ›´æ–°cooldown
     /// 
-    /// XMLÅäÖÃÊ¾Àı£º
+    /// XMLé…ç½®ç¤ºä¾‹ï¼š
     /// <![CDATA[
     /// <TheSecondSeat.Framework.NarratorEventDef>
     ///   <defName>HighAffinityReward</defName>
-    ///   <label>¸ßºÃ¸Ğ¶È½±Àø</label>
-    ///   <description>µ±ºÃ¸Ğ¶È´ïµ½80+Ê±£¬ĞğÊÂÕßÌá¹©¶îÍâ°ïÖú</description>
+    ///   <label>é«˜å¥½æ„Ÿåº¦å¥–åŠ±</label>
+    ///   <description>å½“å¥½æ„Ÿåº¦è¾¾åˆ°80+æ—¶ï¼Œå™äº‹è€…æä¾›é¢å¤–å¸®åŠ©</description>
     ///   
     ///   <chance>0.5</chance>
     ///   <cooldownTicks>36000</cooldownTicks>
@@ -38,7 +38,7 @@ namespace TheSecondSeat.Framework
     ///   
     ///   <actions>
     ///     <li Class="TheSecondSeat.Framework.Actions.ShowDialogueAction">
-    ///       <dialogueText>¿´ÆğÀ´Äã×öµÃ²»´í£¡ÈÃÎÒ°ïÄãÒ»°Ñ~</dialogueText>
+    ///       <dialogueText>çœ‹èµ·æ¥ä½ åšå¾—ä¸é”™ï¼è®©æˆ‘å¸®ä½ ä¸€æŠŠ~</dialogueText>
     ///     </li>
     ///     <li Class="TheSecondSeat.Framework.Actions.SpawnResourceAction">
     ///       <resourceType>Steel</resourceType>
@@ -51,177 +51,177 @@ namespace TheSecondSeat.Framework
     public class NarratorEventDef : Def
     {
         // ============================================
-        // »ù±¾ĞÅÏ¢
+        // åŸºæœ¬ä¿¡æ¯
         // ============================================
         
         /// <summary>
-        /// ÊÂ¼şÏÔÊ¾Ãû³Æ£¨±¾µØ»¯¼ü»òÖ±½ÓÎÄ±¾£©
+        /// äº‹ä»¶æ˜¾ç¤ºåç§°ï¼ˆæœ¬åœ°åŒ–é”®æˆ–ç›´æ¥æ–‡æœ¬ï¼‰
         /// </summary>
         public string eventLabel = "";
         
         /// <summary>
-        /// ÊÂ¼şÃèÊö£¨ÓÃÓÚµ÷ÊÔºÍ±à¼­Æ÷ÏÔÊ¾£©
+        /// äº‹ä»¶æè¿°ï¼ˆç”¨äºè°ƒè¯•å’Œç¼–è¾‘å™¨æ˜¾ç¤ºï¼‰
         /// </summary>
         public string eventDescription = "";
         
         /// <summary>
-        /// ÊÂ¼şÀà±ğ£¨ÓÃÓÚ·Ö×éºÍ¹ıÂË£©
-        /// ÀıÈç£º"Reward", "Punishment", "Dialogue", "Combat"
+        /// äº‹ä»¶ç±»åˆ«ï¼ˆç”¨äºåˆ†ç»„å’Œè¿‡æ»¤ï¼‰
+        /// ä¾‹å¦‚ï¼š"Reward", "Punishment", "Dialogue", "Combat"
         /// </summary>
         public string category = "General";
         
         /// <summary>
-        /// ÊÂ¼şÓÅÏÈ¼¶£¨ÊıÖµÔ½¸ßÔ½ÓÅÏÈÖ´ĞĞ£©
+        /// äº‹ä»¶ä¼˜å…ˆçº§ï¼ˆæ•°å€¼è¶Šé«˜è¶Šä¼˜å…ˆæ‰§è¡Œï¼‰
         /// </summary>
         public int priority = 0;
         
         // ============================================
-        // ´¥·¢ÅäÖÃ
+        // è§¦å‘é…ç½®
         // ============================================
         
         /// <summary>
-        /// ´¥·¢Ìõ¼şÁĞ±í£¨ËùÓĞÌõ¼ş±ØĞëÂú×ã²Å´¥·¢£©
+        /// è§¦å‘æ¡ä»¶åˆ—è¡¨ï¼ˆæ‰€æœ‰æ¡ä»¶å¿…é¡»æ»¡è¶³æ‰è§¦å‘ï¼‰
         /// </summary>
         public List<TSSTrigger> triggers = new List<TSSTrigger>();
         
         /// <summary>
-        /// ´¥·¢¸ÅÂÊ£¨0.0-1.0£©
-        /// 1.0 = 100%´¥·¢£¬0.5 = 50%´¥·¢
+        /// è§¦å‘æ¦‚ç‡ï¼ˆ0.0-1.0ï¼‰
+        /// 1.0 = 100%è§¦å‘ï¼Œ0.5 = 50%è§¦å‘
         /// </summary>
         public float chance = 1.0f;
         
         /// <summary>
-        /// ÀäÈ´Ê±¼ä£¨ÓÎÏ·Tick£©
-        /// 0 = ÎŞÀäÈ´£¬3600 = 1·ÖÖÓ£¬216000 = 1ÓÎÏ·ÈÕ
+        /// å†·å´æ—¶é—´ï¼ˆæ¸¸æˆTickï¼‰
+        /// 0 = æ— å†·å´ï¼Œ3600 = 1åˆ†é’Ÿï¼Œ216000 = 1æ¸¸æˆæ—¥
         /// </summary>
         public int cooldownTicks = 0;
         
         /// <summary>
-        /// ÊÇ·ñÖ»´¥·¢Ò»´Î£¨´¥·¢ºó×Ô¶¯½ûÓÃ£©
+        /// æ˜¯å¦åªè§¦å‘ä¸€æ¬¡ï¼ˆè§¦å‘åè‡ªåŠ¨ç¦ç”¨ï¼‰
         /// </summary>
         public bool triggerOnce = false;
         
         /// <summary>
-        /// ×îĞ¡´¥·¢¼ä¸ô£¨ÓÎÏ·Tick£©
-        /// ·ÀÖ¹Í¬Ò»ÊÂ¼şÆµ·±´¥·¢
+        /// æœ€å°è§¦å‘é—´éš”ï¼ˆæ¸¸æˆTickï¼‰
+        /// é˜²æ­¢åŒä¸€äº‹ä»¶é¢‘ç¹è§¦å‘
         /// </summary>
         public int minIntervalTicks = 3600;
         
         // ============================================
-        // ĞĞ¶¯ÅäÖÃ
+        // è¡ŒåŠ¨é…ç½®
         // ============================================
         
         /// <summary>
-        /// ĞĞ¶¯ÁĞ±í£¨°´Ë³ĞòÖ´ĞĞ£©
+        /// è¡ŒåŠ¨åˆ—è¡¨ï¼ˆæŒ‰é¡ºåºæ‰§è¡Œï¼‰
         /// </summary>
         public List<TSSAction> actions = new List<TSSAction>();
         
         /// <summary>
-        /// ÊÇ·ñ²¢ĞĞÖ´ĞĞËùÓĞaction£¨Ä¬ÈÏ´®ĞĞ£©
+        /// æ˜¯å¦å¹¶è¡Œæ‰§è¡Œæ‰€æœ‰actionï¼ˆé»˜è®¤ä¸²è¡Œï¼‰
         /// </summary>
         public bool parallelExecution = false;
         
         /// <summary>
-        /// Ö´ĞĞÊ§°ÜÊ±ÊÇ·ñ¼ÌĞøÖ´ĞĞºóĞøaction
+        /// æ‰§è¡Œå¤±è´¥æ—¶æ˜¯å¦ç»§ç»­æ‰§è¡Œåç»­action
         /// </summary>
         public bool continueOnError = true;
         
         // ============================================
-        // Ìõ¼şÅäÖÃ
+        // æ¡ä»¶é…ç½®
         // ============================================
         
         /// <summary>
-        /// ĞèÒªµÄÈË¸ñÀàĞÍ£¨Áô¿Õ±íÊ¾ËùÓĞÈË¸ñ¶¼¿É´¥·¢£©
+        /// éœ€è¦çš„äººæ ¼ç±»å‹ï¼ˆç•™ç©ºè¡¨ç¤ºæ‰€æœ‰äººæ ¼éƒ½å¯è§¦å‘ï¼‰
         /// </summary>
         public List<string> requiredPersonas = new List<string>();
         
         /// <summary>
-        /// ĞèÒªµÄAIÄ£Ê½£¨Áô¿Õ±íÊ¾ËùÓĞÄ£Ê½¶¼¿É´¥·¢£©
+        /// éœ€è¦çš„AIæ¨¡å¼ï¼ˆç•™ç©ºè¡¨ç¤ºæ‰€æœ‰æ¨¡å¼éƒ½å¯è§¦å‘ï¼‰
         /// </summary>
         public List<string> requiredDifficultyModes = new List<string>();
         
         /// <summary>
-        /// ×îĞ¡ÓÎÏ·Ê±¼ä£¨Tick£©
-        /// 0 = ÎŞÏŞÖÆ£¬216000 = ÓÎÏ·¿ªÊ¼1Ììºó²ÅÄÜ´¥·¢
+        /// æœ€å°æ¸¸æˆæ—¶é—´ï¼ˆTickï¼‰
+        /// 0 = æ— é™åˆ¶ï¼Œ216000 = æ¸¸æˆå¼€å§‹1å¤©åæ‰èƒ½è§¦å‘
         /// </summary>
         public int minGameTicks = 0;
         
         /// <summary>
-        /// ×î´óÓÎÏ·Ê±¼ä£¨Tick£©
-        /// 0 = ÎŞÏŞÖÆ
+        /// æœ€å¤§æ¸¸æˆæ—¶é—´ï¼ˆTickï¼‰
+        /// 0 = æ— é™åˆ¶
         /// </summary>
         public int maxGameTicks = 0;
         
         // ============================================
-        // UIÅäÖÃ
+        // UIé…ç½®
         // ============================================
         
         /// <summary>
-        /// ÊÇ·ñÔÚ´¥·¢Ê±ÏÔÊ¾Í¨ÖªÏûÏ¢
+        /// æ˜¯å¦åœ¨è§¦å‘æ—¶æ˜¾ç¤ºé€šçŸ¥æ¶ˆæ¯
         /// </summary>
         public bool showNotification = true;
         
         /// <summary>
-        /// Í¨ÖªÏûÏ¢ÀàĞÍ
+        /// é€šçŸ¥æ¶ˆæ¯ç±»å‹
         /// </summary>
         public MessageTypeDef notificationMessageType = MessageTypeDefOf.PositiveEvent;
         
         /// <summary>
-        /// ×Ô¶¨ÒåÍ¨ÖªÎÄ±¾£¨Áô¿ÕÊ¹ÓÃlabel£©
+        /// è‡ªå®šä¹‰é€šçŸ¥æ–‡æœ¬ï¼ˆç•™ç©ºä½¿ç”¨labelï¼‰
         /// </summary>
         public string customNotificationText = "";
         
         // ============================================
-        // ÔËĞĞÊ±Êı¾İ£¨²»´ÓXML¼ÓÔØ£©
+        // è¿è¡Œæ—¶æ•°æ®ï¼ˆä¸ä»XMLåŠ è½½ï¼‰
         // ============================================
         
         /// <summary>
-        /// ÉÏ´Î´¥·¢Ê±¼ä£¨ÓÎÏ·Tick£©
+        /// ä¸Šæ¬¡è§¦å‘æ—¶é—´ï¼ˆæ¸¸æˆTickï¼‰
         /// </summary>
         [Unsaved]
         private int lastTriggeredTick = 0;
         
         /// <summary>
-        /// ÒÑ´¥·¢´ÎÊı
+        /// å·²è§¦å‘æ¬¡æ•°
         /// </summary>
         [Unsaved]
         private int triggeredCount = 0;
         
         /// <summary>
-        /// ÊÇ·ñÒÑ±»½ûÓÃ£¨triggerOnce´¥·¢ºó»áÉèÎªtrue£©
+        /// æ˜¯å¦å·²è¢«ç¦ç”¨ï¼ˆtriggerOnceè§¦å‘åä¼šè®¾ä¸ºtrueï¼‰
         /// </summary>
         [Unsaved]
         private bool isDisabled = false;
         
         // ============================================
-        // ¹«¹²·½·¨
+        // å…¬å…±æ–¹æ³•
         // ============================================
         
         /// <summary>
-        /// ¼ì²éÊÂ¼şÊÇ·ñ¿ÉÒÔ´¥·¢
+        /// æ£€æŸ¥äº‹ä»¶æ˜¯å¦å¯ä»¥è§¦å‘
         /// </summary>
         public bool CanTrigger(Map map, Dictionary<string, object> context)
         {
-            // ¼ì²éÊÇ·ñÒÑ½ûÓÃ
+            // æ£€æŸ¥æ˜¯å¦å·²ç¦ç”¨
             if (isDisabled)
             {
                 return false;
             }
             
-            // ¼ì²éÀäÈ´Ê±¼ä
+            // æ£€æŸ¥å†·å´æ—¶é—´
             int currentTick = Find.TickManager.TicksGame;
             if (currentTick - lastTriggeredTick < cooldownTicks)
             {
                 return false;
             }
             
-            // ¼ì²é×îĞ¡´¥·¢¼ä¸ô
+            // æ£€æŸ¥æœ€å°è§¦å‘é—´éš”
             if (currentTick - lastTriggeredTick < minIntervalTicks)
             {
                 return false;
             }
             
-            // ¼ì²éÓÎÏ·Ê±¼äÏŞÖÆ
+            // æ£€æŸ¥æ¸¸æˆæ—¶é—´é™åˆ¶
             if (minGameTicks > 0 && currentTick < minGameTicks)
             {
                 return false;
@@ -232,7 +232,7 @@ namespace TheSecondSeat.Framework
                 return false;
             }
             
-            // ¼ì²éÈË¸ñÏŞÖÆ
+            // æ£€æŸ¥äººæ ¼é™åˆ¶
             if (requiredPersonas.Count > 0)
             {
                 if (!context.TryGetValue("persona", out object personaObj))
@@ -247,7 +247,7 @@ namespace TheSecondSeat.Framework
                 }
             }
             
-            // ¼ì²éËùÓĞ´¥·¢Æ÷
+            // æ£€æŸ¥æ‰€æœ‰è§¦å‘å™¨
             if (triggers != null && triggers.Count > 0)
             {
                 foreach (var trigger in triggers)
@@ -259,7 +259,7 @@ namespace TheSecondSeat.Framework
                 }
             }
             
-            // ¼ì²é¸ÅÂÊ
+            // æ£€æŸ¥æ¦‚ç‡
             if (chance < 1.0f && Rand.Value > chance)
             {
                 if (Prefs.DevMode)
@@ -273,7 +273,7 @@ namespace TheSecondSeat.Framework
         }
         
         /// <summary>
-        /// ´¥·¢ÊÂ¼ş£¨Ö´ĞĞËùÓĞaction£©
+        /// è§¦å‘äº‹ä»¶ï¼ˆæ‰§è¡Œæ‰€æœ‰actionï¼‰
         /// </summary>
         public void TriggerEvent(Map map, Dictionary<string, object> context)
         {
@@ -284,22 +284,29 @@ namespace TheSecondSeat.Framework
                     Log.Message($"[NarratorEventDef] Triggering event: {defName} ({eventLabel})");
                 }
                 
-                // ÏÔÊ¾Í¨Öª
+                // ? æ˜¾ç¤ºé€šçŸ¥ï¼ˆå¢å¼ºnullæ£€æŸ¥ï¼‰
                 if (showNotification)
                 {
                     string notifText = !string.IsNullOrEmpty(customNotificationText) 
                         ? customNotificationText 
                         : eventLabel;
                     
-                    Messages.Message(notifText, notificationMessageType);
+                    // ? ç¡®ä¿ MessageType ä¸ä¸º nullï¼Œæä¾›é»˜è®¤å€¼
+                    var messageType = notificationMessageType ?? MessageTypeDefOf.PositiveEvent;
+                    
+                    // ? å¢åŠ æ–‡æœ¬éªŒè¯ï¼Œé¿å…ç©ºæ–‡æœ¬å¯¼è‡´çš„é—®é¢˜
+                    if (!string.IsNullOrWhiteSpace(notifText))
+                    {
+                        Messages.Message(notifText, messageType);
+                    }
                 }
                 
-                // Ö´ĞĞËùÓĞaction
+                // æ‰§è¡Œæ‰€æœ‰action
                 if (actions != null && actions.Count > 0)
                 {
                     if (parallelExecution)
                     {
-                        // ²¢ĞĞÖ´ĞĞ£¨²»µÈ´ıÑÓ³Ù£©
+                        // å¹¶è¡Œæ‰§è¡Œï¼ˆä¸ç­‰å¾…å»¶è¿Ÿï¼‰
                         foreach (var action in actions)
                         {
                             ExecuteActionWithDelay(action, map, context);
@@ -307,7 +314,7 @@ namespace TheSecondSeat.Framework
                     }
                     else
                     {
-                        // ´®ĞĞÖ´ĞĞ
+                        // ä¸²è¡Œæ‰§è¡Œ
                         float totalDelay = 0f;
                         foreach (var action in actions)
                         {
@@ -317,11 +324,11 @@ namespace TheSecondSeat.Framework
                     }
                 }
                 
-                // ¸üĞÂ´¥·¢×´Ì¬
+                // æ›´æ–°è§¦å‘çŠ¶æ€
                 lastTriggeredTick = Find.TickManager.TicksGame;
                 triggeredCount++;
                 
-                // Èç¹ûÊÇÒ»´ÎĞÔÊÂ¼ş£¬½ûÓÃËü
+                // å¦‚æœæ˜¯ä¸€æ¬¡æ€§äº‹ä»¶ï¼Œç¦ç”¨å®ƒ
                 if (triggerOnce)
                 {
                     isDisabled = true;
@@ -344,7 +351,7 @@ namespace TheSecondSeat.Framework
         }
         
         /// <summary>
-        /// Ö´ĞĞaction£¨´øÑÓ³Ù£©
+        /// æ‰§è¡Œactionï¼ˆå¸¦å»¶è¿Ÿï¼‰
         /// </summary>
         private void ExecuteActionWithDelay(TSSAction action, Map map, Dictionary<string, object> context, float additionalDelay = 0f)
         {
@@ -352,15 +359,15 @@ namespace TheSecondSeat.Framework
             
             if (totalDelay <= 0f)
             {
-                // Á¢¼´Ö´ĞĞ
+                // ç«‹å³æ‰§è¡Œ
                 action.ExecuteSafe(map, context);
             }
             else
             {
-                // ÑÓ³ÙÖ´ĞĞ
-                Find.TickManager.CurTimeSpeed = TimeSpeed.Normal; // È·±£Ê±¼äÔÚÔËĞĞ
+                // å»¶è¿Ÿæ‰§è¡Œ
+                Find.TickManager.CurTimeSpeed = TimeSpeed.Normal; // ç¡®ä¿æ—¶é—´åœ¨è¿è¡Œ
                 
-                // Ê¹ÓÃRimWorldµÄ¶¨Ê±Æ÷ÏµÍ³
+                // ä½¿ç”¨RimWorldçš„å®šæ—¶å™¨ç³»ç»Ÿ
                 LongEventHandler.QueueLongEvent(() =>
                 {
                     action.ExecuteSafe(map, context);
@@ -369,7 +376,7 @@ namespace TheSecondSeat.Framework
         }
         
         /// <summary>
-        /// ÖØÖÃ´¥·¢×´Ì¬£¨ÓÃÓÚµ÷ÊÔ»ò´æµµ¼æÈİ£©
+        /// é‡ç½®è§¦å‘çŠ¶æ€ï¼ˆç”¨äºè°ƒè¯•æˆ–å­˜æ¡£å…¼å®¹ï¼‰
         /// </summary>
         public void ResetState()
         {
@@ -379,24 +386,24 @@ namespace TheSecondSeat.Framework
         }
         
         /// <summary>
-        /// »ñÈ¡ÏÂ´Î¿É´¥·¢Ê±¼ä£¨Ãë£©
+        /// è·å–ä¸‹æ¬¡å¯è§¦å‘æ—¶é—´ï¼ˆç§’ï¼‰
         /// </summary>
         public int GetSecondsUntilNextTrigger()
         {
             int currentTick = Find.TickManager.TicksGame;
             int nextTriggerTick = lastTriggeredTick + Math.Max(cooldownTicks, minIntervalTicks);
             int remainingTicks = Math.Max(0, nextTriggerTick - currentTick);
-            return remainingTicks / 60; // ×ª»»ÎªÃë
+            return remainingTicks / 60; // è½¬æ¢ä¸ºç§’
         }
         
         /// <summary>
-        /// Def¼ÓÔØºóÑéÖ¤
+        /// DefåŠ è½½åéªŒè¯
         /// </summary>
         public override void ResolveReferences()
         {
             base.ResolveReferences();
             
-            // ÑéÖ¤ÅäÖÃ
+            // éªŒè¯é…ç½®
             if (string.IsNullOrEmpty(eventLabel))
             {
                 eventLabel = defName;
@@ -422,7 +429,7 @@ namespace TheSecondSeat.Framework
                 requiredDifficultyModes = new List<string>();
             }
             
-            // ÑéÖ¤ËùÓĞ´¥·¢Æ÷ºÍĞĞ¶¯
+            // éªŒè¯æ‰€æœ‰è§¦å‘å™¨å’Œè¡ŒåŠ¨
             foreach (var trigger in triggers)
             {
                 if (!trigger.Validate(out string triggerError))
