@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TheSecondSeat")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0f94c174bcd2cd8f50d19586754d75abf0f0b9c6")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+305e99e255d8650205fb4905212ec566ab62a2a3")]
 [assembly: System.Reflection.AssemblyProductAttribute("TheSecondSeat")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TheSecondSeat")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
