@@ -5,17 +5,22 @@ using TheSecondSeat.PersonaGeneration;
 using TheSecondSeat.Narrator;
 using TheSecondSeat.Settings;
 using System.Collections.Generic;
+using System; // ✅ 添加
 
 namespace TheSecondSeat.UI
 {
     /// <summary>
-    /// ? v1.6.44: 全身立绘面板（独立绘制，不继承 Window）
-    /// 功能：
+    /// ✅ v1.6.63: 全身立绘面板（独立绘制，不继承 Window）
+    /// 新增功能：
+    /// - ⭐ 通用姿态系统（姿态覆盖、特效叠加、动画回调）
+    /// - 实体化降临支持（动态替换身体层）
+    /// 
+    /// 原有功能：
     /// - Shift 键幽灵模式（未按 Shift：半透明 + 点击穿透）
     /// - 自定义浮动文字系统（替代 MoteMaker）
     /// - 区域交互（头部摸摸、身体戳戳）
     /// - 分层立绘 + 动画系统（呼吸、眨眼、张嘴）
-    /// - ? Runtime Layering（修复透明度和动画问题）
+    /// - Runtime Layering（修复透明度和动画问题）
     /// </summary>
     [StaticConstructorOnStartup]
     public class FullBodyPortraitPanel
@@ -37,7 +42,41 @@ namespace TheSecondSeat.UI
         private const float FAST_FLASH_DURATION = 0.15f;
         private const float FAST_FLASH_INTERVAL = 0.05f;
         
-        // ==================== 字段定义 ====================
+        // ==================== ⭐ 通用姿态系统字段 ====================
+        
+        /// <summary>
+        /// 当前覆盖姿态的纹理名称（如 "body_arrival"）
+        /// 非空时：替代默认身体层 (Layer 1)
+        /// </summary>
+        private string overridePosture = null;
+        
+        /// <summary>
+        /// 特效纹理名称（如 "glitch_circle"）
+        /// 绘制在最顶层，使用 Alpha 混合
+        /// </summary>
+        private string activeEffect = null;
+        
+        /// <summary>
+        /// 动画结束回调
+        /// </summary>
+        private Action onAnimationComplete = null;
+        
+        /// <summary>
+        /// 动画计时器（秒）
+        /// </summary>
+        private float animationTimer = 0f;
+        
+        /// <summary>
+        /// 动画总时长（秒）
+        /// </summary>
+        private float animationDuration = 0f;
+        
+        /// <summary>
+        /// 动画状态标志
+        /// </summary>
+        private bool isPlayingAnimation = false;
+        
+        // ==================== 原有字段定义 ====================
         
         private float displayWidth;
         private float displayHeight;
@@ -86,10 +125,60 @@ namespace TheSecondSeat.UI
             displayWidth = PORTRAIT_WIDTH * SCALE_FACTOR;
             displayHeight = PORTRAIT_HEIGHT * SCALE_FACTOR;
             
-            // ? v1.6.50: 固定位置（屏幕左侧，垂直居中 -40px 上移）
+            // 固定位置（屏幕左侧，垂直居中 -40px 上移）
             float x = 10f;
-            float y = (Verse.UI.screenHeight - displayHeight) / 2f - 40f;  // ? 上移 40px
+            float y = (Verse.UI.screenHeight - displayHeight) / 2f - 40f;
             drawRect = new Rect(x, y, displayWidth, displayHeight);
+        }
+        
+        // ==================== ⭐ 通用姿态系统公共接口 ====================
+        
+        /// <summary>
+        /// ⭐ 触发姿态动画
+        /// </summary>
+        /// <param name="postureName">姿态纹理名称（如 "body_arrival"）</param>
+        /// <param name="effectName">特效纹理名称（如 "glitch_circle"），可为 null</param>
+        /// <param name="duration">动画时长（秒）</param>
+        /// <param name="callback">动画结束回调，可为 null</param>
+        public void TriggerPostureAnimation(string postureName, string effectName, float duration, Action callback = null)
+        {
+            // 初始化动画状态
+            overridePosture = postureName;
+            activeEffect = effectName;
+            animationDuration = duration;
+            animationTimer = 0f;
+            onAnimationComplete = callback;
+            isPlayingAnimation = true;
+            
+            Log.Message($"[FullBodyPortraitPanel] ⭐ 开始姿态动画: {postureName}, 特效: {effectName ?? "无"}, 时长: {duration}秒");
+        }
+        
+        /// <summary>
+        /// ⭐ 停止当前动画并恢复默认状态
+        /// </summary>
+        public void StopAnimation()
+        {
+            if (!isPlayingAnimation) return;
+            
+            // 触发回调（如果存在）
+            try
+            {
+                onAnimationComplete?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[FullBodyPortraitPanel] 动画回调异常: {ex}");
+            }
+            
+            // 清除动画状态
+            overridePosture = null;
+            activeEffect = null;
+            animationTimer = 0f;
+            animationDuration = 0f;
+            onAnimationComplete = null;
+            isPlayingAnimation = false;
+            
+            Log.Message("[FullBodyPortraitPanel] ⭐ 动画已停止");
         }
         
         // ==================== 主绘制方法 ====================
@@ -99,6 +188,9 @@ namespace TheSecondSeat.UI
         /// </summary>
         public void Draw()
         {
+            // ⭐ 更新动画计时器
+            UpdateAnimation();
+            
             // 更新张嘴动画
             MouthAnimationSystem.Update(Time.deltaTime);
             
@@ -113,13 +205,30 @@ namespace TheSecondSeat.UI
         }
         
         /// <summary>
+        /// ⭐ 更新动画状态（每帧调用）
+        /// </summary>
+        private void UpdateAnimation()
+        {
+            if (!isPlayingAnimation) return;
+            
+            // 计时器递增
+            animationTimer += Time.deltaTime;
+            
+            // 检查是否结束
+            if (animationTimer >= animationDuration)
+            {
+                StopAnimation();
+            }
+        }
+        
+        /// <summary>
         /// ? v1.6.44: 绘制立绘内容（核心逻辑 - Runtime Layering 版本）
         /// </summary>
         private void DrawPortraitContents()
         {
             if (currentPersona == null) return;
             
-            // ? 更新身体层缓存（仅在人格变化时重新加载）
+            // 更新身体层缓存（仅在人格变化时重新加载）
             UpdateBodyBaseIfNeeded();
             
             bool mouseOver = Mouse.IsOver(drawRect);
@@ -130,7 +239,13 @@ namespace TheSecondSeat.UI
             float alpha = 1.0f;
             bool shouldConsumeInput = false;
             
-            if (mouseOver && !shiftHeld)
+            // ⭐ 动画中强制不透明（忽略 Shift 逻辑）
+            if (isPlayingAnimation)
+            {
+                alpha = CalculateAnimationAlpha();
+                shouldConsumeInput = false; // 动画中不响应输入
+            }
+            else if (mouseOver && !shiftHeld)
             {
                 // 未按 Shift：半透明 + 不拦截输入
                 alpha = 0.2f;
@@ -145,22 +260,28 @@ namespace TheSecondSeat.UI
             
             // ==================== 2. 绘制立绘（关键：统一设置 GUI.color） ====================
             
-            // 应用呼吸动画偏移
-            float breathingOffset = ExpressionSystem.GetBreathingOffset(currentPersona.defName);
+            // 应用呼吸动画偏移（动画中禁用呼吸动画）
+            float breathingOffset = isPlayingAnimation ? 0f : ExpressionSystem.GetBreathingOffset(currentPersona.defName);
             Rect animatedRect = new Rect(drawRect.x, drawRect.y + breathingOffset, drawRect.width, drawRect.height);
             
-            // ? 关键：在绘制任何图层前统一设置 GUI.color（修复透明度不一致问题）
+            // ⭐ 关键：在绘制任何图层前统一设置 GUI.color
             GUI.color = new Color(1f, 1f, 1f, alpha);
             
-            // 运行时分层绘制（所有图层继承相同的 alpha）
+            // ⭐ 运行时分层绘制（支持姿态覆盖）
             DrawLayeredPortraitRuntime(animatedRect, currentPersona);
             
-            // ? 绘制完成后恢复颜色
+            // ⭐ 绘制特效层（最顶层）
+            if (!string.IsNullOrEmpty(activeEffect))
+            {
+                DrawEffectLayer(animatedRect);
+            }
+            
+            // 绘制完成后恢复颜色
             GUI.color = Color.white;
             
-            // ==================== 3. 交互处理（仅在 Shift 模式下） ====================
+            // ==================== 3. 交互处理（仅在 Shift 模式下，且非动画中） ====================
             
-            if (shiftHeld && mouseOver)
+            if (!isPlayingAnimation && shiftHeld && mouseOver)
             {
                 // 处理区域交互
                 bool interactionHandled = HandleZoneInteraction(drawRect);
@@ -182,7 +303,7 @@ namespace TheSecondSeat.UI
             }
             else
             {
-                // 未按 Shift：取消触摸模式，衰减头部摸摸进度
+                // 未按 Shift 或动画中：取消触摸模式
                 if (isTouchModeActive || isHovering)
                 {
                     DeactivateTouchMode();
@@ -198,7 +319,7 @@ namespace TheSecondSeat.UI
             
             // ==================== 4. 工具提示 ====================
             
-            if (mouseOver)
+            if (mouseOver && !isPlayingAnimation)
             {
                 string tooltip = BuildTooltip(shiftHeld);
                 TooltipHandler.TipRegion(drawRect, tooltip);
@@ -319,11 +440,11 @@ namespace TheSecondSeat.UI
             ExpressionType expression;
             if (affinity >= 60f)
             {
-                expression = Random.value > 0.5f ? ExpressionType.Shy : ExpressionType.Happy;
+                expression = UnityEngine.Random.value > 0.5f ? ExpressionType.Shy : ExpressionType.Happy;
             }
             else if (affinity >= -20f)
             {
-                expression = Random.value > 0.5f ? ExpressionType.Confused : ExpressionType.Neutral;
+                expression = UnityEngine.Random.value > 0.5f ? ExpressionType.Confused : ExpressionType.Neutral;
             }
             else
             {
@@ -367,11 +488,11 @@ namespace TheSecondSeat.UI
             ExpressionType expression;
             if (affinity >= 60f)
             {
-                expression = Random.value > 0.5f ? ExpressionType.Surprised : ExpressionType.Happy;
+                expression = UnityEngine.Random.value > 0.5f ? ExpressionType.Surprised : ExpressionType.Happy;
             }
             else if (affinity >= -20f)
             {
-                expression = Random.value > 0.5f ? ExpressionType.Confused : ExpressionType.Neutral;
+                expression = UnityEngine.Random.value > 0.5f ? ExpressionType.Confused : ExpressionType.Neutral;
             }
             else
             {
@@ -438,11 +559,11 @@ namespace TheSecondSeat.UI
             }
             else if (touchCount % 3 == 0)
             {
-                var expression = touchExpressions[Random.Range(0, touchExpressions.Length)];
+                var expression = touchExpressions[UnityEngine.Random.Range(0, touchExpressions.Length)];
                 TriggerExpression(expression, duration: 2f);
                 
-                string[] emojis = { "(?▽｀)", "(????)?", "(≧▽≦)", "ヾ(?°?°?)?", "(????)" };
-                AddFloatingText(emojis[Random.Range(0, emojis.Length)], new Color(1f, 0.8f, 0.9f));
+                string[] emojis = { "(?▽｀)", "(๑˃ᴗ˂)✧", "(≧▽≦)", "ヾ(◍°∇°◍)ﾉ", "(๑˃̵ᴗ˂̵)" };
+                AddFloatingText(emojis[UnityEngine.Random.Range(0, emojis.Length)], new Color(1f, 0.8f, 0.9f));
             }
             
             if (touchCount >= 10)
@@ -457,7 +578,7 @@ namespace TheSecondSeat.UI
         /// </summary>
         private void OnTouchCombo()
         {
-            bool isHappy = Random.value > 0.3f;
+            bool isHappy = UnityEngine.Random.value > 0.3f;
             TriggerExpression(isHappy ? ExpressionType.Happy : ExpressionType.Smug, duration: 3f);
             
             AddFloatingText(isHappy ? "(*^▽^*)" : "(￣︶￣)↗", new Color(1f, 0.7f, 0.3f));
@@ -686,18 +807,47 @@ namespace TheSecondSeat.UI
         /// </summary>
         private void DrawLayeredPortraitRuntime(Rect rect, NarratorPersonaDef persona)
         {
-            // ==================== Layer 1: 身体基础层（缓存） ====================
+            // ==================== ⭐ Layer 1: 身体层（姿态覆盖或默认） ====================
             
-            if (cachedBodyBase == null)
+            if (!string.IsNullOrEmpty(overridePosture))
             {
-                // 如果没有缓存，绘制占位符
-                Widgets.DrawBoxSolid(rect, persona.primaryColor);
+                // ⭐ 动画中：绘制姿态纹理（完全替代身体层）
+                string posturePath = $"UI/Narrators/Descent/Postures/{overridePosture}";
+                Texture2D postureTexture = ContentFinder<Texture2D>.Get(posturePath, false);
+                
+                if (postureTexture != null)
+                {
+                    Widgets.DrawTextureFitted(rect, postureTexture, 1.0f);
+                }
+                else
+                {
+                    Log.Warning($"[FullBodyPortraitPanel] 姿态纹理未找到: {posturePath}");
+                    // 降级：绘制默认身体层
+                    if (cachedBodyBase != null)
+                    {
+                        Widgets.DrawTextureFitted(rect, cachedBodyBase, 1.0f);
+                    }
+                    else
+                    {
+                        Widgets.DrawBoxSolid(rect, persona.primaryColor);
+                    }
+                }
+                
+                // ⭐ 姿态动画中：跳过眼睛和嘴巴（特殊姿态自带表情）
                 return;
             }
-            
-            // ? 修复：使用 Widgets.DrawTextureFitted 而不是 GUI.DrawTexture
-            // Widgets.DrawTextureFitted 会正确应用 GUI.color 的 alpha
-            Widgets.DrawTextureFitted(rect, cachedBodyBase, 1.0f);
+            else
+            {
+                // ⭐ 平时：绘制默认身体层
+                if (cachedBodyBase == null)
+                {
+                    // 如果没有缓存，绘制占位符
+                    Widgets.DrawBoxSolid(rect, persona.primaryColor);
+                    return;
+                }
+                
+                Widgets.DrawTextureFitted(rect, cachedBodyBase, 1.0f);
+            }
             
             // ==================== Layer 2: 嘴巴层（动态加载，张嘴动画） ====================
             
@@ -707,7 +857,6 @@ namespace TheSecondSeat.UI
                 var mouthTexture = PortraitLoader.GetLayerTexture(persona, mouthLayerName);
                 if (mouthTexture != null)
                 {
-                    // ? 修复：使用 Widgets.DrawTextureFitted
                     Widgets.DrawTextureFitted(rect, mouthTexture, 1.0f);
                 }
             }
@@ -720,7 +869,6 @@ namespace TheSecondSeat.UI
                 var eyeTexture = PortraitLoader.GetLayerTexture(persona, eyeLayerName);
                 if (eyeTexture != null)
                 {
-                    // ? 修复：使用 Widgets.DrawTextureFitted
                     Widgets.DrawTextureFitted(rect, eyeTexture, 1.0f);
                 }
             }
@@ -736,7 +884,6 @@ namespace TheSecondSeat.UI
                 var flushTexture = PortraitLoader.GetLayerTexture(persona, flushLayerName);
                 if (flushTexture != null)
                 {
-                    // ? 修复：使用 Widgets.DrawTextureFitted
                     Widgets.DrawTextureFitted(rect, flushTexture, 1.0f);
                 }
             }
@@ -976,6 +1123,66 @@ namespace TheSecondSeat.UI
             }
             
             return tooltip;
+        }
+        
+        /// <summary>
+        /// ⭐ 计算动画 Alpha 值（淡入/保持/淡出）
+        /// </summary>
+        private float CalculateAnimationAlpha()
+        {
+            if (!isPlayingAnimation || animationDuration <= 0f)
+            {
+                return 1.0f;
+            }
+            
+            float progress = animationTimer / animationDuration;
+            
+            // 淡入阶段（0 - 10%）
+            if (progress < 0.1f)
+            {
+                return Mathf.Lerp(0f, 1f, progress / 0.1f);
+            }
+            // 保持阶段（10% - 90%）
+            else if (progress < 0.9f)
+            {
+                return 1.0f;
+            }
+            // 淡出阶段（90% - 100%）
+            else
+            {
+                return Mathf.Lerp(1f, 0f, (progress - 0.9f) / 0.1f);
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ 绘制特效层（最顶层，Alpha 混合）
+        /// </summary>
+        private void DrawEffectLayer(Rect rect)
+        {
+            if (string.IsNullOrEmpty(activeEffect) || currentPersona == null) return;
+            
+            // 加载特效纹理
+            string effectPath = $"UI/Narrators/Descent/Effects/{activeEffect}";
+            Texture2D effectTexture = ContentFinder<Texture2D>.Get(effectPath, false);
+            
+            if (effectTexture == null)
+            {
+                Log.Warning($"[FullBodyPortraitPanel] 特效纹理未找到: {effectPath}");
+                return;
+            }
+            
+            // 计算特效 Alpha（脉冲效果）
+            float effectAlpha = 0.5f + 0.5f * Mathf.Sin(animationTimer * 3f);
+            
+            // 应用特效颜色
+            Color originalColor = GUI.color;
+            GUI.color = new Color(1f, 1f, 1f, effectAlpha * GUI.color.a);
+            
+            // 绘制特效
+            Widgets.DrawTextureFitted(rect, effectTexture, 1.0f);
+            
+            // 恢复颜色
+            GUI.color = originalColor;
         }
     }
 }

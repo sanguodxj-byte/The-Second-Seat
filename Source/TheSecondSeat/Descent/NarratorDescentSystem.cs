@@ -1,25 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq; // ? 添加 Linq 命名空间
+using System.Linq;
 using UnityEngine;
 using Verse;
+using Verse.Sound; // ⭐ 添加 Sound 命名空间
 using RimWorld;
 using TheSecondSeat.Narrator;
 using TheSecondSeat.PersonaGeneration;
+using TheSecondSeat.Core; // ⭐ 添加
 
 namespace TheSecondSeat.Descent
 {
     /// <summary>
-    /// ? v2.0.0: 叙事者降临系统 - 核心管理器
+    /// ⭐ v1.6.63: 叙事者降临系统 - 完全通用化执行器
     /// 
-    /// 功能：
-    /// - 触发降临模式（援助/袭击）
-    /// - 协调立绘切换、特效播放、动画播放
-    /// - 生成降临后的小人和召唤物
-    /// - 管理降临状态和冷却
+    /// 核心原则：
+    /// - 只读配置，不认人
+    /// - 所有 Def 名称从 NarratorPersonaDef 读取
+    /// - 禁止硬编码任何 DefName
+    /// - 支持任意叙事者的降临配置
     /// 
     /// 使用：
-    /// - NarratorDescentSystem.Instance.TriggerDescent(DescentMode.Assist)
+    /// - NarratorDescentSystem.Instance.TriggerDescent(isHostile: false)
     /// </summary>
     public class NarratorDescentSystem : GameComponent
     {
@@ -40,19 +42,16 @@ namespace TheSecondSeat.Descent
         
         // ==================== 状态字段 ====================
         
-        private DescentState currentState = DescentState.Idle;
-        private DescentMode lastDescentMode = DescentMode.Assist;
+        private bool isDescending = false;
+        private bool lastDescentWasHostile = false;
         private int lastDescentTick = 0;
-        private const int DESCENT_COOLDOWN_TICKS = 36000; // 10分钟冷却（60秒/分 * 60帧/秒 * 10）
+        private const int DESCENT_COOLDOWN_TICKS = 36000; // 10分钟冷却
         
-        private DescentAnimationController? animationController;
-        private DescentEffectRenderer? effectRenderer;
         private IntVec3 targetDescentLocation;
         
         // ==================== 配置参数 ====================
         
-        public const float MIN_AFFINITY_FOR_ASSIST = 40f;    // 援助模式最低好感度
-        public const float MIN_AFFINITY_FOR_ATTACK = -100f;  // 袭击模式最低好感度（总是可用）
+        public const float MIN_AFFINITY_FOR_FRIENDLY = 40f;  // 友好降临最低好感度
         public const int DESCENT_RANGE = 30;                 // 降临范围（格子）
         
         // ==================== 构造函数 ====================
@@ -62,35 +61,46 @@ namespace TheSecondSeat.Descent
             instance = this;
         }
         
-        // ==================== 公共API ====================
+        // ==================== ⭐ 公共API ====================
         
         /// <summary>
-        /// 触发降临模式
+        /// ⭐ 触发降临（完全通用化）
         /// </summary>
-        /// <param name="mode">降临模式（援助/袭击）</param>
+        /// <param name="isHostile">是否为敌对降临</param>
         /// <param name="targetLoc">目标降临地点（可选，自动选择）</param>
         /// <returns>是否成功触发</returns>
-        public bool TriggerDescent(DescentMode mode, IntVec3? targetLoc = null)
+        public bool TriggerDescent(bool isHostile, IntVec3? targetLoc = null)
         {
-            // 1. 检查是否可以触发
-            if (!CanTriggerDescent(mode, out string reason))
+            // 1. 获取当前人格配置
+            var manager = Current.Game?.GetComponent<NarratorManager>();
+            var persona = manager?.GetCurrentPersona();
+            
+            if (persona == null)
+            {
+                Log.Error("[NarratorDescentSystem] 无法获取当前叙事者人格");
+                Messages.Message("错误：无法获取叙事者配置", MessageTypeDefOf.RejectInput);
+                return false;
+            }
+            
+            // 2. ⭐ 检查是否支持降临（读取配置）
+            if (string.IsNullOrEmpty(persona.descentPawnKind))
+            {
+                Log.Warning($"[NarratorDescentSystem] 叙事者 {persona.defName} 未配置 descentPawnKind，不支持降临");
+                Messages.Message($"{persona.narratorName} 尚未支持实体化降临功能", MessageTypeDefOf.RejectInput);
+                return false;
+            }
+            
+            // 3. 检查基本条件
+            if (!CanTriggerDescent(isHostile, persona, out string reason))
             {
                 Messages.Message($"无法触发降临: {reason}", MessageTypeDefOf.RejectInput);
-                Log.Warning($"[NarratorDescentSystem] Cannot trigger descent: {reason}");
                 return false;
             }
             
-            // 2. 检查状态
-            if (currentState != DescentState.Idle)
-            {
-                Messages.Message("降临正在进行中，请稍候...", MessageTypeDefOf.RejectInput);
-                return false;
-            }
-            
-            // 3. 选择降临地点
+            // 4. 选择降临地点
             if (targetLoc == null)
             {
-                targetLoc = SelectDescentLocation(mode);
+                targetLoc = SelectDescentLocation();
                 if (targetLoc == null || !targetLoc.Value.IsValid)
                 {
                     Messages.Message("找不到合适的降临地点！", MessageTypeDefOf.RejectInput);
@@ -99,19 +109,21 @@ namespace TheSecondSeat.Descent
             }
             
             targetDescentLocation = targetLoc.Value;
-            lastDescentMode = mode;
+            lastDescentWasHostile = isHostile;
+            lastDescentTick = Find.TickManager.TicksGame;
             
-            // 4. 开始降临序列
-            Log.Message($"[NarratorDescentSystem] Triggering descent: Mode={mode}, Location={targetDescentLocation}");
-            StartDescentSequence(mode);
+            // 5. ⭐ 开始降临序列（通用化）
+            StartDescentSequence(persona, isHostile);
             
             return true;
         }
         
+        // ==================== ⭐ 私有方法 - 通用化逻辑 ====================
+        
         /// <summary>
-        /// 检查是否可以触发降临
+        /// ⭐ 检查是否可以触发降临（通用检查）
         /// </summary>
-        public bool CanTriggerDescent(DescentMode mode, out string reason)
+        private bool CanTriggerDescent(bool isHostile, NarratorPersonaDef persona, out string reason)
         {
             reason = "";
             
@@ -124,34 +136,29 @@ namespace TheSecondSeat.Descent
                 return false;
             }
             
-            // 2. 检查是否已有叙事者小人
-            if (HasNarratorPawnOnMap())
+            // 2. 检查是否已有降临实体
+            if (HasDescentPawnOnMap(persona))
             {
-                reason = "叙事者已经在场，无法重复降临";
+                reason = $"{persona.narratorName} 已经在场，无法重复降临";
                 return false;
             }
             
-            // 3. 检查好感度
-            var agent = Current.Game?.GetComponent<Storyteller.StorytellerAgent>();
-            if (agent != null)
+            // 3. 检查好感度（仅友好模式）
+            if (!isHostile)
             {
-                float affinity = agent.GetAffinity();
-                
-                if (mode == DescentMode.Assist && affinity < MIN_AFFINITY_FOR_ASSIST)
+                var agent = Current.Game?.GetComponent<Storyteller.StorytellerAgent>();
+                if (agent != null)
                 {
-                    reason = $"援助模式需要好感度 {MIN_AFFINITY_FOR_ASSIST}+，当前 {affinity:F0}";
-                    return false;
-                }
-                
-                // 袭击模式总是可用，但高好感度时提示
-                if (mode == DescentMode.Attack && affinity > 60f)
-                {
-                    // 允许触发，但记录警告
-                    Log.Warning($"[NarratorDescentSystem] Triggering attack descent at high affinity ({affinity:F0})");
+                    float affinity = agent.GetAffinity();
+                    if (affinity < MIN_AFFINITY_FOR_FRIENDLY)
+                    {
+                        reason = $"友好降临需要好感度 {MIN_AFFINITY_FOR_FRIENDLY}+，当前 {affinity:F0}";
+                        return false;
+                    }
                 }
             }
             
-            // 4. 检查是否有有效地图
+            // 4. 检查地图
             if (Find.CurrentMap == null)
             {
                 reason = "当前没有有效地图";
@@ -162,167 +169,425 @@ namespace TheSecondSeat.Descent
         }
         
         /// <summary>
-        /// 获取降临冷却剩余时间（秒）
+        /// ⭐ 开始降临序列（完全通用化）
         /// </summary>
-        public int GetCooldownRemaining()
+        private void StartDescentSequence(NarratorPersonaDef persona, bool isHostile)
         {
-            int ticksSinceLastDescent = Find.TickManager.TicksGame - lastDescentTick;
-            int remainingTicks = Math.Max(0, DESCENT_COOLDOWN_TICKS - ticksSinceLastDescent);
-            return remainingTicks / 60; // 转换为秒
-        }
-        
-        /// <summary>
-        /// 检查是否有叙事者小人在地图上
-        /// </summary>
-        public bool HasNarratorPawnOnMap()
-        {
-            if (Find.CurrentMap == null) return false;
-            
-            foreach (Pawn pawn in Find.CurrentMap.mapPawns.FreeColonists)
-            {
-                // 检查是否是叙事者小人（通过标记或特殊属性）
-                if (pawn.def.defName.Contains("Narrator") || 
-                    pawn.LabelShort.Contains("叙事者"))
-                {
-                    return true;
-                }
-            }
-            
-            return false;
-        }
-        
-        // ==================== 私有方法 ====================
-        
-        /// <summary>
-        /// 开始降临序列
-        /// </summary>
-        private void StartDescentSequence(DescentMode mode)
-        {
-            try
-            {
-                currentState = DescentState.PreparingPosture;
-                lastDescentTick = Find.TickManager.TicksGame;
-                
-                // 1. 初始化控制器
-                if (animationController == null)
-                {
-                    animationController = new DescentAnimationController();
-                }
-                
-                if (effectRenderer == null)
-                {
-                    effectRenderer = new DescentEffectRenderer();
-                }
-                
-                // 2. 开始姿势切换动画
-                animationController.StartPostureSequence(mode, OnPostureSequenceComplete);
-                
-                // 3. 播放音效（可选）
-                PlayDescentSound(mode, DescentSoundType.Preparation);
-                
-                // 4. 显示消息
-                string modeText = mode == DescentMode.Assist ? "援助" : "袭击";
-                Messages.Message($"?? 叙事者降临 - {modeText}模式启动！", MessageTypeDefOf.PositiveEvent);
-                
-                Log.Message($"[NarratorDescentSystem] Descent sequence started: {mode}");
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[NarratorDescentSystem] Failed to start descent sequence: {ex}");
-                currentState = DescentState.Idle;
-            }
-        }
-        
-        /// <summary>
-        /// 姿势序列完成回调
-        /// </summary>
-        private void OnPostureSequenceComplete()
-        {
-            currentState = DescentState.PlayingCinematic;
-            
-            // 开始过场动画
-            animationController?.StartCinematic(lastDescentMode, targetDescentLocation, OnCinematicComplete);
-            
-            Log.Message("[NarratorDescentSystem] Posture sequence completed, starting cinematic");
-        }
-        
-        /// <summary>
-        /// 过场动画完成回调
-        /// </summary>
-        private void OnCinematicComplete()
-        {
-            currentState = DescentState.SpawningEntities;
+            isDescending = true;
             
             try
             {
-                // 1. 生成叙事者小人
-                Pawn narratorPawn = SpawnNarratorPawn(targetDescentLocation);
+                // 1. ⭐ 播放立绘姿态动画（从配置读取）
+                PlayPostureAnimation(persona);
                 
-                // 2. 生成召唤物
-                Pawn summonPawn = SpawnSummonCreature(targetDescentLocation, lastDescentMode);
+                // 2. ⭐ 播放音效（从配置读取）
+                PlayDescentSound(persona);
                 
-                // 3. 播放降落特效
-                effectRenderer?.PlayImpactEffect(targetDescentLocation, lastDescentMode);
+                // 3. ⭐ 显示通用信件
+                SendDescentLetter(persona, isHostile);
                 
-                // 4. 播放音效
-                PlayDescentSound(lastDescentMode, DescentSoundType.Impact);
+                // 4. ⭐ 生成降临实体（延迟3秒后执行）
+                LongEventHandler.QueueLongEvent(() =>
+                {
+                    SpawnPhysicalEntities(persona, isHostile);
+                    isDescending = false;
+                }, "Descending", false, null);
                 
-                // 5. 应用降临效果
-                ApplyDescentEffects(targetDescentLocation, lastDescentMode);
-                
-                // 6. 完成降临
-                currentState = DescentState.Idle;
-                
-                string modeText = lastDescentMode == DescentMode.Assist ? "援助" : "袭击";
-                Messages.Message($"? 叙事者降临完成！{modeText}开始！", MessageTypeDefOf.PositiveEvent);
-                
-                Log.Message("[NarratorDescentSystem] Descent completed successfully");
+                Log.Message($"[NarratorDescentSystem] ⭐ 开始降临: {persona.defName}, 敌对={isHostile}");
             }
             catch (Exception ex)
             {
-                Log.Error($"[NarratorDescentSystem] Failed to spawn entities: {ex}");
-                currentState = DescentState.Idle;
+                Log.Error($"[NarratorDescentSystem] 降临序列失败: {ex}");
+                isDescending = false;
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ 播放立绘姿态动画（从配置读取）
+        /// </summary>
+        private void PlayPostureAnimation(NarratorPersonaDef persona)
+        {
+            try
+            {
+                var panel = PortraitOverlaySystem.GetPanel();
+                if (panel == null)
+                {
+                    Log.Warning("[NarratorDescentSystem] 立绘面板未初始化，跳过姿态动画");
+                    return;
+                }
+                
+                // ⭐ 从配置读取姿态和特效路径
+                string posturePath = persona.descentPosturePath;
+                string effectPath = persona.descentEffectPath;
+                
+                if (string.IsNullOrEmpty(posturePath))
+                {
+                    Log.Message("[NarratorDescentSystem] 未配置姿态动画，跳过");
+                    return;
+                }
+                
+                // ⭐ 调用通用姿态系统
+                panel.TriggerPostureAnimation(
+                    postureName: posturePath,
+                    effectName: effectPath,
+                    duration: 3.0f,
+                    callback: () => Log.Message("[NarratorDescentSystem] 姿态动画完成")
+                );
+                
+                Log.Message($"[NarratorDescentSystem] 播放姿态动画: {posturePath}, 特效: {effectPath ?? "无"}");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[NarratorDescentSystem] 播放姿态动画失败: {ex}");
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ 生成降临实体（完全通用化，禁止硬编码）
+        /// </summary>
+        private void SpawnPhysicalEntities(NarratorPersonaDef persona, bool isHostile)
+        {
+            try
+            {
+                Map map = Find.CurrentMap;
+                if (map == null)
+                {
+                    Log.Error("[NarratorDescentSystem] 地图为空，无法生成实体");
+                    return;
+                }
+                
+                // 1. ⭐ 生成空投舱/特效物（可选）
+                SpawnSkyfaller(persona, map);
+                
+                // 2. ⭐ 生成主体实体（必须）
+                Pawn mainPawn = SpawnMainPawn(persona, map, isHostile);
+                
+                if (mainPawn == null)
+                {
+                    Log.Error("[NarratorDescentSystem] 生成主体实体失败");
+                    return;
+                }
+                
+                // 3. ⭐ 生成伴随生物（可选）
+                Pawn companion = SpawnCompanion(persona, map, mainPawn, isHostile);
+                
+                // 4. ⭐ 应用降临效果
+                ApplyDescentEffects(persona, mainPawn, companion, isHostile);
+                
+                Log.Message($"[NarratorDescentSystem] ⭐ 降临实体生成完成: {mainPawn?.LabelShort ?? "未知"}");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[NarratorDescentSystem] 生成降临实体失败: {ex}");
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ 生成空投舱/特效物（从配置读取 DefName）
+        /// </summary>
+        private void SpawnSkyfaller(NarratorPersonaDef persona, Map map)
+        {
+            try
+            {
+                string skyfallerDefName = persona.descentSkyfallerDef;
+                
+                if (string.IsNullOrEmpty(skyfallerDefName))
+                {
+                    // 使用默认空投舱
+                    skyfallerDefName = "DropPodIncoming";
+                }
+                
+                // ⭐ 通用化：从 DefDatabase 读取
+                ThingDef skyfallerDef = DefDatabase<ThingDef>.GetNamedSilentFail(skyfallerDefName);
+                
+                if (skyfallerDef == null)
+                {
+                    Log.Warning($"[NarratorDescentSystem] 空投舱 Def 未找到: {skyfallerDefName}，跳过");
+                    return;
+                }
+                
+                // TODO: 生成空投舱（需要进一步实现）
+                Log.Message($"[NarratorDescentSystem] 使用空投舱: {skyfallerDefName}");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[NarratorDescentSystem] 生成空投舱失败: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ 生成主体实体（从配置读取 PawnKindDef）
+        /// </summary>
+        private Pawn SpawnMainPawn(NarratorPersonaDef persona, Map map, bool isHostile)
+        {
+            try
+            {
+                // ⭐ 禁止硬编码：从配置读取
+                string pawnKindName = persona.descentPawnKind;
+                
+                PawnKindDef pawnKindDef = DefDatabase<PawnKindDef>.GetNamedSilentFail(pawnKindName);
+                
+                if (pawnKindDef == null)
+                {
+                    Log.Error($"[NarratorDescentSystem] PawnKindDef 未找到: {pawnKindName}");
+                    return null;
+                }
+                
+                // ⭐ 确定阵营
+                Faction faction = isHostile ? Find.FactionManager.RandomEnemyFaction() : Faction.OfPlayer;
+                
+                // ⭐ 生成 Pawn
+                Pawn pawn = PawnGenerator.GeneratePawn(pawnKindDef, faction);
+                
+                // ⭐ 设置名称（使用人格名称）
+                pawn.Name = new NameTriple("", persona.narratorName, "");
+                
+                // ⭐ 生成到地图
+                GenSpawn.Spawn(pawn, targetDescentLocation, map);
+                
+                Log.Message($"[NarratorDescentSystem] ⭐ 生成主体: {pawn.LabelShort} (PawnKind: {pawnKindName})");
+                
+                return pawn;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[NarratorDescentSystem] 生成主体实体失败: {ex}");
+                return null;
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ 生成伴随生物（从配置读取，可选）
+        /// </summary>
+        private Pawn SpawnCompanion(NarratorPersonaDef persona, Map map, Pawn master, bool isHostile)
+        {
+            try
+            {
+                // ⭐ 读取配置
+                string companionKindName = persona.companionPawnKind;
+                
+                if (string.IsNullOrEmpty(companionKindName))
+                {
+                    Log.Message("[NarratorDescentSystem] 未配置伴随生物，跳过");
+                    return null;
+                }
+                
+                // ⭐ 通用化：从 DefDatabase 读取
+                PawnKindDef companionKindDef = DefDatabase<PawnKindDef>.GetNamedSilentFail(companionKindName);
+                
+                if (companionKindDef == null)
+                {
+                    Log.Warning($"[NarratorDescentSystem] 伴随生物 PawnKindDef 未找到: {companionKindName}");
+                    return null;
+                }
+                
+                // ⭐ 确定阵营（与主体一致）
+                Faction faction = master.Faction;
+                
+                // ⭐ 生成伴随生物
+                Pawn companion = PawnGenerator.GeneratePawn(companionKindDef, faction);
+                
+                // ⭐ 生成到主体旁边
+                IntVec3 companionLoc = targetDescentLocation + new IntVec3(2, 0, 0);
+                GenSpawn.Spawn(companion, companionLoc, map);
+                
+                // ⭐ 建立 Bond 关系（如果支持）
+                if (companion.RaceProps.Animal && master.IsColonist)
+                {
+                    companion.relations?.AddDirectRelation(PawnRelationDefOf.Bond, master);
+                    Log.Message($"[NarratorDescentSystem] 建立 Bond: {master.LabelShort} <-> {companion.LabelShort}");
+                }
+                
+                Log.Message($"[NarratorDescentSystem] ⭐ 生成伴随生物: {companion.LabelShort} (PawnKind: {companionKindName})");
+                
+                return companion;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[NarratorDescentSystem] 生成伴随生物失败: {ex.Message}");
+                return null;
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ 应用降临效果（通用化）
+        /// </summary>
+        private void ApplyDescentEffects(NarratorPersonaDef persona, Pawn mainPawn, Pawn companion, bool isHostile)
+        {
+            try
+            {
+                Map map = Find.CurrentMap;
+                if (map == null) return;
+                
+                // 根据敌对/友好应用不同效果
+                if (isHostile)
+                {
+                    ApplyHostileEffects(targetDescentLocation, map);
+                }
+                else
+                {
+                    ApplyFriendlyEffects(targetDescentLocation, map);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[NarratorDescentSystem] 应用降临效果失败: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// 应用友好效果
+        /// </summary>
+        private void ApplyFriendlyEffects(IntVec3 location, Map map)
+        {
+            // 1. 治愈周围的殖民者
+            foreach (Pawn pawn in GenRadial.RadialDistinctThingsAround(location, map, 10f, true).OfType<Pawn>())
+            {
+                if (pawn.IsColonist && pawn.health != null)
+                {
+                    List<Hediff_Injury> injuries = new List<Hediff_Injury>();
+                    pawn.health.hediffSet.GetHediffs(ref injuries);
+                    
+                    foreach (var injury in injuries)
+                    {
+                        injury.Heal(injury.Severity);
+                    }
+                }
+            }
+            
+            Log.Message("[NarratorDescentSystem] 应用友好效果：治愈殖民者");
+        }
+        
+        /// <summary>
+        /// 应用敌对效果
+        /// </summary>
+        private void ApplyHostileEffects(IntVec3 location, Map map)
+        {
+            // 1. 对周围敌人造成伤害
+            foreach (Pawn pawn in GenRadial.RadialDistinctThingsAround(location, map, 10f, true).OfType<Pawn>())
+            {
+                if (pawn.HostileTo(Faction.OfPlayer))
+                {
+                    pawn.TakeDamage(new DamageInfo(DamageDefOf.Burn, 50f));
+                }
+            }
+            
+            Log.Message("[NarratorDescentSystem] 应用敌对效果：伤害敌人");
+        }
+        
+        /// <summary>
+        /// ⭐ 播放降临音效（从配置读取）
+        /// </summary>
+        private void PlayDescentSound(NarratorPersonaDef persona)
+        {
+            try
+            {
+                string soundDefName = persona.descentSound;
+                
+                if (string.IsNullOrEmpty(soundDefName))
+                {
+                    Log.Message("[NarratorDescentSystem] 未配置降临音效，跳过");
+                    return;
+                }
+                
+                // ⭐ 通用化：从 DefDatabase 读取
+                SoundDef soundDef = DefDatabase<SoundDef>.GetNamedSilentFail(soundDefName);
+                
+                if (soundDef == null)
+                {
+                    Log.Warning($"[NarratorDescentSystem] 音效 Def 未找到: {soundDefName}");
+                    return;
+                }
+                
+                // 播放音效（修复：使用正确的 RimWorld API）
+                SoundStarter.PlayOneShot(soundDef, new TargetInfo(targetDescentLocation, Find.CurrentMap));
+                
+                Log.Message($"[NarratorDescentSystem] 播放音效: {soundDefName}");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[NarratorDescentSystem] 播放音效失败: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ 发送降临信件（动态读取配置或使用通用文本）
+        /// </summary>
+        private void SendDescentLetter(NarratorPersonaDef persona, bool isHostile)
+        {
+            try
+            {
+                // ⭐ 读取配置的信件标题和内容
+                string letterLabel = persona.descentLetterLabel;
+                string letterText = persona.descentLetterText;
+                
+                // ⭐ 如果未配置，使用通用文本
+                if (string.IsNullOrEmpty(letterLabel))
+                {
+                    letterLabel = isHostile ? 
+                        $"{persona.narratorName} 降临（袭击）" : 
+                        $"{persona.narratorName} 降临（援助）";
+                }
+                
+                if (string.IsNullOrEmpty(letterText))
+                {
+                    letterText = isHostile ?
+                        $"{persona.narratorName} 以敌对姿态降临到了这片土地！" :
+                        $"{persona.narratorName} 响应你的呼唤，降临到了这片土地！";
+                }
+                
+                // ⭐ 发送信件
+                LetterDef letterDef = isHostile ? LetterDefOf.ThreatBig : LetterDefOf.PositiveEvent;
+                
+                Find.LetterStack.ReceiveLetter(
+                    label: letterLabel,
+                    text: letterText,
+                    textLetterDef: letterDef,
+                    lookTargets: new TargetInfo(targetDescentLocation, Find.CurrentMap)
+                );
+                
+                Log.Message($"[NarratorDescentSystem] 发送信件: {letterLabel}");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[NarratorDescentSystem] 发送信件失败: {ex.Message}");
             }
         }
         
         /// <summary>
         /// 选择降临地点
         /// </summary>
-        private IntVec3? SelectDescentLocation(DescentMode mode)
+        private IntVec3? SelectDescentLocation()
         {
             try
             {
                 Map map = Find.CurrentMap;
                 if (map == null) return null;
                 
-                // 获取玩家殖民地中心
                 IntVec3 colonyCenter = map.Center;
                 
                 // 寻找合适的降临点
-                for (int i = 0; i < 50; i++) // 最多尝试50次
+                for (int i = 0; i < 50; i++)
                 {
-                    // 在殖民地周围随机选点
                     IntVec3 candidate = colonyCenter + new IntVec3(
                         Rand.Range(-DESCENT_RANGE, DESCENT_RANGE),
                         0,
                         Rand.Range(-DESCENT_RANGE, DESCENT_RANGE)
                     );
                     
-                    // 检查地点是否合适
                     if (IsValidDescentLocation(candidate, map))
                     {
                         return candidate;
                     }
                 }
                 
-                // 如果找不到，返回殖民地中心附近
                 return CellFinder.TryFindRandomCellNear(colonyCenter, map, 20, 
                     (IntVec3 c) => IsValidDescentLocation(c, map), 
                     out IntVec3 result) ? result : (IntVec3?)null;
             }
             catch (Exception ex)
             {
-                Log.Error($"[NarratorDescentSystem] Failed to select descent location: {ex}");
+                Log.Error($"[NarratorDescentSystem] 选择降临地点失败: {ex}");
                 return null;
             }
         }
@@ -334,9 +599,9 @@ namespace TheSecondSeat.Descent
         {
             if (!loc.InBounds(map)) return false;
             if (!loc.Standable(map)) return false;
-            if (loc.Roofed(map)) return false; // 不能在屋顶下
+            if (loc.Roofed(map)) return false;
             
-            // 检查周围是否有足够空间（3x3区域）
+            // 检查周围空间
             for (int x = -1; x <= 1; x++)
             {
                 for (int z = -1; z <= 1; z++)
@@ -353,183 +618,41 @@ namespace TheSecondSeat.Descent
         }
         
         /// <summary>
-        /// 生成叙事者小人
+        /// ⭐ 检查是否已有降临实体（通用化检查）
         /// </summary>
-        private Pawn SpawnNarratorPawn(IntVec3 location)
+        private bool HasDescentPawnOnMap(NarratorPersonaDef persona)
         {
-            try
+            if (Find.CurrentMap == null) return false;
+            
+            // ⭐ 读取配置的 PawnKindDef
+            string pawnKindName = persona.descentPawnKind;
+            
+            foreach (Pawn pawn in Find.CurrentMap.mapPawns.AllPawns)
             {
-                // 获取当前人格
-                var manager = Current.Game?.GetComponent<NarratorManager>();
-                var persona = manager?.GetCurrentPersona();
-                
-                if (persona == null)
+                // 检查 PawnKindDef 是否匹配
+                if (pawn.kindDef?.defName == pawnKindName)
                 {
-                    Log.Error("[NarratorDescentSystem] No persona found for pawn generation");
-                    return null;
+                    return true;
                 }
                 
-                // TODO: 创建叙事者小人 Def（参考 DescentPawnDef.cs）
-                // PawnKindDef pawnKindDef = DefDatabase<PawnKindDef>.GetNamed($"Narrator_{persona.defName}";
-                
-                // 临时：使用默认小人
-                PawnKindDef pawnKindDef = PawnKindDefOf.Colonist;
-                
-                // 生成小人
-                Pawn pawn = PawnGenerator.GeneratePawn(pawnKindDef, Faction.OfPlayer);
-                
-                // 设置名称
-                pawn.Name = new NameTriple("", persona.narratorName, "");
-                
-                // 生成到地图
-                GenSpawn.Spawn(pawn, location, Find.CurrentMap);
-                
-                Log.Message($"[NarratorDescentSystem] Spawned narrator pawn: {pawn.LabelShort} at {location}");
-                
-                return pawn;
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[NarratorDescentSystem] Failed to spawn narrator pawn: {ex}");
-                return null;
-            }
-        }
-        
-        /// <summary>
-        /// 生成召唤物
-        /// </summary>
-        private Pawn SpawnSummonCreature(IntVec3 location, DescentMode mode)
-        {
-            try
-            {
-                // TODO: 创建巨龙召唤物 Def（参考 DescentPawnDef.cs）
-                // PawnKindDef summonDef = DefDatabase<PawnKindDef>.GetNamed("NarratorDragon");
-                
-                // ? 修复：使用存在的PawnKindDef
-                PawnKindDef summonDef = DefDatabase<PawnKindDef>.AllDefsListForReading.FirstOrDefault(
-                    pk => pk.defName.Contains("Wolf") || pk.defName.Contains("Warg")
-                );
-                
-                if (summonDef == null)
+                // 或者检查名称是否匹配
+                if (pawn.Name != null && pawn.Name.ToStringShort == persona.narratorName)
                 {
-                    summonDef = PawnKindDefOf.Colonist; // 回退到殖民者
-                }
-                
-                // 生成召唤物
-                Pawn summon = PawnGenerator.GeneratePawn(summonDef, Faction.OfPlayer);
-                
-                // 调整位置（在叙事者旁边）
-                IntVec3 summonLoc = location + new IntVec3(2, 0, 0);
-                GenSpawn.Spawn(summon, summonLoc, Find.CurrentMap);
-                
-                Log.Message($"[NarratorDescentSystem] Spawned summon creature at {summonLoc}");
-                
-                return summon;
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[NarratorDescentSystem] Failed to spawn summon: {ex}");
-                return null;
-            }
-        }
-        
-        /// <summary>
-        /// 应用降临效果
-        /// </summary>
-        private void ApplyDescentEffects(IntVec3 location, DescentMode mode)
-        {
-            try
-            {
-                Map map = Find.CurrentMap;
-                if (map == null) return;
-                
-                // 根据模式应用不同效果
-                if (mode == DescentMode.Assist)
-                {
-                    ApplyAssistEffects(location, map);
-                }
-                else
-                {
-                    ApplyAttackEffects(location, map);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[NarratorDescentSystem] Failed to apply descent effects: {ex}");
-            }
-        }
-        
-        /// <summary>
-        /// 应用援助效果
-        /// </summary>
-        private void ApplyAssistEffects(IntVec3 location, Map map)
-        {
-            // 1. 治愈周围的殖民者
-            foreach (Pawn pawn in GenRadial.RadialDistinctThingsAround(location, map, 10f, true).OfType<Pawn>())
-            {
-                if (pawn.IsColonist && pawn.health != null)
-                {
-                    // ? 修复：使用正确的GetHediffs方法签名
-                    List<Hediff_Injury> injuries = new List<Hediff_Injury>();
-                    pawn.health.hediffSet.GetHediffs(ref injuries);
-                    
-                    foreach (var injury in injuries)
-                    {
-                        injury.Heal(injury.Severity);
-                    }
-                    
-                    Log.Message($"[NarratorDescentSystem] Healed colonist: {pawn.LabelShort}");
+                    return true;
                 }
             }
             
-            // 2. 提升心情
-            // TODO: 添加心情Buff
-            
-            // 3. 播放治愈特效
-            effectRenderer?.PlayAuraEffect(location, DescentMode.Assist, 5f);
+            return false;
         }
         
         /// <summary>
-        /// 应用袭击效果
+        /// 获取降临冷却剩余时间（秒）
         /// </summary>
-        private void ApplyAttackEffects(IntVec3 location, Map map)
+        public int GetCooldownRemaining()
         {
-            // 1. 对周围敌人造成伤害
-            foreach (Pawn pawn in GenRadial.RadialDistinctThingsAround(location, map, 10f, true).OfType<Pawn>())
-            {
-                if (pawn.HostileTo(Faction.OfPlayer))
-                {
-                    // 造成伤害
-                    pawn.TakeDamage(new DamageInfo(DamageDefOf.Burn, 50f));
-                    
-                    Log.Message($"[NarratorDescentSystem] Damaged enemy: {pawn.LabelShort}");
-                }
-            }
-            
-            // 2. 制造恐慌
-            // TODO: 添加恐慌效果
-            
-            // 3. 播放攻击特效
-            effectRenderer?.PlayAuraEffect(location, DescentMode.Attack, 5f);
-        }
-        
-        /// <summary>
-        /// 播放降临音效
-        /// </summary>
-        private void PlayDescentSound(DescentMode mode, DescentSoundType type)
-        {
-            try
-            {
-                // TODO: 实现音效播放
-                // SoundDef soundDef = GetDescentSound(mode, type);
-                // soundDef.PlayOneShot(new TargetInfo(targetDescentLocation, Find.CurrentMap));
-                
-                Log.Message($"[NarratorDescentSystem] Playing sound: {mode} - {type}");
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"[NarratorDescentSystem] Failed to play sound: {ex.Message}");
-            }
+            int ticksSinceLastDescent = Find.TickManager.TicksGame - lastDescentTick;
+            int remainingTicks = Math.Max(0, DESCENT_COOLDOWN_TICKS - ticksSinceLastDescent);
+            return remainingTicks / 60;
         }
         
         // ==================== 存档相关 ====================
@@ -537,46 +660,38 @@ namespace TheSecondSeat.Descent
         public override void ExposeData()
         {
             base.ExposeData();
-            Scribe_Values.Look(ref currentState, "currentState", DescentState.Idle);
-            Scribe_Values.Look(ref lastDescentMode, "lastDescentMode", DescentMode.Assist);
+            Scribe_Values.Look(ref isDescending, "isDescending", false);
+            Scribe_Values.Look(ref lastDescentWasHostile, "lastDescentWasHostile", false);
             Scribe_Values.Look(ref lastDescentTick, "lastDescentTick", 0);
             Scribe_Values.Look(ref targetDescentLocation, "targetDescentLocation");
         }
     }
     
-    // ==================== 枚举定义 ====================
+    // ==================== 向后兼容枚举（已弃用） ====================
     
     /// <summary>
-    /// 降临模式
+    /// [已弃用] 降临模式枚举 - 保留用于向后兼容
+    /// 新代码请使用 bool isHostile 参数
     /// </summary>
+    [Obsolete("Use bool isHostile instead. Assist = false, Attack = true")]
     public enum DescentMode
     {
-        Assist,  // 援助模式（治愈、祝福）
-        Attack   // 袭击模式（伤害、诅咒）
+        Assist,  // 援助模式（友好降临） = isHostile: false
+        Attack   // 袭击模式（敌对降临） = isHostile: true
     }
     
     /// <summary>
-    /// 降临状态
+    /// [已弃用] 降临音效类型 - 保留用于向后兼容
+    /// 新代码请直接使用 SoundDef 名称
     /// </summary>
-    public enum DescentState
-    {
-        Idle,               // 空闲
-        PreparingPosture,   // 准备姿势
-        PlayingCinematic,   // 播放过场动画
-        SpawningEntities,   // 生成实体
-        Completed           // 完成
-    }
-    
-    /// <summary>
-    /// 降临音效类型
-    /// </summary>
+    [Obsolete("Use SoundDef names directly from persona.descentSound")]
     public enum DescentSoundType
     {
-        Preparation,  // 准备
-        Charging,     // 蓄力
-        Casting,      // 施法
-        Flight,       // 飞行
-        Impact,       // 冲击
-        Completion    // 完成
+        Preparation,
+        Charging,
+        Casting,
+        Flight,
+        Impact,
+        Completion
     }
 }

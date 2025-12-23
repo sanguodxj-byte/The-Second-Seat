@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <!-- 精神侵蚀 Hediff -->
+  <HediffDef>
+    <defName>TSS_MentalCorruption</defName>
+    <label>精神侵蚀</label>
+    <description>长时间注视克苏鲁导致的精神污染。症状会随时间逐渐加重，最终导致精神崩溃。停止注视后会缓慢恢复。</description>
+    
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.8, 0.2, 0.8)</defaultLabelColor>
+    <isBad>true</isBad>
+    <makesSickThought>true</makesSickThought>
+    
+    <initialSeverity>0.05</initialSeverity>
+    <minSeverity>0</minSeverity>
+    <maxSeverity>1.0</maxSeverity>
+    
+    <!-- 阶段性症状 -->
+    <stages>
+      <!-- 轻度（0.0-0.3）：心情下降 -->
+      <li>
+        <label>轻微</label>
+        <minSeverity>0</minSeverity>
+        <capMods>
+          <li>
+            <capacity>Consciousness</capacity>
+            <offset>-0.05</offset>
+          </li>
+        </capMods>
+        <statOffsets>
+          <MentalBreakThreshold>0.05</MentalBreakThreshold>
+        </statOffsets>
+      </li>
+      
+      <!-- 中度（0.3-0.6）：命中率下降，偶尔呕吐 -->
+      <li>
+        <label>中等</label>
+        <minSeverity>0.3</minSeverity>
+        <capMods>
+          <li>
+            <capacity>Consciousness</capacity>
+            <offset>-0.15</offset>
+          </li>
+          <li>
+            <capacity>Sight</capacity>
+            <offset>-0.2</offset>
+          </li>
+        </capMods>
+        <statOffsets>
+          <MentalBreakThreshold>0.15</MentalBreakThreshold>
+        </statOffsets>
+        <vomitMtbDays>0.5</vomitMtbDays>
+      </li>
+      
+      <!-- 重度（0.6-1.0）：强制精神崩溃 -->
+      <li>
+        <label>严重</label>
+        <minSeverity>0.6</minSeverity>
+        <capMods>
+          <li>
+            <capacity>Consciousness</capacity>
+            <offset>-0.3</offset>
+          </li>
+          <li>
+            <capacity>Sight</capacity>
+            <offset>-0.4</offset>
+          </li>
+          <li>
+            <capacity>Moving</capacity>
+            <offset>-0.2</offset>
+          </li>
+        </capMods>
+        <statOffsets>
+          <MentalBreakThreshold>0.3</MentalBreakThreshold>
+        </statOffsets>
+        <vomitMtbDays>0.2</vomitMtbDays>
+        <mentalStateGivers>
+          <li>
+            <mentalState>Wander_Sad</mentalState>
+            <mtbDays>0.1</mtbDays>
+          </li>
+          <li>
+            <mentalState>Berserk</mentalState>
+            <mtbDays>0.5</mtbDays>
+          </li>
+        </mentalStateGivers>
+      </li>
+    </stages>
+    
+    <!-- 组件：自然恢复 -->
+    <comps>
+      <li Class="HediffCompProperties_SeverityPerDay">
+        <severityPerDay>-0.2</severityPerDay> <!-- 每天自然恢复0.2 -->
+      </li>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>360000</disappearsAfterTicks> <!-- 6天后完全消失 -->
+      </li>
+    </comps>
+  </HediffDef>
+</Defs>

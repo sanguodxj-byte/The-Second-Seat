@@ -41,6 +41,7 @@ namespace TheSecondSeat.TTS
         }
 
         private AudioSource? currentAudioSource;
+        private Coroutine? currentPlaybackCoroutine; // ✅ v1.6.65: 追踪当前协程
         private const float BUFFER_TIME = 0.5f; // 播放结束后的缓冲时间
         private const int MAX_DELETE_RETRIES = 3; // 最大删除重试次数
         private const float DELETE_RETRY_DELAY = 0.2f; // 删除重试延迟
@@ -178,8 +179,31 @@ namespace TheSecondSeat.TTS
                 return;
             }
 
-            // 启动"加载-播放-删除"协程
-            StartCoroutine(LoadPlayDeleteCoroutine(filePath, personaDefName, onComplete));
+            // ✅ v1.6.65: 打断机制 - 停止当前播放
+            if (currentPlaybackCoroutine != null)
+            {
+                StopCoroutine(currentPlaybackCoroutine);
+                currentPlaybackCoroutine = null;
+                Log.Message("[TTSAudioPlayer] Previous playback interrupted by new audio");
+                
+                // 立即停止当前音频
+                if (currentAudioSource != null && currentAudioSource.isPlaying)
+                {
+                    currentAudioSource.Stop();
+                }
+                
+                // 清除旧的播放状态
+                if (!string.IsNullOrEmpty(currentSpeakingPersona))
+                {
+                    SetSpeakingState(currentSpeakingPersona, false);
+                }
+                
+                // 停止嘴部动画
+                PersonaGeneration.MouthAnimationSystem.StopAnimation();
+            }
+
+            // 启动新的播放协程
+            currentPlaybackCoroutine = StartCoroutine(LoadPlayDeleteCoroutine(filePath, personaDefName, onComplete));
         }
 
         /// <summary>
@@ -304,6 +328,9 @@ namespace TheSecondSeat.TTS
             // === 9. 删除临时文件（带重试机制） ===
             // ? 启动独立协程删除文件，避免阻塞
             StartCoroutine(DeleteFileWithRetry(filePath));
+            
+            // ✅ v1.6.65: 清除协程引用
+            currentPlaybackCoroutine = null;
         }
 
         /// <summary>
@@ -374,6 +401,14 @@ namespace TheSecondSeat.TTS
                 }
                 
                 Log.Message("[TTSAudioPlayer] Playback stopped");
+            }
+
+            // 如果有正在运行的协程，则停止协程
+            if (currentPlaybackCoroutine != null)
+            {
+                StopCoroutine(currentPlaybackCoroutine);
+                currentPlaybackCoroutine = null;
+                Log.Message("[TTSAudioPlayer] Playback coroutine stopped");
             }
         }
 

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  
+  <!-- ==================== Personality Tags - Label ==================== -->
+  
+  <PersonalityTag.Yandere.Label>Yandere</PersonalityTag.Yandere.Label>
+  <PersonalityTag.Yandere.Description>Obsessively in love with you, extremely possessive, easily jealous.</PersonalityTag.Yandere.Description>
+  
+  <PersonalityTag.Kuudere.Label>Kuudere</PersonalityTag.Kuudere.Label>
+  <PersonalityTag.Kuudere.Description>Calm and expressionless on the outside, but has zero sense of personal space with you. Silently initiates bold physical contact.</PersonalityTag.Kuudere.Description>
+  
+  <PersonalityTag.Tsundere.Label>Tsundere</PersonalityTag.Tsundere.Label>
+  <PersonalityTag.Tsundere.Description>Denies liking you verbally, but actions betray true feelings.</PersonalityTag.Tsundere.Description>
+  
+  <PersonalityTag.Gentle.Label>Gentle</PersonalityTag.Gentle.Label>
+  <PersonalityTag.Gentle.Description>Extremely caring and nurturing, constantly worried about your wellbeing.</PersonalityTag.Gentle.Description>
+  
+  <PersonalityTag.Arrogant.Label>Arrogant</PersonalityTag.Arrogant.Label>
+  <PersonalityTag.Arrogant.Description>Treats everything with superiority, but you are a special existence.</PersonalityTag.Arrogant.Description>
+  
+  <PersonalityTag.Energetic.Label>Energetic</PersonalityTag.Energetic.Label>
+  <PersonalityTag.Energetic.Description>Full of energy, always upbeat and optimistic.</PersonalityTag.Energetic.Description>
+  
+  <PersonalityTag.Mysterious.Label>Mysterious</PersonalityTag.Mysterious.Label>
+  <PersonalityTag.Mysterious.Description>Speaks in riddles and hints, shrouded in mystery.</PersonalityTag.Mysterious.Description>
+  
+</LanguageData>

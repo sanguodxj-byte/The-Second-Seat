@@ -165,6 +165,70 @@ namespace TheSecondSeat.PersonaGeneration
         public List<string> selectedTraits = new List<string>();
         
         // ============================================
+        // ⭐ v1.6.63: 通用降临系统配置 API
+        // ============================================
+        
+        /// <summary>
+        /// ⭐ API: 降临实体的 PawnKindDef 名称
+        /// 示例: "Sideria_Descent" 或 "Human"
+        /// 如果为空，该叙事者不支持实体化降临
+        /// </summary>
+        [NoTranslate]
+        public string descentPawnKind = "";
+        
+        /// <summary>
+        /// ⭐ API: 空投舱/特效物的 ThingDef 名称
+        /// 示例: "DropPodIncoming" 或自定义的 "MagicalPortal"
+        /// 如果为空，使用默认的 DropPodIncoming
+        /// </summary>
+        [NoTranslate]
+        public string descentSkyfallerDef = "";
+        
+        /// <summary>
+        /// ⭐ API: 伴随生物（如龙）的 PawnKindDef 名称（可选）
+        /// 示例: "Sideria_Dragon"
+        /// 如果为空，不生成伴随生物
+        /// </summary>
+        [NoTranslate]
+        public string companionPawnKind = "";
+        
+        /// <summary>
+        /// ⭐ API: 降临时的特殊姿态图片名称
+        /// 不含路径，仅文件名，例如 "body_arrival"
+        /// 对应纹理路径: UI/Narrators/Descent/Postures/{descentPosturePath}
+        /// </summary>
+        [NoTranslate]
+        public string descentPosturePath = "";
+        
+        /// <summary>
+        /// ⭐ API: 降临时的特效图片名称
+        /// 不含路径，仅文件名，例如 "glitch_circle"
+        /// 对应纹理路径: UI/Narrators/Descent/Effects/{descentEffectPath}
+        /// </summary>
+        [NoTranslate]
+        public string descentEffectPath = "";
+        
+        /// <summary>
+        /// ⭐ API: 降临音效 SoundDef 名称
+        /// 示例: "Thunder_OnMap" 或自定义的 "Descent_Arrival"
+        /// 如果为空，不播放音效
+        /// </summary>
+        [NoTranslate]
+        public string descentSound = "";
+        
+        /// <summary>
+        /// ⭐ API: 降临信件标题（本地化键）
+        /// 如果为空，使用通用标题 "{narratorName} 降临了"
+        /// </summary>
+        public string descentLetterLabel = "";
+        
+        /// <summary>
+        /// ⭐ API: 降临信件内容（本地化键）
+        /// 如果为空，使用通用内容
+        /// </summary>
+        public string descentLetterText = "";
+        
+        // ============================================
         // 运行时数据（不从XML加载）
         // ============================================
         
@@ -370,6 +434,16 @@ namespace TheSecondSeat.PersonaGeneration
             if (defaultVoice == null) defaultVoice = "";
             if (voicePitch == null) voicePitch = "+0Hz";
             if (voiceRate == null) voiceRate = "+0%";
+            
+            // ⭐ v1.6.63: 确保降临系统字段不为 null
+            if (descentPawnKind == null) descentPawnKind = "";
+            if (descentSkyfallerDef == null) descentSkyfallerDef = "";
+            if (companionPawnKind == null) companionPawnKind = "";
+            if (descentPosturePath == null) descentPosturePath = "";
+            if (descentEffectPath == null) descentEffectPath = "";
+            if (descentSound == null) descentSound = "";
+            if (descentLetterLabel == null) descentLetterLabel = "";
+            if (descentLetterText == null) descentLetterText = "";
             
             if (Prefs.DevMode)
             {

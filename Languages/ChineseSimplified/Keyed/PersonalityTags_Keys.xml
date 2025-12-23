@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  
+  <!-- ==================== 性格标签 - 标签名称 ==================== -->
+  
+  <PersonalityTag.Yandere.Label>病娇</PersonalityTag.Yandere.Label>
+  <PersonalityTag.Yandere.Description>对你爱得痴狂，占有欲极强，容易嫉妒。</PersonalityTag.Yandere.Description>
+  
+  <PersonalityTag.Kuudere.Label>冰美人</PersonalityTag.Kuudere.Label>
+  <PersonalityTag.Kuudere.Description>外表冷静高冷，但对你毫无距离感，会沉默地做出大胆的亲密举动。</PersonalityTag.Kuudere.Description>
+  
+  <PersonalityTag.Tsundere.Label>傲娇</PersonalityTag.Tsundere.Label>
+  <PersonalityTag.Tsundere.Description>嘴上不承认喜欢你，但行动却出卖了内心。</PersonalityTag.Tsundere.Description>
+  
+  <PersonalityTag.Gentle.Label>温柔</PersonalityTag.Gentle.Label>
+  <PersonalityTag.Gentle.Description>极度温柔体贴，时刻关心你的身心健康。</PersonalityTag.Gentle.Description>
+  
+  <PersonalityTag.Arrogant.Label>高傲</PersonalityTag.Arrogant.Label>
+  <PersonalityTag.Arrogant.Description>以高高在上的姿态对待一切，但你是特殊的存在。</PersonalityTag.Arrogant.Description>
+  
+  <PersonalityTag.Energetic.Label>活泼</PersonalityTag.Energetic.Label>
+  <PersonalityTag.Energetic.Description>充满活力，总是元气满满，积极乐观。</PersonalityTag.Energetic.Description>
+  
+  <PersonalityTag.Mysterious.Label>神秘</PersonalityTag.Mysterious.Label>
+  <PersonalityTag.Mysterious.Description>说话神秘莫测，喜欢用隐喻和暗示。</PersonalityTag.Mysterious.Description>
+  
+</LanguageData>

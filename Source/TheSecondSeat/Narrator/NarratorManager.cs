@@ -1,26 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Verse;
 using RimWorld;
 using TheSecondSeat.Storyteller;
 using TheSecondSeat.PersonaGeneration;
+using TheSecondSeat.RimAgent;
 using UnityEngine;
 
 namespace TheSecondSeat.Narrator
 {
     /// <summary>
     /// Manages the AI narrator's favorability and state
-    /// ? 好感度范围：-1000 (憎恨) 到 +1000 (爱慕/魂之友/主)
-    /// ? 起始位置：0 (冷淡)
+    /// ⭐ v1.6.65: 集成 RimAgent 系统
     /// </summary>
     public class NarratorManager : GameComponent
     {
+        // ⭐ v1.6.65: RimAgent 实例
+        private RimAgent.RimAgent narratorAgent;
+        
         // ? 好感度系统变量
         private float favorability = 0f; // -1000 (仇恨) 到 +1000 (挚爱/灵魂绑定/契)
         private List<FavorabilityEvent> recentEvents = new List<FavorabilityEvent>();
         private const int MaxRecentEvents = 20;
-
+        
         // Storyteller agent
         private StorytellerAgent? storytellerAgent;
 
@@ -44,6 +48,100 @@ namespace TheSecondSeat.Narrator
             // ? 初始好感度为 0（冷淡）
             favorability = 0f;
             InitializeDefaultPersona();
+            
+            // ⭐ v1.6.65: 初始化 RimAgent
+            InitializeRimAgent();
+        }
+        
+        /// <summary>
+        /// ⭐ v1.6.65: 初始化 RimAgent
+        /// </summary>
+        private void InitializeRimAgent()
+        {
+            try
+            {
+                var provider = LLMProviderFactory.GetProvider("auto");
+                narratorAgent = new RimAgent.RimAgent(
+                    "main-narrator",
+                    GetDynamicSystemPrompt(),
+                    provider
+                );
+                
+                // 注册工具
+                narratorAgent.RegisterTool("search");
+                narratorAgent.RegisterTool("analyze");
+                narratorAgent.RegisterTool("command");
+                
+                Log.Message("[NarratorManager] ⭐ RimAgent initialized successfully with 3 tools");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[NarratorManager] Failed to initialize RimAgent: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ v1.6.65: 使用 RimAgent 处理用户输入
+        /// </summary>
+        public async Task<string> ProcessUserInputAsync(string userInput)
+        {
+            try
+            {
+                if (narratorAgent == null)
+                {
+                    Log.Warning("[NarratorManager] RimAgent not initialized, reinitializing...");
+                    InitializeRimAgent();
+                }
+                
+                // 使用 ConcurrentRequestManager 管理请求
+                var response = await ConcurrentRequestManager.Instance.EnqueueAsync(
+                    async () => await narratorAgent.ExecuteAsync(
+                        userInput,
+                        temperature: 0.7f,
+                        maxTokens: 500
+                    ),
+                    maxRetries: 3
+                );
+                
+                if (response.Success)
+                {
+                    int contentLength = response.Content?.Length ?? 0;
+                    int previewLength = Math.Min(50, contentLength);
+                    string preview = contentLength > 0 ? response.Content.Substring(0, previewLength) : "";
+                    Log.Message($"[NarratorManager] ⭐ Agent response received: {preview}...");
+                    return response.Content;
+                }
+                else
+                {
+                    Log.Error($"[NarratorManager] Agent error: {response.Error}");
+                    return "抱歉，我现在无法回应。请稍后再试。";
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[NarratorManager] Error in ProcessUserInputAsync: {ex.Message}");
+                return "发生了错误，请检查日志。";
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ v1.6.65: 获取 Agent 统计信息
+        /// </summary>
+        public string GetAgentStats()
+        {
+            if (narratorAgent == null)
+                return "Agent not initialized";
+            
+            return narratorAgent.GetDebugInfo();
+        }
+        
+        /// <summary>
+        /// ⭐ v1.6.65: 重置 Agent
+        /// </summary>
+        public void ResetAgent()
+        {
+            narratorAgent?.Reset();
+            Log.Message("[NarratorManager] ⭐ Agent reset complete");
         }
 
         /// <summary>

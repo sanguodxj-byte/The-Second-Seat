@@ -1,0 +1,27 @@
+﻿TSS 编译+部署报告
+================================
+
+部署时间: 2025-12-21 12:40:04
+部署类型: 增量部署
+部署目标: D:\steam\steamapps\common\RimWorld\Mods\TheSecondSeat
+
+编译信息:
+- 耗时: 1.69秒
+- 状态: 成功
+- DLL 大小: 577.5 KB
+
+已部署文件:
+- Assemblies\TheSecondSeat.dll
+- Defs\*.xml
+- 其他资源 (跳过)
+
+验证状态: 通过
+
+EventTester 状态: 已编译
+
+下一步:
+1. 启动 RimWorld
+2. 按 F12 开启开发者模式
+3. 点击 ?? → 搜索 'TSS Events'
+4. 测试事件
+

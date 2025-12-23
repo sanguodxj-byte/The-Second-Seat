@@ -24,11 +24,35 @@ namespace TheSecondSeat.PersonaGeneration
     public static class MouthAnimationSystem
     {
         // ===== 配置参数 =====
-        private const float SMOOTHING_FACTOR = 0.15f;           // ✅ 平滑因子（越小越慢，建议 0.1~0.2）
-        private const float MIN_HOLD_TIME = 0.05f;              // ✅ 最小保持时间（秒，避免高频闪烁）
-        private const float SUDDEN_CHANGE_THRESHOLD = 0.5f;     // ✅ 突变阈值（大于此值立即切换）
-        private const float SILENCE_THRESHOLD = 0.05f;          // ✅ 闭嘴阈值（提高以过滤噪音）
-        private const float MOUTH_CHANGE_INTERVAL = 0.15f;      // 每0.15秒切换一次嘴型
+        
+        /// <summary>
+        /// ✅ v1.6.65: 进一步降低动画速度，提升自然度
+        /// 平滑因子（数值越小越慢，越平滑）
+        /// v1.6.60: 0.15 → v1.6.65: 0.08 (降低 47%)
+        /// </summary>
+        private const float SMOOTHING_FACTOR = 0.08f;
+        
+        /// <summary>
+        /// 最小保持时间（秒，避免高频闪烁）
+        /// v1.6.60: 0.05s → v1.6.65: 0.15s (增加 200%)
+        /// </summary>
+        private const float MIN_HOLD_TIME = 0.15f;
+        
+        /// <summary>
+        /// 突变阈值（大于此值立即切换）
+        /// </summary>
+        private const float SUDDEN_CHANGE_THRESHOLD = 0.5f;
+        
+        /// <summary>
+        /// 闭嘴阈值（提高以过滤噪音）
+        /// </summary>
+        private const float SILENCE_THRESHOLD = 0.05f;
+        
+        /// <summary>
+        /// 嘴型切换间隔（秒）
+        /// v1.6.60: 0.15s → v1.6.65: 0.2s (增加 33%)
+        /// </summary>
+        private const float MOUTH_CHANGE_INTERVAL = 0.2f;
         
         // ===== 说话状态数据 =====
         private class SpeakingState
@@ -339,6 +363,27 @@ namespace TheSecondSeat.PersonaGeneration
         public static void ClearAllStates()
         {
             speakingStates.Clear();
+        }
+        
+        /// <summary>
+        /// ✅ v1.6.65: 立即停止所有嘴部动画
+        /// </summary>
+        public static void StopAnimation()
+        {
+            // 强制所有人格立即闭嘴
+            foreach (var state in speakingStates.Values)
+            {
+                state.isSpeaking = false;
+                state.speakingTime = 0f;
+                state.currentOpenness = 0f;
+                state.targetRawOpenness = 0f;
+                state.lockedMouthLayer = null;
+            }
+            
+            if (Prefs.DevMode)
+            {
+                Log.Message("[MouthAnimationSystem] All mouth animations stopped");
+            }
         }
     }
 }

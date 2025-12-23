@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Verse;
-using UnityEngine;
+using TheSecondSeat.RimAgent;
 using UnityEngine.Networking;
 
 namespace TheSecondSeat.LLM
@@ -44,31 +45,41 @@ namespace TheSecondSeat.LLM
 
         /// <summary>
         /// Send game state to LLM and receive AI response asynchronously
-        /// ? 修改：使用 provider 字段判断，而不是 URL 检测
+        /// ⭐ v1.6.65: 使用 ConcurrentRequestManager 管理并发
         /// </summary>
-        public async Task<LLMResponse?> SendStateAndGetActionAsync(
+        public async Task<LLMResponse> SendStateAndGetActionAsync(
             string systemPrompt, 
             string gameStateJson, 
             string userMessage = "")
         {
             try
             {
-                // ? 使用 provider 字段判断
-                if (provider == "gemini")
-                {
-                    Log.Message("[The Second Seat] 使用 Gemini API");
-                    return await SendToGeminiAsync(systemPrompt, gameStateJson, userMessage);
-                }
-                else
-                {
-                    Log.Message($"[The Second Seat] 使用 {provider} (OpenAI 兼容格式)");
-                    return await SendToOpenAICompatibleAsync(systemPrompt, gameStateJson, userMessage);
-                }
+                // ⭐ v1.6.65: 使用 ConcurrentRequestManager 包装请求
+                return await ConcurrentRequestManager.Instance.EnqueueAsync(
+                    async () => {
+                        // ? 使用 provider 字段判断
+                        if (provider == "gemini")
+                        {
+                            Log.Message("[The Second Seat] 使用 Gemini API");
+                            return await SendToGeminiAsync(systemPrompt, gameStateJson, userMessage);
+                        }
+                        else
+                        {
+                            Log.Message($"[The Second Seat] 使用 {provider} (OpenAI 兼容格式)");
+                            return await SendToOpenAICompatibleAsync(systemPrompt, gameStateJson, userMessage);
+                        }
+                    },
+                    maxRetries: 3
+                );
             }
             catch (Exception ex)
             {
-                Log.Error($"[The Second Seat] LLM service error: {ex.Message}\n{ex.StackTrace}");
-                return null;
+                Log.Error($"[The Second Seat] ⭐ LLM service error after retries: {ex.Message}\n{ex.StackTrace}");
+                return new LLMResponse
+                {
+                    dialogue = "抱歉，我现在无法回应。",
+                    thought = $"Error: {ex.Message}"
+                };
             }
         }
 

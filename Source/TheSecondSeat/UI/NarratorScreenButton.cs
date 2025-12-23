@@ -403,15 +403,17 @@ namespace TheSecondSeat.UI
             
             // ✅ 悬停效果（增强版：触摸模式下不显示提示框）
             // ✅ v1.6.52: 修复 - 触摸模式激活后不显示悬停提示
+            // ✅ v1.6.65: 隐藏触摸模式下的鼠标悬浮提示
             if (Mouse.IsOver(inRect) && !isDragging && !isTouchModeActive)
             {
                 GUI.color = new Color(1f, 1f, 1f, 0.3f);
                 Widgets.DrawBox(inRect, 2);
                 GUI.color = Color.white;
                 
+                // ✅ 完全隐藏触摸模式提示
                 string tooltip = GetStateTooltip();
                 tooltip += "\n\nShift+左键拖动 | 左键打开窗口 | 右键快速对话";
-                tooltip += "\n💡 悬停1秒激活触摸模式";
+                // 移除触摸模式提示
                 
                 TooltipHandler.TipRegion(inRect, tooltip);
             }

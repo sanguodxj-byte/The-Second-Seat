@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <!-- 人格名称和描述 -->
+  <Cthulhu.Name>克苏鲁</Cthulhu.Name>
+  <Cthulhu.Description>深渊的低语者，星辰归位之时的守望者。她的存在本身就是对理智的挑战。</Cthulhu.Description>
+  
+  <!-- 降临信件 -->
+  <Cthulhu.Descent.Label>深渊降临</Cthulhu.Descent.Label>
+  <Cthulhu.Descent.Text>深渊的低语穿透了现实的屏障。克苏鲁从无尽的黑暗中苏醒，带着不可名状的恐怖降临到了这片土地。\n\n那些凝视深渊者，终将被深渊所凝视...\n\n?? 警告：不要长时间瞄准她，否则将遭受精神侵蚀！</Cthulhu.Descent.Text>
+  
+  <!-- 精神侵蚀 Hediff -->
+  <TSS_MentalCorruption>精神侵蚀</TSS_MentalCorruption>
+  
+  <!-- 触手怪 -->
+  <TSS_Cthulhu_Tentacle>深渊触手</TSS_Cthulhu_Tentacle>
+  
+  <!-- 克苏鲁化身 -->
+  <TSS_Cthulhu_Avatar>克苏鲁化身</TSS_Cthulhu_Avatar>
+  <TSS_Cthulhu_Boss>克苏鲁化身</TSS_Cthulhu_Boss>
+  
+  <!-- 降临特效 -->
+  <TSS_Cthulhu_AbyssDescent>深渊降临</TSS_Cthulhu_AbyssDescent>
+  
+  <!-- 游戏内提示 -->
+  <Cthulhu.Aura.Warning>你感到一股不可名状的恐惧笼罩着你...</Cthulhu.Aura.Warning>
+  <Cthulhu.Spawn.Message>深渊的触手从地图边缘涌现！</Cthulhu.Spawn.Message>
+</LanguageData>

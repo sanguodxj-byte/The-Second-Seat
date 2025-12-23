@@ -136,6 +136,29 @@ namespace TheSecondSeat.Framework
             {
                 try
                 {
+                // ? 跳过高优先级事件（已在高优先级检查中处理）
+                if (eventDef.priority >= 100)
+                {
+                    continue;
+                }
+                
+                // ? 新增：跳过测试/调试事件
+                if (eventDef.category == "Test" || 
+                    eventDef.category == "Debug")
+                {
+                    continue;
+                }
+                
+                // ? 新增：跳过没有triggers的事件（防御性编程）
+                if (eventDef.triggers == null || eventDef.triggers.Count == 0)
+                {
+                    if (Prefs.DevMode)
+                    {
+                        Log.Warning($"[NarratorEventManager] Event '{eventDef.defName}' has no triggers, skipping auto-check");
+                    }
+                    continue;
+                }
+                
                     // 跳过高优先级事件（已在高优先级检查中处理）
                     if (eventDef.priority >= 100)
                     {

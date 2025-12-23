@@ -595,6 +595,13 @@ namespace TheSecondSeat.UI
         {
             List<FloatMenuOption> options = new List<FloatMenuOption>();
 
+            // ✅ 添加：编辑人格（打开 Dialog_PersonaEditor）
+            options.Add(new FloatMenuOption("编辑人格卡片", () => {
+                Find.WindowStack.Add(new Dialog_PersonaEditor(persona));
+            }));
+            
+            options.Add(new FloatMenuOption("--- 基本操作 ---", null));
+
             // ? 调试选项（仅在调试模式下显示）
             var settings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
             if (settings?.debugMode == true)

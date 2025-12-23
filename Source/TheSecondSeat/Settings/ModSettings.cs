@@ -43,6 +43,18 @@ namespace TheSecondSeat.Settings
         public float ttsSpeechRate = 1.0f;
         public float ttsVolume = 1.0f;
         public bool autoPlayTTS = false; // ✅ 新增：自动播放 TTS
+        
+        // ⭐ v1.6.65: RimAgent 设置
+        public string agentName = "main-narrator";
+        public int maxRetries = 3;
+        public float retryDelay = 2f;
+        public int maxHistoryMessages = 20;
+        public System.Collections.Generic.Dictionary<string, bool> toolsEnabled = new System.Collections.Generic.Dictionary<string, bool>();
+        
+        // ⭐ v1.6.65: 并发管理设置
+        public int maxConcurrent = 5;
+        public int requestTimeout = 60;
+        public bool enableRetry = true;
 
         // ? UI Collapse States (�５�״̬)
         public bool collapseLLMSettings = false;
@@ -109,6 +121,18 @@ namespace TheSecondSeat.Settings
             Scribe_Values.Look(ref ttsSpeechRate, "ttsSpeechRate", 1.0f);
             Scribe_Values.Look(ref ttsVolume, "ttsVolume", 1.0f);
             Scribe_Values.Look(ref autoPlayTTS, "autoPlayTTS", false); // ✅ 新增
+            
+            // ⭐ v1.6.65: RimAgent 设置
+            Scribe_Values.Look(ref agentName, "agentName", "main-narrator");
+            Scribe_Values.Look(ref maxRetries, "maxRetries", 3);
+            Scribe_Values.Look(ref retryDelay, "retryDelay", 2f);
+            Scribe_Values.Look(ref maxHistoryMessages, "maxHistoryMessages", 20);
+            Scribe_Collections.Look(ref toolsEnabled, "toolsEnabled", LookMode.Value, LookMode.Value);
+            
+            // ⭐ v1.6.65: 并发管理设置
+            Scribe_Values.Look(ref maxConcurrent, "maxConcurrent", 5);
+            Scribe_Values.Look(ref requestTimeout, "requestTimeout", 60);
+            Scribe_Values.Look(ref enableRetry, "enableRetry", true);
 
             // ? Collapse States
             Scribe_Values.Look(ref collapseLLMSettings, "collapseLLMSettings", false);

@@ -1,0 +1,33 @@
+// 在游戏控制台（~键）中执行以下命令来验证 RimAgent 是否加载
+
+// 1. 检查类是否存在
+var types = System.Reflection.Assembly.GetExecutingAssembly().GetTypes();
+var initClass = types.FirstOrDefault(t => t.Name == "TheSecondSeatInit");
+Log.Message("TheSecondSeatInit 类存在: " + (initClass != null));
+
+// 2. 检查 RimAgentTools 是否存在
+var toolsClass = types.FirstOrDefault(t => t.Name == "RimAgentTools");
+Log.Message("RimAgentTools 类存在: " + (toolsClass != null));
+
+// 3. 检查工具注册状态
+if (toolsClass != null) {
+    var getToolsMethod = toolsClass.GetMethod("GetRegisteredToolNames", 
+        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+    if (getToolsMethod != null) {
+        var tools = getToolsMethod.Invoke(null, null) as System.Collections.Generic.List<string>;
+        Log.Message("已注册的工具: " + string.Join(", ", tools));
+    }
+}
+
+// 4. 检查 NarratorManager
+var manager = Current.Game?.GetComponent<TheSecondSeat.Narrator.NarratorManager>();
+if (manager != null) {
+    Log.Message("NarratorManager 存在");
+    // 尝试获取 Agent 统计
+    try {
+        var stats = manager.GetAgentStats();
+        Log.Message(stats);
+    } catch (System.Exception ex) {
+        Log.Error("获取 Agent 统计失败: " + ex.Message);
+    }
+}

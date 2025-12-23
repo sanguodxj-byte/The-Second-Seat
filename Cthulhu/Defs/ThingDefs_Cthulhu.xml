@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <!-- 克苏鲁化身 ThingDef -->
+  <ThingDef ParentName="BasePawn">
+    <defName>TSS_Cthulhu_Boss</defName>
+    <label>克苏鲁化身</label>
+    <description>深渊的低语者，不可名状之物的化身。长时间注视她将导致精神崩溃。</description>
+    
+    <statBases>
+      <MarketValue>5000</MarketValue>
+      <MoveSpeed>4.5</MoveSpeed>
+      <ArmorRating_Blunt>0.5</ArmorRating_Blunt>
+      <ArmorRating_Sharp>0.5</ArmorRating_Sharp>
+      <PsychicSensitivity>0.1</PsychicSensitivity> <!-- 几乎免疫心灵影响 -->
+    </statBases>
+    
+    <!-- ? 核心机制：深渊召唤 + 理智光环 -->
+    <comps>
+      <!-- 深渊召唤：从地图边缘刷触手 -->
+      <li Class="TheSecondSeat.Components.CompProperties_SpawnerFromEdge">
+        <spawnPawnKind>TSS_Cthulhu_Tentacle</spawnPawnKind>
+        <spawnInterval>600</spawnInterval> <!-- 10秒一次 -->
+        <spawnMaxCount>20</spawnMaxCount>
+        <aiMode>PushToCenter</aiMode>
+        <friendlyFaction>false</friendlyFaction>
+        <despawnOnBossDeath>true</despawnOnBossDeath>
+        <spawnSound>Ambient_AltNoise</spawnSound>
+      </li>
+      
+      <!-- 理智光环：不可直视 -->
+      <li Class="TheSecondSeat.Components.CompProperties_SanityAura">
+        <radius>15</radius>
+        <severityPerSecond>0.03</severityPerSecond>
+        <linkedHediff>TSS_MentalCorruption</linkedHediff>
+        <onlyWhenTargeting>true</onlyWhenTargeting>
+        <strictLineOfSight>false</strictLineOfSight>
+        <drainSound>Ambient_AltNoise</drainSound>
+      </li>
+    </comps>
+  </ThingDef>
+
+  <!-- 降临空投舱特效 -->
+  <ThingDef ParentName="DropPodIncoming">
+    <defName>TSS_Cthulhu_AbyssDescent</defName>
+    <label>深渊降临</label>
+    <description>克苏鲁的降临特效，伴随着深渊的低语。</description>
+    
+    <graphicData>
+      <texPath>Things/Special/DropPodIncoming</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>(3,3)</drawSize>
+      <color>(0.2, 0.8, 0.6)</color> <!-- 深海绿 -->
+    </graphicData>
+    
+    <soundImpactDefault>Ambient_AltNoise</soundImpactDefault>
+  </ThingDef>
+</Defs>

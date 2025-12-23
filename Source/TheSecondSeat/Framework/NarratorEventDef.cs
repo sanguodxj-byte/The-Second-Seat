@@ -163,8 +163,10 @@ namespace TheSecondSeat.Framework
         
         /// <summary>
         /// 通知消息类型
+        /// ❌ 修复：不能在字段初始化时使用 DefOf
+        /// ✅ 应该在 ResolveReferences() 中初始化
         /// </summary>
-        public MessageTypeDef notificationMessageType = MessageTypeDefOf.PositiveEvent;
+        public MessageTypeDef notificationMessageType;
         
         /// <summary>
         /// 自定义通知文本（留空使用label）
@@ -402,6 +404,12 @@ namespace TheSecondSeat.Framework
         public override void ResolveReferences()
         {
             base.ResolveReferences();
+            
+            // ✅ 在这里初始化 DefOf，避免"未初始化的 DefOf"警告
+            if (notificationMessageType == null)
+            {
+                notificationMessageType = MessageTypeDefOf.PositiveEvent;
+            }
             
             // 验证配置
             if (string.IsNullOrEmpty(eventLabel))
