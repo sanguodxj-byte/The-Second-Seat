@@ -110,6 +110,16 @@ namespace TheSecondSeat.PersonaGeneration
         /// <summary>API: 语音速度调整（如"+10%"、"-5%"）</summary>
         public string voiceRate = "+0%";
         
+        /// <summary>
+        /// ⭐ v1.6.75: TTS 语音音调（0.5-2.0，1.0为正常）
+        /// </summary>
+        public float ttsVoicePitch = 1.0f;
+        
+        /// <summary>
+        /// ⭐ v1.6.75: TTS 语音速度（0.5-2.0，1.0为正常）
+        /// </summary>
+        public float ttsVoiceSpeed = 1.0f;
+        
         // ============================================
         // 对话与事件配置 API
         // ============================================
@@ -434,6 +444,10 @@ namespace TheSecondSeat.PersonaGeneration
             if (defaultVoice == null) defaultVoice = "";
             if (voicePitch == null) voicePitch = "+0Hz";
             if (voiceRate == null) voiceRate = "+0%";
+            
+            // ⭐ v1.6.75: 确保 TTS 语音参数有默认值
+            if (ttsVoicePitch <= 0f) ttsVoicePitch = 1.0f;
+            if (ttsVoiceSpeed <= 0f) ttsVoiceSpeed = 1.0f;
             
             // ⭐ v1.6.63: 确保降临系统字段不为 null
             if (descentPawnKind == null) descentPawnKind = "";
