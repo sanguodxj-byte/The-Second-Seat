@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,7 +7,7 @@ using Verse;
 namespace TheSecondSeat.RimAgent
 {
     /// <summary>
-    /// ? v1.6.65: LLM Ìá¹©ÉÌ¹¤³§£¨ĞŞ¸´°æ£©
+    /// ? v1.6.65: LLM æä¾›å•†å·¥å‚ï¼ˆä¿®å¤ç‰ˆï¼‰
     /// </summary>
     public static class LLMProviderFactory
     {
@@ -82,7 +82,7 @@ namespace TheSecondSeat.RimAgent
         }
     }
 
-    // ===== Ìá¹©ÉÌÊµÏÖ£¨ĞŞ¸´°æ£º·µ»Ø response.Content£© =====
+    // ===== æä¾›å•†å®ç°ï¼ˆä¿®å¤ç‰ˆï¼šè¿”å› response.Contentï¼‰ =====
 
     public class OpenAIProvider : ILLMProvider
     {
@@ -97,12 +97,12 @@ namespace TheSecondSeat.RimAgent
             }
         }
 
-        public async Task<string> SendMessageAsync(string systemPrompt, string userMessage, float temperature = 0.7f, int maxTokens = 500)
+        public async Task<string> SendMessageAsync(string systemPrompt, string gameState, string userMessage, float temperature = 0.7f, int maxTokens = 500)
         {
             try
             {
-                // ? ĞŞ¸´£º·µ»Ø response.dialogue
-                var response = await LLM.LLMService.Instance.SendStateAndGetActionAsync(systemPrompt, "", userMessage);
+                // ? ä¿®å¤ï¼šä¼ é€’å®Œæ•´çš„ gameState
+                var response = await LLM.LLMService.Instance.SendStateAndGetActionAsync(systemPrompt, gameState ?? "", userMessage);
                 return response.dialogue ?? string.Empty;
             }
             catch (Exception ex)
@@ -131,12 +131,12 @@ namespace TheSecondSeat.RimAgent
             }
         }
 
-        public async Task<string> SendMessageAsync(string systemPrompt, string userMessage, float temperature = 0.7f, int maxTokens = 500)
+        public async Task<string> SendMessageAsync(string systemPrompt, string gameState, string userMessage, float temperature = 0.7f, int maxTokens = 500)
         {
             try
             {
-                // ? ĞŞ¸´£º·µ»Ø response.dialogue
-                var response = await LLM.LLMService.Instance.SendStateAndGetActionAsync(systemPrompt, "", userMessage);
+                // ? ä¿®å¤ï¼šä¼ é€’å®Œæ•´çš„ gameState
+                var response = await LLM.LLMService.Instance.SendStateAndGetActionAsync(systemPrompt, gameState ?? "", userMessage);
                 return response.dialogue ?? string.Empty;
             }
             catch (Exception ex)
@@ -165,12 +165,12 @@ namespace TheSecondSeat.RimAgent
             }
         }
 
-        public async Task<string> SendMessageAsync(string systemPrompt, string userMessage, float temperature = 0.7f, int maxTokens = 500)
+        public async Task<string> SendMessageAsync(string systemPrompt, string gameState, string userMessage, float temperature = 0.7f, int maxTokens = 500)
         {
             try
             {
-                // ? ĞŞ¸´£º·µ»Ø response.dialogue
-                var response = await LLM.LLMService.Instance.SendStateAndGetActionAsync(systemPrompt, "", userMessage);
+                // ? ä¿®å¤ï¼šä¼ é€’å®Œæ•´çš„ gameState
+                var response = await LLM.LLMService.Instance.SendStateAndGetActionAsync(systemPrompt, gameState ?? "", userMessage);
                 return response.dialogue ?? string.Empty;
             }
             catch (Exception ex)
@@ -199,12 +199,12 @@ namespace TheSecondSeat.RimAgent
             }
         }
 
-        public async Task<string> SendMessageAsync(string systemPrompt, string userMessage, float temperature = 0.7f, int maxTokens = 500)
+        public async Task<string> SendMessageAsync(string systemPrompt, string gameState, string userMessage, float temperature = 0.7f, int maxTokens = 500)
         {
             try
             {
-                // ? ĞŞ¸´£º·µ»Ø response.dialogue
-                var response = await LLM.LLMService.Instance.SendStateAndGetActionAsync(systemPrompt, "", userMessage);
+                // ? ä¿®å¤ï¼šä¼ é€’å®Œæ•´çš„ gameState
+                var response = await LLM.LLMService.Instance.SendStateAndGetActionAsync(systemPrompt, gameState ?? "", userMessage);
                 return response.dialogue ?? string.Empty;
             }
             catch (Exception ex)

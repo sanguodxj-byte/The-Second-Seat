@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -10,7 +10,7 @@ using TheSecondSeat.PersonaGeneration;
 namespace TheSecondSeat.UI
 {
     /// <summary>
-    /// ÈË¸ñ¿¨Æ¬±à¼­Æ÷ - ÔÊĞíĞŞ¸ÄÈË¸ñµÄ¸÷ÏîÊôĞÔ£¬ÌØ±ğÊÇ personalityTags
+    /// äººæ ¼å¡ç‰‡ç¼–è¾‘å™¨ - å…è®¸ä¿®æ”¹äººæ ¼çš„å„é¡¹å±æ€§ï¼Œç‰¹åˆ«æ˜¯ personalityTags
     /// </summary>
     public class Dialog_PersonaEditor : Window
     {
@@ -18,7 +18,7 @@ namespace TheSecondSeat.UI
         private Vector2 scrollPosition = Vector2.zero;
         private string newTag = "";
         
-        // ÁÙÊ±±à¼­×Ö¶Î
+        // ä¸´æ—¶ç¼–è¾‘å­—æ®µ
         private string editNarratorName;
         private string editBiography;
         private List<string> editPersonalityTags;
@@ -39,7 +39,7 @@ namespace TheSecondSeat.UI
             this.absorbInputAroundWindow = true;
             this.closeOnClickedOutside = false;
             
-            // ³õÊ¼»¯ÁÙÊ±±à¼­×Ö¶Î
+            // åˆå§‹åŒ–ä¸´æ—¶ç¼–è¾‘å­—æ®µ
             editNarratorName = persona.narratorName ?? "";
             editBiography = persona.biography ?? "";
             editPersonalityTags = new List<string>(persona.personalityTags ?? new List<string>());
@@ -49,63 +49,63 @@ namespace TheSecondSeat.UI
 
         public override void DoWindowContents(Rect inRect)
         {
-            // ±êÌâ
+            // æ ‡é¢˜
             Text.Font = GameFont.Medium;
             Text.Anchor = TextAnchor.MiddleCenter;
             Rect titleRect = new Rect(0f, 0f, inRect.width, 40f);
-            Widgets.Label(titleRect, $"±à¼­ÈË¸ñ: {persona.label}");
+            Widgets.Label(titleRect, $"ç¼–è¾‘äººæ ¼: {persona.label}");
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
 
-            // ÄÚÈİÇøÓò
+            // å†…å®¹åŒºåŸŸ
             Rect contentRect = new Rect(MARGIN, 50f, inRect.width - MARGIN * 2, inRect.height - 110f);
             Rect viewRect = new Rect(0f, 0f, contentRect.width - 20f, 800f);
             Widgets.BeginScrollView(contentRect, ref scrollPosition, viewRect);
             
             float curY = 0f;
             
-            // ===== »ù±¾ĞÅÏ¢ =====
-            DrawSectionHeader(viewRect.width, ref curY, "»ù±¾ĞÅÏ¢");
+            // ===== åŸºæœ¬ä¿¡æ¯ =====
+            DrawSectionHeader(viewRect.width, ref curY, "åŸºæœ¬ä¿¡æ¯");
             
-            // ÈË¸ñÃû³Æ
-            Widgets.Label(new Rect(0f, curY, LABEL_WIDTH, INPUT_HEIGHT), "ÈË¸ñÃû³Æ:");
+            // äººæ ¼åç§°
+            Widgets.Label(new Rect(0f, curY, LABEL_WIDTH, INPUT_HEIGHT), "äººæ ¼åç§°:");
             Rect nameRect = new Rect(LABEL_WIDTH, curY, viewRect.width - LABEL_WIDTH, INPUT_HEIGHT);
             editNarratorName = Widgets.TextField(nameRect, editNarratorName);
             curY += INPUT_HEIGHT + 10f;
             
-            // ÈË¸ñ´«¼Ç
-            Widgets.Label(new Rect(0f, curY, LABEL_WIDTH, INPUT_HEIGHT), "ÈË¸ñ´«¼Ç:");
+            // äººæ ¼ä¼ è®°
+            Widgets.Label(new Rect(0f, curY, LABEL_WIDTH, INPUT_HEIGHT), "äººæ ¼ä¼ è®°:");
             curY += INPUT_HEIGHT + 5f;
             Rect bioRect = new Rect(0f, curY, viewRect.width, 100f);
             editBiography = Widgets.TextArea(bioRect, editBiography);
             curY += 110f;
             
-            // ===== ¸öĞÔ±êÇ©£¨ÖØµã¹¦ÄÜ£©=====
-            DrawSectionHeader(viewRect.width, ref curY, "¸öĞÔ±êÇ© (Personality Tags)");
+            // ===== ä¸ªæ€§æ ‡ç­¾ï¼ˆé‡ç‚¹åŠŸèƒ½ï¼‰=====
+            DrawSectionHeader(viewRect.width, ref curY, "ä¸ªæ€§æ ‡ç­¾ (Personality Tags)");
             
-            // ËµÃ÷ÎÄ×Ö
+            // è¯´æ˜æ–‡å­—
             GUI.color = Color.yellow;
-            string tagsHelp = "¸öĞÔ±êÇ©ÓÃÓÚ¶¨Òå AI µÄĞÔ¸ñÌØÕ÷£¬Ã¿¸ö±êÇ©»áÓ°Ïì¶Ô»°·ç¸ñºÍĞĞÎªÄ£Ê½¡£\n" +
-                            "ÀıÈç: cheerful, serious, sarcastic, gentle, protective µÈ";
+            string tagsHelp = "ä¸ªæ€§æ ‡ç­¾ç”¨äºå®šä¹‰ AI çš„æ€§æ ¼ç‰¹å¾ï¼Œæ¯ä¸ªæ ‡ç­¾ä¼šå½±å“å¯¹è¯é£æ ¼å’Œè¡Œä¸ºæ¨¡å¼ã€‚\n" +
+                            "ä¾‹å¦‚: cheerful, serious, sarcastic, gentle, protective ç­‰";
             float helpHeight = Text.CalcHeight(tagsHelp, viewRect.width);
             Widgets.Label(new Rect(0f, curY, viewRect.width, helpHeight), tagsHelp);
             GUI.color = Color.white;
             curY += helpHeight + 10f;
             
-            // ÏÖÓĞ±êÇ©ÁĞ±í
+            // ç°æœ‰æ ‡ç­¾åˆ—è¡¨
             if (editPersonalityTags.Count > 0)
             {
                 for (int i = 0; i < editPersonalityTags.Count; i++)
                 {
                     Rect tagRowRect = new Rect(0f, curY, viewRect.width, INPUT_HEIGHT);
                     
-                    // ±êÇ©ÊäÈë¿ò
+                    // æ ‡ç­¾è¾“å…¥æ¡†
                     Rect tagInputRect = new Rect(0f, curY, viewRect.width - 100f, INPUT_HEIGHT);
                     editPersonalityTags[i] = Widgets.TextField(tagInputRect, editPersonalityTags[i]);
                     
-                    // É¾³ı°´Å¥
+                    // åˆ é™¤æŒ‰é’®
                     Rect deleteButtonRect = new Rect(viewRect.width - 90f, curY, 80f, INPUT_HEIGHT);
-                    if (Widgets.ButtonText(deleteButtonRect, "É¾³ı"))
+                    if (Widgets.ButtonText(deleteButtonRect, "åˆ é™¤"))
                     {
                         editPersonalityTags.RemoveAt(i);
                         break;
@@ -117,18 +117,18 @@ namespace TheSecondSeat.UI
             else
             {
                 GUI.color = Color.gray;
-                Widgets.Label(new Rect(0f, curY, viewRect.width, INPUT_HEIGHT), "(ÔİÎŞ±êÇ©)");
+                Widgets.Label(new Rect(0f, curY, viewRect.width, INPUT_HEIGHT), "(æš‚æ— æ ‡ç­¾)");
                 GUI.color = Color.white;
                 curY += INPUT_HEIGHT + 5f;
             }
             
-            // Ìí¼ÓĞÂ±êÇ©
+            // æ·»åŠ æ–°æ ‡ç­¾
             curY += 10f;
-            Widgets.Label(new Rect(0f, curY, 100f, INPUT_HEIGHT), "Ìí¼Ó±êÇ©:");
+            Widgets.Label(new Rect(0f, curY, 100f, INPUT_HEIGHT), "æ·»åŠ æ ‡ç­¾:");
             Rect newTagRect = new Rect(100f, curY, viewRect.width - 220f, INPUT_HEIGHT);
             newTag = Widgets.TextField(newTagRect, newTag);
             Rect addButtonRect = new Rect(viewRect.width - 100f, curY, 100f, INPUT_HEIGHT);
-            if (Widgets.ButtonText(addButtonRect, "Ìí¼Ó"))
+            if (Widgets.ButtonText(addButtonRect, "æ·»åŠ "))
             {
                 if (!string.IsNullOrWhiteSpace(newTag))
                 {
@@ -138,41 +138,41 @@ namespace TheSecondSeat.UI
             }
             curY += INPUT_HEIGHT + 20f;
             
-            // ===== ¶Ô»°·ç¸ñ =====
-            DrawSectionHeader(viewRect.width, ref curY, "¶Ô»°·ç¸ñ");
+            // ===== å¯¹è¯é£æ ¼ =====
+            DrawSectionHeader(viewRect.width, ref curY, "å¯¹è¯é£æ ¼");
             
             if (persona.dialogueStyle != null)
             {
-                DrawSlider(viewRect.width, ref curY, "ÕıÊ½³Ì¶È", ref persona.dialogueStyle.formalityLevel);
-                DrawSlider(viewRect.width, ref curY, "Çé¸Ğ±í´ï", ref persona.dialogueStyle.emotionalExpression);
-                DrawSlider(viewRect.width, ref curY, "»°ÓïÏêÏ¸¶È", ref persona.dialogueStyle.verbosity);
-                DrawSlider(viewRect.width, ref curY, "ÓÄÄ¬³Ì¶È", ref persona.dialogueStyle.humorLevel);
-                DrawSlider(viewRect.width, ref curY, "·í´Ì³Ì¶È", ref persona.dialogueStyle.sarcasmLevel);
+                DrawSlider(viewRect.width, ref curY, "æ­£å¼ç¨‹åº¦", ref persona.dialogueStyle.formalityLevel);
+                DrawSlider(viewRect.width, ref curY, "æƒ…æ„Ÿè¡¨è¾¾", ref persona.dialogueStyle.emotionalExpression);
+                DrawSlider(viewRect.width, ref curY, "è¯è¯­è¯¦ç»†åº¦", ref persona.dialogueStyle.verbosity);
+                DrawSlider(viewRect.width, ref curY, "å¹½é»˜ç¨‹åº¦", ref persona.dialogueStyle.humorLevel);
+                DrawSlider(viewRect.width, ref curY, "è®½åˆºç¨‹åº¦", ref persona.dialogueStyle.sarcasmLevel);
             }
             
             curY += 20f;
             
             Widgets.EndScrollView();
             
-            // ===== µ×²¿°´Å¥ =====
+            // ===== åº•éƒ¨æŒ‰é’® =====
             Rect buttonRect = new Rect(MARGIN, inRect.height - 50f, 150f, BUTTON_HEIGHT);
             
-            // ±£´æ°´Å¥
-            if (Widgets.ButtonText(buttonRect, "±£´æĞŞ¸Ä"))
+            // ä¿å­˜æŒ‰é’®
+            if (Widgets.ButtonText(buttonRect, "ä¿å­˜ä¿®æ”¹"))
             {
                 SaveChanges();
             }
             
-            // È¡Ïû°´Å¥
+            // å–æ¶ˆæŒ‰é’®
             buttonRect.x += 160f;
-            if (Widgets.ButtonText(buttonRect, "È¡Ïû"))
+            if (Widgets.ButtonText(buttonRect, "å–æ¶ˆ"))
             {
                 this.Close();
             }
             
-            // µ¼³ö°´Å¥
+            // å¯¼å‡ºæŒ‰é’®
             buttonRect.x += 160f;
-            if (Widgets.ButtonText(buttonRect, "µ¼³öÎªÎÄ¼ş"))
+            if (Widgets.ButtonText(buttonRect, "å¯¼å‡ºä¸ºæ–‡ä»¶"))
             {
                 ExportPersona();
             }
@@ -206,29 +206,33 @@ namespace TheSecondSeat.UI
         {
             try
             {
-                // Ó¦ÓÃĞŞ¸Ä
+                // åº”ç”¨ä¿®æ”¹
                 persona.narratorName = editNarratorName;
                 persona.biography = editBiography;
                 persona.personalityTags = new List<string>(editPersonalityTags);
                 
-                // ±£´æµ½ÎÄ¼ş
-                bool exportSuccess = PersonaGeneration.PersonaDefExporter.ExportPersona(persona, null, null);
+                // ? ä¿®å¤ï¼šç›´æ¥ç”Ÿæˆå’Œä¿å­˜ XMLï¼Œä¸å¤„ç†ç«‹ç»˜
+                string xmlContent = PersonaDefExporter.GeneratePersonaDefXml(persona);
+                string xmlFilePath = PersonaDefExporter.SavePersonaDefXml(persona.defName, xmlContent);
                 
-                if (exportSuccess)
+                if (!string.IsNullOrEmpty(xmlFilePath))
                 {
-                    Messages.Message($"ÈË¸ñ '{persona.label}' ÒÑ³É¹¦±£´æ£¡", MessageTypeDefOf.PositiveEvent);
+                    Messages.Message($"äººæ ¼ '{persona.label}' å·²æˆåŠŸä¿å­˜åˆ° XML æ–‡ä»¶ï¼\n" +
+                                   $"æ–‡ä»¶ä½ç½®: {System.IO.Path.GetFileName(xmlFilePath)}", 
+                                   MessageTypeDefOf.PositiveEvent);
+                    Log.Message($"[Dialog_PersonaEditor] äººæ ¼å·²ä¿å­˜: {xmlFilePath}");
                 }
                 else
                 {
-                    Messages.Message($"ÈË¸ñ '{persona.label}' ĞŞ¸ÄÒÑÓ¦ÓÃ£¬µ«Î´ÄÜ±£´æµ½ÎÄ¼ş", MessageTypeDefOf.CautionInput);
+                    Messages.Message($"äººæ ¼ '{persona.label}' ä¿®æ”¹å·²åº”ç”¨ï¼Œä½†æœªèƒ½ä¿å­˜åˆ°æ–‡ä»¶", MessageTypeDefOf.CautionInput);
                 }
                 
                 this.Close();
             }
             catch (Exception ex)
             {
-                Log.Error($"[Dialog_PersonaEditor] ±£´æÈË¸ñÊ§°Ü: {ex}");
-                Messages.Message($"±£´æÊ§°Ü: {ex.Message}", MessageTypeDefOf.RejectInput);
+                Log.Error($"[Dialog_PersonaEditor] ä¿å­˜äººæ ¼å¤±è´¥: {ex}");
+                Messages.Message($"ä¿å­˜å¤±è´¥: {ex.Message}", MessageTypeDefOf.RejectInput);
             }
         }
         
@@ -236,26 +240,30 @@ namespace TheSecondSeat.UI
         {
             try
             {
-                // ÏÈÓ¦ÓÃĞŞ¸Ä
+                // å…ˆåº”ç”¨ä¿®æ”¹
                 persona.narratorName = editNarratorName;
                 persona.biography = editBiography;
                 persona.personalityTags = new List<string>(editPersonalityTags);
                 
-                bool success = PersonaGeneration.PersonaDefExporter.ExportPersona(persona, null, null);
+                // ? ä¿®å¤ï¼šç›´æ¥ç”Ÿæˆå’Œä¿å­˜ XML
+                string xmlContent = PersonaDefExporter.GeneratePersonaDefXml(persona);
+                string xmlFilePath = PersonaDefExporter.SavePersonaDefXml(persona.defName, xmlContent);
                 
-                if (success)
+                if (!string.IsNullOrEmpty(xmlFilePath))
                 {
-                    Messages.Message($"ÈË¸ñ '{persona.label}' ÒÑµ¼³öµ½ Defs ÎÄ¼ş¼Ğ", MessageTypeDefOf.PositiveEvent);
+                    Messages.Message($"äººæ ¼ '{persona.label}' å·²å¯¼å‡ºåˆ° Defs æ–‡ä»¶å¤¹ï¼\n" +
+                                   $"æ–‡ä»¶ä½ç½®: {System.IO.Path.GetFileName(xmlFilePath)}", 
+                                   MessageTypeDefOf.PositiveEvent);
                 }
                 else
                 {
-                    Messages.Message("µ¼³öÊ§°Ü", MessageTypeDefOf.RejectInput);
+                    Messages.Message("å¯¼å‡ºå¤±è´¥", MessageTypeDefOf.RejectInput);
                 }
             }
             catch (Exception ex)
             {
-                Log.Error($"[Dialog_PersonaEditor] µ¼³öÈË¸ñÊ§°Ü: {ex}");
-                Messages.Message($"µ¼³öÊ§°Ü: {ex.Message}", MessageTypeDefOf.RejectInput);
+                Log.Error($"[Dialog_PersonaEditor] å¯¼å‡ºäººæ ¼å¤±è´¥: {ex}");
+                Messages.Message($"å¯¼å‡ºå¤±è´¥: {ex.Message}", MessageTypeDefOf.RejectInput);
             }
         }
     }

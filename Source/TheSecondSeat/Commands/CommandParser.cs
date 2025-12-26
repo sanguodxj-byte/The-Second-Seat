@@ -9,17 +9,38 @@ namespace TheSecondSeat.Commands
 {
     /// <summary>
     /// Parses LLM command output and executes the appropriate game command
+    /// ✅ v1.6.66: 完全重构 - 注册所有已实现命令
     /// </summary>
     public static class CommandParser
     {
+        // ✅ 修复：注册所有在 ConcreteCommands.cs 中实现的命令
         private static readonly Dictionary<string, Func<IAICommand>> commandRegistry = new Dictionary<string, Func<IAICommand>>
         {
+            // === 基础批量命令 ===
             { "BatchHarvest", () => new BatchHarvestCommand() },
             { "BatchEquip", () => new BatchEquipCommand() },
             { "PriorityRepair", () => new PriorityRepairCommand() },
             { "EmergencyRetreat", () => new EmergencyRetreatCommand() },
-            { "ChangePolicy", () => new ChangePolicyCommand() },
-            // ? 事件触发命令（对弈者模式）
+            { "ChangePolicy", () => new ChangePolicyCommand() }, // 或使用 ChangePolicyCommand_New
+            
+            // === 新增：资源与采集批量命令 ===
+            { "BatchMine", () => new BatchMineCommand() },
+            { "BatchLogging", () => new BatchLoggingCommand() },
+            { "DesignatePlantCut", () => new DesignatePlantCutCommand() },
+            { "BatchCapture", () => new BatchCaptureCommand() },
+
+            // === ✅ 关键修复：殖民者微操命令 (Pawn Management) ===
+            { "DraftPawn", () => new DraftPawnCommand() },
+            { "MovePawn", () => new MovePawnCommand() },
+            { "HealPawn", () => new HealPawnCommand() },
+            { "SetWorkPriority", () => new SetWorkPriorityCommand() },
+            { "EquipWeapon", () => new EquipWeaponCommand() },
+
+            // === 新增：物品管理命令 ===
+            { "ForbidItems", () => new ForbidItemsCommand() },
+            { "AllowItems", () => new AllowItemsCommand() },
+
+            // === 对弈者事件命令 ===
             { "TriggerEvent", () => new TriggerEventCommand() },
             { "ScheduleEvent", () => new ScheduleEventCommand() }
         };
@@ -39,7 +60,7 @@ namespace TheSecondSeat.Commands
 
             if (!commandRegistry.ContainsKey(actionName))
             {
-                Log.Warning($"[The Second Seat] Unknown command: {actionName}");
+                Log.Warning($"[The Second Seat] Unknown command: {actionName} (Available: {string.Join(", ", commandRegistry.Keys)})");
                 return CommandResult.Failed($"Unknown command: {actionName}", -1f);
             }
 
@@ -48,7 +69,7 @@ namespace TheSecondSeat.Commands
                 // Instantiate command
                 var command = commandRegistry[actionName]();
                 
-                // Execute with safe wrapper
+                // ✅ 修复：正确传递 target 和 parameters
                 var result = (command as BaseAICommand)?.ExecuteSafe(
                     llmCommand.target, 
                     llmCommand.parameters);

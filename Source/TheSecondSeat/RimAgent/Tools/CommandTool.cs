@@ -17,6 +17,7 @@ namespace TheSecondSeat.RimAgent.Tools
         
         public async Task<ToolResult> ExecuteAsync(Dictionary<string, object> parameters)
         {
+            Log.Message(string.Format("[CommandTool] ExecuteAsync called with parameters: {0}", string.Join(", ", parameters.Keys)));
             try
             {
                 if (!parameters.TryGetValue("action", out var actionObj))

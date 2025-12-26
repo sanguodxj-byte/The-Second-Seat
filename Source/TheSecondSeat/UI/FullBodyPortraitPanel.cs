@@ -4,13 +4,19 @@ using RimWorld;
 using TheSecondSeat.PersonaGeneration;
 using TheSecondSeat.Narrator;
 using TheSecondSeat.Settings;
+using TheSecondSeat.Descent;
+
 using System.Collections.Generic;
 using System; // ✅ 添加
 
 namespace TheSecondSeat.UI
 {
     /// <summary>
-    /// ✅ v1.6.63: 全身立绘面板（独立绘制，不继承 Window）
+    /// ✅ v1.6.74: 全身立绘面板（独立绘制，不继承 Window）
+    /// ⭐ v1.6.74 更新：立绘尺寸规格调整
+    /// - 原始立绘尺寸：2308x3544px
+    /// - 显示尺寸：保持相同比例缩放
+    /// 
     /// 新增功能：
     /// - ⭐ 通用姿态系统（姿态覆盖、特效叠加、动画回调）
     /// - 实体化降临支持（动态替换身体层）
@@ -27,9 +33,10 @@ namespace TheSecondSeat.UI
     {
         // ==================== 常量定义 ====================
         
-        private const float PORTRAIT_WIDTH = 1024f;
-        private const float PORTRAIT_HEIGHT = 1574f;
-        private const float SCALE_FACTOR = 0.35f;
+        // ⭐ v1.6.74: 更新立绘尺寸规格为 2308x3544px
+        private const float PORTRAIT_WIDTH = 2308f;
+        private const float PORTRAIT_HEIGHT = 3544f;
+        private const float SCALE_FACTOR = 0.15f; // 调整缩放比例以保持合适的显示大小
         
         private const float HOVER_ACTIVATION_TIME = 1.0f;
         private const float TOUCH_COOLDOWN = 0.3f;

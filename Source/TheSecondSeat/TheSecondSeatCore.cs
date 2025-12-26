@@ -6,6 +6,9 @@ using TheSecondSeat.Core;
 using TheSecondSeat.Events;
 using TheSecondSeat.Autonomous;
 using TheSecondSeat.Monitoring;
+using TheSecondSeat.PersonaGeneration;
+using TheSecondSeat.RimAgent; // ⭐ v1.6.77: 新增 - 引入 RimAgent
+using TheSecondSeat.RimAgent.Tools; // ⭐ v1.6.77: 新增 - 引入 Tools
 using System.Reflection;
 
 namespace TheSecondSeat
@@ -27,6 +30,98 @@ namespace TheSecondSeat
             Log.Message("[The Second Seat] 版本: 1.0.0");
             Log.Message("[The Second Seat] Harmony补丁已应用");
             Log.Message("[The Second Seat] ================================================");
+            
+            // ⭐ v1.6.77: 注册 RimAgent 工具
+            RegisterTools();
+            
+            // ⭐ 新增：调试日志 - 列出所有已加载的 NarratorPersonaDef
+            LogLoadedPersonaDefs();
+        }
+        
+        /// <summary>
+        /// ⭐ v1.6.77: 注册所有 RimAgent 工具
+        /// </summary>
+        private static void RegisterTools()
+        {
+            try
+            {
+                Log.Message("[The Second Seat] ================================================");
+                Log.Message("[The Second Seat] 🔧 开始注册 RimAgent 工具...");
+                
+                // 注册工具
+                RimAgentTools.RegisterTool("search", new SearchTool());
+                RimAgentTools.RegisterTool("read_log", new LogReaderTool()); // ⭐ 新增：日志读取工具
+                // RimAgentTools.RegisterTool("file_access", new FileAccessTool()); // 可选：文件访问工具（如果需要）
+                
+                Log.Message("[The Second Seat] ✅ 工具注册完成！");
+                Log.Message("[The Second Seat]   • search - 搜索游戏数据");
+                Log.Message("[The Second Seat]   • read_log - 读取游戏日志（诊断报错）");
+                Log.Message("[The Second Seat] ================================================");
+            }
+            catch (System.Exception ex)
+            {
+                Log.Error($"[The Second Seat] ❌ 工具注册失败: {ex.Message}");
+                Log.Error($"[The Second Seat] 堆栈跟踪: {ex.StackTrace}");
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ 调试方法：列出所有已加载的 NarratorPersonaDef
+        /// </summary>
+        private static void LogLoadedPersonaDefs()
+        {
+            try
+            {
+                Log.Message("[The Second Seat] ================================================");
+                Log.Message("[The Second Seat] 📊 开始检查 NarratorPersonaDef 加载情况...");
+                
+                var allDefs = DefDatabase<NarratorPersonaDef>.AllDefsListForReading;
+                
+                if (allDefs == null || allDefs.Count == 0)
+                {
+                    Log.Warning("[The Second Seat] ❌ 未找到任何 NarratorPersonaDef！");
+                    Log.Warning("[The Second Seat] 可能原因：");
+                    Log.Warning("[The Second Seat]   1. XML 文件未正确放置在 Defs/ 文件夹");
+                    Log.Warning("[The Second Seat]   2. XML 类型声明错误");
+                    Log.Warning("[The Second Seat]   3. Mod 加载顺序问题");
+                }
+                else
+                {
+                    Log.Message($"[The Second Seat] ✅ 成功加载 {allDefs.Count} 个 NarratorPersonaDef");
+                    Log.Message("[The Second Seat] ------------------------------------------------");
+                    
+                    foreach (var def in allDefs)
+                    {
+                        // 获取 Mod 来源信息
+                        string modName = def.modContentPack?.Name ?? "未知Mod";
+                        string modPackageId = def.modContentPack?.PackageId ?? "未知PackageId";
+                        
+                        // 检查是否有立绘路径
+                        string portraitStatus = string.IsNullOrEmpty(def.portraitPath) 
+                            ? "❌ 无立绘路径" 
+                            : $"✅ {def.portraitPath}";
+                        
+                        // 检查是否启用分层立绘
+                        string layeredStatus = def.useLayeredPortrait ? "🎨 分层立绘" : "📷 单图";
+                        
+                        Log.Message($"[The Second Seat] 人格: {def.defName}");
+                        Log.Message($"[The Second Seat]   • 名称: {def.narratorName}");
+                        Log.Message($"[The Second Seat]   • 来源: {modName} ({modPackageId})");
+                        Log.Message($"[The Second Seat]   • 立绘: {portraitStatus}");
+                        Log.Message($"[The Second Seat]   • 类型: {layeredStatus}");
+                        Log.Message($"[The Second Seat]   • 主题色: {def.primaryColor}");
+                        Log.Message("[The Second Seat] ------------------------------------------------");
+                    }
+                }
+                
+                Log.Message("[The Second Seat] 📊 NarratorPersonaDef 检查完成");
+                Log.Message("[The Second Seat] ================================================");
+            }
+            catch (System.Exception ex)
+            {
+                Log.Error($"[The Second Seat] ❌ LogLoadedPersonaDefs 异常: {ex.Message}");
+                Log.Error($"[The Second Seat] 堆栈跟踪: {ex.StackTrace}");
+            }
         }
     }
 

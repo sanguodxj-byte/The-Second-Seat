@@ -276,17 +276,51 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// 加载单个图层纹理
+        /// ⭐ v1.6.74: 支持多路径回退（主 Mod 和子 Mod 路径）
         /// ? v1.6.27: 完全静默，不输出任何日志
-        /// ? v1.6.27: 直接使用 personaName（如 "Sideria"）
         /// </summary>
         private static Texture2D LoadLayerTexture(string personaName, string layerName)
         {
-            string texturePath = $"{LAYERED_BASE_PATH}{personaName}/{layerName}";
-            var texture = ContentFinder<Texture2D>.Get(texturePath, false);
+            // ⭐ v1.6.74: 尝试多个路径（按优先级）
+            string[] pathsToTry = new[]
+            {
+                // 路径 1: 主 Mod 路径（UI/Narrators/9x16/Layered/PersonaName/）
+                $"{LAYERED_BASE_PATH}{personaName}/{layerName}",
+                
+                // 路径 2: 子 Mod 路径（Narrators/Layered/）- 适配 Sideria
+                $"Narrators/Layered/{layerName}",
+                
+                // 路径 3: 旧版路径（向后兼容）
+                $"UI/Narrators/Layered/{personaName}/{layerName}"
+            };
             
-            // ? v1.6.27: 完全静默，成功和失败都不输出
+            foreach (var texturePath in pathsToTry)
+            {
+                var texture = ContentFinder<Texture2D>.Get(texturePath, false);
+                
+                if (texture != null)
+                {
+                    // ⭐ 只在 DevMode 下输出成功路径（方便调试）
+                    if (Prefs.DevMode)
+                    {
+                        Log.Message($"[LayeredPortraitCompositor] ✅ Loaded: {texturePath}");
+                    }
+                    return texture;
+                }
+            }
             
-            return texture;
+            // ⭐ 所有路径都失败，只在 DevMode 下输出警告
+            if (Prefs.DevMode)
+            {
+                Log.Warning($"[LayeredPortraitCompositor] ❌ Not found: {layerName} for {personaName}");
+                Log.Warning($"[LayeredPortraitCompositor]   Tried paths:");
+                foreach (var path in pathsToTry)
+                {
+                    Log.Warning($"[LayeredPortraitCompositor]     • {path}");
+                }
+            }
+            
+            return null;
         }
         
         /// <summary>

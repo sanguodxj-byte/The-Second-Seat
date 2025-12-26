@@ -123,6 +123,7 @@ namespace TheSecondSeat.Integration
 
         /// <summary>
         /// ? 阶段二：获取全局游戏状态（仅叙事者模式）
+        /// ✅ v1.6.47: 线程安全修复 - 使用 GameStateObserver
         /// </summary>
         private static string GetGlobalGameState()
         {
@@ -130,18 +131,20 @@ namespace TheSecondSeat.Integration
 
             try
             {
-                // ? 阶段三：安全检查 - 避免 Find.CurrentMap 为空时崩溃
-                if (Find.World == null)
+                // ✅ 修复：使用线程安全的 GameStateObserver 代替直接访问 map.mapPawns
+                var snapshot = Observer.GameStateObserver.CaptureSnapshotSafe();
+                
+                if (snapshot == null)
                 {
                     if (Prefs.DevMode)
-                        Log.Warning("[SimpleRimTalkIntegration] Find.World 为空，跳过全局状态获取");
+                        Log.Warning("[SimpleRimTalkIntegration] GameStateObserver 返回空快照");
                     return "";
                 }
 
                 // 1. 财富（Wealth）
                 try
                 {
-                    float wealth = Find.World.PlayerWealthForStoryteller;
+                    int wealth = snapshot.colony?.wealth ?? 0;
                     string wealthLevel = wealth > 200000 ? "极高" :
                                        wealth > 100000 ? "高" :
                                        wealth > 50000 ? "中等" :
@@ -155,14 +158,10 @@ namespace TheSecondSeat.Integration
                         Log.Warning($"[SimpleRimTalkIntegration] 获取财富失败: {ex.Message}");
                 }
 
-                // 2. 人口（Population）- ? 修复 API 调用
+                // 2. 人口（Population）- ✅ 修复：从快照读取
                 try
                 {
-                    int colonistCount = 0;
-                    if (Find.CurrentMap != null)
-                    {
-                        colonistCount = Find.CurrentMap.mapPawns.FreeColonistsCount;
-                    }
+                    int colonistCount = snapshot.colonists?.Count ?? 0;
                     stateBuilder.AppendLine($"- 殖民者: {colonistCount} 人");
                 }
                 catch (Exception ex)
@@ -171,15 +170,14 @@ namespace TheSecondSeat.Integration
                         Log.Warning($"[SimpleRimTalkIntegration] 获取人口失败: {ex.Message}");
                 }
 
-                // 3. 日期/季节（Date/Season）- ? 修复 API 调用
+                // 3. 日期/季节（Date/Season）- ✅ 修复：只访问非游戏对象的静态API
                 try
                 {
-                    if (Find.CurrentMap != null)
+                    if (Find.TickManager != null && Find.CurrentMap != null)
                     {
                         int tile = Find.CurrentMap.Tile;
                         long ticks = Find.TickManager.TicksAbs;
                         
-                        // ? 使用正确的 API：GenDate.Season(long absTick, int tile)
                         Season season = GenDate.Season(ticks, Find.WorldGrid.LongLatOf(tile));
                         string seasonName = season.LabelCap();
                         stateBuilder.AppendLine($"- 季节: {seasonName}");
@@ -191,24 +189,33 @@ namespace TheSecondSeat.Integration
                         Log.Warning($"[SimpleRimTalkIntegration] 获取季节失败: {ex.Message}");
                 }
 
-                // 4. 威胁点数（Threat Points）- 可选
+                // 4. 威胁点数（Threat Points）- ✅ 修复：从快照读取威胁信息
                 try
                 {
-                    if (Find.Storyteller != null && Find.CurrentMap != null)
+                    if (snapshot.threats != null)
                     {
-                        float threatPoints = StorytellerUtility.DefaultThreatPointsNow(Find.CurrentMap);
-                        stateBuilder.AppendLine($"- 当前威胁点数: {threatPoints:F0}");
+                        bool hasRaid = snapshot.threats.raidActive;
+                        int raidStrength = snapshot.threats.raidStrength;
+                        
+                        if (hasRaid)
+                        {
+                            stateBuilder.AppendLine($"- 当前威胁: 袭击进行中 (强度: {raidStrength})");
+                        }
+                        else
+                        {
+                            stateBuilder.AppendLine("- 当前威胁: 无");
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
                     if (Prefs.DevMode)
-                        Log.Warning($"[SimpleRimTalkIntegration] 获取威胁点数失败: {ex.Message}");
+                        Log.Warning($"[SimpleRimTalkIntegration] 获取威胁信息失败: {ex.Message}");
                 }
             }
             catch (Exception ex)
             {
-                // ? 阶段三：全局安全检查
+                // ? 全局安全检查
                 if (Prefs.DevMode)
                     Log.Warning($"[SimpleRimTalkIntegration] GetGlobalGameState 失败: {ex.Message}");
             }

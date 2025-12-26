@@ -1,27 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 using Verse;
-using Verse.Sound; // ⭐ 添加 Sound 命名空间
+using Verse.Sound;
 using RimWorld;
 using TheSecondSeat.Narrator;
 using TheSecondSeat.PersonaGeneration;
-using TheSecondSeat.Core; // ⭐ 添加
+using TheSecondSeat.Core;
 
 namespace TheSecondSeat.Descent
 {
     /// <summary>
-    /// ⭐ v1.6.63: 叙事者降临系统 - 完全通用化执行器
+    /// ⭐ v1.6.72: 叙事者降临系统 - 完全通用化执行器
     /// 
-    /// 核心原则：
-    /// - 只读配置，不认人
-    /// - 所有 Def 名称从 NarratorPersonaDef 读取
-    /// - 禁止硬编码任何 DefName
-    /// - 支持任意叙事者的降临配置
-    /// 
-    /// 使用：
-    /// - NarratorDescentSystem.Instance.TriggerDescent(isHostile: false)
+    /// 新增功能：
+    /// - 降临时强制关闭立绘面板，使用默认头像
+    /// - 叙事者回归后自动恢复立绘和头像
+    /// - 叙事者自主判断回归时机（基于性格）
     /// </summary>
     public class NarratorDescentSystem : GameComponent
     {
@@ -49,10 +46,21 @@ namespace TheSecondSeat.Descent
         
         private IntVec3 targetDescentLocation;
         
+        // ⭐ v1.6.72: 新增回归相关字段
+        private Pawn? currentDescentPawn = null;     // 当前降临的实体
+        private int descentStartTick = 0;            // 降临开始时间
+        private bool portraitWasOpen = false;         // 降临前立绘是否打开
+        private int lastReturnCheckTick = 0;          // 上次检查回归的时间
+        private const int RETURN_CHECK_INTERVAL = 600; // 每10秒检查一次回归
+        
         // ==================== 配置参数 ====================
         
-        public const float MIN_AFFINITY_FOR_FRIENDLY = 40f;  // 友好降临最低好感度
-        public const int DESCENT_RANGE = 30;                 // 降临范围（格子）
+        public const float MIN_AFFINITY_FOR_FRIENDLY = 40f;
+        public const int DESCENT_RANGE = 30;
+        
+        // ⭐ v1.6.72: 回归判断参数
+        private const int MIN_DESCENT_DURATION = 18000;   // 最短降临时间 5分钟
+        private const int MAX_DESCENT_DURATION = 216000;  // 最长降临时间 1小时
         
         // ==================== 构造函数 ====================
         
@@ -66,9 +74,6 @@ namespace TheSecondSeat.Descent
         /// <summary>
         /// ⭐ 触发降临（完全通用化）
         /// </summary>
-        /// <param name="isHostile">是否为敌对降临</param>
-        /// <param name="targetLoc">目标降临地点（可选，自动选择）</param>
-        /// <returns>是否成功触发</returns>
         public bool TriggerDescent(bool isHostile, IntVec3? targetLoc = null)
         {
             // 1. 获取当前人格配置
@@ -111,6 +116,17 @@ namespace TheSecondSeat.Descent
             targetDescentLocation = targetLoc.Value;
             lastDescentWasHostile = isHostile;
             lastDescentTick = Find.TickManager.TicksGame;
+            descentStartTick = Find.TickManager.TicksGame;
+            
+            // ⭐ v1.6.72: 记录立绘状态并关闭
+            bool wasVisible = PortraitOverlaySystem.IsEnabled();
+            portraitWasOpen = wasVisible;
+            
+            if (wasVisible)
+            {
+                PortraitOverlaySystem.Toggle(false); // 关闭立绘面板
+                Log.Message("[NarratorDescentSystem] 立绘面板已关闭");
+            }
             
             // 5. ⭐ 开始降临序列（通用化）
             StartDescentSequence(persona, isHostile);
@@ -118,7 +134,290 @@ namespace TheSecondSeat.Descent
             return true;
         }
         
-        // ==================== ⭐ 私有方法 - 通用化逻辑 ====================
+        /// <summary>
+        /// ⭐ v1.6.72: 叙事者主动回归
+        /// </summary>
+        public bool TriggerReturn(bool forceImmediate = false)
+        {
+            if (currentDescentPawn == null || !currentDescentPawn.Spawned)
+            {
+                Log.Warning("[NarratorDescentSystem] 没有降临实体，无法回归");
+                return false;
+            }
+            
+            try
+            {
+                // 1. 播放回归动画（逆向播放降临动画）
+                PlayReturnAnimation();
+                
+                // 2. 移除降临实体
+                currentDescentPawn.Destroy(DestroyMode.Vanish);
+                currentDescentPawn = null;
+                
+                // 3. 恢复立绘面板
+                RestorePortraitPanel();
+                
+                // 4. 显示回归消息
+                var manager = Current.Game?.GetComponent<NarratorManager>();
+                var persona = manager?.GetCurrentPersona();
+                if (persona != null)
+                {
+                    Messages.Message(
+                        $"{persona.narratorName} 已回归虚空，继续以意识形态陪伴你。",
+                        MessageTypeDefOf.NeutralEvent
+                    );
+                }
+                
+                Log.Message("[NarratorDescentSystem] 叙事者已回归");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[NarratorDescentSystem] 回归失败: {ex}");
+                return false;
+            }
+        }
+        
+        // ==================== ⭐ v1.6.72: 新增方法 ====================
+        
+        /// <summary>
+        /// ⭐ v1.6.72: 每帧检查是否应该回归
+        /// </summary>
+        public override void GameComponentTick()
+        {
+            base.GameComponentTick();
+            
+            // 没有降临实体，跳过
+            if (currentDescentPawn == null || !currentDescentPawn.Spawned)
+            {
+                return;
+            }
+            
+            // 检查间隔
+            int currentTick = Find.TickManager.TicksGame;
+            if (currentTick - lastReturnCheckTick < RETURN_CHECK_INTERVAL)
+            {
+                return;
+            }
+            
+            lastReturnCheckTick = currentTick;
+            
+            // 检查是否应该回归
+            if (ShouldReturn())
+            {
+                TriggerReturn();
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ v1.6.72: 判断叙事者是否应该回归
+        /// </summary>
+        private bool ShouldReturn()
+        {
+            if (currentDescentPawn == null) return false;
+            
+            int currentTick = Find.TickManager.TicksGame;
+            int elapsedTicks = currentTick - descentStartTick;
+            
+            // 1. 检查最短降临时间（必须至少停留5分钟）
+            if (elapsedTicks < MIN_DESCENT_DURATION)
+            {
+                return false;
+            }
+            
+            // 2. 检查最长降临时间（超过1小时强制回归）
+            if (elapsedTicks > MAX_DESCENT_DURATION)
+            {
+                Log.Message("[NarratorDescentSystem] 降临时间过长，强制回归");
+                return true;
+            }
+            
+            // 3. 获取人格配置
+            var manager = Current.Game?.GetComponent<NarratorManager>();
+            var persona = manager?.GetCurrentPersona();
+            if (persona == null) return true;
+            
+            // 4. 基于性格判断回归时机
+            return ShouldReturnBasedOnPersonality(persona, elapsedTicks);
+        }
+        
+        /// <summary>
+        /// ⭐ v1.6.72: 基于性格判断是否回归
+        /// </summary>
+        private bool ShouldReturnBasedOnPersonality(NarratorPersonaDef persona, int elapsedTicks)
+        {
+            // 获取好感度和性格标签
+            var agent = Current.Game?.GetComponent<Storyteller.StorytellerAgent>();
+            float affinity = agent?.GetAffinity() ?? 0f;
+            
+            // 基础停留时间（30分钟）
+            int baseStayDuration = 108000;
+            
+            // ==================== 性格影响停留时间 ====================
+            
+            // 社交型人格：喜欢和殖民者相处，停留更久
+            if (HasPersonalityTag(persona, "社交", "外向", "友善"))
+            {
+                baseStayDuration = (int)(baseStayDuration * 1.5f); // 延长50%
+            }
+            
+            // 高傲/独立型人格：不喜欢长时间停留
+            if (HasPersonalityTag(persona, "高傲", "冷淡", "独立"))
+            {
+                baseStayDuration = (int)(baseStayDuration * 0.7f); // 缩短30%
+            }
+            
+            // 好奇型人格：想看看殖民地
+            if (HasPersonalityTag(persona, "好奇", "活泼", "调皮"))
+            {
+                baseStayDuration = (int)(baseStayDuration * 1.3f); // 延长30%
+            }
+            
+            // 懒惰/悠闲型：可能蹭顿饭再走
+            if (HasPersonalityTag(persona, "懒惰", "悠闲", "随性"))
+            {
+                // 检查是否有食物
+                if (HasGoodFood())
+                {
+                    baseStayDuration = (int)(baseStayDuration * 1.8f); // 大幅延长
+                }
+            }
+            
+            // ==================== 好感度影响 ====================
+            
+            if (affinity > 80f)
+            {
+                // 高好感度：更愿意停留
+                baseStayDuration = (int)(baseStayDuration * 1.2f);
+            }
+            else if (affinity < 30f)
+            {
+                // 低好感度：快速离开
+                baseStayDuration = (int)(baseStayDuration * 0.5f);
+            }
+            
+            // ==================== 随机因素 ====================
+            
+            // 添加10-20%的随机波动
+            float randomFactor = Rand.Range(0.9f, 1.2f);
+            baseStayDuration = (int)(baseStayDuration * randomFactor);
+            
+            // 如果已经超过计算出的停留时间，应该回归
+            if (elapsedTicks > baseStayDuration)
+            {
+                // 10%概率继续停留（"再待一会儿"）
+                if (Rand.Chance(0.1f))
+                {
+                    Log.Message($"[NarratorDescentSystem] {persona.narratorName} 决定再待一会儿");
+                    descentStartTick += 36000; // 延长5分钟
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            return false;
+        }
+        
+        /// <summary>
+        /// ⭐ v1.6.72: 检查人格是否有特定标签
+        /// </summary>
+        private bool HasPersonalityTag(NarratorPersonaDef persona, params string[] tags)
+        {
+            if (persona.toneTags == null) return false;
+            
+            foreach (var tag in tags)
+            {
+                if (persona.toneTags.Any(t => t.Contains(tag)))
+                {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+        
+        /// <summary>
+        /// ⭐ v1.6.72: 检查是否有好吃的食物
+        /// </summary>
+        private bool HasGoodFood()
+        {
+            var map = Find.CurrentMap;
+            if (map == null) return false;
+            
+            // 检查是否有精致餐食或更好的食物
+            return map.listerThings.ThingsInGroup(ThingRequestGroup.FoodSourceNotPlantOrTree)
+                .Any(t => t.def.IsNutritionGivingIngestible && 
+                         t.TryGetComp<CompIngredients>() != null);
+        }
+        
+        /// <summary>
+        /// ⭐ v1.6.72: 恢复立绘面板
+        /// </summary>
+        private void RestorePortraitPanel()
+        {
+            try
+            {
+                if (portraitWasOpen)
+                {
+                    PortraitOverlaySystem.Toggle(true); // 恢复立绘面板
+                    Log.Message("[NarratorDescentSystem] 立绘面板已恢复");
+                }
+                
+                // 恢复头像
+                var manager = Current.Game?.GetComponent<NarratorManager>();
+                var persona = manager?.GetCurrentPersona();
+                if (persona != null)
+                {
+                    // 重新加载头像
+                    PortraitLoader.LoadPortrait(persona);
+                    Log.Message("[NarratorDescentSystem] 头像已恢复");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[NarratorDescentSystem] 恢复立绘面板失败: {ex}");
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ v1.6.72: 播放回归动画（降临动画逆向播放）
+        /// </summary>
+        private void PlayReturnAnimation()
+        {
+            try
+            {
+                var manager = Current.Game?.GetComponent<NarratorManager>();
+                var persona = manager?.GetCurrentPersona();
+                if (persona == null) return;
+                
+                // 播放回归音效
+                string returnSound = persona.descentSound; // 使用相同音效
+                if (!string.IsNullOrEmpty(returnSound))
+                {
+                    SoundDef soundDef = DefDatabase<SoundDef>.GetNamedSilentFail(returnSound);
+                    if (soundDef != null && currentDescentPawn != null)
+                    {
+                        SoundStarter.PlayOneShot(soundDef, new TargetInfo(currentDescentPawn.Position, Find.CurrentMap));
+                    }
+                }
+                
+                // 播放特效（光芒消失）
+                if (currentDescentPawn != null)
+                {
+                    // TODO: 添加回归特效（光柱上升、身影消失）
+                    FleckMaker.ThrowSmoke(currentDescentPawn.DrawPos, Find.CurrentMap, 2f);
+                }
+                
+                Log.Message("[NarratorDescentSystem] 播放回归动画");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[NarratorDescentSystem] 播放回归动画失败: {ex.Message}");
+            }
+        }
+        
+        // ==================== 私有方法 - 通用化逻辑 ====================
         
         /// <summary>
         /// ⭐ 检查是否可以触发降临（通用检查）
@@ -216,9 +515,18 @@ namespace TheSecondSeat.Descent
                     return;
                 }
                 
-                // ⭐ 从配置读取姿态和特效路径
-                string posturePath = persona.descentPosturePath;
-                string effectPath = persona.descentEffectPath;
+                // ⭐ v1.6.72: 从配置读取姿态和特效路径（支持人格专属文件夹）
+                string personaName = SanitizeFileName(persona.narratorName);
+                
+                // 姿态路径：UI/Narrators/Descent/Postures/{PersonaName}/{PostureName}
+                string posturePath = string.IsNullOrEmpty(persona.descentPosturePath) 
+                    ? null 
+                    : $"{personaName}/{persona.descentPosturePath}";
+                
+                // 特效路径：UI/Narrators/Descent/Effects/{PersonaName}/{EffectName}
+                string effectPath = string.IsNullOrEmpty(persona.descentEffectPath) 
+                    ? null 
+                    : $"{personaName}/{persona.descentEffectPath}";
                 
                 if (string.IsNullOrEmpty(posturePath))
                 {
@@ -240,6 +548,33 @@ namespace TheSecondSeat.Descent
             {
                 Log.Error($"[NarratorDescentSystem] 播放姿态动画失败: {ex}");
             }
+        }
+        
+        /// <summary>
+        /// 清理文件名中的非法字符
+        /// </summary>
+        private static string SanitizeFileName(string fileName)
+        {
+            if (string.IsNullOrEmpty(fileName))
+            {
+                return "UnnamedPersona";
+            }
+            
+            char[] invalidChars = Path.GetInvalidFileNameChars();
+            string sanitized = fileName;
+            
+            foreach (char c in invalidChars)
+            {
+                sanitized = sanitized.Replace(c, '_');
+            }
+            
+            sanitized = sanitized.Replace(" ", "_");
+            sanitized = sanitized.Replace("(", "");
+            sanitized = sanitized.Replace(")", "");
+            sanitized = sanitized.Replace("[", "");
+            sanitized = sanitized.Replace("]", "");
+            
+            return sanitized;
         }
         
         /// <summary>
@@ -274,7 +609,7 @@ namespace TheSecondSeat.Descent
                 // 4. ⭐ 应用降临效果
                 ApplyDescentEffects(persona, mainPawn, companion, isHostile);
                 
-                Log.Message($"[NarratorDescentSystem] ⭐ 降临实体生成完成: {mainPawn?.LabelShort ?? "未知"}");
+                Log.Message($"[NarratorDescentSystem] ⭐ 降臨实体生成完成: {mainPawn?.LabelShort ?? "未知"}");
             }
             catch (Exception ex)
             {
@@ -322,9 +657,7 @@ namespace TheSecondSeat.Descent
         {
             try
             {
-                // ⭐ 禁止硬编码：从配置读取
                 string pawnKindName = persona.descentPawnKind;
-                
                 PawnKindDef pawnKindDef = DefDatabase<PawnKindDef>.GetNamedSilentFail(pawnKindName);
                 
                 if (pawnKindDef == null)
@@ -333,17 +666,13 @@ namespace TheSecondSeat.Descent
                     return null;
                 }
                 
-                // ⭐ 确定阵营
                 Faction faction = isHostile ? Find.FactionManager.RandomEnemyFaction() : Faction.OfPlayer;
-                
-                // ⭐ 生成 Pawn
                 Pawn pawn = PawnGenerator.GeneratePawn(pawnKindDef, faction);
-                
-                // ⭐ 设置名称（使用人格名称）
                 pawn.Name = new NameTriple("", persona.narratorName, "");
-                
-                // ⭐ 生成到地图
                 GenSpawn.Spawn(pawn, targetDescentLocation, map);
+                
+                // ⭐ v1.6.72: 保存降临实体引用
+                currentDescentPawn = pawn;
                 
                 Log.Message($"[NarratorDescentSystem] ⭐ 生成主体: {pawn.LabelShort} (PawnKind: {pawnKindName})");
                 
@@ -664,6 +993,12 @@ namespace TheSecondSeat.Descent
             Scribe_Values.Look(ref lastDescentWasHostile, "lastDescentWasHostile", false);
             Scribe_Values.Look(ref lastDescentTick, "lastDescentTick", 0);
             Scribe_Values.Look(ref targetDescentLocation, "targetDescentLocation");
+            
+            // ⭐ v1.6.72: 新增存档字段
+            Scribe_References.Look(ref currentDescentPawn, "currentDescentPawn");
+            Scribe_Values.Look(ref descentStartTick, "descentStartTick", 0);
+            Scribe_Values.Look(ref portraitWasOpen, "portraitWasOpen", false);
+            Scribe_Values.Look(ref lastReturnCheckTick, "lastReturnCheckTick", 0);
         }
     }
     

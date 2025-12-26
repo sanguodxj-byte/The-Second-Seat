@@ -1,4 +1,4 @@
-using Verse;
+ï»¿using Verse;
 using RimWorld;
 using System;
 using System.Collections.Generic;
@@ -7,13 +7,13 @@ using TheSecondSeat.WebSearch;
 namespace TheSecondSeat.Settings
 {
     /// <summary>
-    /// ÉèÖÃ¸¨ÖúÀà - ÅäÖÃºÍ²âÊÔ·½·¨
-    /// ÌáÈ¡×Ô ModSettings.cs
+    /// è®¾ç½®è¾…åŠ©ç±» - é…ç½®å’Œæµ‹è¯•æ–¹æ³•
+    /// æå–è‡ª ModSettings.cs
     /// </summary>
     public static class SettingsHelper
     {
         /// <summary>
-        /// ÅäÖÃÍøÂçËÑË÷
+        /// é…ç½®ç½‘ç»œæœç´¢
         /// </summary>
         public static void ConfigureWebSearch(TheSecondSeatSettings settings)
         {
@@ -34,7 +34,7 @@ namespace TheSecondSeat.Settings
         }
         
         /// <summary>
-        /// ÅäÖÃ¶àÄ£Ì¬·ÖÎö
+        /// é…ç½®å¤šæ¨¡æ€åˆ†æ
         /// </summary>
         public static void ConfigureMultimodalAnalysis(TheSecondSeatSettings settings)
         {
@@ -56,7 +56,7 @@ namespace TheSecondSeat.Settings
         }
         
         /// <summary>
-        /// ÅäÖÃ TTS
+        /// é…ç½® TTS
         /// </summary>
         public static void ConfigureTTS(TheSecondSeatSettings settings)
         {
@@ -80,9 +80,9 @@ namespace TheSecondSeat.Settings
         }
         
         /// <summary>
-        /// ²âÊÔÁ¬½Ó
+        /// æµ‹è¯•è¿æ¥
         /// </summary>
-        public static async void TestConnection()
+        public static async System.Threading.Tasks.Task TestConnectionAsync()
         {
             try
             {
@@ -101,14 +101,15 @@ namespace TheSecondSeat.Settings
             }
             catch (Exception ex)
             {
+                Log.Error($"[SettingsHelper] TestConnection failed: {ex.Message}");
                 Messages.Message($"Connection test failed: {ex.Message}", MessageTypeDefOf.NegativeEvent);
             }
         }
         
         /// <summary>
-        /// ²âÊÔ TTS
+        /// æµ‹è¯• TTS
         /// </summary>
-        public static async void TestTTS()
+        public static async System.Threading.Tasks.Task TestTTSAsync()
         {
             try
             {
@@ -128,12 +129,13 @@ namespace TheSecondSeat.Settings
             }
             catch (Exception ex)
             {
+                Log.Error($"[SettingsHelper] TestTTS failed: {ex.Message}");
                 Messages.Message($"TTS test failed: {ex.Message}", MessageTypeDefOf.NegativeEvent);
             }
         }
         
         /// <summary>
-        /// ÏÔÊ¾ÓïÒôÑ¡Ôñ²Ëµ¥
+        /// æ˜¾ç¤ºè¯­éŸ³é€‰æ‹©èœå•
         /// </summary>
         public static void ShowVoiceSelectionMenu(TheSecondSeatSettings settings)
         {
@@ -152,16 +154,16 @@ namespace TheSecondSeat.Settings
         }
         
         /// <summary>
-        /// »ñÈ¡Ê¾ÀıÈ«¾ÖÌáÊ¾´Ê
+        /// è·å–ç¤ºä¾‹å…¨å±€æç¤ºè¯
         /// </summary>
         public static string GetExampleGlobalPrompt()
         {
-            return "# È«¾ÖÌáÊ¾´ÊÊ¾Àı\n\n" +
-                   "Äã¿ÉÒÔÔÚÕâÀïÌí¼ÓÈ«¾ÖÖ¸ÁîÀ´Ó°ÏìAIµÄĞĞÎª¡£\n\n" +
-                   "ÀıÈç£º\n" +
-                   "- Ê¹ÓÃÓÑºÃÇáËÉµÄÓïÆø\n" +
-                   "- ÓÅÏÈ¿¼ÂÇÍæ¼ÒµÄ°²È«\n" +
-                   "- ÔÚÎ£ÏÕÇé¿öÏÂÌá¹©¾¯¸æ";
+            return "# å…¨å±€æç¤ºè¯ç¤ºä¾‹\n\n" +
+                   "ä½ å¯ä»¥åœ¨è¿™é‡Œæ·»åŠ å…¨å±€æŒ‡ä»¤æ¥å½±å“AIçš„è¡Œä¸ºã€‚\n\n" +
+                   "ä¾‹å¦‚ï¼š\n" +
+                   "- ä½¿ç”¨å‹å¥½è½»æ¾çš„è¯­æ°”\n" +
+                   "- ä¼˜å…ˆè€ƒè™‘ç©å®¶çš„å®‰å…¨\n" +
+                   "- åœ¨å±é™©æƒ…å†µä¸‹æä¾›è­¦å‘Š";
         }
     }
 }

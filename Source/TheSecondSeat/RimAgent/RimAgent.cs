@@ -24,10 +24,11 @@ namespace TheSecondSeat.RimAgent
         public int SuccessfulRequests { get; private set; }
         public int FailedRequests { get; private set; }
         
-        public RimAgent(string agentId, string systemPrompt, ILLMProvider provider)
+        public RimAgent(string AgentId, string SystemPrompt, ILLMProvider provider)
         {
-            AgentId = agentId ?? throw new ArgumentNullException(nameof(agentId));
-            SystemPrompt = systemPrompt ?? throw new ArgumentNullException(nameof(systemPrompt));
+            AgentId = AgentId ?? throw new ArgumentNullException(nameof(AgentId));
+            Log.Message($"[RimAgent] Agent created: {AgentId}, SystemPrompt length: {SystemPrompt.Length}");
+            SystemPrompt = SystemPrompt ?? throw new ArgumentNullException(nameof(SystemPrompt));
             Provider = provider ?? throw new ArgumentNullException(nameof(provider));
             AvailableTools = new List<string>();
             ConversationHistory = new List<AgentMessage>();
@@ -44,7 +45,7 @@ namespace TheSecondSeat.RimAgent
             }
         }
         
-        public async Task<AgentResponse> ExecuteAsync(string userMessage, float temperature = 0.7f, int maxTokens = 500)
+        public async Task<AgentResponse> ExecuteAsync(string userMessage, string gameState = "", float temperature = 0.7f, int maxTokens = 500)
         {
             if (State == AgentState.Running)
             {
@@ -53,6 +54,7 @@ namespace TheSecondSeat.RimAgent
             
             try
             {
+                Log.Message($"[RimAgent] {AgentId}: ExecuteAsync called, message: {userMessage}, gameState length: {gameState?.Length ?? 0}");
                 State = AgentState.Running;
                 TotalRequests++;
                 
@@ -63,7 +65,8 @@ namespace TheSecondSeat.RimAgent
                     Timestamp = DateTime.Now
                 });
                 
-                string response = await Provider.SendMessageAsync(SystemPrompt, userMessage, temperature, maxTokens);
+                // ✅ 传递 gameState 到 Provider
+                string response = await Provider.SendMessageAsync(SystemPrompt, gameState, userMessage, temperature, maxTokens);
                 
                 ConversationHistory.Add(new AgentMessage
                 {

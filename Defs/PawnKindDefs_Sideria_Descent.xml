@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- ? Sideria 降临形态 - 主体实体 -->
+  <PawnKindDef>
+    <defName>Sideria_Descent</defName>
+    <label>Sideria (降临形态)</label>
+    <labelPlural>Sideria 降临</labelPlural>
+    <race>Human</race>
+    <combatPower>1000</combatPower>
+    <defaultFactionType>PlayerColony</defaultFactionType>
+    
+    <!-- ? 人类必需字段 -->
+    <initialWillRange>100~100</initialWillRange>
+    <initialResistanceRange>100~100</initialResistanceRange>
+    <chemicalAddictionChance>0</chemicalAddictionChance>
+    
+    <backstoryCategories>
+      <li>Offworld</li>
+    </backstoryCategories>
+    
+    <lifeStages>
+      <li>
+        <bodyGraphicData>
+          <texPath>Things/Pawn/Humanlike/BodyTypes/Female_Average</texPath>
+          <graphicClass>Graphic_Multi</graphicClass>
+          <drawSize>1.5</drawSize>
+          <shadowData>
+            <volume>(0.3, 0.8, 0.3)</volume>
+          </shadowData>
+        </bodyGraphicData>
+      </li>
+    </lifeStages>
+    
+    <!-- ? 修复：使用 skills 而不是 skillRequirements -->
+    <skills>
+      <li>
+        <skill>Shooting</skill>
+        <range>15~20</range>
+      </li>
+      <li>
+        <skill>Melee</skill>
+        <range>15~20</range>
+      </li>
+      <li>
+        <skill>Medicine</skill>
+        <range>15~20</range>
+      </li>
+      <li>
+        <skill>Intellectual</skill>
+        <range>15~20</range>
+      </li>
+    </skills>
+    
+    <!-- 超强装备 -->
+    <weaponMoney>9999~9999</weaponMoney>
+    <weaponTags>
+      <li>IndustrialGunAdvanced</li>
+    </weaponTags>
+    
+    <apparelMoney>9999~9999</apparelMoney>
+    <apparelTags>
+      <li>IndustrialAdvanced</li>
+    </apparelTags>
+    
+    <techHediffsMoney>9999~9999</techHediffsMoney>
+    <techHediffsTags>
+      <li>Advanced</li>
+    </techHediffsTags>
+    <techHediffsChance>1.0</techHediffsChance>
+  </PawnKindDef>
+
+  <!-- ? Sideria 伴随生物 -->
+  
+
+</Defs>

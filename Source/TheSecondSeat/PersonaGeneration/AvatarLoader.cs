@@ -19,6 +19,7 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// 加载头像（UI按钮专用）
+        /// ⭐ v1.6.74: 支持多路径回退（主 Mod 和子 Mod 路径）
         /// ? 优化：静默回退，不刷屏日志
         /// ? 支持表情变体系统
         /// </summary>
@@ -52,7 +53,7 @@ namespace TheSecondSeat.PersonaGeneration
             
             Texture2D texture = null;
             
-            // 1. 尝试加载表情头像文件
+            // 1. 尝试加载表情头像文件（多路径回退）
             string personaName = GetPersonaName(def);
             
             if (expression.HasValue && expression.Value != ExpressionType.Neutral)
@@ -60,55 +61,88 @@ namespace TheSecondSeat.PersonaGeneration
                 // ? 从后缀中获取文件名（已经包含变体号）
                 string expressionFileName = expressionSuffix.TrimStart('_').ToLower();
                 
-                string avatarPath = $"{AVATARS_PATH}{personaName}/{expressionFileName}";
-                texture = ContentFinder<Texture2D>.Get(avatarPath, false);
-                
-                // ? 移除成功日志，只在DevMode下输出
-                if (texture != null && Prefs.DevMode)
+                // ⭐ v1.6.74: 尝试多个路径（按优先级）
+                string[] expressionPathsToTry = new[]
                 {
-                    Log.Message($"[AvatarLoader] ? 加载表情头像: {avatarPath}");
+                    // 路径 1: 主 Mod 路径（UI/Narrators/Avatars/PersonaName/）
+                    $"{AVATARS_PATH}{personaName}/{expressionFileName}",
+                    
+                    // 路径 2: 子 Mod 路径（Narrators/Avatars/）- 适配 Sideria
+                    $"Narrators/Avatars/{expressionFileName}",
+                    
+                    // 路径 3: 旧版路径（向后兼容）
+                    $"UI/Narrators/{personaName}/{expressionFileName}"
+                };
+                
+                foreach (var path in expressionPathsToTry)
+                {
+                    texture = ContentFinder<Texture2D>.Get(path, false);
+                    
+                    if (texture != null)
+                    {
+                        if (Prefs.DevMode)
+                        {
+                            Log.Message($"[AvatarLoader] ✅ 加载表情头像: {path}");
+                        }
+                        break;
+                    }
                 }
             }
             
-            // 2. 如果没有表情头像，尝试加载基础头像
+            // 2. 如果没有表情头像，尝试加载基础头像（多路径回退）
             if (texture == null)
             {
                 string[] baseFileNames = new[] { "base", "neutral", "Base", "Neutral", "default", "Default" };
                 
                 foreach (var baseName in baseFileNames)
                 {
-                    string baseAvatarPath = $"{AVATARS_PATH}{personaName}/{baseName}";
-                    texture = ContentFinder<Texture2D>.Get(baseAvatarPath, false);
-                    
-                    if (texture != null)
+                    // ⭐ v1.6.74: 尝试多个路径（按优先级）
+                    string[] basePathsToTry = new[]
                     {
-                        // ? 移除成功日志，只在DevMode下输出
-                        if (Prefs.DevMode)
+                        // 路径 1: 主 Mod 路径（UI/Narrators/Avatars/PersonaName/）
+                        $"{AVATARS_PATH}{personaName}/{baseName}",
+                        
+                        // 路径 2: 子 Mod 路径（Narrators/Avatars/）- 适配 Sideria
+                        $"Narrators/Avatars/{baseName}",
+                        
+                        // 路径 3: 旧版路径（向后兼容）
+                        $"UI/Narrators/{personaName}/{baseName}"
+                    };
+                    
+                    foreach (var path in basePathsToTry)
+                    {
+                        texture = ContentFinder<Texture2D>.Get(path, false);
+                        
+                        if (texture != null)
                         {
-                            Log.Message($"[AvatarLoader] ? 加载基础头像: {baseAvatarPath}");
+                            if (Prefs.DevMode)
+                            {
+                                Log.Message($"[AvatarLoader] ✅ 加载基础头像: {path}");
+                            }
+                            SetTextureQualitySafe(texture);
+                            break;
                         }
-                        SetTextureQualitySafe(texture);
-                        break;
                     }
+                    
+                    if (texture != null) break;
                 }
             }
             
-            // 3. 兜底：使用立绘裁剪
-            if (texture == null)
-            {
-                var portrait = PortraitLoader.LoadPortrait(def, expression);
-                if (portrait != null)
-                {
-                    // ? 移除日志，静默裁剪
-                    texture = CropHeadFromPortraitSafe(portrait);
-                }
-            }
+            // 3. ⭐ v1.6.74: 禁用立绘回退（避免分层立绘被加载到头像位置）
+            // 如果没有头像文件，直接使用占位符
+            // 不再回退到 PortraitLoader（全身立绘系统）
             
             // 4. 最终占位符
             if (texture == null)
             {
                 // ? 只在完全失败时输出警告
-                Log.Warning($"[AvatarLoader] ? 所有加载方式失败，使用占位符: {def.defName}{expressionSuffix}");
+                if (Prefs.DevMode)
+                {
+                    Log.Warning($"[AvatarLoader] 未找到头像文件，使用占位符: {def.defName}{expressionSuffix}");
+                    Log.Warning($"[AvatarLoader]   尝试的路径：");
+                    Log.Warning($"[AvatarLoader]     • UI/Narrators/Avatars/{personaName}/base");
+                    Log.Warning($"[AvatarLoader]     • Narrators/Avatars/base");
+                }
                 texture = GeneratePlaceholder(def.primaryColor);
             }
             

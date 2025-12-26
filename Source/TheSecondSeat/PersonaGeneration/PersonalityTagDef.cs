@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Verse;
@@ -6,19 +6,19 @@ using Verse;
 namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
-    /// ? v1.6.64: ĞÔ¸ñ±êÇ©¶¨Òå - XML ÅäÖÃ»¯
+    /// ? v1.6.64: æ€§æ ¼æ ‡ç­¾å®šä¹‰ - XML é…ç½®åŒ–
     /// 
-    /// ºËĞÄÉè¼Æ£º
-    /// - ĞÔ¸ñ±êÇ©´Ó XML ¼ÓÔØ£¬ÍêÈ«¿ÉÅäÖÃ
-    /// - Mod ×÷Õß¿É×ÔÓÉÀ©Õ¹ĞÂ±êÇ©
-    /// - Ö§³Ö¶àÓïÑÔ±¾µØ»¯
-    /// - Ö§³ÖÌõ¼ş¼¤»î£¨ºÃ¸Ğ¶È·¶Î§£©
-    /// - Ö§³Ö¶Ô»°·ç¸ñĞŞÕı
+    /// æ ¸å¿ƒè®¾è®¡ï¼š
+    /// - æ€§æ ¼æ ‡ç­¾ä» XML åŠ è½½ï¼Œå®Œå…¨å¯é…ç½®
+    /// - Mod ä½œè€…å¯è‡ªç”±æ‰©å±•æ–°æ ‡ç­¾
+    /// - æ”¯æŒå¤šè¯­è¨€æœ¬åœ°åŒ–
+    /// - æ”¯æŒæ¡ä»¶æ¿€æ´»ï¼ˆå¥½æ„Ÿåº¦èŒƒå›´ï¼‰
+    /// - æ”¯æŒå¯¹è¯é£æ ¼ä¿®æ­£
     /// 
-    /// XML Ê¾Àı£º
+    /// XML ç¤ºä¾‹ï¼š
     /// <PersonalityTagDef>
     ///   <defName>Kuudere</defName>
-    ///   <label>±ùÃÀÈË</label>
+    ///   <label>å†°ç¾äºº</label>
     ///   <minAffinityToActivate>60</minAffinityToActivate>
     ///   <behaviorInstructions>
     ///     <li>?? **KUUDERE MODE:**...</li>
@@ -27,75 +27,75 @@ namespace TheSecondSeat.PersonaGeneration
     /// </summary>
     public class PersonalityTagDef : Def
     {
-        // ==================== »ù´¡ĞÅÏ¢ ====================
+        // ==================== åŸºç¡€ä¿¡æ¯ ====================
         
         /// <summary>
-        /// ±êÇ©ÏÔÊ¾Ãû³Æ£¨ÖĞÎÄ£©
+        /// æ ‡ç­¾æ˜¾ç¤ºåç§°ï¼ˆä¸­æ–‡ï¼‰
         /// </summary>
         public string label;
         
         /// <summary>
-        /// ±¾µØ»¯¼ü£¨¿ÉÑ¡£©
+        /// æœ¬åœ°åŒ–é”®ï¼ˆå¯é€‰ï¼‰
         /// </summary>
         public string labelKey;
         
         /// <summary>
-        /// ÃèÊö±¾µØ»¯¼ü£¨¿ÉÑ¡£©
+        /// æè¿°æœ¬åœ°åŒ–é”®ï¼ˆå¯é€‰ï¼‰
         /// </summary>
         public string descriptionKey;
         
-        // ==================== ¼¤»îÌõ¼ş ====================
+        // ==================== æ¿€æ´»æ¡ä»¶ ====================
         
         /// <summary>
-        /// ×îµÍ¼¤»îºÃ¸Ğ¶È
+        /// æœ€ä½æ¿€æ´»å¥½æ„Ÿåº¦
         /// </summary>
         public float minAffinityToActivate = 0f;
         
         /// <summary>
-        /// ×î¸ß¼¤»îºÃ¸Ğ¶È
+        /// æœ€é«˜æ¿€æ´»å¥½æ„Ÿåº¦
         /// </summary>
         public float maxAffinityToActivate = 100f;
         
         /// <summary>
-        /// ÊÇ·ñĞèÒªÔÚ Assistant Ä£Ê½ÏÂ¼¤»î
+        /// æ˜¯å¦éœ€è¦åœ¨ Assistant æ¨¡å¼ä¸‹æ¿€æ´»
         /// </summary>
         public bool requiresAssistantMode = true;
         
-        // ==================== ĞĞÎªÖ¸Áî ====================
+        // ==================== è¡Œä¸ºæŒ‡ä»¤ ====================
         
         /// <summary>
-        /// ĞĞÎªÖ¸ÁîÁĞ±í£¨°´ÓÅÏÈ¼¶ÅÅĞò£©
+        /// è¡Œä¸ºæŒ‡ä»¤åˆ—è¡¨ï¼ˆæŒ‰ä¼˜å…ˆçº§æ’åºï¼‰
         /// </summary>
         public List<BehaviorInstruction> behaviorInstructions = new List<BehaviorInstruction>();
         
-        // ==================== ±íÇéÇãÏò ====================
+        // ==================== è¡¨æƒ…å€¾å‘ ====================
         
         /// <summary>
-        /// ÍÆ¼ö±íÇéÁĞ±í
+        /// æ¨èè¡¨æƒ…åˆ—è¡¨
         /// </summary>
         public List<string> preferredExpressions = new List<string>();
         
-        // ==================== ¶Ô»°·ç¸ñĞŞÕı ====================
+        // ==================== å¯¹è¯é£æ ¼ä¿®æ­£ ====================
         
         /// <summary>
-        /// ¶Ô»°·ç¸ñĞŞÕıÆ÷
+        /// å¯¹è¯é£æ ¼ä¿®æ­£å™¨
         /// </summary>
         public DialogueStyleModifiers dialogueStyleModifiers;
         
-        // ==================== ¹«¹²·½·¨ ====================
+        // ==================== å…¬å…±æ–¹æ³• ====================
         
         /// <summary>
-        /// ¼ì²éÊÇ·ñÓ¦¸Ã¼¤»î´Ë±êÇ©
+        /// æ£€æŸ¥æ˜¯å¦åº”è¯¥æ¿€æ´»æ­¤æ ‡ç­¾
         /// </summary>
         public bool ShouldActivate(float affinity, AIDifficultyMode difficultyMode)
         {
-            // ¼ì²éºÃ¸Ğ¶È·¶Î§
+            // æ£€æŸ¥å¥½æ„Ÿåº¦èŒƒå›´
             if (affinity < minAffinityToActivate || affinity > maxAffinityToActivate)
             {
                 return false;
             }
             
-            // ¼ì²éÄÑ¶ÈÄ£Ê½
+            // æ£€æŸ¥éš¾åº¦æ¨¡å¼
             if (requiresAssistantMode && difficultyMode != AIDifficultyMode.Assistant)
             {
                 return false;
@@ -105,7 +105,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// Éú³ÉĞĞÎªÖ¸ÁîÎÄ±¾
+        /// ç”Ÿæˆè¡Œä¸ºæŒ‡ä»¤æ–‡æœ¬
         /// </summary>
         public string GenerateInstructionText()
         {
@@ -114,13 +114,13 @@ namespace TheSecondSeat.PersonaGeneration
                 return string.Empty;
             }
             
-            // °´ÓÅÏÈ¼¶ÅÅĞò²¢Æ´½Ó
+            // æŒ‰ä¼˜å…ˆçº§æ’åºå¹¶æ‹¼æ¥
             var sorted = behaviorInstructions.OrderBy(i => i.priority).ToList();
             return string.Join("\n", sorted.Select(i => i.text));
         }
         
         /// <summary>
-        /// Ó¦ÓÃ¶Ô»°·ç¸ñĞŞÕı
+        /// åº”ç”¨å¯¹è¯é£æ ¼ä¿®æ­£
         /// </summary>
         public void ApplyStyleModifiers(DialogueStyleDef style)
         {
@@ -133,7 +133,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// »ñÈ¡±¾µØ»¯±êÇ©
+        /// è·å–æœ¬åœ°åŒ–æ ‡ç­¾
         /// </summary>
         public string GetLocalizedLabel()
         {
@@ -146,7 +146,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// »ñÈ¡±¾µØ»¯ÃèÊö
+        /// è·å–æœ¬åœ°åŒ–æè¿°
         /// </summary>
         public string GetLocalizedDescription()
         {
@@ -160,43 +160,43 @@ namespace TheSecondSeat.PersonaGeneration
     }
     
     /// <summary>
-    /// ĞĞÎªÖ¸Áî£¨µ¥Ìõ£©
+    /// è¡Œä¸ºæŒ‡ä»¤ï¼ˆå•æ¡ï¼‰
     /// </summary>
     public class BehaviorInstruction
     {
         /// <summary>
-        /// ÓÅÏÈ¼¶£¨Êı×ÖÔ½Ğ¡Ô½ÓÅÏÈ£©
+        /// ä¼˜å…ˆçº§ï¼ˆæ•°å­—è¶Šå°è¶Šä¼˜å…ˆï¼‰
         /// </summary>
         public int priority = 0;
         
         /// <summary>
-        /// Ö¸ÁîÎÄ±¾
+        /// æŒ‡ä»¤æ–‡æœ¬
         /// </summary>
         public string text;
     }
     
     /// <summary>
-    /// ¶Ô»°·ç¸ñĞŞÕıÆ÷
+    /// å¯¹è¯é£æ ¼ä¿®æ­£å™¨
     /// </summary>
     public class DialogueStyleModifiers
     {
-        // »ù´¡·ç¸ñ²ÎÊı
+        // åŸºç¡€é£æ ¼å‚æ•°
         public float? formalityLevel;
         public float? emotionalExpression;
         public float? verbosity;
         public float? humorLevel;
         public float? sarcasmLevel;
         
-        // ÌØÊâĞĞÎª²ÎÊı
-        public float? possessiveness;      // Õ¼ÓĞÓû£¨Yandere£©
-        public float? physicalDirectness;  // ÎïÀí½Ó´¥Ö±½Ó¶È£¨Kuudere£©
-        public float? tsundereness;        // °Á½¿¶È£¨Tsundere£©
-        public float? nurturing;           // ºÇ»¤¶È£¨Gentle£©
-        public float? arrogance;           // ¸ß°Á¶È£¨Arrogant£©
-        public float? mysteriousness;      // ÉñÃØ¶È£¨Mysterious£©
+        // ç‰¹æ®Šè¡Œä¸ºå‚æ•°
+        public float? possessiveness;      // å æœ‰æ¬²ï¼ˆYandereï¼‰
+        public float? physicalDirectness;  // ç‰©ç†æ¥è§¦ç›´æ¥åº¦ï¼ˆKuudereï¼‰
+        public float? tsundereness;        // å‚²å¨‡åº¦ï¼ˆTsundereï¼‰
+        public float? nurturing;           // å‘µæŠ¤åº¦ï¼ˆGentleï¼‰
+        public float? arrogance;           // é«˜å‚²åº¦ï¼ˆArrogantï¼‰
+        public float? mysteriousness;      // ç¥ç§˜åº¦ï¼ˆMysteriousï¼‰
         
         /// <summary>
-        /// Ó¦ÓÃĞŞÕıµ½¶Ô»°·ç¸ñ
+        /// åº”ç”¨ä¿®æ­£åˆ°å¯¹è¯é£æ ¼
         /// </summary>
         public void ApplyTo(DialogueStyleDef style)
         {

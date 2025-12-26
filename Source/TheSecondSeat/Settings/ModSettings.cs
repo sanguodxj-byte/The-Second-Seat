@@ -481,8 +481,9 @@ namespace TheSecondSeat.Settings
             
             Listing_Standard listingStandard = new Listing_Standard();
             
-            // 增加滚动视图高度
-            var scrollViewRect = new Rect(0f, 0f, inRect.width - 20f, 2600f);
+            // ✅ v1.6.65: 增加滚动视图高度，确保所有设置项完全可见
+            // 修改：2600f → 3600f (增加 1000px)
+            var scrollViewRect = new Rect(0f, 0f, inRect.width - 20f, 3600f);
             var outRect = new Rect(0f, 0f, inRect.width, inRect.height);
             
             Widgets.BeginScrollView(outRect, ref scrollPosition, scrollViewRect);
@@ -595,55 +596,6 @@ namespace TheSecondSeat.Settings
                 }
             });
 
-            // === LLM 设置（可折叠）===
-            DrawCollapsibleSection(listingStandard, "TSS_Settings_LLM_Title".Translate(), ref settings.collapseLLMSettings, () =>
-            {
-                // LLM �ṩ��ѡ��
-                listingStandard.Label("TSS_Settings_LLMProvider".Translate());
-                if (listingStandard.RadioButton("TSS_Settings_LLMProvider_Local".Translate(), settings.llmProvider == "local"))
-                {
-                    settings.llmProvider = "local";
-                    settings.apiEndpoint = "http://localhost:1234/v1/chat/completions";
-                    settings.modelName = "local-model";
-                }
-                if (listingStandard.RadioButton("TSS_Settings_LLMProvider_OpenAI".Translate(), settings.llmProvider == "openai"))
-                {
-                    settings.llmProvider = "openai";
-                    settings.apiEndpoint = "https://api.openai.com/v1/chat/completions";
-                    settings.modelName = "gpt-4";
-                }
-                if (listingStandard.RadioButton("TSS_Settings_LLMProvider_DeepSeek".Translate(), settings.llmProvider == "deepseek"))
-                {
-                    settings.llmProvider = "deepseek";
-                    settings.apiEndpoint = "https://api.deepseek.com/v1/chat/completions";
-                    settings.modelName = "deepseek-chat";
-                }
-                if (listingStandard.RadioButton("TSS_Settings_LLMProvider_Gemini".Translate(), settings.llmProvider == "gemini"))
-                {
-                    settings.llmProvider = "gemini";
-                    settings.apiEndpoint = "https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-exp:generateContent";
-                    settings.modelName = "gemini-2.0-flash-exp";
-                }
-                
-                listingStandard.Gap(12f);
-                
-                listingStandard.Label("TSS_Settings_APIEndpoint".Translate());
-                settings.apiEndpoint = listingStandard.TextEntry(settings.apiEndpoint);
-                
-                listingStandard.Label("TSS_Settings_APIKey".Translate());
-                settings.apiKey = listingStandard.TextEntry(settings.apiKey);
-                
-                listingStandard.Label("TSS_Settings_ModelName".Translate());
-                settings.modelName = listingStandard.TextEntry(settings.modelName);
-
-                listingStandard.Gap(12f);
-                listingStandard.Label($"{"TSS_Settings_Temperature".Translate()}: {settings.temperature:F2}");
-                settings.temperature = listingStandard.Slider(settings.temperature, 0f, 2f);
-
-                listingStandard.Label($"{"TSS_Settings_MaxTokens".Translate()}: {settings.maxTokens}");
-                settings.maxTokens = (int)listingStandard.Slider(settings.maxTokens, 100, 2000);
-            });
-
             // === �����������ã����５���===
             DrawCollapsibleSection(listingStandard, "TSS_Settings_WebSearch_Title".Translate(), ref settings.collapseWebSearchSettings, () =>
             {
@@ -696,64 +648,6 @@ namespace TheSecondSeat.Settings
             });
 
             // === ��ģ̬�������ã����５���===
-            DrawCollapsibleSection(listingStandard, "TSS_Settings_Multimodal_Title".Translate(), ref settings.collapseMultimodalSettings, () =>
-            {
-                listingStandard.CheckboxLabeled("TSS_Settings_EnableMultimodal".Translate(), ref settings.enableMultimodalAnalysis);
-
-                if (settings.enableMultimodalAnalysis)
-                {
-                    // ģ���ṩ��ѡ��
-                    listingStandard.Label("TSS_Settings_MultimodalProvider".Translate());
-                    
-                    // ✅ 修复：每次更改提供商时立即重新配置
-                    bool providerChanged = false;
-                    
-                    if (listingStandard.RadioButton("TSS_Settings_MultimodalProvider_OpenAI".Translate(), settings.multimodalProvider == "openai"))
-                    {
-                        if (settings.multimodalProvider != "openai")
-                        {
-                            settings.multimodalProvider = "openai";
-                            providerChanged = true;
-                        }
-                    }
-                    if (listingStandard.RadioButton("TSS_Settings_MultimodalProvider_DeepSeek".Translate(), settings.multimodalProvider == "deepseek"))
-                    {
-                        if (settings.multimodalProvider != "deepseek")
-                        {
-                            settings.multimodalProvider = "deepseek";
-                            providerChanged = true;
-                        }
-                    }
-                    if (listingStandard.RadioButton("TSS_Settings_MultimodalProvider_Gemini".Translate(), settings.multimodalProvider == "gemini"))
-                    {
-                        if (settings.multimodalProvider != "gemini")
-                        {
-                            settings.multimodalProvider = "gemini";
-                            providerChanged = true;
-                        }
-                    }
-
-                    // ✅ 如果提供商改变，立即重新配置
-                    if (providerChanged)
-                    {
-                        ConfigureMultimodalAnalysis();
-                        Messages.Message($"多模态分析提供商已切换到: {settings.multimodalProvider}", MessageTypeDefOf.NeutralEvent);
-                    }
-
-                    listingStandard.Gap(12f);
-
-                    // API Key ��ģ������
-                    listingStandard.Label("TSS_Settings_MultimodalAPIKey".Translate());
-                    settings.multimodalApiKey = listingStandard.TextEntry(settings.multimodalApiKey);
-                    
-                    listingStandard.Label("TSS_Settings_VisionModel".Translate());
-                    settings.visionModel = listingStandard.TextEntry(settings.visionModel);
-                    
-                    listingStandard.Label("TSS_Settings_TextAnalysisModel".Translate());
-                    settings.textAnalysisModel = listingStandard.TextEntry(settings.textAnalysisModel);
-                }
-            });
-
             // ? === TTS ���ã����５���===
             DrawCollapsibleSection(listingStandard, "语音合成（TTS）", ref settings.collapseTTSSettings, () =>
             {
@@ -857,7 +751,7 @@ namespace TheSecondSeat.Settings
                     // ✅ 测试按钮
                     if (listingStandard.ButtonText("测试 TTS"))
                     {
-                        TestTTS();
+                        _ = TestTTSAsync();
                     }
 
                     if (settings.enableTTS != oldEnableTTS)
@@ -868,6 +762,30 @@ namespace TheSecondSeat.Settings
             });
 
             // === ȫ����ʾ�ʣ����５���===
+
+            // ===== v1.6.65: Agent 配置按钮（统一高级配置）=====
+            listingStandard.Gap(12f);
+            listingStandard.GapLine();
+            
+            Text.Font = GameFont.Medium;
+            listingStandard.Label("高级配置");
+            Text.Font = GameFont.Small;
+            listingStandard.Gap(8f);
+            
+            // Agent 配置按钮
+            if (listingStandard.ButtonText("[高级] Agent 配置（API / 并发管理 / 多模态）"))
+            {
+                Find.WindowStack.Add(new UI.Dialog_UnifiedAgentSettings());
+            }
+            
+            var oldFont3 = Text.Font;
+            Text.Font = GameFont.Tiny;
+            GUI.color = new Color(0.7f, 0.7f, 0.7f);
+            listingStandard.Label("  配置 LLM API、多模态分析、Agent 重试机制、并发管理");
+            GUI.color = Color.white;
+            Text.Font = oldFont3;
+            
+            listingStandard.GapLine();
             listingStandard.Label("TSS_Settings_GlobalPrompt_Title".Translate());
             listingStandard.Gap(12f);
             
@@ -928,7 +846,7 @@ namespace TheSecondSeat.Settings
             // �������Ӱ�ť
             if (listingStandard.ButtonText("TSS_Settings_TestConnection".Translate()))
             {
-                TestConnection();
+                _ = TestConnectionAsync();
             }
 
             // ����������水ť
@@ -941,7 +859,7 @@ namespace TheSecondSeat.Settings
             // ? ���� TTS ��ť
             if (settings.enableTTS && listingStandard.ButtonText("TSS_Settings_TestTTS".Translate()))
             {
-                TestTTS();
+                _ = TestTTSAsync();
             }
             
             listingStandard.Gap(30f);
@@ -952,7 +870,7 @@ namespace TheSecondSeat.Settings
             base.DoSettingsWindowContents(inRect);
         }
 
-        private async void TestConnection()
+        private async System.Threading.Tasks.Task TestConnectionAsync()
         {
             try
             {
@@ -971,6 +889,7 @@ namespace TheSecondSeat.Settings
             }
             catch (System.Exception ex)
             {
+                Log.Error($"[ModSettings] TestConnection failed: {ex.Message}");
                 Messages.Message($"���Ӳ���ʧ��: {ex.Message}", MessageTypeDefOf.NegativeEvent);
             }
         }
@@ -993,7 +912,7 @@ namespace TheSecondSeat.Settings
         }
 
         // ? ���� TTS
-        private async void TestTTS()
+        private async System.Threading.Tasks.Task TestTTSAsync()
         {
             try
             {
@@ -1013,6 +932,7 @@ namespace TheSecondSeat.Settings
             }
             catch (System.Exception ex)
             {
+                Log.Error($"[ModSettings] TestTTS failed: {ex.Message}");
                 Messages.Message($"TTS ����ʧ��: {ex.Message}", MessageTypeDefOf.NegativeEvent);
             }
         }

@@ -1171,11 +1171,17 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ✅ v1.6.34: 获取单个图层纹理（用于运行时分层绘制）
-        /// ✅ v1.6.61: 关闭调试日志
+        /// ✅ v1.6.34: 获取单个图层纹理（支持子 Mod 路径）
+        /// ⭐ v1.6.74 更新：支持 Sideria 的无子文件夹路径
+        /// ⭐ 路径回退机制：
+        ///   1. 主 Mod 路径: UI/Narrators/9x16/Layered/{PersonaName}/{layerName}
+        ///   2. 子 Mod 路径（带子文件夹）: Narrators/Layered/{PersonaName}/{layerName}
+        ///   3. ⭐ 子 Mod 路径（无子文件夹）: Narrators/Layered/{layerName} - 适配 Sideria
+        ///   4. 降临姿态路径: UI/Narrators/Descent/Postures/{PersonaName}/{layerName}
+        ///   5. 降临特效路径: UI/Narrators/Descent/Effects/{PersonaName}/{layerName}
         /// </summary>
         /// <param name="def">人格定义</param>
-        /// <param name="layerName">图层名称（如 "base_body", "happy_eyes", "small_mouth"）</param>
+        /// <param name="layerName">图层名称（如 "base_body", "happy_eyes", "descent_pose"）</param>
         /// <returns>图层纹理，如果未找到则返回null</returns>
         public static Texture2D GetLayerTexture(NarratorPersonaDef def, string layerName)
         {
@@ -1194,67 +1200,78 @@ namespace TheSecondSeat.PersonaGeneration
                 return cachedTexture;
             }
             
-            // 3. 构建图层路径
-            string layerPath = $"UI/Narrators/9x16/Layered/{personaName}/{layerName}";
+            // 3. ⭐ v1.6.74: 多路径回退机制（支持 Sideria 无子文件夹结构）
+            Texture2D texture = null;
             
-            // 4. 加载纹理
-            Texture2D texture = ContentFinder<Texture2D>.Get(layerPath, false);
+            // 路径1：主 Mod 9x16 分层路径（带子文件夹）
+            string layerPath1 = $"UI/Narrators/9x16/Layered/{personaName}/{layerName}";
+            texture = ContentFinder<Texture2D>.Get(layerPath1, false);
             
+            if (texture == null)
+            {
+                // 路径2：子 Mod 分层路径（带子文件夹）
+                string layerPath2 = $"Narrators/Layered/{personaName}/{layerName}";
+                texture = ContentFinder<Texture2D>.Get(layerPath2, false);
+            }
+            
+            if (texture == null)
+            {
+                // ⭐ 路径3：子 Mod 分层路径（无子文件夹）- 适配 Sideria
+                string layerPath3 = $"Narrators/Layered/{layerName}";
+                texture = ContentFinder<Texture2D>.Get(layerPath3, false);
+            }
+            
+            if (texture == null && (layerName.Contains("descent") || layerName.Contains("pose")))
+            {
+                // 路径4：降临姿态路径（主 Mod）
+                string descentPath1 = $"UI/Narrators/Descent/Postures/{personaName}/{layerName}";
+                texture = ContentFinder<Texture2D>.Get(descentPath1, false);
+                
+                if (texture == null)
+                {
+                    // 路径5：降临姿态路径（子 Mod，无子文件夹）
+                    string descentPath2 = $"Narrators/Descent/Postures/{layerName}";
+                    texture = ContentFinder<Texture2D>.Get(descentPath2, false);
+                }
+            }
+            
+            if (texture == null && (layerName.Contains("effect") || layerName.Contains("assist") || layerName.Contains("attack")))
+            {
+                // 路径6：降临特效路径（主 Mod）
+                string effectPath1 = $"UI/Narrators/Descent/Effects/{personaName}/{layerName}";
+                texture = ContentFinder<Texture2D>.Get(effectPath1, false);
+                
+                if (texture == null)
+                {
+                    // 路径7：降临特效路径（子 Mod，无子文件夹）
+                    string effectPath2 = $"Narrators/Descent/Effects/{layerName}";
+                    texture = ContentFinder<Texture2D>.Get(effectPath2, false);
+                }
+            }
+            
+            // 4. 设置纹理质量并缓存
             if (texture != null)
             {
-                // 设置纹理过滤模式为双线性（更平滑）
-                texture.filterMode = FilterMode.Bilinear;
-                texture.anisoLevel = 4; // 各向异性过滤（提升斜角质量）
-                texture.wrapMode = TextureWrapMode.Clamp; // 消除边缘杂色
-                
-                // 缓存纹理
+                SetTextureQuality(texture);
                 cache[cacheKey] = texture;
                 
-                // ✅ v1.6.61: 关闭调试日志
-                // if (Prefs.DevMode)
-                // {
-                //     Log.Message($"[PortraitLoader] Loaded layer: {layerPath} ({texture.width}x{texture.height})");
-                // }
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[PortraitLoader] ✅ 加载图层: {layerName} ({texture.width}x{texture.height})");
+                }
             }
             else if (Prefs.DevMode)
             {
-                Log.Warning($"[PortraitLoader] Layer not found: {layerPath}");
+                Log.Warning($"[PortraitLoader] ⚠️ 图层未找到: {layerName} (persona: {personaName})");
+                Log.Warning($"[PortraitLoader]   尝试的路径:");
+                Log.Warning($"[PortraitLoader]     • UI/Narrators/9x16/Layered/{personaName}/{layerName}");
+                Log.Warning($"[PortraitLoader]     • Narrators/Layered/{personaName}/{layerName}");
+                Log.Warning($"[PortraitLoader]     • Narrators/Layered/{layerName}");
             }
             
             return texture;
         }
-        
-        /// <summary>
-        /// ✅ v1.6.34: 批量获取多个图层纹理
-        /// </summary>
-        /// <param name="def">人格定义</param>
-        /// <param name="layerNames">图层名称列表</param>
-        /// <returns>图层名称→纹理的字典</returns>
-        public static Dictionary<string, Texture2D> GetLayerTextures(NarratorPersonaDef def, params string[] layerNames)
-        {
-            var result = new Dictionary<string, Texture2D>();
-            
-            foreach (var layerName in layerNames)
-            {
-                var texture = GetLayerTexture(def, layerName);
-                if (texture != null)
-                {
-                    result[layerName] = texture;
-                }
-            }
-            
-            return result;
-        }
-        
-        /// <summary>
-        /// ✅ v1.6.34: 清除特定图层的缓存
-        /// </summary>
-        public static void ClearLayerCache(NarratorPersonaDef def, string layerName)
-        {
-            string personaName = GetPersonaFolderName(def);
-            string cacheKey = $"{personaName}_layer_{layerName}";
-            cache.Remove(cacheKey);
-        }
+
     }
 }
 

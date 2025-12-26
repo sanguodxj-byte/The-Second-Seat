@@ -17,6 +17,7 @@ namespace TheSecondSeat.RimAgent.Tools
         
         public async Task<ToolResult> ExecuteAsync(Dictionary<string, object> parameters)
         {
+            Log.Message(string.Format("[SearchTool] ExecuteAsync called with parameters: {0}", string.Join(", ", parameters.Keys)));
             try
             {
                 if (!parameters.TryGetValue("query", out var queryObj))
@@ -25,22 +26,63 @@ namespace TheSecondSeat.RimAgent.Tools
                 }
                 
                 string query = queryObj.ToString().ToLower();
+                
+                // ✅ 修复：在主线程捕获游戏数据
+                List<string> pawnNames = null;
+                List<string> thingLabels = null;
+                
+                // 使用 TaskCompletionSource 在主线程执行数据捕获
+                var tcs = new TaskCompletionSource<bool>();
+                
+                Verse.LongEventHandler.ExecuteWhenFinished(() =>
+                {
+                    try
+                    {
+                        var map = Find.CurrentMap;
+                        if (map != null)
+                        {
+                            // 捕获殖民者名称
+                            var pawns = map.mapPawns?.FreeColonists;
+                            if (pawns != null)
+                            {
+                                pawnNames = pawns.Select(p => p.Name.ToStringShort).ToList();
+                            }
+                            
+                            // 捕获物品标签
+                            var things = map.listerThings?.AllThings;
+                            if (things != null)
+                            {
+                                thingLabels = things.Select(t => t.Label).ToList();
+                            }
+                        }
+                        
+                        tcs.SetResult(true);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error($"[SearchTool] Error capturing game data: {ex.Message}");
+                        tcs.SetException(ex);
+                    }
+                });
+                
+                // 等待主线程数据捕获完成
+                await tcs.Task;
+                
+                // ✅ 现在在后台线程处理捕获的数据（线程安全）
                 var results = new List<string>();
                 
                 // 搜索殖民者
-                var pawns = Find.CurrentMap?.mapPawns.FreeColonists;
-                if (pawns != null)
+                if (pawnNames != null)
                 {
-                    var matchedPawns = pawns.Where(p => p.Name.ToStringShort.ToLower().Contains(query));
-                    results.AddRange(matchedPawns.Select(p => $"殖民者: {p.Name.ToStringShort}"));
+                    var matchedPawns = pawnNames.Where(name => name.ToLower().Contains(query));
+                    results.AddRange(matchedPawns.Select(name => $"殖民者: {name}"));
                 }
                 
                 // 搜索物品
-                var things = Find.CurrentMap?.listerThings.AllThings;
-                if (things != null)
+                if (thingLabels != null)
                 {
-                    var matchedThings = things.Where(t => t.Label.ToLower().Contains(query)).Take(10);
-                    results.AddRange(matchedThings.Select(t => $"物品: {t.Label}"));
+                    var matchedThings = thingLabels.Where(label => label.ToLower().Contains(query)).Take(10);
+                    results.AddRange(matchedThings.Select(label => $"物品: {label}"));
                 }
                 
                 return new ToolResult
@@ -51,6 +93,7 @@ namespace TheSecondSeat.RimAgent.Tools
             }
             catch (Exception ex)
             {
+                Log.Error($"[SearchTool] ExecuteAsync failed: {ex.Message}");
                 return new ToolResult { Success = false, Error = ex.Message };
             }
         }

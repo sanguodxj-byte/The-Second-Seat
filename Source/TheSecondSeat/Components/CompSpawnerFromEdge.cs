@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Verse;
@@ -10,20 +10,20 @@ using RimWorld;
 namespace TheSecondSeat.Components
 {
     /// <summary>
-    /// ? v1.6.63: ÉîÔ¨ÕÙ»½×é¼ş - ´ÓµØÍ¼±ßÔµÎŞÏŞË¢´¥ÊÖ
+    /// ? v1.6.63: æ·±æ¸Šå¬å”¤ç»„ä»¶ - ä»åœ°å›¾è¾¹ç¼˜æ— é™åˆ·è§¦æ‰‹
     /// 
-    /// ºËĞÄ¹¦ÄÜ£º
-    /// - ¶¨Ê±´ÓµØÍ¼±ßÔµÉú³ÉµĞ¶ÔÉúÎï
-    /// - Ö§³ÖÍ¨ÓÃÅäÖÃ£¨Éú³ÉÊ²Ã´¡¢¶à¾ÃÉúÒ»´Î¡¢×î¶à¼¸¸ö£©
-    /// - °ó¶¨µ½Boss£¬BossËÀºó×Ô¶¯Í£Ö¹
-    /// - ¿ÉÅäÖÃAIĞĞÎª£¨ÍÆ½ø/±£ÎÀ£©
+    /// æ ¸å¿ƒåŠŸèƒ½ï¼š
+    /// - å®šæ—¶ä»åœ°å›¾è¾¹ç¼˜ç”Ÿæˆæ•Œå¯¹ç”Ÿç‰©
+    /// - æ”¯æŒé€šç”¨é…ç½®ï¼ˆç”Ÿæˆä»€ä¹ˆã€å¤šä¹…ç”Ÿä¸€æ¬¡ã€æœ€å¤šå‡ ä¸ªï¼‰
+    /// - ç»‘å®šåˆ°Bossï¼ŒBossæ­»åè‡ªåŠ¨åœæ­¢
+    /// - å¯é…ç½®AIè¡Œä¸ºï¼ˆæ¨è¿›/ä¿å«ï¼‰
     /// 
-    /// XMLÅäÖÃÊ¾Àı£º
+    /// XMLé…ç½®ç¤ºä¾‹ï¼š
     /// <code>
     /// &lt;comps&gt;
     ///   &lt;li Class="TheSecondSeat.Components.CompProperties_SpawnerFromEdge"&gt;
     ///     &lt;spawnThingDef&gt;TSS_Cthulhu_Tentacle&lt;/spawnThingDef&gt;
-    ///     &lt;spawnInterval&gt;600&lt;/spawnInterval&gt; &lt;!-- 10Ãë --&gt;
+    ///     &lt;spawnInterval&gt;600&lt;/spawnInterval&gt; &lt;!-- 10ç§’ --&gt;
     ///     &lt;spawnMaxCount&gt;20&lt;/spawnMaxCount&gt;
     ///     &lt;aiMode&gt;PushToCenter&lt;/aiMode&gt;
     ///   &lt;/li&gt;
@@ -51,14 +51,14 @@ namespace TheSecondSeat.Components
         {
             base.CompTick();
             
-            // ¼ì²éBossÊÇ·ñ»¹»î×Å
+            // æ£€æŸ¥Bossæ˜¯å¦è¿˜æ´»ç€
             if (!parent.Spawned || parent.Destroyed)
             {
                 CleanupSpawnedPawns();
                 return;
             }
             
-            // µ¹¼ÆÊ±
+            // å€’è®¡æ—¶
             ticksUntilNextSpawn--;
             
             if (ticksUntilNextSpawn <= 0)
@@ -67,16 +67,16 @@ namespace TheSecondSeat.Components
                 ResetSpawnTimer();
             }
             
-            // ÇåÀíÒÑËÀÍöµÄÉúÎï
+            // æ¸…ç†å·²æ­»äº¡çš„ç”Ÿç‰©
             CleanupDeadPawns();
         }
         
         /// <summary>
-        /// ³¢ÊÔ´ÓµØÍ¼±ßÔµÉú³ÉÉúÎï
+        /// å°è¯•ä»åœ°å›¾è¾¹ç¼˜ç”Ÿæˆç”Ÿç‰©
         /// </summary>
         private void TrySpawnFromEdge()
         {
-            // 1. ¼ì²éÊÇ·ñ´ïµ½×î´óÊıÁ¿
+            // 1. æ£€æŸ¥æ˜¯å¦è¾¾åˆ°æœ€å¤§æ•°é‡
             if (spawnedPawns.Count >= Props.spawnMaxCount)
             {
                 return;
@@ -85,19 +85,19 @@ namespace TheSecondSeat.Components
             Map map = parent.Map;
             if (map == null) return;
             
-            // 2. Ñ¡Ôñ±ßÔµÎ»ÖÃ
+            // 2. é€‰æ‹©è¾¹ç¼˜ä½ç½®
             IntVec3? spawnPos = TryFindEdgeSpawnLocation(map);
             if (spawnPos == null || !spawnPos.Value.IsValid)
             {
-                Log.Warning("[CompSpawnerFromEdge] ÕÒ²»µ½ºÏÊÊµÄ±ßÔµÉú³ÉÎ»ÖÃ");
+                Log.Warning("[CompSpawnerFromEdge] æ‰¾ä¸åˆ°åˆé€‚çš„è¾¹ç¼˜ç”Ÿæˆä½ç½®");
                 return;
             }
             
-            // 3. Éú³ÉÉúÎï
+            // 3. ç”Ÿæˆç”Ÿç‰©
             PawnKindDef pawnKindDef = DefDatabase<PawnKindDef>.GetNamedSilentFail(Props.spawnPawnKind);
             if (pawnKindDef == null)
             {
-                Log.Error($"[CompSpawnerFromEdge] PawnKindDef Î´ÕÒµ½: {Props.spawnPawnKind}");
+                Log.Error($"[CompSpawnerFromEdge] PawnKindDef æœªæ‰¾åˆ°: {Props.spawnPawnKind}");
                 return;
             }
             
@@ -107,29 +107,29 @@ namespace TheSecondSeat.Components
             GenSpawn.Spawn(pawn, spawnPos.Value, map);
             spawnedPawns.Add(pawn);
             
-            // 4. ¸³ÓèAIÈÎÎñ
+            // 4. èµ‹äºˆAIä»»åŠ¡
             AssignAIBehavior(pawn, map);
             
-            // 5. ²¥·ÅÌØĞ§
+            // 5. æ’­æ”¾ç‰¹æ•ˆ
             PlaySpawnEffect(spawnPos.Value, map);
             
-            Log.Message($"[CompSpawnerFromEdge] Éú³É´¥ÊÖ: {pawn.LabelShort} at {spawnPos.Value}");
+            Log.Message($"[CompSpawnerFromEdge] ç”Ÿæˆè§¦æ‰‹: {pawn.LabelShort} at {spawnPos.Value}");
         }
         
         /// <summary>
-        /// Ñ°ÕÒºÏÊÊµÄ±ßÔµÉú³ÉÎ»ÖÃ
+        /// å¯»æ‰¾åˆé€‚çš„è¾¹ç¼˜ç”Ÿæˆä½ç½®
         /// </summary>
         private IntVec3? TryFindEdgeSpawnLocation(Map map)
         {
             CellRect mapRect = new CellRect(0, 0, map.Size.x, map.Size.z);
             IEnumerable<IntVec3> edgeCells = mapRect.EdgeCells;
             
-            // Ëæ»ú´òÂÒ±ßÔµ¸ñ×ÓË³Ğò
+            // éšæœºæ‰“ä¹±è¾¹ç¼˜æ ¼å­é¡ºåº
             List<IntVec3> shuffledEdges = edgeCells.ToList();
             shuffledEdges.Shuffle();
             
-            // Ñ°ÕÒµÚÒ»¸öºÏ·¨Î»ÖÃ
-            foreach (IntVec3 cell in shuffledEdges.Take(100)) // ×î¶à³¢ÊÔ100´Î
+            // å¯»æ‰¾ç¬¬ä¸€ä¸ªåˆæ³•ä½ç½®
+            foreach (IntVec3 cell in shuffledEdges.Take(100)) // æœ€å¤šå°è¯•100æ¬¡
             {
                 if (IsValidSpawnLocation(cell, map))
                 {
@@ -141,7 +141,7 @@ namespace TheSecondSeat.Components
         }
         
         /// <summary>
-        /// ¼ì²éÎ»ÖÃÊÇ·ñÊÊºÏÉú³É
+        /// æ£€æŸ¥ä½ç½®æ˜¯å¦é€‚åˆç”Ÿæˆ
         /// </summary>
         private bool IsValidSpawnLocation(IntVec3 cell, Map map)
         {
@@ -154,21 +154,21 @@ namespace TheSecondSeat.Components
         }
         
         /// <summary>
-        /// ¸³ÓèAIĞĞÎª
+        /// èµ‹äºˆAIè¡Œä¸º
         /// </summary>
         private void AssignAIBehavior(Pawn pawn, Map map)
         {
             switch (Props.aiMode)
             {
                 case AIMode.PushToCenter:
-                    // ´´½¨Ò»¸öÏòµØÍ¼ÖĞĞÄÍÆ½øµÄ LordJob
+                    // åˆ›å»ºä¸€ä¸ªå‘åœ°å›¾ä¸­å¿ƒæ¨è¿›çš„ LordJob
                     IntVec3 centerPos = map.Center;
                     LordJob_AssaultColony lordJob = new LordJob_AssaultColony(pawn.Faction, true, true, false, false, true);
                     Lord lord = LordMaker.MakeNewLord(pawn.Faction, lordJob, map, new List<Pawn> { pawn });
                     break;
                     
                 case AIMode.DefendBoss:
-                    // ±£»¤BossµÄAI
+                    // ä¿æŠ¤Bossçš„AI
                     if (parent is Pawn boss)
                     {
                         LordJob_DefendPoint defendJob = new LordJob_DefendPoint(boss.Position, null, 0f, true);
@@ -177,26 +177,26 @@ namespace TheSecondSeat.Components
                     break;
                     
                 case AIMode.Wander:
-                    // ÂşÓÎÄ£Ê½£¨Ä¬ÈÏAI£©
+                    // æ¼«æ¸¸æ¨¡å¼ï¼ˆé»˜è®¤AIï¼‰
                     break;
             }
         }
         
         /// <summary>
-        /// ²¥·ÅÉú³ÉÌØĞ§
+        /// æ’­æ”¾ç”Ÿæˆç‰¹æ•ˆ
         /// </summary>
         private void PlaySpawnEffect(IntVec3 pos, Map map)
         {
-            // ÂÌÉ«ÑÌÎí
+            // ç»¿è‰²çƒŸé›¾
             FleckMaker.ThrowSmoke(pos.ToVector3(), map, 2f);
             
-            // ÉîÔ¨ÒôĞ§
+            // æ·±æ¸ŠéŸ³æ•ˆ
             if (!string.IsNullOrEmpty(Props.spawnSound))
             {
                 SoundDef soundDef = DefDatabase<SoundDef>.GetNamedSilentFail(Props.spawnSound);
                 if (soundDef != null)
                 {
-                    // ? ĞŞ¸´£ºÊ¹ÓÃÕıÈ·µÄ PlayOneShot µ÷ÓÃ
+                    // ? ä¿®å¤ï¼šä½¿ç”¨æ­£ç¡®çš„ PlayOneShot è°ƒç”¨
                     SoundInfo info = SoundInfo.InMap(new TargetInfo(pos, map));
                     soundDef.PlayOneShot(info);
                 }
@@ -204,17 +204,17 @@ namespace TheSecondSeat.Components
         }
         
         /// <summary>
-        /// ÖØÖÃÉú³É¼ÆÊ±Æ÷
+        /// é‡ç½®ç”Ÿæˆè®¡æ—¶å™¨
         /// </summary>
         private void ResetSpawnTimer()
         {
             int baseInterval = Props.spawnInterval;
-            int variance = (int)(baseInterval * 0.2f); // ¡À20% Ëæ»úĞÔ
+            int variance = (int)(baseInterval * 0.2f); // Â±20% éšæœºæ€§
             ticksUntilNextSpawn = baseInterval + Random.Range(-variance, variance);
         }
         
         /// <summary>
-        /// ÇåÀíÒÑËÀÍöµÄÉúÎï
+        /// æ¸…ç†å·²æ­»äº¡çš„ç”Ÿç‰©
         /// </summary>
         private void CleanupDeadPawns()
         {
@@ -222,7 +222,7 @@ namespace TheSecondSeat.Components
         }
         
         /// <summary>
-        /// BossËÀºóÇåÀíËùÓĞÉú³ÉµÄÉúÎï
+        /// Bossæ­»åæ¸…ç†æ‰€æœ‰ç”Ÿæˆçš„ç”Ÿç‰©
         /// </summary>
         private void CleanupSpawnedPawns()
         {
@@ -232,12 +232,12 @@ namespace TheSecondSeat.Components
                 {
                     if (Props.despawnOnBossDeath)
                     {
-                        // Ö±½ÓÏûÊ§
+                        // ç›´æ¥æ¶ˆå¤±
                         pawn.Destroy();
                     }
                     else
                     {
-                        // ¿ñ±©£¨¹¥»÷×î½üµÄÄ¿±ê£©
+                        // ç‹‚æš´ï¼ˆæ”»å‡»æœ€è¿‘çš„ç›®æ ‡ï¼‰
                         pawn.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Berserk);
                     }
                 }
@@ -262,36 +262,36 @@ namespace TheSecondSeat.Components
         
         public override string CompInspectStringExtra()
         {
-            string info = $"»îÔ¾´¥ÊÖ: {spawnedPawns.Count}/{Props.spawnMaxCount}\n";
-            info += $"ÏÂ´ÎÉú³É: {ticksUntilNextSpawn} ticks";
+            string info = $"æ´»è·ƒè§¦æ‰‹: {spawnedPawns.Count}/{Props.spawnMaxCount}\n";
+            info += $"ä¸‹æ¬¡ç”Ÿæˆ: {ticksUntilNextSpawn} ticks";
             return info;
         }
     }
     
     /// <summary>
-    /// ×é¼şÅäÖÃÀà
+    /// ç»„ä»¶é…ç½®ç±»
     /// </summary>
     public class CompProperties_SpawnerFromEdge : CompProperties
     {
-        /// <summary>Éú³ÉµÄ PawnKindDef Ãû³Æ</summary>
+        /// <summary>ç”Ÿæˆçš„ PawnKindDef åç§°</summary>
         public string spawnPawnKind = "";
         
-        /// <summary>Éú³É¼ä¸ô£¨ticks£©</summary>
-        public int spawnInterval = 600; // Ä¬ÈÏ10Ãë
+        /// <summary>ç”Ÿæˆé—´éš”ï¼ˆticksï¼‰</summary>
+        public int spawnInterval = 600; // é»˜è®¤10ç§’
         
-        /// <summary>³¡ÉÏ×î´óÊıÁ¿</summary>
+        /// <summary>åœºä¸Šæœ€å¤§æ•°é‡</summary>
         public int spawnMaxCount = 20;
         
-        /// <summary>AIĞĞÎªÄ£Ê½</summary>
+        /// <summary>AIè¡Œä¸ºæ¨¡å¼</summary>
         public AIMode aiMode = AIMode.PushToCenter;
         
-        /// <summary>ÊÇ·ñÎªÓÑºÃÕóÓª</summary>
+        /// <summary>æ˜¯å¦ä¸ºå‹å¥½é˜µè¥</summary>
         public bool friendlyFaction = false;
         
-        /// <summary>BossËÀºóÊÇ·ñÏûÊ§</summary>
+        /// <summary>Bossæ­»åæ˜¯å¦æ¶ˆå¤±</summary>
         public bool despawnOnBossDeath = true;
         
-        /// <summary>Éú³ÉÒôĞ§</summary>
+        /// <summary>ç”ŸæˆéŸ³æ•ˆ</summary>
         public string spawnSound = "";
         
         public CompProperties_SpawnerFromEdge()
@@ -301,12 +301,12 @@ namespace TheSecondSeat.Components
     }
     
     /// <summary>
-    /// AIĞĞÎªÄ£Ê½Ã¶¾Ù
+    /// AIè¡Œä¸ºæ¨¡å¼æšä¸¾
     /// </summary>
     public enum AIMode
     {
-        PushToCenter,  // ÏòµØÍ¼ÖĞĞÄÍÆ½ø
-        DefendBoss,    // ±£ÎÀBoss
-        Wander         // Ëæ»úÂşÓÎ
+        PushToCenter,  // å‘åœ°å›¾ä¸­å¿ƒæ¨è¿›
+        DefendBoss,    // ä¿å«Boss
+        Wander         // éšæœºæ¼«æ¸¸
     }
 }

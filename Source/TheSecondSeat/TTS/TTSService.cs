@@ -51,7 +51,7 @@ namespace TheSecondSeat.TTS
 
         /// <summary>
         /// 配置 TTS 服务
-        /// ? v2.0.1: 新增 apiUrl 和 modelName 参数，支持 OpenAI 兼容接口
+        /// v2.0.1: 新增 apiUrl 和 modelName 参数，支持 OpenAI 兼容接口
         /// </summary>
         /// <param name="provider">TTS 提供商: "azure", "edge", "local", "openai"</param>
         /// <param name="key">API 密钥（可选）</param>
@@ -78,7 +78,7 @@ namespace TheSecondSeat.TTS
             speechRate = UnityEngine.Mathf.Clamp(rate, 0.5f, 2.0f);
             volume = UnityEngine.Mathf.Clamp(vol, 0.0f, 1.0f);
 
-            // ? 配置 OpenAI 兼容接口
+            // 配置 OpenAI 兼容接口
             if (ttsProvider == "openai")
             {
                 if (!string.IsNullOrEmpty(apiUrl))
@@ -91,14 +91,17 @@ namespace TheSecondSeat.TTS
                     openAI_Model = modelName;
                 }
                 
-                // ? 如果有 API Key，准备 Authorization Header
+                // 如果有 API Key，准备 Authorization Header
                 httpClient.DefaultRequestHeaders.Clear();
                 if (!string.IsNullOrEmpty(apiKey))
                 {
                     httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
                 }
                 
-                Log.Message($"[TTSService] Configured OpenAI-compatible TTS: {openAI_ApiUrl}, model: {openAI_Model}");
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[TTSService] Configured OpenAI-compatible TTS: {openAI_ApiUrl}, model: {openAI_Model}");
+                }
             }
             // 配置 Azure TTS 的 Authorization Header
             else if (ttsProvider == "azure" && !string.IsNullOrEmpty(apiKey))
@@ -110,7 +113,7 @@ namespace TheSecondSeat.TTS
 
         /// <summary>
         /// 将文本转换为语音并保存为文件
-        /// ? v1.6.30: 添加 personaDefName 参数，用于口型同步追踪
+        /// ⭐ v1.6.74: 添加 personaDefName 参数，用于口型同步追踪和 Viseme 序列推送
         /// </summary>
         /// <param name="text">要转换的文本</param>
         /// <param name="personaDefName">人格 DefName（用于状态追踪，可选）</param>
@@ -119,32 +122,38 @@ namespace TheSecondSeat.TTS
         {
             if (string.IsNullOrWhiteSpace(text))
             {
-                Log.Warning("[TTSService] Text is empty");
+                if (Prefs.DevMode)
+                {
+                    Log.Warning("[TTSService] Text is empty");
+                }
                 return null;
             }
 
             try
             {
-                // ? 清理文本：移除括号内的动作和表情描写
+                // 清理文本：移除括号内的动作和表情描写
                 string cleanText = CleanTextForTTS(text);
                 
                 if (string.IsNullOrWhiteSpace(cleanText))
                 {
-                    Log.Warning("[TTSService] Text is empty after cleaning");
+                    if (Prefs.DevMode)
+                    {
+                        Log.Warning("[TTSService] Text is empty after cleaning");
+                    }
                     return null;
                 }
                 
-                // ? 生成 WAV 文件名
+                // 生成 WAV 文件名
                 string fileName = $"tts_{DateTime.Now:yyyyMMdd_HHmmss}.wav";
                 string filePath = Path.Combine(audioOutputDir, fileName);
 
                 byte[]? audioData = null;
 
-                // ? 根据提供商选择生成方式
+                // ⭐ v1.6.74: 根据提供商选择生成方式（传递 personaDefName）
                 switch (ttsProvider.ToLower())
                 {
                     case "azure":
-                        audioData = await GenerateAzureTTSAsync(cleanText);
+                        audioData = await GenerateAzureTTSAsync(cleanText, personaDefName);
                         break;
                     case "local":
                         audioData = await GenerateLocalTTSAsync(cleanText);
@@ -156,21 +165,31 @@ namespace TheSecondSeat.TTS
                         audioData = await GenerateOpenAITTSAsync(cleanText);
                         break;
                     default:
-                        Log.Error($"[TTSService] Unknown provider: {ttsProvider}");
+                        if (Prefs.DevMode)
+                        {
+                            Log.Error($"[TTSService] Unknown provider: {ttsProvider}");
+                        }
                         return null;
                 }
 
                 if (audioData == null || audioData.Length == 0)
                 {
-                    Log.Error($"[TTSService] Failed to generate audio with {ttsProvider}");
+                    if (Prefs.DevMode)
+                    {
+                        Log.Error($"[TTSService] Failed to generate audio with {ttsProvider}");
+                    }
                     return null;
                 }
 
                 // 保存音频文件
                 File.WriteAllBytes(filePath, audioData);
-                Log.Message($"[TTSService] Audio saved to: {filePath}");
+                
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[TTSService] Audio saved to: {filePath}");
+                }
 
-                // ? 在主线程自动打开音频播放器（传递 personaDefName）
+                // 在主线程自动打开音频播放器（传递 personaDefName）
                 string capturedPersonaDefName = personaDefName;  // 捕获变量用于闭包
                 Verse.LongEventHandler.ExecuteWhenFinished(() => 
                 {
@@ -181,13 +200,17 @@ namespace TheSecondSeat.TTS
             }
             catch (Exception ex)
             {
-                Log.Error($"[TTSService] Error: {ex.Message}");
+                // 仅在 DevMode 昒示详细错误
+                if (Prefs.DevMode)
+                {
+                    Log.Error($"[TTSService] Error: {ex.Message}");
+                }
                 return null;
             }
         }
 
         /// <summary>
-        /// ? 生成本地 TTS (使用 System.Speech)
+        /// 生成本地 TTS (使用 System.Speech)
         /// </summary>
         private Task<byte[]?> GenerateLocalTTSAsync(string text)
         {
@@ -222,20 +245,27 @@ namespace TheSecondSeat.TTS
                 }
                 catch (Exception ex)
                 {
-                    Log.Error($"[TTSService] Local TTS error: {ex.Message}");
+                    // 仅在 DevMode 显示错误
+                    if (Prefs.DevMode)
+                    {
+                        Log.Error($"[TTSService] Local TTS error: {ex.Message}");
+                    }
                     return null;
                 }
             });
         }
 
         /// <summary>
-        /// ? 生成 Edge TTS (占位符/简单实现)
+        /// 生成 Edge TTS (占位符/简单实现)
         /// </summary>
         private Task<byte[]?> GenerateEdgeTTSAsync(string text)
         {
-            // Edge TTS 通常需要 WebSocket，这里暂时返回 null 并提示
-            Log.Warning("[TTSService] Edge TTS implementation requires WebSocket support which is complex to embed.");
-            Log.Warning("[TTSService] Please use Azure TTS or Local TTS for now.");
+            // 仅在 DevMode 显示提示信息
+            if (Prefs.DevMode)
+            {
+                Log.Warning("[TTSService] Edge TTS implementation requires WebSocket support which is complex to embed.");
+                Log.Warning("[TTSService] Please use Azure TTS or Local TTS for now.");
+            }
             return Task.FromResult<byte[]?>(null);
         }
 
@@ -249,11 +279,14 @@ namespace TheSecondSeat.TTS
         {
             try
             {
-                // ? 调试：记录请求信息
-                Log.Message($"[TTSService] Sending request to OpenAI TTS API: {openAI_ApiUrl}");
-                Log.Message($"[TTSService] Model: {openAI_Model}, Voice: {voiceName}");
+                // 仅在 DevMode 记录请求信息
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[TTSService] Sending request to OpenAI TTS API: {openAI_ApiUrl}");
+                    Log.Message($"[TTSService] Model: {openAI_Model}, Voice: {voiceName}");
+                }
 
-                // ? 构建 OpenAI Speech API 兼容的请求体
+                // 构建 OpenAI Speech API 兼容的请求体
                 var requestBody = new
                 {
                     model = openAI_Model,           // 模型名称（如 "gpt-sovits"）
@@ -265,36 +298,49 @@ namespace TheSecondSeat.TTS
 
                 string jsonBody = JsonConvert.SerializeObject(requestBody);
                 
-                // ? 调试：记录请求体
+                // 仅在 DevMode 记录请求体
                 if (Prefs.DevMode)
                 {
                     Log.Message($"[TTSService] Request body: {jsonBody}");
                 }
 
-                // ? 发送 POST 请求
+                // 发送 POST 请求
                 var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
                 var response = await httpClient.PostAsync(openAI_ApiUrl, content);
 
                 if (!response.IsSuccessStatusCode)
                 {
                     var error = await response.Content.ReadAsStringAsync();
-                    Log.Error($"[TTSService] OpenAI TTS error: {response.StatusCode}");
-                    Log.Error($"[TTSService] Error details: {error}");
-                    Log.Error($"[TTSService] Request URL: {openAI_ApiUrl}");
-                    Log.Error($"[TTSService] Model: {openAI_Model}");
+                    
+                    // 仅在 DevMode 显示详细错误
+                    if (Prefs.DevMode)
+                    {
+                        Log.Error($"[TTSService] OpenAI TTS error: {response.StatusCode}");
+                        Log.Error($"[TTSService] Error details: {error}");
+                        Log.Error($"[TTSService] Request URL: {openAI_ApiUrl}");
+                        Log.Error($"[TTSService] Model: {openAI_Model}");
+                    }
                     return null;
                 }
 
-                // ? 读取音频数据（应该是 WAV 格式）
+                // 读取音频数据（应该是 WAV 格式）
                 byte[] audioData = await response.Content.ReadAsByteArrayAsync();
-                Log.Message($"[TTSService] OpenAI TTS audio generated: {audioData.Length} bytes");
+                
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[TTSService] OpenAI TTS audio generated: {audioData.Length} bytes");
+                }
                 
                 return audioData;
             }
             catch (Exception ex)
             {
-                Log.Error($"[TTSService] OpenAI TTS exception: {ex.Message}");
-                Log.Error($"[TTSService] Stack trace: {ex.StackTrace}");
+                // 仅在 DevMode 显示异常堆栈
+                if (Prefs.DevMode)
+                {
+                    Log.Error($"[TTSService] OpenAI TTS exception: {ex.Message}");
+                    Log.Error($"[TTSService] Stack trace: {ex.StackTrace}");
+                }
                 return null;
             }
         }
@@ -317,35 +363,49 @@ namespace TheSecondSeat.TTS
                 
                 if (!File.Exists(filePath))
                 {
-                    Log.Warning($"[TTSService] Audio file not found: {filePath}");
+                    if (Prefs.DevMode)
+                    {
+                        Log.Warning($"[TTSService] Audio file not found: {filePath}");
+                    }
                     return;
                 }
 
-                // ? 读取音频文件字节
+                // 读取音频文件字节
                 byte[] audioData = File.ReadAllBytes(filePath);
                 
-                // ? 播放前：设置正在说话状态
+                // 播放前：设置正在说话状态
                 IsSpeaking = true;
                 
-                // ? v1.6.30: 使用 Unity AudioSource 播放，并传递 personaDefName
+                // v1.6.30: 使用 Unity AudioSource 播放，并传递 personaDefName
                 TTSAudioPlayer.Instance.PlayFromBytes(audioData, personaDefName, () => {
-                    // ? 播放结束：清除正在说话状态
+                    // 播放结束：清除正在说话状态
                     IsSpeaking = false;
-                    Log.Message("[TTSService] Audio playback finished");
+                    if (Prefs.DevMode)
+                    {
+                        Log.Message("[TTSService] Audio playback finished");
+                    }
                 });
                 
-                Log.Message($"[TTSService] Playing audio via Unity AudioSource: {filePath}");
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[TTSService] Playing audio via Unity AudioSource: {filePath}");
+                }
             }
             catch (Exception ex)
             {
-                Log.Warning($"[TTSService] Failed to auto-play audio: {ex.Message}");
-                // ? 异常时也要重置状态
+                // 仅在 DevMode 显示警告
+                if (Prefs.DevMode)
+                {
+                    Log.Warning($"[TTSService] Failed to auto-play audio: {ex.Message}");
+                }
+                // 异常时也要重置状态
                 IsSpeaking = false;
             }
         }
 
         /// <summary>
         /// 清理文本用于 TTS：移除括号内的动作和表情描写
+        /// ⭐ v1.6.75: 修复 - 支持所有括号类型
         /// </summary>
         private string CleanTextForTTS(string text)
         {
@@ -354,31 +414,38 @@ namespace TheSecondSeat.TTS
                 return text;
             }
 
-            // ? 移除所有类型的括号内容
+            // ⭐ v1.6.75: 移除所有类型的括号内容
             // (动作描写)、（中文括号）、[旁白]、【注释】、<标记>
             text = System.Text.RegularExpressions.Regex.Replace(text, @"\([^)]*\)", "");      // (英文括号)
             text = System.Text.RegularExpressions.Regex.Replace(text, @"（[^）]*）", "");      // （中文括号）
-            text = System.Text.RegularExpressions.Regex.Replace(text, @"\[[^\]]*\]", "");     // [方括号]
+            text = System.Text.RegularExpressions.Regex.Replace(text, @"\[[^\]]*\]", "");     // [方括号] ⭐ 新增
             text = System.Text.RegularExpressions.Regex.Replace(text, @"【[^】]*】", "");      // 【中文方括号】
             text = System.Text.RegularExpressions.Regex.Replace(text, @"<[^>]*>", "");        // <尖括号>
+            text = System.Text.RegularExpressions.Regex.Replace(text, @"\*[^*]*\*", "");      // *星号* ⭐ 新增（Markdown 动作）
             
-            // ? 移除多余的空格和换行
+            // ⭐ 移除多余的空格和换行
             text = System.Text.RegularExpressions.Regex.Replace(text, @"\s+", " ");
             
-            // ? 移除首尾空格
+            // ⭐ 移除首尾空格
             text = text.Trim();
             
             return text;
         }
 
         /// <summary>
-        /// 使用 Azure TTS 生成语音
+        /// ⭐ v1.6.74: 使用 Azure TTS 生成语音（支持 Viseme 数据）
+        /// 注意：Azure TTS REST API 不直接返回 Viseme 事件
+        /// 需要使用 WebSocket 或 Speech SDK 才能获取实时 Viseme
+        /// 当前实现：仅生成音频，Viseme 支持待后续升级
         /// </summary>
-        private async Task<byte[]?> GenerateAzureTTSAsync(string text)
+        private async Task<byte[]?> GenerateAzureTTSAsync(string text, string personaDefName = "")
         {
             if (string.IsNullOrEmpty(apiKey))
             {
-                Log.Error("[TTSService] Azure TTS API key is not configured");
+                if (Prefs.DevMode)
+                {
+                    Log.Warning("[TTSService] Azure TTS API key is not configured");
+                }
                 return null;
             }
 
@@ -389,52 +456,137 @@ namespace TheSecondSeat.TTS
                 // 构建 SSML
                 string ssml = BuildSSML(text, voiceName, speechRate);
                 
-                // ? 调试：记录完整的 SSML
-                Log.Message($"[TTSService] SSML:\n{ssml}");
-                Log.Message($"[TTSService] Endpoint: {endpoint}");
-                Log.Message($"[TTSService] Voice: {voiceName}");
+                // ⭐ v1.6.74: 调试：记录完整的 SSML（仅 DevMode）
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[TTSService] SSML:\n{ssml}");
+                    Log.Message($"[TTSService] Endpoint: {endpoint}");
+                    Log.Message($"[TTSService] Voice: {voiceName}");
+                }
 
-                // ? 修复：设置正确的 Content-Type 和输出格式
+                // 设置请求内容
                 var content = new StringContent(ssml, Encoding.UTF8, "application/ssml+xml");
                 
-                // ? 确保请求头正确（移除旧的，重新添加）
+                // 确保请求头正确（移除旧的，重新添加）
                 httpClient.DefaultRequestHeaders.Remove("Ocp-Apim-Subscription-Key");
                 httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", apiKey);
                 
-                // ? 设置输出格式（WAV PCM）
+                // 设置输出格式（WAV PCM）
                 httpClient.DefaultRequestHeaders.Remove("X-Microsoft-OutputFormat");
                 httpClient.DefaultRequestHeaders.Add("X-Microsoft-OutputFormat", "riff-48khz-16bit-mono-pcm");
                 
-                // ? 添加 User-Agent（某些 API 要求）
+                // 添加 User-Agent（某些 API 要求）
                 httpClient.DefaultRequestHeaders.Remove("User-Agent");
                 httpClient.DefaultRequestHeaders.Add("User-Agent", "RimWorld-TheSecondSeat-TTS");
 
+                // ⭐ v1.6.74: TODO - Azure TTS Viseme 支持
+                // Azure TTS REST API 不支持直接返回 Viseme 事件
+                // 需要使用以下方式之一：
+                // 1. WebSocket API (wss://{region}.tts.speech.microsoft.com/cognitiveservices/websocket/v1)
+                // 2. Speech SDK (Microsoft.CognitiveServices.Speech)
+                // 3. 使用备用方案：基于音频振幅分析估算开合度
+                
+                // 当前：仅生成音频
                 var response = await httpClient.PostAsync(endpoint, content);
 
                 if (!response.IsSuccessStatusCode)
                 {
                     var error = await response.Content.ReadAsStringAsync();
                     
-                    // ? 详细错误日志
-                    Log.Error($"[TTSService] Azure TTS error: {response.StatusCode}");
-                    Log.Error($"[TTSService] Error details: {error}");
-                    Log.Error($"[TTSService] Region: {apiRegion}");
-                    Log.Error($"[TTSService] Voice: {voiceName}");
-                    Log.Error($"[TTSService] SSML length: {ssml.Length} characters");
+                    // 仅在 DevMode 显示详细错误日志
+                    if (Prefs.DevMode)
+                    {
+                        Log.Error($"[TTSService] Azure TTS error: {response.StatusCode}");
+                        Log.Error($"[TTSService] Error details: {error}");
+                        Log.Error($"[TTSService] Region: {apiRegion}");
+                        Log.Error($"[TTSService] Voice: {voiceName}");
+                        Log.Error($"[TTSService] SSML length: {ssml.Length} characters");
+                    }
                     
                     return null;
                 }
 
                 byte[] audioData = await response.Content.ReadAsByteArrayAsync();
-                Log.Message($"[TTSService] Audio generated: {audioData.Length} bytes");
+                
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[TTSService] Audio generated: {audioData.Length} bytes");
+                }
+                
+                // ⭐ v1.6.74: 备用方案 - 使用简单的 Viseme 序列模拟
+                // 基于文本长度估算 Viseme 序列（粗略估计）
+                if (!string.IsNullOrEmpty(personaDefName))
+                {
+                    GenerateSimpleVisemeSequence(text, personaDefName);
+                }
                 
                 return audioData;
             }
             catch (Exception ex)
             {
-                Log.Error($"[TTSService] Azure TTS exception: {ex.Message}");
-                Log.Error($"[TTSService] Stack trace: {ex.StackTrace}");
+                // 仅在 DevMode 显示异常堆栈
+                if (Prefs.DevMode)
+                {
+                    Log.Error($"[TTSService] Azure TTS exception: {ex.Message}");
+                    Log.Error($"[TTSService] Stack trace: {ex.StackTrace}");
+                }
                 return null;
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ v1.6.74: 【备用方案】生成简单的 Viseme 序列
+        /// 基于文本分析粗略估算口型变化
+        /// 注意：这不是真正的音素同步，仅作为演示和备用方案
+        /// </summary>
+        private void GenerateSimpleVisemeSequence(string text, string personaDefName)
+        {
+            try
+            {
+                var visemes = new List<PersonaGeneration.VisemeCode>();
+                
+                // 简单规则：基于字符类型估算 Viseme
+                foreach (char c in text)
+                {
+                    // 中文字符
+                    if (c >= 0x4E00 && c <= 0x9FA5)
+                    {
+                        // 随机 Medium/Large（中文张嘴较大）
+                        visemes.Add(UnityEngine.Random.value > 0.5f 
+                            ? PersonaGeneration.VisemeCode.Medium 
+                            : PersonaGeneration.VisemeCode.Large);
+                    }
+                    // 英文元音
+                    else if ("aeiouAEIOU".IndexOf(c) >= 0)  // 修复：使用 IndexOf 代替 Contains
+                    {
+                        visemes.Add(PersonaGeneration.VisemeCode.Medium);
+                    }
+                    // 其他字符
+                    else if (char.IsLetter(c))
+                    {
+                        visemes.Add(PersonaGeneration.VisemeCode.Small);
+                    }
+                }
+                
+                // 如果序列不为空，推送到动画系统
+                if (visemes.Count > 0)
+                {
+                    // 添加开始和结束的闭嘴
+                    visemes.Insert(0, PersonaGeneration.VisemeCode.Closed);
+                    visemes.Add(PersonaGeneration.VisemeCode.Closed);
+                    
+                    // 推送到 MouthAnimationSystem
+                    PersonaGeneration.MouthAnimationSystem.PushVisemeSequence(personaDefName, visemes);
+                    
+                    if (Prefs.DevMode)
+                    {
+                        Log.Message($"[TTSService] Generated simple Viseme sequence: {visemes.Count} visemes (DEMO MODE)");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[TTSService] Failed to generate Viseme sequence: {ex.Message}");
             }
         }
 
@@ -520,7 +672,11 @@ namespace TheSecondSeat.TTS
             }
             catch (Exception ex)
             {
-                Verse.Log.Warning($"[TTSService] Failed to get emotion: {ex.Message}");
+                // 仅在 DevMode 显示警告
+                if (Prefs.DevMode)
+                {
+                    Verse.Log.Warning($"[TTSService] Failed to get emotion: {ex.Message}");
+                }
                 return new EmotionStyle("chat", 1.0f);
             }
         }
@@ -558,12 +714,20 @@ namespace TheSecondSeat.TTS
                     {
                         File.Delete(file);
                     }
-                    Log.Message($"[TTSService] Deleted {files.Length} audio files");
+                    
+                    if (Prefs.DevMode)
+                    {
+                        Log.Message($"[TTSService] Deleted {files.Length} audio files");
+                    }
                 }
             }
             catch (Exception ex)
             {
-                Log.Error($"[TTSService] Error clearing cache: {ex.Message}");
+                // 仅在 DevMode 显示错误
+                if (Prefs.DevMode)
+                {
+                    Log.Error($"[TTSService] Error clearing cache: {ex.Message}");
+                }
             }
         }
 
@@ -584,7 +748,7 @@ namespace TheSecondSeat.TTS
                 "zh-CN-liaoning-XiaobeiNeural", // 女声（东北方言）
                 "zh-CN-shaanxi-XiaoniNeural",   // 女声（陕西方言）
                 
-                // ? 中文语音（多风格 - 晓晓增强版）
+                // ? 中文语音（多风格 - 晒晓增强版）
                 "zh-CN-XiaoxiaoMultilingualNeural", // 女声（多语言，流畅）
                 "zh-CN-XiaochenNeural",      // 女声（客服，温柔）
                 "zh-CN-XiaohanNeural",       // 女声（通用，自然）

@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -9,13 +9,13 @@ using TheSecondSeat.PersonaGeneration;
 namespace TheSecondSeat.UI
 {
     /// <summary>
-    /// ?? v1.6.62: ¶àÄ£Ì¬Á¢»æ·ÖÎöÈË¸ñÉú³Éµ¯´°
+    /// ?? v1.6.62: å¤šæ¨¡æ€ç«‹ç»˜åˆ†æäººæ ¼ç”Ÿæˆå¼¹çª—
     /// 
-    /// ¹¦ÄÜ£º
-    /// - ×ó²àÏÔÊ¾Á¢»æÔ¤ÀÀ
-    /// - ÓÒ²àÊäÈëÈË¸ñÃû³Æ¡¢Ñ¡ÔñÌØÖÊ¡¢ÓÃ»§²¹³ä
-    /// - ÓÒÏÂ½Ç"¿ªÊ¼·ÖÎö"°´Å¥
-    /// - ·ÖÎöÍê³ÉºóÉú³É´ø¸öĞÔ±êÇ©µÄÈË¸ñ
+    /// åŠŸèƒ½ï¼š
+    /// - å·¦ä¾§æ˜¾ç¤ºç«‹ç»˜é¢„è§ˆ
+    /// - å³ä¾§è¾“å…¥äººæ ¼åç§°ã€é€‰æ‹©ç‰¹è´¨ã€ç”¨æˆ·è¡¥å……
+    /// - å³ä¸‹è§’"å¼€å§‹åˆ†æ"æŒ‰é’®
+    /// - åˆ†æå®Œæˆåç”Ÿæˆå¸¦ä¸ªæ€§æ ‡ç­¾çš„äººæ ¼
     /// </summary>
     public class Dialog_MultimodalPersonaGeneration : Window
     {
@@ -23,24 +23,24 @@ namespace TheSecondSeat.UI
         private string portraitPath;
         private Vector2 scrollPosition = Vector2.zero;
         
-        // ÓÃ»§ÊäÈë
+        // ç”¨æˆ·è¾“å…¥
         private string personaName = "";
         private List<string> selectedTraits = new List<string>();
         private string userSupplement = "";
         
-        // ×´Ì¬
+        // çŠ¶æ€
         private bool isAnalyzing = false;
         private string statusMessage = "";
         
-        // ¿ÉÑ¡ÌØÖÊÁĞ±í£¨×î¶à3¸ö£©
+        // å¯é€‰ç‰¹è´¨åˆ—è¡¨ï¼ˆæœ€å¤š3ä¸ªï¼‰
         private static readonly string[] AvailableTraits = new[]
         {
-            "ÉÆÁ¼", "¼áÇ¿", "ÎÂÈá", "Àä¿á", "ÓÂ¸Ò", "½÷É÷",
-            "ÀÖ¹Û", "±¯¹Û", "ÀíĞÔ", "¸ĞĞÔ", "×ÔĞÅ", "Ç«Ñ·",
-            "ÍâÏò", "ÄÚÏò", "ÑÏËà", "»îÆÃ", "Àä¾²", "ÈÈÇé"
+            "å–„è‰¯", "åšå¼º", "æ¸©æŸ”", "å†·é…·", "å‹‡æ•¢", "è°¨æ…",
+            "ä¹è§‚", "æ‚²è§‚", "ç†æ€§", "æ„Ÿæ€§", "è‡ªä¿¡", "è°¦é€Š",
+            "å¤–å‘", "å†…å‘", "ä¸¥è‚ƒ", "æ´»æ³¼", "å†·é™", "çƒ­æƒ…"
         };
         
-        // ²¼¾Ö³£Á¿
+        // å¸ƒå±€å¸¸é‡
         private const float WINDOW_WIDTH = 900f;
         private const float WINDOW_HEIGHT = 700f;
         private const float PORTRAIT_WIDTH = 360f;
@@ -64,35 +64,35 @@ namespace TheSecondSeat.UI
 
         public override void DoWindowContents(Rect inRect)
         {
-            // ±êÌâ
+            // æ ‡é¢˜
             Text.Font = GameFont.Medium;
             Text.Anchor = TextAnchor.MiddleCenter;
             Rect titleRect = new Rect(0f, 0f, inRect.width, 40f);
-            Widgets.Label(titleRect, "¶àÄ£Ì¬Á¢»æ·ÖÎö - Éú³ÉÈË¸ñ");
+            Widgets.Label(titleRect, "å¤šæ¨¡æ€ç«‹ç»˜åˆ†æ - ç”Ÿæˆäººæ ¼");
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
 
-            // ÄÚÈİÇøÓò£¨·Ö×óÓÒÁ½À¸£©
+            // å†…å®¹åŒºåŸŸï¼ˆåˆ†å·¦å³ä¸¤æ ï¼‰
             float contentY = 50f;
             float contentHeight = inRect.height - 110f;
             
-            // === ×ó²à£ºÁ¢»æÔ¤ÀÀ ===
+            // === å·¦ä¾§ï¼šç«‹ç»˜é¢„è§ˆ ===
             Rect leftRect = new Rect(MARGIN, contentY, PORTRAIT_WIDTH, contentHeight);
             DrawPortraitPreview(leftRect);
             
-            // === ÓÒ²à£ºÊäÈëÇøÓò ===
+            // === å³ä¾§ï¼šè¾“å…¥åŒºåŸŸ ===
             float rightX = MARGIN + PORTRAIT_WIDTH + 20f;
             float rightWidth = inRect.width - rightX - MARGIN;
             Rect rightRect = new Rect(rightX, contentY, rightWidth, contentHeight);
             DrawInputArea(rightRect);
             
-            // === µ×²¿°´Å¥ ===
+            // === åº•éƒ¨æŒ‰é’® ===
             float buttonY = inRect.height - 50f;
             DrawBottomButtons(new Rect(MARGIN, buttonY, inRect.width - MARGIN * 2, BUTTON_HEIGHT));
         }
 
         /// <summary>
-        /// »æÖÆ×ó²àÁ¢»æÔ¤ÀÀ
+        /// ç»˜åˆ¶å·¦ä¾§ç«‹ç»˜é¢„è§ˆ
         /// </summary>
         private void DrawPortraitPreview(Rect rect)
         {
@@ -100,14 +100,14 @@ namespace TheSecondSeat.UI
             
             if (portraitTexture != null)
             {
-                // ¼ÆËãËõ·Å±ÈÀı£¨±£³Ö¿í¸ß±È£©
+                // è®¡ç®—ç¼©æ”¾æ¯”ä¾‹ï¼ˆä¿æŒå®½é«˜æ¯”ï¼‰
                 float textureAspect = (float)portraitTexture.width / portraitTexture.height;
                 float rectAspect = rect.width / rect.height;
                 
                 Rect imageRect;
                 if (textureAspect > rectAspect)
                 {
-                    // ÎÆÀí¸ü¿í£¬ÒÔ¿í¶ÈÎª×¼
+                    // çº¹ç†æ›´å®½ï¼Œä»¥å®½åº¦ä¸ºå‡†
                     float scaledHeight = rect.width / textureAspect;
                     imageRect = new Rect(
                         rect.x,
@@ -118,7 +118,7 @@ namespace TheSecondSeat.UI
                 }
                 else
                 {
-                    // ÎÆÀí¸ü¸ß£¬ÒÔ¸ß¶ÈÎª×¼
+                    // çº¹ç†æ›´é«˜ï¼Œä»¥é«˜åº¦ä¸ºå‡†
                     float scaledWidth = rect.height * textureAspect;
                     imageRect = new Rect(
                         rect.x + (rect.width - scaledWidth) / 2f,
@@ -132,15 +132,15 @@ namespace TheSecondSeat.UI
             }
             else
             {
-                // Õ¼Î»·û
+                // å ä½ç¬¦
                 Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(rect, "Á¢»æÔ¤ÀÀ\n(Î´¼ÓÔØ)");
+                Widgets.Label(rect, "ç«‹ç»˜é¢„è§ˆ\n(æœªåŠ è½½)");
                 Text.Anchor = TextAnchor.UpperLeft;
             }
         }
 
         /// <summary>
-        /// »æÖÆÓÒ²àÊäÈëÇøÓò
+        /// ç»˜åˆ¶å³ä¾§è¾“å…¥åŒºåŸŸ
         /// </summary>
         private void DrawInputArea(Rect rect)
         {
@@ -149,33 +149,33 @@ namespace TheSecondSeat.UI
             
             float curY = 0f;
             
-            // 1. ÈË¸ñÃû³Æ
-            Widgets.Label(new Rect(0f, curY, viewRect.width, INPUT_HEIGHT), "ÈË¸ñÃû³Æ *:");
+            // 1. äººæ ¼åç§°
+            Widgets.Label(new Rect(0f, curY, viewRect.width, INPUT_HEIGHT), "äººæ ¼åç§° *:");
             curY += INPUT_HEIGHT + 5f;
             
             Rect nameRect = new Rect(0f, curY, viewRect.width, INPUT_HEIGHT);
             personaName = Widgets.TextField(nameRect, personaName);
             curY += INPUT_HEIGHT + 15f;
             
-            // 2. ÌØÖÊÑ¡Ôñ£¨×î¶à3¸ö£©
+            // 2. ç‰¹è´¨é€‰æ‹©ï¼ˆæœ€å¤š3ä¸ªï¼‰
             Widgets.Label(new Rect(0f, curY, viewRect.width, INPUT_HEIGHT), 
-                $"Ñ¡ÔñÌØÖÊ£¨×î¶à3¸ö£¬ÒÑÑ¡ {selectedTraits.Count}/3£©:");
+                $"é€‰æ‹©ç‰¹è´¨ï¼ˆæœ€å¤š3ä¸ªï¼Œå·²é€‰ {selectedTraits.Count}/3ï¼‰:");
             curY += INPUT_HEIGHT + 5f;
             
             curY = DrawTraitSelection(viewRect, curY);
             curY += 15f;
             
-            // 3. ÓÃ»§²¹³ä
+            // 3. ç”¨æˆ·è¡¥å……
             Widgets.Label(new Rect(0f, curY, viewRect.width, INPUT_HEIGHT), 
-                "ÓÃ»§²¹³ä *£¨½«ÓëÍ¼Ïñ·ÖÎö½áºÏ£©:");
+                "ç”¨æˆ·è¡¥å…… *ï¼ˆå°†ä¸å›¾åƒåˆ†æç»“åˆï¼‰:");
             curY += INPUT_HEIGHT + 5f;
             
             Text.Font = GameFont.Tiny;
             Rect hintRect = new Rect(0f, curY, viewRect.width, 40f);
             GUI.color = Color.gray;
             Widgets.Label(hintRect, 
-                "ÌáÊ¾£ºÇëÃèÊö½ÇÉ«µÄĞÔ¸ñ¡¢±³¾°¡¢Ëµ»°·ç¸ñµÈ¡£\n" +
-                "Õâ¶ÎÃèÊö½«ÓëAIµÄÊÓ¾õ·ÖÎö½áºÏ£¬Éú³ÉÍêÕûµÄÈË¸ñÊı¾İ¡£");
+                "æç¤ºï¼šè¯·æè¿°è§’è‰²çš„æ€§æ ¼ã€èƒŒæ™¯ã€è¯´è¯é£æ ¼ç­‰ã€‚\n" +
+                "è¿™æ®µæè¿°å°†ä¸AIçš„è§†è§‰åˆ†æç»“åˆï¼Œç”Ÿæˆå®Œæ•´çš„äººæ ¼æ•°æ®ã€‚");
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
             curY += 45f;
@@ -184,7 +184,7 @@ namespace TheSecondSeat.UI
             userSupplement = Widgets.TextArea(supplementRect, userSupplement);
             curY += 260f;
             
-            // 4. ×´Ì¬ÏûÏ¢
+            // 4. çŠ¶æ€æ¶ˆæ¯
             if (!string.IsNullOrEmpty(statusMessage))
             {
                 GUI.color = isAnalyzing ? Color.yellow : Color.green;
@@ -197,12 +197,12 @@ namespace TheSecondSeat.UI
         }
 
         /// <summary>
-        /// »æÖÆÌØÖÊÑ¡Ôñ°´Å¥£¨Íø¸ñ²¼¾Ö£©
+        /// ç»˜åˆ¶ç‰¹è´¨é€‰æ‹©æŒ‰é’®ï¼ˆç½‘æ ¼å¸ƒå±€ï¼‰
         /// </summary>
         private float DrawTraitSelection(Rect viewRect, float startY)
         {
             float curY = startY;
-            float buttonWidth = (viewRect.width - 20f) / 3f; // Ã¿ĞĞ3¸ö
+            float buttonWidth = (viewRect.width - 20f) / 3f; // æ¯è¡Œ3ä¸ª
             float buttonHeight = 30f;
             
             int col = 0;
@@ -216,7 +216,7 @@ namespace TheSecondSeat.UI
                 float y = curY + row * (buttonHeight + 5f);
                 Rect buttonRect = new Rect(x, y, buttonWidth, buttonHeight);
                 
-                // Ñ¡ÖĞ×´Ì¬¸ßÁÁ
+                // é€‰ä¸­çŠ¶æ€é«˜äº®
                 if (isSelected)
                 {
                     GUI.color = new Color(0.5f, 1f, 0.5f);
@@ -226,19 +226,19 @@ namespace TheSecondSeat.UI
                 {
                     if (isSelected)
                     {
-                        // È¡ÏûÑ¡Ôñ
+                        // å–æ¶ˆé€‰æ‹©
                         selectedTraits.Remove(trait);
                     }
                     else
                     {
-                        // Ìí¼ÓÑ¡Ôñ£¨×î¶à3¸ö£©
+                        // æ·»åŠ é€‰æ‹©ï¼ˆæœ€å¤š3ä¸ªï¼‰
                         if (selectedTraits.Count < 3)
                         {
                             selectedTraits.Add(trait);
                         }
                         else
                         {
-                            Messages.Message("×î¶àÖ»ÄÜÑ¡Ôñ3¸öÌØÖÊ", MessageTypeDefOf.RejectInput);
+                            Messages.Message("æœ€å¤šåªèƒ½é€‰æ‹©3ä¸ªç‰¹è´¨", MessageTypeDefOf.RejectInput);
                         }
                     }
                 }
@@ -253,27 +253,27 @@ namespace TheSecondSeat.UI
                 }
             }
             
-            // ¼ÆËã×Ü¸ß¶È
+            // è®¡ç®—æ€»é«˜åº¦
             int totalRows = (AvailableTraits.Length + 2) / 3;
             return curY + totalRows * (buttonHeight + 5f);
         }
 
         /// <summary>
-        /// »æÖÆµ×²¿°´Å¥
+        /// ç»˜åˆ¶åº•éƒ¨æŒ‰é’®
         /// </summary>
         private void DrawBottomButtons(Rect rect)
         {
             float buttonWidth = 150f;
             float spacing = 10f;
             
-            // È¡Ïû°´Å¥£¨×ó²à£©
+            // å–æ¶ˆæŒ‰é’®ï¼ˆå·¦ä¾§ï¼‰
             Rect cancelRect = new Rect(rect.x, rect.y, buttonWidth, rect.height);
-            if (Widgets.ButtonText(cancelRect, "È¡Ïû"))
+            if (Widgets.ButtonText(cancelRect, "å–æ¶ˆ"))
             {
                 this.Close();
             }
             
-            // ¿ªÊ¼·ÖÎö°´Å¥£¨ÓÒ²à£©
+            // å¼€å§‹åˆ†ææŒ‰é’®ï¼ˆå³ä¾§ï¼‰
             Rect analyzeRect = new Rect(
                 rect.x + rect.width - buttonWidth,
                 rect.y,
@@ -282,7 +282,7 @@ namespace TheSecondSeat.UI
             );
             
             GUI.enabled = !isAnalyzing;
-            if (Widgets.ButtonText(analyzeRect, isAnalyzing ? "·ÖÎöÖĞ..." : "¿ªÊ¼·ÖÎö"))
+            if (Widgets.ButtonText(analyzeRect, isAnalyzing ? "åˆ†æä¸­..." : "å¼€å§‹åˆ†æ"))
             {
                 StartAnalysis();
             }
@@ -290,35 +290,35 @@ namespace TheSecondSeat.UI
         }
 
         /// <summary>
-        /// ÑéÖ¤ÊäÈë
+        /// éªŒè¯è¾“å…¥
         /// </summary>
         private bool ValidateInput()
         {
             if (string.IsNullOrWhiteSpace(personaName))
             {
-                statusMessage = "´íÎó: ÇëÊäÈëÈË¸ñÃû³Æ";
-                Messages.Message("ÇëÊäÈëÈË¸ñÃû³Æ", MessageTypeDefOf.RejectInput);
+                statusMessage = "é”™è¯¯: è¯·è¾“å…¥äººæ ¼åç§°";
+                Messages.Message("è¯·è¾“å…¥äººæ ¼åç§°", MessageTypeDefOf.RejectInput);
                 return false;
             }
             
             if (string.IsNullOrWhiteSpace(userSupplement))
             {
-                statusMessage = "´íÎó: ÇëÊäÈëÓÃ»§²¹³äÃèÊö";
-                Messages.Message("ÇëÊäÈëÓÃ»§²¹³äÃèÊö", MessageTypeDefOf.RejectInput);
+                statusMessage = "é”™è¯¯: è¯·è¾“å…¥ç”¨æˆ·è¡¥å……æè¿°";
+                Messages.Message("è¯·è¾“å…¥ç”¨æˆ·è¡¥å……æè¿°", MessageTypeDefOf.RejectInput);
                 return false;
             }
             
             if (userSupplement.Length < 20)
             {
-                statusMessage = "´íÎó: ÓÃ»§²¹³äÌ«¶Ì£¬ÇëÖÁÉÙÊäÈë20¸ö×Ö·û";
-                Messages.Message("ÓÃ»§²¹³äÌ«¶Ì£¬ÇëÊäÈë¸üÏêÏ¸µÄÃèÊö", MessageTypeDefOf.RejectInput);
+                statusMessage = "é”™è¯¯: ç”¨æˆ·è¡¥å……å¤ªçŸ­ï¼Œè¯·è‡³å°‘è¾“å…¥20ä¸ªå­—ç¬¦";
+                Messages.Message("ç”¨æˆ·è¡¥å……å¤ªçŸ­ï¼Œè¯·è¾“å…¥æ›´è¯¦ç»†çš„æè¿°", MessageTypeDefOf.RejectInput);
                 return false;
             }
             
             if (portraitTexture == null)
             {
-                statusMessage = "´íÎó: Á¢»æÎÆÀíÎ´¼ÓÔØ";
-                Messages.Message("Á¢»æÎÆÀíÎ´¼ÓÔØ£¬ÎŞ·¨½øĞĞ·ÖÎö", MessageTypeDefOf.RejectInput);
+                statusMessage = "é”™è¯¯: ç«‹ç»˜çº¹ç†æœªåŠ è½½";
+                Messages.Message("ç«‹ç»˜çº¹ç†æœªåŠ è½½ï¼Œæ— æ³•è¿›è¡Œåˆ†æ", MessageTypeDefOf.RejectInput);
                 return false;
             }
             
@@ -326,7 +326,7 @@ namespace TheSecondSeat.UI
         }
 
         /// <summary>
-        /// ?? ¿ªÊ¼¶àÄ£Ì¬·ÖÎö
+        /// ?? å¼€å§‹å¤šæ¨¡æ€åˆ†æ
         /// </summary>
         private void StartAnalysis()
         {
@@ -341,29 +341,29 @@ namespace TheSecondSeat.UI
             }
             
             isAnalyzing = true;
-            statusMessage = "ÕıÔÚ½øĞĞ¶àÄ£Ì¬·ÖÎö£¬ÇëÉÔºò...\nÕâ¿ÉÄÜĞèÒª10-30Ãë";
+            statusMessage = "æ­£åœ¨è¿›è¡Œå¤šæ¨¡æ€åˆ†æï¼Œè¯·ç¨å€™...\nè¿™å¯èƒ½éœ€è¦10-30ç§’";
             
             try
             {
-                // 1. ¹¹½¨ÍêÕûµÄÓÃ»§ÊäÈë£¨ÌØÖÊ + ²¹³ä£©
+                // 1. æ„å»ºå®Œæ•´çš„ç”¨æˆ·è¾“å…¥ï¼ˆç‰¹è´¨ + è¡¥å……ï¼‰
                 string fullUserInput = BuildFullUserInput();
                 
-                // 2. µ÷ÓÃ¶àÄ£Ì¬·ÖÎö·şÎñ
+                // 2. è°ƒç”¨å¤šæ¨¡æ€åˆ†ææœåŠ¡
                 var modSettings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
                 bool useMultimodal = modSettings?.enableMultimodalAnalysis ?? false;
                 
                 if (!useMultimodal)
                 {
-                    statusMessage = "´íÎó: ¶àÄ£Ì¬·ÖÎöÎ´ÆôÓÃ£¬ÇëÔÚÉèÖÃÖĞÆôÓÃ";
-                    Messages.Message("ÇëÔÚModÉèÖÃÖĞÆôÓÃ¶àÄ£Ì¬·ÖÎö¹¦ÄÜ", MessageTypeDefOf.RejectInput);
+                    statusMessage = "é”™è¯¯: å¤šæ¨¡æ€åˆ†ææœªå¯ç”¨ï¼Œè¯·åœ¨è®¾ç½®ä¸­å¯ç”¨";
+                    Messages.Message("è¯·åœ¨Modè®¾ç½®ä¸­å¯ç”¨å¤šæ¨¡æ€åˆ†æåŠŸèƒ½", MessageTypeDefOf.RejectInput);
                     isAnalyzing = false;
                     return;
                 }
                 
-                // 3. Ö´ĞĞ·ÖÎö
+                // 3. æ‰§è¡Œåˆ†æ
                 var analysisService = MultimodalAnalysisService.Instance;
                 
-                // È·±£·şÎñÒÑÅäÖÃ
+                // ç¡®ä¿æœåŠ¡å·²é…ç½®
                 if (modSettings != null)
                 {
                     analysisService.Configure(
@@ -374,7 +374,7 @@ namespace TheSecondSeat.UI
                     );
                 }
                 
-                // µ÷ÓÃ·ÖÎö£¨´«µİÌØÖÊºÍÓÃ»§²¹³ä£©
+                // è°ƒç”¨åˆ†æï¼ˆä¼ é€’ç‰¹è´¨å’Œç”¨æˆ·è¡¥å……ï¼‰
                 var analysisResult = analysisService.AnalyzePersonaImageWithTraits(
                     portraitTexture,
                     personaName,
@@ -384,27 +384,27 @@ namespace TheSecondSeat.UI
                 
                 if (analysisResult != null)
                 {
-                    // 4. ´´½¨ÈË¸ñ¶¨Òå
+                    // 4. åˆ›å»ºäººæ ¼å®šä¹‰
                     CreatePersonaFromAnalysis(analysisResult);
                     
-                    statusMessage = "? ·ÖÎöÍê³É£¡ÈË¸ñÒÑÉú³É";
+                    statusMessage = "? åˆ†æå®Œæˆï¼äººæ ¼å·²ç”Ÿæˆ";
                     
-                    // ÑÓ³Ù¹Ø±Õ´°¿Ú
+                    // å»¶è¿Ÿå…³é—­çª—å£
                     System.Threading.Tasks.Task.Delay(2000).ContinueWith(_ => {
                         this.Close();
                     });
                 }
                 else
                 {
-                    statusMessage = "? ·ÖÎöÊ§°Ü£¬Çë¼ì²éAPIÅäÖÃ»òÍøÂçÁ¬½Ó";
-                    Messages.Message("¶àÄ£Ì¬·ÖÎöÊ§°Ü£¬Çë¼ì²éÈÕÖ¾", MessageTypeDefOf.RejectInput);
+                    statusMessage = "? åˆ†æå¤±è´¥ï¼Œè¯·æ£€æŸ¥APIé…ç½®æˆ–ç½‘ç»œè¿æ¥";
+                    Messages.Message("å¤šæ¨¡æ€åˆ†æå¤±è´¥ï¼Œè¯·æ£€æŸ¥æ—¥å¿—", MessageTypeDefOf.RejectInput);
                 }
             }
             catch (Exception ex)
             {
-                statusMessage = $"´íÎó: {ex.Message}";
-                Messages.Message($"·ÖÎöÊ§°Ü: {ex.Message}", MessageTypeDefOf.RejectInput);
-                Log.Error($"[Dialog_MultimodalPersonaGeneration] ·ÖÎöÊ§°Ü: {ex}");
+                statusMessage = $"é”™è¯¯: {ex.Message}";
+                Messages.Message($"åˆ†æå¤±è´¥: {ex.Message}", MessageTypeDefOf.RejectInput);
+                Log.Error($"[Dialog_MultimodalPersonaGeneration] åˆ†æå¤±è´¥: {ex}");
             }
             finally
             {
@@ -413,57 +413,57 @@ namespace TheSecondSeat.UI
         }
 
         /// <summary>
-        /// ¹¹½¨ÍêÕûµÄÓÃ»§ÊäÈë£¨ÌØÖÊ + ²¹³ä£©
+        /// æ„å»ºå®Œæ•´çš„ç”¨æˆ·è¾“å…¥ï¼ˆç‰¹è´¨ + è¡¥å……ï¼‰
         /// </summary>
         private string BuildFullUserInput()
         {
             var parts = new List<string>();
             
-            // 1. Ìí¼ÓÌØÖÊ
+            // 1. æ·»åŠ ç‰¹è´¨
             if (selectedTraits.Count > 0)
             {
-                parts.Add($"¡¾ºËĞÄÌØÖÊ¡¿: {string.Join("¡¢", selectedTraits)}");
+                parts.Add($"ã€æ ¸å¿ƒç‰¹è´¨ã€‘: {string.Join("ã€", selectedTraits)}");
             }
             
-            // 2. Ìí¼ÓÓÃ»§²¹³ä
-            parts.Add($"¡¾ÏêÏ¸ÃèÊö¡¿: {userSupplement}");
+            // 2. æ·»åŠ ç”¨æˆ·è¡¥å……
+            parts.Add($"ã€è¯¦ç»†æè¿°ã€‘: {userSupplement}");
             
             return string.Join("\n\n", parts);
         }
 
         /// <summary>
-        /// ´Ó·ÖÎö½á¹û´´½¨ÈË¸ñ¶¨Òå
+        /// ä»åˆ†æç»“æœåˆ›å»ºäººæ ¼å®šä¹‰
         /// </summary>
         private void CreatePersonaFromAnalysis(PersonaAnalysisResult analysisResult)
         {
             try
             {
-                // 1. ´´½¨»ù´¡ÈË¸ñ¶¨Òå
+                // 1. åˆ›å»ºåŸºç¡€äººæ ¼å®šä¹‰
                 NarratorPersonaDef newPersona = new NarratorPersonaDef();
                 newPersona.defName = $"UserGenerated_{personaName.Replace(" ", "_")}_{DateTime.Now.Ticks}";
                 newPersona.narratorName = personaName;
                 newPersona.label = personaName;
                 newPersona.enabled = true;
                 
-                // 2. ÉèÖÃ·ÖÎö½á¹û
+                // 2. è®¾ç½®åˆ†æç»“æœ
                 newPersona.SetAnalysis(analysisResult);
                 
-                // 3. ?? ÉèÖÃ¸öĞÔ±êÇ©£¨À´×Ô·ÖÎö½á¹û£©
+                // 3. ?? è®¾ç½®ä¸ªæ€§æ ‡ç­¾ï¼ˆæ¥è‡ªåˆ†æç»“æœï¼‰
                 if (analysisResult.PersonalityTags != null && analysisResult.PersonalityTags.Count > 0)
                 {
                     newPersona.personalityTags = analysisResult.PersonalityTags;
                 }
                 
-                // 4. ?? ÉèÖÃÓÃ»§Ñ¡ÔñµÄÌØÖÊ
+                // 4. ?? è®¾ç½®ç”¨æˆ·é€‰æ‹©çš„ç‰¹è´¨
                 newPersona.selectedTraits = selectedTraits.ToList();
                 
-                // 5. ÉèÖÃbiography£¨ÓÃ»§ÊäÈë + AI·ÖÎö£©
+                // 5. è®¾ç½®biographyï¼ˆç”¨æˆ·è¾“å…¥ + AIåˆ†æï¼‰
                 newPersona.biography = BuildFullBiography(analysisResult);
                 
-                // 6. ÉèÖÃÑÕÉ«£¨´Ó·ÖÎö½á¹û£©
+                // 6. è®¾ç½®é¢œè‰²ï¼ˆä»åˆ†æç»“æœï¼‰
                 if (analysisResult.VisualTags != null && analysisResult.VisualTags.Count > 0)
                 {
-                    // ´ÓÊÓ¾õ±êÇ©ÖĞÌáÈ¡ÑÕÉ«
+                    // ä»è§†è§‰æ ‡ç­¾ä¸­æå–é¢œè‰²
                     newPersona.primaryColor = ExtractPrimaryColor(analysisResult);
                     newPersona.accentColor = ExtractAccentColor(analysisResult);
                 }
@@ -473,7 +473,7 @@ namespace TheSecondSeat.UI
                     newPersona.accentColor = Color.gray;
                 }
                 
-                // 7. ÉèÖÃ¶Ô»°·ç¸ñ
+                // 7. è®¾ç½®å¯¹è¯é£æ ¼
                 if (analysisResult.SuggestedDialogueStyle != null)
                 {
                     newPersona.dialogueStyle = analysisResult.SuggestedDialogueStyle;
@@ -493,7 +493,7 @@ namespace TheSecondSeat.UI
                     };
                 }
                 
-                // 8. ÉèÖÃÊÂ¼şÆ«ºÃ
+                // 8. è®¾ç½®äº‹ä»¶åå¥½
                 newPersona.eventPreferences = new EventPreferencesDef
                 {
                     positiveEventBias = 0.0f,
@@ -502,76 +502,76 @@ namespace TheSecondSeat.UI
                     interventionFrequency = 0.5f
                 };
                 
-                // 9. ×¢²áµ½ DefDatabase
+                // 9. æ³¨å†Œåˆ° DefDatabase
                 if (!DefDatabase<NarratorPersonaDef>.AllDefs.Contains(newPersona))
                 {
                     DefDatabase<NarratorPersonaDef>.Add(newPersona);
                 }
                 
-                // 10. ±£´æµ½ÎÄ¼ş
+                // 10. ä¿å­˜åˆ°æ–‡ä»¶
                 bool exportSuccess = PersonaDefExporter.ExportPersona(
                     newPersona,
                     portraitPath,
                     portraitTexture
                 );
                 
-                // 11. ÏÔÊ¾³É¹¦ÏûÏ¢
-                string successMsg = $"ÈË¸ñ '{personaName}' ´´½¨³É¹¦£¡\n\n";
+                // 11. æ˜¾ç¤ºæˆåŠŸæ¶ˆæ¯
+                string successMsg = $"äººæ ¼ '{personaName}' åˆ›å»ºæˆåŠŸï¼\n\n";
                 
                 if (analysisResult.PersonalityTags != null && analysisResult.PersonalityTags.Count > 0)
                 {
-                    successMsg += $"?? ¸öĞÔ±êÇ©: {string.Join("¡¢", analysisResult.PersonalityTags)}\n\n";
+                    successMsg += $"?? ä¸ªæ€§æ ‡ç­¾: {string.Join("ã€", analysisResult.PersonalityTags)}\n\n";
                 }
                 
                 if (exportSuccess)
                 {
-                    successMsg += "? ÈË¸ñÒÑ±£´æµ½ Defs ÎÄ¼ş¼Ğ£¬ÖØÆôÓÎÏ·ºóÓÀ¾ÃÉúĞ§¡£";
+                    successMsg += "? äººæ ¼å·²ä¿å­˜åˆ° Defs æ–‡ä»¶å¤¹ï¼Œé‡å¯æ¸¸æˆåæ°¸ä¹…ç”Ÿæ•ˆã€‚";
                 }
                 else
                 {
-                    successMsg += "?? ÈË¸ñÒÑ¼ÓÔØµ½µ±Ç°»á»°£¬µ«Î´ÄÜ±£´æµ½ÎÄ¼ş¡£";
+                    successMsg += "?? äººæ ¼å·²åŠ è½½åˆ°å½“å‰ä¼šè¯ï¼Œä½†æœªèƒ½ä¿å­˜åˆ°æ–‡ä»¶ã€‚";
                 }
                 
                 Messages.Message(successMsg, MessageTypeDefOf.PositiveEvent);
                 
                 if (Prefs.DevMode)
                 {
-                    Log.Message($"[Dialog_MultimodalPersonaGeneration] ÈË¸ñ´´½¨³É¹¦: {personaName}");
-                    Log.Message($"  - ¸öĞÔ±êÇ©: {string.Join(", ", newPersona.personalityTags ?? new List<string>())}");
-                    Log.Message($"  - ÓÃ»§ÌØÖÊ: {string.Join(", ", newPersona.selectedTraits ?? new List<string>())}");
+                    Log.Message($"[Dialog_MultimodalPersonaGeneration] äººæ ¼åˆ›å»ºæˆåŠŸ: {personaName}");
+                    Log.Message($"  - ä¸ªæ€§æ ‡ç­¾: {string.Join(", ", newPersona.personalityTags ?? new List<string>())}");
+                    Log.Message($"  - ç”¨æˆ·ç‰¹è´¨: {string.Join(", ", newPersona.selectedTraits ?? new List<string>())}");
                 }
             }
             catch (Exception ex)
             {
-                Log.Error($"[Dialog_MultimodalPersonaGeneration] ´´½¨ÈË¸ñÊ§°Ü: {ex}");
-                Messages.Message($"´´½¨ÈË¸ñÊ§°Ü: {ex.Message}", MessageTypeDefOf.RejectInput);
+                Log.Error($"[Dialog_MultimodalPersonaGeneration] åˆ›å»ºäººæ ¼å¤±è´¥: {ex}");
+                Messages.Message($"åˆ›å»ºäººæ ¼å¤±è´¥: {ex.Message}", MessageTypeDefOf.RejectInput);
             }
         }
 
         /// <summary>
-        /// ¹¹½¨ÍêÕûµÄbiography£¨ÓÃ»§ÊäÈë + AI·ÖÎö£©
+        /// æ„å»ºå®Œæ•´çš„biographyï¼ˆç”¨æˆ·è¾“å…¥ + AIåˆ†æï¼‰
         /// </summary>
         private string BuildFullBiography(PersonaAnalysisResult analysisResult)
         {
             var parts = new List<string>();
             
-            // 1. ÓÃ»§ÊäÈë²¿·Ö
-            parts.Add("¡¾ÓÃ»§ÃèÊö¡¿");
+            // 1. ç”¨æˆ·è¾“å…¥éƒ¨åˆ†
+            parts.Add("ã€ç”¨æˆ·æè¿°ã€‘");
             parts.Add(BuildFullUserInput());
             parts.Add("");
             
-            // 2. AIÊÓ¾õ·ÖÎö²¿·Ö
+            // 2. AIè§†è§‰åˆ†æéƒ¨åˆ†
             if (!string.IsNullOrEmpty(analysisResult.VisualDescription))
             {
-                parts.Add("¡¾AIÊÓ¾õ·ÖÎö¡¿");
+                parts.Add("ã€AIè§†è§‰åˆ†æã€‘");
                 parts.Add(analysisResult.VisualDescription);
                 parts.Add("");
             }
             
-            // 3. ÍêÕûÉú³ÉµÄbiography
+            // 3. å®Œæ•´ç”Ÿæˆçš„biography
             if (!string.IsNullOrEmpty(analysisResult.GeneratedBiography))
             {
-                parts.Add("¡¾×ÛºÏ·ÖÎö¡¿");
+                parts.Add("ã€ç»¼åˆåˆ†æã€‘");
                 parts.Add(analysisResult.GeneratedBiography);
             }
             
@@ -579,20 +579,20 @@ namespace TheSecondSeat.UI
         }
 
         /// <summary>
-        /// ´Ó·ÖÎö½á¹ûÌáÈ¡Ö÷É«µ÷
+        /// ä»åˆ†æç»“æœæå–ä¸»è‰²è°ƒ
         /// </summary>
         private Color ExtractPrimaryColor(PersonaAnalysisResult analysisResult)
         {
-            // TODO: ´Ó analysisResult.VisualTags »òÆäËû×Ö¶ÎÌáÈ¡ÑÕÉ«
+            // TODO: ä» analysisResult.VisualTags æˆ–å…¶ä»–å­—æ®µæå–é¢œè‰²
             return Color.white;
         }
 
         /// <summary>
-        /// ´Ó·ÖÎö½á¹ûÌáÈ¡ÖØÒôÉ«
+        /// ä»åˆ†æç»“æœæå–é‡éŸ³è‰²
         /// </summary>
         private Color ExtractAccentColor(PersonaAnalysisResult analysisResult)
         {
-            // TODO: ´Ó analysisResult.VisualTags »òÆäËû×Ö¶ÎÌáÈ¡ÑÕÉ«
+            // TODO: ä» analysisResult.VisualTags æˆ–å…¶ä»–å­—æ®µæå–é¢œè‰²
             return Color.gray;
         }
     }

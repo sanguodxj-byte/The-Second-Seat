@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Verse;
@@ -8,15 +8,15 @@ using RimWorld;
 namespace TheSecondSeat.Components
 {
     /// <summary>
-    /// ? v1.6.63: ÀíÖÇ¹â»·×é¼ş - ²»¿ÉÖ±ÊÓ»úÖÆ
+    /// ? v1.6.63: ç†æ™ºå…‰ç¯ç»„ä»¶ - ä¸å¯ç›´è§†æœºåˆ¶
     /// 
-    /// ºËĞÄ¹¦ÄÜ£º
-    /// - ¼ì²âË­ÔÚÃé×¼/×¢ÊÓBoss
-    /// - Ê©¼Ó¿É¶ÑµşµÄ¾«ÉñÇÖÊ´Hediff
-    /// - Ö§³Ö·¶Î§¹â»·£¨½øÈë·¶Î§¼´µôÀíÖÇ£©
-    /// - ¿ÉÅäÖÃ³Í·£ÑÏÖØ¶ÈºÍ»Ö¸´ËÙ¶È
+    /// æ ¸å¿ƒåŠŸèƒ½ï¼š
+    /// - æ£€æµ‹è°åœ¨ç„å‡†/æ³¨è§†Boss
+    /// - æ–½åŠ å¯å †å çš„ç²¾ç¥ä¾µèš€Hediff
+    /// - æ”¯æŒèŒƒå›´å…‰ç¯ï¼ˆè¿›å…¥èŒƒå›´å³æ‰ç†æ™ºï¼‰
+    /// - å¯é…ç½®æƒ©ç½šä¸¥é‡åº¦å’Œæ¢å¤é€Ÿåº¦
     /// 
-    /// XMLÅäÖÃÊ¾Àı£º
+    /// XMLé…ç½®ç¤ºä¾‹ï¼š
     /// <code>
     /// &lt;comps&gt;
     ///   &lt;li Class="TheSecondSeat.Components.CompProperties_SanityAura"&gt;
@@ -31,7 +31,7 @@ namespace TheSecondSeat.Components
     public class CompSanityAura : ThingComp
     {
         private int tickCounter = 0;
-        private const int CHECK_INTERVAL = 60; // Ã¿Ãë¼ì²éÒ»´Î
+        private const int CHECK_INTERVAL = 60; // æ¯ç§’æ£€æŸ¥ä¸€æ¬¡
         
         private Dictionary<Pawn, float> affectedPawns = new Dictionary<Pawn, float>();
         
@@ -53,7 +53,7 @@ namespace TheSecondSeat.Components
         }
         
         /// <summary>
-        /// ´¦ÀíÀíÖÇÁ÷Ê§
+        /// å¤„ç†ç†æ™ºæµå¤±
         /// </summary>
         private void ProcessSanityDrain()
         {
@@ -68,7 +68,7 @@ namespace TheSecondSeat.Components
                 
                 bool shouldDrain = false;
                 
-                // ·½°¸A£º·¶Î§¹â»·£¨Ö»ÒªÔÚ¸½½ü£©
+                // æ–¹æ¡ˆAï¼šèŒƒå›´å…‰ç¯ï¼ˆåªè¦åœ¨é™„è¿‘ï¼‰
                 if (!Props.onlyWhenTargeting)
                 {
                     float distance = colonist.Position.DistanceTo(parent.Position);
@@ -77,7 +77,7 @@ namespace TheSecondSeat.Components
                         shouldDrain = true;
                     }
                 }
-                // ·½°¸B£º±ØĞëÃé×¼²Å´¥·¢
+                // æ–¹æ¡ˆBï¼šå¿…é¡»ç„å‡†æ‰è§¦å‘
                 else
                 {
                     if (IsTargetingBoss(colonist))
@@ -96,17 +96,17 @@ namespace TheSecondSeat.Components
                 }
             }
             
-            // ÇåÀíÒÑËÀÍöµÄPawn
+            // æ¸…ç†å·²æ­»äº¡çš„Pawn
             affectedPawns = affectedPawns.Where(kvp => kvp.Key != null && !kvp.Key.Dead)
                                         .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
         
         /// <summary>
-        /// ¼ì²âÖ³ÃñÕßÊÇ·ñÔÚÃé×¼Boss
+        /// æ£€æµ‹æ®–æ°‘è€…æ˜¯å¦åœ¨ç„å‡†Boss
         /// </summary>
         private bool IsTargetingBoss(Pawn colonist)
         {
-            // ·½·¨1£º¼ì²éµ±Ç°¹¥»÷Ä¿±ê
+            // æ–¹æ³•1ï¼šæ£€æŸ¥å½“å‰æ”»å‡»ç›®æ ‡
             if (colonist.TargetCurrentlyAimingAt != null)
             {
                 if (colonist.TargetCurrentlyAimingAt.Thing == parent)
@@ -115,7 +115,7 @@ namespace TheSecondSeat.Components
                 }
             }
             
-            // ·½·¨2£º¼ì²éJobÄ¿±ê
+            // æ–¹æ³•2ï¼šæ£€æŸ¥Jobç›®æ ‡
             if (colonist.CurJob != null)
             {
                 LocalTargetInfo target = colonist.CurJob.targetA;
@@ -125,7 +125,7 @@ namespace TheSecondSeat.Components
                 }
             }
             
-            // ·½·¨3£ºÑÏ¸ñµÄÊÓÏß¼ì²â£¨¿ÉÑ¡£¬ĞÔÄÜÏûºÄ´ó£©
+            // æ–¹æ³•3ï¼šä¸¥æ ¼çš„è§†çº¿æ£€æµ‹ï¼ˆå¯é€‰ï¼Œæ€§èƒ½æ¶ˆè€—å¤§ï¼‰
             if (Props.strictLineOfSight)
             {
                 if (IsLookingAtBoss(colonist))
@@ -138,21 +138,21 @@ namespace TheSecondSeat.Components
         }
         
         /// <summary>
-        /// ÑÏ¸ñµÄÊÓÏß¼ì²â£¨ÅĞ¶ÏÖ³ÃñÕßÊÇ·ñÃæÏòBoss£©
+        /// ä¸¥æ ¼çš„è§†çº¿æ£€æµ‹ï¼ˆåˆ¤æ–­æ®–æ°‘è€…æ˜¯å¦é¢å‘Bossï¼‰
         /// </summary>
         private bool IsLookingAtBoss(Pawn colonist)
         {
-            // ¼ÆËã·½ÏòÏòÁ¿
+            // è®¡ç®—æ–¹å‘å‘é‡
             Vector3 directionToBoss = (parent.Position - colonist.Position).ToVector3();
             Vector3 colonistFacing = colonist.Rotation.FacingCell.ToVector3();
             
-            // ¼ÆËã¼Ğ½Ç
+            // è®¡ç®—å¤¹è§’
             float angle = Vector3.Angle(colonistFacing, directionToBoss);
             
-            // Èç¹û¼Ğ½ÇĞ¡ÓÚ60¶È£¬ÈÏÎªÔÚ¿´Boss
+            // å¦‚æœå¤¹è§’å°äº60åº¦ï¼Œè®¤ä¸ºåœ¨çœ‹Boss
             if (angle < 60f)
             {
-                // ÉäÏß¼ì²â£ºÈ·ÈÏÊÓÏßÎŞ×èµ²
+                // å°„çº¿æ£€æµ‹ï¼šç¡®è®¤è§†çº¿æ— é˜»æŒ¡
                 IntVec3 targetPos = parent.Position;
                 if (GenSight.LineOfSight(colonist.Position, targetPos, colonist.Map, true))
                 {
@@ -164,18 +164,18 @@ namespace TheSecondSeat.Components
         }
         
         /// <summary>
-        /// Ê©¼ÓÀíÖÇÉËº¦
+        /// æ–½åŠ ç†æ™ºä¼¤å®³
         /// </summary>
         private void ApplySanityDamage(Pawn colonist)
         {
             HediffDef hediffDef = DefDatabase<HediffDef>.GetNamedSilentFail(Props.linkedHediff);
             if (hediffDef == null)
             {
-                Log.Error($"[CompSanityAura] HediffDef Î´ÕÒµ½: {Props.linkedHediff}");
+                Log.Error($"[CompSanityAura] HediffDef æœªæ‰¾åˆ°: {Props.linkedHediff}");
                 return;
             }
             
-            // »ñÈ¡»òÌí¼ÓHediff
+            // è·å–æˆ–æ·»åŠ Hediff
             Hediff hediff = colonist.health.hediffSet.GetFirstHediffOfDef(hediffDef);
             if (hediff == null)
             {
@@ -183,26 +183,26 @@ namespace TheSecondSeat.Components
                 colonist.health.AddHediff(hediff);
             }
             
-            // Ôö¼ÓÑÏÖØ¶È
+            // å¢åŠ ä¸¥é‡åº¦
             float severityIncrease = Props.severityPerSecond * (CHECK_INTERVAL / 60f);
             hediff.Severity += severityIncrease;
             
-            // ¼ÇÂ¼ÊÜÓ°ÏìÊ±¼ä
+            // è®°å½•å—å½±å“æ—¶é—´
             if (!affectedPawns.ContainsKey(colonist))
             {
                 affectedPawns[colonist] = 0f;
             }
             affectedPawns[colonist] += CHECK_INTERVAL / 60f;
             
-            // ²¥·ÅÊÓ¾õĞ§¹û
-            if (Rand.Chance(0.1f)) // 10%¸ÅÂÊ²¥·ÅÌØĞ§
+            // æ’­æ”¾è§†è§‰æ•ˆæœ
+            if (Rand.Chance(0.1f)) // 10%æ¦‚ç‡æ’­æ”¾ç‰¹æ•ˆ
             {
                 PlaySanityDrainEffect(colonist);
             }
         }
         
         /// <summary>
-        /// »Ö¸´ÀíÖÇ
+        /// æ¢å¤ç†æ™º
         /// </summary>
         private void RecoverSanity(Pawn colonist)
         {
@@ -212,11 +212,11 @@ namespace TheSecondSeat.Components
             Hediff hediff = colonist.health.hediffSet.GetFirstHediffOfDef(hediffDef);
             if (hediff != null)
             {
-                // ×ÔÈ»»Ö¸´
-                float recoveryRate = Props.severityPerSecond * 0.5f; // »Ö¸´ËÙ¶ÈÊÇËğÊ§µÄÒ»°ë
+                // è‡ªç„¶æ¢å¤
+                float recoveryRate = Props.severityPerSecond * 0.5f; // æ¢å¤é€Ÿåº¦æ˜¯æŸå¤±çš„ä¸€åŠ
                 hediff.Severity -= recoveryRate * (CHECK_INTERVAL / 60f);
                 
-                // Èç¹ûÍêÈ«»Ö¸´£¬ÒÆ³ıHediff
+                // å¦‚æœå®Œå…¨æ¢å¤ï¼Œç§»é™¤Hediff
                 if (hediff.Severity <= 0f)
                 {
                     colonist.health.RemoveHediff(hediff);
@@ -226,20 +226,20 @@ namespace TheSecondSeat.Components
         }
         
         /// <summary>
-        /// ²¥·ÅÀíÖÇÁ÷Ê§ÌØĞ§
+        /// æ’­æ”¾ç†æ™ºæµå¤±ç‰¹æ•ˆ
         /// </summary>
         private void PlaySanityDrainEffect(Pawn colonist)
         {
-            // ×ÏÉ«ÑÌÎí
+            // ç´«è‰²çƒŸé›¾
             FleckMaker.ThrowMetaPuff(colonist.Position.ToVector3(), colonist.Map);
             
-            // ²¥·ÅÒôĞ§
+            // æ’­æ”¾éŸ³æ•ˆ
             if (!string.IsNullOrEmpty(Props.drainSound))
             {
                 SoundDef soundDef = DefDatabase<SoundDef>.GetNamedSilentFail(Props.drainSound);
                 if (soundDef != null)
                 {
-                    // ? ĞŞ¸´£ºÊ¹ÓÃÕıÈ·µÄ PlayOneShot µ÷ÓÃ
+                    // ? ä¿®å¤ï¼šä½¿ç”¨æ­£ç¡®çš„ PlayOneShot è°ƒç”¨
                     SoundInfo info = SoundInfo.InMap(new TargetInfo(colonist.Position, colonist.Map));
                     soundDef.PlayOneShot(info);
                 }
@@ -264,11 +264,11 @@ namespace TheSecondSeat.Components
         public override string CompInspectStringExtra()
         {
             int affectedCount = affectedPawns.Count;
-            return $"ÊÜÓ°ÏìµÄÖ³ÃñÕß: {affectedCount}";
+            return $"å—å½±å“çš„æ®–æ°‘è€…: {affectedCount}";
         }
         
         /// <summary>
-        /// »æÖÆ¹â»··¶Î§£¨µ÷ÊÔÓÃ£©
+        /// ç»˜åˆ¶å…‰ç¯èŒƒå›´ï¼ˆè°ƒè¯•ç”¨ï¼‰
         /// </summary>
         public override void PostDraw()
         {
@@ -276,33 +276,33 @@ namespace TheSecondSeat.Components
             
             if (Prefs.DevMode && Find.Selector.IsSelected(parent))
             {
-                // »æÖÆ¹â»··¶Î§Ô²È¦
+                // ç»˜åˆ¶å…‰ç¯èŒƒå›´åœ†åœˆ
                 GenDraw.DrawRadiusRing(parent.Position, Props.radius);
             }
         }
     }
     
     /// <summary>
-    /// ×é¼şÅäÖÃÀà
+    /// ç»„ä»¶é…ç½®ç±»
     /// </summary>
     public class CompProperties_SanityAura : CompProperties
     {
-        /// <summary>¹â»·°ë¾¶</summary>
+        /// <summary>å…‰ç¯åŠå¾„</summary>
         public float radius = 10f;
         
-        /// <summary>Ã¿ÃëÔö¼ÓµÄÑÏÖØ¶È</summary>
+        /// <summary>æ¯ç§’å¢åŠ çš„ä¸¥é‡åº¦</summary>
         public float severityPerSecond = 0.02f;
         
-        /// <summary>¹ØÁªµÄ HediffDef Ãû³Æ</summary>
+        /// <summary>å…³è”çš„ HediffDef åç§°</summary>
         public string linkedHediff = "";
         
-        /// <summary>ÊÇ·ñÖ»ÔÚÃé×¼Ê±´¥·¢</summary>
+        /// <summary>æ˜¯å¦åªåœ¨ç„å‡†æ—¶è§¦å‘</summary>
         public bool onlyWhenTargeting = true;
         
-        /// <summary>ÊÇ·ñÊ¹ÓÃÑÏ¸ñµÄÊÓÏß¼ì²â</summary>
+        /// <summary>æ˜¯å¦ä½¿ç”¨ä¸¥æ ¼çš„è§†çº¿æ£€æµ‹</summary>
         public bool strictLineOfSight = false;
         
-        /// <summary>ÀíÖÇÁ÷Ê§ÒôĞ§</summary>
+        /// <summary>ç†æ™ºæµå¤±éŸ³æ•ˆ</summary>
         public string drainSound = "";
         
         public CompProperties_SanityAura()

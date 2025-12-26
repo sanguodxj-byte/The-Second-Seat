@@ -323,8 +323,9 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// 生成人格定义XML内容
+        /// ✅ v1.6.66: 改为 public，供 Dialog_PersonaEditor 使用
         /// </summary>
-        private static string GeneratePersonaDefXml(NarratorPersonaDef persona)
+        public static string GeneratePersonaDefXml(NarratorPersonaDef persona)
         {
             var sb = new StringBuilder();
             
@@ -454,28 +455,22 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// 保存人格定义XML文件
+        /// ✅ v1.6.71: 使用 PersonaFolderManager，支持子文件夹隔离
         /// </summary>
-        private static string SavePersonaDefXml(string defName, string xmlContent)
+        public static string SavePersonaDefXml(string defName, string xmlContent)
         {
             try
             {
-                // 获取Mod根目录
-                var modContentPack = LoadedModManager.RunningModsListForReading
-                    .FirstOrDefault(mod => mod.PackageId.ToLower().Contains("thesecondseat") || 
-                                          mod.Name.Contains("Second Seat"));
+                // ⭐ 从 defName 提取人格名称（假设 defName 格式为 "Sideria" 或 "Sideria_Variant"）
+                string personaName = defName.Split('_')[0];
                 
-                if (modContentPack == null)
+                // ⭐ 使用 PersonaFolderManager 获取 Defs 目录
+                string defsDir = PersonaFolderManager.GetPersonaDefsDirectory(personaName);
+                
+                if (defsDir == null)
                 {
-                    Log.Error("[PersonaDefExporter] 无法找到Mod目录");
+                    Log.Error("[PersonaDefExporter] 无法找到人格 Defs 目录");
                     return null;
-                }
-                
-                // 创建Defs/NarratorPersonaDefs目录
-                string defsDir = Path.Combine(modContentPack.RootDir, "Defs", "NarratorPersonaDefs");
-                if (!Directory.Exists(defsDir))
-                {
-                    Directory.CreateDirectory(defsDir);
-                    Log.Message($"[PersonaDefExporter] 创建目录: {defsDir}");
                 }
                 
                 // 生成文件名

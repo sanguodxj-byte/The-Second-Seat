@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using Verse;
 using RimWorld;
 using System;
@@ -6,13 +6,13 @@ using System;
 namespace TheSecondSeat.Settings
 {
     /// <summary>
-    /// ÉèÖÃ½çÃæ UI ¸¨ÖúÀà
-    /// ÌáÈ¡×Ô ModSettings.cs£¬¼õÉÙÖ÷ÎÄ¼ş´úÂëÁ¿
+    /// è®¾ç½®ç•Œé¢ UI è¾…åŠ©ç±»
+    /// æå–è‡ª ModSettings.csï¼Œå‡å°‘ä¸»æ–‡ä»¶ä»£ç é‡
     /// </summary>
     public static class SettingsUI
     {
         /// <summary>
-        /// »æÖÆÄÑ¶ÈÄ£Ê½Ñ¡Ïî£¨´øÍ¼±ê£©
+        /// ç»˜åˆ¶éš¾åº¦æ¨¡å¼é€‰é¡¹ï¼ˆå¸¦å›¾æ ‡ï¼‰
         /// </summary>
         public static void DrawDifficultyOption(
             Rect rect, 
@@ -23,7 +23,7 @@ namespace TheSecondSeat.Settings
             bool isSelected, 
             Color accentColor)
         {
-            // ±³¾°
+            // èƒŒæ™¯
             if (isSelected)
             {
                 Widgets.DrawBoxSolid(rect, new Color(accentColor.r * 0.3f, accentColor.g * 0.3f, accentColor.b * 0.3f, 0.5f));
@@ -33,7 +33,7 @@ namespace TheSecondSeat.Settings
                 Widgets.DrawBoxSolid(rect, new Color(0.25f, 0.25f, 0.25f, 0.5f));
             }
             
-            // ±ß¿ò
+            // è¾¹æ¡†
             if (isSelected)
             {
                 GUI.color = accentColor;
@@ -47,7 +47,7 @@ namespace TheSecondSeat.Settings
             
             var innerRect = rect.ContractedBy(5f);
             
-            // Í¼±êÇøÓò£¨×ó²à£©
+            // å›¾æ ‡åŒºåŸŸï¼ˆå·¦ä¾§ï¼‰
             float iconSize = 50f;
             var iconRect = new Rect(innerRect.x, innerRect.y, iconSize, iconSize);
             
@@ -57,10 +57,10 @@ namespace TheSecondSeat.Settings
             }
             else
             {
-                // Õ¼Î»·û£º»æÖÆ´øÑÕÉ«µÄ·½¿é
+                // å ä½ç¬¦ï¼šç»˜åˆ¶å¸¦é¢œè‰²çš„æ–¹å—
                 Widgets.DrawBoxSolid(iconRect, accentColor * 0.5f);
                 
-                // »æÖÆÄ£Ê½Ê××ÖÄ¸
+                // ç»˜åˆ¶æ¨¡å¼é¦–å­—æ¯
                 Text.Font = GameFont.Medium;
                 Text.Anchor = TextAnchor.MiddleCenter;
                 GUI.color = Color.white;
@@ -69,23 +69,23 @@ namespace TheSecondSeat.Settings
                 Text.Font = GameFont.Small;
             }
             
-            // ÎÄ×ÖÇøÓò£¨ÓÒ²à£©
+            // æ–‡å­—åŒºåŸŸï¼ˆå³ä¾§ï¼‰
             float textX = innerRect.x + iconSize + 10f;
             float textWidth = innerRect.width - iconSize - 10f;
             
-            // ±êÌâ
+            // æ ‡é¢˜
             Text.Font = GameFont.Small;
             GUI.color = isSelected ? accentColor : Color.white;
             var titleRect = new Rect(textX, innerRect.y, textWidth, 20f);
-            Widgets.Label(titleRect, title + (isSelected ? " [ÒÑÑ¡Ôñ]" : ""));
+            Widgets.Label(titleRect, title + (isSelected ? " [å·²é€‰æ‹©]" : ""));
             
-            // ¸±±êÌâ
+            // å‰¯æ ‡é¢˜
             Text.Font = GameFont.Tiny;
             GUI.color = new Color(0.7f, 0.7f, 0.7f);
             var subtitleRect = new Rect(textX, innerRect.y + 18f, textWidth, 16f);
             Widgets.Label(subtitleRect, subtitle);
             
-            // ÃèÊö£¨ĞüÍ£Ê±ÏÔÊ¾£©
+            // æè¿°ï¼ˆæ‚¬åœæ—¶æ˜¾ç¤ºï¼‰
             if (Mouse.IsOver(rect))
             {
                 GUI.color = new Color(0.6f, 0.6f, 0.6f);
@@ -98,7 +98,7 @@ namespace TheSecondSeat.Settings
         }
 
         /// <summary>
-        /// »æÖÆÕÛµşÇøÓò
+        /// ç»˜åˆ¶æŠ˜å åŒºåŸŸ
         /// </summary>
         public static void DrawCollapsibleSection(
             Listing_Standard listing, 
@@ -108,10 +108,10 @@ namespace TheSecondSeat.Settings
         {
             var headerRect = listing.GetRect(30f);
             
-            // »æÖÆ±êÌâ±³¾°
+            // ç»˜åˆ¶æ ‡é¢˜èƒŒæ™¯
             Widgets.DrawBoxSolid(headerRect, new Color(0.2f, 0.2f, 0.2f, 0.5f));
             
-            // »æÖÆ¼ıÍ·ºÍ±êÌâ
+            // ç»˜åˆ¶ç®­å¤´å’Œæ ‡é¢˜
             var arrowRect = new Rect(headerRect.x + 5f, headerRect.y + 5f, 20f, 20f);
             var titleRect = new Rect(headerRect.x + 30f, headerRect.y, headerRect.width - 30f, headerRect.height);
             
@@ -119,17 +119,17 @@ namespace TheSecondSeat.Settings
             Widgets.Label(titleRect, title);
             Text.Font = GameFont.Small;
             
-            // »æÖÆ¼ıÍ·
+            // ç»˜åˆ¶ç®­å¤´
             string arrow = collapsed ? ">" : "v";
             Widgets.Label(arrowRect, arrow);
             
-            // µã»÷ÇĞ»»ÕÛµş
+            // ç‚¹å‡»åˆ‡æ¢æŠ˜å 
             if (Widgets.ButtonInvisible(headerRect))
             {
                 collapsed = !collapsed;
             }
             
-            // Èç¹ûÎ´ÕÛµş£¬»æÖÆÄÚÈİ
+            // å¦‚æœæœªæŠ˜å ï¼Œç»˜åˆ¶å†…å®¹
             if (!collapsed)
             {
                 listing.Gap(8f);
@@ -141,7 +141,7 @@ namespace TheSecondSeat.Settings
         }
         
         /// <summary>
-        /// ¼ÓÔØÄÑ¶ÈÍ¼±ê
+        /// åŠ è½½éš¾åº¦å›¾æ ‡
         /// </summary>
         public static void LoadDifficultyIcons(ref Texture2D? assistantIcon, ref Texture2D? opponentIcon)
         {

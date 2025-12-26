@@ -1,80 +1,74 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
-  <name>The Second Seat - Narrator Personification Framework</name>
-  <author>The Second Seat Team</author>
+  <name>The Second Seat</name>
+  <author>sanguo</author>
   <supportedVersions>
     <li>1.4</li>
     <li>1.5</li>
     <li>1.6</li>
   </supportedVersions>
-  <packageId>TheSecondSeat.NarratorFramework</packageId>
-  <description>
-    [h1]The Second Seat - Narrator Personification Framework[/h1]
-    
-    A comprehensive framework for creating personified AI narrators in RimWorld.
-    
-    [h2]Core Features[/h2]
-    - AI-powered narrator with personality system
-    - Dynamic portrait and expression system
-    - Layered portrait support with multiple expressions
-    - Affinity system tracking player relationship
-    - Event-driven narrative generation
-    - Batch command execution via natural language
-    - Multi-modal analysis for custom personas
-    - Extensible API for custom narrator personas
-    
-    [h2]For Players[/h2]
-    This mod provides a framework with built-in vanilla narrators (Cassandra, Phoebe, Randy, etc.).
-    For custom narrator personas (like Sideria), install additional persona mods.
-    
-    [h2]For Mod Developers[/h2]
-    Create custom narrator personas by:
-    - Defining personas via XML (no coding required)
-    - Adding custom portraits and expressions
-    - Configuring dialogue styles and event preferences
-    - Leveraging the full framework API
-    
-    See example: "The Second Seat - Sideria Example" mod
-    
-    [h2]Technical Requirements[/h2]
-    - RimWorld 1.4+
-    - LLM API access (OpenAI, DeepSeek, Gemini, or local models)
-    - Optional: Azure TTS for voice synthesis
-    
-    鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
-    
-    [h1]绗簩甯綅 - 鍙欎簨鑰呬汉鏍煎寲妗嗘灦[/h1]
-    
-    涓篟imWorld鎵撻€犵殑鍏ㄩ潰鍙欎簨鑰呬汉鏍煎寲妗嗘灦銆?
-    
-    [h2]鏍稿績鍔熻兘[/h2]
-    - AI椹卞姩鐨勪汉鏍煎寲鍙欎簨鑰?
-    - 鍔ㄦ€佸ご鍍忓拰琛ㄦ儏绯荤粺
-    - 鍒嗗眰绔嬬粯鏀寔锛屽琛ㄦ儏鍒囨崲
-    - 濂芥劅搴︾郴缁熻拷韪帺瀹跺叧绯?
-    - 浜嬩欢椹卞姩鐨勫彊浜嬬敓鎴?
-    - 鑷劧璇█鎵归噺鍛戒护鎵ц
-    - 澶氭ā鎬佸垎鏋愮敓鎴愯嚜瀹氫箟浜烘牸
-    - 鍙墿灞旳PI锛屾敮鎸佽嚜瀹氫箟鍙欎簨鑰呬汉鏍?
-    
-    [h2]闈㈠悜鐜╁[/h2]
-    姝od鎻愪緵妗嗘灦鍜屽唴缃師鐗堝彊浜嬭€咃紙Cassandra銆丳hoebe銆丷andy绛夛級銆?
-    瑕佷娇鐢ㄨ嚜瀹氫箟鍙欎簨鑰呬汉鏍硷紙濡係ideria锛夛紝璇峰畨瑁呴澶栫殑浜烘牸Mod銆?
-    
-    [h2]闈㈠悜Mod寮€鍙戣€匸/h2]
-    鍒涘缓鑷畾涔夊彊浜嬭€呬汉鏍硷細
-    - 閫氳繃XML瀹氫箟浜烘牸锛堟棤闇€缂栫▼锛?
-    - 娣诲姞鑷畾涔夊ご鍍忓拰琛ㄦ儏
-    - 閰嶇疆瀵硅瘽椋庢牸鍜屼簨浠跺亸濂?
-    - 鍒╃敤瀹屾暣鐨勬鏋禔PI
-    
-    绀轰緥鍙傝€冿細"The Second Seat - Sideria Example" Mod
-    
-    [h2]鎶€鏈姹俒/h2]
-    - RimWorld 1.4+
-    - LLM API璁块棶锛圤penAI銆丏eepSeek銆丟emini鎴栨湰鍦版ā鍨嬶級
-    - 鍙€夛細Azure TTS璇煶鍚堟垚
-  </description>
+  <packageId>sanguo.thesecondseat</packageId>
+  <description>第二席位 - 叙事者人格化框架
+
+【核心功能】
+• AI驱动的人格化叙事者
+• 动态头像和表情系统
+• 分层立绘支持，多表情切换
+• 好感度系统追踪玩家关系
+• 事件驱动的叙事生成
+• 自然语言批量命令执行
+• 多模态分析生成自定义人格
+• 可扩展API，支持自定义叙事者人格
+
+【面向玩家】
+此Mod提供框架和内置原版叙事者（Cassandra、Phoebe、Randy等）。
+要使用自定义叙事者人格（如Sideria），请安装额外的人格Mod。
+
+【面向Mod开发者】
+创建自定义叙事者人格：
+• 通过XML定义人格（无需编程）
+• 添加自定义头像和表情
+• 配置对话风格和事件偏好
+• 利用完整的框架API
+
+示例参考："The Second Seat - Sideria" Mod
+
+【技术要求】
+• RimWorld 1.4+
+• LLM API访问（OpenAI、DeepSeek、Gemini或本地模型）
+• 可选：Azure TTS语音合成
+
+---
+
+The Second Seat - Narrator Personification Framework
+
+[Core Features]
+• AI-powered personified narrator
+• Dynamic portrait and expression system
+• Layered portrait support with multiple expressions
+• Affinity system tracking player relationship
+• Event-driven narrative generation
+• Batch command execution via natural language
+• Multi-modal analysis for custom personas
+• Extensible API for custom narrator personas
+
+[For Players]
+This mod provides a framework with built-in vanilla narrators (Cassandra, Phoebe, Randy, etc.).
+For custom narrator personas (like Sideria), install additional persona mods.
+
+[For Mod Developers]
+Create custom narrator personas by:
+• Defining personas via XML (no coding required)
+• Adding custom portraits and expressions
+• Configuring dialogue styles and event preferences
+• Leveraging the full framework API
+
+See example: "The Second Seat - Sideria" mod
+
+[Technical Requirements]
+• RimWorld 1.4+
+• LLM API access (OpenAI, DeepSeek, Gemini, or local models)
+• Optional: Azure TTS for voice synthesis</description>
   <modDependencies>
   </modDependencies>
   <loadAfter>

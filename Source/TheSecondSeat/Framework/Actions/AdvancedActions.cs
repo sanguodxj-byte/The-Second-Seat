@@ -76,6 +76,13 @@ namespace TheSecondSeat.Framework.Actions
         
         public override void Execute(Map map, Dictionary<string, object> context)
         {
+            // ✅ 线程诊断日志
+            int threadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
+            if (Prefs.DevMode)
+            {
+                Log.Message($"[StrikeLightningAction] Execute on Thread ID: {threadId} (Main={UnityEngine.Application.isPlaying})");
+            }
+            
             if (map == null)
             {
                 Log.Warning("[StrikeLightningAction] Map is null, cannot strike lightning");
@@ -324,6 +331,13 @@ namespace TheSecondSeat.Framework.Actions
         
         public override void Execute(Map map, Dictionary<string, object> context)
         {
+            // ✅ 线程诊断日志
+            int threadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
+            if (Prefs.DevMode)
+            {
+                Log.Message($"[GiveHediffAction] Execute on Thread ID: {threadId}");
+            }
+            
             if (hediffDef == null)
             {
                 Log.Error("[GiveHediffAction] hediffDef is null");

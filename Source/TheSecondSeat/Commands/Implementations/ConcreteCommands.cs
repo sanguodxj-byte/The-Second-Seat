@@ -143,6 +143,13 @@ namespace TheSecondSeat.Commands.Implementations
 
         public override bool Execute(string? target = null, object? parameters = null)
         {
+            // ✅ 线程诊断日志
+            int threadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
+            if (Prefs.DevMode)
+            {
+                Log.Message($"[BatchEquipCommand] Execute on Thread ID: {threadId}");
+            }
+            
             var map = Find.CurrentMap;
             if (map == null)
             {

@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -9,8 +9,8 @@ using TheSecondSeat.RimAgent;
 namespace TheSecondSeat.UI
 {
     /// <summary>
-    /// ? v1.6.65: RimAgent ÉèÖÃµ¯´°
-    /// °üº¬ Agent ÅäÖÃºÍ¹¤¾ß¿â¹ÜÀí
+    /// ? v1.6.65: RimAgent è®¾ç½®å¼¹çª—
+    /// åŒ…å« Agent é…ç½®å’Œå·¥å…·åº“ç®¡ç†
     /// </summary>
     public class Dialog_RimAgentSettings : Window
     {
@@ -20,7 +20,7 @@ namespace TheSecondSeat.UI
         private float retryDelay = 2f;
         private int maxHistoryMessages = 20;
         
-        // ¹¤¾ßÆôÓÃ×´Ì¬
+        // å·¥å…·å¯ç”¨çŠ¶æ€
         private Dictionary<string, bool> toolsEnabled = new Dictionary<string, bool>();
         
         public override Vector2 InitialSize => new Vector2(700f, 600f);
@@ -32,16 +32,16 @@ namespace TheSecondSeat.UI
             forcePause = true;
             absorbInputAroundWindow = true;
             
-            // ¼ÓÔØÉèÖÃ
+            // åŠ è½½è®¾ç½®
             LoadSettings();
             
-            // ³õÊ¼»¯¹¤¾ßÆôÓÃ×´Ì¬
+            // åˆå§‹åŒ–å·¥å…·å¯ç”¨çŠ¶æ€
             var registeredTools = RimAgentTools.GetRegisteredToolNames();
             foreach (var toolName in registeredTools)
             {
                 if (!toolsEnabled.ContainsKey(toolName))
                 {
-                    toolsEnabled[toolName] = true; // Ä¬ÈÏÆôÓÃ
+                    toolsEnabled[toolName] = true; // é»˜è®¤å¯ç”¨
                 }
             }
         }
@@ -82,13 +82,13 @@ namespace TheSecondSeat.UI
             Listing_Standard listing = new Listing_Standard();
             listing.Begin(inRect);
             
-            // ±êÌâ
+            // æ ‡é¢˜
             Text.Font = GameFont.Medium;
-            listing.Label("? RimAgent ÉèÖÃ");
+            listing.Label("? RimAgent è®¾ç½®");
             Text.Font = GameFont.Small;
             listing.Gap(10f);
             
-            // ¹ö¶¯ÇøÓò
+            // æ»šåŠ¨åŒºåŸŸ
             Rect scrollRect = new Rect(0f, listing.CurHeight, inRect.width, inRect.height - listing.CurHeight - 60f);
             Rect viewRect = new Rect(0f, 0f, scrollRect.width - 20f, 800f);
             
@@ -98,20 +98,20 @@ namespace TheSecondSeat.UI
             scrollListing.Begin(viewRect);
             
             // ========================================
-            // Agent »ù´¡ÅäÖÃ
+            // Agent åŸºç¡€é…ç½®
             // ========================================
-            scrollListing.Label("?? Agent »ù´¡ÅäÖÃ");
+            scrollListing.Label("?? Agent åŸºç¡€é…ç½®");
             scrollListing.GapLine(12f);
             
-            // Agent Ãû³Æ
+            // Agent åç§°
             Rect nameRect = scrollListing.GetRect(30f);
-            Widgets.Label(nameRect.LeftHalf(), "Agent Ãû³Æ:");
+            Widgets.Label(nameRect.LeftHalf(), "Agent åç§°:");
             agentName = Widgets.TextField(nameRect.RightHalf(), agentName);
             scrollListing.Gap(5f);
             
-            // ×î´óÖØÊÔ´ÎÊı
+            // æœ€å¤§é‡è¯•æ¬¡æ•°
             Rect retriesRect = scrollListing.GetRect(30f);
-            Widgets.Label(retriesRect.LeftHalf(), $"×î´óÖØÊÔ´ÎÊı: {maxRetries}");
+            Widgets.Label(retriesRect.LeftHalf(), $"æœ€å¤§é‡è¯•æ¬¡æ•°: {maxRetries}");
             maxRetries = (int)Widgets.HorizontalSlider(
                 retriesRect.RightHalf(), 
                 maxRetries, 
@@ -122,9 +122,9 @@ namespace TheSecondSeat.UI
             );
             scrollListing.Gap(5f);
             
-            // ÖØÊÔÑÓ³Ù
+            // é‡è¯•å»¶è¿Ÿ
             Rect delayRect = scrollListing.GetRect(30f);
-            Widgets.Label(delayRect.LeftHalf(), $"ÖØÊÔÑÓ³Ù(Ãë): {retryDelay:F1}");
+            Widgets.Label(delayRect.LeftHalf(), $"é‡è¯•å»¶è¿Ÿ(ç§’): {retryDelay:F1}");
             retryDelay = Widgets.HorizontalSlider(
                 delayRect.RightHalf(), 
                 retryDelay, 
@@ -135,9 +135,9 @@ namespace TheSecondSeat.UI
             );
             scrollListing.Gap(5f);
             
-            // ÀúÊ·ÏûÏ¢ÊıÁ¿
+            // å†å²æ¶ˆæ¯æ•°é‡
             Rect historyRect = scrollListing.GetRect(30f);
-            Widgets.Label(historyRect.LeftHalf(), $"ÀúÊ·ÏûÏ¢ÊıÁ¿: {maxHistoryMessages}");
+            Widgets.Label(historyRect.LeftHalf(), $"å†å²æ¶ˆæ¯æ•°é‡: {maxHistoryMessages}");
             maxHistoryMessages = (int)Widgets.HorizontalSlider(
                 historyRect.RightHalf(), 
                 maxHistoryMessages, 
@@ -149,22 +149,22 @@ namespace TheSecondSeat.UI
             scrollListing.Gap(15f);
             
             // ========================================
-            // ¹¤¾ß¿â¹ÜÀí
+            // å·¥å…·åº“ç®¡ç†
             // ========================================
-            scrollListing.Label("?? ¹¤¾ß¿â¹ÜÀí");
+            scrollListing.Label("?? å·¥å…·åº“ç®¡ç†");
             scrollListing.GapLine(12f);
             
             var registeredTools = RimAgentTools.GetRegisteredToolNames();
             
             if (registeredTools.Count == 0)
             {
-                scrollListing.Label("?? Î´ÕÒµ½ÒÑ×¢²áµÄ¹¤¾ß");
+                scrollListing.Label("?? æœªæ‰¾åˆ°å·²æ³¨å†Œçš„å·¥å…·");
             }
             else
             {
                 foreach (var toolName in registeredTools)
                 {
-                    // È·±£¹¤¾ßÔÚ×ÖµäÖĞ
+                    // ç¡®ä¿å·¥å…·åœ¨å­—å…¸ä¸­
                     if (!toolsEnabled.ContainsKey(toolName))
                     {
                         toolsEnabled[toolName] = true;
@@ -172,30 +172,30 @@ namespace TheSecondSeat.UI
                     
                     Rect toolRect = scrollListing.GetRect(30f);
                     
-                    // ¹¤¾ßÍ¼±ê£¨¼òµ¥µÄÑÕÉ«¿é£©
+                    // å·¥å…·å›¾æ ‡ï¼ˆç®€å•çš„é¢œè‰²å—ï¼‰
                     Rect iconRect = new Rect(toolRect.x, toolRect.y, 24f, 24f);
                     Color iconColor = toolsEnabled[toolName] ? Color.green : Color.gray;
                     GUI.color = iconColor;
                     Widgets.DrawBoxSolid(iconRect, iconColor);
                     GUI.color = Color.white;
                     
-                    // ¹¤¾ßÃû³Æ
+                    // å·¥å…·åç§°
                     Rect nameRectTool = new Rect(toolRect.x + 30f, toolRect.y, toolRect.width / 2 - 40f, toolRect.height);
                     Widgets.Label(nameRectTool, toolName);
                     
-                    // ¹¤¾ßÃèÊö£¨»ñÈ¡£©
+                    // å·¥å…·æè¿°ï¼ˆè·å–ï¼‰
                     string description = GetToolDescription(toolName);
                     Rect descRect = new Rect(toolRect.x + toolRect.width / 2, toolRect.y, toolRect.width / 3, toolRect.height);
                     Text.Font = GameFont.Tiny;
                     Widgets.Label(descRect, description);
                     Text.Font = GameFont.Small;
                     
-                    // ÆôÓÃ/½ûÓÃ¿ª¹Ø
+                    // å¯ç”¨/ç¦ç”¨å¼€å…³
                     Rect toggleRect = new Rect(toolRect.xMax - 80f, toolRect.y, 80f, toolRect.height);
                     bool oldEnabled = toolsEnabled[toolName];
                     bool newEnabled = oldEnabled;
                     
-                    if (Widgets.ButtonText(toggleRect, oldEnabled ? "? ÆôÓÃ" : "? ½ûÓÃ"))
+                    if (Widgets.ButtonText(toggleRect, oldEnabled ? "? å¯ç”¨" : "? ç¦ç”¨"))
                     {
                         newEnabled = !oldEnabled;
                         toolsEnabled[toolName] = newEnabled;
@@ -208,9 +208,9 @@ namespace TheSecondSeat.UI
             scrollListing.Gap(15f);
             
             // ========================================
-            // Agent Í³¼ÆĞÅÏ¢
+            // Agent ç»Ÿè®¡ä¿¡æ¯
             // ========================================
-            scrollListing.Label("?? Agent Í³¼Æ");
+            scrollListing.Label("?? Agent ç»Ÿè®¡");
             scrollListing.GapLine(12f);
             
             try
@@ -220,7 +220,7 @@ namespace TheSecondSeat.UI
                 {
                     string stats = manager.GetAgentStats();
                     
-                    // ÏÔÊ¾Í³¼ÆĞÅÏ¢£¨¶àĞĞÎÄ±¾¿ò£©
+                    // æ˜¾ç¤ºç»Ÿè®¡ä¿¡æ¯ï¼ˆå¤šè¡Œæ–‡æœ¬æ¡†ï¼‰
                     Rect statsRect = scrollListing.GetRect(100f);
                     Widgets.DrawBoxSolid(statsRect, new Color(0.1f, 0.1f, 0.1f, 0.5f));
                     Text.Font = GameFont.Tiny;
@@ -229,40 +229,40 @@ namespace TheSecondSeat.UI
                     
                     scrollListing.Gap(10f);
                     
-                    // ÖØÖÃ Agent °´Å¥
-                    if (scrollListing.ButtonText("?? ÖØÖÃ Agent", "Çå³ı¶Ô»°ÀúÊ·ºÍÍ³¼Æ"))
+                    // é‡ç½® Agent æŒ‰é’®
+                    if (scrollListing.ButtonText("?? é‡ç½® Agent", "æ¸…é™¤å¯¹è¯å†å²å’Œç»Ÿè®¡"))
                     {
                         manager.ResetAgent();
-                        Messages.Message("Agent ÒÑÖØÖÃ", MessageTypeDefOf.PositiveEvent);
+                        Messages.Message("Agent å·²é‡ç½®", MessageTypeDefOf.PositiveEvent);
                     }
                 }
                 else
                 {
-                    scrollListing.Label("?? Î´ÕÒµ½ NarratorManager£¨ĞèÒªÔÚÓÎÏ·ÖĞÊ¹ÓÃ£©");
+                    scrollListing.Label("?? æœªæ‰¾åˆ° NarratorManagerï¼ˆéœ€è¦åœ¨æ¸¸æˆä¸­ä½¿ç”¨ï¼‰");
                 }
             }
             catch (Exception ex)
             {
-                scrollListing.Label($"? »ñÈ¡Í³¼ÆÊ§°Ü: {ex.Message}");
+                scrollListing.Label($"? è·å–ç»Ÿè®¡å¤±è´¥: {ex.Message}");
             }
             
             scrollListing.End();
             Widgets.EndScrollView();
             
-            // µ×²¿°´Å¥
+            // åº•éƒ¨æŒ‰é’®
             listing.End();
             
             Rect bottomRect = new Rect(inRect.x, inRect.yMax - 50f, inRect.width, 50f);
             
-            // ±£´æ°´Å¥
-            if (Widgets.ButtonText(new Rect(bottomRect.x, bottomRect.y, 150f, 35f), "?? ±£´æÉèÖÃ"))
+            // ä¿å­˜æŒ‰é’®
+            if (Widgets.ButtonText(new Rect(bottomRect.x, bottomRect.y, 150f, 35f), "?? ä¿å­˜è®¾ç½®"))
             {
                 SaveSettings();
-                Messages.Message("RimAgent ÉèÖÃÒÑ±£´æ", MessageTypeDefOf.PositiveEvent);
+                Messages.Message("RimAgent è®¾ç½®å·²ä¿å­˜", MessageTypeDefOf.PositiveEvent);
             }
             
-            // ¹Ø±Õ°´Å¥
-            if (Widgets.ButtonText(new Rect(bottomRect.xMax - 150f, bottomRect.y, 150f, 35f), "¹Ø±Õ"))
+            // å…³é—­æŒ‰é’®
+            if (Widgets.ButtonText(new Rect(bottomRect.xMax - 150f, bottomRect.y, 150f, 35f), "å…³é—­"))
             {
                 Close();
             }
@@ -283,7 +283,7 @@ namespace TheSecondSeat.UI
                 // Ignore
             }
             
-            return "ÎŞÃèÊö";
+            return "æ— æè¿°";
         }
     }
 }

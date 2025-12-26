@@ -1,9 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <loadFolders>
+  <!-- RimWorld 1.5 -->
   <v1.5>
     <li>1.5</li>
     <li>/</li>
   </v1.5>
+  
+  <!-- RimWorld 1.6 -->
   <v1.6>
     <li>1.6</li>
     <li>/</li>

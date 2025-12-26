@@ -117,6 +117,24 @@ namespace TheSecondSeat.LLM
         {
             Log.Message("[The Second Seat] 使用 OpenAI 兼容格式");
             
+            // ✅ 修复：限制 gameState 大小（防止 JSON 过大）
+            const int MaxGameStateLength = 8000;  // 8KB 限制
+            string truncatedGameState = gameStateJson ?? "";
+            if (truncatedGameState.Length > MaxGameStateLength)
+            {
+                truncatedGameState = truncatedGameState.Substring(0, MaxGameStateLength) + "\n[...游戏状态已截断...]";
+                Log.Warning($"[The Second Seat] gameState 过大 ({gameStateJson.Length} 字符)，已截断到 {MaxGameStateLength}");
+            }
+            
+            // ✅ 修复：确保内容不为 null
+            string safeSystemPrompt = systemPrompt ?? "You are an AI assistant.";
+            string safeUserMessage = userMessage ?? "";
+            
+            // 构建用户消息
+            string fullUserMessage = string.IsNullOrEmpty(truncatedGameState)
+                ? safeUserMessage
+                : $"Game State:\n{truncatedGameState}\n\n{safeUserMessage}";
+            
             // 构建请求
             var request = new OpenAIRequest
             {
@@ -125,17 +143,24 @@ namespace TheSecondSeat.LLM
                 max_tokens = 500,
                 messages = new[]
                 {
-                    new Message { role = "system", content = systemPrompt },
-                    new Message { role = "user", content = $"Game State:\n{gameStateJson}\n\n{userMessage}" }
+                    new Message { role = "system", content = safeSystemPrompt },
+                    new Message { role = "user", content = fullUserMessage }
                 }
             };
 
-            string jsonContent = JsonConvert.SerializeObject(request);
+            // ✅ 修复：使用严格的 JSON 序列化设置
+            string jsonContent = JsonConvert.SerializeObject(request, new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore,  // 忽略 null 字段
+                StringEscapeHandling = StringEscapeHandling.EscapeHtml,  // 转义特殊字符
+                Formatting = Formatting.None  // 不格式化（减少大小）
+            });
 
             try
             {
                 Log.Message($"[The Second Seat] 请求: {apiEndpoint}");
                 Log.Message($"[The Second Seat] 模型: {modelName}");
+                Log.Message($"[The Second Seat] JSON 大小: {jsonContent.Length} 字符");
 
                 // ? 使用 UnityWebRequest
                 using var webRequest = new UnityWebRequest(apiEndpoint, "POST");

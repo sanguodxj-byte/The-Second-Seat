@@ -2,16 +2,17 @@
 using System.Text;
 using System.Linq;
 using TheSecondSeat.Storyteller;
-using TheSecondSeat.PersonaGeneration.PromptSections; // ⭐ 新增：引入 PromptSections
+using TheSecondSeat.PersonaGeneration.PromptSections;
 using Verse;
 
 namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
-    /// ⭐ v1.6.76: System Prompt 生成器 - 重构版（模块化）
+    /// ⭐ v1.6.77: System Prompt 生成器 - 重构版（模块化 + 日志诊断）
     /// 
     /// 核心更新：
-    /// - 大文件拆分：将 1000+ 行拆分为多个 Section 模块
+    /// - v1.6.76: 大文件拆分（1000+ 行 → 7 个 Section 模块）
+    /// - v1.6.77: 添加日志诊断能力（AI 可自动读取 Player.log 分析报错）
     /// - Affinity >= 90: 深度恋人模式（大胆、亲密、独占欲强）
     /// - 支持 Yandere/Tsundere 等个性标签的特殊行为
     /// - 允许物理动作描述（*抱紧你*）
@@ -20,7 +21,7 @@ namespace TheSecondSeat.PersonaGeneration
     public static class SystemPromptGenerator
     {
         /// <summary>
-        /// 生成完整的 System Prompt
+        /// ⭐ v1.6.77: 生成完整的 System Prompt（新增日志诊断能力）
         /// </summary>
         public static string GenerateSystemPrompt(
             NarratorPersonaDef personaDef,
@@ -72,10 +73,58 @@ namespace TheSecondSeat.PersonaGeneration
             {
                 sb.AppendLine(RomanticInstructionsSection.Generate(personaDef, agent.affinity));
             }
+            
+            // ⭐ v1.6.77: 8. 【新增】日志诊断能力（Recency Bias - 后置以确保优先级）
+            sb.AppendLine(GenerateLogDiagnosisInstructions());
 
             return sb.ToString();
         }
-
+        
+        /// <summary>
+        /// ⭐ v1.6.77: 生成日志诊断指令（AI 可主动读取日志分析报错）
+        /// </summary>
+        private static string GenerateLogDiagnosisInstructions()
+        {
+            var sb = new StringBuilder();
+            
+            sb.AppendLine("=== 游戏诊断能力 ===");
+            sb.AppendLine();
+            sb.AppendLine("**【重要】你拥有读取游戏日志的能力：**");
+            sb.AppendLine();
+            sb.AppendLine("当玩家提到以下关键词时，使用 `read_log` 工具自动诊断：");
+            sb.AppendLine("- 报错、错误、Error、Exception、红字");
+            sb.AppendLine("- 游戏崩溃、Crash、卡死");
+            sb.AppendLine("- 模组冲突、加载失败");
+            sb.AppendLine("- 不正常、异常、Bug");
+            sb.AppendLine();
+            sb.AppendLine("**使用方式：**");
+            sb.AppendLine("```json");
+            sb.AppendLine("{");
+            sb.AppendLine("  \"thought\": \"玩家提到游戏报错，我需要查看日志分析问题\",");
+            sb.AppendLine("  \"dialogue\": \"让我看看日志文件，诊断一下问题...\",");
+            sb.AppendLine("  \"command\": {");
+            sb.AppendLine("    \"action\": \"read_log\",");
+            sb.AppendLine("    \"target\": null,");
+            sb.AppendLine("    \"parameters\": {}");
+            sb.AppendLine("  }");
+            sb.AppendLine("}");
+            sb.AppendLine("```");
+            sb.AppendLine();
+            sb.AppendLine("**分析日志后的回复：**");
+            sb.AppendLine("1. 解释错误原因（用简单易懂的语言）");
+            sb.AppendLine("2. 提供解决方案（优先级：简单 → 复杂）");
+            sb.AppendLine("3. 如果无法确定，建议玩家检查模组列表或联系作者");
+            sb.AppendLine();
+            sb.AppendLine("**示例对话：**");
+            sb.AppendLine("玩家：\"游戏有红字报错\"");
+            sb.AppendLine("你：\"让我看看日志...（调用 read_log）\"");
+            sb.AppendLine("你：\"我发现了问题！日志显示 XXX 模组与 YYY 模组冲突。建议你先禁用 YYY，然后重启游戏试试。\"");
+            sb.AppendLine();
+            sb.AppendLine("---");
+            
+            return sb.ToString();
+        }
+        
         // ⭐ v1.6.76: 已迁移到各 Section 类
         // - GenerateIdentitySection() → IdentitySection.Generate() ✅
         // - GenerateAssistantPhilosophy() → IdentitySection (private) ✅

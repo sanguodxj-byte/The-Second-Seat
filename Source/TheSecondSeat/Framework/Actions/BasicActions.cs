@@ -49,7 +49,7 @@ namespace TheSecondSeat.Framework.Actions
     public class ShowDialogueAction : TSSAction
     {
         public string dialogueText = "";
-        public MessageTypeDef messageType = MessageTypeDefOf.NeutralEvent;
+        public MessageTypeDef messageType; // ? 运行时获取默认值
         public bool useNarratorWindow = false;
         
         public override void Execute(Map map, Dictionary<string, object> context)

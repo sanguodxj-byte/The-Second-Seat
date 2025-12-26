@@ -296,7 +296,7 @@ namespace TheSecondSeat.UI
                 {
                     // ? 如果有Texture，直接传递
                     Texture2D? texture = portrait.Texture;
-                    options.Add(new FloatMenuOption(portrait.Name, () => CreatePersonaFromPortrait(portrait.Path, texture)));
+                    options.Add(new FloatMenuOption(portrait.Name, () => _ = CreatePersonaFromPortraitAsync(portrait.Path, texture)));
                 }
             }
             
@@ -307,7 +307,7 @@ namespace TheSecondSeat.UI
                 foreach (var portrait in modPortraits)
                 {
                     Texture2D? texture = portrait.Texture;
-                    options.Add(new FloatMenuOption(portrait.Name, () => CreatePersonaFromPortrait(portrait.Path, texture)));
+                    options.Add(new FloatMenuOption(portrait.Name, () => { _ = CreatePersonaFromPortraitAsync(portrait.Path, texture); }));
                 }
             }
             
@@ -317,7 +317,7 @@ namespace TheSecondSeat.UI
                 options.Add(new FloatMenuOption("--- 本Mod立绘 ---", null));
                 foreach (var portrait in thisModPortraits)
                 {
-                    options.Add(new FloatMenuOption(portrait.Name, () => CreatePersonaFromPortrait(portrait.Path, null)));
+                    options.Add(new FloatMenuOption(portrait.Name, () => { _ = CreatePersonaFromPortraitAsync(portrait.Path, null); }));
                 }
             }
             
@@ -327,7 +327,7 @@ namespace TheSecondSeat.UI
                 options.Add(new FloatMenuOption("--- 用户自定义 ---", null));
                 foreach (var portrait in userPortraits)
                 {
-                    options.Add(new FloatMenuOption(portrait.Name, () => CreatePersonaFromPortrait(portrait.Path, null)));
+                    options.Add(new FloatMenuOption(portrait.Name, () => _ = CreatePersonaFromPortraitAsync(portrait.Path, null)));
                 }
             }
             
@@ -362,7 +362,7 @@ namespace TheSecondSeat.UI
                 {
                     // ? 如果有Texture，直接传递
                     Texture2D? texture = portrait.Texture;
-                    options.Add(new FloatMenuOption(portrait.Name, () => CreatePersonaFromPortrait(portrait.Path, texture)));
+                    options.Add(new FloatMenuOption(portrait.Name, () => _ = CreatePersonaFromPortraitAsync(portrait.Path, texture)));
                 }
             }
             
@@ -373,7 +373,7 @@ namespace TheSecondSeat.UI
                 foreach (var portrait in modPortraits)
                 {
                     Texture2D? texture = portrait.Texture;
-                    options.Add(new FloatMenuOption(portrait.Name, () => CreatePersonaFromPortrait(portrait.Path, texture)));
+                    options.Add(new FloatMenuOption(portrait.Name, () => { _ = CreatePersonaFromPortraitAsync(portrait.Path, texture); }));
                 }
             }
             
@@ -383,7 +383,7 @@ namespace TheSecondSeat.UI
                 options.Add(new FloatMenuOption("--- 本Mod立绘 ---", null));
                 foreach (var portrait in thisModPortraits)
                 {
-                    options.Add(new FloatMenuOption(portrait.Name, () => CreatePersonaFromPortrait(portrait.Path, null)));
+                    options.Add(new FloatMenuOption(portrait.Name, () => _ = CreatePersonaFromPortraitAsync(portrait.Path, null)));
                 }
             }
             
@@ -393,14 +393,14 @@ namespace TheSecondSeat.UI
                 options.Add(new FloatMenuOption("--- 用户自定义 ---", null));
                 foreach (var portrait in userPortraits)
                 {
-                    options.Add(new FloatMenuOption(portrait.Name, () => CreatePersonaFromPortrait(portrait.Path, null)));
+                    options.Add(new FloatMenuOption(portrait.Name, () => { _ = CreatePersonaFromPortraitAsync(portrait.Path, null); }));
                 }
             }
             
             Find.WindowStack.Add(new FloatMenu(options));
         }
 
-        private async void CreatePersonaFromPortrait(string portraitPath, Texture2D? existingTexture = null)
+        private async System.Threading.Tasks.Task CreatePersonaFromPortraitAsync(string portraitPath, Texture2D? existingTexture = null)
         {
             try
             {

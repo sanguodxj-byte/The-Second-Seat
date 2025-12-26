@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using UnityEngine;
 using Verse;
 using RimWorld;
@@ -7,25 +7,25 @@ using TheSecondSeat.RimAgent;
 namespace TheSecondSeat.UI
 {
     /// <summary>
-    /// ? v1.6.65: API ÉèÖÃµ¯´°
-    /// °üº¬ LLM API¡¢TTS API ºÍ²¢·¢¹ÜÀíÆ÷ÅäÖÃ
+    /// ? v1.6.65: API è®¾ç½®å¼¹çª—
+    /// åŒ…å« LLM APIã€TTS API å’Œå¹¶å‘ç®¡ç†å™¨é…ç½®
     /// </summary>
     public class Dialog_APISettings : Window
     {
         private Vector2 scrollPosition = Vector2.zero;
         
-        // LLM ÉèÖÃ
+        // LLM è®¾ç½®
         private string llmProvider = "openai";
         private string llmApiKey = "";
         private string llmEndpoint = "https://api.openai.com/v1/chat/completions";
         private string llmModel = "gpt-4";
         
-        // TTS ÉèÖÃ
+        // TTS è®¾ç½®
         private string ttsProvider = "edge";
         private string ttsApiKey = "";
         private string ttsVoice = "zh-CN-XiaoxiaoNeural";
         
-        // ²¢·¢¹ÜÀíÉèÖÃ
+        // å¹¶å‘ç®¡ç†è®¾ç½®
         private int maxConcurrent = 5;
         private int requestTimeout = 60;
         private bool enableRetry = true;
@@ -60,7 +60,7 @@ namespace TheSecondSeat.UI
                 ttsApiKey = settings.ttsApiKey ?? "";
                 ttsVoice = settings.ttsVoice ?? "zh-CN-XiaoxiaoNeural";
                 
-                // ²¢·¢
+                // å¹¶å‘
                 maxConcurrent = settings.maxConcurrent;
                 requestTimeout = settings.requestTimeout;
                 enableRetry = settings.enableRetry;
@@ -85,27 +85,27 @@ namespace TheSecondSeat.UI
                 settings.ttsApiKey = ttsApiKey;
                 settings.ttsVoice = ttsVoice;
                 
-                // ²¢·¢
+                // å¹¶å‘
                 settings.maxConcurrent = maxConcurrent;
                 settings.requestTimeout = requestTimeout;
                 settings.enableRetry = enableRetry;
                 
                 settings.Write();
                 
-                // Ó¦ÓÃÉèÖÃµ½·şÎñ
+                // åº”ç”¨è®¾ç½®åˆ°æœåŠ¡
                 ApplySettings();
             }
         }
         
         private void ApplySettings()
         {
-            // ¸üĞÂ LLM Service
+            // æ›´æ–° LLM Service
             LLM.LLMService.Instance.Configure(llmEndpoint, llmApiKey, llmModel, llmProvider);
             
-            // ¸üĞÂ TTS Service
+            // æ›´æ–° TTS Service
             TTS.TTSService.Instance.Configure(ttsProvider, ttsApiKey, ttsVoice);
             
-            // ¸üĞÂ²¢·¢¹ÜÀíÆ÷
+            // æ›´æ–°å¹¶å‘ç®¡ç†å™¨
             ConcurrentRequestManager.Instance.UpdateSettings(maxConcurrent, requestTimeout, enableRetry);
         }
 
@@ -114,13 +114,13 @@ namespace TheSecondSeat.UI
             Listing_Standard listing = new Listing_Standard();
             listing.Begin(inRect);
             
-            // ±êÌâ
+            // æ ‡é¢˜
             Text.Font = GameFont.Medium;
-            listing.Label("?? API ÅäÖÃ");
+            listing.Label("?? API é…ç½®");
             Text.Font = GameFont.Small;
             listing.Gap(10f);
             
-            // ¹ö¶¯ÇøÓò
+            // æ»šåŠ¨åŒºåŸŸ
             Rect scrollRect = new Rect(0f, listing.CurHeight, inRect.width, inRect.height - listing.CurHeight - 60f);
             Rect viewRect = new Rect(0f, 0f, scrollRect.width - 20f, 1000f);
             
@@ -130,12 +130,12 @@ namespace TheSecondSeat.UI
             scrollListing.Begin(viewRect);
             
             // ========================================
-            // LLM API ÅäÖÃ
+            // LLM API é…ç½®
             // ========================================
-            scrollListing.Label("?? LLM API ÅäÖÃ");
+            scrollListing.Label("?? LLM API é…ç½®");
             scrollListing.GapLine(12f);
             
-            // Provider Ñ¡Ôñ
+            // Provider é€‰æ‹©
             Rect providerRect = scrollListing.GetRect(30f);
             Widgets.Label(providerRect.LeftHalf(), "Provider:");
             
@@ -159,7 +159,7 @@ namespace TheSecondSeat.UI
                         llmEndpoint = "https://generativelanguage.googleapis.com/v1/models";
                         llmModel = "gemini-pro";
                     }),
-                    new FloatMenuOption("±¾µØ LLM", () => {
+                    new FloatMenuOption("æœ¬åœ° LLM", () => {
                         llmProvider = "local";
                         llmEndpoint = "http://localhost:1234/v1/chat/completions";
                         llmModel = "local-model";
@@ -188,21 +188,21 @@ namespace TheSecondSeat.UI
             llmModel = Widgets.TextField(modelRect.RightHalf(), llmModel);
             scrollListing.Gap(5f);
             
-            // ²âÊÔÁ¬½Ó°´Å¥
-            if (scrollListing.ButtonText("?? ²âÊÔ LLM Á¬½Ó", "²âÊÔ LLM API ÊÇ·ñ¿ÉÓÃ"))
+            // æµ‹è¯•è¿æ¥æŒ‰é’®
+            if (scrollListing.ButtonText("?? æµ‹è¯• LLM è¿æ¥", "æµ‹è¯• LLM API æ˜¯å¦å¯ç”¨"))
             {
-                TestLLMConnection();
+                _ = TestLLMConnectionAsync();
             }
             
             scrollListing.Gap(15f);
             
             // ========================================
-            // TTS API ÅäÖÃ
+            // TTS API é…ç½®
             // ========================================
-            scrollListing.Label("?? TTS API ÅäÖÃ");
+            scrollListing.Label("?? TTS API é…ç½®");
             scrollListing.GapLine(12f);
             
-            // TTS Provider Ñ¡Ôñ
+            // TTS Provider é€‰æ‹©
             Rect ttsProviderRect = scrollListing.GetRect(30f);
             Widgets.Label(ttsProviderRect.LeftHalf(), "Provider:");
             
@@ -211,7 +211,7 @@ namespace TheSecondSeat.UI
             {
                 var options = new System.Collections.Generic.List<FloatMenuOption>
                 {
-                    new FloatMenuOption("Edge TTS (Ãâ·Ñ)", () => {
+                    new FloatMenuOption("Edge TTS (å…è´¹)", () => {
                         ttsProvider = "edge";
                         ttsVoice = "zh-CN-XiaoxiaoNeural";
                     }),
@@ -229,7 +229,7 @@ namespace TheSecondSeat.UI
             }
             scrollListing.Gap(5f);
             
-            // TTS API Key£¨Ä³Ğ© Provider ĞèÒª£©
+            // TTS API Keyï¼ˆæŸäº› Provider éœ€è¦ï¼‰
             if (ttsProvider != "edge")
             {
                 Rect ttsKeyRect = scrollListing.GetRect(30f);
@@ -244,23 +244,23 @@ namespace TheSecondSeat.UI
             ttsVoice = Widgets.TextField(voiceRect.RightHalf(), ttsVoice);
             scrollListing.Gap(5f);
             
-            // ²âÊÔ TTS °´Å¥
-            if (scrollListing.ButtonText("?? ²âÊÔ TTS", "²¥·Å²âÊÔÓïÒô"))
+            // æµ‹è¯• TTS æŒ‰é’®
+            if (scrollListing.ButtonText("?? æµ‹è¯• TTS", "æ’­æ”¾æµ‹è¯•è¯­éŸ³"))
             {
-                TestTTS();
+                _ = TestTTSAsync();
             }
             
             scrollListing.Gap(15f);
             
             // ========================================
-            // ²¢·¢¹ÜÀíÆ÷ÅäÖÃ
+            // å¹¶å‘ç®¡ç†å™¨é…ç½®
             // ========================================
-            scrollListing.Label("? ²¢·¢¹ÜÀíÆ÷");
+            scrollListing.Label("? å¹¶å‘ç®¡ç†å™¨");
             scrollListing.GapLine(12f);
             
-            // ×î´ó²¢·¢Êı
+            // æœ€å¤§å¹¶å‘æ•°
             Rect concurrentRect = scrollListing.GetRect(30f);
-            Widgets.Label(concurrentRect.LeftHalf(), $"×î´ó²¢·¢Êı: {maxConcurrent}");
+            Widgets.Label(concurrentRect.LeftHalf(), $"æœ€å¤§å¹¶å‘æ•°: {maxConcurrent}");
             maxConcurrent = (int)Widgets.HorizontalSlider(
                 concurrentRect.RightHalf(), 
                 maxConcurrent, 
@@ -271,9 +271,9 @@ namespace TheSecondSeat.UI
             );
             scrollListing.Gap(5f);
             
-            // ÇëÇó³¬Ê±
+            // è¯·æ±‚è¶…æ—¶
             Rect timeoutRect = scrollListing.GetRect(30f);
-            Widgets.Label(timeoutRect.LeftHalf(), $"ÇëÇó³¬Ê±(Ãë): {requestTimeout}");
+            Widgets.Label(timeoutRect.LeftHalf(), $"è¯·æ±‚è¶…æ—¶(ç§’): {requestTimeout}");
             requestTimeout = (int)Widgets.HorizontalSlider(
                 timeoutRect.RightHalf(), 
                 requestTimeout, 
@@ -284,14 +284,14 @@ namespace TheSecondSeat.UI
             );
             scrollListing.Gap(5f);
             
-            // ÆôÓÃÖØÊÔ
+            // å¯ç”¨é‡è¯•
             Rect retryRect = scrollListing.GetRect(30f);
-            Widgets.Label(retryRect.LeftHalf(), "ÆôÓÃ×Ô¶¯ÖØÊÔ:");
+            Widgets.Label(retryRect.LeftHalf(), "å¯ç”¨è‡ªåŠ¨é‡è¯•:");
             Widgets.Checkbox(retryRect.RightHalf().position, ref enableRetry);
             scrollListing.Gap(10f);
             
-            // ²¢·¢¹ÜÀíÆ÷Í³¼Æ
-            scrollListing.Label("?? ²¢·¢Í³¼Æ:");
+            // å¹¶å‘ç®¡ç†å™¨ç»Ÿè®¡
+            scrollListing.Label("?? å¹¶å‘ç»Ÿè®¡:");
             try
             {
                 string stats = ConcurrentRequestManager.Instance.GetStats();
@@ -304,92 +304,92 @@ namespace TheSecondSeat.UI
                 
                 scrollListing.Gap(10f);
                 
-                // ÖØÖÃÍ³¼Æ°´Å¥
-                if (scrollListing.ButtonText("?? ÖØÖÃÍ³¼Æ", "Çå³ı²¢·¢¹ÜÀíÆ÷Í³¼Æ"))
+                // é‡ç½®ç»Ÿè®¡æŒ‰é’®
+                if (scrollListing.ButtonText("?? é‡ç½®ç»Ÿè®¡", "æ¸…é™¤å¹¶å‘ç®¡ç†å™¨ç»Ÿè®¡"))
                 {
                     ConcurrentRequestManager.Instance.ResetStats();
-                    Messages.Message("²¢·¢Í³¼ÆÒÑÖØÖÃ", MessageTypeDefOf.PositiveEvent);
+                    Messages.Message("å¹¶å‘ç»Ÿè®¡å·²é‡ç½®", MessageTypeDefOf.PositiveEvent);
                 }
             }
             catch (Exception ex)
             {
-                scrollListing.Label($"? »ñÈ¡Í³¼ÆÊ§°Ü: {ex.Message}");
+                scrollListing.Label($"? è·å–ç»Ÿè®¡å¤±è´¥: {ex.Message}");
             }
             
             scrollListing.End();
             Widgets.EndScrollView();
             
-            // µ×²¿°´Å¥
+            // åº•éƒ¨æŒ‰é’®
             listing.End();
             
             Rect bottomRect = new Rect(inRect.x, inRect.yMax - 50f, inRect.width, 50f);
             
-            // ±£´æ²¢Ó¦ÓÃ°´Å¥
-            if (Widgets.ButtonText(new Rect(bottomRect.x, bottomRect.y, 150f, 35f), "?? ±£´æ²¢Ó¦ÓÃ"))
+            // ä¿å­˜å¹¶åº”ç”¨æŒ‰é’®
+            if (Widgets.ButtonText(new Rect(bottomRect.x, bottomRect.y, 150f, 35f), "?? ä¿å­˜å¹¶åº”ç”¨"))
             {
                 SaveSettings();
-                Messages.Message("API ÉèÖÃÒÑ±£´æ²¢Ó¦ÓÃ", MessageTypeDefOf.PositiveEvent);
+                Messages.Message("API è®¾ç½®å·²ä¿å­˜å¹¶åº”ç”¨", MessageTypeDefOf.PositiveEvent);
             }
             
-            // ¹Ø±Õ°´Å¥
-            if (Widgets.ButtonText(new Rect(bottomRect.xMax - 150f, bottomRect.y, 150f, 35f), "¹Ø±Õ"))
+            // å…³é—­æŒ‰é’®
+            if (Widgets.ButtonText(new Rect(bottomRect.xMax - 150f, bottomRect.y, 150f, 35f), "å…³é—­"))
             {
                 Close();
             }
         }
         
-        private async void TestLLMConnection()
+        private async System.Threading.Tasks.Task TestLLMConnectionAsync()
         {
-            Messages.Message("ÕıÔÚ²âÊÔ LLM Á¬½Ó...", MessageTypeDefOf.NeutralEvent);
+            Messages.Message("æ­£åœ¨æµ‹è¯• LLM è¿æ¥...", MessageTypeDefOf.NeutralEvent);
             
             try
             {
-                // ÁÙÊ±Ó¦ÓÃÉèÖÃ
+                // ä¸´æ—¶åº”ç”¨è®¾ç½®
                 LLM.LLMService.Instance.Configure(llmEndpoint, llmApiKey, llmModel, llmProvider);
                 
                 bool success = await LLM.LLMService.Instance.TestConnectionAsync();
                 
                 if (success)
                 {
-                    Messages.Message("? LLM Á¬½Ó²âÊÔ³É¹¦£¡", MessageTypeDefOf.PositiveEvent);
+                    Messages.Message("? LLM è¿æ¥æµ‹è¯•æˆåŠŸï¼", MessageTypeDefOf.PositiveEvent);
                 }
                 else
                 {
-                    Messages.Message("? LLM Á¬½Ó²âÊÔÊ§°Ü£¬Çë¼ì²éÅäÖÃ", MessageTypeDefOf.RejectInput);
+                    Messages.Message("? LLM è¿æ¥æµ‹è¯•å¤±è´¥ï¼Œè¯·æ£€æŸ¥é…ç½®", MessageTypeDefOf.RejectInput);
                 }
             }
             catch (Exception ex)
             {
-                Messages.Message($"? ²âÊÔÒì³£: {ex.Message}", MessageTypeDefOf.RejectInput);
+                Messages.Message($"? æµ‹è¯•å¼‚å¸¸: {ex.Message}", MessageTypeDefOf.RejectInput);
                 Log.Error($"[API Settings] LLM test failed: {ex.Message}");
             }
         }
         
-        private async void TestTTS()
+        private async System.Threading.Tasks.Task TestTTSAsync()
         {
-            Messages.Message("ÕıÔÚ²âÊÔ TTS...", MessageTypeDefOf.NeutralEvent);
+            Messages.Message("æ­£åœ¨æµ‹è¯• TTS...", MessageTypeDefOf.NeutralEvent);
             
             try
             {
-                // ÁÙÊ±Ó¦ÓÃÉèÖÃ
+                // ä¸´æ—¶åº”ç”¨è®¾ç½®
                 TTS.TTSService.Instance.Configure(ttsProvider, ttsApiKey, ttsVoice);
                 
-                // ²¥·Å²âÊÔÓïÒô£¨Ê¹ÓÃ SpeakAsync ¶ø²»ÊÇ SynthesizeSpeechAsync£©
-                string testText = "ÕâÊÇÒ»Ìõ²âÊÔÓïÒôÏûÏ¢¡£";
+                // æ’­æ”¾æµ‹è¯•è¯­éŸ³ï¼ˆä½¿ç”¨ SpeakAsync è€Œä¸æ˜¯ SynthesizeSpeechAsyncï¼‰
+                string testText = "è¿™æ˜¯ä¸€æ¡æµ‹è¯•è¯­éŸ³æ¶ˆæ¯ã€‚";
                 string? filePath = await TTS.TTSService.Instance.SpeakAsync(testText);
                 
                 if (!string.IsNullOrEmpty(filePath))
                 {
-                    Messages.Message("? TTS ²âÊÔÍê³É£¡", MessageTypeDefOf.PositiveEvent);
+                    Messages.Message("? TTS æµ‹è¯•å®Œæˆï¼", MessageTypeDefOf.PositiveEvent);
                 }
                 else
                 {
-                    Messages.Message("? TTS ²âÊÔÊ§°Ü", MessageTypeDefOf.RejectInput);
+                    Messages.Message("? TTS æµ‹è¯•å¤±è´¥", MessageTypeDefOf.RejectInput);
                 }
             }
             catch (Exception ex)
             {
-                Messages.Message($"? TTS ²âÊÔÊ§°Ü: {ex.Message}", MessageTypeDefOf.RejectInput);
+                Messages.Message($"? TTS æµ‹è¯•å¤±è´¥: {ex.Message}", MessageTypeDefOf.RejectInput);
                 Log.Error($"[API Settings] TTS test failed: {ex.Message}");
             }
         }
