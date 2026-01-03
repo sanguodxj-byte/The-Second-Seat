@@ -14,20 +14,23 @@ namespace TheSecondSeat.PersonaGeneration
     /// </summary>
     public static class LayeredPortraitCompositor
     {
-        // 合成缓存（避免重复合成相同配置）
+        // ✅ 修复内存泄漏：添加缓存大小限制
         private static Dictionary<string, Texture2D> compositeCache = new Dictionary<string, Texture2D>();
+        private const int MaxCacheSize = 30; // 最大缓存数量
         
         // 基础纹理路径
         private const string LAYERED_BASE_PATH = "UI/Narrators/9x16/Layered/";
 
         /// <summary>
         /// 合成分层立绘（异步版本）
+        /// ⚠️ v1.6.80: 修复线程安全问题 - 纹理加载必须在主线程
+        /// ⚠️ v1.6.81: 修复CS1998警告 - 移除async关键字，使用Task.FromResult包装
         /// ? v1.6.27: 使用base_body作为底图，其他部件覆盖；异步合成避免卡顿
         /// ? v1.6.29: Neutral表情直接使用base_body（底图已包含睁眼闭嘴）
         /// </summary>
-        public static async Task<Texture2D> CompositeLayersAsync(
-            LayeredPortraitConfig config, 
-            ExpressionType expression = ExpressionType.Neutral, 
+        public static Task<Texture2D> CompositeLayersAsync(
+            LayeredPortraitConfig config,
+            ExpressionType expression = ExpressionType.Neutral,
             string outfit = "default")
         {
             // 1. 生成缓存键
@@ -36,7 +39,7 @@ namespace TheSecondSeat.PersonaGeneration
             // 2. 检查缓存
             if (compositeCache.TryGetValue(cacheKey, out Texture2D cachedTexture))
             {
-                return cachedTexture;
+                return Task.FromResult(cachedTexture);
             }
 
             try
@@ -44,6 +47,7 @@ namespace TheSecondSeat.PersonaGeneration
                 // ? v1.6.27: 使用 PersonaName 而不是 PersonaDefName
                 string personaName = config.PersonaName;
                 
+                // ⚠️ v1.6.80: 所有纹理加载必须在主线程完成
                 // 3. ? 加载base_body作为底图
                 var baseBodyTexture = LoadLayerTexture(personaName, "base_body");
                 
@@ -54,14 +58,14 @@ namespace TheSecondSeat.PersonaGeneration
                     {
                         Log.Warning($"[LayeredPortraitCompositor] base_body.png not found for {personaName}");
                     }
-                    return null;
+                    return Task.FromResult<Texture2D>(null);
                 }
 
                 // ? v1.6.29: 如果是Neutral表情，直接返回底图（底图已包含睁眼闭嘴）
                 if (expression == ExpressionType.Neutral)
                 {
                     compositeCache[cacheKey] = baseBodyTexture;
-                    return baseBodyTexture;
+                    return Task.FromResult(baseBodyTexture);
                 }
 
                 // 创建图层列表，base_body作为第一层
@@ -76,7 +80,7 @@ namespace TheSecondSeat.PersonaGeneration
                 if (eyesLayerName != "opened_eyes")
                 {
                     var eyesTexture = LoadLayerTexture(personaName, eyesLayerName);
-                    if (eyesTexture != null) 
+                    if (eyesTexture != null)
                     {
                         layers.Add(eyesTexture);
                     }
@@ -85,7 +89,7 @@ namespace TheSecondSeat.PersonaGeneration
                 if (mouthLayerName != "opened_mouth")
                 {
                     var mouthTexture = LoadLayerTexture(personaName, mouthLayerName);
-                    if (mouthTexture != null) 
+                    if (mouthTexture != null)
                     {
                         layers.Add(mouthTexture);
                     }
@@ -98,16 +102,34 @@ namespace TheSecondSeat.PersonaGeneration
                     layers.Add(flushTexture);
                 }
                 
-                // 6. ? 异步合成所有层（在后台线程）
-                Texture2D composite = await Task.Run(() => CompositeAllLayers(layers));
+                // ⚠️ v1.6.80: 像素合成可以同步完成，避免跨线程问题
+                // 因为纹理已在主线程加载，像素操作也必须在主线程
+                Texture2D composite = CompositeAllLayers(layers);
                 
-                // 7. 缓存结果
+                // 7. ✅ 修复：替换前先销毁旧纹理，限制缓存大小
                 if (composite != null)
                 {
+                    // 销毁旧纹理（如果存在）
+                    if (compositeCache.TryGetValue(cacheKey, out var oldTexture))
+                    {
+                        UnityEngine.Object.Destroy(oldTexture);
+                    }
+                    
+                    // 限制缓存大小
+                    if (compositeCache.Count >= MaxCacheSize)
+                    {
+                        var firstKey = compositeCache.Keys.First();
+                        if (compositeCache.TryGetValue(firstKey, out var oldestTexture))
+                        {
+                            UnityEngine.Object.Destroy(oldestTexture);
+                        }
+                        compositeCache.Remove(firstKey);
+                    }
+                    
                     compositeCache[cacheKey] = composite;
                 }
                 
-                return composite;
+                return Task.FromResult(composite);
             }
             catch (Exception ex)
             {
@@ -116,7 +138,7 @@ namespace TheSecondSeat.PersonaGeneration
                 {
                     Log.Error($"[LayeredPortraitCompositor] Composite failed: {ex}");
                 }
-                return null;
+                return Task.FromResult<Texture2D>(null);
             }
         }
         
@@ -202,9 +224,26 @@ namespace TheSecondSeat.PersonaGeneration
                 // 6. 合成所有层
                 Texture2D composite = CompositeAllLayers(layers);
                 
-                // 7. 缓存结果
+                // 7. ✅ 修复：替换前先销毁旧纹理，限制缓存大小
                 if (composite != null)
                 {
+                    // 销毁旧纹理（如果存在）
+                    if (compositeCache.TryGetValue(cacheKey, out var oldTexture))
+                    {
+                        UnityEngine.Object.Destroy(oldTexture);
+                    }
+                    
+                    // 限制缓存大小
+                    if (compositeCache.Count >= MaxCacheSize)
+                    {
+                        var firstKey = compositeCache.Keys.First();
+                        if (compositeCache.TryGetValue(firstKey, out var oldestTexture))
+                        {
+                            UnityEngine.Object.Destroy(oldestTexture);
+                        }
+                        compositeCache.Remove(firstKey);
+                    }
+                    
                     compositeCache[cacheKey] = composite;
                 }
                 
@@ -287,7 +326,7 @@ namespace TheSecondSeat.PersonaGeneration
                 // 路径 1: 主 Mod 路径（UI/Narrators/9x16/Layered/PersonaName/）
                 $"{LAYERED_BASE_PATH}{personaName}/{layerName}",
                 
-                // 路径 2: 子 Mod 路径（Narrators/Layered/）- 适配 Sideria
+                // 路径 2: 子 Mod 路径（Narrators/Layered/）- 适配扁平结构
                 $"Narrators/Layered/{layerName}",
                 
                 // 路径 3: 旧版路径（向后兼容）
@@ -325,7 +364,7 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// ? v1.6.27: 从 defName 提取人格文件夹名称
-        /// 例如：Sideria_Default → Sideria, Cassandra_Classic → Cassandra
+        /// 例如：YourPersona_Default → YourPersona, Cassandra_Classic → Cassandra
         /// </summary>
         private static string GetPersonaFolderName(string defName)
         {
@@ -379,21 +418,19 @@ namespace TheSecondSeat.PersonaGeneration
             {
                 if (layer == null) continue;
                 
-                // 确保尺寸一致
+                // ? v1.6.83: 自动处理尺寸不匹配（通过 GetReadablePixels 缩放）
                 if (layer.width != width || layer.height != height)
                 {
-                    // ? 只在DevMode下输出警告
                     if (Prefs.DevMode)
                     {
-                        Log.Warning($"[LayeredPortraitCompositor] Layer size mismatch: {layer.width}x{layer.height} vs {width}x{height}");
+                        Log.Warning($"[LayeredPortraitCompositor] Resizing layer {layer.name}: {layer.width}x{layer.height} -> {width}x{height}");
                     }
-                    continue;
                 }
                 
                 try
                 {
-                    // 获取图层像素（使用 RenderTexture 避免 "not readable" 错误）
-                    Color[] layerPixels = GetReadablePixels(layer);
+                    // 获取图层像素（使用 RenderTexture 避免 "not readable" 错误，并自动缩放）
+                    Color[] layerPixels = GetReadablePixels(layer, width, height);
                     
                     // Alpha 混合
                     for (int i = 0; i < pixels.Length; i++)
@@ -429,41 +466,48 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// 获取纹理的可读像素（避免 "not readable" 错误）
+        /// 获取纹理的可读像素（避免 "not readable" 错误，并支持自动缩放）
         /// </summary>
-        private static Color[] GetReadablePixels(Texture2D texture)
+        private static Color[] GetReadablePixels(Texture2D texture, int targetWidth, int targetHeight)
         {
-            // 尝试直接读取
-            try
+            // 如果尺寸匹配且可读，尝试直接读取（性能优化）
+            if (texture.width == targetWidth && texture.height == targetHeight)
             {
-                return texture.GetPixels();
+                try
+                {
+                    return texture.GetPixels();
+                }
+                catch
+                {
+                    // 如果不可读，回退到 RenderTexture 方法
+                }
             }
-            catch
-            {
-                // 如果失败，使用 RenderTexture 转换
-                RenderTexture renderTex = RenderTexture.GetTemporary(
-                    texture.width, 
-                    texture.height, 
-                    0, 
-                    RenderTextureFormat.Default, 
-                    RenderTextureReadWrite.Linear
-                );
-                
-                Graphics.Blit(texture, renderTex);
-                RenderTexture previous = RenderTexture.active;
-                RenderTexture.active = renderTex;
-                
-                Texture2D readable = new Texture2D(texture.width, texture.height, TextureFormat.RGBA32, false);
-                readable.ReadPixels(new Rect(0, 0, renderTex.width, renderTex.height), 0, 0);
-                readable.Apply();
-                
-                Color[] pixels = readable.GetPixels();
-                
-                RenderTexture.active = previous;
-                RenderTexture.ReleaseTemporary(renderTex);
-                
-                return pixels;
-            }
+
+            // 使用 RenderTexture 转换（支持缩放和不可读纹理）
+            RenderTexture renderTex = RenderTexture.GetTemporary(
+                targetWidth,
+                targetHeight,
+                0,
+                RenderTextureFormat.Default,
+                RenderTextureReadWrite.Linear
+            );
+            
+            // Blit 会自动处理缩放
+            Graphics.Blit(texture, renderTex);
+            
+            RenderTexture previous = RenderTexture.active;
+            RenderTexture.active = renderTex;
+            
+            Texture2D readable = new Texture2D(targetWidth, targetHeight, TextureFormat.RGBA32, false);
+            readable.ReadPixels(new Rect(0, 0, targetWidth, targetHeight), 0, 0);
+            readable.Apply();
+            
+            Color[] pixels = readable.GetPixels();
+            
+            RenderTexture.active = previous;
+            RenderTexture.ReleaseTemporary(renderTex);
+            
+            return pixels;
         }
         
         /// <summary>
@@ -515,27 +559,46 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// 清除特定人格和表情的缓存
+        /// ✅ 修复：销毁纹理防止内存泄漏
+        /// ⭐ v1.6.92: 跳过 Neutral 表情的缓存（base_body 不应被清除）
         /// </summary>
         public static void ClearCache(string personaDefName, ExpressionType expression)
         {
+            // ⭐ v1.6.92: 跳过 Neutral 表情（base_body 是分层立绘的基础，不应被频繁清除）
+            if (expression == ExpressionType.Neutral)
+            {
+                return;
+            }
+            
             string cacheKey = $"{personaDefName}_{expression}_default";
             
-            if (compositeCache.Remove(cacheKey))
+            if (compositeCache.TryGetValue(cacheKey, out var texture))
             {
-                if (Prefs.DevMode)
-                {
-                    Log.Message($"[LayeredPortraitCompositor] Cache cleared: {cacheKey}");
-                }
+                UnityEngine.Object.Destroy(texture);
+                compositeCache.Remove(cacheKey);
+                
+                // 日志已静默
             }
         }
         
         /// <summary>
         /// 清除所有缓存
+        /// ✅ 修复：销毁所有纹理防止内存泄漏
         /// </summary>
         public static void ClearAllCache()
         {
+            foreach (var texture in compositeCache.Values)
+            {
+                if (texture != null)
+                {
+                    UnityEngine.Object.Destroy(texture);
+                }
+            }
             compositeCache.Clear();
-            Log.Message("[LayeredPortraitCompositor] All cache cleared");
+            if (Prefs.DevMode)
+            {
+                Log.Message("[LayeredPortraitCompositor] All cache cleared");
+            }
         }
     }
 }

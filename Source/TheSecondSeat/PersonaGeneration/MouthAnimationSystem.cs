@@ -122,14 +122,7 @@ namespace TheSecondSeat.PersonaGeneration
                 // 更新状态
                 state.IsSpeaking = isCurrentlySpeaking;
                 
-                if (Prefs.DevMode && isCurrentlySpeaking && !state.isSpeaking)
-                {
-                    Log.Message($"[MouthAnimationSystem] {persona.defName} 开始说话");
-                }
-                else if (Prefs.DevMode && !isCurrentlySpeaking && state.isSpeaking)
-                {
-                    Log.Message($"[MouthAnimationSystem] {persona.defName} 停止说话");
-                }
+                // 日志已静默：TTS说话状态变化
             }
         }
         
@@ -206,9 +199,16 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// ⭐ v1.6.74: 音素模式 - 从 TTS 音素数据获取嘴型
+        /// ⭐ v1.7.6: 添加 visemeQueue null 安全检查
         /// </summary>
         private static string GetMouthLayerNameFromPhoneme(SpeakingState state, string defName, bool isPlayingTTS)
         {
+            // ⭐ v1.7.6: 确保 visemeQueue 不为 null
+            if (state.visemeQueue == null)
+            {
+                state.visemeQueue = new Queue<VisemeCode>();
+            }
+            
             if (!isPlayingTTS)
             {
                 // TTS 停止后立即闭嘴
@@ -220,10 +220,7 @@ namespace TheSecondSeat.PersonaGeneration
                     state.visemeQueue.Clear();
                     state.lockedMouthLayer = null;
                     
-                    if (Prefs.DevMode)
-                    {
-                        Log.Message($"[MouthAnimationSystem] {defName} TTS停止 - 立即闭嘴（音素模式）");
-                    }
+                    // 日志已静默：TTS停止（音素模式）
                 }
                 
                 return null; // 闭嘴
@@ -259,11 +256,7 @@ namespace TheSecondSeat.PersonaGeneration
             if (layerName != state.lockedMouthLayer)
             {
                 state.lockedMouthLayer = layerName;
-                
-                if (Prefs.DevMode)
-                {
-                    Log.Message($"[MouthAnimationSystem] {defName} Viseme切换: {state.currentViseme} (音素模式)");
-                }
+                // 日志已静默：Viseme切换
             }
             
             return layerName;
@@ -289,11 +282,7 @@ namespace TheSecondSeat.PersonaGeneration
                 
                 state.targetRawOpenness = targetOpenness;
                 
-                // 调试日志：TTS 播放时输出
-                if (Prefs.DevMode && state.speakingTime % 1f < 0.1f) // 每秒输出一次
-                {
-                    Log.Message($"[MouthAnimationSystem] {defName} TTS播放中 - 原始开合度: {targetOpenness:F2}, 平滑后: {state.currentOpenness:F2}（模拟模式）");
-                }
+                // 日志已静默：TTS播放时的开合度
             }
             else
             {
@@ -306,10 +295,7 @@ namespace TheSecondSeat.PersonaGeneration
                     state.targetRawOpenness = 0f;
                     state.lockedMouthLayer = null;
                     
-                    if (Prefs.DevMode)
-                    {
-                        Log.Message($"[MouthAnimationSystem] {defName} TTS停止 - 立即闭嘴（模拟模式）");
-                    }
+                    // 日志已静默：TTS停止（模拟模式）
                 }
                 
                 // 根据表情获取静态开合度
@@ -372,11 +358,7 @@ namespace TheSecondSeat.PersonaGeneration
             {
                 state.lockedMouthLayer = layerName;
                 state.lastStateChangeTime = currentTime;
-                
-                if (Prefs.DevMode)
-                {
-                    Log.Message($"[MouthAnimationSystem] {defName} 嘴型切换: {layerName ?? "null"} (表情={state.currentExpression}, 开合度={state.currentOpenness:F2}, Viseme={viseme}, TTS={isPlayingTTS})（模拟模式）");
-                }
+                // 日志已静默：嘴型切换
             }
             
             return layerName;
@@ -401,10 +383,7 @@ namespace TheSecondSeat.PersonaGeneration
                 state.visemeQueue.Enqueue(viseme);
             }
             
-            if (Prefs.DevMode)
-            {
-                Log.Message($"[MouthAnimationSystem] {defName} 接收 Viseme 序列: {visemes.Count} 个");
-            }
+            // 日志已静默：Viseme序列接收
         }
         
         /// <summary>
@@ -444,6 +423,7 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// ✅ v1.6.65: 立即停止所有嘴部动画
+        /// ⭐ v1.7.6: 添加 visemeQueue null 安全检查
         /// </summary>
         public static void StopAnimation()
         {
@@ -457,13 +437,18 @@ namespace TheSecondSeat.PersonaGeneration
                 state.lockedMouthLayer = null;
                 state.currentViseme = VisemeCode.Closed;
                 state.targetViseme = VisemeCode.Closed;
-                state.visemeQueue.Clear();
+                // ⭐ v1.7.6: null 安全检查
+                if (state.visemeQueue != null)
+                {
+                    state.visemeQueue.Clear();
+                }
+                else
+                {
+                    state.visemeQueue = new Queue<VisemeCode>();
+                }
             }
             
-            if (Prefs.DevMode)
-            {
-                Log.Message("[MouthAnimationSystem] All mouth animations stopped");
-            }
+            // 日志已静默：所有嘴部动画停止
         }
     }
 }

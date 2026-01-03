@@ -99,7 +99,7 @@ namespace TheSecondSeat.UI
             if (window != null)
             {
                 window.userInput = text;
-                Log.Message($"[NarratorWindow] 输入框已设置: {text}");
+                // 日志已静默：输入框设置
             }
         }
         
@@ -118,7 +118,7 @@ namespace TheSecondSeat.UI
                 window.userInput = text;
                 window.SendMessage(text);
                 window.userInput = "";  // 清空输入框
-                Log.Message($"[NarratorWindow] 已自动发送: {text}");
+                // 日志已静默：自动发送
             }
         }
 
@@ -303,7 +303,7 @@ namespace TheSecondSeat.UI
         private void DrawLayeredPortraitRuntime(Rect rect, PersonaGeneration.NarratorPersonaDef persona)
         {
             // ? v1.6.35: 移除useLayeredPortrait检查，强制使用分层系统
-            // 原因：所有立绘文件已部署在 Layered/Sideria/ 文件夹下
+            // 原因：所有立绘文件已部署在 Layered/{PersonaName}/ 文件夹下
             
             // 1. 绘制基础身体层（始终显示）
             var baseBody = PortraitLoader.GetLayerTexture(persona, "base_body");

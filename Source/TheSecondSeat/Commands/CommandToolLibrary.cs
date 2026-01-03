@@ -203,53 +203,33 @@ namespace TheSecondSeat.Commands
         
         private static void RegisterResourceCommands()
         {
-            // 2.1 禁止/允许物品
+            // 2.1 禁止物品
             Register(new CommandDefinition
             {
-                commandId = "ForbidItem",
+                commandId = "ForbidItems",
                 category = "ResourceManagement",
-                displayName = "禁止/允许物品",
-                description = "设置物品的禁止状态",
+                displayName = "禁止物品",
+                description = "禁止指定类型的物品",
                 parameters = new List<ParameterDef>
                 {
-                    new ParameterDef { name = "thingDef", type = "string", required = true, description = "物品DefName" },
-                    new ParameterDef { name = "forbidden", type = "bool", required = false, defaultValue = "true", description = "true=禁止, false=允许" },
-                    new ParameterDef { name = "scope", type = "string", required = false, defaultValue = "All", 
-                        validValues = new List<string> { "All", "Selected", "Area" }, description = "范围" }
+                    new ParameterDef { name = "limit", type = "int", required = false, defaultValue = "-1", description = "限制数量" }
                 },
-                example = "{ \"action\": \"ForbidItem\", \"thingDef\": \"Steel\", \"forbidden\": false }",
-                notes = "禁止的物品不会被搬运"
+                example = "{ \"action\": \"ForbidItems\", \"limit\": 10 }",
+                notes = "禁止的物品不会被殖民者互动"
             });
-            
-            // 2.2 搬运到仓库
+
+            // 2.2 允许物品
             Register(new CommandDefinition
             {
-                commandId = "HaulToStorage",
+                commandId = "AllowItems",
                 category = "ResourceManagement",
-                displayName = "搬运到仓库",
-                description = "将物品搬运到指定仓库区",
+                displayName = "允许物品",
+                description = "允许指定类型的物品（解除禁止）",
                 parameters = new List<ParameterDef>
                 {
-                    new ParameterDef { name = "thingDef", type = "string", required = false, description = "物品DefName（为空则搬运所有可搬运物品）" },
-                    new ParameterDef { name = "storageZone", type = "string", required = false, description = "目标仓库区名称" }
+                    new ParameterDef { name = "limit", type = "int", required = false, defaultValue = "-1", description = "限制数量" }
                 },
-                example = "{ \"action\": \"HaulToStorage\", \"thingDef\": \"MealSimple\" }",
-                notes = "需要有可用的搬运工"
-            });
-            
-            // 2.3 丢弃物品
-            Register(new CommandDefinition
-            {
-                commandId = "DropItem",
-                category = "ResourceManagement",
-                displayName = "丢弃物品",
-                description = "命令殖民者丢弃当前携带的物品",
-                parameters = new List<ParameterDef>
-                {
-                    new ParameterDef { name = "pawnName", type = "string", required = true, description = "殖民者名字" },
-                    new ParameterDef { name = "thingDef", type = "string", required = false, description = "物品DefName（为空则丢弃全部）" }
-                },
-                example = "{ \"action\": \"DropItem\", \"pawnName\": \"张三\" }",
+                example = "{ \"action\": \"AllowItems\", \"limit\": 10 }",
                 notes = ""
             });
         }
@@ -260,78 +240,8 @@ namespace TheSecondSeat.Commands
         
         private static void RegisterBuildingCommands()
         {
-            // 3.1 指派建造
-            Register(new CommandDefinition
-            {
-                commandId = "DesignateBuild",
-                category = "Building",
-                displayName = "指派建造",
-                description = "在指定位置规划新建筑",
-                parameters = new List<ParameterDef>
-                {
-                    new ParameterDef { name = "buildingDef", type = "string", required = true, description = "建筑DefName" },
-                    new ParameterDef { name = "x", type = "int", required = true, description = "X坐标" },
-                    new ParameterDef { name = "z", type = "int", required = true, description = "Z坐标" },
-                    new ParameterDef { name = "rotation", type = "string", required = false, defaultValue = "North",
-                        validValues = new List<string> { "North", "South", "East", "West" }, description = "朝向" },
-                    new ParameterDef { name = "stuffDef", type = "string", required = false, description = "材料DefName" }
-                },
-                example = "{ \"action\": \"DesignateBuild\", \"buildingDef\": \"Wall\", \"x\": 10, \"z\": 10, \"stuffDef\": \"BlocksGranite\" }",
-                notes = "需要有足够的材料和建筑工人"
-            });
-            
-            // 3.2 取消建造
-            Register(new CommandDefinition
-            {
-                commandId = "CancelBuild",
-                category = "Building",
-                displayName = "取消建造",
-                description = "取消指定位置的建造计划",
-                parameters = new List<ParameterDef>
-                {
-                    new ParameterDef { name = "x", type = "int", required = true, description = "X坐标" },
-                    new ParameterDef { name = "z", type = "int", required = true, description = "Z坐标" }
-                },
-                example = "{ \"action\": \"CancelBuild\", \"x\": 10, \"z\": 10 }",
-                notes = ""
-            });
-            
-            // 3.3 拆除建筑
-            Register(new CommandDefinition
-            {
-                commandId = "Deconstruct",
-                category = "Building",
-                displayName = "拆除建筑",
-                description = "指派拆除建筑",
-                parameters = new List<ParameterDef>
-                {
-                    new ParameterDef { name = "x", type = "int", required = true, description = "X坐标" },
-                    new ParameterDef { name = "z", type = "int", required = true, description = "Z坐标" }
-                },
-                example = "{ \"action\": \"Deconstruct\", \"x\": 10, \"z\": 10 }",
-                notes = "拆除会回收部分材料"
-            });
-            
-            // 3.4 创建区域
-            Register(new CommandDefinition
-            {
-                commandId = "CreateZone",
-                category = "Building",
-                displayName = "创建区域",
-                description = "创建仓库区、种植区或倾倒区",
-                parameters = new List<ParameterDef>
-                {
-                    new ParameterDef { name = "zoneType", type = "string", required = true, 
-                        validValues = new List<string> { "Stockpile", "Growing", "Dumping" }, description = "区域类型" },
-                    new ParameterDef { name = "x1", type = "int", required = true, description = "起始X坐标" },
-                    new ParameterDef { name = "z1", type = "int", required = true, description = "起始Z坐标" },
-                    new ParameterDef { name = "x2", type = "int", required = true, description = "结束X坐标" },
-                    new ParameterDef { name = "z2", type = "int", required = true, description = "结束Z坐标" },
-                    new ParameterDef { name = "zoneName", type = "string", required = false, description = "区域名称" }
-                },
-                example = "{ \"action\": \"CreateZone\", \"zoneType\": \"Stockpile\", \"x1\": 10, \"z1\": 10, \"x2\": 20, \"z2\": 20 }",
-                notes = ""
-            });
+            // 目前没有已实现的建筑命令
+            // 待实现: CancelBuild, Deconstruct
         }
         
         #endregion
@@ -376,23 +286,24 @@ namespace TheSecondSeat.Commands
                 example = "{ \"action\": \"ScheduleEvent\", \"eventType\": \"raid\", \"delayMinutes\": 30 }",
                 notes = "仅在对弈者模式下可用"
             });
-            
-            // 5.3 修改天气
+
+            // 5.3 叙事者降临
             Register(new CommandDefinition
             {
-                commandId = "ChangeWeather",
+                commandId = "Descent",
                 category = "Event",
-                displayName = "修改天气",
-                description = "改变当前地图天气",
+                displayName = "叙事者降临",
+                description = "以实体化身降临到战场，协助殖民者战斗或进行互动。这将消耗大量能量并有冷却时间。",
                 parameters = new List<ParameterDef>
                 {
-                    new ParameterDef { name = "weatherDef", type = "string", required = true,
-                        validValues = new List<string> { "Clear", "Rain", "RainyThunderstorm", "DryThunderstorm", "FoggyRain", "Fog", "SnowGentle", "SnowHard" },
-                        description = "天气DefName" }
+                    new ParameterDef { name = "mode", type = "string", required = false, defaultValue = "assist",
+                        validValues = new List<string> { "assist", "hostile" },
+                        description = "降临模式：assist(协助战斗), hostile(敌对)" }
                 },
-                example = "{ \"action\": \"ChangeWeather\", \"weatherDef\": \"Rain\" }",
-                notes = "仅在对弈者模式下可用"
+                example = "{ \"action\": \"Descent\", \"mode\": \"assist\" }",
+                notes = "当殖民地遭遇严重危机时使用"
             });
+            
         }
         
         #endregion
@@ -401,60 +312,33 @@ namespace TheSecondSeat.Commands
         
         private static void RegisterQueryCommands()
         {
-            // 7.1 获取殖民者列表
+            // 7.1 获取地图位置信息
             Register(new CommandDefinition
             {
-                commandId = "GetColonists",
+                commandId = "GetMapLocation",
                 category = "Query",
-                displayName = "获取殖民者列表",
-                description = "获取所有殖民者的信息",
+                displayName = "获取位置信息",
+                description = "获取地图尺寸和居住区中心坐标，用于定位",
+                parameters = new List<ParameterDef>(),
+                example = "{ \"action\": \"GetMapLocation\" }",
+                notes = "返回地图大小和以最大居住区为中心的锚点坐标"
+            });
+
+            // 7.2 扫描地图态势
+            Register(new CommandDefinition
+            {
+                commandId = "ScanMap",
+                category = "Query",
+                displayName = "扫描地图态势",
+                description = "扫描地图上的特定目标（威胁、访客、资源）并报告其方位",
                 parameters = new List<ParameterDef>
                 {
-                    new ParameterDef { name = "includeDetails", type = "bool", required = false, defaultValue = "false", description = "是否包含详细信息" }
+                    new ParameterDef { name = "target", type = "string", required = false, defaultValue = "hostiles",
+                        validValues = new List<string> { "hostiles", "friendlies", "resources", "all" },
+                        description = "扫描目标类型：hostiles(敌人), friendlies(访客/盟友), resources(高价值资源), all(全部)" }
                 },
-                example = "{ \"action\": \"GetColonists\", \"includeDetails\": true }",
-                notes = "返回殖民者名字、健康状态、当前工作等"
-            });
-            
-            // 7.2 获取资源统计
-            Register(new CommandDefinition
-            {
-                commandId = "GetResources",
-                category = "Query",
-                displayName = "获取资源统计",
-                description = "获取殖民地资源数量",
-                parameters = new List<ParameterDef>
-                {
-                    new ParameterDef { name = "category", type = "string", required = false, 
-                        validValues = new List<string> { "all", "food", "medicine", "weapons", "materials" },
-                        description = "资源类别" }
-                },
-                example = "{ \"action\": \"GetResources\", \"category\": \"food\" }",
-                notes = ""
-            });
-            
-            // 7.3 获取威胁信息
-            Register(new CommandDefinition
-            {
-                commandId = "GetThreats",
-                category = "Query",
-                displayName = "获取威胁信息",
-                description = "获取当前地图上的威胁信息",
-                parameters = new List<ParameterDef>(),
-                example = "{ \"action\": \"GetThreats\" }",
-                notes = "返回敌人数量、位置、威胁等级等"
-            });
-            
-            // 7.4 获取殖民地状态
-            Register(new CommandDefinition
-            {
-                commandId = "GetColonyStatus",
-                category = "Query",
-                displayName = "获取殖民地状态",
-                description = "获取殖民地整体状态概览",
-                parameters = new List<ParameterDef>(),
-                example = "{ \"action\": \"GetColonyStatus\" }",
-                notes = "返回财富、人口、电力、食物储备等"
+                example = "{ \"action\": \"ScanMap\", \"target\": \"hostiles\" }",
+                notes = "报告目标相对于居住区中心的方位和数量"
             });
         }
         

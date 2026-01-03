@@ -18,6 +18,7 @@ namespace TheSecondSeat.RimAgent.Tools
         
         public async Task<ToolResult> ExecuteAsync(Dictionary<string, object> parameters)
         {
+            await Task.CompletedTask; // 保持异步签名
             Log.Message(string.Format("[AnalyzeTool] ExecuteAsync called with parameters: {0}", string.Join(", ", parameters.Keys)));
             try
             {

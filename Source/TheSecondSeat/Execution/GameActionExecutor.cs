@@ -6,18 +6,19 @@ using Verse;
 using Verse.AI;
 using TheSecondSeat.NaturalLanguage;
 using TheSecondSeat.Commands.Implementations;
+using TheSecondSeat.Utils;
 
 namespace TheSecondSeat.Execution
 {
     /// <summary>
     /// 游戏动作执行器 - 命令路由器
-    /// ? v1.6.40: 完全迁移到路由器架构，移除所有直接实现
+    /// ⭐ v1.6.84: 修复线程安全问题，确保在主线程执行
     /// </summary>
     public static class GameActionExecutor
     {
         /// <summary>
         /// 执行解析后的命令
-        /// ? 线程安全：必须在主线程执行
+        /// ⭐ v1.6.84: 修复线程安全 - 如果不在主线程则调度到主线程
         /// </summary>
         public static ExecutionResult Execute(ParsedCommand command)
         {
@@ -28,18 +29,65 @@ namespace TheSecondSeat.Execution
 
             Log.Message($"[GameActionExecutor] 执行命令: {command.action} (Target={command.parameters.target}, Scope={command.parameters.scope})");
 
-            // ? 检查是否在主线程
+            // ⭐ v1.6.84: 检查是否在主线程
+            if (!TSS_AssetLoader.IsMainThread)
+            {
+                Log.Warning("[GameActionExecutor] 不在主线程，调度到主线程执行");
+                
+                // 使用异步模式返回结果
+                ExecutionResult? pendingResult = null;
+                bool completed = false;
+                
+                Verse.LongEventHandler.ExecuteWhenFinished(() =>
+                {
+                    pendingResult = ExecuteOnMainThread(command);
+                    completed = true;
+                });
+                
+                // 等待执行完成（最多 5 秒）
+                int waitCount = 0;
+                while (!completed && waitCount < 100)
+                {
+                    System.Threading.Thread.Sleep(50);
+                    waitCount++;
+                }
+                
+                if (!completed)
+                {
+                    return ExecutionResult.Failed("命令执行超时");
+                }
+                
+                return pendingResult ?? ExecutionResult.Failed("未知错误");
+            }
+
+            // ⭐ 检查游戏是否运行
             if (!UnityEngine.Application.isPlaying)
             {
                 return ExecutionResult.Failed("游戏未运行");
             }
+            
+            return ExecuteOnMainThread(command);
+        }
+        
+        /// <summary>
+        /// 在主线程执行命令（内部方法）
+        /// </summary>
+        private static ExecutionResult ExecuteOnMainThread(ParsedCommand command)
+        {
 
             try
             {
-                // ? 转换参数为 Dictionary<string, object>
+                // ⭐ v1.6.84: 再次验证主线程
+                if (!TSS_AssetLoader.IsMainThread)
+                {
+                    Log.Error("[GameActionExecutor] ExecuteOnMainThread 被错误地在非主线程调用！");
+                    return ExecutionResult.Failed("必须在主线程执行");
+                }
+                
+                // 转换参数为 Dictionary<string, object>
                 Dictionary<string, object> paramsDict = ConvertParams(command.parameters);
 
-                // ? 根据 action 字符串实例化对应的命令类并执行
+                // 根据 action 字符串实例化对应的命令类并执行
                 bool success = command.action switch
                 {
                     // === 批量操作命令 ===

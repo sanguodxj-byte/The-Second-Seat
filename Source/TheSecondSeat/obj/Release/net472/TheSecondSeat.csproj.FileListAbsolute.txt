@@ -8,3 +8,12 @@ C:\Users\Administrator\Desktop\rim mod\The Second Seat\Source\TheSecondSeat\obj\
 C:\Users\Administrator\Desktop\rim mod\The Second Seat\Source\TheSecondSeat\obj\Release\net472\TheSecon.1B642B3D.Up2Date
 C:\Users\Administrator\Desktop\rim mod\The Second Seat\Source\TheSecondSeat\obj\Release\net472\TheSecondSeat.dll
 C:\Users\Administrator\Desktop\rim mod\The Second Seat\1.6\Assemblies\TheSecondSeat.dll
+D:\rim mod\The Second Seat\Source\TheSecondSeat\bin\Release\net472\TheSecondSeat.dll
+D:\rim mod\The Second Seat\Source\TheSecondSeat\bin\Release\net472\0Harmony.dll
+D:\rim mod\The Second Seat\Source\TheSecondSeat\obj\Release\net472\TheSecondSeat.csproj.AssemblyReference.cache
+D:\rim mod\The Second Seat\Source\TheSecondSeat\obj\Release\net472\TheSecondSeat.GeneratedMSBuildEditorConfig.editorconfig
+D:\rim mod\The Second Seat\Source\TheSecondSeat\obj\Release\net472\TheSecondSeat.AssemblyInfoInputs.cache
+D:\rim mod\The Second Seat\Source\TheSecondSeat\obj\Release\net472\TheSecondSeat.AssemblyInfo.cs
+D:\rim mod\The Second Seat\Source\TheSecondSeat\obj\Release\net472\TheSecondSeat.csproj.CoreCompileInputs.cache
+D:\rim mod\The Second Seat\Source\TheSecondSeat\obj\Release\net472\TheSecon.1B642B3D.Up2Date
+D:\rim mod\The Second Seat\Source\TheSecondSeat\obj\Release\net472\TheSecondSeat.dll

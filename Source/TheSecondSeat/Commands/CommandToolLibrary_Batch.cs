@@ -47,16 +47,16 @@ namespace TheSecondSeat.Commands
                 commandId = "BatchMine",
                 category = "Batch",
                 displayName = "批量采矿",
-                description = "指派所有可采矿资源",
+                description = "指派地图上的可采矿资源（支持全图或特定类型）",
                 parameters = new List<ParameterDef>
                 {
                     new ParameterDef { name = "target", type = "string", required = false, defaultValue = "all",
-                        validValues = new List<string> { "all", "metal", "stone", "components" }, description = "采矿目标类型" },
+                        validValues = new List<string> { "all", "metal", "stone", "components" }, description = "采矿目标类型 (all=全图矿物)" },
                     new ParameterDef { name = "limit", type = "int", required = false, defaultValue = "-1", description = "限制数量（-1=全部）" },
                     new ParameterDef { name = "nearFocus", type = "bool", required = false, defaultValue = "false", description = "优先选择靠近鼠标/镜头的目标" }
                 },
-                example = "{ \"action\": \"BatchMine\", \"target\": \"metal\", \"limit\": 5, \"nearFocus\": true }",
-                notes = "采矿最近的5个金属矿"
+                example = "{ \"action\": \"BatchMine\", \"target\": \"all\" }",
+                notes = "支持全图矿物标记，或指定特定类型（如金属、石块）"
             });
             
             // 6.4 批量伐木
@@ -65,10 +65,10 @@ namespace TheSecondSeat.Commands
                 commandId = "BatchLogging",
                 category = "Batch",
                 displayName = "批量伐木",
-                description = "指派所有成熟树木进行砍伐",
+                description = "指派树木进行砍伐（支持指定数量）",
                 parameters = new List<ParameterDef>
                 {
-                    new ParameterDef { name = "limit", type = "int", required = false, defaultValue = "-1", description = "限制数量（-1=全部）" },
+                    new ParameterDef { name = "limit", type = "int", required = false, defaultValue = "-1", description = "限制砍伐数量（例如：10棵，-1=全部）" },
                     new ParameterDef { name = "nearFocus", type = "bool", required = false, defaultValue = "false", description = "优先选择靠近鼠标/镜头的目标" }
                 },
                 example = "{ \"action\": \"BatchLogging\", \"limit\": 20, \"nearFocus\": true }",

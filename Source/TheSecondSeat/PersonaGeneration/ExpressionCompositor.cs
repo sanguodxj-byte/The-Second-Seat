@@ -66,10 +66,15 @@ namespace TheSecondSeat.PersonaGeneration
                 return cached;
             }
             
+            // ⭐ v1.7.2: 修复内存泄漏 - 使用 finally 确保临时纹理被清理
+            Texture2D readableBase = null;
+            Texture2D readableFace = null;
+            Texture2D processedFace = null;
+            
             try
             {
                 // ? 智能裁剪：如果表情差分是完整立绘，自动裁剪出面部区域
-                Texture2D processedFace = faceTexture;
+                processedFace = faceTexture;
                 if (autoCrop && IsFullPortrait(faceTexture, baseTexture))
                 {
                     Log.Message($"[ExpressionCompositor] 检测到完整立绘表情，执行智能裁剪");
@@ -83,8 +88,8 @@ namespace TheSecondSeat.PersonaGeneration
                 }
                 
                 // 创建可读版本纹理
-                Texture2D readableBase = MakeReadable(baseTexture);
-                Texture2D readableFace = MakeReadable(processedFace);
+                readableBase = MakeReadable(baseTexture);
+                readableFace = MakeReadable(processedFace);
                 
                 // 创建结果纹理
                 Texture2D result = new Texture2D(readableBase.width, readableBase.height, TextureFormat.RGBA32, false);
@@ -107,12 +112,6 @@ namespace TheSecondSeat.PersonaGeneration
                     compositeCache[cacheKey] = result;
                 }
                 
-                // 清理临时纹理
-                if (readableBase != baseTexture)
-                    UnityEngine.Object.Destroy(readableBase);
-                if (readableFace != faceTexture && readableFace != processedFace)
-                    UnityEngine.Object.Destroy(readableFace);
-                
                 Log.Message($"[ExpressionCompositor] 合成表情成功: {cacheKey}");
                 return result;
             }
@@ -120,6 +119,19 @@ namespace TheSecondSeat.PersonaGeneration
             {
                 Log.Error($"[ExpressionCompositor] 合成表情失败: {ex}");
                 return baseTexture; // 失败时返回基础立绘
+            }
+            finally
+            {
+                // ⭐ v1.7.2: 无论成功失败，强制清理临时显存
+                if (readableBase != null && readableBase != baseTexture)
+                    UnityEngine.Object.Destroy(readableBase);
+                    
+                if (readableFace != null && readableFace != faceTexture && readableFace != processedFace)
+                    UnityEngine.Object.Destroy(readableFace);
+                    
+                // 如果 processedFace 是由智能裁剪创建的（不是原始纹理），也需要清理
+                if (processedFace != null && processedFace != faceTexture)
+                    UnityEngine.Object.Destroy(processedFace);
             }
         }
         

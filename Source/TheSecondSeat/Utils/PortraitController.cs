@@ -34,7 +34,7 @@ namespace TheSecondSeat.Utils
         
         // ========== 纹理缓存 ==========
         /// <summary>
-        /// 纹理缓存：key = "defName_type" (例如 "Sideria_base", "Sideria_blink")
+        /// 纹理缓存：key = "defName_type" (例如 "YourPersona_base", "YourPersona_blink")
         /// </summary>
         private Dictionary<string, Texture2D> textureCache = new Dictionary<string, Texture2D>();
         

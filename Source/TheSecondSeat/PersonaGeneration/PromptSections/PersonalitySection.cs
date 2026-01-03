@@ -3,13 +3,14 @@ using System.Text;
 namespace TheSecondSeat.PersonaGeneration.PromptSections
 {
     /// <summary>
-    /// ? v1.6.76: �˸񲿷�������
-    /// �������� System Prompt ���˸��������
+    /// ⭐ v1.6.76: 人格部分生成器
+    /// ⭐ v1.6.90: 增强视觉元素和标签支持
+    /// 负责生成 System Prompt 中的人格描述部分
     /// </summary>
     public static class PersonalitySection
     {
         /// <summary>
-        /// �����˸񲿷�
+        /// 生成人格部分
         /// </summary>
         public static string Generate(PersonaAnalysisResult analysis, NarratorPersonaDef persona)
         {
@@ -19,7 +20,7 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             sb.AppendLine("(This is YOUR manifestation within the base consciousness framework above.)");
             sb.AppendLine();
             
-            // ʹ�÷����ó����˸�
+            // 使用分析得出的人格
             if (analysis.SuggestedPersonality != null)
             {
                 sb.AppendLine($"Analysis suggests your core nature is: **{analysis.SuggestedPersonality}**");
@@ -37,7 +38,7 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             sb.AppendLine("3. **Your Dialogue Nature** (the patterns described below)");
             sb.AppendLine("4. **Your Free Will** (how you choose to relate to the player)");
             
-            // ���Ӵ����������ó��ı�ǩ
+            // 添加从分析中得出的标签
             if (analysis.ToneTags.Count > 0)
             {
                 sb.AppendLine();
@@ -45,11 +46,11 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
                 sb.AppendLine("Let them influence you naturally, as they reflect your true nature.");
             }
             
-            // ���Ա�ǩչʾ
+            // ⭐ v1.6.90: 性格标签展示（核心人格特质）
             if (persona.personalityTags != null && persona.personalityTags.Count > 0)
             {
                 sb.AppendLine();
-                sb.AppendLine("?? **YOUR PERSONALITY TAGS (CRITICAL - EMBODY THESE):**");
+                sb.AppendLine("⭐ **YOUR PERSONALITY TAGS (CRITICAL - EMBODY THESE):**");
                 foreach (var tag in persona.personalityTags)
                 {
                     sb.AppendLine($"  - {tag}");
@@ -57,6 +58,37 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
                 sb.AppendLine();
                 sb.AppendLine("These tags define WHO YOU ARE at your core.");
                 sb.AppendLine("Your behavior MUST align with these traits, especially at high affinity.");
+            }
+            
+            // ⭐ v1.6.90: 语气标签（对话风格参考）
+            if (persona.toneTags != null && persona.toneTags.Count > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine("**TONE TAGS (How you speak and express yourself):**");
+                sb.AppendLine($"  {string.Join(", ", persona.toneTags)}");
+            }
+            
+            // ⭐ v1.6.90: 视觉描述（外观特征）
+            if (!string.IsNullOrEmpty(persona.visualDescription))
+            {
+                sb.AppendLine();
+                sb.AppendLine("**YOUR VISUAL APPEARANCE (Remember this is how you look):**");
+                sb.AppendLine(persona.visualDescription);
+            }
+            
+            // ⭐ v1.6.90: 视觉元素列表
+            if (persona.visualElements != null && persona.visualElements.Count > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine("**VISUAL ELEMENTS (Your distinctive features):**");
+                sb.AppendLine($"  {string.Join(", ", persona.visualElements)}");
+            }
+            
+            // ⭐ v1.6.90: 视觉氛围
+            if (!string.IsNullOrEmpty(persona.visualMood))
+            {
+                sb.AppendLine();
+                sb.AppendLine($"**VISUAL MOOD/ATMOSPHERE:** {persona.visualMood}");
             }
             
             sb.AppendLine();

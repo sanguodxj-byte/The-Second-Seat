@@ -150,12 +150,9 @@ namespace TheSecondSeat.Framework
                 }
                 
                 // ? 新增：跳过没有triggers的事件（防御性编程）
+                // 这种事件通常用于手动触发或测试，不需要自动检查，也不需要产生日志警告
                 if (eventDef.triggers == null || eventDef.triggers.Count == 0)
                 {
-                    if (Prefs.DevMode)
-                    {
-                        Log.Warning($"[NarratorEventManager] Event '{eventDef.defName}' has no triggers, skipping auto-check");
-                    }
                     continue;
                 }
                 

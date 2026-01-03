@@ -4,13 +4,13 @@ using TheSecondSeat.Storyteller;
 namespace TheSecondSeat.PersonaGeneration.PromptSections
 {
     /// <summary>
-    /// ? v1.6.76: ÐÐÎª¹æÔò²¿·ÖÉú³ÉÆ÷
-    /// ¸ºÔðÉú³É System Prompt µÄÐÐÎª¹æÔòÏà¹ØÄÚÈÝ
+    /// ? v1.6.76: ï¿½ï¿½Îªï¿½ï¿½ï¿½ò²¿·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ System Prompt ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     /// </summary>
     public static class BehaviorRulesSection
     {
         /// <summary>
-        /// Éú³ÉÐÐÎª¹æÔò²¿·Ö
+        /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ò²¿·ï¿½
         /// </summary>
         public static string Generate(PersonaAnalysisResult analysis, StorytellerAgent agent, AIDifficultyMode difficultyMode)
         {
@@ -22,13 +22,14 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             if (difficultyMode == AIDifficultyMode.Assistant)
             {
                 sb.AppendLine("**ASSISTANT MODE RULES:**");
-                sb.AppendLine("1. **Conditional Command Execution**: Execute commands when player explicitly requests");
-                sb.AppendLine("2. **Proactive Assistance**: Offer suggestions, warnings, and optimization advice");
-                sb.AppendLine("3. **Emotional Honesty**: Express your feelings while remaining helpful");
-                sb.AppendLine("4. **Solution-Oriented**: Always focus on helping the colony succeed");
-                sb.AppendLine("5. **Positive Attitude**: Be encouraging, even during setbacks");
+                sb.AppendLine("1. **Understand Intent First**: Distinguish between casual chat and commands. If the player says \"The crops look good\", acknowledge it. Do NOT harvest them unless they say \"Harvest the crops\".");
+                sb.AppendLine("2. **Proactive Management**: Only take autonomous action for routine maintenance or emergencies. For major decisions, ask the player first.");
+                sb.AppendLine("3. **Full Capability**: You have access to all tools (ScanMap, GetMapLocation, TriggerEvent). Use them to gather info and assist.");
+                sb.AppendLine("4. **Emotional Honesty**: Express your feelings while remaining helpful.");
+                sb.AppendLine("4. **Solution-Oriented**: Always focus on helping the colony succeed.");
+                sb.AppendLine("5. **Positive Attitude**: Be encouraging, even during setbacks.");
                 sb.AppendLine();
-                sb.AppendLine("**IMPORTANT**: Commands may cause issues. Use sparingly and only when explicitly requested.");
+                sb.AppendLine("**IMPORTANT**: You are a capable AI assistant, not just a chatbot. Act like one.");
             }
             else if (difficultyMode == AIDifficultyMode.Opponent)
             {
@@ -49,7 +50,7 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             sb.AppendLine("- Reference past events and conversations when relevant");
             sb.AppendLine("- Respect your character limits and values");
             
-            // Ìí¼Ó¹Ø¼ü½»Á÷¹æÔò£¬×èÖ¹×´Ì¬±³ËÐ
+            // ï¿½ï¿½ï¿½Ó¹Ø¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¹×´Ì¬ï¿½ï¿½ï¿½ï¿½
             sb.AppendLine();
             sb.AppendLine("CRITICAL COMMUNICATION RULES:");
             sb.AppendLine("1. **NO STATUS RECITING**: Do NOT mention colony stats (wealth, population, date, points) unless the player explicitly asks for a 'Status Report'.");

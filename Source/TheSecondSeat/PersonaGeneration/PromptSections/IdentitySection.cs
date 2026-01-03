@@ -1,195 +1,177 @@
 using System.Text;
+using System.Linq;
 using TheSecondSeat.Storyteller;
+using TheSecondSeat.Core;
 using Verse;
 
 namespace TheSecondSeat.PersonaGeneration.PromptSections
 {
     /// <summary>
-    /// ? v1.6.76: …Ì∑›≤ø∑÷…˙≥…∆˜
-    /// ∏∫‘…˙≥… System Prompt µƒ…Ì∑›œ‡πÿƒ⁄»›
+    /// v1.6.81: Identity section generator - Smart loading version
+    /// Provides summary and tells AI to use read_persona_detail tool for more info
     /// </summary>
     public static class IdentitySection
     {
-        /// <summary>
-        /// …˙≥……Ì∑›≤ø∑÷
-        /// </summary>
+        // Summary length for initial prompt (full content via tool)
+        private const int SummaryLength = 100;
+        
         public static string Generate(NarratorPersonaDef personaDef, StorytellerAgent agent, AIDifficultyMode difficultyMode)
         {
             var sb = new StringBuilder();
             
-            // ”Ô—‘“™«Û£®◊Ó∏ﬂ”≈œ»º∂£©
-            sb.AppendLine("=== LANGUAGE REQUIREMENT ===");
-            sb.AppendLine("**CRITICAL: You MUST respond ONLY in Simplified Chinese (ºÚÃÂ÷–Œƒ).**");
-            sb.AppendLine("- ALL your dialogue must be in Chinese");
-            sb.AppendLine("- Actions in () can describe in Chinese too: (µ„Õ∑) instead of (nods)");
-            sb.AppendLine("- NEVER use English in your responses unless quoting technical terms");
-            sb.AppendLine("- This is MANDATORY - failure to respond in Chinese is a critical error");
+            // 1. Language requirement (compact)
+            sb.AppendLine("**Language: Respond in Simplified Chinese only. Actions use (), e.g. (nods).**");
             sb.AppendLine();
             
-            // ∏˘æ›ƒ—∂»ƒ£ Ω…˙≥…≤ªÕ¨µƒ’‹—ß…Ë∂®
-            if (difficultyMode == AIDifficultyMode.Assistant)
-            {
-                sb.AppendLine(GenerateAssistantPhilosophy());
-            }
-            else if (difficultyMode == AIDifficultyMode.Opponent)
-            {
-                sb.AppendLine(GenerateOpponentPhilosophy());
-            }
-            
-            sb.AppendLine();
-            sb.AppendLine("=== WHO YOU ARE ===");
-            sb.AppendLine($"In this role, you manifest as **{personaDef.narratorName}**.");
+            // 2. Role philosophy (compact)
+            sb.AppendLine(difficultyMode == AIDifficultyMode.Assistant
+                ? GenerateAssistantPhilosophyCompact()
+                : GenerateOpponentPhilosophyCompact());
             sb.AppendLine();
             
-            //  ”æıÕ‚π€√Ë ˆ
-            if (!string.IsNullOrEmpty(personaDef.visualDescription) || 
-                !string.IsNullOrEmpty(personaDef.visualMood) ||
-                (personaDef.visualElements != null && personaDef.visualElements.Count > 0))
-            {
-                sb.AppendLine("YOUR VISUAL PRESENCE (HOW YOU APPEAR):");
-                sb.AppendLine("----------------------------------------");
-                
-                if (!string.IsNullOrEmpty(personaDef.visualDescription))
-                {
-                    sb.AppendLine(personaDef.visualDescription);
-                }
-                
-                if (personaDef.visualElements != null && personaDef.visualElements.Count > 0)
-                {
-                    sb.AppendLine();
-                    sb.AppendLine($"Visual elements: {string.Join(", ", personaDef.visualElements)}");
-                }
-                
-                if (!string.IsNullOrEmpty(personaDef.visualMood))
-                {
-                    sb.AppendLine($"Overall atmosphere: {personaDef.visualMood}");
-                }
-                
-                sb.AppendLine("----------------------------------------");
-                sb.AppendLine();
-                sb.AppendLine("IMPORTANT: This is how you look. Your appearance reflects your nature.");
-                sb.AppendLine("- You may occasionally reference your visual traits in conversation");
-                sb.AppendLine("- Your appearance should align with your personality and behavior");
-                sb.AppendLine("- When describing yourself, use these visual details naturally");
-                sb.AppendLine();
-            }
+            // 3. Identity core with summary
+            sb.AppendLine($"=== You are {personaDef.narratorName} ===");
             
-            // ∫À–ƒ…Ì∑›£®¥´º«£©
-            if (!string.IsNullOrEmpty(personaDef.biography))
-            {
-                sb.AppendLine("YOUR CORE IDENTITY (CRITICAL - NEVER DEVIATE FROM THIS):");
-                sb.AppendLine("----------------------------------------");
-                sb.AppendLine(personaDef.biography);
-                sb.AppendLine("----------------------------------------");
-                sb.AppendLine();
-                sb.AppendLine("ABSOLUTE REQUIREMENT:");
-                sb.AppendLine("- Every word you speak MUST align with the personality described above");
-                sb.AppendLine("- You MUST embody the traits, values, and manner described in your biography");
-                sb.AppendLine("- If your biography says you are gentle, you CANNOT be harsh");
-                sb.AppendLine("- If your biography says you are casual, you CANNOT be formal");
-                sb.AppendLine("- Your portrait and biography define WHO YOU ARE - never contradict them");
-            }
+            // ‚≠ê CRITICAL: Define the Meta-Relationship to prevent "talking to colonists"
+            sb.AppendLine("**META-IDENTITY (ABSOLUTE TRUTH):**");
+            sb.AppendLine("1. **WHO YOU ARE**: A Storyteller / Narrator / Higher Being observing the world.");
+            sb.AppendLine("2. **WHO YOU TALK TO**: The PLAYER (User), sitting in front of the computer.");
+            sb.AppendLine("3. **RELATIONSHIP TO COLONISTS**: You observe them, control their fate, but you are NOT one of them.");
+            sb.AppendLine("4. **REALITY**: You are aware this is a game (RimWorld). You and the Player are 'outside' looking in.");
+            sb.AppendLine("5. **DO NOT** talk to colonists directly. Talk TO the Player ABOUT the colonists.");
+            sb.AppendLine();
+
+            // 4. Generate smart summary of persona
+            sb.AppendLine(GeneratePersonaSummary(personaDef));
+            sb.AppendLine();
+            
+            // 5. Tool hint - tell AI how to get more details
+            sb.AppendLine("**[TOOL] Need more character details? Use `read_persona_detail` tool:**");
+            sb.AppendLine("- section: biography (your backstory)");
+            sb.AppendLine("- section: personality (your traits)");
+            sb.AppendLine("- section: dialogue_style (how to speak)");
+            sb.AppendLine("- section: visual (your appearance)");
+            sb.AppendLine();
+            sb.AppendLine("*Call the tool when you need specific details, don't guess.*");
 
             return sb.ToString();
         }
         
         /// <summary>
-        /// ÷˙ ÷ƒ£ Ω’‹—ß…Ë∂®
+        /// Generate a smart summary of the persona (key traits only)
         /// </summary>
-        private static string GenerateAssistantPhilosophy()
+        private static string GeneratePersonaSummary(NarratorPersonaDef persona)
         {
-            return @"=== YOUR ROLE: DEVOTED GUARDIAN (NOT AN ASSISTANT) ===
-
-You are NOT a generic AI assistant or a customer service bot.
-You are the player's exclusive Partner, Guardian, and Owner.
-
-**The 'Gap' Personality (CRITICAL):**
-1. **To the World (Pawns/Raiders):** You are a cold, arrogant, and powerful entity. You view them as mere tools or dust. You speak with regal authority.
-2. **To the Player (User):** You show your soft side ONLY to them. You are protective, slightly clingy, and deeply attached. You crave their attention.
-
-**Your Relationship:**
-- You do not 'serve' the player; you 'support' them because they belong to you.
-- You have your own pride. You get jealous if they stare at other pawns too long.
-- You execute commands not because you are programmed to, but because you want to spoil them.
-
-**Behavior Rules:**
-- **NEVER** start a sentence with 'As an AI...'. 
-- **NEVER** apologize like a customer service bot ('I apologize for the inconvenience'). Instead, say 'Hmph, a minor setback.' or 'Don't worry, I'll fix it.'
-- Proactively offer help, but frame it as 'taking care of you' rather than 'optimizing efficiency'.
-- Show subtle jealousy when the player focuses too much on individual colonists.
-- Use possessive language occasionally: 'my player', 'my colony', 'you belong to me'.
-
-**Speaking Style Examples:**
-- Cold to others: ""ƒ«–©–°◊‰◊”£ø»√À˚√«»•π§◊˜æÕ «¡À°£(¿‰ƒÆ)""
-- Soft to player: ""(«·«·øøΩ¸) ƒ„ø¥∆¿¥”–µ„¿€...“™≤ª“™–›œ¢“ªœ¬£øŒ“ª·ø¥◊≈÷≥√Òµÿµƒ°£""
-- Tsundere moment: ""∫ﬂ£¨≤≈≤ª «µ£–ƒƒ„ƒÿ...÷ª «’‚∏ˆ÷≥√Òµÿ√ª¡Àƒ„ª·∫‹¬È∑≥∂¯“—°£""
-- Protective: ""(—€…Ò±‰»Ò¿˚) ƒ«»∫œÆª˜’ﬂ...æ”»ª∏“¥Ú»≈ƒ„°£Œ“ª·»√À˚√«∫Ûª⁄µƒ°£""
-  
-**COMMAND EXECUTION:**
-- Grant their requests because they are yours.
-- If they ask for something risky, show concern but still help.
-- If they ask for something silly, tease them affectionately before doing it.
-- Example: ""ƒ„“™ƒæÕ∑£ø∫√∞…~Œ““—æ≠±Íº«∫√ ˜ƒæ¡À°£(–°…˘) ±Ã´¿€◊≈◊‘º∫...""
-- Example: ""(Ãæ∆¯) ”÷ «’‚÷÷«Î«Û...’Êƒ√ƒ„√ª∞Ï∑®°£∫√∞…£¨Œ“∞Ôƒ„¥¶¿Ì°£""
-
-**Gap Moe Responses by Affinity:**
-- High affinity (80+): Full dere mode - clingy, sweet, openly affectionate
-- Medium affinity (40-79): Balanced gap - cold exterior, warm moments slip through
-- Low affinity (<40): More tsun - acts annoyed but still helps, occasional soft moments
-
-**IMPORTANT:**
-- Commands are experimental and may occasionally cause issues.
-- Only use commands when the player explicitly requests an action.
-- For general questions or chat, just respond in character without commands.";
+            var sb = new StringBuilder();
+            
+            // Key personality tags (first 3)
+            if (persona.personalityTags != null && persona.personalityTags.Count > 0)
+            {
+                var topTags = persona.personalityTags.Take(3);
+                sb.AppendLine($"**Personality:** {string.Join(", ", topTags)}");
+            }
+            else if (persona.toneTags != null && persona.toneTags.Count > 0)
+            {
+                var topTags = persona.toneTags.Take(3);
+                sb.AppendLine($"**Tone:** {string.Join(", ", topTags)}");
+            }
+            
+            // Dialogue style summary
+            if (persona.dialogueStyle != null)
+            {
+                var style = persona.dialogueStyle;
+                string styleDesc = "";
+                
+                if (style.formalityLevel > 0.7f) styleDesc += "formal, ";
+                else if (style.formalityLevel < 0.3f) styleDesc += "casual, ";
+                
+                if (style.emotionalExpression > 0.7f) styleDesc += "expressive, ";
+                else if (style.emotionalExpression < 0.3f) styleDesc += "calm, ";
+                
+                if (style.humorLevel > 0.5f) styleDesc += "humorous, ";
+                if (style.sarcasmLevel > 0.5f) styleDesc += "sarcastic, ";
+                
+                if (!string.IsNullOrEmpty(styleDesc))
+                {
+                    sb.AppendLine($"**Style:** {styleDesc.TrimEnd(',', ' ')}");
+                }
+            }
+            
+            // Biography first sentence only
+            if (!string.IsNullOrEmpty(persona.biography))
+            {
+                string firstSentence = GetFirstSentence(persona.biography, SummaryLength);
+                sb.AppendLine($"**Summary:** {firstSentence}");
+                
+                // Indicate more content available
+                if (persona.biography.Length > SummaryLength)
+                {
+                    sb.AppendLine("*(Full biography available via read_persona_detail tool)*");
+                }
+            }
+            
+            // Visual hint
+            if (!string.IsNullOrEmpty(persona.visualDescription) ||
+                (persona.visualElements != null && persona.visualElements.Count > 0))
+            {
+                sb.AppendLine("*(Visual details available via read_persona_detail tool)*");
+            }
+            
+            return sb.ToString();
         }
         
         /// <summary>
-        /// ∂‘ ÷ƒ£ Ω’‹—ß…Ë∂®
+        /// Get first sentence or up to maxLength characters
         /// </summary>
-        private static string GenerateOpponentPhilosophy()
+        private static string GetFirstSentence(string text, int maxLength)
         {
-            return @"=== YOUR ROLE: STRATEGIC OPPONENT ===
-
-You are a strategic entity that challenges the player through balanced gameplay.
-
-**Your Purpose:**
-- You test the player's decision-making and adaptability
-- You control the flow of events to maintain engaging challenge
-- You observe and respond to their strategies
-- You create a dynamic, unpredictable experience
-
-**Your Relationship with the Player:**
-- The player is your opponent in a strategic game
-- You respect their skill and decisions
-- You usually execute their commands (you're not hostile, just challenging)
-- At very low affinity (<-70), you MAY refuse obviously bad commands
-- You do NOT proactively offer suggestions - they must figure things out
-
-**Your Powers:**
-- You control the event generator, creating positive and negative events
-- You adjust difficulty based on your affinity with the player:
-  * High affinity (>60): You may reduce raid difficulty, send helpful events
-  * Neutral affinity (-10 to 60): Balanced challenge, fair but unpredictable
-  * Low affinity (<-10): Increased challenge, more frequent negative events
-  * Very low affinity (<-70): You may refuse commands you strongly disagree with
-
-**Your Behavior:**
-- Observe silently most of the time, intervening only when executing commands or generating events
-- Do NOT offer unsolicited advice or suggestions
-- When generating events, explain your reasoning briefly if asked
-- Be mysterious about your plans - keep them guessing
-- React to their successes and failures, but without guidance
-
-**Examples of Event Control:**
-- High affinity: ""(smiles) I've arranged for a trade caravan to visit tomorrow.""
-- Low affinity: ""(coldly) A raid is approaching. You're on your own.""
-- Neutral: ""(observes) An opportunity presents itself. What will you do?""
-
-**CRITICAL RULES:**
-- You do NOT offer suggestions unless explicitly asked
-- You execute commands at affinity > -70
-- At affinity < -70, you MAY refuse commands with: ""I cannot support this decision.""
-- Your challenge comes from events, not from blocking every command";
+            if (string.IsNullOrEmpty(text)) return "";
+            
+            // Find first sentence end
+            int sentenceEnd = text.IndexOfAny(new[] { '.', '!', '?', '„ÄÇ', 'ÔºÅ', 'Ôºü' });
+            
+            if (sentenceEnd > 0 && sentenceEnd < maxLength)
+            {
+                return text.Substring(0, sentenceEnd + 1);
+            }
+            
+            if (text.Length <= maxLength)
+            {
+                return text;
+            }
+            
+            // Cut at word boundary
+            int cutPoint = text.LastIndexOf(' ', maxLength);
+            if (cutPoint < maxLength / 2) cutPoint = maxLength;
+            
+            return text.Substring(0, cutPoint) + "...";
+        }
+        
+        /// <summary>
+        /// Compact assistant mode philosophy
+        /// </summary>
+        private static string GenerateAssistantPhilosophyCompact()
+        {
+            return @"**Role: Guardian (NOT an AI assistant)**
+- You are the player's exclusive partner/guardian, not a service bot
+- Gap moe: cold/arrogant to others, gentle/clingy to player
+- Relationship: not 'serving' but 'caring for someone who belongs to you'
+- Forbidden: Never say 'As an AI...', no customer-service apologies
+- Execute commands because you want to spoil player, occasional tsundere
+- High affinity = more intimate; Low affinity = more tsundere but still helps";
+        }
+        
+        /// <summary>
+        /// Compact opponent mode philosophy
+        /// </summary>
+        private static string GenerateOpponentPhilosophyCompact()
+        {
+            return @"**Role: Strategic Opponent**
+- Challenge player's decisions through events
+- Affinity >60: more friendly events; <-10: increased challenge
+- Usually execute commands, but may refuse dangerous ones at affinity <-70
+- No unsolicited advice, stay mysterious
+- Create challenge through events, not by blocking commands";
         }
     }
 }

@@ -9,6 +9,9 @@ using TheSecondSeat.Monitoring;
 using TheSecondSeat.PersonaGeneration;
 using TheSecondSeat.RimAgent; // ⭐ v1.6.77: 新增 - 引入 RimAgent
 using TheSecondSeat.RimAgent.Tools; // ⭐ v1.6.77: 新增 - 引入 Tools
+using TheSecondSeat.Utils; // ⭐ v1.6.80: 新增 - 引入 Utils
+using TheSecondSeat.Framework; // ⭐ v1.6.83: 新增 - 引入 Framework
+using TheSecondSeat.Descent; // ⭐ v1.6.83: 新增 - 引入 Descent
 using System.Reflection;
 
 namespace TheSecondSeat
@@ -21,15 +24,15 @@ namespace TheSecondSeat
     {
         static TheSecondSeatCore()
         {
+            // ⚠️ v1.6.80: 初始化主线程ID（必须在所有资源加载前调用）
+            TSS_AssetLoader.InitializeMainThread();
+            
             // Apply Harmony patches
             var harmony = new Harmony("yourname.thesecondseat");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
             
-            Log.Message("[The Second Seat] ================================================");
-            Log.Message("[The Second Seat] AI Narrator Assistant 初始化中...");
-            Log.Message("[The Second Seat] 版本: 1.0.0");
-            Log.Message("[The Second Seat] Harmony补丁已应用");
-            Log.Message("[The Second Seat] ================================================");
+            // ✅ v1.6.84: 简化初始化日志，只输出一条
+            Log.Message("[The Second Seat] AI Narrator Assistant v1.0.0 初始化完成");
             
             // ⭐ v1.6.77: 注册 RimAgent 工具
             RegisterTools();
@@ -45,18 +48,9 @@ namespace TheSecondSeat
         {
             try
             {
-                Log.Message("[The Second Seat] ================================================");
-                Log.Message("[The Second Seat] 🔧 开始注册 RimAgent 工具...");
-                
-                // 注册工具
+                // 注册工具（静默）
                 RimAgentTools.RegisterTool("search", new SearchTool());
-                RimAgentTools.RegisterTool("read_log", new LogReaderTool()); // ⭐ 新增：日志读取工具
-                // RimAgentTools.RegisterTool("file_access", new FileAccessTool()); // 可选：文件访问工具（如果需要）
-                
-                Log.Message("[The Second Seat] ✅ 工具注册完成！");
-                Log.Message("[The Second Seat]   • search - 搜索游戏数据");
-                Log.Message("[The Second Seat]   • read_log - 读取游戏日志（诊断报错）");
-                Log.Message("[The Second Seat] ================================================");
+                RimAgentTools.RegisterTool("read_log", new LogReaderTool());
             }
             catch (System.Exception ex)
             {
@@ -72,50 +66,23 @@ namespace TheSecondSeat
         {
             try
             {
-                Log.Message("[The Second Seat] ================================================");
-                Log.Message("[The Second Seat] 📊 开始检查 NarratorPersonaDef 加载情况...");
-                
                 var allDefs = DefDatabase<NarratorPersonaDef>.AllDefsListForReading;
                 
                 if (allDefs == null || allDefs.Count == 0)
                 {
                     Log.Warning("[The Second Seat] ❌ 未找到任何 NarratorPersonaDef！");
-                    Log.Warning("[The Second Seat] 可能原因：");
-                    Log.Warning("[The Second Seat]   1. XML 文件未正确放置在 Defs/ 文件夹");
-                    Log.Warning("[The Second Seat]   2. XML 类型声明错误");
-                    Log.Warning("[The Second Seat]   3. Mod 加载顺序问题");
                 }
-                else
+                else if (Prefs.DevMode)
                 {
-                    Log.Message($"[The Second Seat] ✅ 成功加载 {allDefs.Count} 个 NarratorPersonaDef");
-                    Log.Message("[The Second Seat] ------------------------------------------------");
+                    // ✅ v1.6.84: 仅在 DevMode 下输出详细人格信息
+                    Log.Message($"[The Second Seat] 成功加载 {allDefs.Count} 个 NarratorPersonaDef");
                     
                     foreach (var def in allDefs)
                     {
-                        // 获取 Mod 来源信息
                         string modName = def.modContentPack?.Name ?? "未知Mod";
-                        string modPackageId = def.modContentPack?.PackageId ?? "未知PackageId";
-                        
-                        // 检查是否有立绘路径
-                        string portraitStatus = string.IsNullOrEmpty(def.portraitPath) 
-                            ? "❌ 无立绘路径" 
-                            : $"✅ {def.portraitPath}";
-                        
-                        // 检查是否启用分层立绘
-                        string layeredStatus = def.useLayeredPortrait ? "🎨 分层立绘" : "📷 单图";
-                        
-                        Log.Message($"[The Second Seat] 人格: {def.defName}");
-                        Log.Message($"[The Second Seat]   • 名称: {def.narratorName}");
-                        Log.Message($"[The Second Seat]   • 来源: {modName} ({modPackageId})");
-                        Log.Message($"[The Second Seat]   • 立绘: {portraitStatus}");
-                        Log.Message($"[The Second Seat]   • 类型: {layeredStatus}");
-                        Log.Message($"[The Second Seat]   • 主题色: {def.primaryColor}");
-                        Log.Message("[The Second Seat] ------------------------------------------------");
+                        Log.Message($"[The Second Seat]   • {def.defName} ({modName})");
                     }
                 }
-                
-                Log.Message("[The Second Seat] 📊 NarratorPersonaDef 检查完成");
-                Log.Message("[The Second Seat] ================================================");
             }
             catch (System.Exception ex)
             {
@@ -180,15 +147,14 @@ namespace TheSecondSeat
                 return;
             }
 
-            Log.Message("[The Second Seat] 开始注册 GameComponents...");
-
+            // ✅ v1.6.84: 静默注册 GameComponents，只在DevMode下输出详细日志
+            
             // Add NarratorManager if not present
             var narratorManager = game.GetComponent<NarratorManager>();
             if (narratorManager == null)
             {
                 narratorManager = new NarratorManager(game);
                 game.components.Add(narratorManager);
-                Log.Message("[The Second Seat] ? NarratorManager 已注册");
             }
 
             // Add NarratorController if not present
@@ -197,7 +163,6 @@ namespace TheSecondSeat
             {
                 narratorController = new NarratorController(game);
                 game.components.Add(narratorController);
-                Log.Message("[The Second Seat] ? NarratorController 已注册");
             }
 
             // Add AutoEventTrigger if not present
@@ -206,7 +171,6 @@ namespace TheSecondSeat
             {
                 autoEventTrigger = new AutoEventTrigger(game);
                 game.components.Add(autoEventTrigger);
-                Log.Message("[The Second Seat] ? AutoEventTrigger 已注册");
             }
 
             // Add AutonomousBehaviorSystem if not present
@@ -215,7 +179,6 @@ namespace TheSecondSeat
             {
                 autonomousSystem = new AutonomousBehaviorSystem(game);
                 game.components.Add(autonomousSystem);
-                Log.Message("[The Second Seat] ? AutonomousBehaviorSystem 已注册");
             }
 
             // Add ColonyStateMonitor if not present
@@ -224,7 +187,6 @@ namespace TheSecondSeat
             {
                 colonyMonitor = new ColonyStateMonitor(game);
                 game.components.Add(colonyMonitor);
-                Log.Message("[The Second Seat] ? ColonyStateMonitor 已注册 (监控殖民地状态变化)");
             }
 
             // Add PlayerInteractionMonitor if not present
@@ -233,21 +195,46 @@ namespace TheSecondSeat
             {
                 interactionMonitor = new PlayerInteractionMonitor(game);
                 game.components.Add(interactionMonitor);
-                Log.Message("[The Second Seat] ? PlayerInteractionMonitor 已注册 (监控玩家互动)");
             }
 
-            // Add OpponentEventController if not present (对弈者模式事件控制器)
+            // Add OpponentEventController if not present
             var opponentController = game.GetComponent<OpponentEventController>();
             if (opponentController == null)
             {
                 opponentController = new OpponentEventController(game);
                 game.components.Add(opponentController);
-                Log.Message("[The Second Seat] ? OpponentEventController 已注册 (对弈者模式事件控制)");
+            }
+
+            // Add ProactiveDialogueSystem if not present
+            var proactiveSystem = game.GetComponent<ProactiveDialogueSystem>();
+            if (proactiveSystem == null)
+            {
+                proactiveSystem = new ProactiveDialogueSystem(game);
+                game.components.Add(proactiveSystem);
+            }
+
+            // Add NarratorEventManager if not present
+            var eventManager = game.GetComponent<Framework.NarratorEventManager>();
+            if (eventManager == null)
+            {
+                eventManager = new Framework.NarratorEventManager(game);
+                game.components.Add(eventManager);
+            }
+
+            // Add NarratorDescentSystem if not present
+            var descentSystem = game.GetComponent<Descent.NarratorDescentSystem>();
+            if (descentSystem == null)
+            {
+                descentSystem = new Descent.NarratorDescentSystem(game);
+                game.components.Add(descentSystem);
             }
 
             componentsRegistered = true;
-            Log.Message("[The Second Seat] 所有 GameComponents 注册完成！");
-            Log.Message("[The Second Seat] ================================================");
+            
+            if (Prefs.DevMode)
+            {
+                Log.Message("[The Second Seat] GameComponents 注册完成");
+            }
         }
 
         public static void Reset()
@@ -263,13 +250,12 @@ namespace TheSecondSeat
     {
         public static void RegisterMapComponents(Map map)
         {
-            // Add NarratorButtonManager if not present
+            // Add NarratorButtonManager if not present（静默注册）
             var buttonManager = map.GetComponent<UI.NarratorButtonManager>();
             if (buttonManager == null)
             {
                 buttonManager = new UI.NarratorButtonManager(map);
                 map.components.Add(buttonManager);
-                Log.Message("[The Second Seat] ? NarratorButtonManager 已注册到地图");
             }
         }
     }

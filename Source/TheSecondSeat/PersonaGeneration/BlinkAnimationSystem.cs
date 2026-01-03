@@ -128,10 +128,7 @@ namespace TheSecondSeat.PersonaGeneration
             var state = GetOrCreateState(personaDefName);
             state.nextBlinkInterval = UnityEngine.Random.Range(minInterval, maxInterval);
             
-            if (Prefs.DevMode)
-            {
-                Log.Message($"[BlinkAnimationSystem] 眨眼间隔调整: {personaDefName} ({minInterval}-{maxInterval}秒)");
-            }
+            // 日志已静默：眨眼间隔调整
         }
         
         /// <summary>

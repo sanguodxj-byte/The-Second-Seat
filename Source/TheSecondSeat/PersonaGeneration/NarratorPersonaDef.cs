@@ -1,11 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Verse;
 using RimWorld;
+using TheSecondSeat.Utils;
+using TheSecondSeat.Core;
 
 namespace TheSecondSeat.PersonaGeneration
 {
+    /// <summary>
+    /// 降临姿态配置类
+    /// </summary>
+    public class DescentPostures
+    {
+        public string standing = "";
+        public string floating = "";
+        public string combat = "";
+        public string casting = "";
+    }
+    
     /// <summary>
     /// 叙事者人格定义 - RimWorld Def类型
     /// 继承自 Verse.Def，可通过XML加载
@@ -25,6 +39,13 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>API: 叙事者名称（显示用）</summary>
         public string narratorName = "Unknown";
+
+        /// <summary>
+        /// ⭐ API: 资源名称（用于加载纹理和音频的文件夹名称）
+        /// 默认为空，此时使用 narratorName 的第一部分
+        /// 设置此字段可实现多语言支持（narratorName 翻译，而文件夹名不变）
+        /// </summary>
+        public string resourceName = "";
         
         /// <summary>API: 本地化显示名称键</summary>
         public string displayNameKey = "";
@@ -111,6 +132,11 @@ namespace TheSecondSeat.PersonaGeneration
         public string voiceRate = "+0%";
         
         /// <summary>
+        /// ⭐ v1.6.75: TTS 语音名称（如 "zh-CN-XiaoxiaoNeural"）
+        /// </summary>
+        public string ttsVoiceName = "";
+        
+        /// <summary>
         /// ⭐ v1.6.75: TTS 语音音调（0.5-2.0，1.0为正常）
         /// </summary>
         public float ttsVoicePitch = 1.0f;
@@ -119,6 +145,11 @@ namespace TheSecondSeat.PersonaGeneration
         /// ⭐ v1.6.75: TTS 语音速度（0.5-2.0，1.0为正常）
         /// </summary>
         public float ttsVoiceSpeed = 1.0f;
+        
+        /// <summary>
+        /// ⭐ v1.6.75: TTS 语音速度（XML兼容别名，与ttsVoiceSpeed相同）
+        /// </summary>
+        public float ttsVoiceRate = 1.0f;
         
         // ============================================
         // 对话与事件配置 API
@@ -180,7 +211,7 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// ⭐ API: 降临实体的 PawnKindDef 名称
-        /// 示例: "Sideria_Descent" 或 "Human"
+        /// 示例: "YourPersona_Descent" 或 "Human"
         /// 如果为空，该叙事者不支持实体化降临
         /// </summary>
         [NoTranslate]
@@ -196,7 +227,7 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// ⭐ API: 伴随生物（如龙）的 PawnKindDef 名称（可选）
-        /// 示例: "Sideria_Dragon"
+        /// 示例: "YourPersona_Companion"
         /// 如果为空，不生成伴随生物
         /// </summary>
         [NoTranslate]
@@ -238,6 +269,100 @@ namespace TheSecondSeat.PersonaGeneration
         /// </summary>
         public string descentLetterText = "";
         
+        /// <summary>
+        /// ⭐ v1.6.78: 是否启用降临模式
+        /// </summary>
+        public bool hasDescentMode = false;
+        
+        /// <summary>
+        /// ⭐ v1.6.78: 降临持续时间（秒）
+        /// </summary>
+        public float descentDuration = 300f;
+        
+        /// <summary>
+        /// ⭐ v1.6.78: 降临冷却时间（秒）
+        /// </summary>
+        public float descentCooldown = 600f;
+        
+        /// <summary>
+        /// ⭐ v1.6.78: 降临特效路径列表
+        /// </summary>
+        public List<string> descentEffects = new List<string>();
+        
+        /// <summary>
+        /// ⭐ v1.6.78: 降临姿态路径字典
+        /// </summary>
+        public DescentPostures descentPostures = new DescentPostures();
+        
+        /// <summary>
+        /// ⭐ v1.6.81: 降临动画类型
+        /// 可选值:
+        /// - "DropPod" (默认): 使用空投仓动画
+        /// - "DragonFlyby": 使用实体飞掠动画 (适用于飞行生物)
+        /// - "Portal": 使用传送门动画 (未来扩展)
+        /// - "Lightning": 使用闪电降临动画 (未来扩展)
+        /// </summary>
+        [NoTranslate]
+        public string descentAnimationType = "DropPod";
+        
+        /// <summary>
+        /// ⭐ v1.6.81: 实体阴影纹理路径（仅 DragonFlyby 类型使用）
+        /// ⭐ v1.6.90: 如果留空，将根据 resourceName 自动生成
+        /// 相对于 Textures/ 文件夹，例如 "Narrators/Descent/Effects/YourPersona/DragonShadow"
+        /// </summary>
+        [NoTranslate]
+        public string dragonShadowTexturePath = "";
+        
+        // ============================================
+        // ⭐ v1.6.90: 路径自动生成API
+        // ============================================
+        
+        /// <summary>
+        /// ⭐ 获取立绘路径（自动生成或使用配置值）
+        /// </summary>
+        public string GetPortraitPath()
+        {
+            if (!string.IsNullOrEmpty(portraitPath))
+                return portraitPath;
+            
+            string resourceName = GetResourceName();
+            return TSSFrameworkConfig.Portrait.GetPortraitPath(resourceName);
+        }
+        
+        /// <summary>
+        /// ⭐ 获取降临姿态完整路径（自动生成或使用配置值）
+        /// </summary>
+        public string GetDescentPostureFullPath()
+        {
+            string resourceName = GetResourceName();
+            string postureName = descentPosturePath;
+            
+            return TSSFrameworkConfig.Descent.GetPosturePath(resourceName, postureName);
+        }
+        
+        /// <summary>
+        /// ⭐ 获取降临特效完整路径（自动生成或使用配置值）
+        /// </summary>
+        public string GetDescentEffectFullPath()
+        {
+            string resourceName = GetResourceName();
+            string effectName = descentEffectPath;
+            
+            return TSSFrameworkConfig.Descent.GetEffectPath(resourceName, effectName);
+        }
+        
+        /// <summary>
+        /// ⭐ 获取龙影纹理完整路径（自动生成或使用配置值）
+        /// </summary>
+        public string GetDragonShadowFullPath()
+        {
+            if (!string.IsNullOrEmpty(dragonShadowTexturePath))
+                return dragonShadowTexturePath;
+            
+            string resourceName = GetResourceName();
+            return TSSFrameworkConfig.Descent.GetShadowPath(resourceName);
+        }
+        
         // ============================================
         // 运行时数据（不从XML加载）
         // ============================================
@@ -251,21 +376,14 @@ namespace TheSecondSeat.PersonaGeneration
         public LayeredPortraitConfig GetLayeredConfig()
         {
             // 强制禁用原版叙事者的分层立绘
-            if (defName == "Cassandra_Classic" || 
-                defName == "Phoebe_Chillax" || 
-                defName == "Randy_Random" ||
-                defName == "Igor_Invader" ||
-                defName == "Luna_Protector")
+            if (VanillaStorytellers.Contains(defName))
             {
                 useLayeredPortrait = false;
                 cachedLayeredConfig = null;
                 return null;
             }
             
-            if (!useLayeredPortrait)
-            {
-                return null;
-            }
+            if (!useLayeredPortrait) return null;
             
             if (cachedLayeredConfig == null)
             {
@@ -274,12 +392,12 @@ namespace TheSecondSeat.PersonaGeneration
                     Log.Warning($"[NarratorPersonaDef] Layered config loading from file not implemented yet: {layeredConfigPath}");
                 }
                 
-                string personaName = GetPersonaName();
-                cachedLayeredConfig = LayeredPortraitConfig.CreateDefault(defName, personaName);
+                string resourceName = GetResourceName();
+                cachedLayeredConfig = LayeredPortraitConfig.CreateDefault(defName, resourceName);
                 
                 if (Prefs.DevMode)
                 {
-                    Log.Message($"[NarratorPersonaDef] Created default layered config for {defName} (persona: {personaName})");
+                    Log.Message($"[NarratorPersonaDef] Created default layered config for {defName} (resource: {resourceName})");
                     Log.Message(cachedLayeredConfig.GetDebugInfo());
                 }
             }
@@ -288,29 +406,30 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// 获取人格名称（用于纹理路径）
+        /// 获取资源名称（用于文件路径）
         /// </summary>
-        private string GetPersonaName()
+        public string GetResourceName()
         {
+            // 1. 优先使用显式配置的资源名称
+            if (!string.IsNullOrEmpty(resourceName))
+            {
+                return resourceName;
+            }
+
+            // 2. 其次尝试从显示名称推断 (兼容旧逻辑)
             if (!string.IsNullOrEmpty(narratorName))
             {
                 return narratorName.Split(' ')[0].Trim();
             }
             
-            string[] suffixesToRemove = new[] { 
-                "_Default", "_Classic", "_Custom", "_Persona", 
-                "_Chillax", "_Random", "_Invader", "_Protector" 
-            };
+            // 3. 最后尝试从 defName 推断
+            // 🏗️ 使用配置类的后缀列表
+            var suffix = TSSFrameworkConfig.Persona.NameSuffixesToRemove
+                .FirstOrDefault(s => defName.EndsWith(s));
             
-            foreach (var suffix in suffixesToRemove)
-            {
-                if (defName.EndsWith(suffix))
-                {
-                    return defName.Substring(0, defName.Length - suffix.Length);
-                }
-            }
-            
-            return defName;
+            return suffix != null
+                ? defName.Substring(0, defName.Length - suffix.Length)
+                : defName;
         }
         
         /// <summary>
@@ -374,94 +493,232 @@ namespace TheSecondSeat.PersonaGeneration
             return biography;
         }
         
+        // 🏗️ 使用配置类的原版叙事者列表
+        private static HashSet<string> VanillaStorytellers => TSSFrameworkConfig.Persona.VanillaStorytellers;
+        
         /// <summary>
         /// 存档兼容性处理，防止 NullReferenceException
+        /// 🛡️ v1.6.79: 增强自动补全逻辑
+        /// ⚠️ v1.6.82: 移除纹理加载，避免线程问题
         /// </summary>
         public override void ResolveReferences()
         {
             base.ResolveReferences();
             
             // 强制禁用原版叙事者的分层立绘
-            if (defName == "Cassandra_Classic" || 
-                defName == "Phoebe_Chillax" || 
-                defName == "Randy_Random" ||
-                defName == "Igor_Invader" ||
-                defName == "Luna_Protector")
+            if (VanillaStorytellers.Contains(defName))
             {
                 useLayeredPortrait = false;
                 cachedLayeredConfig = null;
             }
             
-            // 如果启用分层立绘，预加载所有表情
-            if (useLayeredPortrait)
-            {
-                var config = GetLayeredConfig();
-                if (config != null)
-                {
-                    System.Threading.Tasks.Task.Run(() =>
-                    {
-                        try
-                        {
-                            LayeredPortraitCompositor.PreloadAllExpressions(config);
-                        }
-                        catch (Exception ex)
-                        {
-                            if (Prefs.DevMode)
-                            {
-                                Log.Warning($"[NarratorPersonaDef] 预加载表情失败: {ex.Message}");
-                            }
-                        }
-                    });
-                }
-            }
+            // 🛡️ 第一阶段：确保所有字段不为 null
+            InitializeNullFields();
             
-            // 确保所有集合字段都被初始化
-            if (visualElements == null) visualElements = new List<string>();
-            if (specialAbilities == null) specialAbilities = new List<string>();
-            if (toneTags == null) toneTags = new List<string>();
-            if (forbiddenWords == null) forbiddenWords = new List<string>();
-            if (personalityTags == null) personalityTags = new List<string>();  // 📌 v1.6.62
-            if (selectedTraits == null) selectedTraits = new List<string>();    // 📌 v1.6.62
-            
-            // 确保嵌套对象被初始化
-            if (dialogueStyle == null) dialogueStyle = new DialogueStyleDef();
-            if (eventPreferences == null) eventPreferences = new EventPreferencesDef();
-            
-            // 确保字符串字段不为 null
-            if (narratorName == null) narratorName = "Unknown";
-            if (displayNameKey == null) displayNameKey = "";
-            if (descriptionKey == null) descriptionKey = "";
-            if (biography == null) biography = "";
-            if (portraitPath == null) portraitPath = "";
-            if (customPortraitPath == null) customPortraitPath = "";
-            if (portraitPathBlink == null) portraitPathBlink = "";
-            if (portraitPathSpeaking == null) portraitPathSpeaking = "";
-            if (layeredConfigPath == null) layeredConfigPath = "";
-            if (visualDescription == null) visualDescription = "";
-            if (visualMood == null) visualMood = "";
-            if (personalityType == null) personalityType = "";
-            if (overridePersonality == null) overridePersonality = "";
-            if (defaultVoice == null) defaultVoice = "";
-            if (voicePitch == null) voicePitch = "+0Hz";
-            if (voiceRate == null) voiceRate = "+0%";
-            
-            // ⭐ v1.6.75: 确保 TTS 语音参数有默认值
-            if (ttsVoicePitch <= 0f) ttsVoicePitch = 1.0f;
-            if (ttsVoiceSpeed <= 0f) ttsVoiceSpeed = 1.0f;
-            
-            // ⭐ v1.6.63: 确保降临系统字段不为 null
-            if (descentPawnKind == null) descentPawnKind = "";
-            if (descentSkyfallerDef == null) descentSkyfallerDef = "";
-            if (companionPawnKind == null) companionPawnKind = "";
-            if (descentPosturePath == null) descentPosturePath = "";
-            if (descentEffectPath == null) descentEffectPath = "";
-            if (descentSound == null) descentSound = "";
-            if (descentLetterLabel == null) descentLetterLabel = "";
-            if (descentLetterText == null) descentLetterText = "";
+            // ⚠️ v1.6.82: 移除 AutoFillMissingResources 和 PreloadLayeredPortraitAsync
+            // 这些方法会调用 ContentFinder 导致线程问题
+            // 纹理加载延迟到首次使用时（在主线程的 OnGUI 中）
             
             if (Prefs.DevMode)
             {
-                Log.Message($"[NarratorPersonaDef] ResolveReferences completed for {defName}, useLayeredPortrait={useLayeredPortrait}");
+                Log.Message($"[NarratorPersonaDef] ResolveReferences completed for {defName}, " +
+                           $"useLayeredPortrait={useLayeredPortrait}, hasPortrait={!string.IsNullOrEmpty(portraitPath)}");
+            }
+        }
+        
+        /// <summary>初始化所有可能为 null 的字段</summary>
+        private void InitializeNullFields()
+        {
+            // 集合字段
+            visualElements ??= new List<string>();
+            specialAbilities ??= new List<string>();
+            toneTags ??= new List<string>();
+            forbiddenWords ??= new List<string>();
+            personalityTags ??= new List<string>();
+            selectedTraits ??= new List<string>();
+            descentEffects ??= new List<string>();
+            
+            // 嵌套对象
+            dialogueStyle ??= new DialogueStyleDef();
+            eventPreferences ??= new EventPreferencesDef();
+            descentPostures ??= new DescentPostures();
+            
+            // 🏗️ 字符串字段使用配置类默认值
+            narratorName ??= TSSFrameworkConfig.Persona.DefaultNarratorName;
+            resourceName ??= "";
+            displayNameKey ??= "";
+            descriptionKey ??= "";
+            biography ??= "";
+            portraitPath ??= "";
+            customPortraitPath ??= "";
+            portraitPathBlink ??= "";
+            portraitPathSpeaking ??= "";
+            layeredConfigPath ??= "";
+            visualDescription ??= "";
+            visualMood ??= "";
+            personalityType ??= "";
+            overridePersonality ??= "";
+            defaultVoice ??= "";
+            voicePitch ??= "+0Hz";
+            voiceRate ??= "+0%";
+            ttsVoiceName ??= "";
+            descentPawnKind ??= "";
+            descentSkyfallerDef ??= "";
+            companionPawnKind ??= "";
+            descentPosturePath ??= "";
+            descentEffectPath ??= "";
+            descentSound ??= "";
+            descentLetterLabel ??= "";
+            descentLetterText ??= "";
+            
+            // 🏗️ 数值字段使用配置类默认值
+            if (ttsVoicePitch <= 0f) ttsVoicePitch = TSSFrameworkConfig.TTS.DefaultPitch;
+            if (ttsVoiceSpeed <= 0f) ttsVoiceSpeed = TSSFrameworkConfig.TTS.DefaultSpeechRate;
+            if (ttsVoiceRate <= 0f) ttsVoiceRate = TSSFrameworkConfig.TTS.DefaultSpeechRate;
+            if (descentDuration <= 0f) descentDuration = TSSFrameworkConfig.Descent.DefaultDuration;
+            if (descentCooldown <= 0f) descentCooldown = TSSFrameworkConfig.Descent.DefaultCooldown;
+        }
+        
+        /// <summary>预加载分层立绘（必须在主线程调用）</summary>
+        private void PreloadLayeredPortraitAsync()
+        {
+            if (!useLayeredPortrait) return;
+            
+            var config = GetLayeredConfig();
+            if (config == null) return;
+            
+            // ⚠️ 修复：Unity资源加载必须在主线程执行，移除Task.Run
+            try
+            {
+                LayeredPortraitCompositor.PreloadAllExpressions(config);
+            }
+            catch (Exception ex)
+            {
+                if (Prefs.DevMode)
+                    Log.Warning($"[NarratorPersonaDef] 预加载表情失败: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// 🛡️ 智能补全缺失资源
+        /// 如果子 Mod 的 XML 缺少某些字段，自动填补"不打算做"的功能缺口
+        /// </summary>
+        private void AutoFillMissingResources()
+        {
+            // 获取资源名称（用于路径查找）
+            string resourceName = GetResourceName();
+            
+            // -----------------------------------------
+            // 🛡️ 立绘路径补全
+            // -----------------------------------------
+            if (string.IsNullOrEmpty(portraitPath))
+            {
+                // 检查是否有实际的立绘文件
+                if (TSS_AssetLoader.HasPortrait(resourceName))
+                {
+                    // 有立绘，但路径未配置 - 使用默认路径格式
+                    portraitPath = $"UI/Narrators/9x16/{resourceName}/base";
+                }
+                else
+                {
+                    // 子 Mod 不打算做立绘，指向主 Mod 的占位图
+                    portraitPath = TSS_AssetLoader.DefaultPlaceholderPath;
+                    
+                    // 同时禁用分层立绘（没有基础立绘就不需要分层）
+                    useLayeredPortrait = false;
+                }
+            }
+            
+            // -----------------------------------------
+            // 🛡️ 降临音效补全
+            // -----------------------------------------
+            // 如果不想做声音，descentSound 保持为空
+            // 播放逻辑中会检查空值并静默处理
+            // 这里不需要特别处理，保持空值即可
+            
+            // -----------------------------------------
+            // 🛡️ 降临模式自动检测
+            // -----------------------------------------
+            // 如果配置了降临相关资源但未启用 hasDescentMode，自动启用
+            if (!hasDescentMode)
+            {
+                bool hasDescentConfig =
+                    !string.IsNullOrEmpty(descentPawnKind) ||
+                    !string.IsNullOrEmpty(descentPosturePath) ||
+                    TSS_AssetLoader.HasDescentResources(resourceName);
+                
+                if (hasDescentConfig)
+                {
+                    hasDescentMode = true;
+                    
+                    if (Prefs.DevMode)
+                    {
+                        Log.Message($"[NarratorPersonaDef] Auto-enabled descent mode for {defName}");
+                    }
+                }
+            }
+            
+            // -----------------------------------------
+            // 🛡️ 降临姿态路径补全
+            // -----------------------------------------
+            if (hasDescentMode && descentPostures != null)
+            {
+                // 如果启用了降临但没有配置姿态，检查是否有默认姿态
+                if (string.IsNullOrEmpty(descentPostures.standing))
+                {
+                    // 尝试查找默认姿态
+                    if (TSS_AssetLoader.TextureExists($"UI/Narrators/Descent/Postures/{resourceName}/standing"))
+                    {
+                        descentPostures.standing = $"{resourceName}/standing";
+                    }
+                }
+                
+                if (string.IsNullOrEmpty(descentPostures.floating))
+                {
+                    if (TSS_AssetLoader.TextureExists($"UI/Narrators/Descent/Postures/{resourceName}/floating"))
+                    {
+                        descentPostures.floating = $"{resourceName}/floating";
+                    }
+                }
+                
+                if (string.IsNullOrEmpty(descentPostures.combat))
+                {
+                    if (TSS_AssetLoader.TextureExists($"UI/Narrators/Descent/Postures/{resourceName}/combat"))
+                    {
+                        descentPostures.combat = $"{resourceName}/combat";
+                    }
+                }
+            }
+            
+            // -----------------------------------------
+            // 🛡️ TTS 语音名称补全
+            // -----------------------------------------
+            if (string.IsNullOrEmpty(ttsVoiceName) && string.IsNullOrEmpty(defaultVoice))
+            {
+                // 🏗️ 使用配置类的默认语音
+                ttsVoiceName = TSSFrameworkConfig.TTS.DefaultVoiceName;
+            }
+            else if (string.IsNullOrEmpty(ttsVoiceName) && !string.IsNullOrEmpty(defaultVoice))
+            {
+                // 兼容旧版：将 defaultVoice 复制到 ttsVoiceName
+                ttsVoiceName = defaultVoice;
+            }
+            
+            // -----------------------------------------
+            // 🛡️ 信件内容补全（降临模式）
+            // -----------------------------------------
+            if (hasDescentMode)
+            {
+                if (string.IsNullOrEmpty(descentLetterLabel))
+                {
+                    // 使用叙事者名称生成默认标题
+                    descentLetterLabel = $"TSS_Descent_LetterLabel_{defName}";
+                }
+                
+                if (string.IsNullOrEmpty(descentLetterText))
+                {
+                    descentLetterText = $"TSS_Descent_LetterText_{defName}";
+                }
             }
         }
     }

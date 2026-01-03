@@ -32,7 +32,7 @@ namespace TheSecondSeat.PersonaGeneration
         /// <summary>
         /// 标签显示名称（中文）
         /// </summary>
-        public string label;
+        public new string label;
         
         /// <summary>
         /// 本地化键（可选）

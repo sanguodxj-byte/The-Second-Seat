@@ -461,7 +461,7 @@ namespace TheSecondSeat.PersonaGeneration
         {
             try
             {
-                // ⭐ 从 defName 提取人格名称（假设 defName 格式为 "Sideria" 或 "Sideria_Variant"）
+                // ⭐ 从 defName 提取人格名称（假设 defName 格式为 "YourPersona" 或 "YourPersona_Variant"）
                 string personaName = defName.Split('_')[0];
                 
                 // ⭐ 使用 PersonaFolderManager 获取 Defs 目录

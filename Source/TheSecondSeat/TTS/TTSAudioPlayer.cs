@@ -34,7 +34,6 @@ namespace TheSecondSeat.TTS
                     var go = new GameObject("TTSAudioPlayer");
                     instance = go.AddComponent<TTSAudioPlayer>();
                     DontDestroyOnLoad(go); // 持久化
-                    Log.Message("[TTSAudioPlayer] Instance created");
                 }
                 return instance;
             }
@@ -184,7 +183,6 @@ namespace TheSecondSeat.TTS
             {
                 StopCoroutine(currentPlaybackCoroutine);
                 currentPlaybackCoroutine = null;
-                Log.Message("[TTSAudioPlayer] Previous playback interrupted by new audio");
                 
                 // 立即停止当前音频
                 if (currentAudioSource != null && currentAudioSource.isPlaying)
@@ -215,7 +213,6 @@ namespace TheSecondSeat.TTS
             {
                 string tempPath = Path.Combine(Application.temporaryCachePath, $"tts_temp_{DateTime.Now:yyyyMMddHHmmss}.wav");
                 File.WriteAllBytes(tempPath, data);
-                Log.Message($"[TTSAudioPlayer] Temp file saved: {tempPath}");
                 return tempPath;
             }
             catch (Exception ex)
@@ -233,15 +230,12 @@ namespace TheSecondSeat.TTS
         {
             AudioClip? clip = null;
             GameObject? tempGO = null;
-            bool success = false;
 
             // === 1. 使用 UnityWebRequest 加载音频 ===
             string fileUri = "file://" + filePath.Replace("\\", "/");
             
             using (UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip(fileUri, AudioType.WAV))
             {
-                Log.Message($"[TTSAudioPlayer] Loading audio: {fileUri}");
-                
                 // 发送请求
                 yield return www.SendWebRequest();
 
@@ -267,7 +261,6 @@ namespace TheSecondSeat.TTS
                     yield break;
                 }
 
-                Log.Message($"[TTSAudioPlayer] AudioClip loaded: {clip.length} seconds");
             }
 
             // === 2. 创建临时 GameObject 和 AudioSource ===
@@ -283,25 +276,19 @@ namespace TheSecondSeat.TTS
             if (!string.IsNullOrEmpty(personaDefName))
             {
                 SetSpeakingState(personaDefName, true);
-                Log.Message($"[TTSAudioPlayer] Speaking started: {personaDefName}");
             }
 
             // === 4. 播放音频 ===
             currentAudioSource.Play();
-            Log.Message("[TTSAudioPlayer] Playing audio...");
 
             // === 5. 等待播放完成（添加缓冲时间） ===
             float totalWaitTime = clip.length + BUFFER_TIME;
             yield return new WaitForSeconds(totalWaitTime);
 
-            Log.Message("[TTSAudioPlayer] Playback finished");
-            success = true;
-
             // === 6. 清除播放状态（停止说话） ===
             if (!string.IsNullOrEmpty(personaDefName))
             {
                 SetSpeakingState(personaDefName, false);
-                Log.Message($"[TTSAudioPlayer] Speaking finished: {personaDefName}");
             }
 
             // === 7. 清理 AudioClip 和 GameObject ===
@@ -310,7 +297,6 @@ namespace TheSecondSeat.TTS
             {
                 Destroy(clip);
                 clip = null;
-                Log.Message("[TTSAudioPlayer] AudioClip destroyed");
             }
 
             // 销毁临时 GameObject
@@ -355,15 +341,12 @@ namespace TheSecondSeat.TTS
                 {
                     File.Delete(filePath);
                     deleted = true;
-                    Log.Message($"[TTSAudioPlayer] Temp file deleted: {filePath}");
                 }
                 catch (IOException ioEx)
                 {
                     retryCount++;
                     lastException = ioEx;
                     shouldRetry = (retryCount < MAX_DELETE_RETRIES);
-                    
-                    Log.Warning($"[TTSAudioPlayer] Delete attempt {retryCount}/{MAX_DELETE_RETRIES} failed: {ioEx.Message}");
                 }
                 catch (Exception ex)
                 {
@@ -378,10 +361,7 @@ namespace TheSecondSeat.TTS
                 }
             }
 
-            if (!deleted)
-            {
-                Log.Warning($"[TTSAudioPlayer] Failed to delete temp file after {MAX_DELETE_RETRIES} retries: {filePath}");
-            }
+            // 静默处理删除失败
         }
 
         /// <summary>
@@ -399,8 +379,6 @@ namespace TheSecondSeat.TTS
                 {
                     SetSpeakingState(currentSpeakingPersona, false);
                 }
-                
-                Log.Message("[TTSAudioPlayer] Playback stopped");
             }
 
             // 如果有正在运行的协程，则停止协程
@@ -408,7 +386,6 @@ namespace TheSecondSeat.TTS
             {
                 StopCoroutine(currentPlaybackCoroutine);
                 currentPlaybackCoroutine = null;
-                Log.Message("[TTSAudioPlayer] Playback coroutine stopped");
             }
         }
 
@@ -441,16 +418,13 @@ namespace TheSecondSeat.TTS
                         File.Delete(file);
                         deletedCount++;
                     }
-                    catch (Exception ex)
+                    catch
                     {
-                        Log.Warning($"[TTSAudioPlayer] Failed to cleanup temp file: {ex.Message}");
+                        // 静默处理清理失败
                     }
                 }
 
-                if (deletedCount > 0)
-                {
-                    Log.Message($"[TTSAudioPlayer] Cleaned up {deletedCount} temp files");
-                }
+                // 静默清理
             }
             catch (Exception ex)
             {

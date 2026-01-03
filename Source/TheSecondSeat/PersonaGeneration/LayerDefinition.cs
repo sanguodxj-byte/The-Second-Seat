@@ -186,12 +186,12 @@ namespace TheSecondSeat.PersonaGeneration
     public class LayeredPortraitConfig
     {
         /// <summary>
-        /// 人格 defName（如 "Sideria_Default", "CustomPersona_7a8e00b9"）
+        /// 人格 defName（如 "YourPersona_Default", "CustomPersona_7a8e00b9"）
         /// </summary>
         public string PersonaDefName { get; set; } = "";
         
         /// <summary>
-        /// ? v1.6.27: 人格名称（用户指定的名称，如 "Sideria"）
+        /// ? v1.6.27: 人格名称（用户指定的名称，如 "YourPersona"）
         /// 用于构建纹理路径
         /// </summary>
         public string PersonaName { get; set; } = "";
@@ -391,7 +391,7 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// ? v1.6.27: 从 defName 提取人格名称
-        /// Sideria_Default → Sideria
+        /// YourPersona_Default → YourPersona
         /// CustomPersona_7a8e00b9 → CustomPersona_7a8e00b9 (保持不变)
         /// </summary>
         private static string ExtractPersonaName(string defName)

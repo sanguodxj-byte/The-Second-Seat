@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using UnityEngine;
 using Verse;
+using TheSecondSeat.LLM;
 
 namespace TheSecondSeat.PersonaGeneration
 {
@@ -18,7 +18,6 @@ namespace TheSecondSeat.PersonaGeneration
         private static MultimodalAnalysisService? instance;
         public static MultimodalAnalysisService Instance => instance ??= new MultimodalAnalysisService();
 
-        private readonly HttpClient httpClient;
         private string apiProvider = "openai"; // "openai", "deepseek", "gemini"
         private string apiKey = "";
         private string visionModel = "gpt-4-vision-preview";
@@ -26,8 +25,6 @@ namespace TheSecondSeat.PersonaGeneration
 
         public MultimodalAnalysisService()
         {
-            httpClient = new HttpClient();
-            httpClient.Timeout = TimeSpan.FromSeconds(60);  // 多模态分析可能需要更长时间
         }
 
         /// <summary>
@@ -48,7 +45,7 @@ namespace TheSecondSeat.PersonaGeneration
                 {
                     "openai" => "gpt-4-vision-preview",
                     "deepseek" => "deepseek-vl",
-                    "gemini" => "gemini-pro-vision",
+                    "gemini" => "gemini-1.5-flash",
                     _ => "gpt-4-vision-preview"
                 };
             }
@@ -61,16 +58,9 @@ namespace TheSecondSeat.PersonaGeneration
                 {
                     "openai" => "gpt-4",
                     "deepseek" => "deepseek-chat",
-                    "gemini" => "gemini-pro",
+                    "gemini" => "gemini-1.5-flash",
                     _ => "gpt-4"
                 };
-            }
-
-            // 设置 Authorization Header（与 LLMService 相同方式）
-            if (!string.IsNullOrEmpty(apiKey))
-            {
-                httpClient.DefaultRequestHeaders.Clear();
-                httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
             }
             
             // ? 新增：日志输出确认配置
@@ -443,24 +433,17 @@ Focus on:
                 var requestBody = BuildVisionRequest(base64Image);
 
                 var jsonContent = JsonConvert.SerializeObject(requestBody);
-                var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+                
+                // 使用 OpenAICompatibleClient
+                var response = await OpenAICompatibleClient.SendOpenAIRawRequestAsync(endpoint, apiKey, jsonContent);
 
-                var response = await httpClient.PostAsync(endpoint, content);
-
-                if (!response.IsSuccessStatusCode)
+                if (response == null)
                 {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    Log.Error($"[MultimodalAnalysis] Vision API error: {response.StatusCode} - {errorContent}");
+                    Log.Error($"[MultimodalAnalysis] Vision API returned null response");
                     return null;
                 }
 
-                var responseJson = await response.Content.ReadAsStringAsync();
-                return ParseVisionResponse(responseJson);
-            }
-            catch (TaskCanceledException)
-            {
-                Log.Warning("[MultimodalAnalysis] Vision API request timeout");
-                return null;
+                return ParseVisionResponse(response);
             }
             catch (Exception ex)
             {
@@ -480,24 +463,17 @@ Focus on:
                 var requestBody = BuildTextRequest(text);
 
                 var jsonContent = JsonConvert.SerializeObject(requestBody);
-                var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+                
+                // 使用 OpenAICompatibleClient
+                var response = await OpenAICompatibleClient.SendOpenAIRawRequestAsync(endpoint, apiKey, jsonContent);
 
-                var response = await httpClient.PostAsync(endpoint, content);
-
-                if (!response.IsSuccessStatusCode)
+                if (response == null)
                 {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    Log.Error($"[MultimodalAnalysis] Text API error: {response.StatusCode} - {errorContent}");
+                    Log.Error($"[MultimodalAnalysis] Text API returned null response");
                     return null;
                 }
 
-                var responseJson = await response.Content.ReadAsStringAsync();
-                return ParseTextResponse(responseJson);
-            }
-            catch (TaskCanceledException)
-            {
-                Log.Warning("[MultimodalAnalysis] Text API request timeout");
-                return null;
+                return ParseTextResponse(response);
             }
             catch (Exception ex)
             {
@@ -514,7 +490,7 @@ Focus on:
             {
                 "openai" => "https://api.openai.com/v1/chat/completions",
                 "deepseek" => "https://api.deepseek.com/v1/chat/completions",
-                "gemini" => "https://generativelanguage.googleapis.com/v1/models/gemini-pro-vision:generateContent",
+                "gemini" => $"https://generativelanguage.googleapis.com/v1beta/models/{visionModel}:generateContent",
                 _ => "https://api.openai.com/v1/chat/completions"
             };
         }
@@ -525,7 +501,7 @@ Focus on:
             {
                 "openai" => "https://api.openai.com/v1/chat/completions",
                 "deepseek" => "https://api.deepseek.com/v1/chat/completions",
-                "gemini" => "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent",
+                "gemini" => $"https://generativelanguage.googleapis.com/v1beta/models/{textModel}:generateContent",
                 _ => "https://api.openai.com/v1/chat/completions"
             };
         }
@@ -640,11 +616,10 @@ Biography:
             };
         }
 
-        private VisionAnalysisResult? ParseVisionResponse(string responseJson)
+        private VisionAnalysisResult? ParseVisionResponse(OpenAIResponse response)
         {
             try
             {
-                var response = JsonConvert.DeserializeObject<OpenAIResponse>(responseJson);
                 var content = response?.choices?[0]?.message?.content;
 
                 if (string.IsNullOrEmpty(content))
@@ -664,11 +639,10 @@ Biography:
             }
         }
 
-        private TextAnalysisResult? ParseTextResponse(string responseJson)
+        private TextAnalysisResult? ParseTextResponse(OpenAIResponse response)
         {
             try
             {
-                var response = JsonConvert.DeserializeObject<OpenAIResponse>(responseJson);
                 var content = response?.choices?[0]?.message?.content;
 
                 if (string.IsNullOrEmpty(content))
@@ -684,22 +658,6 @@ Biography:
             {
                 Log.Error($"[MultimodalAnalysis] Error parsing text response: {ex.Message}");
                 return null;
-            }
-        }
-
-        // OpenAI Response Structure
-        private class OpenAIResponse
-        {
-            public Choice[]? choices { get; set; }
-
-            public class Choice
-            {
-                public Message? message { get; set; }
-            }
-
-            public class Message
-            {
-                public string? content { get; set; }
             }
         }
         

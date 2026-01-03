@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using UnityEngine.Networking;
 using Verse;
 
 namespace TheSecondSeat.TTS
@@ -19,7 +19,6 @@ namespace TheSecondSeat.TTS
         private static TTSService? instance;
         public static TTSService Instance => instance ??= new TTSService();
 
-        private readonly HttpClient httpClient;
         private string ttsProvider = "edge"; // "azure", "edge", "local", "openai"
         private string apiKey = "";
         private string apiRegion = "eastus";
@@ -38,9 +37,6 @@ namespace TheSecondSeat.TTS
 
         public TTSService()
         {
-            httpClient = new HttpClient();
-            httpClient.Timeout = TimeSpan.FromSeconds(30);
-            
             // 创建音频输出目录
             audioOutputDir = Path.Combine(GenFilePaths.SaveDataFolderPath, "TheSecondSeat", "TTS");
             if (!Directory.Exists(audioOutputDir))
@@ -62,11 +58,11 @@ namespace TheSecondSeat.TTS
         /// <param name="apiUrl">API 端点 URL（OpenAI 专用，可选）</param>
         /// <param name="modelName">模型名称（OpenAI 专用，可选）</param>
         public void Configure(
-            string provider, 
-            string key = "", 
-            string region = "eastus", 
-            string voice = "zh-CN-XiaoxiaoNeural", 
-            float rate = 1.0f, 
+            string provider,
+            string key = "",
+            string region = "eastus",
+            string voice = "zh-CN-XiaoxiaoNeural",
+            float rate = 1.0f,
             float vol = 1.0f,
             string apiUrl = "",
             string modelName = "")
@@ -91,23 +87,7 @@ namespace TheSecondSeat.TTS
                     openAI_Model = modelName;
                 }
                 
-                // 如果有 API Key，准备 Authorization Header
-                httpClient.DefaultRequestHeaders.Clear();
-                if (!string.IsNullOrEmpty(apiKey))
-                {
-                    httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
-                }
-                
-                if (Prefs.DevMode)
-                {
-                    Log.Message($"[TTSService] Configured OpenAI-compatible TTS: {openAI_ApiUrl}, model: {openAI_Model}");
-                }
-            }
-            // 配置 Azure TTS 的 Authorization Header
-            else if (ttsProvider == "azure" && !string.IsNullOrEmpty(apiKey))
-            {
-                httpClient.DefaultRequestHeaders.Clear();
-                httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", apiKey);
+                // 静默配置
             }
         }
 
@@ -184,10 +164,7 @@ namespace TheSecondSeat.TTS
                 // 保存音频文件
                 File.WriteAllBytes(filePath, audioData);
                 
-                if (Prefs.DevMode)
-                {
-                    Log.Message($"[TTSService] Audio saved to: {filePath}");
-                }
+                // 静默保存
 
                 // 在主线程自动打开音频播放器（传递 personaDefName）
                 string capturedPersonaDefName = personaDefName;  // 捕获变量用于闭包
@@ -279,12 +256,6 @@ namespace TheSecondSeat.TTS
         {
             try
             {
-                // 仅在 DevMode 记录请求信息
-                if (Prefs.DevMode)
-                {
-                    Log.Message($"[TTSService] Sending request to OpenAI TTS API: {openAI_ApiUrl}");
-                    Log.Message($"[TTSService] Model: {openAI_Model}, Voice: {voiceName}");
-                }
 
                 // 构建 OpenAI Speech API 兼容的请求体
                 var requestBody = new
@@ -298,38 +269,36 @@ namespace TheSecondSeat.TTS
 
                 string jsonBody = JsonConvert.SerializeObject(requestBody);
                 
-                // 仅在 DevMode 记录请求体
-                if (Prefs.DevMode)
+
+                // 使用 UnityWebRequest
+                using var webRequest = new UnityWebRequest(openAI_ApiUrl, "POST");
+                webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonBody));
+                webRequest.downloadHandler = new DownloadHandlerBuffer();
+                webRequest.SetRequestHeader("Content-Type", "application/json");
+                
+                if (!string.IsNullOrEmpty(apiKey))
                 {
-                    Log.Message($"[TTSService] Request body: {jsonBody}");
+                    webRequest.SetRequestHeader("Authorization", $"Bearer {apiKey}");
                 }
 
-                // 发送 POST 请求
-                var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
-                var response = await httpClient.PostAsync(openAI_ApiUrl, content);
+                var op = webRequest.SendWebRequest();
+                while (!op.isDone) await Task.Delay(50);
 
-                if (!response.IsSuccessStatusCode)
+                if (webRequest.result != UnityWebRequest.Result.Success)
                 {
-                    var error = await response.Content.ReadAsStringAsync();
-                    
                     // 仅在 DevMode 显示详细错误
                     if (Prefs.DevMode)
                     {
-                        Log.Error($"[TTSService] OpenAI TTS error: {response.StatusCode}");
-                        Log.Error($"[TTSService] Error details: {error}");
+                        Log.Error($"[TTSService] OpenAI TTS error: {webRequest.responseCode} - {webRequest.error}");
+                        Log.Error($"[TTSService] Error details: {webRequest.downloadHandler.text}");
                         Log.Error($"[TTSService] Request URL: {openAI_ApiUrl}");
-                        Log.Error($"[TTSService] Model: {openAI_Model}");
                     }
                     return null;
                 }
 
                 // 读取音频数据（应该是 WAV 格式）
-                byte[] audioData = await response.Content.ReadAsByteArrayAsync();
+                byte[] audioData = webRequest.downloadHandler.data;
                 
-                if (Prefs.DevMode)
-                {
-                    Log.Message($"[TTSService] OpenAI TTS audio generated: {audioData.Length} bytes");
-                }
                 
                 return audioData;
             }
@@ -380,16 +349,10 @@ namespace TheSecondSeat.TTS
                 TTSAudioPlayer.Instance.PlayFromBytes(audioData, personaDefName, () => {
                     // 播放结束：清除正在说话状态
                     IsSpeaking = false;
-                    if (Prefs.DevMode)
-                    {
-                        Log.Message("[TTSService] Audio playback finished");
-                    }
+                    // 静默完成
                 });
                 
-                if (Prefs.DevMode)
-                {
-                    Log.Message($"[TTSService] Playing audio via Unity AudioSource: {filePath}");
-                }
+                // 静默播放
             }
             catch (Exception ex)
             {
@@ -456,28 +419,17 @@ namespace TheSecondSeat.TTS
                 // 构建 SSML
                 string ssml = BuildSSML(text, voiceName, speechRate);
                 
-                // ⭐ v1.6.74: 调试：记录完整的 SSML（仅 DevMode）
-                if (Prefs.DevMode)
-                {
-                    Log.Message($"[TTSService] SSML:\n{ssml}");
-                    Log.Message($"[TTSService] Endpoint: {endpoint}");
-                    Log.Message($"[TTSService] Voice: {voiceName}");
-                }
 
-                // 设置请求内容
-                var content = new StringContent(ssml, Encoding.UTF8, "application/ssml+xml");
+                // 使用 UnityWebRequest
+                using var webRequest = new UnityWebRequest(endpoint, "POST");
+                webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(ssml));
+                webRequest.downloadHandler = new DownloadHandlerBuffer();
                 
-                // 确保请求头正确（移除旧的，重新添加）
-                httpClient.DefaultRequestHeaders.Remove("Ocp-Apim-Subscription-Key");
-                httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", apiKey);
-                
-                // 设置输出格式（WAV PCM）
-                httpClient.DefaultRequestHeaders.Remove("X-Microsoft-OutputFormat");
-                httpClient.DefaultRequestHeaders.Add("X-Microsoft-OutputFormat", "riff-48khz-16bit-mono-pcm");
-                
-                // 添加 User-Agent（某些 API 要求）
-                httpClient.DefaultRequestHeaders.Remove("User-Agent");
-                httpClient.DefaultRequestHeaders.Add("User-Agent", "RimWorld-TheSecondSeat-TTS");
+                // 设置 Header
+                webRequest.SetRequestHeader("Content-Type", "application/ssml+xml");
+                webRequest.SetRequestHeader("Ocp-Apim-Subscription-Key", apiKey);
+                webRequest.SetRequestHeader("X-Microsoft-OutputFormat", "riff-48khz-16bit-mono-pcm");
+                webRequest.SetRequestHeader("User-Agent", "RimWorld-TheSecondSeat-TTS");
 
                 // ⭐ v1.6.74: TODO - Azure TTS Viseme 支持
                 // Azure TTS REST API 不支持直接返回 Viseme 事件
@@ -487,17 +439,16 @@ namespace TheSecondSeat.TTS
                 // 3. 使用备用方案：基于音频振幅分析估算开合度
                 
                 // 当前：仅生成音频
-                var response = await httpClient.PostAsync(endpoint, content);
+                var op = webRequest.SendWebRequest();
+                while (!op.isDone) await Task.Delay(50);
 
-                if (!response.IsSuccessStatusCode)
+                if (webRequest.result != UnityWebRequest.Result.Success)
                 {
-                    var error = await response.Content.ReadAsStringAsync();
-                    
                     // 仅在 DevMode 显示详细错误日志
                     if (Prefs.DevMode)
                     {
-                        Log.Error($"[TTSService] Azure TTS error: {response.StatusCode}");
-                        Log.Error($"[TTSService] Error details: {error}");
+                        Log.Error($"[TTSService] Azure TTS error: {webRequest.responseCode} - {webRequest.error}");
+                        Log.Error($"[TTSService] Error details: {webRequest.downloadHandler.text}");
                         Log.Error($"[TTSService] Region: {apiRegion}");
                         Log.Error($"[TTSService] Voice: {voiceName}");
                         Log.Error($"[TTSService] SSML length: {ssml.Length} characters");
@@ -506,12 +457,8 @@ namespace TheSecondSeat.TTS
                     return null;
                 }
 
-                byte[] audioData = await response.Content.ReadAsByteArrayAsync();
+                byte[] audioData = webRequest.downloadHandler.data;
                 
-                if (Prefs.DevMode)
-                {
-                    Log.Message($"[TTSService] Audio generated: {audioData.Length} bytes");
-                }
                 
                 // ⭐ v1.6.74: 备用方案 - 使用简单的 Viseme 序列模拟
                 // 基于文本长度估算 Viseme 序列（粗略估计）
@@ -578,10 +525,6 @@ namespace TheSecondSeat.TTS
                     // 推送到 MouthAnimationSystem
                     PersonaGeneration.MouthAnimationSystem.PushVisemeSequence(personaDefName, visemes);
                     
-                    if (Prefs.DevMode)
-                    {
-                        Log.Message($"[TTSService] Generated simple Viseme sequence: {visemes.Count} visemes (DEMO MODE)");
-                    }
                 }
             }
             catch (Exception ex)
@@ -715,10 +658,6 @@ namespace TheSecondSeat.TTS
                         File.Delete(file);
                     }
                     
-                    if (Prefs.DevMode)
-                    {
-                        Log.Message($"[TTSService] Deleted {files.Length} audio files");
-                    }
                 }
             }
             catch (Exception ex)

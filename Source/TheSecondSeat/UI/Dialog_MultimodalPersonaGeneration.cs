@@ -264,7 +264,6 @@ namespace TheSecondSeat.UI
         private void DrawBottomButtons(Rect rect)
         {
             float buttonWidth = 150f;
-            float spacing = 10f;
             
             // 取消按钮（左侧）
             Rect cancelRect = new Rect(rect.x, rect.y, buttonWidth, rect.height);

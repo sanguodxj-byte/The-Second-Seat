@@ -35,8 +35,11 @@ namespace TheSecondSeat.LLM
                 return null;
             }
 
+            // ? 修复：确保模型名称不包含 "models/" 前缀
+            string cleanModel = model.Replace("models/", "").Trim();
+            
             // 构建 URL（API Key 在 URL 参数中）
-            string url = $"{BaseUrl}/models/{model}:generateContent?key={apiKey}";
+            string url = $"{BaseUrl}/models/{cleanModel}:generateContent?key={apiKey}";
 
             // 构建请求体（Gemini 格式）
             var request = new GeminiRequest
@@ -98,10 +101,12 @@ namespace TheSecondSeat.LLM
                     return null;
                 }
 
-                Log.Message($"[The Second Seat] 图片已编码为 Base64 ({base64Image.Length} 字符)");
+
+                // ? 修复：确保模型名称不包含 "models/" 前缀
+                string cleanModel = model.Replace("models/", "").Trim();
 
                 // 2?? 构建多模态请求体
-                string url = $"{BaseUrl}/models/{model}:generateContent?key={apiKey}";
+                string url = $"{BaseUrl}/models/{cleanModel}:generateContent?key={apiKey}";
 
                 var request = new GeminiRequest
                 {
@@ -155,7 +160,6 @@ namespace TheSecondSeat.LLM
                 // 确保纹理可读
                 if (!texture.isReadable)
                 {
-                    Log.Warning("[The Second Seat] 纹理不可读，尝试创建可读副本");
                     texture = MakeTextureReadable(texture);
                 }
 
@@ -171,7 +175,6 @@ namespace TheSecondSeat.LLM
                     int newHeight = (int)(texture.height * scale);
                     
                     textureToEncode = ResizeTexture(texture, newWidth, newHeight);
-                    Log.Message($"[The Second Seat] 图片已缩小：{texture.width}x{texture.height} → {newWidth}x{newHeight}");
                 }
 
                 // ? 使用 JPG 编码（更小的文件）
@@ -180,7 +183,6 @@ namespace TheSecondSeat.LLM
                 if (imageBytes == null || imageBytes.Length == 0)
                 {
                     // 如果 JPG 失败，回退到 PNG
-                    Log.Warning("[The Second Seat] JPG 编码失败，回退到 PNG");
                     imageBytes = textureToEncode.EncodeToPNG();
                 }
                 
@@ -192,9 +194,6 @@ namespace TheSecondSeat.LLM
 
                 // 转换为 Base64
                 string base64 = Convert.ToBase64String(imageBytes);
-                
-                Log.Message($"[The Second Seat] 图片编码成功：{textureToEncode.width}x{textureToEncode.height}, " +
-                          $"{imageBytes.Length / 1024}KB → Base64 {base64.Length} 字符");
                 
                 // 清理临时纹理
                 if (needsResize && textureToEncode != texture)
@@ -271,10 +270,7 @@ namespace TheSecondSeat.LLM
 
             try
             {
-                Log.Message($"[The Second Seat] Gemini API 请求: {url}");
-                Log.Message($"[The Second Seat] 请求体大小: {jsonContent.Length} 字符");
-
-                // ? 使用 UnityWebRequest
+                // 使用 UnityWebRequest
                 using var webRequest = new UnityWebRequest(url, "POST");
                 webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonContent));
                 webRequest.downloadHandler = new DownloadHandlerBuffer();
@@ -294,8 +290,6 @@ namespace TheSecondSeat.LLM
                 if (webRequest.result == UnityWebRequest.Result.Success)
                 {
                     string responseText = webRequest.downloadHandler.text;
-                    Log.Message($"[The Second Seat] Gemini API 响应成功: {responseText.Substring(0, Math.Min(500, responseText.Length))}...");
-
                     var response = JsonConvert.DeserializeObject<GeminiResponse>(responseText);
                     return response;
                 }

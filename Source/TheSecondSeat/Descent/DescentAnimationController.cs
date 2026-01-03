@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Verse;
 using TheSecondSeat.PersonaGeneration;
+using TheSecondSeat.Utils;
 
 namespace TheSecondSeat.Descent
 {
@@ -11,12 +12,12 @@ namespace TheSecondSeat.Descent
     /// 
     /// 功能：
     /// - 控制立绘姿势切换序列
-    /// - 播放龙骑兵入场过场动画
+    /// - 播放实体降临过场动画
     /// - 管理动画时间轴和过渡效果
-    /// 
+    ///
     /// 动画序列：
     /// 1. 姿势切换（3秒）：ready → charging → casting
-    /// 2. 过场动画（6秒）：龙骑兵飞入、盘旋、降落、下马
+    /// 2. 过场动画（6秒）：实体飞入、盘旋、降落、着陆
     /// 3. 特效爆发（2秒）：冲击波、光环浮现
     /// </summary>
     public class DescentAnimationController
@@ -34,6 +35,10 @@ namespace TheSecondSeat.Descent
         private const int CINEMATIC_FPS = 15;                  // 过场动画帧率
         private const int CINEMATIC_TOTAL_FRAMES = 90;         // 过场动画总帧数
         
+        // 默认过场动画文件夹（已从 DragonRider 泛化）
+        // 兼容性注意：如果资源包未更新，可能需要重命名文件夹为 EntityFlyby
+        private const string DEFAULT_CINEMATIC_FOLDER = "EntityFlyby";
+
         // ==================== 状态字段 ====================
         
         private PostureState currentPostureState = PostureState.None;
@@ -46,16 +51,16 @@ namespace TheSecondSeat.Descent
         private Action? cinematicCompleteCallback;
         private IntVec3 targetLocation;
         
-        private DescentMode currentMode = DescentMode.Assist;
+        private bool isHostileMode = false;
         
         // ==================== 公共方法 ====================
         
         /// <summary>
         /// 开始姿势切换序列
         /// </summary>
-        public void StartPostureSequence(DescentMode mode, Action onComplete)
+        public void StartPostureSequence(bool isHostile, Action onComplete)
         {
-            currentMode = mode;
+            isHostileMode = isHostile;
             currentPostureState = PostureState.Ready;
             postureTimer = 0f;
             postureCompleteCallback = onComplete;
@@ -63,15 +68,15 @@ namespace TheSecondSeat.Descent
             // 切换到准备姿势
             SwitchToPosture(PostureType.Ready);
             
-            Log.Message($"[DescentAnimationController] Started posture sequence: {mode}");
+            Log.Message($"[DescentAnimationController] Started posture sequence: {(isHostile ? "Attack" : "Assist")}");
         }
         
         /// <summary>
         /// 开始过场动画
         /// </summary>
-        public void StartCinematic(DescentMode mode, IntVec3 location, Action onComplete)
+        public void StartCinematic(bool isHostile, IntVec3 location, Action onComplete)
         {
-            currentMode = mode;
+            isHostileMode = isHostile;
             targetLocation = location;
             isPlayingCinematic = true;
             cinematicTimer = 0f;
@@ -81,7 +86,7 @@ namespace TheSecondSeat.Descent
             // 预加载动画帧（前30帧，避免全部加载导致内存压力）
             PreloadCinematicFrames(0, 30);
             
-            Log.Message($"[DescentAnimationController] Started cinematic: {mode} at {location}");
+            Log.Message($"[DescentAnimationController] Started cinematic: {(isHostile ? "Attack" : "Assist")} at {location}");
         }
         
         /// <summary>
@@ -152,11 +157,19 @@ namespace TheSecondSeat.Descent
         
         /// <summary>
         /// 切换到指定姿势
+        /// ⚠️ v1.6.80: 使用线程安全的资源加载
         /// </summary>
         private void SwitchToPosture(PostureType type)
         {
             try
             {
+                // ⚠️ v1.6.80: 确保在主线程调用
+                if (!TSS_AssetLoader.IsMainThread)
+                {
+                    Log.Warning("[DescentAnimationController] SwitchToPosture called from non-main thread, skipping");
+                    return;
+                }
+                
                 // 获取当前人格
                 var manager = Current.Game?.GetComponent<Narrator.NarratorManager>();
                 var persona = manager?.GetCurrentPersona();
@@ -176,8 +189,10 @@ namespace TheSecondSeat.Descent
                     _ => "descent_pose_ready"
                 };
                 
-                string texturePath = $"UI/Narrators/Descent/Postures/{GetPersonaName(persona)}/{postureName}";
-                Texture2D postureTexture = ContentFinder<Texture2D>.Get(texturePath, false);
+                string personaName = GetPersonaName(persona);
+                
+                // ⚠️ v1.6.80: 使用线程安全的加载方法
+                Texture2D postureTexture = TSS_AssetLoader.LoadDescentPosture(personaName, postureName);
                 
                 if (postureTexture != null)
                 {
@@ -187,7 +202,10 @@ namespace TheSecondSeat.Descent
                 }
                 else
                 {
-                    Log.Warning($"[DescentAnimationController] Posture texture not found: {texturePath}");
+                    if (Prefs.DevMode)
+                    {
+                        Log.Warning($"[DescentAnimationController] Posture texture not found for {personaName}/{postureName}");
+                    }
                 }
             }
             catch (Exception ex)
@@ -239,14 +257,23 @@ namespace TheSecondSeat.Descent
         
         /// <summary>
         /// 显示过场动画帧
+        /// ⚠️ v1.6.80: 使用线程安全的资源加载
         /// </summary>
         private void DisplayCinematicFrame(int frameIndex)
         {
             try
             {
+                // ⚠️ v1.6.80: 确保在主线程调用
+                if (!TSS_AssetLoader.IsMainThread)
+                {
+                    return; // 静默跳过，避免日志刷屏
+                }
+                
                 // 获取帧纹理路径
                 string framePath = GetCinematicFramePath(frameIndex);
-                Texture2D frameTexture = ContentFinder<Texture2D>.Get(framePath, false);
+                
+                // ⚠️ v1.6.80: 使用线程安全的加载方法
+                Texture2D frameTexture = TSS_AssetLoader.LoadTexture(framePath);
                 
                 if (frameTexture != null)
                 {
@@ -302,21 +329,32 @@ namespace TheSecondSeat.Descent
                 stageFrame = frameIndex + 1;
             }
             
-            return $"UI/Narrators/Descent/Cinematic/DragonRider/rider_{stage}_{stageFrame:D3}";
+            return $"UI/Narrators/Descent/Cinematic/{DEFAULT_CINEMATIC_FOLDER}/rider_{stage}_{stageFrame:D3}";
         }
         
         /// <summary>
         /// 预加载过场动画帧
+        /// ⚠️ v1.6.80: 必须在主线程调用
         /// </summary>
         private void PreloadCinematicFrames(int startFrame, int endFrame)
         {
             try
             {
+                // ⚠️ v1.6.80: 确保在主线程调用
+                if (!TSS_AssetLoader.IsMainThread)
+                {
+                    if (Prefs.DevMode)
+                    {
+                        Log.Warning("[DescentAnimationController] PreloadCinematicFrames called from non-main thread, skipping");
+                    }
+                    return;
+                }
+                
                 for (int i = startFrame; i <= endFrame && i < CINEMATIC_TOTAL_FRAMES; i++)
                 {
                     string framePath = GetCinematicFramePath(i);
-                    // 预加载纹理（RimWorld 会自动缓存）
-                    ContentFinder<Texture2D>.Get(framePath, false);
+                    // ⚠️ v1.6.80: 使用线程安全的加载方法
+                    TSS_AssetLoader.LoadTexture(framePath);
                 }
                 
                 if (Prefs.DevMode)

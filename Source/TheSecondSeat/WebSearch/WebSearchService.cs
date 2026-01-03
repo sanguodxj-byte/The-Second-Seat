@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using UnityEngine.Networking;
 using Verse;
 
 namespace TheSecondSeat.WebSearch
@@ -18,7 +18,6 @@ namespace TheSecondSeat.WebSearch
         private static WebSearchService? instance;
         public static WebSearchService Instance => instance ??= new WebSearchService();
 
-        private readonly HttpClient httpClient;
         private readonly Dictionary<string, SearchResultCache> searchCache;
         private const int CacheExpirationMinutes = 60;
         private const int MaxCacheEntries = 100;
@@ -36,11 +35,6 @@ namespace TheSecondSeat.WebSearch
 
         public WebSearchService()
         {
-            httpClient = new HttpClient
-            {
-                Timeout = TimeSpan.FromSeconds(30) // ? 15秒 → 30秒
-            };
-            httpClient.DefaultRequestHeaders.Add("User-Agent", "TheSecondSeat-RimWorld-Mod/1.0");
             searchCache = new Dictionary<string, SearchResultCache>();
         }
 
@@ -150,13 +144,20 @@ namespace TheSecondSeat.WebSearch
 
             var url = $"https://api.bing.microsoft.com/v7.0/search?q={Uri.EscapeDataString(query)}&count={maxResults}";
             
-            var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.Add("Ocp-Apim-Subscription-Key", bingApiKey);
+            using var webRequest = UnityWebRequest.Get(url);
+            webRequest.SetRequestHeader("Ocp-Apim-Subscription-Key", bingApiKey);
+            webRequest.SetRequestHeader("User-Agent", "TheSecondSeat-RimWorld-Mod/1.0");
 
-            var response = await httpClient.SendAsync(request);
-            response.EnsureSuccessStatusCode();
+            var op = webRequest.SendWebRequest();
+            while (!op.isDone) await Task.Delay(50);
 
-            var content = await response.Content.ReadAsStringAsync();
+            if (webRequest.result != UnityWebRequest.Result.Success)
+            {
+                Log.Error($"[WebSearch] Bing API Error: {webRequest.error}");
+                return null;
+            }
+
+            var content = webRequest.downloadHandler.text;
             var json = JObject.Parse(content);
 
             var result = new SearchResult
@@ -197,10 +198,19 @@ namespace TheSecondSeat.WebSearch
 
             var url = $"https://www.googleapis.com/customsearch/v1?key={googleApiKey}&cx={googleSearchEngineId}&q={Uri.EscapeDataString(query)}&num={maxResults}";
 
-            var response = await httpClient.GetAsync(url);
-            response.EnsureSuccessStatusCode();
+            using var webRequest = UnityWebRequest.Get(url);
+            webRequest.SetRequestHeader("User-Agent", "TheSecondSeat-RimWorld-Mod/1.0");
 
-            var content = await response.Content.ReadAsStringAsync();
+            var op = webRequest.SendWebRequest();
+            while (!op.isDone) await Task.Delay(50);
+
+            if (webRequest.result != UnityWebRequest.Result.Success)
+            {
+                Log.Error($"[WebSearch] Google API Error: {webRequest.error}");
+                return null;
+            }
+
+            var content = webRequest.downloadHandler.text;
             var json = JObject.Parse(content);
 
             var result = new SearchResult
@@ -235,10 +245,19 @@ namespace TheSecondSeat.WebSearch
         {
             var url = $"https://api.duckduckgo.com/?q={Uri.EscapeDataString(query)}&format=json&no_html=1&skip_disambig=1";
 
-            var response = await httpClient.GetAsync(url);
-            response.EnsureSuccessStatusCode();
+            using var webRequest = UnityWebRequest.Get(url);
+            webRequest.SetRequestHeader("User-Agent", "TheSecondSeat-RimWorld-Mod/1.0");
 
-            var content = await response.Content.ReadAsStringAsync();
+            var op = webRequest.SendWebRequest();
+            while (!op.isDone) await Task.Delay(50);
+
+            if (webRequest.result != UnityWebRequest.Result.Success)
+            {
+                Log.Error($"[WebSearch] DuckDuckGo API Error: {webRequest.error}");
+                return null;
+            }
+
+            var content = webRequest.downloadHandler.text;
             var json = JObject.Parse(content);
 
             var result = new SearchResult

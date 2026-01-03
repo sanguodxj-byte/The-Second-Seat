@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq;
 using TheSecondSeat.Commands;
 using TheSecondSeat.LLM;
 using TheSecondSeat.Narrator;
@@ -9,6 +10,8 @@ using TheSecondSeat.NaturalLanguage;
 using TheSecondSeat.Execution;
 using TheSecondSeat.Integration;
 using TheSecondSeat.WebSearch;
+using TheSecondSeat.PersonaGeneration;
+using TheSecondSeat.Utils;
 using Verse;
 using RimWorld;
 
@@ -29,6 +32,9 @@ namespace TheSecondSeat.Core
         private bool hasGreetedOnLoad = false;
         private int ticksSinceLoad = 0;
         private const int GreetingDelayTicks = 300; // 加载后5秒再发送问候
+        
+        // ⭐ v1.6.82: 主线程纹理预加载标记
+        private bool hasPreloadedAssets = false;
 
         public string LastDialogue => lastDialogue;
         public bool IsProcessing => isProcessing;
@@ -47,7 +53,17 @@ namespace TheSecondSeat.Core
             {
                 narratorManager = Current.Game.GetComponent<NarratorManager>();
             }
+            
+            // ⭐ v1.6.82: 主线程纹理预加载（只执行一次，在问候之前）
+            if (!hasPreloadedAssets && narratorManager != null)
+            {
+                hasPreloadedAssets = true;
+                PreloadAssetsOnMainThread();
+            }
 
+            // ? v1.6.82: 处理调度的表情切换
+            ProcessScheduledExpressions();
+            
             // ? 只在首次加载后发送一次问候（延迟5秒）
             if (!hasGreetedOnLoad)
             {
@@ -65,6 +81,78 @@ namespace TheSecondSeat.Core
             // 1. 游戏首次加载时（一次）
             // 2. 玩家主动发送消息时
             // 3. 玩家点击聊天窗口发送按钮时
+        }
+        
+        /// <summary>
+        /// ⭐ v1.6.82: 在主线程预加载所有纹理资源
+        /// 避免首次显示时的卡顿
+        /// </summary>
+        private void PreloadAssetsOnMainThread()
+        {
+            try
+            {
+                // 初始化主线程 ID
+                TSS_AssetLoader.InitializeMainThread();
+                
+                // 获取所有已加载的叙事者人格
+                var allPersonas = DefDatabase<NarratorPersonaDef>.AllDefsListForReading;
+                int preloadedCount = 0;
+                
+                foreach (var persona in allPersonas)
+                {
+                    if (persona == null) continue;
+                    
+                    // 预加载立绘
+                    if (!string.IsNullOrEmpty(persona.portraitPath))
+                    {
+                        TSS_AssetLoader.LoadTexture(persona.portraitPath);
+                    }
+                    
+                    // 预加载分层立绘配置
+                    if (persona.useLayeredPortrait)
+                    {
+                        var config = persona.GetLayeredConfig();
+                        if (config != null)
+                        {
+                            // 预加载所有表情的 base_body
+                            LayeredPortraitCompositor.PreloadAllExpressions(config);
+                        }
+                    }
+                    
+                    // 预加载降临姿态
+                    if (persona.hasDescentMode)
+                    {
+                        string personaName = persona.narratorName?.Split(' ')[0] ?? persona.defName;
+                        
+                        if (persona.descentPostures != null)
+                        {
+                            if (!string.IsNullOrEmpty(persona.descentPostures.standing))
+                            {
+                                TSS_AssetLoader.LoadDescentPosture(personaName, persona.descentPostures.standing);
+                            }
+                            if (!string.IsNullOrEmpty(persona.descentPostures.floating))
+                            {
+                                TSS_AssetLoader.LoadDescentPosture(personaName, persona.descentPostures.floating);
+                            }
+                            if (!string.IsNullOrEmpty(persona.descentPostures.combat))
+                            {
+                                TSS_AssetLoader.LoadDescentPosture(personaName, persona.descentPostures.combat);
+                            }
+                        }
+                    }
+                    
+                    preloadedCount++;
+                }
+                
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[NarratorController] ⭐ 主线程预加载完成: {preloadedCount} 个叙事者人格");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[NarratorController] 预加载资源失败: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -90,12 +178,36 @@ namespace TheSecondSeat.Core
             // 修复：在主线程捕获游戏状态
             GameStateSnapshot snapshot;
             string gameStateJson;
+            string selectionContext = "";
             
             try
             {
                 // 1. 在主线程捕获游戏状态（必须！）
-                snapshot = GameStateObserver.CaptureSnapshot();
+                snapshot = GameStateObserver.CaptureSnapshotSafe();
                 gameStateJson = GameStateObserver.SnapshotToJson(snapshot);
+
+                // ? 捕获玩家当前选中的物体
+                if (Find.Selector != null && Find.Selector.SelectedObjects.Count > 0)
+                {
+                    var selectedInfo = new List<string>();
+                    foreach (var obj in Find.Selector.SelectedObjects)
+                    {
+                        if (obj is Thing t)
+                        {
+                            selectedInfo.Add($"{t.Label} (def: {t.def.defName}) @ {t.Position}");
+                        }
+                        else if (obj is Zone z)
+                        {
+                            selectedInfo.Add($"区域: {z.label} (Cells: {z.Cells.Count})");
+                        }
+                    }
+                    
+                    if (selectedInfo.Count > 0)
+                    {
+                        selectionContext = $"[玩家当前选中:\n{string.Join("\n", selectedInfo)}\n]\n";
+                        Log.Message($"[NarratorController] 捕获选中物体: {selectedInfo.Count} 个");
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -122,10 +234,10 @@ namespace TheSecondSeat.Core
             }
 
             // 2. 然后在后台线程处理（不访问游戏数据）
-            Task.Run(async () => await ProcessNarratorUpdateAsync(userMessage, gameStateJson, isGreeting));
+            Task.Run(async () => await ProcessNarratorUpdateAsync(userMessage, gameStateJson, selectionContext, isGreeting));
         }
 
-        private async Task ProcessNarratorUpdateAsync(string userMessage, string gameStateJson, bool isGreeting = false)
+        private async Task ProcessNarratorUpdateAsync(string userMessage, string gameStateJson, string selectionContext, bool isGreeting = false)
         {
             isProcessing = true;
             lastError = ""; // 清除之前的错误
@@ -183,13 +295,14 @@ namespace TheSecondSeat.Core
                 if (isGreeting || string.IsNullOrEmpty(userMessage))
                 {
                     // ? 首次加载问候 - 简单提示，不要强调"观察状态"
-                    enhancedUserMessage = timeContext + 
+                    enhancedUserMessage = timeContext +
                         "玩家刚刚加载了游戏存档。请简短地打个招呼，不需要汇报殖民地状态。";
                 }
                 else
                 {
                     // ? 玩家主动发送消息（不包含 memoryContext）
-                    enhancedUserMessage = timeContext + searchContext + userMessage;
+                    // 包含时间、搜索结果、选中物体上下文
+                    enhancedUserMessage = timeContext + searchContext + selectionContext + userMessage;
                 }
 
                 // 5. Send to LLM
@@ -276,6 +389,12 @@ namespace TheSecondSeat.Core
             else
                 return "深夜";
         }
+        
+        // ? 默认 System Prompt
+        private string GetDefaultSystemPrompt()
+        {
+            return "你是一个 RimWorld 的 AI 叙事者。你的任务是观察游戏状态，与玩家互动，并根据需要执行操作。";
+        }
 
         private void ProcessResponse(LLMResponse response, string userMessage)
         {
@@ -326,34 +445,10 @@ namespace TheSecondSeat.Core
                 // 保存最新的对话（带动作）
                 lastDialogue = displayText;
                 
-                // ? 新增：提取并应用 expression 字段
+                // ? v1.6.82: 提取并应用表情 - 支持单表情和多表情序列
                 try
                 {
-                    if (!string.IsNullOrEmpty(response.expression))
-                    {
-                        // 尝试解析表情类型
-                        if (System.Enum.TryParse<PersonaGeneration.ExpressionType>(response.expression, true, out var expressionType))
-                        {
-                            // 设置表情，持续 3 秒
-                            PersonaGeneration.ExpressionSystem.SetExpression(
-                                narratorDefName, 
-                                expressionType, 
-                                180,  // 3 秒 = 180 ticks
-                                "对话触发"
-                            );
-                            
-                            Log.Message($"[NarratorController] AI 表情切换: {response.expression}");
-                        }
-                        else
-                        {
-                            Log.Warning($"[NarratorController] 无效的表情类型: {response.expression}");
-                        }
-                    }
-                    else
-                    {
-                        // 如果 AI 没有提供 expression，根据对话内容自动推断
-                        PersonaGeneration.ExpressionSystem.UpdateExpressionByDialogueTone(narratorDefName, displayText);
-                    }
+                    ApplyExpressionFromResponse(response, narratorDefName, displayText);
                 }
                 catch (Exception ex)
                 {
@@ -653,32 +748,223 @@ namespace TheSecondSeat.Core
             }
         }
 
-        private string GetDefaultSystemPrompt()
+        /// <summary>
+        /// ? v1.6.82: 应用表情 - 支持单表情和多表情序列
+        /// </summary>
+        private void ApplyExpressionFromResponse(LLMResponse response, string narratorDefName, string dialogueText)
         {
-            return @"你是Cassandra，AI叙事者。用JSON格式回复，包含'thought'、'dialogue'和可选的'command'字段。";
+            // 优先级: emotionSequence > emotions > expression > 自动推断
+            
+            // 1. 检查详细情绪序列 (emotionSequence)
+            if (response.emotionSequence != null && response.emotionSequence.Count > 0)
+            {
+                ApplyEmotionSequence(response.emotionSequence, narratorDefName);
+                return;
+            }
+            
+            // 2. 检查紧凑情绪序列 (emotions: "happy|sad|angry")
+            if (!string.IsNullOrEmpty(response.emotions))
+            {
+                ApplyCompactEmotionSequence(response.emotions, narratorDefName, dialogueText);
+                return;
+            }
+            
+            // 3. 单表情模式 (expression)
+            if (!string.IsNullOrEmpty(response.expression))
+            {
+                if (System.Enum.TryParse<PersonaGeneration.ExpressionType>(response.expression, true, out var expressionType))
+                {
+                    PersonaGeneration.ExpressionSystem.SetExpression(
+                        narratorDefName,
+                        expressionType,
+                        180,  // 3 秒
+                        "对话触发"
+                    );
+                    Log.Message($"[NarratorController] AI 表情切换: {response.expression}");
+                }
+                else
+                {
+                    Log.Warning($"[NarratorController] 无效的表情类型: {response.expression}");
+                }
+                return;
+            }
+            
+            // 4. 没有提供表情，自动推断
+            PersonaGeneration.ExpressionSystem.UpdateExpressionByDialogueTone(narratorDefName, dialogueText);
         }
-
-        public override void ExposeData()
+        
+        /// <summary>
+        /// ? v1.6.82: 应用详细情绪序列
+        /// </summary>
+        private void ApplyEmotionSequence(List<EmotionSegment> segments, string narratorDefName)
         {
-            base.ExposeData();
-            Scribe_Values.Look(ref lastDialogue, "lastDialogue", "");
-            Scribe_Values.Look(ref hasGreetedOnLoad, "hasGreetedOnLoad", false);
-            // ? 注意：不保存 ticksSinceLoad，每次加载都重新计时
+            Log.Message($"[NarratorController] 应用情绪序列: {segments.Count} 个片段");
+            
+            // 计算总时长
+            float totalDuration = 0f;
+            foreach (var segment in segments)
+            {
+                // 如果没有指定时长，按文本长度估算 (中文约 3字/秒)
+                float segmentDuration = segment.estimatedDuration > 0
+                    ? segment.estimatedDuration
+                    : segment.text.Length / 3f;
+                totalDuration += segmentDuration;
+            }
+            
+            // 创建延迟表情切换任务
+            float accumulatedDelay = 0f;
+            for (int i = 0; i < segments.Count; i++)
+            {
+                var segment = segments[i];
+                float delay = accumulatedDelay;
+                
+                // 解析情绪标签
+                string emotionStr = NormalizeEmotionString(segment.emotion);
+                if (System.Enum.TryParse<PersonaGeneration.ExpressionType>(emotionStr, true, out var expressionType))
+                {
+                    // 使用延迟任务设置表情
+                    int delayTicks = (int)(delay * 60); // 秒转换为 ticks
+                    float segmentDuration = segment.estimatedDuration > 0
+                        ? segment.estimatedDuration
+                        : segment.text.Length / 3f;
+                    int durationTicks = (int)(segmentDuration * 60);
+                    
+                    // 记录延迟执行
+                    ScheduleExpressionChange(narratorDefName, expressionType, delayTicks, durationTicks);
+                    
+                    accumulatedDelay += segmentDuration;
+                }
+            }
         }
-    }
-}
-
-namespace UnityEngine
-{
-    /// <summary>
-    /// Helper to execute callbacks on Unity's main thread
-    /// </summary>
-    public static class ApplicationExtensions
-    {
-        public static void CallOnMainThread(Action action)
+        
+        /// <summary>
+        /// ? v1.6.82: 应用紧凑情绪序列 (emotions: "happy|sad|angry")
+        /// </summary>
+        private void ApplyCompactEmotionSequence(string emotionsStr, string narratorDefName, string dialogueText)
         {
-            // RimWorld/Unity specific: use LongEventHandler for main thread execution
-            Verse.LongEventHandler.ExecuteWhenFinished(action);
+            string[] emotions = emotionsStr.Split('|');
+            Log.Message($"[NarratorController] 应用紧凑情绪序列: {emotionsStr} ({emotions.Length} 个)");
+            
+            // 按句子分割对话（按标点）
+            string[] sentences = System.Text.RegularExpressions.Regex.Split(dialogueText, @"(?<=[。！？\.!\?])");
+            sentences = System.Array.FindAll(sentences, s => !string.IsNullOrWhiteSpace(s));
+            
+            // 计算每个情绪的持续时间
+            float totalChars = dialogueText.Length;
+            float charsPerSecond = 3f; // 中文约 3字/秒
+            float totalDuration = totalChars / charsPerSecond;
+            float durationPerEmotion = totalDuration / emotions.Length;
+            
+            // 设置第一个表情（立即）
+            if (emotions.Length > 0)
+            {
+                string firstEmotion = NormalizeEmotionString(emotions[0].Trim());
+                if (System.Enum.TryParse<PersonaGeneration.ExpressionType>(firstEmotion, true, out var firstExpressionType))
+                {
+                    int firstDuration = (int)(durationPerEmotion * 60);
+                    PersonaGeneration.ExpressionSystem.SetExpression(
+                        narratorDefName,
+                        firstExpressionType,
+                        firstDuration,
+                        "情绪序列-1"
+                    );
+                    Log.Message($"[NarratorController] 情绪 1/{emotions.Length}: {firstEmotion} (立即)");
+                }
+            }
+            
+            // 调度后续表情切换
+            for (int i = 1; i < emotions.Length; i++)
+            {
+                string emotion = NormalizeEmotionString(emotions[i].Trim());
+                if (System.Enum.TryParse<PersonaGeneration.ExpressionType>(emotion, true, out var expressionType))
+                {
+                    // 延迟时间 = 前面所有表情的持续时间总和
+                    int delayTicks = (int)(i * durationPerEmotion * 60);
+                    int durationTicks = (int)(durationPerEmotion * 60);
+                    
+                    ScheduleExpressionChange(narratorDefName, expressionType, delayTicks, durationTicks);
+                    Log.Message($"[NarratorController] 情绪 {i+1}/{emotions.Length}: {emotion} (延迟 {delayTicks} ticks)");
+                }
+            }
+        }
+        
+        /// <summary>
+        /// ? 标准化表情字符串 (处理大小写和别名)
+        /// </summary>
+        private string NormalizeEmotionString(string emotion)
+        {
+            if (string.IsNullOrEmpty(emotion)) return "Neutral";
+            
+            // 首字母大写，其余小写
+            string normalized = char.ToUpper(emotion[0]) + emotion.Substring(1).ToLower();
+            
+            // 处理常见别名映射
+            switch (normalized)
+            {
+                case "Happy": return "Smile";
+                case "Sad": return "Sad";
+                case "Angry": return "Angry";
+                case "Surprised": return "Surprised";
+                case "Fear": return "Fear";
+                case "Disgust": return "Disgust";
+                case "Neutral": return "Neutral";
+                case "Thinking": return "Thinking";
+                default: return normalized;
+            }
+        }
+        
+        // ? 表情调度系统
+        
+        private class ScheduledExpression
+        {
+            public string narratorDefName;
+            public PersonaGeneration.ExpressionType expression;
+            public int triggerTick; // 触发的游戏 tick
+            public int durationTicks;
+        }
+        
+        private List<ScheduledExpression> scheduledExpressions = new List<ScheduledExpression>();
+        
+        /// <summary>
+        /// ? 调度一个延迟的表情切换
+        /// </summary>
+        private void ScheduleExpressionChange(string narratorDefName, PersonaGeneration.ExpressionType expression, int delayTicks, int durationTicks)
+        {
+            int currentTick = GenTicks.TicksGame;
+            scheduledExpressions.Add(new ScheduledExpression
+            {
+                narratorDefName = narratorDefName,
+                expression = expression,
+                triggerTick = currentTick + delayTicks,
+                durationTicks = durationTicks
+            });
+        }
+        
+        /// <summary>
+        /// ? 在 GameComponentTick 中调用，处理到期的表情切换
+        /// </summary>
+        private void ProcessScheduledExpressions()
+        {
+            if (scheduledExpressions.Count == 0) return;
+            
+            int currentTick = GenTicks.TicksGame;
+            
+            // 找出所有到期或过期的任务
+            var readyToTrigger = scheduledExpressions.Where(x => x.triggerTick <= currentTick).ToList();
+            
+            foreach (var item in readyToTrigger)
+            {
+                // 应用表情
+                PersonaGeneration.ExpressionSystem.SetExpression(
+                    item.narratorDefName,
+                    item.expression,
+                    item.durationTicks,
+                    "定时情绪序列"
+                );
+                
+                // 从列表中移除
+                scheduledExpressions.Remove(item);
+            }
         }
     }
 }

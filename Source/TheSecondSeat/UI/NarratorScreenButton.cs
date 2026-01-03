@@ -6,6 +6,7 @@ using TheSecondSeat.Core;
 using TheSecondSeat.Settings;
 using TheSecondSeat.PersonaGeneration;
 using TheSecondSeat.Narrator;
+using TheSecondSeat.Descent;
 
 namespace TheSecondSeat.UI
 {
@@ -77,6 +78,17 @@ namespace TheSecondSeat.UI
         private const float SLOW_FLASH_DURATION = 1.0f;  // 慢速闪烁持续时间
         private const float FAST_FLASH_DURATION = 0.15f;  // 快速闪烁单次持续时间
         private const float FAST_FLASH_INTERVAL = 0.05f;  // 快速闪烁间隔
+
+        // ✅ 浮动文字系统 (UI Overlay)
+        private class UIFloatingText
+        {
+            public string text;
+            public Color color;
+            public float spawnTime;
+            public Vector2 startPos;
+            public float duration = 2f;
+        }
+        private System.Collections.Generic.List<UIFloatingText> floatingTexts = new System.Collections.Generic.List<UIFloatingText>();
 
         public NarratorScreenButton()
         {
@@ -441,6 +453,9 @@ namespace TheSecondSeat.UI
             
             // ✅ 绘制边框闪烁效果（最后绘制，覆盖在最上层）
             DrawBorderFlash(inRect);
+
+            // ✅ 绘制浮动文字
+            DrawFloatingTexts();
         }
 
         private void HandleDragging(Rect inRect)
@@ -509,7 +524,7 @@ namespace TheSecondSeat.UI
             PlayerPrefs.SetFloat("TheSecondSeat_ButtonY", windowRect.y);
             PlayerPrefs.Save();
             
-            Log.Message($"[The Second Seat] Button position saved: ({windowRect.x:F0}, {windowRect.y:F0})");
+            // 日志已静默：按钮位置保存
         }
 
         private void LoadSavedPosition()
@@ -525,7 +540,7 @@ namespace TheSecondSeat.UI
                 {
                     savedPosition = new Vector2(x, y);
                     hasLoadedPosition = true;
-                    Log.Message($"[The Second Seat] Button position loaded: ({savedPosition.x:F0}, {savedPosition.y:F0})");
+                    // 日志已静默：按钮位置加载
                 }
             }
         }
@@ -698,6 +713,14 @@ namespace TheSecondSeat.UI
         /// </summary>
         private void ManageFullBodyPortraitPanel()
         {
+            // ⭐ 修复: 如果处于降临状态，强制关闭立绘，防止与 DescenSystem 冲突
+            var descentSystem = NarratorDescentSystem.Instance;
+            if (descentSystem != null && descentSystem.IsDescentActive)
+            {
+                if (PortraitOverlaySystem.IsEnabled()) PortraitOverlaySystem.Toggle(false);
+                return;
+            }
+
             var modSettings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
             bool shouldShowFullBodyPortrait = modSettings?.usePortraitMode ?? false;
             
@@ -768,10 +791,7 @@ namespace TheSecondSeat.UI
                 // ✅ 关键：无限持续时间 (99999f)，直到下次互动事件
                 TriggerExpression(defaultExpression, duration: 99999f);
                 
-                if (Prefs.DevMode)
-                {
-                    Log.Message($"[NarratorScreenButton] 恢复待机表情: {defaultExpression} (Affinity={affinity:F1}, Mood={mood})");
-                }
+                // 日志已静默：恢复待机表情
             }
             else
             {
@@ -782,17 +802,57 @@ namespace TheSecondSeat.UI
 
         /// <summary>
         /// ✅ 显示浮动文字（表情符号）
+        /// 使用纯UI绘制，替代MoteMaker，避免在OnGUI中生成Thing导致的报错，并解决坐标系问题
         /// </summary>
         private void ShowFloatingText(string text, Color color)
         {
-            try
+            floatingTexts.Add(new UIFloatingText
             {
-                var pos = new Vector3(windowRect.center.x, windowRect.y - 30f, 0f);
-                MoteMaker.ThrowText(pos.ToIntVec3().ToVector3Shifted(), Find.CurrentMap, text, color, 2f);
-            }
-            catch
+                text = text,
+                color = color,
+                spawnTime = Time.realtimeSinceStartup,
+                startPos = new Vector2(windowRect.center.x, windowRect.y), // 从按钮顶部冒出
+                duration = 2f
+            });
+        }
+
+        private void DrawFloatingTexts()
+        {
+            if (floatingTexts.Count == 0) return;
+
+            float currentTime = Time.realtimeSinceStartup;
+            
+            // 倒序遍历以便删除
+            for (int i = floatingTexts.Count - 1; i >= 0; i--)
             {
-                // 静默忽略（可能在没有地图时调用）
+                var ft = floatingTexts[i];
+                float age = currentTime - ft.spawnTime;
+                
+                if (age > ft.duration)
+                {
+                    floatingTexts.RemoveAt(i);
+                    continue;
+                }
+
+                float progress = age / ft.duration;
+                float alpha = 1f;
+                if (progress > 0.7f) alpha = 1f - (progress - 0.7f) / 0.3f; // 最后30%时间渐隐
+
+                // 向上漂浮动画
+                float yOffset = -50f * Mathf.Pow(progress, 0.7f); // 非线性上升
+                Vector2 drawPos = ft.startPos + new Vector2(0, yOffset);
+
+                // 绘制文字
+                Vector2 size = Text.CalcSize(ft.text);
+                Rect rect = new Rect(drawPos.x - size.x / 2, drawPos.y - size.y / 2, size.x, size.y);
+
+                Color oldColor = GUI.color;
+                GUI.color = new Color(ft.color.r, ft.color.g, ft.color.b, alpha);
+                
+                Text.Font = GameFont.Medium;
+                Widgets.Label(rect, ft.text);
+                
+                GUI.color = oldColor;
             }
         }
 

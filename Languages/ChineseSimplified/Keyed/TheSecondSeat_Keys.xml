@@ -141,6 +141,22 @@
   <TSS_Command_BatchLogging_None>未找到可砍伐的成熟树木</TSS_Command_BatchLogging_None>
   <TSS_Command_DesignatePlantCut>已指定 {0} 株植物进行砍伐（类型：{1}）</TSS_Command_DesignatePlantCut>
   <TSS_Command_DesignatePlantCut_None>未找到可砍伐的植物（类型：{0}）</TSS_Command_DesignatePlantCut_None>
+  
+  <!-- ⭐ v1.6.84: 新增命令翻译键 -->
+  <TSS_Command_BatchMine>已指定 {0} 个可采矿资源进行开采（类型：{1}）</TSS_Command_BatchMine>
+  <TSS_Command_BatchMine_None>未找到可采矿资源（类型：{0}）</TSS_Command_BatchMine_None>
+  <TSS_Command_PriorityRepair>已标记 {0} 个受损建筑进行修复</TSS_Command_PriorityRepair>
+  <TSS_Command_PriorityRepair_None>未找到受损建筑</TSS_Command_PriorityRepair_None>
+  <TSS_Command_PriorityRepair_NoConstructors>发现 {0} 个受损建筑，但没有可用的建筑工</TSS_Command_PriorityRepair_NoConstructors>
+  <TSS_Command_BatchCapture>已分配 {0} 个俘虏任务</TSS_Command_BatchCapture>
+  <TSS_Command_BatchCapture_None>未找到可俘虏的敌人</TSS_Command_BatchCapture_None>
+  <TSS_Command_BatchCapture_NoWardens>没有可用的看守或殖民者执行俘虏任务</TSS_Command_BatchCapture_NoWardens>
+  <TSS_Command_BatchCapture_NoBeds>没有可用的囚犯床</TSS_Command_BatchCapture_NoBeds>
+  <TSS_Command_BatchCapture_Failed>俘虏任务分配失败</TSS_Command_BatchCapture_Failed>
+  <TSS_Command_ChangePolicy>已收到政策修改请求：{0}</TSS_Command_ChangePolicy>
+  <TSS_Command_TriggerEvent_NotActive>对弈者模式未激活</TSS_Command_TriggerEvent_NotActive>
+  <TSS_Command_TriggerEvent_NoType>未指定事件类型</TSS_Command_TriggerEvent_NoType>
+  <TSS_Command_ScheduleEvent_NotActive>对弈者模式未激活</TSS_Command_ScheduleEvent_NotActive>
 
   <!-- 错误消息 -->
   <TSS_Error_NoAPIKey>错误：未设置 API 密钥</TSS_Error_NoAPIKey>

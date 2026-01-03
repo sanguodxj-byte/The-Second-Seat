@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Verse;
 using RimWorld;
@@ -124,17 +125,22 @@ namespace TheSecondSeat.PersonaGeneration
                 return;
             }
             
-            // ? 清除旧表情的缓存（立即释放）
-            PortraitLoader.ClearPortraitCache(personaDefName, state.CurrentExpression);
-            AvatarLoader.ClearAvatarCache(personaDefName, state.CurrentExpression);
+            // ⭐ v1.6.92: 只清除旧表情的合成缓存，不清除基础图层
+            // 跳过 Neutral 表情的缓存清除（base_body 是分层立绘的基础）
+            if (state.CurrentExpression != ExpressionType.Neutral)
+            {
+                PortraitLoader.ClearPortraitCache(personaDefName, state.CurrentExpression);
+                AvatarLoader.ClearAvatarCache(personaDefName, state.CurrentExpression);
+                LayeredPortraitCompositor.ClearCache(personaDefName, state.CurrentExpression);
+            }
             
-            // ? v1.6.20: 清除分层立绘缓存（强制重新合成新表情）
-            LayeredPortraitCompositor.ClearCache(personaDefName, state.CurrentExpression);
-            LayeredPortraitCompositor.ClearCache(personaDefName, expression);
-            
-            // ? 清除新表情的缓存，确保重新加载
-            PortraitLoader.ClearPortraitCache(personaDefName, expression);
-            AvatarLoader.ClearAvatarCache(personaDefName, expression);
+            // ⭐ v1.6.92: 只清除新表情的缓存（如果不是 Neutral）
+            if (expression != ExpressionType.Neutral)
+            {
+                PortraitLoader.ClearPortraitCache(personaDefName, expression);
+                AvatarLoader.ClearAvatarCache(personaDefName, expression);
+                LayeredPortraitCompositor.ClearCache(personaDefName, expression);
+            }
             
             // ? 随机选择变体编号（1-5）
             // Neutral 表情不使用变体（variant = 0）
@@ -157,11 +163,7 @@ namespace TheSecondSeat.PersonaGeneration
             // ? v1.6.30: 应用感情驱动动画（自动调整眨眼、呼吸等）
             ApplyEmotionDrivenAnimation(personaDefName);
             
-            if (Prefs.DevMode)
-            {
-                string reasonText = string.IsNullOrEmpty(reason) ? "未指定" : reason;
-                Log.Message($"[ExpressionSystem] ? {personaDefName} 表情切换: {state.PreviousExpression} → {expression} (变体: {state.CurrentVariant}, 原因: {reasonText})");
-            }
+            // 日志已静默：表情切换
         }
         
         /// <summary>
@@ -446,10 +448,17 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// 更新表情过渡动画
+        /// ✅ v1.6.82: 添加空引用保护
         /// </summary>
         public static void UpdateTransition(string personaDefName)
         {
+            // ✅ 空引用保护
+            if (string.IsNullOrEmpty(personaDefName))
+                return;
+            
             var state = GetExpressionState(personaDefName);
+            if (state == null)
+                return;
             
             // 如果过渡未完成
             if (state.TransitionProgress < 1f)
@@ -462,6 +471,10 @@ namespace TheSecondSeat.PersonaGeneration
             // ? Processing 触发器不会自动过期（等待AI响应完成）
             if (!state.IsLocked && state.TransitionProgress >= 1f && state.LastTrigger != ExpressionTrigger.Processing)
             {
+                // ✅ v1.6.82: 添加 Find.TickManager 空引用保护
+                if (Find.TickManager == null)
+                    return;
+                
                 int elapsedTicks = Find.TickManager.TicksGame - state.ExpressionStartTick;
                 
                 if (elapsedTicks > EXPRESSION_DURATION_TICKS && state.CurrentExpression != ExpressionType.Neutral)
@@ -479,7 +492,7 @@ namespace TheSecondSeat.PersonaGeneration
         {
             var state = GetExpressionState(personaDefName);
             state.IsLocked = locked;
-            Log.Message($"[ExpressionSystem] {personaDefName} 表情锁定状态: {locked}");
+            // 日志已静默：表情锁定状态
         }
         
         /// <summary>
@@ -528,7 +541,7 @@ namespace TheSecondSeat.PersonaGeneration
         public static void ResetAllExpressions()
         {
             expressionStates.Clear();
-            Log.Message("[ExpressionSystem] 所有表情状态已重置");
+            // 日志已静默：所有表情状态重置
         }
         
         // 辅助方法：检查文本是否包含关键词
@@ -546,11 +559,32 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
+        /// ✅ 新增：清理长时间未使用的表情状态（防止内存泄漏）
+        /// </summary>
+        public static void CleanupOldStates()
+        {
+            int currentTick = Find.TickManager.TicksGame;
+            var staleStates = expressionStates
+                .Where(kv => currentTick - kv.Value.ExpressionStartTick > 180000) // 5小时未使用
+                .Select(kv => kv.Key)
+                .ToList();
+            
+            foreach (var key in staleStates)
+            {
+                expressionStates.Remove(key);
+                breathingStates.Remove(key);
+            }
+            
+            // 日志已静默：清理过期状态
+        }
+        
+        /// <summary>
         /// 获取调试信息
         /// </summary>
         public static string GetDebugInfo()
         {
             var info = $"[ExpressionSystem] 表情状态数量: {expressionStates.Count}\n";
+            info += $"[ExpressionSystem] 呼吸状态数量: {breathingStates.Count}\n";
             
             foreach (var kvp in expressionStates)
             {

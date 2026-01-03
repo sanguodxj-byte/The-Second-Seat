@@ -9,25 +9,12 @@ namespace TheSecondSeat.PersonaGeneration
     /// ? v1.6.71: 人格文件夹管理器 - 支持子 Mod 隔离
     /// 
     /// 核心功能：
-    /// - 特定人格（Sideria, Cthulhu）→ 独立子 Mod 文件夹
+    /// - 自动识别子 Mod（The Second Seat - {PersonaName}）
     /// - 通用人格 → 主 Mod 目录
     /// - 自动创建子 Mod 结构（About.xml, LoadFolders.xml）
     /// </summary>
     public static class PersonaFolderManager
     {
-        // ==================== 人格子 Mod 映射 ====================
-        
-        /// <summary>
-        /// 特殊人格的子 Mod 文件夹名称映射
-        /// </summary>
-        private static readonly System.Collections.Generic.Dictionary<string, string> PersonaSubMods = new System.Collections.Generic.Dictionary<string, string>
-        {
-            { "Sideria", "The Second Seat - Sideria" },
-            { "Cthulhu", "The Second Seat - Cthulhu" },
-            { "Nyarlathotep", "The Second Seat - Cthulhu" }, // 克系人格共用 Cthulhu 子 Mod
-            { "CthulhuGirl", "The Second Seat - Cthulhu" }, // 克苏鲁娘也使用 Cthulhu 子 Mod
-        };
-        
         // ==================== 公共 API ====================
         
         /// <summary>
@@ -35,36 +22,36 @@ namespace TheSecondSeat.PersonaGeneration
         /// </summary>
         public static string GetPersonaRootDirectory(string personaName)
         {
-            // 检查是否为特殊人格
-            if (PersonaSubMods.TryGetValue(personaName, out string subModName))
+            // 1. 尝试从已加载的 Mod 中查找子 Mod
+            string subModName = $"The Second Seat - {personaName}";
+            var subMod = LoadedModManager.RunningModsListForReading
+                .FirstOrDefault(m => m.Name == subModName);
+
+            if (subMod != null)
             {
-                // ? 返回子 Mod 的根目录（独立文件夹）
-                string mainModDir = GetMainModRootDir();
-                if (mainModDir == null)
-                {
-                    Log.Error("[PersonaFolderManager] 无法找到主 Mod 目录");
-                    return null;
-                }
-                
-                // 计算父目录（rim mod\）
-                string parentDir = Directory.GetParent(mainModDir).FullName;
-                string subModDir = Path.Combine(parentDir, subModName);
-                
-                // 如果子 Mod 不存在，创建它
-                if (!Directory.Exists(subModDir))
-                {
-                    Directory.CreateDirectory(subModDir);
-                    Log.Message($"[PersonaFolderManager] 创建子 Mod 文件夹: {subModDir}");
-                    
-                    // 创建子 Mod 结构
-                    CreateSubModStructure(subModDir, personaName);
-                }
-                
-                return subModDir;
+                return subMod.RootDir;
+            }
+
+            // 2. 尝试在主 Mod 同级目录下查找文件夹（开发环境或未加载情况）
+            string mainModDir = GetMainModRootDir();
+            if (mainModDir == null)
+            {
+                Log.Error("[PersonaFolderManager] 无法找到主 Mod 目录");
+                return null;
+            }
+
+            string parentDir = Directory.GetParent(mainModDir).FullName;
+            string potentialSubModDir = Path.Combine(parentDir, subModName);
+
+            if (Directory.Exists(potentialSubModDir))
+            {
+                // 如果文件夹存在但未加载，我们也将其视为根目录
+                // 注意：如果只是为了读取资源，这可能不够（因为资源没加载），但对于文件操作是正确的
+                return potentialSubModDir;
             }
             
-            // 通用人格使用主 Mod 目录
-            return GetMainModRootDir();
+            // 3. 默认为通用人格，使用主 Mod 目录
+            return mainModDir;
         }
         
         /// <summary>
@@ -146,7 +133,33 @@ namespace TheSecondSeat.PersonaGeneration
         /// </summary>
         public static bool UsesSubMod(string personaName)
         {
-            return PersonaSubMods.ContainsKey(personaName);
+            string rootDir = GetPersonaRootDirectory(personaName);
+            string mainDir = GetMainModRootDir();
+            
+            // 如果根目录与主 Mod 目录不同，则说明使用了子 Mod
+            return rootDir != null && mainDir != null && rootDir != mainDir;
+        }
+
+        /// <summary>
+        /// 为人格创建新的子 Mod（如果不存在）
+        /// </summary>
+        public static string CreateSubMod(string personaName)
+        {
+            string mainModDir = GetMainModRootDir();
+            if (mainModDir == null) return null;
+
+            string parentDir = Directory.GetParent(mainModDir).FullName;
+            string subModName = $"The Second Seat - {personaName}";
+            string subModDir = Path.Combine(parentDir, subModName);
+
+            if (!Directory.Exists(subModDir))
+            {
+                Directory.CreateDirectory(subModDir);
+                Log.Message($"[PersonaFolderManager] 创建子 Mod 文件夹: {subModDir}");
+                CreateSubModStructure(subModDir, personaName);
+            }
+
+            return subModDir;
         }
         
         // ==================== 私有方法 ====================

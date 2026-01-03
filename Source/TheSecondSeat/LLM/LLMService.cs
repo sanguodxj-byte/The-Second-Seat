@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -40,7 +39,7 @@ namespace TheSecondSeat.LLM
             modelName = model;
             provider = providerType.ToLower(); // ? 新增：记录 provider
             
-            Log.Message($"[The Second Seat] LLM configured: provider={provider}, endpoint={endpoint}, model={model}");
+            // 静默配置 LLM
         }
 
         /// <summary>
@@ -60,12 +59,10 @@ namespace TheSecondSeat.LLM
                         // ? 使用 provider 字段判断
                         if (provider == "gemini")
                         {
-                            Log.Message("[The Second Seat] 使用 Gemini API");
                             return await SendToGeminiAsync(systemPrompt, gameStateJson, userMessage);
                         }
                         else
                         {
-                            Log.Message($"[The Second Seat] 使用 {provider} (OpenAI 兼容格式)");
                             return await SendToOpenAICompatibleAsync(systemPrompt, gameStateJson, userMessage);
                         }
                     },
@@ -88,7 +85,6 @@ namespace TheSecondSeat.LLM
         /// </summary>
         private async Task<LLMResponse?> SendToGeminiAsync(string systemPrompt, string gameStateJson, string userMessage)
         {
-            Log.Message("[The Second Seat] 使用 Gemini API 格式");
             
             string fullMessage = $"Game State:\n{gameStateJson}\n\n{userMessage}";
             var geminiResponse = await GeminiApiClient.SendRequestAsync(
@@ -115,7 +111,6 @@ namespace TheSecondSeat.LLM
         /// </summary>
         private async Task<LLMResponse?> SendToOpenAICompatibleAsync(string systemPrompt, string gameStateJson, string userMessage)
         {
-            Log.Message("[The Second Seat] 使用 OpenAI 兼容格式");
             
             // ✅ 修复：限制 gameState 大小（防止 JSON 过大）
             const int MaxGameStateLength = 8000;  // 8KB 限制
@@ -123,7 +118,6 @@ namespace TheSecondSeat.LLM
             if (truncatedGameState.Length > MaxGameStateLength)
             {
                 truncatedGameState = truncatedGameState.Substring(0, MaxGameStateLength) + "\n[...游戏状态已截断...]";
-                Log.Warning($"[The Second Seat] gameState 过大 ({gameStateJson.Length} 字符)，已截断到 {MaxGameStateLength}");
             }
             
             // ✅ 修复：确保内容不为 null
@@ -158,11 +152,7 @@ namespace TheSecondSeat.LLM
 
             try
             {
-                Log.Message($"[The Second Seat] 请求: {apiEndpoint}");
-                Log.Message($"[The Second Seat] 模型: {modelName}");
-                Log.Message($"[The Second Seat] JSON 大小: {jsonContent.Length} 字符");
-
-                // ? 使用 UnityWebRequest
+                // 使用 UnityWebRequest
                 using var webRequest = new UnityWebRequest(apiEndpoint, "POST");
                 webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonContent));
                 webRequest.downloadHandler = new DownloadHandlerBuffer();
@@ -188,8 +178,6 @@ namespace TheSecondSeat.LLM
                 if (webRequest.result == UnityWebRequest.Result.Success)
                 {
                     string responseText = webRequest.downloadHandler.text;
-                    Log.Message($"[The Second Seat] API 响应: {responseText.Substring(0, Math.Min(200, responseText.Length))}...");
-
                     var openAIResponse = JsonConvert.DeserializeObject<OpenAIResponse>(responseText);
 
                     if (openAIResponse?.choices == null || openAIResponse.choices.Length == 0)
@@ -322,8 +310,6 @@ namespace TheSecondSeat.LLM
         /// </summary>
         private async Task<bool> TestGeminiConnectionAsync()
         {
-            Log.Message($"[The Second Seat] Testing Gemini API: {modelName}");
-            
             var response = await GeminiApiClient.SendRequestAsync(
                 modelName,
                 apiKey,
@@ -334,7 +320,6 @@ namespace TheSecondSeat.LLM
             
             if (response != null && response.Candidates != null && response.Candidates.Count > 0)
             {
-                Log.Message($"[The Second Seat] Gemini Test succeeded: {response.Candidates[0].Content.Parts[0].Text}");
                 return true;
             }
             else
@@ -364,10 +349,7 @@ namespace TheSecondSeat.LLM
 
             try
             {
-                Log.Message($"[The Second Seat] Testing connection to: {apiEndpoint}");
-                Log.Message($"[The Second Seat] Using model: {modelName}");
-
-                // ? 使用 UnityWebRequest
+                // 使用 UnityWebRequest
                 using var webRequest = new UnityWebRequest(apiEndpoint, "POST");
                 webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonContent));
                 webRequest.downloadHandler = new DownloadHandlerBuffer();
@@ -389,9 +371,6 @@ namespace TheSecondSeat.LLM
 
                 if (webRequest.result == UnityWebRequest.Result.Success)
                 {
-                    string responseContent = webRequest.downloadHandler.text;
-                    Log.Message($"[The Second Seat] Response: {responseContent.Substring(0, Math.Min(200, responseContent.Length))}...");
-                    Log.Message("[The Second Seat] Test connection succeeded");
                     return true;
                 }
                 else

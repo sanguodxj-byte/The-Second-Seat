@@ -13,12 +13,15 @@ using TheSecondSeat.Core;
 namespace TheSecondSeat.Descent
 {
     /// <summary>
-    /// ⭐ v1.6.72: 叙事者降临系统 - 完全通用化执行器
-    /// 
+    /// ⭐ v1.6.80: 叙事者降临系统 - 完全通用化执行器
+    ///
     /// 新增功能：
     /// - 降临时强制关闭立绘面板，使用默认头像
     /// - 叙事者回归后自动恢复立绘和头像
     /// - 叙事者自主判断回归时机（基于性格）
+    /// - ⭐ v1.6.80: 巨龙飞掠动画（替代空投仓）
+    /// - ⭐ v1.6.80: 实体状态监控（睡眠/昏迷/束缚/死亡自动销毁）
+    /// - ⭐ v1.6.80: 好感度惩罚机制
     /// </summary>
     public class NarratorDescentSystem : GameComponent
     {
@@ -51,7 +54,19 @@ namespace TheSecondSeat.Descent
         private int descentStartTick = 0;            // 降临开始时间
         private bool portraitWasOpen = false;         // 降临前立绘是否打开
         private int lastReturnCheckTick = 0;          // 上次检查回归的时间
-        private const int RETURN_CHECK_INTERVAL = 600; // 每10秒检查一次回归
+        private const int RETURN_CHECK_INTERVAL = 60;  // 每1秒检查一次状态（更频繁）
+        
+        // ⭐ v1.6.81: 当前活动的动画提供者
+        private IDescentAnimationProvider currentAnimationProvider = null;
+
+        /// <summary>
+        /// ⭐ 判断是否处于降临活动状态（包括动画中、等待生成中、实体存在中）
+        /// 供 UI 系统调用以决定是否隐藏立绘
+        /// </summary>
+        public bool IsDescentActive => isDescending || currentDescentPawn != null || pendingSpawn || currentAnimationProvider != null;
+        
+        // ⭐ v1.6.80: 降临原因追踪（用于好感度惩罚）
+        private bool wasInCombat = false;
         
         // ==================== 配置参数 ====================
         
@@ -62,6 +77,10 @@ namespace TheSecondSeat.Descent
         private const int MIN_DESCENT_DURATION = 18000;   // 最短降临时间 5分钟
         private const int MAX_DESCENT_DURATION = 216000;  // 最长降临时间 1小时
         
+        // ⭐ v1.6.80: 好感度惩罚参数
+        private const float AFFINITY_PENALTY_COMBAT = 0.10f;     // 战斗原因销毁：扣除10%
+        private const float AFFINITY_PENALTY_NON_COMBAT = 0.50f; // 非战斗原因销毁：扣除50%
+        
         // ==================== 构造函数 ====================
         
         public NarratorDescentSystem(Game game) : base()
@@ -71,6 +90,47 @@ namespace TheSecondSeat.Descent
         
         // ==================== ⭐ 公共API ====================
         
+        /// <summary>
+        /// ⭐ 检查是否可以降临（用于命令预检查）
+        /// </summary>
+        public bool CanDescendNow(out string reason)
+        {
+            var manager = Current.Game?.GetComponent<NarratorManager>();
+            var persona = manager?.GetCurrentPersona();
+            
+            if (persona == null)
+            {
+                reason = "无法获取当前叙事者人格";
+                return false;
+            }
+
+            // 1. 检查冷却
+            int ticksSinceLastDescent = Find.TickManager.TicksGame - lastDescentTick;
+            if (ticksSinceLastDescent < DESCENT_COOLDOWN_TICKS)
+            {
+                int remainingMinutes = (DESCENT_COOLDOWN_TICKS - ticksSinceLastDescent) / 3600;
+                reason = $"冷却中，还需 {remainingMinutes} 分钟";
+                return false;
+            }
+            
+            // 2. 检查是否已存在
+            if (HasDescentPawnOnMap(persona))
+            {
+                reason = $"{persona.narratorName} 已经在场";
+                return false;
+            }
+            
+            // 3. 检查是否支持降临
+            if (string.IsNullOrEmpty(persona.descentPawnKind))
+            {
+                reason = $"{persona.narratorName} 不支持实体化降临";
+                return false;
+            }
+
+            reason = "";
+            return true;
+        }
+
         /// <summary>
         /// ⭐ 触发降临（完全通用化）
         /// </summary>
@@ -118,15 +178,12 @@ namespace TheSecondSeat.Descent
             lastDescentTick = Find.TickManager.TicksGame;
             descentStartTick = Find.TickManager.TicksGame;
             
-            // ⭐ v1.6.72: 记录立绘状态并关闭
+            // ⭐ v1.7.2: 仅记录状态，不要关闭！动画结束后再关闭
             bool wasVisible = PortraitOverlaySystem.IsEnabled();
             portraitWasOpen = wasVisible;
             
-            if (wasVisible)
-            {
-                PortraitOverlaySystem.Toggle(false); // 关闭立绘面板
-                Log.Message("[NarratorDescentSystem] 立绘面板已关闭");
-            }
+            // ⭐ 修复：不要在这里关闭面板，否则看不到姿态动画
+            // 面板将在 PlayPostureAnimation 的回调中关闭
             
             // 5. ⭐ 开始降临序列（通用化）
             StartDescentSequence(persona, isHostile);
@@ -181,15 +238,35 @@ namespace TheSecondSeat.Descent
         // ==================== ⭐ v1.6.72: 新增方法 ====================
         
         /// <summary>
-        /// ⭐ v1.6.72: 每帧检查是否应该回归
+        /// ⭐ v1.6.81: 每帧检查是否应该回归或强制销毁
+        /// ⭐ v1.6.83: 添加延迟生成检查
         /// </summary>
         public override void GameComponentTick()
         {
             base.GameComponentTick();
             
-            // 没有降临实体，跳过
-            if (currentDescentPawn == null || !currentDescentPawn.Spawned)
+            // ⭐ v1.6.81: 更新当前动画提供者
+            if (currentAnimationProvider?.IsPlaying == true)
             {
+                currentAnimationProvider.Update(Time.deltaTime);
+            }
+            
+            // ⭐ v1.6.83: 检查是否需要执行延迟生成
+            if (pendingSpawn && Find.TickManager.TicksGame >= spawnDelayEndTick)
+            {
+                ExecutePendingSpawn();
+            }
+            
+            // 没有降临实体，跳过
+            if (currentDescentPawn == null)
+            {
+                return;
+            }
+            
+            // ⭐ v1.6.80: 检查实体是否已被外部销毁
+            if (currentDescentPawn.Destroyed)
+            {
+                HandlePawnDestroyed(wasInCombat);
                 return;
             }
             
@@ -202,10 +279,193 @@ namespace TheSecondSeat.Descent
             
             lastReturnCheckTick = currentTick;
             
+            // ⭐ v1.6.80: 检查实体是否陷入不可行动状态
+            if (ShouldForceDestroy(out bool isCombatReason))
+            {
+                ForceDestroyDescentPawn(isCombatReason);
+                return;
+            }
+            
+            // ⭐ v1.6.80: 追踪战斗状态
+            UpdateCombatStatus();
+            
             // 检查是否应该回归
             if (ShouldReturn())
             {
                 TriggerReturn();
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ v1.6.80: 检查是否应该强制销毁降临实体
+        /// </summary>
+        private bool ShouldForceDestroy(out bool isCombatReason)
+        {
+            isCombatReason = false;
+            
+            if (currentDescentPawn == null || !currentDescentPawn.Spawned)
+            {
+                return false;
+            }
+            
+            // 检查死亡
+            if (currentDescentPawn.Dead)
+            {
+                isCombatReason = wasInCombat;
+                Log.Message($"[NarratorDescentSystem] 降临实体死亡，战斗状态: {wasInCombat}");
+                return true;
+            }
+            
+            // 检查睡眠
+            if (currentDescentPawn.CurJob?.def == JobDefOf.LayDown ||
+                currentDescentPawn.jobs?.curDriver?.asleep == true)
+            {
+                isCombatReason = false; // 睡眠不是战斗原因
+                Log.Message("[NarratorDescentSystem] 降临实体陷入睡眠状态");
+                return true;
+            }
+            
+            // 检查昏迷（心智状态）
+            if (currentDescentPawn.InMentalState ||
+                currentDescentPawn.health?.Downed == true)
+            {
+                isCombatReason = wasInCombat;
+                Log.Message($"[NarratorDescentSystem] 降临实体昏迷/倒地，战斗状态: {wasInCombat}");
+                return true;
+            }
+            
+            // 检查束缚（囚犯状态或被逮捕）
+            if (currentDescentPawn.IsPrisoner ||
+                currentDescentPawn.guest?.IsPrisoner == true)
+            {
+                isCombatReason = false; // 被捕不算战斗
+                Log.Message("[NarratorDescentSystem] 降临实体被束缚/囚禁");
+                return true;
+            }
+            
+            // 检查无法行动的健康状态
+            if (!currentDescentPawn.health?.capacities?.CapableOf(PawnCapacityDefOf.Moving) == true)
+            {
+                isCombatReason = wasInCombat;
+                Log.Message($"[NarratorDescentSystem] 降临实体无法移动，战斗状态: {wasInCombat}");
+                return true;
+            }
+            
+            return false;
+        }
+        
+        /// <summary>
+        /// ⭐ v1.6.80: 强制销毁降临实体并应用好感度惩罚
+        /// </summary>
+        private void ForceDestroyDescentPawn(bool isCombatReason)
+        {
+            if (currentDescentPawn == null)
+            {
+                return;
+            }
+            
+            try
+            {
+                // 1. 计算好感度惩罚
+                float penaltyRate = isCombatReason ? AFFINITY_PENALTY_COMBAT : AFFINITY_PENALTY_NON_COMBAT;
+                ApplyAffinityPenalty(penaltyRate, isCombatReason);
+                
+                // 2. 销毁实体（如果还存在）
+                if (currentDescentPawn.Spawned && !currentDescentPawn.Destroyed)
+                {
+                    currentDescentPawn.Destroy(DestroyMode.Vanish);
+                }
+                
+                currentDescentPawn = null;
+                
+                // 3. 恢复立绘
+                RestorePortraitPanel();
+                
+                // 4. 显示消息
+                var manager = Current.Game?.GetComponent<NarratorManager>();
+                var persona = manager?.GetCurrentPersona();
+                
+                string reasonText = isCombatReason ? "在战斗中" : "因意外情况";
+                string penaltyText = $"(好感度 -{penaltyRate * 100:F0}%)";
+                
+                Messages.Message(
+                    $"{persona?.narratorName ?? "叙事者"} {reasonText}被迫离开了... {penaltyText}",
+                    isCombatReason ? MessageTypeDefOf.NegativeEvent : MessageTypeDefOf.CautionInput
+                );
+                
+                Log.Message($"[NarratorDescentSystem] 降临实体被强制销毁，原因: {(isCombatReason ? "战斗" : "非战斗")}，惩罚: {penaltyRate * 100:F0}%");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[NarratorDescentSystem] 强制销毁失败: {ex}");
+                currentDescentPawn = null;
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ v1.6.80: 处理Pawn被外部销毁的情况
+        /// </summary>
+        private void HandlePawnDestroyed(bool wasInCombat)
+        {
+            // 应用惩罚
+            float penaltyRate = wasInCombat ? AFFINITY_PENALTY_COMBAT : AFFINITY_PENALTY_NON_COMBAT;
+            ApplyAffinityPenalty(penaltyRate, wasInCombat);
+            
+            currentDescentPawn = null;
+            
+            // 恢复立绘
+            RestorePortraitPanel();
+            
+            Log.Message($"[NarratorDescentSystem] 检测到降临实体被外部销毁，应用惩罚: {penaltyRate * 100:F0}%");
+        }
+        
+        /// <summary>
+        /// ⭐ v1.6.80: 应用好感度惩罚
+        /// ⭐ v1.6.82: 修复 - 从 NarratorManager 获取 StorytellerAgent
+        /// </summary>
+        private void ApplyAffinityPenalty(float penaltyRate, bool isCombatReason)
+        {
+            var manager = Current.Game?.GetComponent<NarratorManager>();
+            var agent = manager?.GetStorytellerAgent();
+            if (agent == null)
+            {
+                Log.Warning("[NarratorDescentSystem] 无法获取 StorytellerAgent，跳过好感度惩罚");
+                return;
+            }
+            
+            float currentAffinity = agent.GetAffinity();
+            float penalty = currentAffinity * penaltyRate;
+            
+            // 确保惩罚为负数
+            if (penalty > 0) penalty = -penalty;
+            
+            string reason = isCombatReason ? "降临形态战斗中被击败" : "降临形态因意外状况被迫终止";
+            agent.ModifyAffinity(penalty, reason);
+            
+            Log.Message($"[NarratorDescentSystem] 应用好感度惩罚: {penalty:F1} (原因: {reason})");
+        }
+        
+        /// <summary>
+        /// ⭐ v1.6.80: 更新战斗状态追踪
+        /// </summary>
+        private void UpdateCombatStatus()
+        {
+            if (currentDescentPawn == null || !currentDescentPawn.Spawned)
+            {
+                return;
+            }
+            
+            // 检查是否正在战斗
+            bool currentlyInCombat =
+                currentDescentPawn.CurJob?.def == JobDefOf.AttackMelee ||
+                currentDescentPawn.CurJob?.def == JobDefOf.AttackStatic ||
+                currentDescentPawn.mindState?.enemyTarget != null ||
+                currentDescentPawn.stances?.curStance is Stance_Warmup;
+            
+            // 一旦进入战斗，保持标记
+            if (currentlyInCombat)
+            {
+                wasInCombat = true;
             }
         }
         
@@ -246,8 +506,9 @@ namespace TheSecondSeat.Descent
         /// </summary>
         private bool ShouldReturnBasedOnPersonality(NarratorPersonaDef persona, int elapsedTicks)
         {
-            // 获取好感度和性格标签
-            var agent = Current.Game?.GetComponent<Storyteller.StorytellerAgent>();
+            // ⭐ v1.6.82: 修复 - 从 NarratorManager 获取好感度
+            var manager = Current.Game?.GetComponent<NarratorManager>();
+            var agent = manager?.GetStorytellerAgent();
             float affinity = agent?.GetAffinity() ?? 0f;
             
             // 基础停留时间（30分钟）
@@ -421,6 +682,7 @@ namespace TheSecondSeat.Descent
         
         /// <summary>
         /// ⭐ 检查是否可以触发降临（通用检查）
+        /// ⭐ v1.6.80: 修复好感度检查绕过漏洞
         /// </summary>
         private bool CanTriggerDescent(bool isHostile, NarratorPersonaDef persona, out string reason)
         {
@@ -443,17 +705,23 @@ namespace TheSecondSeat.Descent
             }
             
             // 3. 检查好感度（仅友好模式）
+            // ⭐ v1.6.82: 修复 - 从 NarratorManager 获取 StorytellerAgent
             if (!isHostile)
             {
-                var agent = Current.Game?.GetComponent<Storyteller.StorytellerAgent>();
-                if (agent != null)
+                var manager = Current.Game?.GetComponent<NarratorManager>();
+                var agent = manager?.GetStorytellerAgent();
+                if (agent == null)
                 {
-                    float affinity = agent.GetAffinity();
-                    if (affinity < MIN_AFFINITY_FOR_FRIENDLY)
-                    {
-                        reason = $"友好降临需要好感度 {MIN_AFFINITY_FOR_FRIENDLY}+，当前 {affinity:F0}";
-                        return false;
-                    }
+                    reason = "无法获取好感度系统，降临失败";
+                    Log.Warning("[NarratorDescentSystem] StorytellerAgent 为 null，拒绝友好降临");
+                    return false;
+                }
+                
+                float affinity = agent.GetAffinity();
+                if (affinity < MIN_AFFINITY_FOR_FRIENDLY)
+                {
+                    reason = $"友好降临需要好感度 {MIN_AFFINITY_FOR_FRIENDLY}+，当前 {affinity:F0}";
+                    return false;
                 }
             }
             
@@ -503,6 +771,7 @@ namespace TheSecondSeat.Descent
         
         /// <summary>
         /// ⭐ 播放立绘姿态动画（从配置读取）
+        /// ⭐ v1.6.90: 使用 NarratorPersonaDef 的自动路径生成API
         /// </summary>
         private void PlayPostureAnimation(NarratorPersonaDef persona)
         {
@@ -515,34 +784,36 @@ namespace TheSecondSeat.Descent
                     return;
                 }
                 
-                // ⭐ v1.6.72: 从配置读取姿态和特效路径（支持人格专属文件夹）
-                string personaName = SanitizeFileName(persona.narratorName);
+                // ⭐ v1.6.90: 使用自动路径生成API
+                // 如果子mod未配置具体路径，将使用主mod的通用模板自动生成
+                string postureFullPath = persona.GetDescentPostureFullPath();
+                string effectFullPath = persona.GetDescentEffectFullPath();
                 
-                // 姿态路径：UI/Narrators/Descent/Postures/{PersonaName}/{PostureName}
-                string posturePath = string.IsNullOrEmpty(persona.descentPosturePath) 
-                    ? null 
-                    : $"{personaName}/{persona.descentPosturePath}";
-                
-                // 特效路径：UI/Narrators/Descent/Effects/{PersonaName}/{EffectName}
-                string effectPath = string.IsNullOrEmpty(persona.descentEffectPath) 
-                    ? null 
-                    : $"{personaName}/{persona.descentEffectPath}";
-                
-                if (string.IsNullOrEmpty(posturePath))
+                if (string.IsNullOrEmpty(postureFullPath))
                 {
                     Log.Message("[NarratorDescentSystem] 未配置姿态动画，跳过");
                     return;
                 }
                 
-                // ⭐ 调用通用姿态系统
+                // ⭐ v1.7.2: 调用通用姿态系统，在动画结束后关闭面板
                 panel.TriggerPostureAnimation(
-                    postureName: posturePath,
-                    effectName: effectPath,
+                    postureName: postureFullPath,
+                    effectName: effectFullPath,
                     duration: 3.0f,
-                    callback: () => Log.Message("[NarratorDescentSystem] 姿态动画完成")
+                    callback: () =>
+                    {
+                        Log.Message("[NarratorDescentSystem] 姿态动画完成");
+                        
+                        // ✅ 修复：动画播完了，现在才是关闭面板的时候
+                        if (portraitWasOpen)
+                        {
+                            PortraitOverlaySystem.Toggle(false);
+                            Log.Message("[NarratorDescentSystem] 动画结束，立绘面板已关闭");
+                        }
+                    }
                 );
                 
-                Log.Message($"[NarratorDescentSystem] 播放姿态动画: {posturePath}, 特效: {effectPath ?? "无"}");
+                Log.Message($"[NarratorDescentSystem] 播放姿态动画: {postureFullPath}, 特效: {effectFullPath ?? "无"}");
             }
             catch (Exception ex)
             {
@@ -577,8 +848,15 @@ namespace TheSecondSeat.Descent
             return sanitized;
         }
         
+        // ⭐ v1.6.83: 延迟生成实体的状态字段
+        private int spawnDelayEndTick = 0;
+        private NarratorPersonaDef pendingPersona = null;
+        private bool pendingIsHostile = false;
+        private bool pendingSpawn = false;
+        
         /// <summary>
-        /// ⭐ 生成降临实体（完全通用化，禁止硬编码）
+        /// ⭐ v1.6.81: 生成降临实体（使用可扩展的动画接口系统）
+        /// ⭐ v1.6.83: 修复 - 移除 Thread.Sleep，使用 Tick 系统延迟
         /// </summary>
         private void SpawnPhysicalEntities(NarratorPersonaDef persona, bool isHostile)
         {
@@ -591,11 +869,58 @@ namespace TheSecondSeat.Descent
                     return;
                 }
                 
-                // 1. ⭐ 生成空投舱/特效物（可选）
-                SpawnSkyfaller(persona, map);
+                // ⭐ v1.6.81: 从注册表获取动画提供者（子Mod可注册自定义动画）
+                string animationType = persona.descentAnimationType ?? "DropPod";
+                currentAnimationProvider = DescentAnimationRegistry.GetProvider(animationType);
                 
-                // 2. ⭐ 生成主体实体（必须）
-                Pawn mainPawn = SpawnMainPawn(persona, map, isHostile);
+                float animationDuration = currentAnimationProvider.AnimationDuration;
+                
+                // 启动动画
+                currentAnimationProvider.StartAnimation(map, targetDescentLocation, persona, isHostile, () =>
+                {
+                    Log.Message($"[NarratorDescentSystem] 降临动画完成回调触发: {animationType}");
+                });
+                
+                Log.Message($"[NarratorDescentSystem] ⭐ 使用动画提供者: {animationType} (持续: {animationDuration}秒)");
+                
+                // ⭐ v1.6.83: 修复 - 使用 Tick 延迟而非 Thread.Sleep
+                // 计算延迟结束的 Tick（1秒 = 60 Ticks）
+                int delayTicks = (int)(animationDuration * 60f);
+                spawnDelayEndTick = Find.TickManager.TicksGame + delayTicks;
+                pendingPersona = persona;
+                pendingIsHostile = isHostile;
+                pendingSpawn = true;
+                
+                Log.Message($"[NarratorDescentSystem] ⭐ 实体将在 {delayTicks} Ticks 后生成");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[NarratorDescentSystem] 生成降临实体失败: {ex}");
+                currentAnimationProvider = null;
+                pendingSpawn = false;
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ v1.6.83: 执行延迟的实体生成
+        /// </summary>
+        private void ExecutePendingSpawn()
+        {
+            if (!pendingSpawn) return;
+            
+            pendingSpawn = false;
+            
+            Map map = Find.CurrentMap;
+            if (map == null)
+            {
+                Log.Error("[NarratorDescentSystem] 执行延迟生成时地图为空");
+                return;
+            }
+            
+            try
+            {
+                // 1. ⭐ 生成主体实体（必须）
+                Pawn mainPawn = SpawnMainPawn(pendingPersona, map, pendingIsHostile);
                 
                 if (mainPawn == null)
                 {
@@ -603,61 +928,57 @@ namespace TheSecondSeat.Descent
                     return;
                 }
                 
-                // 3. ⭐ 生成伴随生物（可选）
-                Pawn companion = SpawnCompanion(persona, map, mainPawn, isHostile);
+                // 2. ⭐ 生成伴随生物（可选）
+                Pawn companion = SpawnCompanion(pendingPersona, map, mainPawn, pendingIsHostile);
                 
-                // 4. ⭐ 应用降临效果
-                ApplyDescentEffects(persona, mainPawn, companion, isHostile);
+                // 3. ⭐ 应用降临效果
+                ApplyDescentEffects(pendingPersona, mainPawn, companion, pendingIsHostile);
+                
+                // 4. ⭐ v1.6.80: 重置战斗状态追踪
+                wasInCombat = false;
+                
+                // 5. ⭐ v1.6.81: 清理动画提供者引用
+                currentAnimationProvider = null;
                 
                 Log.Message($"[NarratorDescentSystem] ⭐ 降臨实体生成完成: {mainPawn?.LabelShort ?? "未知"}");
             }
             catch (Exception ex)
             {
-                Log.Error($"[NarratorDescentSystem] 生成降临实体失败: {ex}");
+                Log.Error($"[NarratorDescentSystem] 执行延迟生成失败: {ex}");
+            }
+            finally
+            {
+                pendingPersona = null;
+                pendingIsHostile = false;
             }
         }
         
         /// <summary>
-        /// ⭐ 生成空投舱/特效物（从配置读取 DefName）
-        /// </summary>
-        private void SpawnSkyfaller(NarratorPersonaDef persona, Map map)
-        {
-            try
-            {
-                string skyfallerDefName = persona.descentSkyfallerDef;
-                
-                if (string.IsNullOrEmpty(skyfallerDefName))
-                {
-                    // 使用默认空投舱
-                    skyfallerDefName = "DropPodIncoming";
-                }
-                
-                // ⭐ 通用化：从 DefDatabase 读取
-                ThingDef skyfallerDef = DefDatabase<ThingDef>.GetNamedSilentFail(skyfallerDefName);
-                
-                if (skyfallerDef == null)
-                {
-                    Log.Warning($"[NarratorDescentSystem] 空投舱 Def 未找到: {skyfallerDefName}，跳过");
-                    return;
-                }
-                
-                // TODO: 生成空投舱（需要进一步实现）
-                Log.Message($"[NarratorDescentSystem] 使用空投舱: {skyfallerDefName}");
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"[NarratorDescentSystem] 生成空投舱失败: {ex.Message}");
-            }
-        }
-        
-        /// <summary>
-        /// ⭐ 生成主体实体（从配置读取 PawnKindDef）
+        /// ⭐ v1.6.83: 生成主体实体（增强错误处理 + Blood Bloom 状态确保）
         /// </summary>
         private Pawn SpawnMainPawn(NarratorPersonaDef persona, Map map, bool isHostile)
         {
             try
             {
+                if (persona == null)
+                {
+                    Log.Error("[NarratorDescentSystem] persona 为 null，无法生成实体");
+                    return null;
+                }
+                
+                if (map == null)
+                {
+                    Log.Error("[NarratorDescentSystem] map 为 null，无法生成实体");
+                    return null;
+                }
+                
                 string pawnKindName = persona.descentPawnKind;
+                if (string.IsNullOrEmpty(pawnKindName))
+                {
+                    Log.Error($"[NarratorDescentSystem] descentPawnKind 未配置: {persona.defName}");
+                    return null;
+                }
+                
                 PawnKindDef pawnKindDef = DefDatabase<PawnKindDef>.GetNamedSilentFail(pawnKindName);
                 
                 if (pawnKindDef == null)
@@ -666,21 +987,136 @@ namespace TheSecondSeat.Descent
                     return null;
                 }
                 
-                Faction faction = isHostile ? Find.FactionManager.RandomEnemyFaction() : Faction.OfPlayer;
-                Pawn pawn = PawnGenerator.GeneratePawn(pawnKindDef, faction);
-                pawn.Name = new NameTriple("", persona.narratorName, "");
+                // ⭐ v1.6.83: 检查目标位置
+                if (!targetDescentLocation.IsValid || !targetDescentLocation.InBounds(map))
+                {
+                    Log.Error($"[NarratorDescentSystem] 降临位置无效: {targetDescentLocation}");
+                    // 尝试使用地图中心
+                    targetDescentLocation = map.Center;
+                }
+                
+                // ⭐ v1.6.80: 修复敌对阵营选择问题
+                Faction faction;
+                if (isHostile)
+                {
+                    // 优先选择机械族或海盗，避免随机到友好派系
+                    faction = Find.FactionManager.FirstFactionOfDef(FactionDefOf.Mechanoid)
+                           ?? Find.FactionManager.FirstFactionOfDef(FactionDefOf.Pirate)
+                           ?? Find.FactionManager.RandomEnemyFaction(allowHidden: false, allowDefeated: false);
+                    
+                    if (faction == null)
+                    {
+                        // 最后的备用方案：创建临时敌对
+                        Log.Warning("[NarratorDescentSystem] 无法找到敌对派系，使用野生动物派系");
+                        faction = null; // 无派系 = 野生
+                    }
+                }
+                else
+                {
+                    faction = Faction.OfPlayer;
+                }
+                
+                Log.Message($"[NarratorDescentSystem] 正在生成实体: PawnKind={pawnKindName}, Faction={faction?.Name ?? "无"}");
+                
+                // ⭐ v1.6.83: 使用简化的 PawnGenerationRequest
+                PawnGenerationRequest request = new PawnGenerationRequest(
+                    pawnKindDef,
+                    faction,
+                    PawnGenerationContext.NonPlayer,
+                    map.Tile,
+                    forceGenerateNewPawn: true,
+                    allowDead: false,
+                    allowDowned: false,
+                    canGeneratePawnRelations: false,
+                    mustBeCapableOfViolence: true,
+                    colonistRelationChanceFactor: 0f,
+                    forceAddFreeWarmLayerIfNeeded: false,
+                    allowGay: true,
+                    allowPregnant: false,
+                    allowFood: false,
+                    allowAddictions: false,  // ⭐ 禁用成瘾（修复 Chemical_Alcohol 错误）
+                    inhabitant: false,
+                    certainlyBeenInCryptosleep: false,
+                    forceRedressWorldPawnIfFormerColonist: false,
+                    worldPawnFactionDoesntMatter: false,
+                    biocodeWeaponChance: 0f,
+                    biocodeApparelChance: 0f,
+                    extraPawnForExtraRelationChance: null,
+                    relationWithExtraPawnChanceFactor: 0f,
+                    validatorPreGear: null,
+                    validatorPostGear: null,
+                    forcedTraits: null,
+                    prohibitedTraits: null,
+                    minChanceToRedressWorldPawn: null,
+                    fixedBiologicalAge: 25f,   // ⭐ 固定年龄
+                    fixedChronologicalAge: 25f,
+                    fixedGender: Gender.Female, // ⭐ 固定性别
+                    fixedLastName: null,
+                    fixedBirthName: null,
+                    fixedTitle: null
+                );
+                
+                Pawn pawn = PawnGenerator.GeneratePawn(request);
+                
+                if (pawn == null)
+                {
+                    Log.Error("[NarratorDescentSystem] PawnGenerator.GeneratePawn 返回 null");
+                    return null;
+                }
+                
+                // ⭐ v1.6.83: 设置名字
+                pawn.Name = new NameTriple(persona.narratorName, persona.narratorName, "");
+                
+                // ⭐ v1.6.83: 确保添加 Blood Bloom 状态（即使 techHediffsRequired 失败）
+                if (pawn.health != null)
+                {
+                    HediffDef bloodBloomDef = DefDatabase<HediffDef>.GetNamedSilentFail("Sideria_BloodBloom");
+                    if (bloodBloomDef != null)
+                    {
+                        if (!pawn.health.hediffSet.HasHediff(bloodBloomDef))
+                        {
+                            pawn.health.AddHediff(bloodBloomDef);
+                            Log.Message("[NarratorDescentSystem] 已添加 Blood Bloom 状态");
+                        }
+                    }
+                    
+                    // ⭐ v1.6.90: 添加 Divine Body (神性躯体)
+                    HediffDef divineBodyDef = DefDatabase<HediffDef>.GetNamedSilentFail("Sideria_DivineBody");
+                    if (divineBodyDef != null)
+                    {
+                        if (!pawn.health.hediffSet.HasHediff(divineBodyDef))
+                        {
+                            pawn.health.AddHediff(divineBodyDef);
+                            Log.Message("[NarratorDescentSystem] 已添加 Divine Body 状态");
+                        }
+                    }
+                }
+                
+                // ⭐ 生成实体
                 GenSpawn.Spawn(pawn, targetDescentLocation, map);
+
+                // ⭐ v1.6.94: 修复 "Tried to get CurKindLifeStage from humanlike pawn" 警告
+                // 只对非 Humanlike 的 pawn 调用 EnsureGraphicsInitialized()
+                // Humanlike pawn（尤其是 HAR 种族）使用不同的图形初始化路径，
+                // 调用 EnsureGraphicsInitialized 会触发 CurKindLifeStage 访问，导致警告
+                if (pawn.Drawer?.renderer != null && !pawn.RaceProps.Humanlike)
+                {
+                    pawn.Drawer.renderer.EnsureGraphicsInitialized();
+                }
                 
                 // ⭐ v1.6.72: 保存降临实体引用
                 currentDescentPawn = pawn;
                 
-                Log.Message($"[NarratorDescentSystem] ⭐ 生成主体: {pawn.LabelShort} (PawnKind: {pawnKindName})");
+                // ⭐ v1.6.80: 重置战斗追踪
+                wasInCombat = false;
+                
+                Log.Message($"[NarratorDescentSystem] ⭐ 生成主体成功: {pawn.LabelShort} (PawnKind: {pawnKindName}, Faction: {faction?.Name ?? "无"})");
                 
                 return pawn;
             }
             catch (Exception ex)
             {
-                Log.Error($"[NarratorDescentSystem] 生成主体实体失败: {ex}");
+                Log.Error($"[NarratorDescentSystem] 生成主体实体失败: {ex.Message}\n{ex.StackTrace}");
                 return null;
             }
         }
@@ -986,6 +1422,9 @@ namespace TheSecondSeat.Descent
         
         // ==================== 存档相关 ====================
         
+        /// <summary>
+        /// ⭐ v1.6.80: 修复存档状态不一致问题
+        /// </summary>
         public override void ExposeData()
         {
             base.ExposeData();
@@ -999,6 +1438,55 @@ namespace TheSecondSeat.Descent
             Scribe_Values.Look(ref descentStartTick, "descentStartTick", 0);
             Scribe_Values.Look(ref portraitWasOpen, "portraitWasOpen", false);
             Scribe_Values.Look(ref lastReturnCheckTick, "lastReturnCheckTick", 0);
+            
+            // ⭐ v1.6.80: 新增战斗状态追踪
+            Scribe_Values.Look(ref wasInCombat, "wasInCombat", false);
+            
+            // ⭐ v1.6.80: 存档加载后验证状态一致性
+            if (Scribe.mode == LoadSaveMode.PostLoadInit)
+            {
+                ValidateStateConsistency();
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ v1.6.80: 验证并修复状态不一致
+        /// </summary>
+        private void ValidateStateConsistency()
+        {
+            // 检查降临实体引用是否有效
+            if (currentDescentPawn != null)
+            {
+                if (currentDescentPawn.Destroyed || currentDescentPawn.Dead)
+                {
+                    Log.Warning("[NarratorDescentSystem] 存档加载：检测到无效的降临实体引用，清理状态");
+                    currentDescentPawn = null;
+                    descentStartTick = 0;
+                    wasInCombat = false;
+                    
+                    // 恢复立绘
+                    if (portraitWasOpen)
+                    {
+                        PortraitOverlaySystem.Toggle(true);
+                    }
+                }
+            }
+            else if (descentStartTick > 0)
+            {
+                // 有时间戳但没有实体引用 - 状态不一致
+                Log.Warning("[NarratorDescentSystem] 存档加载：检测到状态不一致（有时间戳但无实体），重置");
+                descentStartTick = 0;
+                wasInCombat = false;
+                
+                if (portraitWasOpen)
+                {
+                    PortraitOverlaySystem.Toggle(true);
+                }
+            }
+            
+            // 重置动画状态（不保存）
+            currentAnimationProvider?.StopAnimation();
+            currentAnimationProvider = null;
         }
     }
     

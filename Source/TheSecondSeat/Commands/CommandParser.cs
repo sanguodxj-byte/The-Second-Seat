@@ -21,7 +21,6 @@ namespace TheSecondSeat.Commands
             { "BatchEquip", () => new BatchEquipCommand() },
             { "PriorityRepair", () => new PriorityRepairCommand() },
             { "EmergencyRetreat", () => new EmergencyRetreatCommand() },
-            { "ChangePolicy", () => new ChangePolicyCommand() }, // 或使用 ChangePolicyCommand_New
             
             // === 新增：资源与采集批量命令 ===
             { "BatchMine", () => new BatchMineCommand() },
@@ -42,7 +41,14 @@ namespace TheSecondSeat.Commands
 
             // === 对弈者事件命令 ===
             { "TriggerEvent", () => new TriggerEventCommand() },
-            { "ScheduleEvent", () => new ScheduleEventCommand() }
+            { "ScheduleEvent", () => new ScheduleEventCommand() },
+
+            // === 查询命令 ===
+            { "GetMapLocation", () => new GetMapLocationCommand() },
+            { "ScanMap", () => new ScanMapCommand() },
+
+            // === 特殊交互命令 ===
+            { "Descent", () => new DescentCommand() }
         };
 
         /// <summary>

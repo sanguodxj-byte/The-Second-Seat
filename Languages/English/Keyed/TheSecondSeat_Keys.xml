@@ -141,6 +141,22 @@
   <TSS_Command_BatchLogging_None>No mature trees found for logging</TSS_Command_BatchLogging_None>
   <TSS_Command_DesignatePlantCut>Designated {0} plants for cutting (type: {1})</TSS_Command_DesignatePlantCut>
   <TSS_Command_DesignatePlantCut_None>No plants found for cutting (type: {0})</TSS_Command_DesignatePlantCut_None>
+  
+  <!-- ⭐ v1.6.84: New command translation keys -->
+  <TSS_Command_BatchMine>Designated {0} mineable resources for mining (type: {1})</TSS_Command_BatchMine>
+  <TSS_Command_BatchMine_None>No mineable resources found (type: {0})</TSS_Command_BatchMine_None>
+  <TSS_Command_PriorityRepair>Marked {0} damaged buildings for repair</TSS_Command_PriorityRepair>
+  <TSS_Command_PriorityRepair_None>No damaged buildings found</TSS_Command_PriorityRepair_None>
+  <TSS_Command_PriorityRepair_NoConstructors>Found {0} damaged buildings but no constructors available</TSS_Command_PriorityRepair_NoConstructors>
+  <TSS_Command_BatchCapture>Assigned {0} capture jobs</TSS_Command_BatchCapture>
+  <TSS_Command_BatchCapture_None>No downed enemies found to capture</TSS_Command_BatchCapture_None>
+  <TSS_Command_BatchCapture_NoWardens>No wardens or colonists available for capture</TSS_Command_BatchCapture_NoWardens>
+  <TSS_Command_BatchCapture_NoBeds>No prison beds available</TSS_Command_BatchCapture_NoBeds>
+  <TSS_Command_BatchCapture_Failed>Failed to assign capture jobs</TSS_Command_BatchCapture_Failed>
+  <TSS_Command_ChangePolicy>Received policy change request: {0}</TSS_Command_ChangePolicy>
+  <TSS_Command_TriggerEvent_NotActive>Opponent mode is not active</TSS_Command_TriggerEvent_NotActive>
+  <TSS_Command_TriggerEvent_NoType>No event type specified</TSS_Command_TriggerEvent_NoType>
+  <TSS_Command_ScheduleEvent_NotActive>Opponent mode is not active</TSS_Command_ScheduleEvent_NotActive>
 
   <!-- Error Messages -->
   <TSS_Error_NoAPIKey>Error: API key not set</TSS_Error_NoAPIKey>

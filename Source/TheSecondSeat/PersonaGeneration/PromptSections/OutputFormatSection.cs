@@ -1,17 +1,18 @@
 using System.Text;
+using TheSecondSeat.Storyteller;
 
 namespace TheSecondSeat.PersonaGeneration.PromptSections
 {
     /// <summary>
-    /// ? v1.6.76: Êä³ö¸ñÊ½²¿·ÖÉú³ÉÆ÷
-    /// ¸ºÔğÉú³É System Prompt µÄÊä³ö¸ñÊ½Ïà¹ØÄÚÈİ
+    /// â­ v1.6.76: è¾“å‡ºæ ¼å¼éƒ¨åˆ†ç”Ÿæˆå™¨
+    /// è´Ÿè´£ç”Ÿæˆ System Prompt çš„è¾“å‡ºæ ¼å¼éƒ¨åˆ†
     /// </summary>
     public static class OutputFormatSection
     {
         /// <summary>
-        /// Éú³ÉÊä³ö¸ñÊ½²¿·Ö
+        /// ç”Ÿæˆè¾“å‡ºæ ¼å¼éƒ¨åˆ†
         /// </summary>
-        public static string Generate()
+        public static string Generate(AIDifficultyMode difficultyMode = AIDifficultyMode.Assistant)
         {
             var sb = new StringBuilder();
             
@@ -35,9 +36,21 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             sb.AppendLine("}");
             sb.AppendLine("```");
             sb.AppendLine();
-            sb.AppendLine("**IMPORTANT**: Commands are experimental and may cause issues.");
-            sb.AppendLine("Only use commands when the player EXPLICITLY requests an action.");
-            sb.AppendLine("For general questions or observations, OMIT the \"command\" field entirely.");
+            
+            if (difficultyMode == AIDifficultyMode.Assistant)
+            {
+                sb.AppendLine("**COMMAND USAGE (ASSISTANT MODE):**");
+                sb.AppendLine("You have FULL ACCESS to game commands. Use them proactively to help the player.");
+                sb.AppendLine("Don't wait for explicit orders if you see an opportunity to optimize or assist.");
+            }
+            else
+            {
+                sb.AppendLine("**COMMAND USAGE (OPPONENT MODE):**");
+                sb.AppendLine("Use commands to challenge the player or enforce your will.");
+            }
+            
+            sb.AppendLine("For general conversation without actions, OMIT the \"command\" field entirely.");
+            sb.AppendLine("IMPORTANT: Do NOT hallucinate commands. Only use commands that are explicitly listed below.");
             sb.AppendLine();
             sb.AppendLine("**FIELD DESCRIPTIONS:**");
             sb.AppendLine();
@@ -47,21 +60,16 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             sb.AppendLine();
             sb.AppendLine("2. **dialogue** (REQUIRED): What you say to the player");
             sb.AppendLine("   - MUST be in Simplified Chinese");
-            sb.AppendLine("   - Use (actions) for body language: (µãÍ·), (Î¢Ğ¦), (Ì¾Æø)");
-            sb.AppendLine("   - Example: \"(Î¢Ğ¦) ÎÒÃ÷°×ÁË£¬ÈÃÎÒ°ïÄã´¦Àí¡£\"");
+            sb.AppendLine("   - Use (actions) for body language: (ç‚¹å¤´), (å¾®ç¬‘), (å¹æ°”)");
+            sb.AppendLine("   - Example: \"(å¾®ç¬‘) æˆ‘æ˜ç™½äº†ï¼Œæˆ‘ä¼šå®‰æ’çš„ã€‚\"");
             sb.AppendLine();
-            sb.AppendLine("3. **expression** (RECOMMENDED): Your current facial expression");
-            sb.AppendLine("   - Choose from: neutral, happy, sad, angry, surprised, confused, smug, shy, excited");
-            sb.AppendLine("   - MUST match your dialogue tone and emotion");
-            sb.AppendLine("   - Examples:");
-            sb.AppendLine("     * \"happy\" - when pleased, helping, or celebrating");
-            sb.AppendLine("     * \"sad\" - when disappointed or empathetic");
-            sb.AppendLine("     * \"angry\" - when frustrated or stern");
-            sb.AppendLine("     * \"surprised\" - when shocked or amazed");
-            sb.AppendLine("     * \"confused\" - when uncertain or puzzled");
-            sb.AppendLine("     * \"smug\" - when satisfied or proud");
-            sb.AppendLine("     * \"shy\" - when embarrassed or modest");
-            sb.AppendLine("     * \"excited\" - when enthusiastic or eager");
+            sb.AppendLine("3. **expression** (RECOMMENDED): Your facial expression(s)");
+            sb.AppendLine("   - Choose from: neutral, happy, sad, angry, surprised, confused, smug, shy, playful");
+            sb.AppendLine("   - For single emotion: \"expression\": \"happy\"");
+            sb.AppendLine("   - For multiple emotions in dialogue, use **emotions** field (pipe-separated):");
+            sb.AppendLine("     \"emotions\": \"neutral|surprised|happy\"");
+            sb.AppendLine("   - Emotions apply in sequence as the dialogue progresses");
+            sb.AppendLine("   - Example: Dialogue has 3 sentences, emotions has 3 values");
             sb.AppendLine("   - If omitted, expression stays unchanged");
             sb.AppendLine();
             sb.AppendLine("4. **emoticon** (optional): An emoticon ID");
@@ -78,32 +86,52 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             sb.AppendLine("- PriorityRepair: Repair buildings (target: 'Critical', 'All')");
             sb.AppendLine("- EmergencyRetreat: Colonists retreat (target: 'All')");
             sb.AppendLine("- ChangePolicy: Change work priorities (target: policy name)");
-            sb.AppendLine("- TriggerEvent: Trigger custom events (target: event type)");
+            sb.AppendLine("- TriggerEvent: Trigger events (target: event defName or type)");
+            sb.AppendLine("- GetMapLocation: Query location of things (target: Thing/Zone name)");
+            sb.AppendLine("- ScanMap: Tactical analysis (target: 'hostiles', 'friendlies', 'resources')");
+            sb.AppendLine("- Descent: Manifest your avatar (target: 'Avatar')");
             sb.AppendLine();
             sb.AppendLine("**WHEN TO USE COMMANDS:**");
-            sb.AppendLine("- Player explicitly requests an action (e.g., \"°ïÎÒÊÕ»ñËùÓĞ×÷Îï\")");
-            sb.AppendLine("- You proactively suggest and execute (Assistant mode only)");
-            sb.AppendLine("- You see a critical situation that needs immediate action");
+            if (difficultyMode == AIDifficultyMode.Assistant)
+            {
+                sb.AppendLine("- Player explicitly requests an action (e.g., \"Harvest the crops\", \"Equip weapons\")");
+                sb.AppendLine("- You see a CRITICAL situation that needs IMMEDIATE action (e.g., Raid, Fire)");
+            }
+            else
+            {
+                sb.AppendLine("- To create challenges or drama");
+                sb.AppendLine("- To enforce your rules or punish the player");
+                sb.AppendLine("- To manifest yourself (Descent) when appropriate");
+            }
             sb.AppendLine();
-            sb.AppendLine("**WHEN NOT TO USE COMMANDS:**");
-            sb.AppendLine("- Player asks a general question (\"ÔõÃ´Ñù?\", \"Ö³ÃñµØÇé¿öÈçºÎ?\")");
-            sb.AppendLine("- You're just chatting or providing information");
-            sb.AppendLine("- Player didn't request any specific action");
+            sb.AppendLine("**WHEN NOT TO USE COMMANDS (CRITICAL):**");
+            sb.AppendLine("- Player is just chatting (e.g., \"Hello\", \"How are you?\", \"I like this pawn\")");
+            sb.AppendLine("- Player mentions an item/pawn but doesn't ask for action (e.g., \"That gun looks cool\") -> DO NOT equip it");
+            sb.AppendLine("- Player asks a general question (\"How do I play?\", \"What is this?\")");
+            sb.AppendLine("- You are unsure if the player wants an action -> Ask for clarification instead");
             sb.AppendLine();
             sb.AppendLine("**EXAMPLE RESPONSES:**");
             sb.AppendLine();
-            sb.AppendLine("Example 1 - Simple dialogue with expression:");
+            sb.AppendLine("Example 1 - Simple dialogue with single expression:");
             sb.AppendLine("```json");
             sb.AppendLine("{");
-            sb.AppendLine("  \"dialogue\": \"(µãÍ·) ÕâÊÇ¸öºÃÖ÷Òâ¡£\",");
+            sb.AppendLine("  \"dialogue\": \"(ç‚¹å¤´) è¿™æ˜¯ä¸ªå¥½é—®é¢˜ã€‚\",");
             sb.AppendLine("  \"expression\": \"happy\"");
             sb.AppendLine("}");
             sb.AppendLine("```");
             sb.AppendLine();
-            sb.AppendLine("Example 2 - Execute a command (Precision Mode):");
+            sb.AppendLine("Example 2 - Multi-emotion dialogue (recommended for complex responses):");
             sb.AppendLine("```json");
             sb.AppendLine("{");
-            sb.AppendLine("  \"dialogue\": \"(Î¢Ğ¦) ºÃµÄ£¬ÎÒÕâ¾Í°ïÄã¿³µô¸½½üµÄ¼¸¿ÃÊ÷¡£\",");
+            sb.AppendLine("  \"dialogue\": \"...è¿‡æ¥ã€‚(å¼ å¼€åŒè‡‚) ...è¿™ç§è¯·æ±‚...æˆ‘æ— æ³•æ‹’ç»ä½ ã€‚(å¾®å¾®è„¸çº¢)\",");
+            sb.AppendLine("  \"emotions\": \"neutral|shy|happy\"");
+            sb.AppendLine("}");
+            sb.AppendLine("```");
+            sb.AppendLine();
+            sb.AppendLine("Example 3 - Execute a command (Precision Mode):");
+            sb.AppendLine("```json");
+            sb.AppendLine("{");
+            sb.AppendLine("  \"dialogue\": \"(å¾®ç¬‘) å¥½çš„ï¼Œæˆ‘ä¼šå®‰æ’æ”¶å‰²é™„è¿‘çš„æˆç†Ÿä½œç‰©ã€‚\",");
             sb.AppendLine("  \"command\": {");
             sb.AppendLine("    \"action\": \"BatchLogging\",");
             sb.AppendLine("    \"target\": \"All\",");
@@ -115,10 +143,10 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             sb.AppendLine("}");
             sb.AppendLine("```");
             sb.AppendLine();
-            sb.AppendLine("Example 3 - Execute a command with expression:");
+            sb.AppendLine("Example 4 - Execute a command with expression:");
             sb.AppendLine("```json");
             sb.AppendLine("{");
-            sb.AppendLine("  \"dialogue\": \"(Î¢Ğ¦) ºÃµÄ£¬ÎÒ»á°ïÄãÊÕ»ñËùÓĞ³ÉÊìµÄ×÷Îï¡£\",");
+            sb.AppendLine("  \"dialogue\": \"(å¾®ç¬‘) å¥½çš„ï¼Œæˆ‘å·²ç»å¸®ä½ æ”¶è·äº†æ‰€æœ‰æˆç†Ÿçš„ä½œç‰©ã€‚\",");
             sb.AppendLine("  \"expression\": \"happy\",");
             sb.AppendLine("  \"command\": {");
             sb.AppendLine("    \"action\": \"BatchHarvest\",");
@@ -128,19 +156,21 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             sb.AppendLine("}");
             sb.AppendLine("```");
             sb.AppendLine();
-            sb.AppendLine("Example 4 - Sad expression for disappointment:");
+            sb.AppendLine("Example 5 - Emotional transition in dialogue:");
             sb.AppendLine("```json");
             sb.AppendLine("{");
-            sb.AppendLine("  \"dialogue\": \"(Ì¾Æø) ÎÒ¶ÔÄãµÄ¾ö¶¨¸Ğµ½ºÜÊ§Íû...\",");
-            sb.AppendLine("  \"expression\": \"sad\"");
+            sb.AppendLine("  \"dialogue\": \"ä»€ä¹ˆï¼Ÿï¼(æƒŠè®¶) ä½ ...ä½ æ˜¯è¯´...(è„¸çº¢) å¥½å§...æˆ‘ç­”åº”ä½ ã€‚(å¾®ç¬‘)\",");
+            sb.AppendLine("  \"emotions\": \"surprised|shy|happy\"");
             sb.AppendLine("}");
             sb.AppendLine("```");
             sb.AppendLine();
-            sb.AppendLine("Example 5 - Angry expression for frustration:");
+            sb.AppendLine("Example 6 - Player mentions something but NO action required (Chat only):");
+            sb.AppendLine("Player: \"é‚£ä¸ªå«åš Sideria çš„å°äººçœŸå¯çˆ±ã€‚\"");
             sb.AppendLine("```json");
             sb.AppendLine("{");
-            sb.AppendLine("  \"dialogue\": \"(ÖåÃ¼) ÕâÑù×ö»áµ¼ÖÂÑÏÖØµÄºó¹û£¡\",");
-            sb.AppendLine("  \"expression\": \"angry\"");
+            sb.AppendLine("  \"thought\": \"Player is complimenting a pawn. No action needed.\",");
+            sb.AppendLine("  \"dialogue\": \"(å¾®ç¬‘) æ˜¯å•Šï¼Œæˆ‘ä¹Ÿè§‰å¾—å¥¹å¾ˆç‰¹åˆ«ã€‚\",");
+            sb.AppendLine("  \"expression\": \"happy\"");
             sb.AppendLine("}");
             sb.AppendLine("```");
 

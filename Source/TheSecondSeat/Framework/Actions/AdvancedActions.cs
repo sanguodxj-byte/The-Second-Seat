@@ -643,7 +643,7 @@ namespace TheSecondSeat.Framework.Actions
     /// <li Class="TheSecondSeat.Framework.Actions.NarratorSpeakAction">
     ///   <textKey>TSS_Event_DivinePunishment</textKey>
     ///   <text>你的所作所为让我不得不采取措施了...</text>
-    ///   <personaDefName>Sideria_Default</personaDefName>
+    ///   <personaDefName>YourPersona_Default</personaDefName>
     ///   <showDialogue>true</showDialogue>
     /// </li>
     /// ]]>

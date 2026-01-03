@@ -65,7 +65,7 @@ namespace TheSecondSeat.PersonaGeneration
             sb.AppendLine();
 
             // 6. 输出格式
-            sb.AppendLine(OutputFormatSection.Generate());
+            sb.AppendLine(OutputFormatSection.Generate(difficultyMode));
             sb.AppendLine();
             
             // ⭐ 7. 【新增】恋爱关系指令（Recency Bias - 后置以覆盖默认行为）

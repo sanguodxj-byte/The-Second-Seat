@@ -5,9 +5,11 @@ using TheSecondSeat.PersonaGeneration;
 using TheSecondSeat.Narrator;
 using TheSecondSeat.Settings;
 using TheSecondSeat.Descent;
+using TheSecondSeat.Utils;
+using TheSecondSeat.Core;
 
 using System.Collections.Generic;
-using System; // ✅ 添加
+using System;
 
 namespace TheSecondSeat.UI
 {
@@ -31,20 +33,21 @@ namespace TheSecondSeat.UI
     [StaticConstructorOnStartup]
     public class FullBodyPortraitPanel
     {
-        // ==================== 常量定义 ====================
+        // ==================== 🏗️ 配置化常量（使用框架配置） ====================
         
-        // ⭐ v1.6.74: 更新立绘尺寸规格为 2308x3544px
-        private const float PORTRAIT_WIDTH = 2308f;
-        private const float PORTRAIT_HEIGHT = 3544f;
-        private const float SCALE_FACTOR = 0.15f; // 调整缩放比例以保持合适的显示大小
+        // 立绘尺寸使用配置类
+        private static float PORTRAIT_WIDTH => TSSFrameworkConfig.Portrait.OriginalWidth;
+        private static float PORTRAIT_HEIGHT => TSSFrameworkConfig.Portrait.OriginalHeight;
+        private static float SCALE_FACTOR => TSSFrameworkConfig.Portrait.DefaultScaleFactor;
         
-        private const float HOVER_ACTIVATION_TIME = 1.0f;
-        private const float TOUCH_COOLDOWN = 0.3f;
+        // 交互参数使用配置类
+        private static float HOVER_ACTIVATION_TIME => TSSFrameworkConfig.Interaction.HoverActivationTime;
+        private static float TOUCH_COOLDOWN => TSSFrameworkConfig.Interaction.TouchCooldown;
+        private static float HEAD_RUB_THRESHOLD => TSSFrameworkConfig.Interaction.HeadRubThreshold;
+        private static float HEAD_RUB_DECAY_RATE => TSSFrameworkConfig.Interaction.HeadRubDecayRate;
+        private static float HEAD_PAT_COOLDOWN => TSSFrameworkConfig.Interaction.HeadPatCooldown;
         
-        private const float HEAD_RUB_THRESHOLD = 60f;
-        private const float HEAD_RUB_DECAY_RATE = 20f;
-        private const float HEAD_PAT_COOLDOWN = 3.0f;
-        
+        // 闪烁动画参数（保持硬编码，UI 动画细节无需扩展）
         private const float SLOW_FLASH_DURATION = 1.0f;
         private const float FAST_FLASH_DURATION = 0.15f;
         private const float FAST_FLASH_INTERVAL = 0.05f;
@@ -132,9 +135,9 @@ namespace TheSecondSeat.UI
             displayWidth = PORTRAIT_WIDTH * SCALE_FACTOR;
             displayHeight = PORTRAIT_HEIGHT * SCALE_FACTOR;
             
-            // 固定位置（屏幕左侧，垂直居中 -40px 上移）
-            float x = 10f;
-            float y = (Verse.UI.screenHeight - displayHeight) / 2f - 40f;
+            // 🏗️ 使用配置类的位置参数
+            float x = TSSFrameworkConfig.Portrait.PanelOffsetX;
+            float y = (Verse.UI.screenHeight - displayHeight) / 2f + TSSFrameworkConfig.Portrait.PanelOffsetY;
             drawRect = new Rect(x, y, displayWidth, displayHeight);
         }
         
@@ -142,13 +145,34 @@ namespace TheSecondSeat.UI
         
         /// <summary>
         /// ⭐ 触发姿态动画
+        /// 🛡️ v1.6.79: 添加资源存在性检查
         /// </summary>
         /// <param name="postureName">姿态纹理名称（如 "body_arrival"）</param>
         /// <param name="effectName">特效纹理名称（如 "glitch_circle"），可为 null</param>
         /// <param name="duration">动画时长（秒）</param>
         /// <param name="callback">动画结束回调，可为 null</param>
-        public void TriggerPostureAnimation(string postureName, string effectName, float duration, Action callback = null)
+        /// <returns>是否成功触发动画</returns>
+        public bool TriggerPostureAnimation(string postureName, string effectName, float duration, Action callback = null)
         {
+            // 🛡️ 检查姿态资源是否存在
+            if (!string.IsNullOrEmpty(postureName))
+            {
+                string personaName = currentPersona?.defName ?? "";
+                var postureTexture = TSS_AssetLoader.LoadDescentPosture(personaName, postureName, null);
+                
+                if (postureTexture == null)
+                {
+                    if (Prefs.DevMode)
+                    {
+                        Log.Warning($"[FullBodyPortraitPanel] 姿态资源不存在，跳过动画: {postureName}");
+                    }
+                    
+                    // 🛡️ 资源不存在时直接调用回调并返回
+                    callback?.Invoke();
+                    return false;
+                }
+            }
+            
             // 初始化动画状态
             overridePosture = postureName;
             activeEffect = effectName;
@@ -157,7 +181,9 @@ namespace TheSecondSeat.UI
             onAnimationComplete = callback;
             isPlayingAnimation = true;
             
-            Log.Message($"[FullBodyPortraitPanel] ⭐ 开始姿态动画: {postureName}, 特效: {effectName ?? "无"}, 时长: {duration}秒");
+            // 日志已静默：姿态动画开始
+            
+            return true;
         }
         
         /// <summary>
@@ -185,7 +211,7 @@ namespace TheSecondSeat.UI
             onAnimationComplete = null;
             isPlayingAnimation = false;
             
-            Log.Message("[FullBodyPortraitPanel] ⭐ 动画已停止");
+            // 日志已静默：动画停止
         }
         
         // ==================== 主绘制方法 ====================
@@ -230,10 +256,21 @@ namespace TheSecondSeat.UI
         
         /// <summary>
         /// ? v1.6.44: 绘制立绘内容（核心逻辑 - Runtime Layering 版本）
+        /// 🛡️ v1.6.79: 使用 TSS_AssetLoader 静默加载，支持资源缺失时的优雅降级
         /// </summary>
         private void DrawPortraitContents()
         {
             if (currentPersona == null) return;
+            
+            // 🛡️ 检查是否有可用的立绘资源
+            bool hasPortrait = HasAvailablePortrait();
+            
+            if (!hasPortrait)
+            {
+                // 🛡️ 没有立绘资源时显示占位符
+                DrawNoPortraitPlaceholder();
+                return;
+            }
             
             // 更新身体层缓存（仅在人格变化时重新加载）
             UpdateBodyBaseIfNeeded();
@@ -274,8 +311,11 @@ namespace TheSecondSeat.UI
             // ⭐ 关键：在绘制任何图层前统一设置 GUI.color
             GUI.color = new Color(1f, 1f, 1f, alpha);
             
+            // 判断是否处于幽灵模式（半透明且非动画状态）
+            bool isGhostMode = !isPlayingAnimation && mouseOver && !shiftHeld;
+
             // ⭐ 运行时分层绘制（支持姿态覆盖）
-            DrawLayeredPortraitRuntime(animatedRect, currentPersona);
+            DrawLayeredPortraitRuntime(animatedRect, currentPersona, isGhostMode);
             
             // ⭐ 绘制特效层（最顶层）
             if (!string.IsNullOrEmpty(activeEffect))
@@ -435,93 +475,57 @@ namespace TheSecondSeat.UI
             }
         }
         
-        /// <summary>
-        /// ? 头部摸摸交互
-        /// </summary>
+        /// <summary>根据好感度选择表情（🏗️ 使用配置阈值）</summary>
+        private ExpressionType SelectExpressionByAffinity(float affinity, ExpressionType highPositive, ExpressionType lowPositive)
+        {
+            float highThreshold = TSSFrameworkConfig.Interaction.HighAffinityThreshold;
+            float lowThreshold = TSSFrameworkConfig.Interaction.LowAffinityThreshold;
+            
+            if (affinity >= highThreshold)
+                return UnityEngine.Random.value > 0.5f ? highPositive : ExpressionType.Happy;
+            if (affinity >= lowThreshold)
+                return UnityEngine.Random.value > 0.5f ? ExpressionType.Confused : ExpressionType.Neutral;
+            return ExpressionType.Angry;
+        }
+        
+        /// <summary>? 头部摸摸交互（🏗️ 使用配置值）</summary>
         private void DoHeadPatInteraction()
         {
-            var agent = Current.Game?.GetComponent<Storyteller.StorytellerAgent>();
-            float affinity = agent?.GetAffinity() ?? 0f;
+            float affinity = Current.Game?.GetComponent<Storyteller.StorytellerAgent>()?.GetAffinity() ?? 0f;
+            float highThreshold = TSSFrameworkConfig.Interaction.HighAffinityThreshold;
+            float lowThreshold = TSSFrameworkConfig.Interaction.LowAffinityThreshold;
+            float bonus = TSSFrameworkConfig.Interaction.HeadPatAffinityBonus;
             
-            // 选择表情
-            ExpressionType expression;
-            if (affinity >= 60f)
-            {
-                expression = UnityEngine.Random.value > 0.5f ? ExpressionType.Shy : ExpressionType.Happy;
-            }
-            else if (affinity >= -20f)
-            {
-                expression = UnityEngine.Random.value > 0.5f ? ExpressionType.Confused : ExpressionType.Neutral;
-            }
-            else
-            {
-                expression = ExpressionType.Angry;
-            }
+            TriggerExpression(SelectExpressionByAffinity(affinity, ExpressionType.Shy, ExpressionType.Happy), duration: 3f);
+            AddFloatingText(InteractionPhrases.GetHeadPatPhrase(affinity), GetTextColorByAffinity(affinity));
             
-            TriggerExpression(expression, duration: 3f);
-            
-            // 显示对话文本
-            string phrase = InteractionPhrases.GetHeadPatPhrase(affinity);
-            Color textColor = GetTextColorByAffinity(affinity);
-            AddFloatingText(phrase, textColor);
-            
-            // 边框闪烁
-            if (affinity >= 60f)
+            if (affinity >= highThreshold)
             {
                 StartBorderFlash(1);
+                ModifyAffinity(bonus, "头部摸摸互动");
+                Messages.Message($"好感度 +{bonus}（头部摸摸）", MessageTypeDefOf.PositiveEvent);
             }
-            
-            // 好感度变化
-            if (affinity >= 60f)
-            {
-                ModifyAffinity(3f, "头部摸摸互动");
-                Messages.Message("好感度 +3（头部摸摸）", MessageTypeDefOf.PositiveEvent);
-            }
-            else if (affinity < -20f)
+            else if (affinity < lowThreshold)
             {
                 ModifyAffinity(-1f, "不受欢迎的触碰");
             }
         }
         
-        /// <summary>
-        /// ? 身体戳戳交互
-        /// </summary>
+        /// <summary>? 身体戳戳交互（🏗️ 使用配置值）</summary>
         private void DoPokeInteraction()
         {
-            var agent = Current.Game?.GetComponent<Storyteller.StorytellerAgent>();
-            float affinity = agent?.GetAffinity() ?? 0f;
+            float affinity = Current.Game?.GetComponent<Storyteller.StorytellerAgent>()?.GetAffinity() ?? 0f;
+            float highThreshold = TSSFrameworkConfig.Interaction.HighAffinityThreshold;
+            float lowThreshold = TSSFrameworkConfig.Interaction.LowAffinityThreshold;
+            float bonus = TSSFrameworkConfig.Interaction.PokeAffinityBonus;
             
-            // 选择表情
-            ExpressionType expression;
-            if (affinity >= 60f)
-            {
-                expression = UnityEngine.Random.value > 0.5f ? ExpressionType.Surprised : ExpressionType.Happy;
-            }
-            else if (affinity >= -20f)
-            {
-                expression = UnityEngine.Random.value > 0.5f ? ExpressionType.Confused : ExpressionType.Neutral;
-            }
-            else
-            {
-                expression = ExpressionType.Angry;
-            }
+            TriggerExpression(SelectExpressionByAffinity(affinity, ExpressionType.Surprised, ExpressionType.Happy), duration: 2f);
+            AddFloatingText(InteractionPhrases.GetPokePhrase(affinity), GetTextColorByAffinity(affinity));
             
-            TriggerExpression(expression, duration: 2f);
-            
-            // 显示对话文本
-            string phrase = InteractionPhrases.GetPokePhrase(affinity);
-            Color textColor = GetTextColorByAffinity(affinity);
-            AddFloatingText(phrase, textColor);
-            
-            // 好感度变化
-            if (affinity >= 60f)
-            {
-                ModifyAffinity(1f, "身体戳戳互动");
-            }
-            else if (affinity < -20f)
-            {
+            if (affinity >= highThreshold)
+                ModifyAffinity(bonus, "身体戳戳互动");
+            else if (affinity < lowThreshold)
                 ModifyAffinity(-0.5f, "烦人的触碰");
-            }
         }
         
         /// <summary>
@@ -581,7 +585,7 @@ namespace TheSecondSeat.UI
         }
         
         /// <summary>
-        /// ? 连续触摸奖励
+        /// ? 连续触摸奖励（🏗️ 使用配置值）
         /// </summary>
         private void OnTouchCombo()
         {
@@ -591,8 +595,9 @@ namespace TheSecondSeat.UI
             AddFloatingText(isHappy ? "(*^▽^*)" : "(￣︶￣)↗", new Color(1f, 0.7f, 0.3f));
             StartBorderFlash(3);
             
-            ModifyAffinity(5f, "全身立绘触摸互动");
-            Messages.Message($"好感度 +5（全身立绘互动）", MessageTypeDefOf.PositiveEvent);
+            float bonus = TSSFrameworkConfig.Interaction.TouchComboAffinityBonus;
+            ModifyAffinity(bonus, "全身立绘触摸互动");
+            Messages.Message($"好感度 +{bonus}（全身立绘互动）", MessageTypeDefOf.PositiveEvent);
         }
         
         // ==================== 自定义浮动文字系统 ====================
@@ -704,35 +709,29 @@ namespace TheSecondSeat.UI
             DrawBorderFlash(inRect);
         }
         
-        private void DrawHoverProgress(Rect inRect, float progress)
+        private void DrawProgressBar(Rect barRect, float progress, Color startColor, Color endColor)
         {
             progress = Mathf.Clamp01(progress);
-            
-            var progressBarRect = new Rect(inRect.x, inRect.yMax + 2f, inRect.width, 8f);
-            Widgets.DrawBoxSolid(progressBarRect, new Color(0.2f, 0.2f, 0.2f, 0.6f));
-            
-            var fillRect = new Rect(progressBarRect.x, progressBarRect.y, progressBarRect.width * progress, progressBarRect.height);
-            Color fillColor = Color.Lerp(new Color(0.3f, 0.8f, 1f), new Color(1f, 0.8f, 0.3f), progress);
-            Widgets.DrawBoxSolid(fillRect, fillColor);
+            Widgets.DrawBoxSolid(barRect, new Color(0.2f, 0.2f, 0.2f, 0.6f));
+            Widgets.DrawBoxSolid(new Rect(barRect.x, barRect.y, barRect.width * progress, barRect.height),
+                                Color.Lerp(startColor, endColor, progress));
         }
+        
+        private void DrawHoverProgress(Rect inRect, float progress)
+            => DrawProgressBar(new Rect(inRect.x, inRect.yMax + 2f, inRect.width, 8f), progress,
+                              new Color(0.3f, 0.8f, 1f), new Color(1f, 0.8f, 0.3f));
         
         private void DrawHeadRubProgress(Rect inRect, float progress)
         {
-            progress = Mathf.Clamp01(progress);
-            
-            var progressBarRect = new Rect(inRect.x, inRect.y - 12f, inRect.width, 8f);
-            Widgets.DrawBoxSolid(progressBarRect, new Color(0.2f, 0.2f, 0.2f, 0.6f));
-            
-            var fillRect = new Rect(progressBarRect.x, progressBarRect.y, progressBarRect.width * progress, progressBarRect.height);
-            Color fillColor = Color.Lerp(new Color(1f, 0.6f, 0.6f), new Color(1f, 0.3f, 0.3f), progress);
-            Widgets.DrawBoxSolid(fillRect, fillColor);
+            var barRect = new Rect(inRect.x, inRect.y - 12f, inRect.width, 8f);
+            DrawProgressBar(barRect, progress, new Color(1f, 0.6f, 0.6f), new Color(1f, 0.3f, 0.3f));
             
             if (progress > 0.5f)
             {
                 Text.Font = GameFont.Tiny;
                 Text.Anchor = TextAnchor.MiddleCenter;
                 GUI.color = new Color(1f, 1f, 1f, 0.8f);
-                Widgets.Label(progressBarRect, "继续摸摸...");
+                Widgets.Label(barRect, "继续摸摸...");
                 Text.Anchor = TextAnchor.UpperLeft;
                 GUI.color = Color.white;
             }
@@ -807,40 +806,52 @@ namespace TheSecondSeat.UI
         /// <summary>
         /// ? v1.6.44: 运行时分层绘制立绘（Runtime Layering）
         /// ? v1.6.53: 修复半透明问题 - 使用 Graphics.DrawTexture 替代 GUI.DrawTexture
+        /// 🛡️ v1.6.79: 使用 TSS_AssetLoader 静默加载资源
         /// 关键修复：
         /// - 使用缓存的 cachedBodyBase（静态层）
         /// - 每帧动态获取眼睛和嘴巴图层（动画层）
         /// - ? 使用 Graphics.DrawTexture 正确应用 GUI.color 的 alpha 值
+        /// - 👻 幽灵模式下只绘制身体层，避免透明度叠加
         /// </summary>
-        private void DrawLayeredPortraitRuntime(Rect rect, NarratorPersonaDef persona)
+        private void DrawLayeredPortraitRuntime(Rect rect, NarratorPersonaDef persona, bool isGhostMode)
         {
+            string personaName = GetPersonaName(persona);
+            
             // ==================== ⭐ Layer 1: 身体层（姿态覆盖或默认） ====================
             
             if (!string.IsNullOrEmpty(overridePosture))
             {
-                // ⭐ 动画中：绘制姿态纹理（完全替代身体层）
-                string posturePath = $"UI/Narrators/Descent/Postures/{overridePosture}";
-                Texture2D postureTexture = ContentFinder<Texture2D>.Get(posturePath, false);
+                // ⭐ 动画中：使用 TSS_AssetLoader 静默加载姿态纹理
+                Texture2D postureTexture = TSS_AssetLoader.LoadDescentPosture(personaName, overridePosture, null);
                 
                 if (postureTexture != null)
                 {
-                    Widgets.DrawTextureFitted(rect, postureTexture, 1.0f);
+                    // ⭐ 强制高度对齐：以高度为基准计算宽度，保持宽高比
+                    float aspect = (float)postureTexture.width / postureTexture.height;
+                    float targetHeight = rect.height;
+                    float targetWidth = targetHeight * aspect;
+                    
+                    // 水平居中绘制
+                    float xOffset = (rect.width - targetWidth) / 2f;
+                    Rect drawRect = new Rect(rect.x + xOffset, rect.y, targetWidth, targetHeight);
+                    
+                    GUI.DrawTexture(drawRect, postureTexture);
                 }
                 else
                 {
-                    Log.Warning($"[FullBodyPortraitPanel] 姿态纹理未找到: {posturePath}");
-                    // 降级：绘制默认身体层
+                    // 🛡️ 静默降级：绘制默认身体层（不输出警告）
                     if (cachedBodyBase != null)
                     {
                         Widgets.DrawTextureFitted(rect, cachedBodyBase, 1.0f);
                     }
                     else
                     {
-                        Widgets.DrawBoxSolid(rect, persona.primaryColor);
+                        // 最终降级：绘制颜色占位符
+                        DrawMinimalPlaceholder(rect, persona);
                     }
                 }
                 
-                // ⭐ 姿态动画中：跳过眼睛和嘴巴（特殊姿态自带表情）
+                // ⭐ 降临姿态不支持分层和动态表情，绘制完成后直接返回
                 return;
             }
             else
@@ -848,14 +859,17 @@ namespace TheSecondSeat.UI
                 // ⭐ 平时：绘制默认身体层
                 if (cachedBodyBase == null)
                 {
-                    // 如果没有缓存，绘制占位符
-                    Widgets.DrawBoxSolid(rect, persona.primaryColor);
+                    // 🛡️ 如果没有缓存，绘制最小占位符
+                    DrawMinimalPlaceholder(rect, persona);
                     return;
                 }
                 
                 Widgets.DrawTextureFitted(rect, cachedBodyBase, 1.0f);
             }
             
+            // 👻 幽灵模式：只绘制身体层，跳过所有面部细节
+            if (isGhostMode) return;
+
             // ==================== Layer 2: 嘴巴层（动态加载，张嘴动画） ====================
             
             string mouthLayerName = MouthAnimationSystem.GetMouthLayerName(persona.defName);
@@ -883,10 +897,10 @@ namespace TheSecondSeat.UI
             // ==================== Layer 4: 特效层（可选：腮红等） ====================
             
             var expressionState = ExpressionSystem.GetExpressionState(persona.defName);
-            if (expressionState.CurrentExpression == ExpressionType.Shy || 
+            if (expressionState.CurrentExpression == ExpressionType.Shy ||
                 expressionState.CurrentExpression == ExpressionType.Angry)
             {
-                string flushLayerName = expressionState.CurrentExpression == ExpressionType.Shy ? 
+                string flushLayerName = expressionState.CurrentExpression == ExpressionType.Shy ?
                     "flush_shy" : "flush_angry";
                 var flushTexture = PortraitLoader.GetLayerTexture(persona, flushLayerName);
                 if (flushTexture != null)
@@ -911,12 +925,15 @@ namespace TheSecondSeat.UI
             }
             
             // 检查是否需要更新缓存
-            if (cachedPersonaDefName == currentPersona.defName && cachedBodyBase != null)
+            // ⭐ v1.6.92: 使用 Unity 的隐式 bool 转换检查纹理是否仍然有效
+            // 避免引用已销毁的纹理（CleanOldCache 可能销毁了 base_body）
+            if (cachedPersonaDefName == currentPersona.defName && cachedBodyBase != null && cachedBodyBase)
             {
                 return; // 缓存有效，无需更新
             }
             
             // 加载基础身体层（静态层）
+            // 加载基础身体层（静态层）- 日志已静默
             cachedBodyBase = PortraitLoader.GetLayerTexture(currentPersona, "base_body");
             
             // 如果找不到 base_body，尝试 body 或 base
@@ -930,11 +947,6 @@ namespace TheSecondSeat.UI
             }
             
             cachedPersonaDefName = currentPersona.defName;
-            
-            if (Prefs.DevMode && cachedBodyBase != null)
-            {
-                Log.Message($"[FullBodyPortraitPanel] 缓存身体层: {currentPersona.defName}");
-            }
         }
         
         private InteractionPhrases.InteractionZone GetInteractionZone(Rect rect, Vector2 mousePos)
@@ -1061,18 +1073,13 @@ namespace TheSecondSeat.UI
         
         private Color GetTextColorByAffinity(float affinity)
         {
-            if (affinity >= 60f)
-            {
-                return new Color(1f, 0.7f, 0.8f);
-            }
-            else if (affinity >= -20f)
-            {
-                return new Color(0.8f, 0.9f, 1f);
-            }
-            else
-            {
-                return new Color(0.7f, 0.7f, 0.7f);
-            }
+            // 🏗️ 使用配置类的颜色和阈值
+            float highThreshold = TSSFrameworkConfig.Interaction.HighAffinityThreshold;
+            float lowThreshold = TSSFrameworkConfig.Interaction.LowAffinityThreshold;
+            
+            return affinity >= highThreshold ? TSSFrameworkConfig.Colors.HighAffinityTextColor
+                 : affinity >= lowThreshold ? TSSFrameworkConfig.Colors.NeutralAffinityTextColor
+                 : TSSFrameworkConfig.Colors.LowAffinityTextColor;
         }
         
         private void ModifyAffinity(float delta, string reason)
@@ -1163,18 +1170,20 @@ namespace TheSecondSeat.UI
         
         /// <summary>
         /// ⭐ 绘制特效层（最顶层，Alpha 混合）
+        /// 🛡️ v1.6.79: 使用 TSS_AssetLoader 静默加载
         /// </summary>
         private void DrawEffectLayer(Rect rect)
         {
             if (string.IsNullOrEmpty(activeEffect) || currentPersona == null) return;
             
-            // 加载特效纹理
-            string effectPath = $"UI/Narrators/Descent/Effects/{activeEffect}";
-            Texture2D effectTexture = ContentFinder<Texture2D>.Get(effectPath, false);
+            string personaName = GetPersonaName(currentPersona);
+            
+            // 🛡️ 使用 TSS_AssetLoader 静默加载特效纹理
+            Texture2D effectTexture = TSS_AssetLoader.LoadDescentEffect(personaName, activeEffect, null);
             
             if (effectTexture == null)
             {
-                Log.Warning($"[FullBodyPortraitPanel] 特效纹理未找到: {effectPath}");
+                // 🛡️ 静默处理：特效不存在时跳过绘制
                 return;
             }
             
@@ -1190,6 +1199,97 @@ namespace TheSecondSeat.UI
             
             // 恢复颜色
             GUI.color = originalColor;
+        }
+        
+        // ==================== 🛡️ 资源检查和占位符方法 ====================
+        
+        /// <summary>
+        /// 🛡️ 检查当前人格是否有可用的立绘资源
+        /// </summary>
+        private bool HasAvailablePortrait()
+        {
+            if (currentPersona == null) return false;
+            
+            string personaName = GetPersonaName(currentPersona);
+            
+            // 使用 TSS_AssetLoader 检查立绘存在性
+            return TSS_AssetLoader.HasPortrait(personaName);
+        }
+        
+        /// <summary>
+        /// 🛡️ 检查是否有降临模式资源
+        /// </summary>
+        public bool HasDescentResources()
+        {
+            if (currentPersona == null) return false;
+            
+            string personaName = GetPersonaName(currentPersona);
+            return TSS_AssetLoader.HasDescentResources(personaName);
+        }
+        
+        /// <summary>
+        /// 🛡️ 绘制无立绘时的占位符界面
+        /// </summary>
+        private void DrawNoPortraitPlaceholder()
+        {
+            // 绘制半透明背景
+            GUI.color = new Color(0.15f, 0.15f, 0.2f, 0.6f);
+            Widgets.DrawBoxSolid(drawRect, GUI.color);
+            GUI.color = Color.white;
+            
+            // 绘制边框
+            Widgets.DrawBox(drawRect, 2);
+            
+            // 绘制提示文字
+            Text.Font = GameFont.Medium;
+            Text.Anchor = TextAnchor.MiddleCenter;
+            
+            string personaName = currentPersona?.narratorName ?? "Unknown";
+            string message = $"{personaName}\n\n<color=#888888>立绘资源加载中...</color>";
+            
+            Rect textRect = drawRect.ContractedBy(20f);
+            Widgets.Label(textRect, message);
+            
+            Text.Font = GameFont.Small;
+            Text.Anchor = TextAnchor.UpperLeft;
+        }
+        
+        /// <summary>
+        /// 🛡️ 绘制最小占位符（仅颜色块和名称）
+        /// </summary>
+        private void DrawMinimalPlaceholder(Rect rect, NarratorPersonaDef persona)
+        {
+            // 使用人格主题色绘制背景
+            Color bgColor = persona.primaryColor;
+            bgColor.a = 0.3f;
+            Widgets.DrawBoxSolid(rect, bgColor);
+            
+            // 绘制边框
+            GUI.color = new Color(persona.primaryColor.r, persona.primaryColor.g, persona.primaryColor.b, 0.8f);
+            Widgets.DrawBox(rect, 1);
+            GUI.color = Color.white;
+            
+            // 绘制人格名称（居中）
+            Text.Font = GameFont.Small;
+            Text.Anchor = TextAnchor.MiddleCenter;
+            GUI.color = new Color(1f, 1f, 1f, 0.7f);
+            
+            Rect labelRect = new Rect(rect.x, rect.center.y - 15f, rect.width, 30f);
+            Widgets.Label(labelRect, persona.narratorName);
+            
+            Text.Anchor = TextAnchor.UpperLeft;
+            GUI.color = Color.white;
+        }
+        
+        /// <summary>
+        /// 🛡️ 获取人格名称（用于资源路径）
+        /// ⭐ v1.6.90: 使用 GetResourceName() 确保本地化兼容性
+        /// </summary>
+        private string GetPersonaName(NarratorPersonaDef persona)
+        {
+            if (persona == null) return "";
+            
+            return persona.GetResourceName();
         }
     }
 }

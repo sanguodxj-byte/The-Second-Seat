@@ -222,30 +222,72 @@ namespace TheSecondSeat.UI
                     "把天气改成晴天",
                     "Clear/Rain/Fog/Snow等", false),
                 
-                // === ? 事件调试（开发者工具）===
-                new CommandInfo("TSS_TestWelcomeGift", "?? 触发见面礼", "事件调试",
-                    "【测试】触发见面礼事件（+500银 +10好感）", 
+                // === 🎭 事件调试（开发者工具）===
+                new CommandInfo("TSS_TestWelcomeGift", "🎁 触发见面礼", "事件调试",
+                    "【测试】触发见面礼事件（+500银 +10好感）",
                     "触发见面礼事件",
                     "无参数", true),
                 
-                new CommandInfo("TSS_TestDivineWrath", "? 触发神罚", "事件调试",
-                    "【测试】触发神罚事件（雷击 中毒 -20好感）", 
+                new CommandInfo("TSS_TestDivineWrath", "⚡ 触发神罚", "事件调试",
+                    "【测试】触发神罚事件（雷击 中毒 -20好感）",
                     "触发神罚事件",
                     "无参数", true),
                 
-                new CommandInfo("TSS_TestMechRaid", "?? 触发敌袭", "事件调试",
-                    "【测试】触发敌袭警报事件（5秒后袭击）", 
+                new CommandInfo("TSS_TestMechRaid", "🤖 触发敌袭", "事件调试",
+                    "【测试】触发敌袭警报事件（5秒后袭击）",
                     "触发敌袭警报",
                     "无参数", true),
                 
-                new CommandInfo("TSS_ListAllEvents", "?? 列出所有事件", "事件调试",
-                    "【测试】列出所有已加载的自定义事件", 
+                new CommandInfo("TSS_ListAllEvents", "📋 列出所有事件", "事件调试",
+                    "【测试】列出所有已加载的自定义事件",
                     "列出所有事件",
                     "无参数", true),
                 
-                new CommandInfo("TSS_CheckEventSystem", "?? 检查事件系统", "事件调试",
-                    "【测试】检查事件系统状态和完整性", 
+                new CommandInfo("TSS_CheckEventSystem", "🔍 检查事件系统", "事件调试",
+                    "【测试】检查事件系统状态和完整性",
                     "检查事件系统",
+                    "无参数", true),
+                
+                // === ⭐ 降临调试（v1.6.81）===
+                new CommandInfo("TSS_DescentFriendly", "🌟 友好降临", "事件调试",
+                    "【测试】触发叙事者友好降临（援助模式）",
+                    "触发友好降临",
+                    "无参数", true),
+                
+                new CommandInfo("TSS_DescentHostile", "💀 敌对降临", "事件调试",
+                    "【测试】触发叙事者敌对降临（袭击模式）",
+                    "触发敌对降临",
+                    "无参数", true),
+                
+                new CommandInfo("TSS_DescentReturn", "🔙 叙事者回归", "事件调试",
+                    "【测试】强制叙事者回归虚空",
+                    "强制叙事者回归",
+                    "无参数", true),
+                
+                new CommandInfo("TSS_CheckDescentSystem", "⚙️ 检查降临系统", "事件调试",
+                    "【测试】检查降临系统状态和配置",
+                    "检查降临系统",
+                    "无参数", true),
+                
+                // === ⭐ v1.6.82: 降临动画类型测试 ===
+                new CommandInfo("TSS_DescentDropPod", "📦 空投仓降临", "事件调试",
+                    "【测试】使用空投仓动画触发降临（默认类型）",
+                    "测试空投仓降临",
+                    "无参数", true),
+                
+                new CommandInfo("TSS_DescentDragonFlyby", "🦅 实体飞掠降临", "事件调试",
+                    "【测试】使用实体飞掠动画触发降临",
+                    "测试实体飞掠降临",
+                    "无参数", true),
+                
+                new CommandInfo("TSS_DescentPortal", "🌀 传送门降临", "事件调试",
+                    "【测试】使用传送门（折跃）动画触发降临",
+                    "测试传送门降临",
+                    "无参数", true),
+                
+                new CommandInfo("TSS_DescentLightning", "⚡ 闪电降临", "事件调试",
+                    "【测试】使用闪电动画触发降临",
+                    "测试闪电降临",
                     "无参数", true),
                 
                 // === 查询（通过对话实现）===
@@ -395,8 +437,11 @@ namespace TheSecondSeat.UI
         /// </summary>
         private void OnCommandClicked(CommandInfo command)
         {
-            // ? 检查是否为事件调试命令
-            if (command.CommandName.StartsWith("TSS_Test") || command.CommandName.StartsWith("TSS_List") || command.CommandName.StartsWith("TSS_Check"))
+            // ⭐ 检查是否为事件调试命令（包括降临调试）
+            if (command.CommandName.StartsWith("TSS_Test") ||
+                command.CommandName.StartsWith("TSS_List") ||
+                command.CommandName.StartsWith("TSS_Check") ||
+                command.CommandName.StartsWith("TSS_Descent"))
             {
                 // 直接调用 EventTester 的方法
                 HandleEventDebugCommand(command.CommandName);
@@ -411,7 +456,7 @@ namespace TheSecondSeat.UI
         }
         
         /// <summary>
-        /// ? 处理事件调试命令
+        /// ⭐ 处理事件调试命令
         /// </summary>
         private void HandleEventDebugCommand(string commandName)
         {
@@ -419,6 +464,7 @@ namespace TheSecondSeat.UI
             {
                 switch (commandName)
                 {
+                    // === 原有事件调试 ===
                     case "TSS_TestWelcomeGift":
                         Testing.EventTester.TriggerWelcomeGift();
                         break;
@@ -437,6 +483,40 @@ namespace TheSecondSeat.UI
                     
                     case "TSS_CheckEventSystem":
                         Testing.EventTester.CheckEventSystem();
+                        break;
+                    
+                    // === ⭐ v1.6.81: 降临调试 ===
+                    case "TSS_DescentFriendly":
+                        Testing.EventTester.TriggerDescent(isHostile: false);
+                        break;
+                    
+                    case "TSS_DescentHostile":
+                        Testing.EventTester.TriggerDescent(isHostile: true);
+                        break;
+                    
+                    case "TSS_DescentReturn":
+                        Testing.EventTester.TriggerDescentReturn();
+                        break;
+                    
+                    case "TSS_CheckDescentSystem":
+                        Testing.EventTester.CheckDescentSystem();
+                        break;
+                    
+                    // === ⭐ v1.6.82: 降临动画类型测试 ===
+                    case "TSS_DescentDropPod":
+                        Testing.EventTester.TriggerDescentWithAnimation("DropPod");
+                        break;
+                    
+                    case "TSS_DescentDragonFlyby":
+                        Testing.EventTester.TriggerDescentWithAnimation("DragonFlyby");
+                        break;
+                    
+                    case "TSS_DescentPortal":
+                        Testing.EventTester.TriggerDescentWithAnimation("Portal");
+                        break;
+                    
+                    case "TSS_DescentLightning":
+                        Testing.EventTester.TriggerDescentWithAnimation("Lightning");
                         break;
                     
                     default:

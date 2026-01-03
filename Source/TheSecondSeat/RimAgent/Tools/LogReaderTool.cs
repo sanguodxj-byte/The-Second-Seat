@@ -8,32 +8,33 @@ using Verse;
 namespace TheSecondSeat.RimAgent.Tools
 {
     /// <summary>
-    /// ? v1.6.77: ╪╚╪Р╟Фхуж╬╤ах║╧╓╬ъ - ж╩╤аё╛нч╥Гоуё╛нчпХиСеЗ
+    /// ? v1.6.77: О©╫О©╫О©╫О©╫О©╫О©╫О©╫ж╬О©╫О©╫х║О©╫О©╫О©╫О©╫ - ж╩О©╫О©╫О©╫О©╫О©╫ч╥О©╫О©╫уёО©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫
     /// 
-    /// ╧╕дэё╨
-    /// - вт╤╞╤╗н╩ Player.log нд╪Ч
-    /// - ╤ах║вН╨С 50 ппё╗вЦ╧╩уО╤о╠╗╢Мё╘
-    /// - ж╩╤а╡ывВё╛нчхн╨н╦╠вВсц
+    /// О©╫О©╫О©╫эёО©╫
+    /// - О©╫т╤О©╫О©╫О©╫н╩ Player.log О©╫д╪О©╫
+    /// - О©╫О©╫х║О©╫О©╫О©╫ 50 О©╫пёО©╫О©╫Ц╧╩О©╫О©╫о╠О©╫О©╫О©╫О©╫О©╫
+    /// - ж╩О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫н╨н╦О©╫О©╫О©╫О©╫О©╫
     /// 
-    /// й╧сцЁ║╬╟ё╨
-    /// - сц╩╖╠╗╦Ф"╨Лвж╠╗╢М"й╠ё╛AI вт╤╞╤ах║хуж╬╥жнЖ
-    /// - уО╤осно╥╠ююёт╜рР
-    /// - ╡И©╢вН╫Э╣д╬╞╦Фпео╒
+    /// й╧О©╫цЁО©╫О©╫О©╫О©╫О©╫
+    /// - О©╫ц╩О©╫О©╫О©╫О©╫О©╫"О©╫О©╫О©╫ж╠О©╫О©╫О©╫"й╠О©╫О©╫AI О©╫т╤О©╫О©╫О©╫х║О©╫О©╫ж╬О©╫О©╫О©╫О©╫
+    /// - О©╫О©╫О©╫О©╫О©╫о╥О©╫О©╫О©╫О©╫т╜О©╫О©╫
+    /// - О©╫И©╢О©╫О©╫О©╫О©╫д╬О©╫О©╫О©╫О©╫О©╫о╒
     /// </summary>
     public class LogReaderTool : ITool
     {
         public string Name => "read_log";
         
-        public string Description => "╤ах║сно╥хуж╬╣двН╨С╡©╥жрт╥жнЖ╠╗╢М (read_tail). нчпХ╡нйЩё╛вт╤╞╤╗н╩ Player.log ╡╒╤ах║вН╨С 50 пп║ё";
+        public string Description => "О©╫О©╫х║О©╫О©╫о╥О©╫О©╫ж╬О©╫О©╫О©╫О©╫С╡©╥О©╫О©╫т╥О©╫О©╫О©╫О©╫О©╫О©╫О©╫ (read_tail). О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫т╤О©╫О©╫О©╫н╩ Player.log О©╫О©╫О©╫О©╫х║О©╫О©╫О©╫ 50 О©╫п║О©╫";
 
         public async Task<ToolResult> ExecuteAsync(Dictionary<string, object> parameters)
         {
+            await Task.CompletedTask; // Д©²Ф▄│Е╪┌Ф╜╔Г╜╬Е░█
             try
             {
-                // 1. вт╤╞╤╗н╩ Player.log (пч╦╢ё╨й╧сцуЩх╥╣д API)
+                // 1. Х┤╙Е┼╗Е╝ Д╫█ Player.log
                 string logPath = Path.Combine(GenFilePaths.ConfigFolderPath, "..", "Logs", "Player.log");
                 
-                // ╧Ф╥╤╩╞б╥╬╤
+                // О©╫Ф╥╤О©╫О©╫б╥О©╫О©╫
                 logPath = Path.GetFullPath(logPath);
                 
                 if (!File.Exists(logPath))
@@ -45,10 +46,10 @@ namespace TheSecondSeat.RimAgent.Tools
                     };
                 }
 
-                // 2. ж╩╤ах║вН╨С 50 пп (вЦ╧╩©╢╠╗╢Мак)
+                // 2. ж╩О©╫О©╫х║О©╫О©╫О©╫ 50 О©╫О©╫ (О©╫Ц╧╩О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫)
                 int linesToRead = 50;
                 
-                // тйпМ╧╡оМ╤ах║ё╗╠эцБнд╪Ч╠╩кЬ╤╗ё╘
+                // О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫х║О©╫О©╫О©╫О©╫О©╫О©╫О©╫д╪О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫
                 string[] allLines;
                 using (var fs = new FileStream(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 using (var sr = new StreamReader(fs))
@@ -64,7 +65,7 @@ namespace TheSecondSeat.RimAgent.Tools
                 int startLine = Math.Max(0, allLines.Length - linesToRead);
                 string tailContent = string.Join("\n", allLines.Skip(startLine));
 
-                // 3. мЁ╪ф╢МнС╨м╬╞╦ФйЩа©
+                // 3. мЁО©╫ф╢О©╫О©╫О©╫м╬О©╫О©╫О©╫О©╫О©╫О©╫О©╫
                 int errorCount = allLines.Count(line => line.Contains("Exception") || line.Contains("ERROR") || line.Contains("Error"));
                 int warningCount = allLines.Count(line => line.Contains("WARNING") || line.Contains("Warning"));
 
@@ -80,12 +81,61 @@ namespace TheSecondSeat.RimAgent.Tools
             }
             catch (Exception ex)
             {
-                return new ToolResult 
-                { 
-                    Success = false, 
-                    Error = $"Error reading log: {ex.Message}" 
+                return new ToolResult
+                {
+                    Success = false,
+                    Error = $"Error reading log: {ex.Message}"
                 };
             }
+        }
+
+        /// <summary>
+        /// Д╩▌Ф╣│Ф°╚Е╟╬Е─▓Е╨▐Х╞╩Е▐√Ф▄┤Е╝ Х║▄Ф∙╟
+        /// </summary>
+        private List<string> ReadLastLines(FileStream fs, int count)
+        {
+            var lines = new List<string>();
+            if (fs.Length == 0) return lines;
+
+            long position = fs.Length - 1;
+            int linesFound = 0;
+            var buffer = new List<byte>();
+            
+            // Ф─╩Ф≤╞Х╞╩Е▐√Ф°─Е░▌Д╦─Х║▄
+            while (position >= 0)
+            {
+                fs.Seek(position, SeekOrigin.Begin);
+                int byteVal = fs.ReadByte();
+                
+                if (byteVal == '\n')
+                {
+                    // Ф┴╬Е┬╟Ф█╒Х║▄Г╛╕О╪▄Е╓└Г░├Г╪⌠Е├╡Е▄╨
+                    if (buffer.Count > 0)
+                    {
+                        buffer.Reverse();
+                        lines.Insert(0, System.Text.Encoding.UTF8.GetString(buffer.ToArray()).Trim());
+                        buffer.Clear();
+                        linesFound++;
+                        
+                        if (linesFound >= count) break;
+                    }
+                }
+                else if (byteVal != '\r') // Е©╫Г∙╔ \r
+                {
+                    buffer.Add((byte)byteVal);
+                }
+                
+                position--;
+            }
+            
+            // Е╓└Г░├Ф°─Е░▌Е┴╘Д╫≥Г └Г╪⌠Е├╡Е▄╨О╪┬Е█ЁФ√┤Д╩╤Г └Г╛╛Д╦─Х║▄О╪┴
+            if (buffer.Count > 0)
+            {
+                buffer.Reverse();
+                lines.Insert(0, System.Text.Encoding.UTF8.GetString(buffer.ToArray()).Trim());
+            }
+            
+            return lines;
         }
     }
 }

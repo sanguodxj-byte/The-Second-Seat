@@ -51,7 +51,7 @@ namespace TheSecondSeat.Autonomous
             // 只有在高好感度时才主动提出建议
             if (agent.affinity < 30f) return;
 
-            var snapshot = GameStateObserver.CaptureSnapshot();
+            var snapshot = GameStateObserver.CaptureSnapshotSafe();
             var suggestions = GenerateSuggestions(snapshot, agent);
 
             foreach (var suggestion in suggestions)

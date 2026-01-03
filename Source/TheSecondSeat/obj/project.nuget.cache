@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "MvVDO+FNw7U=",
+  "dgSpecHash": "A9PkBYWKK/s=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Administrator\\Desktop\\rim mod\\The Second Seat\\Source\\TheSecondSeat\\TheSecondSeat.csproj",
+  "projectFilePath": "D:\\rim mod\\The Second Seat\\Source\\TheSecondSeat\\TheSecondSeat.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Administrator\\.nuget\\packages\\lib.harmony\\2.3.3\\lib.harmony.2.3.3.nupkg.sha512",
     "C:\\Users\\Administrator\\.nuget\\packages\\newtonsoft.json\\13.0.1\\newtonsoft.json.13.0.1.nupkg.sha512",

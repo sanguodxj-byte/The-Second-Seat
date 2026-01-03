@@ -67,7 +67,7 @@ namespace TheSecondSeat.PersonaGeneration
                     // 路径 1: 主 Mod 路径（UI/Narrators/Avatars/PersonaName/）
                     $"{AVATARS_PATH}{personaName}/{expressionFileName}",
                     
-                    // 路径 2: 子 Mod 路径（Narrators/Avatars/）- 适配 Sideria
+                    // 路径 2: 子 Mod 路径（Narrators/Avatars/）- 适配扁平结构
                     $"Narrators/Avatars/{expressionFileName}",
                     
                     // 路径 3: 旧版路径（向后兼容）
@@ -102,7 +102,7 @@ namespace TheSecondSeat.PersonaGeneration
                         // 路径 1: 主 Mod 路径（UI/Narrators/Avatars/PersonaName/）
                         $"{AVATARS_PATH}{personaName}/{baseName}",
                         
-                        // 路径 2: 子 Mod 路径（Narrators/Avatars/）- 适配 Sideria
+                        // 路径 2: 子 Mod 路径（Narrators/Avatars/）- 适配扁平结构
                         $"Narrators/Avatars/{baseName}",
                         
                         // 路径 3: 旧版路径（向后兼容）

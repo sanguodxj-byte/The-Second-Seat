@@ -55,6 +55,7 @@ namespace TheSecondSeat.Narrator
         
         /// <summary>
         /// ⭐ v1.6.65: 初始化 RimAgent
+        /// ✅ v1.6.76: 修复工具注册 - 同时注册到RimAgentTools和Agent
         /// </summary>
         private void InitializeRimAgent()
         {
@@ -67,12 +68,23 @@ namespace TheSecondSeat.Narrator
                     provider
                 );
                 
-                // 注册工具
-                narratorAgent.RegisterTool("search");
-                narratorAgent.RegisterTool("analyze");
-                narratorAgent.RegisterTool("command");
+                // ✅ 修复：创建工具实例并注册到全局工具库
+                var searchTool = new RimAgent.Tools.SearchTool();
+                var analyzeTool = new RimAgent.Tools.AnalyzeTool();
+                var commandTool = new RimAgent.Tools.CommandTool();
+                var personaDetailTool = new RimAgent.Tools.PersonaDetailTool();
                 
-                Log.Message("[NarratorManager] ⭐ RimAgent initialized successfully with 3 tools");
+                RimAgent.RimAgentTools.RegisterTool(searchTool.Name, searchTool);
+                RimAgent.RimAgentTools.RegisterTool(analyzeTool.Name, analyzeTool);
+                RimAgent.RimAgentTools.RegisterTool(commandTool.Name, commandTool);
+                RimAgent.RimAgentTools.RegisterTool(personaDetailTool.Name, personaDetailTool);
+                
+                // 注册工具到Agent（用于列表显示）
+                narratorAgent.RegisterTool(searchTool.Name);
+                narratorAgent.RegisterTool(analyzeTool.Name);
+                narratorAgent.RegisterTool(commandTool.Name);
+                narratorAgent.RegisterTool(personaDetailTool.Name);
+                
             }
             catch (Exception ex)
             {
@@ -89,7 +101,6 @@ namespace TheSecondSeat.Narrator
             {
                 if (narratorAgent == null)
                 {
-                    Log.Warning("[NarratorManager] RimAgent not initialized, reinitializing...");
                     InitializeRimAgent();
                 }
                 
@@ -105,10 +116,6 @@ namespace TheSecondSeat.Narrator
                 
                 if (response.Success)
                 {
-                    int contentLength = response.Content?.Length ?? 0;
-                    int previewLength = Math.Min(50, contentLength);
-                    string preview = contentLength > 0 ? response.Content.Substring(0, previewLength) : "";
-                    Log.Message($"[NarratorManager] ⭐ Agent response received: {preview}...");
                     return response.Content;
                 }
                 else
@@ -141,7 +148,6 @@ namespace TheSecondSeat.Narrator
         public void ResetAgent()
         {
             narratorAgent?.Reset();
-            Log.Message("[NarratorManager] ⭐ Agent reset complete");
         }
 
         /// <summary>
@@ -157,19 +163,36 @@ namespace TheSecondSeat.Narrator
             else
             {
                 storytellerAgent = new StorytellerAgent();
-                Log.Warning("[NarratorManager] Cassandra_Classic 人格定义未找到，使用默认配置");
             }
         }
 
         /// <summary>
-        /// 加载指定人格
+        /// 加载指定人格（用于新游戏或切换人格）
         /// </summary>
         public void LoadPersona(NarratorPersonaDef personaDef)
+        {
+            LoadPersonaInternal(personaDef, resetAffinity: true);
+        }
+        
+        /// <summary>
+        /// ⭐ v1.6.82: 从存档恢复人格（不重置好感度）
+        /// </summary>
+        private void RestorePersonaFromSave(NarratorPersonaDef personaDef)
+        {
+            LoadPersonaInternal(personaDef, resetAffinity: false);
+        }
+        
+        /// <summary>
+        /// ⭐ v1.6.82: 内部人格加载方法
+        /// </summary>
+        /// <param name="personaDef">人格定义</param>
+        /// <param name="resetAffinity">是否重置好感度（存档恢复时为false）</param>
+        private void LoadPersonaInternal(NarratorPersonaDef personaDef, bool resetAffinity)
         {
             currentPersonaDef = personaDef;
             currentAnalysis = PersonaAnalyzer.AnalyzePersonaDef(personaDef);
             
-            // ? 保存 defName 用于存档
+            // 保存 defName 用于存档
             savedPersonaDefName = personaDef.defName;
             
             if (storytellerAgent == null)
@@ -186,20 +209,33 @@ namespace TheSecondSeat.Narrator
                 storytellerAgent.dialogueStyle = currentAnalysis.DialogueStyle;
             }
             
-            // ? 设置初始好感度（-500 ~ 500）
-            if (personaDef.baseAffinityBias != 0f)
+            // ⭐ v1.6.82: 只在非存档恢复时设置初始好感度
+            if (resetAffinity)
             {
-                favorability = personaDef.baseAffinityBias * 500f;
-                
-                // ? 转换到 StorytellerAgent 的 -100~100 范围
-                float normalizedAffinity = favorability / 10f;
-                storytellerAgent.affinity = normalizedAffinity;
+                // initialAffinity: -100 ~ 100 (直接映射到 StorytellerAgent)
+                // baseAffinityBias: -1.0 ~ 1.0 (乘以500后作为 NarratorManager.favorability)
+                if (personaDef.initialAffinity != 0f)
+                {
+                    // 使用 initialAffinity 直接设置 StorytellerAgent 的 affinity
+                    storytellerAgent.affinity = Mathf.Clamp(personaDef.initialAffinity, -100f, 100f);
+                    
+                    // 同步到 NarratorManager 的 favorability（扩展到 -1000~1000）
+                    favorability = storytellerAgent.affinity * 10f;
+                }
+                else if (personaDef.baseAffinityBias != 0f)
+                {
+                    // 兼容旧版：使用 baseAffinityBias
+                    favorability = personaDef.baseAffinityBias * 500f;
+                    
+                    // 转换到 StorytellerAgent 的 -100~100 范围
+                    float normalizedAffinity = favorability / 10f;
+                    storytellerAgent.affinity = normalizedAffinity;
+                }
             }
+            // 存档恢复时，好感度已经从存档加载，无需重置
             
-            // ? **关键修复**：立即根据好感度调整对话风格
+            // 根据当前好感度调整对话风格
             storytellerAgent.AdjustDialogueStyleByAffinity();
-
-            Log.Message($"[NarratorManager] 已加载人格: {personaDef.narratorName} ({storytellerAgent.primaryTrait}), 好感度: {favorability:F0}, 对话风格已调整");
         }
 
         /// <summary>
@@ -255,7 +291,6 @@ namespace TheSecondSeat.Narrator
                 storytellerAgent.ModifyAffinity(normalizedAmount, reason);
             }
 
-            Log.Message($"[NarratorManager] Favorability: {oldValue:F0} -> {favorability:F0} ({reason})");
         }
 
         public string GetRecentEventsSummary()
@@ -302,7 +337,8 @@ namespace TheSecondSeat.Narrator
             var modSettings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?
                 .GetSettings<Settings.TheSecondSeatSettings>();
             var difficultyMode = modSettings?.difficultyMode ?? PersonaGeneration.AIDifficultyMode.Assistant;
-            bool useCompact = modSettings?.useCompactPrompt ?? true;  // 默认使用精简版
+            // ⭐ 修复：默认使用完整版 Prompt，确保人格和恋爱关系指令生效
+            bool useCompact = modSettings?.useCompactPrompt ?? false;
 
             // ? 根据设置选择精简版或完整版
             if (useCompact)
@@ -414,27 +450,22 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
             
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
-                // 加载时，根据保存的 defName 恢复人格
-                Log.Message($"[NarratorManager] 正在加载人格: {savedPersonaDefName}");
-                
+                // ⭐ v1.6.82: 从存档恢复人格（不重置好感度）
                 if (!string.IsNullOrEmpty(savedPersonaDefName))
                 {
                     var personaDef = DefDatabase<NarratorPersonaDef>.GetNamedSilentFail(savedPersonaDefName);
                     if (personaDef != null)
                     {
-                        // ? 直接加载，不使用 LongEventHandler（可能导致时机问题）
-                        LoadPersona(personaDef);
-                        Log.Message($"[NarratorManager] ? 成功恢复人格: {personaDef.narratorName}");
+                        // 使用恢复方法，不覆盖存档中的好感度值
+                        RestorePersonaFromSave(personaDef);
                     }
                     else
                     {
-                        Log.Warning($"[NarratorManager] ? 未找到人格 {savedPersonaDefName}，使用默认人格");
                         InitializeDefaultPersona();
                     }
                 }
                 else
                 {
-                    Log.Warning("[NarratorManager] savedPersonaDefName 为空，使用默认人格");
                     InitializeDefaultPersona();
                 }
                 
@@ -452,27 +483,48 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
         
         /// <summary>
         /// ? 新增：GameComponent Tick - 用于自动问候和表情系统更新
+        /// ✅ v1.6.76: 添加定期缓存清理（防止内存泄漏）
+        /// ✅ v1.6.82: 添加全面的空引用保护
         /// </summary>
         public override void GameComponentTick()
         {
             base.GameComponentTick();
             
-            // ? 新增：更新当前人格的表情过渡
-            if (currentPersonaDef != null)
-            {
-                ExpressionSystem.UpdateTransition(currentPersonaDef.defName);
-            }
+            // ✅ v1.6.82: 空引用保护 - 确保游戏已完全加载
+            if (Find.TickManager == null || Current.Game == null)
+                return;
             
-            // 检查是否需要自动问候
-            if (!hasGreetedThisSession && Current.ProgramState == ProgramState.Playing)
+            try
             {
-                ticksSinceLoad++;
-                
-                if (ticksSinceLoad >= GreetingDelayTicks)
+                // ? 新增：更新当前人格的表情过渡
+                if (currentPersonaDef != null && !string.IsNullOrEmpty(currentPersonaDef.defName))
                 {
-                    hasGreetedThisSession = true;
-                    TriggerAutoGreeting();
+                    ExpressionSystem.UpdateTransition(currentPersonaDef.defName);
                 }
+                
+                // ✅ 新增：每10分钟清理一次旧缓存（防止内存泄漏）
+                if (Find.TickManager.TicksGame % 36000 == 0) // 36000 ticks = 10分钟
+                {
+                    PortraitLoader.CleanOldCache();
+                    ExpressionSystem.CleanupOldStates();
+                }
+                
+                // 检查是否需要自动问候
+                if (!hasGreetedThisSession && Current.ProgramState == ProgramState.Playing)
+                {
+                    ticksSinceLoad++;
+                    
+                    if (ticksSinceLoad >= GreetingDelayTicks)
+                    {
+                        hasGreetedThisSession = true;
+                        TriggerAutoGreeting();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // ✅ v1.6.82: 捕获所有异常，防止游戏崩溃
+                Log.Error($"[NarratorManager] GameComponentTick error: {ex.Message}");
             }
         }
         
@@ -493,8 +545,6 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
                     var logErrors = CheckRecentLogErrors();
                     
                     string greetingContext = BuildGreetingContext(now, logErrors);
-                    
-                    Log.Message($"[NarratorManager] 触发自动问候（时间：{now:HH:mm}，错误数：{logErrors.Count}）");
                     
                     // 触发 AI 问候
                     controller.TriggerNarratorUpdate(greetingContext);
@@ -522,7 +572,6 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
                 
                 if (messageQueueField == null)
                 {
-                    Log.Warning("[NarratorManager] 无法访问日志队列");
                     return errors;
                 }
                 
@@ -561,9 +610,9 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
                     }
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                Log.Warning($"[NarratorManager] 检查日志错误时出错: {ex.Message}");
+                // 静默处理日志检查失败
             }
             
             return errors;

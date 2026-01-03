@@ -6,6 +6,7 @@ using Verse.AI;
 using RimWorld;
 using UnityEngine;
 using TheSecondSeat.NaturalLanguage;
+using TheSecondSeat.Descent;
 
 namespace TheSecondSeat.Commands.Implementations
 {
@@ -201,6 +202,7 @@ namespace TheSecondSeat.Commands.Implementations
 
     /// <summary>
     /// Set all damaged structures to priority repair
+    /// ⭐ v1.6.84: 修复 - RimWorld 没有 Repair designation，改用允许并分配建筑工修复
     /// </summary>
     public class PriorityRepairCommand : BaseAICommand
     {
@@ -208,7 +210,7 @@ namespace TheSecondSeat.Commands.Implementations
 
         public override string GetDescription()
         {
-            return "Prioritize repair of damaged structures";
+            return "Prioritize repair of damaged structures by unforbidding them and assigning constructors";
         }
 
         public override bool Execute(string? target = null, object? parameters = null)
@@ -220,44 +222,82 @@ namespace TheSecondSeat.Commands.Implementations
                 return false;
             }
 
-            int designated = 0;
-            var damagedThings = map.listerThings.AllThings
-                .Where(t => t.def.useHitPoints && 
-                           t.HitPoints < t.MaxHitPoints && 
+            int repairCount = 0;
+            var damagedBuildings = map.listerThings.AllThings
+                .Where(t => t.def.useHitPoints &&
+                           t.HitPoints < t.MaxHitPoints &&
                            t.HitPoints > 0 &&
-                           t.def.building != null)
+                           t.def.building != null &&
+                           t.Spawned)
                 .ToList();
 
-            // 安全获取 Repair designation
-            var repairDef = DefDatabase<DesignationDef>.GetNamedSilentFail("Repair");
-            if (repairDef == null)
+            if (damagedBuildings.Count == 0)
             {
-                LogError("Repair designation not found");
+                LogExecution("No damaged buildings found");
+                Messages.Message("TSS_Command_PriorityRepair_None".Translate(), MessageTypeDefOf.RejectInput);
                 return false;
             }
 
-            foreach (var thing in damagedThings)
+            // ⭐ v1.6.84: RimWorld 自动修复未被禁止的建筑
+            // 我们需要：1) 取消禁止 2) 查找可用建筑工 3) 创建修理工作
+            foreach (var building in damagedBuildings)
             {
-                var existingDesignation = map.designationManager.DesignationOn(thing);
-                if (existingDesignation == null || existingDesignation.def != repairDef)
+                // 1. 取消禁止
+                if (building.IsForbidden(Faction.OfPlayer))
                 {
-                    map.designationManager.AddDesignation(
-                        new Designation(thing, repairDef));
-                    designated++;
+                    building.SetForbidden(false, false);
+                }
+                
+                // 2. 标记需要修复（通过取消任何阻止修复的状态）
+                repairCount++;
+                
+                // 视觉反馈
+                FleckMaker.ThrowMetaIcon(building.Position, map, FleckDefOf.FeedbackGoto);
+            }
+
+            // 3. 找建筑工来修复
+            var constructors = map.mapPawns.FreeColonistsSpawned
+                .Where(p => !p.Downed &&
+                           !p.Dead &&
+                           p.workSettings?.WorkIsActive(WorkTypeDefOf.Construction) == true)
+                .OrderByDescending(p => p.skills?.GetSkill(SkillDefOf.Construction)?.Level ?? 0)
+                .ToList();
+
+            if (constructors.Count == 0)
+            {
+                LogExecution($"Found {repairCount} damaged buildings but no constructors available");
+                Messages.Message("TSS_Command_PriorityRepair_NoConstructors".Translate(repairCount), MessageTypeDefOf.CautionInput);
+                return repairCount > 0;
+            }
+
+            // 4. 为每个损坏的建筑分配最近的建筑工（建筑工会自动寻找修复工作）
+            int assignedJobs = 0;
+            foreach (var building in damagedBuildings.OrderByDescending(b => b.MaxHitPoints - b.HitPoints))
+            {
+                var nearestConstructor = constructors
+                    .Where(c => c.CanReserveAndReach(building, PathEndMode.Touch, Danger.Some))
+                    .OrderBy(c => c.Position.DistanceTo(building.Position))
+                    .FirstOrDefault();
+
+                if (nearestConstructor != null)
+                {
+                    // 尝试创建修复工作
+                    var repairJob = JobMaker.MakeJob(JobDefOf.Repair, building);
+                    if (nearestConstructor.jobs?.TryTakeOrderedJob(repairJob) == true)
+                    {
+                        assignedJobs++;
+                        if (assignedJobs >= constructors.Count)
+                            break; // 所有建筑工都已分配
+                    }
                 }
             }
 
-            LogExecution($"Designated {designated} items for repair");
+            LogExecution($"Found {repairCount} damaged buildings, assigned {assignedJobs} repair jobs");
             
-            if (designated > 0)
-            {
-                Messages.Message(
-                    "TSS_Command_PriorityRepair".Translate(designated), 
-                    MessageTypeDefOf.NeutralEvent);
-                return true;
-            }
-
-            return false;
+            Messages.Message(
+                "TSS_Command_PriorityRepair".Translate(repairCount),
+                MessageTypeDefOf.NeutralEvent);
+            return true;
         }
     }
 
@@ -337,6 +377,7 @@ namespace TheSecondSeat.Commands.Implementations
 
     /// <summary>
     /// Batch capture downed enemies
+    /// ⭐ v1.6.84: 修复 - 使用 Job 而非 Designation 来俘虏敌人
     /// </summary>
     public class BatchCaptureCommand : BaseAICommand
     {
@@ -344,7 +385,7 @@ namespace TheSecondSeat.Commands.Implementations
 
         public override string GetDescription()
         {
-            return "Capture all downed enemies and assign to colonists";
+            return "Capture all downed enemies by assigning colonists to carry them to prison beds";
         }
 
         public override bool Execute(string? target = null, object? parameters = null)
@@ -358,8 +399,8 @@ namespace TheSecondSeat.Commands.Implementations
 
             int captured = 0;
             var downedPawns = map.mapPawns.AllPawnsSpawned
-                .Where(p => p.Downed && 
-                           p.HostileTo(Faction.OfPlayer) && 
+                .Where(p => p.Downed &&
+                           p.HostileTo(Faction.OfPlayer) &&
                            !p.Dead &&
                            p.RaceProps.Humanlike)
                 .ToList();
@@ -377,55 +418,86 @@ namespace TheSecondSeat.Commands.Implementations
 
             if (availableColonists.Count == 0)
             {
+                // 也尝试没有看守工作但能搬运的殖民者
+                availableColonists = map.mapPawns.FreeColonistsSpawned
+                    .Where(c => !c.Downed && !c.Dead)
+                    .ToList();
+            }
+
+            if (availableColonists.Count == 0)
+            {
                 LogExecution("No available colonists to perform capture");
                 Messages.Message("TSS_Command_BatchCapture_NoWardens".Translate(), MessageTypeDefOf.RejectInput);
                 return false;
             }
 
-            // 安全获取 Capture designation
-            var captureDef = DefDatabase<DesignationDef>.GetNamedSilentFail("Capture");
-            if (captureDef == null)
+            // ⭐ v1.6.84: 查找可用的囚犯床
+            var prisonBeds = map.listerBuildings.AllBuildingsColonistOfClass<Building_Bed>()
+                .Where(b => b.ForPrisoners && !b.Medical && b.AnyUnoccupiedSleepingSlot)
+                .ToList();
+
+            if (prisonBeds.Count == 0)
             {
-                captureDef = DefDatabase<DesignationDef>.GetNamedSilentFail("Tame"); // 备用
-            }
-            
-            if (captureDef == null)
-            {
-                LogError("Capture designation not found");
-                Messages.Message("TSS_Command_BatchCapture_NoWardens".Translate(), MessageTypeDefOf.RejectInput);
-                return false;
+                LogExecution("No prison beds available");
+                Messages.Message("TSS_Command_BatchCapture_NoBeds".Translate(), MessageTypeDefOf.CautionInput);
+                // 继续执行，殖民者会尝试找地方放
             }
 
+            // ⭐ v1.6.84: 使用 Capture Job 而非 Designation
             foreach (var pawn in downedPawns)
             {
-                // Check if already designated for capture
-                if (map.designationManager.DesignationOn(pawn, captureDef) != null)
-                    continue;
-
-                // Find nearest available colonist
+                // 找最近的可用殖民者
                 var nearestColonist = availableColonists
+                    .Where(c => c.CanReserveAndReach(pawn, PathEndMode.ClosestTouch, Danger.Deadly))
                     .OrderBy(c => c.Position.DistanceTo(pawn.Position))
                     .FirstOrDefault();
 
-                if (nearestColonist != null && nearestColonist.CanReserveAndReach(pawn, PathEndMode.OnCell, Danger.Deadly))
+                if (nearestColonist != null)
                 {
-                    // Add capture designation
-                    map.designationManager.AddDesignation(new Designation(pawn, captureDef));
-                    captured++;
+                    // 创建俘虏工作
+                    var captureJob = JobMaker.MakeJob(JobDefOf.Capture, pawn);
+                    
+                    // 如果有可用的囚犯床，指定目标床
+                    var nearestBed = prisonBeds
+                        .Where(b => b.AnyUnoccupiedSleepingSlot)
+                        .OrderBy(b => b.Position.DistanceTo(pawn.Position))
+                        .FirstOrDefault();
+                    
+                    if (nearestBed != null)
+                    {
+                        captureJob = JobMaker.MakeJob(JobDefOf.Capture, pawn, nearestBed);
+                    }
+                    
+                    if (nearestColonist.jobs?.TryTakeOrderedJob(captureJob) == true)
+                    {
+                        captured++;
+                        
+                        // 从可用列表移除已分配的殖民者
+                        availableColonists.Remove(nearestColonist);
+                        
+                        // 视觉反馈
+                        FleckMaker.ThrowMetaIcon(pawn.Position, map, FleckDefOf.FeedbackGoto);
+                        
+                        if (availableColonists.Count == 0)
+                            break;
+                    }
                 }
             }
 
-            LogExecution($"Designated {captured} enemies for capture");
+            LogExecution($"Assigned {captured} capture jobs for downed enemies");
             
             if (captured > 0)
             {
                 Messages.Message(
-                    "TSS_Command_BatchCapture".Translate(captured), 
+                    "TSS_Command_BatchCapture".Translate(captured),
                     MessageTypeDefOf.PositiveEvent);
                 return true;
             }
-
-            return false;
+            else
+            {
+                Messages.Message("TSS_Command_BatchCapture_Failed".Translate(), MessageTypeDefOf.RejectInput);
+                return false;
+            }
         }
     }
 
@@ -928,6 +1000,71 @@ namespace TheSecondSeat.Commands.Implementations
         }
     }
 
+    /// <summary>
+    /// ? 叙事者降临
+    /// AI 触发实体化身降临
+    /// </summary>
+    public class DescentCommand : BaseAICommand
+    {
+        public override string ActionName => "Descent";
+
+        public override string GetDescription()
+        {
+            return "Descend as an avatar to assist or interact. Parameters: mode=<assist/hostile>";
+        }
+
+        public override bool Execute(string? target = null, object? parameters = null)
+        {
+            var descentSystem = NarratorDescentSystem.Instance;
+            
+            if (descentSystem == null)
+            {
+                LogError("NarratorDescentSystem not found");
+                return false;
+            }
+
+            // 检查冷却
+            if (!descentSystem.CanDescendNow(out string reason))
+            {
+                LogExecution($"无法降临: {reason}");
+                Messages.Message($"无法降临: {reason}", MessageTypeDefOf.RejectInput);
+                return false;
+            }
+
+            // 解析模式
+            string mode = "assist";
+            if (parameters is Dictionary<string, object> paramsDict)
+            {
+                if (paramsDict.TryGetValue("mode", out var modeObj))
+                {
+                    mode = modeObj?.ToString()?.ToLower() ?? "assist";
+                }
+            }
+            else if (target != null)
+            {
+                mode = target.ToLower();
+            }
+
+            bool isHostile = mode == "hostile";
+
+            // 触发降临
+            bool success = descentSystem.TriggerDescent(isHostile);
+
+            if (success)
+            {
+                string typeStr = isHostile ? "敌对" : "协助";
+                LogExecution($"AI triggered descent ({typeStr})");
+                // 具体的降临消息由 NarratorDescentSystem 处理
+                return true;
+            }
+            else
+            {
+                LogExecution("Failed to trigger descent");
+                return false;
+            }
+        }
+    }
+
     #region ? v1.6.40: 殖民者管理命令（从 GameActionExecutor 迁移）
 
     /// <summary>
@@ -971,8 +1108,8 @@ namespace TheSecondSeat.Commands.Implementations
                 // 如果指定了名字，只处理匹配的殖民者
                 if (!string.IsNullOrEmpty(pawnName) && pawnName != "All")
                 {
-                    if (!colonist.Name.ToStringShort.Contains(pawnName) && 
-                        !colonist.LabelShort.Contains(pawnName))
+                    if (colonist.Name.ToStringShort.IndexOf(pawnName, StringComparison.OrdinalIgnoreCase) < 0 &&
+                        colonist.LabelShort.IndexOf(pawnName, StringComparison.OrdinalIgnoreCase) < 0)
                         continue;
                 }
 
@@ -1049,16 +1186,27 @@ namespace TheSecondSeat.Commands.Implementations
             }
 
             var targetPos = new IntVec3(x, 0, z);
-            if (!targetPos.InBounds(map) || !targetPos.Walkable(map))
+            if (!targetPos.InBounds(map))
             {
-                LogError($"目标位置 ({x}, {z}) 不可到达");
+                LogError($"目标位置 ({x}, {z}) 超出地图边界");
                 return false;
             }
 
-            // 查找殖民者
+            // ⭐ v1.6.95: 模糊寻路 - 如果目标不可走，寻找附近可走的点
+            if (!targetPos.Walkable(map))
+            {
+                if (!CellFinder.TryFindRandomCellNear(targetPos, map, 5, c => c.Walkable(map), out IntVec3 nearPos))
+                {
+                    LogError($"目标位置 ({x}, {z}) 及附近不可到达");
+                    return false;
+                }
+                targetPos = nearPos;
+            }
+
+            // 查找殖民者 (忽略大小写)
             var colonist = map.mapPawns.FreeColonistsSpawned
-                .FirstOrDefault(p => p.Name.ToStringShort.Contains(pawnName) || 
-                                    p.LabelShort.Contains(pawnName));
+                .FirstOrDefault(p => p.Name.ToStringShort.IndexOf(pawnName, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                    p.LabelShort.IndexOf(pawnName, StringComparison.OrdinalIgnoreCase) >= 0);
 
             if (colonist == null)
             {
@@ -1120,8 +1268,8 @@ namespace TheSecondSeat.Commands.Implementations
             if (!string.IsNullOrEmpty(pawnName) && pawnName != "All")
             {
                 injuredColonists = injuredColonists
-                    .Where(p => p.Name.ToStringShort.Contains(pawnName) || 
-                               p.LabelShort.Contains(pawnName))
+                    .Where(p => p.Name.ToStringShort.IndexOf(pawnName, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                               p.LabelShort.IndexOf(pawnName, StringComparison.OrdinalIgnoreCase) >= 0)
                     .ToList();
             }
 
@@ -1237,9 +1385,9 @@ namespace TheSecondSeat.Commands.Implementations
 
             // 查找殖民者
             var colonists = map.mapPawns.FreeColonistsSpawned
-                .Where(p => pawnName == "All" || 
-                           p.Name.ToStringShort.Contains(pawnName) || 
-                           p.LabelShort.Contains(pawnName))
+                .Where(p => pawnName == "All" ||
+                           p.Name.ToStringShort.IndexOf(pawnName, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                           p.LabelShort.IndexOf(pawnName, StringComparison.OrdinalIgnoreCase) >= 0)
                 .ToList();
 
             if (colonists.Count == 0)
@@ -1305,8 +1453,8 @@ namespace TheSecondSeat.Commands.Implementations
 
             // 查找殖民者
             var colonist = map.mapPawns.FreeColonistsSpawned
-                .FirstOrDefault(p => p.Name.ToStringShort.Contains(pawnName) || 
-                                    p.LabelShort.Contains(pawnName));
+                .FirstOrDefault(p => p.Name.ToStringShort.IndexOf(pawnName, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                    p.LabelShort.IndexOf(pawnName, StringComparison.OrdinalIgnoreCase) >= 0);
 
             if (colonist == null)
             {
@@ -1476,6 +1624,215 @@ namespace TheSecondSeat.Commands.Implementations
             }
 
             return false;
+        }
+    }
+
+    #endregion
+
+    #region ? v1.6.90: 查询命令
+
+    /// <summary>
+    /// ? 获取地图位置信息（以居住区为锚点）
+    /// </summary>
+    public class GetMapLocationCommand : BaseAICommand
+    {
+        public override string ActionName => "GetMapLocation";
+
+        public override string GetDescription()
+        {
+            return "Get map size and home area center coordinates.";
+        }
+
+        public override bool Execute(string? target = null, object? parameters = null)
+        {
+            var map = Find.CurrentMap;
+            if (map == null)
+            {
+                LogError("No active map");
+                return false;
+            }
+
+            // 计算居住区中心
+            IntVec3 homeCenter = map.Center;
+            var homeCells = map.areaManager.Home.ActiveCells;
+            if (homeCells.Any())
+            {
+                long sumX = 0;
+                long sumZ = 0;
+                int count = 0;
+                foreach (var cell in homeCells)
+                {
+                    sumX += cell.x;
+                    sumZ += cell.z;
+                    count++;
+                }
+                homeCenter = new IntVec3((int)(sumX / count), 0, (int)(sumZ / count));
+            }
+
+            // 构建返回数据
+            var result = new
+            {
+                MapSize = new { x = map.Size.x, z = map.Size.z },
+                HomeCenter = new { x = homeCenter.x, z = homeCenter.z },
+                CardinalDirections = new
+                {
+                    North = new { x = homeCenter.x, z = Math.Min(map.Size.z - 1, homeCenter.z + 20) },
+                    South = new { x = homeCenter.x, z = Math.Max(0, homeCenter.z - 20) },
+                    East = new { x = Math.Min(map.Size.x - 1, homeCenter.x + 20), z = homeCenter.z },
+                    West = new { x = Math.Max(0, homeCenter.x - 20), z = homeCenter.z }
+                },
+                Description = $"Map Size: {map.Size.x}x{map.Size.z}. Home Center: ({homeCenter.x}, {homeCenter.z})."
+            };
+
+            string jsonResult = Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.None);
+            
+            LogExecution($"Map Location: {jsonResult}");
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// ? 扫描地图态势（威胁、访客、资源）
+    /// </summary>
+    public class ScanMapCommand : BaseAICommand
+    {
+        public override string ActionName => "ScanMap";
+
+        public override string GetDescription()
+        {
+            return "Scan map for specific targets (hostiles, friendlies, resources).";
+        }
+
+        public override bool Execute(string? target = null, object? parameters = null)
+        {
+            var map = Find.CurrentMap;
+            if (map == null)
+            {
+                LogError("No active map");
+                return false;
+            }
+
+            string scanTarget = "hostiles"; // 默认
+            if (parameters is Newtonsoft.Json.Linq.JObject jObj && jObj.TryGetValue("target", out var val))
+            {
+                scanTarget = val.ToString().ToLower();
+            }
+
+            // 计算居住区中心作为锚点
+            IntVec3 homeCenter = map.Center;
+            var homeCells = map.areaManager.Home.ActiveCells;
+            if (homeCells.Any())
+            {
+                long sumX = 0; long sumZ = 0; int count = 0;
+                foreach (var cell in homeCells) { sumX += cell.x; sumZ += cell.z; count++; }
+                homeCenter = new IntVec3((int)(sumX / count), 0, (int)(sumZ / count));
+            }
+
+            var result = new Dictionary<string, object>();
+            result["HomeCenter"] = new { x = homeCenter.x, z = homeCenter.z };
+            string description = $"Scan Target: {scanTarget}. Home: ({homeCenter.x}, {homeCenter.z}). ";
+
+            bool scanAll = scanTarget == "all";
+
+            // 1. 扫描威胁 (Hostiles)
+            if (scanAll || scanTarget == "hostiles")
+            {
+                var hostiles = map.mapPawns.AllPawnsSpawned
+                    .Where(p => p.HostileTo(Faction.OfPlayer) && !p.Downed && !p.Dead)
+                    .ToList();
+                
+                if (hostiles.Any())
+                {
+                    var center = GetCentroid(hostiles.Select(p => p.Position));
+                    string info = $"{hostiles.Count} enemies at {GetDirection(homeCenter, center)} ({center.x}, {center.z})";
+                    result["Threats"] = info;
+                    description += $"Threats: {info}. ";
+                }
+                else
+                {
+                    result["Threats"] = "None";
+                    description += "Threats: None. ";
+                }
+            }
+
+            // 2. 扫描访客/商队 (Neutrals/Friendlies)
+            if (scanAll || scanTarget == "friendlies")
+            {
+                var neutrals = map.mapPawns.AllPawnsSpawned
+                    .Where(p => !p.HostileTo(Faction.OfPlayer) && !p.IsColonist && !p.IsSlaveOfColony && !p.Downed && !p.Dead && p.RaceProps.Humanlike)
+                    .ToList();
+
+                if (neutrals.Any())
+                {
+                    var center = GetCentroid(neutrals.Select(p => p.Position));
+                    string info = $"{neutrals.Count} visitors at {GetDirection(homeCenter, center)} ({center.x}, {center.z})";
+                    result["Visitors"] = info;
+                    description += $"Visitors: {info}. ";
+                }
+                else
+                {
+                    result["Visitors"] = "None";
+                    description += "Visitors: None. ";
+                }
+            }
+
+            // 3. 扫描高价值矿物 (Resources)
+            if (scanAll || scanTarget == "resources")
+            {
+                var valuableDefNames = new HashSet<string> { "MineableSteel", "MineableGold", "MineableSilver", "MineableJade", "MineableUranium", "MineablePlasteel", "MineableComponentsIndustrial" };
+                var resources = map.listerThings.AllThings
+                    .Where(t => t.def.mineable && valuableDefNames.Contains(t.def.defName))
+                    .GroupBy(t => t.def.label)
+                    .Select(g => new
+                    {
+                        Name = g.Key,
+                        Count = g.Count(),
+                        Center = GetCentroid(g.Select(t => t.Position))
+                    })
+                    .Select(r => $"{r.Name}: ~{r.Count} veins at {GetDirection(homeCenter, r.Center)}")
+                    .ToList();
+
+                string resourceInfo = resources.Any() ? string.Join("; ", resources) : "No valuable resources visible";
+                result["Resources"] = resourceInfo;
+                description += $"Resources: {resourceInfo}.";
+            }
+
+            result["Description"] = description;
+            string jsonResult = Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.None);
+            
+            LogExecution($"Map Scan ({scanTarget}): {jsonResult}");
+            return true;
+        }
+
+        private IntVec3 GetCentroid(IEnumerable<IntVec3> positions)
+        {
+            if (!positions.Any()) return IntVec3.Zero;
+            long sumX = 0, sumZ = 0;
+            int count = 0;
+            foreach (var pos in positions)
+            {
+                sumX += pos.x;
+                sumZ += pos.z;
+                count++;
+            }
+            return new IntVec3((int)(sumX / count), 0, (int)(sumZ / count));
+        }
+
+        private string GetDirection(IntVec3 from, IntVec3 to)
+        {
+            float dx = to.x - from.x;
+            float dz = to.z - from.z;
+            double angle = Math.Atan2(dz, dx) * (180 / Math.PI); // -180 to 180
+
+            if (angle > -22.5 && angle <= 22.5) return "East";
+            if (angle > 22.5 && angle <= 67.5) return "North-East";
+            if (angle > 67.5 && angle <= 112.5) return "North";
+            if (angle > 112.5 && angle <= 157.5) return "North-West";
+            if (angle > 157.5 || angle <= -157.5) return "West";
+            if (angle > -157.5 && angle <= -112.5) return "South-West";
+            if (angle > -112.5 && angle <= -67.5) return "South";
+            if (angle > -67.5 && angle <= -22.5) return "South-East";
+            return "Unknown";
         }
     }
 

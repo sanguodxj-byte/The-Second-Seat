@@ -49,7 +49,7 @@ namespace TheSecondSeat.Framework.Actions
     public class ShowDialogueAction : TSSAction
     {
         public string dialogueText = "";
-        public MessageTypeDef messageType; // ? 运行时获取默认值
+        public MessageTypeDef messageType; // ⭐ v1.6.83: 运行时检查 null
         public bool useNarratorWindow = false;
         
         public override void Execute(Map map, Dictionary<string, object> context)
@@ -66,7 +66,9 @@ namespace TheSecondSeat.Framework.Actions
             }
             else
             {
-                Messages.Message(dialogueText, messageType);
+                // ⭐ v1.6.83: 修复 - 添加 null 检查，使用默认消息类型
+                var msgType = messageType ?? MessageTypeDefOf.NeutralEvent;
+                Messages.Message(dialogueText, msgType);
             }
             
             if (Prefs.DevMode)

@@ -73,16 +73,13 @@ namespace TheSecondSeat.LLM
                     return null;
                 }
 
-                Log.Message($"[OpenAICompatible] 图片已编码为 Base64 ({base64Image.Length} 字符)");
 
                 // 2?? 根据 provider 构建不同格式的请求
                 string jsonContent;
                 
                 if (provider.ToLower() == "deepseek")
                 {
-                    // ? DeepSeek 特殊格式：不使用 image_url，只发送文本提示
-                    Log.Message("[OpenAICompatible] 使用 DeepSeek 文本格式（不支持 Vision）");
-                    
+                    // DeepSeek 特殊格式：不使用 image_url，只发送文本提示
                     var request = new
                     {
                         model = model,
@@ -158,7 +155,6 @@ namespace TheSecondSeat.LLM
                 // 确保纹理可读
                 if (!texture.isReadable)
                 {
-                    Log.Warning("[OpenAICompatible] 纹理不可读，尝试创建可读副本");
                     texture = MakeTextureReadable(texture);
                 }
 
@@ -174,7 +170,6 @@ namespace TheSecondSeat.LLM
                     int newHeight = (int)(texture.height * scale);
                     
                     textureToEncode = ResizeTexture(texture, newWidth, newHeight);
-                    Log.Message($"[OpenAICompatible] 图片已缩小：{texture.width}x{texture.height} → {newWidth}x{newHeight}");
                 }
 
                 // ? 使用 JPG 编码（更小的文件）
@@ -183,7 +178,6 @@ namespace TheSecondSeat.LLM
                 if (imageBytes == null || imageBytes.Length == 0)
                 {
                     // 如果 JPG 失败，回退到 PNG
-                    Log.Warning("[OpenAICompatible] JPG 编码失败，回退到 PNG");
                     imageBytes = textureToEncode.EncodeToPNG();
                 }
                 
@@ -195,9 +189,6 @@ namespace TheSecondSeat.LLM
 
                 // 转换为 Base64
                 string base64 = Convert.ToBase64String(imageBytes);
-                
-                Log.Message($"[OpenAICompatible] 图片编码成功：{textureToEncode.width}x{textureToEncode.height}, " +
-                          $"{imageBytes.Length / 1024}KB → Base64 {base64.Length} 字符");
                 
                 // 清理临时纹理
                 if (needsResize && textureToEncode != texture)
@@ -264,13 +255,10 @@ namespace TheSecondSeat.LLM
         /// <summary>
         /// 发送原始 JSON 请求到 OpenAI 兼容端点
         /// </summary>
-        private static async Task<OpenAIResponse?> SendOpenAIRawRequestAsync(string endpoint, string apiKey, string jsonContent)
+        public static async Task<OpenAIResponse?> SendOpenAIRawRequestAsync(string endpoint, string apiKey, string jsonContent)
         {
             try
             {
-                Log.Message($"[OpenAICompatible] 请求: {endpoint}");
-                Log.Message($"[OpenAICompatible] 请求体大小: {jsonContent.Length} 字符");
-
                 using var webRequest = new UnityWebRequest(endpoint, "POST");
                 webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonContent));
                 webRequest.downloadHandler = new DownloadHandlerBuffer();
@@ -294,8 +282,6 @@ namespace TheSecondSeat.LLM
                 if (webRequest.result == UnityWebRequest.Result.Success)
                 {
                     string responseText = webRequest.downloadHandler.text;
-                    Log.Message($"[OpenAICompatible] 响应成功: {responseText.Substring(0, Math.Min(500, responseText.Length))}...");
-
                     var response = JsonConvert.DeserializeObject<OpenAIResponse>(responseText);
                     return response;
                 }
