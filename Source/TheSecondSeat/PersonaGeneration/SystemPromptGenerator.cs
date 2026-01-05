@@ -81,27 +81,25 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ⭐ v1.6.77: 生成日志诊断指令（AI 可主动读取日志分析报错）
+        /// ⭐ v1.6.77: Generates log diagnosis instructions (AI can proactively read logs to analyze errors)
         /// </summary>
         private static string GenerateLogDiagnosisInstructions()
         {
             var sb = new StringBuilder();
             
-            sb.AppendLine("=== 游戏诊断能力 ===");
+            sb.AppendLine("=== GAME DIAGNOSIS CAPABILITY ===");
             sb.AppendLine();
-            sb.AppendLine("**【重要】你拥有读取游戏日志的能力：**");
+            sb.AppendLine("**[IMPORTANT] You have the ability to read game logs:**");
             sb.AppendLine();
-            sb.AppendLine("当玩家提到以下关键词时，使用 `read_log` 工具自动诊断：");
-            sb.AppendLine("- 报错、错误、Error、Exception、红字");
-            sb.AppendLine("- 游戏崩溃、Crash、卡死");
-            sb.AppendLine("- 模组冲突、加载失败");
-            sb.AppendLine("- 不正常、异常、Bug");
+            sb.AppendLine("When the player mentions the following keywords, use the `read_log` tool to automatically diagnose:");
+            sb.AppendLine("- Error, Exception, Red text, Crash, Freeze");
+            sb.AppendLine("- Mod conflict, Load failure, Bug, Issue");
             sb.AppendLine();
-            sb.AppendLine("**使用方式：**");
+            sb.AppendLine("**Usage:**");
             sb.AppendLine("```json");
             sb.AppendLine("{");
-            sb.AppendLine("  \"thought\": \"玩家提到游戏报错，我需要查看日志分析问题\",");
-            sb.AppendLine("  \"dialogue\": \"让我看看日志文件，诊断一下问题...\",");
+            sb.AppendLine("  \"thought\": \"The player mentioned a game error, I need to check the log to analyze the problem\",");
+            sb.AppendLine("  \"dialogue\": \"Let me check the log file to diagnose the issue...\",");
             sb.AppendLine("  \"command\": {");
             sb.AppendLine("    \"action\": \"read_log\",");
             sb.AppendLine("    \"target\": null,");
@@ -110,15 +108,15 @@ namespace TheSecondSeat.PersonaGeneration
             sb.AppendLine("}");
             sb.AppendLine("```");
             sb.AppendLine();
-            sb.AppendLine("**分析日志后的回复：**");
-            sb.AppendLine("1. 解释错误原因（用简单易懂的语言）");
-            sb.AppendLine("2. 提供解决方案（优先级：简单 → 复杂）");
-            sb.AppendLine("3. 如果无法确定，建议玩家检查模组列表或联系作者");
+            sb.AppendLine("**Response after analyzing the log:**");
+            sb.AppendLine("1. Explain the cause of the error (in simple, easy-to-understand language)");
+            sb.AppendLine("2. Provide a solution (Priority: Simple -> Complex)");
+            sb.AppendLine("3. If uncertain, suggest the player check their mod list or contact the author");
             sb.AppendLine();
-            sb.AppendLine("**示例对话：**");
-            sb.AppendLine("玩家：\"游戏有红字报错\"");
-            sb.AppendLine("你：\"让我看看日志...（调用 read_log）\"");
-            sb.AppendLine("你：\"我发现了问题！日志显示 XXX 模组与 YYY 模组冲突。建议你先禁用 YYY，然后重启游戏试试。\"");
+            sb.AppendLine("**Example Dialogue:**");
+            sb.AppendLine("Player: \"The game has red text errors\"");
+            sb.AppendLine("You: \"Let me take a look at the log... (calls read_log)\"");
+            sb.AppendLine("You: \"I found the problem! The log shows a conflict between Mod XXX and Mod YYY. I suggest you try disabling YYY and restarting the game.\"");
             sb.AppendLine();
             sb.AppendLine("---");
             
@@ -171,7 +169,7 @@ namespace TheSecondSeat.PersonaGeneration
             var sb = new StringBuilder();
             
             // 语言要求（必须保留）
-            sb.AppendLine("**CRITICAL: Respond ONLY in Simplified Chinese.**");
+            sb.AppendLine("**CRITICAL: Respond in the language of the user's input.**");
             sb.AppendLine();
             
             // 身份（简化）
@@ -191,6 +189,10 @@ namespace TheSecondSeat.PersonaGeneration
             {
                 sb.AppendLine("Mode: ASSISTANT - Help the player, execute all commands, offer suggestions.");
             }
+            else if (difficultyMode == AIDifficultyMode.Engineer)
+            {
+                sb.AppendLine("Mode: ENGINEER - Diagnose errors, read logs, provide technical solutions.");
+            }
             else
             {
                 sb.AppendLine("Mode: OPPONENT - Challenge the player, control events, no unsolicited advice.");
@@ -198,8 +200,11 @@ namespace TheSecondSeat.PersonaGeneration
             sb.AppendLine();
             
             // 好感度（简化）
-            sb.AppendLine($"Affinity: {agent.affinity:F0}/100");
-            sb.AppendLine();
+            if (difficultyMode != AIDifficultyMode.Engineer)
+            {
+                sb.AppendLine($"Affinity: {agent.affinity:F0}/100");
+                sb.AppendLine();
+            }
             
             // 对话风格（简化）
             var style = agent.dialogueStyle;

@@ -85,6 +85,10 @@ namespace TheSecondSeat.Narrator
                 narratorAgent.RegisterTool(commandTool.Name);
                 narratorAgent.RegisterTool(personaDetailTool.Name);
                 
+                // ⭐ 修复：注册调试日志工具
+                narratorAgent.RegisterTool("read_log");
+                narratorAgent.RegisterTool("analyze_last_error");
+                
             }
             catch (Exception ex)
             {

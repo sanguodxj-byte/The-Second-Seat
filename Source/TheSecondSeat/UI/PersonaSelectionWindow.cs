@@ -295,7 +295,7 @@ namespace TheSecondSeat.UI
                 foreach (var portrait in vanillaPortraits)
                 {
                     // ? 如果有Texture，直接传递
-                    Texture2D? texture = portrait.Texture;
+                    Texture2D? texture = portrait.Texture as Texture2D;
                     options.Add(new FloatMenuOption(portrait.Name, () => _ = CreatePersonaFromPortraitAsync(portrait.Path, texture)));
                 }
             }
@@ -306,7 +306,7 @@ namespace TheSecondSeat.UI
                 options.Add(new FloatMenuOption("--- 其他Mod叙事者 ---", null));
                 foreach (var portrait in modPortraits)
                 {
-                    Texture2D? texture = portrait.Texture;
+                    Texture2D? texture = portrait.Texture as Texture2D;
                     options.Add(new FloatMenuOption(portrait.Name, () => { _ = CreatePersonaFromPortraitAsync(portrait.Path, texture); }));
                 }
             }
@@ -361,7 +361,7 @@ namespace TheSecondSeat.UI
                 foreach (var portrait in vanillaPortraits)
                 {
                     // ? 如果有Texture，直接传递
-                    Texture2D? texture = portrait.Texture;
+                    Texture2D? texture = portrait.Texture as Texture2D;
                     options.Add(new FloatMenuOption(portrait.Name, () => _ = CreatePersonaFromPortraitAsync(portrait.Path, texture)));
                 }
             }
@@ -372,7 +372,7 @@ namespace TheSecondSeat.UI
                 options.Add(new FloatMenuOption("--- 其他Mod叙事者 ---", null));
                 foreach (var portrait in modPortraits)
                 {
-                    Texture2D? texture = portrait.Texture;
+                    Texture2D? texture = portrait.Texture as Texture2D;
                     options.Add(new FloatMenuOption(portrait.Name, () => { _ = CreatePersonaFromPortraitAsync(portrait.Path, texture); }));
                 }
             }

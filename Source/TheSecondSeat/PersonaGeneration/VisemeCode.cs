@@ -283,35 +283,44 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// 获取对应的纹理名称
+        /// ⭐ v1.8.0: 更新为新的纹理命名规范
+        /// - A_mouth: 大张嘴 (Ah)
+        /// - E_mouth: 咧嘴/扁嘴 (Ee)
+        /// - O_mouth: 圆嘴 (Oh)
+        /// - U_mouth: 嘟嘴/小孔 (Oo)
+        /// - Neutral_mouth: 微张/自然
+        /// - Closed_mouth: 闭合 (M)
         /// </summary>
         public static string GetTextureName(VisemeCode viseme)
         {
             return viseme switch
             {
-                VisemeCode.Closed => "closed_mouth",
-                VisemeCode.Small => "small_mouth",
-                VisemeCode.Medium => "medium_mouth",
-                VisemeCode.Large => "larger_mouth",
-                VisemeCode.Smile => "smile_mouth",
-                VisemeCode.OShape => "o_mouth",
-                _ => "closed_mouth"
+                VisemeCode.Closed => "Closed_mouth",    // 闭合 (M/B/P)
+                VisemeCode.Small => "U_mouth",          // 嘟嘴/小孔 (Oo/U)
+                VisemeCode.Medium => "Neutral_mouth",   // 微张/自然
+                VisemeCode.Large => "A_mouth",          // 大张嘴 (Ah/A)
+                VisemeCode.Smile => "E_mouth",          // 咧嘴/扁嘴 (Ee/I)
+                VisemeCode.OShape => "O_mouth",         // 圆嘴 (Oh/O)
+                _ => "Closed_mouth"
             };
         }
         
         /// <summary>
-        /// ⭐ v1.6.74: 获取 Viseme 对应的纹理名称（兼容 MouthAnimationSystem）
+        /// ⭐ v1.8.0: 获取 Viseme 对应的纹理名称（兼容 MouthAnimationSystem）
+        /// ⭐ v1.8.1: 修复 Closed 应返回 "Closed_mouth" 以支持 Sideria 等子 Mod
+        /// ⭐ v1.8.2: 修复 Small/Medium 对调 - Small=微张, Medium=嘟嘴
         /// </summary>
         public static string VisemeToTextureName(VisemeCode viseme)
         {
             return viseme switch
             {
-                VisemeCode.Closed => null,              // 使用 base_body 默认嘴型
-                VisemeCode.Small => "small_mouth",
-                VisemeCode.Medium => "medium_mouth",
-                VisemeCode.Large => "larger_mouth",
-                VisemeCode.Smile => "smile_mouth",
-                VisemeCode.OShape => "o_mouth",
-                _ => null
+                VisemeCode.Closed => "Closed_mouth",    // 闭合嘴型 (M/B/P) - 支持子 Mod 纹理
+                VisemeCode.Small => "Neutral_mouth",    // ⭐ 修复：微张/自然 (轻微开口)
+                VisemeCode.Medium => "U_mouth",         // ⭐ 修复：嘟嘴/小孔 (Oo/U)
+                VisemeCode.Large => "A_mouth",          // 大张嘴 (Ah/A)
+                VisemeCode.Smile => "E_mouth",          // 咧嘴/扁嘴 (Ee/I)
+                VisemeCode.OShape => "O_mouth",         // 圆嘴 (Oh/O)
+                _ => "Closed_mouth"
             };
         }
         
@@ -371,36 +380,84 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ⭐ v1.6.74: 解析 Azure TTS Viseme 事件
+        /// ⭐ v1.8.0: 解析 Azure TTS Viseme 事件（优化映射）
         /// Azure TTS 可以返回实时 Viseme 序列（Viseme ID 基于 SAPI 标准）
+        ///
+        /// 映射规则（匹配新纹理文件）：
+        /// - Closed_mouth: ID 0 (Sil), ID 21 (P/B/M 闭唇音)
+        /// - A_mouth: ID 1 (Ae/Ax/Ah), ID 2 (Aa), ID 9 (Ao), ID 11 (Ah)
+        /// - E_mouth: ID 6 (Eh), ID 7 (Y/Iy/Ih), ID 8 (Ey)
+        /// - O_mouth: ID 3 (Ao/awe), ID 13 (Ow), ID 14 (Oy)
+        /// - U_mouth: ID 4 (Uh), ID 5 (Er), ID 10 (O), ID 15 (Uw), ID 16 (Uh)
+        /// - Neutral_mouth: ID 12 (H), ID 17 (R), ID 18 (F/V), ID 19 (Th/Dh), ID 20 (S/Z), 其他
         /// </summary>
         public static VisemeCode ParseAzureVisemeId(int visemeId)
         {
             return visemeId switch
             {
-                0 => VisemeCode.Closed,    // Silence
-                1 => VisemeCode.Medium,    // AE
-                2 => VisemeCode.Large,     // AA
-                3 => VisemeCode.Medium,    // AO
-                4 => VisemeCode.Small,     // EH
-                5 => VisemeCode.Medium,    // ER
-                6 => VisemeCode.Small,     // IH
-                7 => VisemeCode.Small,     // IY
-                8 => VisemeCode.OShape,    // UW
-                9 => VisemeCode.OShape,    // UH
-                10 => VisemeCode.Medium,   // AH
-                11 => VisemeCode.Small,    // EY
-                12 => VisemeCode.Large,    // AY
-                13 => VisemeCode.Large,    // AW
-                14 => VisemeCode.OShape,   // OW
-                15 => VisemeCode.OShape,   // OY
-                16 => VisemeCode.OShape,   // W
-                17 => VisemeCode.Smile,    // Y
-                18 => VisemeCode.Small,    // R
-                19 => VisemeCode.Small,    // L
-                20 => VisemeCode.Smile,    // S
-                21 => VisemeCode.Smile,    // Z
-                _ => VisemeCode.Closed
+                // === 1. 闭合 (Closed) ===
+                0 => VisemeCode.Closed,    // Sil (静音)
+                21 => VisemeCode.Closed,   // P, B, M (闭唇音)
+                
+                // === 2. 大张嘴 (Large → A_mouth) ===
+                1 => VisemeCode.Large,     // Ae, Ax, Ah (cat, cut)
+                2 => VisemeCode.Large,     // Aa (father)
+                9 => VisemeCode.Large,     // Ao (dog - 动漫风格处理为大张)
+                11 => VisemeCode.Large,    // Ah (hut)
+                
+                // === 3. 咧嘴/扁嘴 (Smile → E_mouth) ===
+                6 => VisemeCode.Smile,     // Eh, Ae (bed)
+                7 => VisemeCode.Smile,     // Y, Iy, Ih, Ix (yes, eat - 标准咧嘴音)
+                8 => VisemeCode.Smile,     // Ey, Eh, Et (ate)
+                
+                // === 4. 圆嘴 (OShape → O_mouth) ===
+                3 => VisemeCode.OShape,    // Ao (awe)
+                13 => VisemeCode.OShape,   // Ow (go)
+                14 => VisemeCode.OShape,   // Oy (boy)
+                
+                // === 5. 嘟嘴 (Small → U_mouth) ===
+                4 => VisemeCode.Small,     // Uh (部分情况)
+                5 => VisemeCode.Small,     // Er (fur - 卷舌圆唇)
+                10 => VisemeCode.Small,    // O (no)
+                15 => VisemeCode.Small,    // Uw (two - 标准嘟嘴)
+                16 => VisemeCode.Small,    // Uh (book)
+                
+                // === 6. 微张/自然 (Medium → Neutral_mouth) ===
+                12 => VisemeCode.Medium,   // H (呵气)
+                17 => VisemeCode.Medium,   // R (词头微张)
+                18 => VisemeCode.Medium,   // F, V (咬唇 - 用微张代替)
+                19 => VisemeCode.Medium,   // Th, Dh (咬舌 - 用微张代替)
+                20 => VisemeCode.Medium,   // S, Z (用微张更自然)
+                
+                _ => VisemeCode.Medium     // 默认微张
+            };
+        }
+        
+        /// <summary>
+        /// ⭐ v1.8.0: 直接从 Azure Viseme ID 获取纹理名称（快捷方法）
+        /// 跳过 VisemeCode 中间层，直接返回纹理文件名
+        /// </summary>
+        public static string MapAzureVisemeToTexture(int azureVisemeId)
+        {
+            return azureVisemeId switch
+            {
+                // === 1. 闭合 (Closed_mouth) ===
+                0 or 21 => "Closed_mouth",
+                
+                // === 2. 大张嘴 (A_mouth) ===
+                1 or 2 or 9 or 11 => "A_mouth",
+                
+                // === 3. 咧嘴/扁嘴 (E_mouth) ===
+                6 or 7 or 8 => "E_mouth",
+                
+                // === 4. 圆嘴 (O_mouth) ===
+                3 or 13 or 14 => "O_mouth",
+                
+                // === 5. 嘟嘴 (U_mouth) ===
+                4 or 5 or 10 or 15 or 16 => "U_mouth",
+                
+                // === 6. 微张/自然 (Neutral_mouth) ===
+                _ => "Neutral_mouth"
             };
         }
     }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Verse;
 
@@ -12,13 +13,15 @@ namespace TheSecondSeat.PersonaGeneration
     public class FaceRegion
     {
         // 面部区域在完整立绘中的位置（归一化坐标 0-1）
+        // 坐标系：Top-Down (0,0 在左上角)
         public float CenterX { get; set; } = 0.5f;      // 水平中心（0.5 = 正中间）
         public float CenterY { get; set; } = 0.35f;     // 垂直中心（0.35 = 略偏上，适合大多数立绘）
         public float Width { get; set; } = 0.4f;        // 宽度占比（0.4 = 40%）
         public float Height { get; set; } = 0.3f;       // 高度占比（0.3 = 30%）
         
         // 羽化边缘（避免硬边界）
-        public float FeatherRadius { get; set; } = 0.05f;  // 5%的羽化范围
+        // 注意：GPU 版本暂不支持自动羽化，依赖素材本身的 Alpha 通道
+        public float FeatherRadius { get; set; } = 0.05f;  
         
         /// <summary>
         /// 获取面部区域的像素范围
@@ -35,103 +38,103 @@ namespace TheSecondSeat.PersonaGeneration
     }
     
     /// <summary>
-    /// 表情纹理合成器
+    /// 表情纹理合成器 (GPU Accelerated)
     /// ? 将面部表情纹理叠加到基础立绘上
+    /// ? v2.0: 使用 RenderTexture 替代 CPU SetPixels，大幅提升性能
     /// </summary>
     public static class ExpressionCompositor
     {
         // 缓存已合成的表情纹理
-        private static Dictionary<string, Texture2D> compositeCache = new Dictionary<string, Texture2D>();
+        private static Dictionary<string, Texture> compositeCache = new Dictionary<string, Texture>();
+        private const int MaxCacheSize = 20; // 限制缓存大小，避免显存占用过高
         
         /// <summary>
         /// 合成表情（基础立绘 + 脸部差分）
-        /// ? 新增：支持智能裁剪，减少内存占用
         /// </summary>
         /// <param name="baseTexture">基础立绘（完整身体、衣服等）</param>
         /// <param name="faceTexture">脸部差分（或完整表情立绘）</param>
         /// <param name="faceRegion">脸部区域</param>
         /// <param name="cacheKey">缓存键（用于避免重复合成）</param>
-        /// <param name="autoCrop">是否自动裁剪表情差分（如果是完整立绘）</param>
-        /// <returns>合成后的立绘纹理</returns>
-        public static Texture2D CompositeExpression(
-            Texture2D baseTexture, 
-            Texture2D faceTexture, 
+        /// <param name="autoCrop">是否自动裁剪表情差分（如果是完整立绘且为 Texture2D）</param>
+        /// <returns>合成后的立绘纹理 (RenderTexture)</returns>
+        public static Texture CompositeExpression(
+            Texture baseTexture, 
+            Texture faceTexture, 
             FaceRegion faceRegion,
             string cacheKey = null,
             bool autoCrop = true)
         {
             // 检查缓存
-            if (!string.IsNullOrEmpty(cacheKey) && compositeCache.TryGetValue(cacheKey, out Texture2D cached))
+            if (!string.IsNullOrEmpty(cacheKey) && compositeCache.TryGetValue(cacheKey, out Texture cached))
             {
                 return cached;
             }
             
-            // ⭐ v1.7.2: 修复内存泄漏 - 使用 finally 确保临时纹理被清理
-            Texture2D readableBase = null;
-            Texture2D readableFace = null;
-            Texture2D processedFace = null;
+            if (baseTexture == null) return null;
             
-            try
+            // 如果没有表情贴图，直接返回底图
+            if (faceTexture == null) return baseTexture;
+
+            Texture processedFace = faceTexture;
+
+            // ? 智能裁剪逻辑
+            // 仅当输入是 Texture2D 时尝试裁剪 (SmartCropper 需要读取像素)
+            // 如果是 RenderTexture，假设已经处理好或者是作为整体覆盖
+            if (autoCrop && faceTexture is Texture2D faceTex2D && baseTexture is Texture2D baseTex2D)
             {
-                // ? 智能裁剪：如果表情差分是完整立绘，自动裁剪出面部区域
-                processedFace = faceTexture;
-                if (autoCrop && IsFullPortrait(faceTexture, baseTexture))
+                if (IsFullPortrait(faceTex2D, baseTex2D))
                 {
-                    Log.Message($"[ExpressionCompositor] 检测到完整立绘表情，执行智能裁剪");
-                    processedFace = SmartCropper.CropTexture(faceTexture, SmartCropper.CropType.Expression);
-                    
-                    if (processedFace == null)
+                    // Log.Message($"[ExpressionCompositor] 检测到完整立绘表情，执行智能裁剪");
+                    var cropped = SmartCropper.CropTexture(faceTex2D, SmartCropper.CropType.Expression);
+                    if (cropped != null)
                     {
-                        Log.Warning("[ExpressionCompositor] 裁剪失败，使用原始纹理");
-                        processedFace = faceTexture;
+                        processedFace = cropped;
                     }
                 }
+            }
+            
+            // 创建目标 RT
+            RenderTexture targetRT = PortraitRenderSystem.CreateRenderTexture(baseTexture.width, baseTexture.height);
+            
+            RenderTexture previousRT = RenderTexture.active;
+
+            try
+            {
+                RenderTexture.active = targetRT;
                 
-                // 创建可读版本纹理
-                readableBase = MakeReadable(baseTexture);
-                readableFace = MakeReadable(processedFace);
+                // 1. 清除背景
+                GL.Clear(true, true, Color.clear);
                 
-                // 创建结果纹理
-                Texture2D result = new Texture2D(readableBase.width, readableBase.height, TextureFormat.RGBA32, false);
+                // 2. 设置 Top-Down 坐标系 (与 GUI 和 FaceRegion 定义一致)
+                GL.PushMatrix();
+                GL.LoadPixelMatrix(0, baseTexture.width, baseTexture.height, 0);
                 
-                // 复制基础像素
-                Color[] basePixels = readableBase.GetPixels();
-                result.SetPixels(basePixels);
+                // 3. 绘制底图 (铺满)
+                Graphics.DrawTexture(new Rect(0, 0, baseTexture.width, baseTexture.height), baseTexture);
                 
-                // 获取脸部区域
-                Rect faceRect = faceRegion.GetPixelRect(readableBase.width, readableBase.height);
+                // 4. 计算面部位置并绘制
+                Rect faceRect = faceRegion.GetPixelRect(baseTexture.width, baseTexture.height);
+                Graphics.DrawTexture(faceRect, processedFace);
                 
-                // 混合脸部差分
-                BlendFaceRegion(result, readableFace, faceRect, faceRegion.FeatherRadius);
+                GL.PopMatrix();
                 
-                result.Apply();
-                
-                // 保存缓存
+                // 缓存结果
                 if (!string.IsNullOrEmpty(cacheKey))
                 {
-                    compositeCache[cacheKey] = result;
+                    AddToCache(cacheKey, targetRT);
                 }
                 
-                Log.Message($"[ExpressionCompositor] 合成表情成功: {cacheKey}");
-                return result;
+                return targetRT;
             }
             catch (Exception ex)
             {
-                Log.Error($"[ExpressionCompositor] 合成表情失败: {ex}");
-                return baseTexture; // 失败时返回基础立绘
+                Log.Error($"[ExpressionCompositor] GPU Composite failed: {ex}");
+                PortraitRenderSystem.Release(targetRT);
+                return baseTexture;
             }
             finally
             {
-                // ⭐ v1.7.2: 无论成功失败，强制清理临时显存
-                if (readableBase != null && readableBase != baseTexture)
-                    UnityEngine.Object.Destroy(readableBase);
-                    
-                if (readableFace != null && readableFace != faceTexture && readableFace != processedFace)
-                    UnityEngine.Object.Destroy(readableFace);
-                    
-                // 如果 processedFace 是由智能裁剪创建的（不是原始纹理），也需要清理
-                if (processedFace != null && processedFace != faceTexture)
-                    UnityEngine.Object.Destroy(processedFace);
+                RenderTexture.active = previousRT;
             }
         }
         
@@ -146,92 +149,37 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// 将纹理转换为可读格式
+        /// 添加到缓存并管理容量
         /// </summary>
-        private static Texture2D MakeReadable(Texture2D source)
+        private static void AddToCache(string key, Texture texture)
         {
-            RenderTexture renderTex = RenderTexture.GetTemporary(
-                source.width, 
-                source.height, 
-                0, 
-                RenderTextureFormat.Default, 
-                RenderTextureReadWrite.Linear
-            );
-            
-            Graphics.Blit(source, renderTex);
-            RenderTexture previous = RenderTexture.active;
-            RenderTexture.active = renderTex;
-            
-            Texture2D readable = new Texture2D(source.width, source.height, TextureFormat.RGBA32, false);
-            readable.ReadPixels(new Rect(0, 0, renderTex.width, renderTex.height), 0, 0);
-            readable.Apply();
-            
-            RenderTexture.active = previous;
-            RenderTexture.ReleaseTemporary(renderTex);
-            
-            return readable;
-        }
-        
-        /// <summary>
-        /// 混合面部区域（带羽化边缘）
-        /// </summary>
-        private static void BlendFaceRegion(
-            Texture2D target, 
-            Texture2D face, 
-            Rect faceRect, 
-            float featherRadius)
-        {
-            int startX = Mathf.Max(0, Mathf.FloorToInt(faceRect.x));
-            int startY = Mathf.Max(0, Mathf.FloorToInt(faceRect.y));
-            int endX = Mathf.Min(target.width, Mathf.CeilToInt(faceRect.xMax));
-            int endY = Mathf.Min(target.height, Mathf.CeilToInt(faceRect.yMax));
-            
-            float featherPixels = featherRadius * target.width;
-            
-            for (int y = startY; y < endY; y++)
+            if (compositeCache.ContainsKey(key))
             {
-                for (int x = startX; x < endX; x++)
-                {
-                    // 计算在面部纹理中的归一化坐标
-                    float u = (x - faceRect.x) / faceRect.width;
-                    float v = (y - faceRect.y) / faceRect.height;
-                    
-                    // 边界检查
-                    if (u < 0 || u > 1 || v < 0 || v > 1) continue;
-                    
-                    // 从面部纹理采样
-                    int faceX = Mathf.FloorToInt(u * face.width);
-                    int faceY = Mathf.FloorToInt(v * face.height);
-                    
-                    if (faceX < 0 || faceX >= face.width || faceY < 0 || faceY >= face.height) continue;
-                    
-                    Color faceColor = face.GetPixel(faceX, faceY);
-                    
-                    // 如果面部像素是透明的，跳过
-                    if (faceColor.a < 0.01f) continue;
-                    
-                    // 计算羽化权重（距离边缘越近越透明）
-                    float distToEdge = GetDistanceToEdge(u, v);
-                    float featherWeight = Mathf.Clamp01(distToEdge / featherRadius);
-                    
-                    // 混合颜色
-                    Color baseColor = target.GetPixel(x, y);
-                    float alpha = faceColor.a * featherWeight;
-                    Color blended = Color.Lerp(baseColor, faceColor, alpha);
-                    
-                    target.SetPixel(x, y, blended);
-                }
+                ReleaseTexture(compositeCache[key]);
+                compositeCache[key] = texture;
+                return;
             }
+
+            if (compositeCache.Count >= MaxCacheSize)
+            {
+                var firstKey = compositeCache.Keys.First();
+                ReleaseTexture(compositeCache[firstKey]);
+                compositeCache.Remove(firstKey);
+            }
+            
+            compositeCache[key] = texture;
         }
-        
-        /// <summary>
-        /// 计算点到矩形边缘的最小距离（归一化）
-        /// </summary>
-        private static float GetDistanceToEdge(float u, float v)
+
+        private static void ReleaseTexture(Texture texture)
         {
-            float distX = Mathf.Min(u, 1f - u);
-            float distY = Mathf.Min(v, 1f - v);
-            return Mathf.Min(distX, distY);
+            if (texture is RenderTexture rt)
+            {
+                PortraitRenderSystem.Release(rt);
+            }
+            else
+            {
+                UnityEngine.Object.Destroy(texture);
+            }
         }
         
         /// <summary>
@@ -241,13 +189,13 @@ namespace TheSecondSeat.PersonaGeneration
         {
             foreach (var texture in compositeCache.Values)
             {
-                if (texture != null)
-                {
-                    UnityEngine.Object.Destroy(texture);
-                }
+                ReleaseTexture(texture);
             }
             compositeCache.Clear();
-            Log.Message("[ExpressionCompositor] 表情合成缓存已清除");
+            if (Prefs.DevMode)
+            {
+                Log.Message("[ExpressionCompositor] 表情合成缓存已清除 (GPU)");
+            }
         }
         
         /// <summary>

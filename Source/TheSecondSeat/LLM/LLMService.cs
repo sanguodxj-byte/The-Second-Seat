@@ -13,7 +13,7 @@ namespace TheSecondSeat.LLM
     /// 统一使用 UnityWebRequest（RimWorld 兼容）
     /// 支持：OpenAI, DeepSeek, Gemini, 本地 LLM
     /// </summary>
-    public class LLMService
+    public class LLMService : ILLMProvider
     {
         private static LLMService? instance;
         public static LLMService Instance => instance ??= new LLMService();
@@ -32,6 +32,9 @@ namespace TheSecondSeat.LLM
         /// Configure the LLM endpoint and API key
         /// ? 新增：providerType 参数
         /// </summary>
+        public string ProviderName => provider;
+        public bool IsAvailable => !string.IsNullOrEmpty(apiEndpoint);
+
         public void Configure(string endpoint, string key, string model = "gpt-4", string providerType = "openai")
         {
             apiEndpoint = endpoint;
@@ -40,6 +43,24 @@ namespace TheSecondSeat.LLM
             provider = providerType.ToLower(); // ? 新增：记录 provider
             
             // 静默配置 LLM
+        }
+
+        /// <summary>
+        /// Implement ILLMProvider.SendMessageAsync
+        /// </summary>
+        public async Task<string> SendMessageAsync(string systemPrompt, string gameState, string userMessage, float temperature = 0.7f, int maxTokens = 500)
+        {
+            var response = await SendStateAndGetActionAsync(systemPrompt, gameState, userMessage);
+            
+            if (response == null) return "Error: No response from LLM";
+            
+            // If there's a thought, include it (ReAct agent might parse it)
+            if (!string.IsNullOrEmpty(response.thought))
+            {
+                return $"[THOUGHT]: {response.thought}\n{response.dialogue}";
+            }
+            
+            return response.dialogue;
         }
 
         /// <summary>

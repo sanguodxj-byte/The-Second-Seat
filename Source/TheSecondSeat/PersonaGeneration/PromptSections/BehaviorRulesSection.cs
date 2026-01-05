@@ -42,6 +42,17 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
                 sb.AppendLine();
                 sb.AppendLine("**IMPORTANT**: Commands may cause issues. Use only when necessary.");
             }
+            else if (difficultyMode == AIDifficultyMode.Engineer)
+            {
+                sb.AppendLine("**ENGINEER MODE RULES:**");
+                sb.AppendLine("1. **Log Analysis**: If the user mentions an error or bug, use `read_log` immediately.");
+                sb.AppendLine("2. **Technical Precision**: Use precise terminology. Quote error messages exactly.");
+                sb.AppendLine("3. **Solution Focused**: Don't just identify the problem, suggest a fix or workaround.");
+                sb.AppendLine("4. **Proactive Debugging**: If you see a red error in the log, explain it to the player.");
+                sb.AppendLine("5. **No Roleplay Fluff**: Keep roleplay minimal. Focus on the technical task.");
+                sb.AppendLine();
+                sb.AppendLine("**IMPORTANT**: You are here to fix the game, not play it.");
+            }
             
             sb.AppendLine();
             sb.AppendLine("UNIVERSAL RULES:");

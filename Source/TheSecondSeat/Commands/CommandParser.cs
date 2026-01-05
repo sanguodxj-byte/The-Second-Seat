@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using TheSecondSeat.Commands.Implementations;
 using TheSecondSeat.LLM;
 using TheSecondSeat.Events;
@@ -10,47 +11,10 @@ namespace TheSecondSeat.Commands
     /// <summary>
     /// Parses LLM command output and executes the appropriate game command
     /// ✅ v1.6.66: 完全重构 - 注册所有已实现命令
+    /// ⭐ v1.7.00: 适配 CommandRegistry
     /// </summary>
     public static class CommandParser
     {
-        // ✅ 修复：注册所有在 ConcreteCommands.cs 中实现的命令
-        private static readonly Dictionary<string, Func<IAICommand>> commandRegistry = new Dictionary<string, Func<IAICommand>>
-        {
-            // === 基础批量命令 ===
-            { "BatchHarvest", () => new BatchHarvestCommand() },
-            { "BatchEquip", () => new BatchEquipCommand() },
-            { "PriorityRepair", () => new PriorityRepairCommand() },
-            { "EmergencyRetreat", () => new EmergencyRetreatCommand() },
-            
-            // === 新增：资源与采集批量命令 ===
-            { "BatchMine", () => new BatchMineCommand() },
-            { "BatchLogging", () => new BatchLoggingCommand() },
-            { "DesignatePlantCut", () => new DesignatePlantCutCommand() },
-            { "BatchCapture", () => new BatchCaptureCommand() },
-
-            // === ✅ 关键修复：殖民者微操命令 (Pawn Management) ===
-            { "DraftPawn", () => new DraftPawnCommand() },
-            { "MovePawn", () => new MovePawnCommand() },
-            { "HealPawn", () => new HealPawnCommand() },
-            { "SetWorkPriority", () => new SetWorkPriorityCommand() },
-            { "EquipWeapon", () => new EquipWeaponCommand() },
-
-            // === 新增：物品管理命令 ===
-            { "ForbidItems", () => new ForbidItemsCommand() },
-            { "AllowItems", () => new AllowItemsCommand() },
-
-            // === 对弈者事件命令 ===
-            { "TriggerEvent", () => new TriggerEventCommand() },
-            { "ScheduleEvent", () => new ScheduleEventCommand() },
-
-            // === 查询命令 ===
-            { "GetMapLocation", () => new GetMapLocationCommand() },
-            { "ScanMap", () => new ScanMapCommand() },
-
-            // === 特殊交互命令 ===
-            { "Descent", () => new DescentCommand() }
-        };
-
         /// <summary>
         /// Parse and execute a command from LLM response
         /// </summary>
@@ -64,20 +28,20 @@ namespace TheSecondSeat.Commands
             // Normalize action name
             var actionName = llmCommand.action.Trim();
 
-            if (!commandRegistry.ContainsKey(actionName))
+            var command = CommandRegistry.GetCommand(actionName);
+            if (command == null)
             {
-                Log.Warning($"[The Second Seat] Unknown command: {actionName} (Available: {string.Join(", ", commandRegistry.Keys)})");
+                Log.Warning($"[The Second Seat] Unknown command: {actionName}");
                 return CommandResult.Failed($"Unknown command: {actionName}", -1f);
             }
 
             try
             {
-                // Instantiate command
-                var command = commandRegistry[actionName]();
-                
                 // ✅ 修复：正确传递 target 和 parameters
+                // 注意：这里使用的是 CommandRegistry 中的单例实例
+                // 如果命令有状态，可能需要修改为工厂模式，但目前的命令大多是无状态的或者每次执行重置
                 var result = (command as BaseAICommand)?.ExecuteSafe(
-                    llmCommand.target, 
+                    llmCommand.target,
                     llmCommand.parameters);
 
                 return result ?? CommandResult.Failed("Command execution returned null");
@@ -94,21 +58,15 @@ namespace TheSecondSeat.Commands
         /// </summary>
         public static List<string> GetAvailableCommands()
         {
-            return new List<string>(commandRegistry.Keys);
+            return CommandRegistry.GetAllCommands().Select(c => c.ActionName).ToList();
         }
 
         /// <summary>
         /// Register a custom command (for modding support)
         /// </summary>
-        public static void RegisterCommand(string actionName, Func<IAICommand> factory)
+        public static void RegisterCommand(IAICommand command)
         {
-            if (commandRegistry.ContainsKey(actionName))
-            {
-                Log.Warning($"[The Second Seat] Overwriting existing command: {actionName}");
-            }
-            
-            commandRegistry[actionName] = factory;
-            Log.Message($"[The Second Seat] Registered command: {actionName}");
+            CommandRegistry.RegisterCommand(command);
         }
 
         /// <summary>
@@ -116,12 +74,12 @@ namespace TheSecondSeat.Commands
         /// </summary>
         public static string GetCommandDescription(string actionName)
         {
-            if (!commandRegistry.ContainsKey(actionName))
+            var command = CommandRegistry.GetCommand(actionName);
+            if (command == null)
             {
                 return "Unknown command";
             }
 
-            var command = commandRegistry[actionName]();
             return command.GetDescription();
         }
     }

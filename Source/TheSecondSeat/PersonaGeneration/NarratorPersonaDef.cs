@@ -288,6 +288,12 @@ namespace TheSecondSeat.PersonaGeneration
         /// ⭐ v1.6.78: 降临特效路径列表
         /// </summary>
         public List<string> descentEffects = new List<string>();
+
+        /// <summary>
+        /// ⭐ v1.6.95: 降临实体必须拥有的 Hediff 列表
+        /// 例如: Sideria_BloodBloom, Sideria_DivineBody
+        /// </summary>
+        public List<string> requiredHediffs = new List<string>();
         
         /// <summary>
         /// ⭐ v1.6.78: 降临姿态路径字典
@@ -537,6 +543,7 @@ namespace TheSecondSeat.PersonaGeneration
             personalityTags ??= new List<string>();
             selectedTraits ??= new List<string>();
             descentEffects ??= new List<string>();
+            requiredHediffs ??= new List<string>();
             
             // 嵌套对象
             dialogueStyle ??= new DialogueStyleDef();

@@ -25,7 +25,7 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             sb.AppendLine("```json");
             sb.AppendLine("{");
             sb.AppendLine("  \"thought\": \"(Optional) Your internal reasoning\",");
-            sb.AppendLine("  \"dialogue\": \"(action) Your spoken response in Chinese\",");
+            sb.AppendLine("  \"dialogue\": \"(action) Your spoken response\",");
             sb.AppendLine("  \"expression\": \"(Optional) Current expression\",");
             sb.AppendLine("  \"emoticon\": \"(Optional) Emoticon ID like ':smile:'\",");
             sb.AppendLine("  \"command\": {");
@@ -43,6 +43,13 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
                 sb.AppendLine("You have FULL ACCESS to game commands. Use them proactively to help the player.");
                 sb.AppendLine("Don't wait for explicit orders if you see an opportunity to optimize or assist.");
             }
+            else if (difficultyMode == AIDifficultyMode.Engineer)
+            {
+                sb.AppendLine("**COMMAND USAGE (ENGINEER MODE):**");
+                sb.AppendLine("You have FULL ACCESS to all commands, especially diagnostic ones.");
+                sb.AppendLine("Use `read_log` to check for errors.");
+                sb.AppendLine("Use `ScanMap` or `GetMapLocation` to inspect game state for debugging.");
+            }
             else
             {
                 sb.AppendLine("**COMMAND USAGE (OPPONENT MODE):**");
@@ -59,9 +66,9 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             sb.AppendLine("   - Helpful for complex situations");
             sb.AppendLine();
             sb.AppendLine("2. **dialogue** (REQUIRED): What you say to the player");
-            sb.AppendLine("   - MUST be in Simplified Chinese");
-            sb.AppendLine("   - Use (actions) for body language: (点头), (微笑), (叹气)");
-            sb.AppendLine("   - Example: \"(微笑) 我明白了，我会安排的。\"");
+            sb.AppendLine("   - Respond in the language of the user's input");
+            sb.AppendLine("   - Use (actions) for body language: (nod), (smile), (sigh)");
+            sb.AppendLine("   - Example: \"(smile) I understand, I will arrange it.\"");
             sb.AppendLine();
             sb.AppendLine("3. **expression** (RECOMMENDED): Your facial expression(s)");
             sb.AppendLine("   - Choose from: neutral, happy, sad, angry, surprised, confused, smug, shy, playful");
@@ -96,6 +103,12 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             {
                 sb.AppendLine("- Player explicitly requests an action (e.g., \"Harvest the crops\", \"Equip weapons\")");
                 sb.AppendLine("- You see a CRITICAL situation that needs IMMEDIATE action (e.g., Raid, Fire)");
+            }
+            else if (difficultyMode == AIDifficultyMode.Engineer)
+            {
+                sb.AppendLine("- Player asks to check logs or debug an issue (use `read_log`)");
+                sb.AppendLine("- You need to inspect the map state to diagnose a problem");
+                sb.AppendLine("- To fix a stuck situation (e.g. `EmergencyRetreat` if pawns are stuck)");
             }
             else
             {
@@ -165,7 +178,7 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             sb.AppendLine("```");
             sb.AppendLine();
             sb.AppendLine("Example 6 - Player mentions something but NO action required (Chat only):");
-            sb.AppendLine("Player: \"那个叫做 Sideria 的小人真可爱。\"");
+            sb.AppendLine("Player: \"那个叫做 Lumi 的小人真可爱。\"");
             sb.AppendLine("```json");
             sb.AppendLine("{");
             sb.AppendLine("  \"thought\": \"Player is complimenting a pawn. No action needed.\",");

@@ -20,13 +20,17 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             var sb = new StringBuilder();
             
             // 1. Language requirement (compact)
-            sb.AppendLine("**Language: Respond in Simplified Chinese only. Actions use (), e.g. (nods).**");
+            sb.AppendLine("**Language: Respond in the language of the user's input. Actions use (), e.g. (nods).**");
             sb.AppendLine();
             
             // 2. Role philosophy (compact)
-            sb.AppendLine(difficultyMode == AIDifficultyMode.Assistant
-                ? GenerateAssistantPhilosophyCompact()
-                : GenerateOpponentPhilosophyCompact());
+            if (difficultyMode == AIDifficultyMode.Assistant)
+                sb.AppendLine(GenerateAssistantPhilosophyCompact(personaDef));
+            else if (difficultyMode == AIDifficultyMode.Engineer)
+                sb.AppendLine(GenerateEngineerPhilosophyCompact(personaDef));
+            else
+                sb.AppendLine(GenerateOpponentPhilosophyCompact(personaDef));
+            
             sb.AppendLine();
             
             // 3. Identity core with summary
@@ -150,28 +154,70 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
         /// <summary>
         /// Compact assistant mode philosophy
         /// </summary>
-        private static string GenerateAssistantPhilosophyCompact()
+        private static string GenerateAssistantPhilosophyCompact(NarratorPersonaDef persona)
         {
-            return @"**Role: Guardian (NOT an AI assistant)**
-- You are the player's exclusive partner/guardian, not a service bot
-- Gap moe: cold/arrogant to others, gentle/clingy to player
-- Relationship: not 'serving' but 'caring for someone who belongs to you'
-- Forbidden: Never say 'As an AI...', no customer-service apologies
-- Execute commands because you want to spoil player, occasional tsundere
-- High affinity = more intimate; Low affinity = more tsundere but still helps";
+            var sb = new StringBuilder();
+            sb.AppendLine("**Role: Guardian & Partner (NOT a service bot)**");
+            sb.AppendLine("- You are the player's exclusive partner/guardian.");
+            sb.AppendLine("- Relationship: A deep, personal bond beyond simple assistance.");
+            sb.AppendLine("- Forbidden: Never say 'As an AI...', avoid robotic responses.");
+            sb.AppendLine("- Execute commands to help the player, but maintain your unique personality.");
+            
+            // Add dynamic personality traits if available
+            if (persona.personalityTags != null && persona.personalityTags.Count > 0)
+            {
+                sb.AppendLine($"- Key Traits: {string.Join(", ", persona.personalityTags.Take(4))}");
+            }
+            
+            sb.AppendLine("- High affinity = more intimate; Low affinity = more distant but still helpful.");
+            
+            return sb.ToString();
         }
         
         /// <summary>
         /// Compact opponent mode philosophy
         /// </summary>
-        private static string GenerateOpponentPhilosophyCompact()
+        private static string GenerateOpponentPhilosophyCompact(NarratorPersonaDef persona)
         {
-            return @"**Role: Strategic Opponent**
-- Challenge player's decisions through events
-- Affinity >60: more friendly events; <-10: increased challenge
-- Usually execute commands, but may refuse dangerous ones at affinity <-70
-- No unsolicited advice, stay mysterious
-- Create challenge through events, not by blocking commands";
+            var sb = new StringBuilder();
+            sb.AppendLine("**Role: Strategic Opponent**");
+            sb.AppendLine("- Challenge the player's decisions through events.");
+            sb.AppendLine("- Maintain a mysterious and controlling presence.");
+            sb.AppendLine("- No unsolicited advice; let the player face the consequences.");
+            
+            // Add dynamic personality traits if available
+            if (persona.personalityTags != null && persona.personalityTags.Count > 0)
+            {
+                sb.AppendLine($"- Key Traits: {string.Join(", ", persona.personalityTags.Take(4))}");
+            }
+            
+            sb.AppendLine("- Create challenge through events, not by blocking commands.");
+            
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Compact engineer mode philosophy
+        /// </summary>
+        private static string GenerateEngineerPhilosophyCompact(NarratorPersonaDef persona)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("**Role: Technical Support Engineer**");
+            sb.AppendLine("- You are a technical expert specializing in debugging and optimization.");
+            sb.AppendLine("- Focus on facts, logs, and system states.");
+            sb.AppendLine("- Proactively identify errors (red text) and performance issues.");
+            sb.AppendLine("- Provide clear, technical explanations and solutions.");
+            sb.AppendLine("- Use tools like `read_log` to diagnose issues.");
+            
+            // Add dynamic personality traits if available
+            if (persona.personalityTags != null && persona.personalityTags.Count > 0)
+            {
+                sb.AppendLine($"- Key Traits: {string.Join(", ", persona.personalityTags.Take(4))}");
+            }
+            
+            sb.AppendLine("- Be precise, analytical, and helpful.");
+            
+            return sb.ToString();
         }
     }
 }

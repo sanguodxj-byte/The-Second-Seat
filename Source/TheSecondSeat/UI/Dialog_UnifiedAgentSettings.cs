@@ -8,16 +8,19 @@ using TheSecondSeat.RimAgent;
 namespace TheSecondSeat.UI
 {
     /// <summary>
-    /// v1.6.65: 统一的 Agent 配置窗口
+    /// v1.6.66: 统一的 Agent 配置窗口（紧凑版）
     /// 整合：LLM API 配置 + 多模态分析 + RimAgent 设置 + 并发管理
-    /// 禁止使用 emoji
     /// </summary>
     public class Dialog_UnifiedAgentSettings : Window
     {
         private Settings.TheSecondSeatSettings settings;
         private Vector2 scrollPosition = Vector2.zero;
         
-        public override Vector2 InitialSize => new Vector2(800f, 700f);
+        // 紧凑行高
+        private const float CompactRowHeight = 24f;
+        private const float LabelWidth = 120f;
+        
+        public override Vector2 InitialSize => new Vector2(700f, 600f);
 
         public Dialog_UnifiedAgentSettings()
         {
@@ -25,7 +28,7 @@ namespace TheSecondSeat.UI
             settings = mod?.GetSettings<Settings.TheSecondSeatSettings>();
             
             this.doCloseX = true;
-            this.doCloseButton = true;
+            this.doCloseButton = false;
             this.forcePause = true;
             this.absorbInputAroundWindow = true;
         }
@@ -35,206 +38,344 @@ namespace TheSecondSeat.UI
             // 标题
             Text.Font = GameFont.Medium;
             Text.Anchor = TextAnchor.MiddleCenter;
-            Rect titleRect = new Rect(0f, 0f, inRect.width, 40f);
+            Rect titleRect = new Rect(0f, 0f, inRect.width, 30f);
             Widgets.Label(titleRect, "Agent 高级配置");
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
 
             // 内容区域
-            Rect contentRect = new Rect(0f, 50f, inRect.width, inRect.height - 100f);
-            Rect viewRect = new Rect(0f, 0f, contentRect.width - 20f, 1800f);
+            Rect contentRect = new Rect(0f, 35f, inRect.width, inRect.height - 80f);
+            Rect viewRect = new Rect(0f, 0f, contentRect.width - 20f, 900f);
             
             Widgets.BeginScrollView(contentRect, ref scrollPosition, viewRect);
             
-            Listing_Standard listing = new Listing_Standard();
-            listing.Begin(viewRect);
+            float y = 0f;
+            float width = viewRect.width;
             
             // ===== 1. LLM API 配置 =====
-            DrawSection(listing, "LLM API 配置", () =>
+            y = DrawSectionCompact(viewRect, y, "LLM API 配置", (float startY) =>
             {
-                // LLM 提供商
-                listing.Label("LLM 提供商:");
-                if (listing.RadioButton("本地 LLM (LM Studio / Ollama)", settings.llmProvider == "local"))
+                float cy = startY;
+                
+                // 提供商选择 - 横向紧凑布局
+                Rect providerRect = new Rect(0, cy, width, CompactRowHeight);
+                Widgets.Label(new Rect(0, cy, LabelWidth, CompactRowHeight), "提供商:");
+                
+                float btnWidth = (width - LabelWidth - 10) / 4f;
+                if (Widgets.ButtonText(new Rect(LabelWidth, cy, btnWidth - 2, CompactRowHeight - 2), "本地", true, true, settings.llmProvider == "local"))
                 {
                     settings.llmProvider = "local";
                     settings.apiEndpoint = "http://localhost:1234/v1/chat/completions";
                     settings.modelName = "local-model";
                 }
-                if (listing.RadioButton("OpenAI (GPT-4)", settings.llmProvider == "openai"))
+                if (Widgets.ButtonText(new Rect(LabelWidth + btnWidth, cy, btnWidth - 2, CompactRowHeight - 2), "OpenAI", true, true, settings.llmProvider == "openai"))
                 {
                     settings.llmProvider = "openai";
                     settings.apiEndpoint = "https://api.openai.com/v1/chat/completions";
                     settings.modelName = "gpt-4";
                 }
-                if (listing.RadioButton("DeepSeek", settings.llmProvider == "deepseek"))
+                if (Widgets.ButtonText(new Rect(LabelWidth + btnWidth * 2, cy, btnWidth - 2, CompactRowHeight - 2), "DeepSeek", true, true, settings.llmProvider == "deepseek"))
                 {
                     settings.llmProvider = "deepseek";
                     settings.apiEndpoint = "https://api.deepseek.com/v1/chat/completions";
                     settings.modelName = "deepseek-chat";
                 }
-                if (listing.RadioButton("Gemini", settings.llmProvider == "gemini"))
+                if (Widgets.ButtonText(new Rect(LabelWidth + btnWidth * 3, cy, btnWidth - 2, CompactRowHeight - 2), "Gemini", true, true, settings.llmProvider == "gemini"))
                 {
                     settings.llmProvider = "gemini";
                     settings.apiEndpoint = "https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-exp:generateContent";
                     settings.modelName = "gemini-2.0-flash-exp";
                 }
-                
-                listing.Gap(12f);
+                cy += CompactRowHeight + 4;
                 
                 // API 端点
-                listing.Label("API 端点:");
-                settings.apiEndpoint = listing.TextEntry(settings.apiEndpoint);
+                cy = DrawCompactTextField(cy, width, "API 端点:", ref settings.apiEndpoint);
                 
                 // API 密钥
-                listing.Label("API 密钥:");
-                settings.apiKey = listing.TextEntry(settings.apiKey);
+                cy = DrawCompactTextField(cy, width, "API 密钥:", ref settings.apiKey, true);
                 
                 // 模型名称
-                listing.Label("模型名称:");
-                settings.modelName = listing.TextEntry(settings.modelName);
+                cy = DrawCompactTextField(cy, width, "模型:", ref settings.modelName);
                 
-                listing.Gap(12f);
+                // 温度和Token - 同一行
+                Widgets.Label(new Rect(0, cy, LabelWidth, CompactRowHeight), $"温度: {settings.temperature:F2}");
+                settings.temperature = Widgets.HorizontalSlider(new Rect(LabelWidth, cy + 4, (width - LabelWidth) / 2 - 10, 16f), settings.temperature, 0f, 2f);
+                Widgets.Label(new Rect(width / 2, cy, 80, CompactRowHeight), $"Token: {settings.maxTokens}");
+                settings.maxTokens = (int)Widgets.HorizontalSlider(new Rect(width / 2 + 80, cy + 4, width / 2 - 90, 16f), settings.maxTokens, 100, 2000);
+                cy += CompactRowHeight + 4;
                 
-                // 温度
-                listing.Label($"温度 (Temperature): {settings.temperature:F2}");
-                settings.temperature = listing.Slider(settings.temperature, 0f, 2f);
+                // 保存按钮
+                if (Widgets.ButtonText(new Rect(width - 80, cy, 75, 22), "保存 LLM"))
+                {
+                    SaveLLMSettings();
+                }
+                cy += 26;
                 
-                // 最大 Token
-                listing.Label($"最大 Token: {settings.maxTokens}");
-                settings.maxTokens = (int)listing.Slider(settings.maxTokens, 100, 2000);
+                return cy;
             });
             
             // ===== 2. 多模态分析配置 =====
-            DrawSection(listing, "多模态分析配置", () =>
+            y = DrawSectionCompact(viewRect, y, "多模态分析", (float startY) =>
             {
-                bool oldEnable = settings.enableMultimodalAnalysis;
-                listing.CheckboxLabeled("启用多模态分析", ref settings.enableMultimodalAnalysis);
+                float cy = startY;
+                
+                // 启用开关
+                Rect checkRect = new Rect(0, cy, width, CompactRowHeight);
+                Widgets.CheckboxLabeled(checkRect, "启用多模态分析", ref settings.enableMultimodalAnalysis);
+                cy += CompactRowHeight;
                 
                 if (settings.enableMultimodalAnalysis)
                 {
-                    listing.Gap(8f);
-                    
                     // 提供商
-                    listing.Label("多模态提供商:");
-                    if (listing.RadioButton("OpenAI (GPT-4 Vision)", settings.multimodalProvider == "openai"))
-                    {
+                    Widgets.Label(new Rect(0, cy, LabelWidth, CompactRowHeight), "提供商:");
+                    float btnWidth = (width - LabelWidth - 10) / 3f;
+                    if (Widgets.ButtonText(new Rect(LabelWidth, cy, btnWidth - 2, CompactRowHeight - 2), "OpenAI", true, true, settings.multimodalProvider == "openai"))
                         settings.multimodalProvider = "openai";
-                    }
-                    if (listing.RadioButton("DeepSeek (janus-pro-7b)", settings.multimodalProvider == "deepseek"))
-                    {
+                    if (Widgets.ButtonText(new Rect(LabelWidth + btnWidth, cy, btnWidth - 2, CompactRowHeight - 2), "DeepSeek", true, true, settings.multimodalProvider == "deepseek"))
                         settings.multimodalProvider = "deepseek";
-                    }
-                    if (listing.RadioButton("Gemini (gemini-pro-vision)", settings.multimodalProvider == "gemini"))
-                    {
+                    if (Widgets.ButtonText(new Rect(LabelWidth + btnWidth * 2, cy, btnWidth - 2, CompactRowHeight - 2), "Gemini", true, true, settings.multimodalProvider == "gemini"))
                         settings.multimodalProvider = "gemini";
+                    cy += CompactRowHeight + 4;
+                    
+                    cy = DrawCompactTextField(cy, width, "API 密钥:", ref settings.multimodalApiKey, true);
+                    cy = DrawCompactTextField(cy, width, "视觉模型:", ref settings.visionModel);
+                    
+                    // 保存按钮
+                    if (Widgets.ButtonText(new Rect(width - 100, cy, 95, 22), "保存多模态"))
+                    {
+                        SaveMultimodalSettings();
                     }
-                    
-                    listing.Gap(8f);
-                    
-                    // API 密钥
-                    listing.Label("多模态 API 密钥:");
-                    settings.multimodalApiKey = listing.TextEntry(settings.multimodalApiKey);
-                    
-                    // 视觉模型
-                    listing.Label("视觉模型:");
-                    settings.visionModel = listing.TextEntry(settings.visionModel);
-                    
-                    // 文本分析模型
-                    listing.Label("文本分析模型:");
-                    settings.textAnalysisModel = listing.TextEntry(settings.textAnalysisModel);
+                    cy += 26;
                 }
+                
+                return cy;
             });
             
             // ===== 3. RimAgent 设置 =====
-            DrawSection(listing, "RimAgent 设置", () =>
+            y = DrawSectionCompact(viewRect, y, "RimAgent 设置", (float startY) =>
             {
+                float cy = startY;
+                
                 // Agent 名称
-                listing.Label("Agent 名称:");
-                settings.agentName = listing.TextEntry(settings.agentName);
+                cy = DrawCompactTextField(cy, width, "Agent名称:", ref settings.agentName);
                 
-                listing.Gap(8f);
+                // 重试和历史 - 同一行
+                Widgets.Label(new Rect(0, cy, 80, CompactRowHeight), $"重试: {settings.maxRetries}");
+                settings.maxRetries = (int)Widgets.HorizontalSlider(new Rect(80, cy + 4, 100, 16f), settings.maxRetries, 1, 10);
+                Widgets.Label(new Rect(200, cy, 80, CompactRowHeight), $"延迟: {settings.retryDelay:F1}s");
+                settings.retryDelay = Widgets.HorizontalSlider(new Rect(280, cy + 4, 100, 16f), settings.retryDelay, 0.5f, 10f);
+                Widgets.Label(new Rect(400, cy, 80, CompactRowHeight), $"历史: {settings.maxHistoryMessages}");
+                settings.maxHistoryMessages = (int)Widgets.HorizontalSlider(new Rect(480, cy + 4, width - 490, 16f), settings.maxHistoryMessages, 5, 100);
+                cy += CompactRowHeight + 4;
                 
-                // 最大重试次数
-                listing.Label($"最大重试次数: {settings.maxRetries}");
-                settings.maxRetries = (int)listing.Slider(settings.maxRetries, 1, 10);
-                
-                // 重试延迟
-                listing.Label($"重试延迟: {settings.retryDelay:F1} 秒");
-                settings.retryDelay = listing.Slider(settings.retryDelay, 0.5f, 10f);
-                
-                // 历史消息数
-                listing.Label($"历史消息数: {settings.maxHistoryMessages}");
-                settings.maxHistoryMessages = (int)listing.Slider(settings.maxHistoryMessages, 5, 100);
+                return cy;
             });
             
             // ===== 4. 并发管理设置 =====
-            DrawSection(listing, "并发管理设置", () =>
+            y = DrawSectionCompact(viewRect, y, "并发管理", (float startY) =>
             {
-                // 最大并发数
-                listing.Label($"最大并发请求数: {settings.maxConcurrent}");
-                settings.maxConcurrent = (int)listing.Slider(settings.maxConcurrent, 1, 20);
+                float cy = startY;
                 
-                // 请求超时
-                listing.Label($"请求超时: {settings.requestTimeout} 秒");
-                settings.requestTimeout = (int)listing.Slider(settings.requestTimeout, 10, 300);
+                // 同一行布局
+                Widgets.Label(new Rect(0, cy, 80, CompactRowHeight), $"并发: {settings.maxConcurrent}");
+                settings.maxConcurrent = (int)Widgets.HorizontalSlider(new Rect(80, cy + 4, 120, 16f), settings.maxConcurrent, 1, 20);
+                Widgets.Label(new Rect(220, cy, 100, CompactRowHeight), $"超时: {settings.requestTimeout}s");
+                settings.requestTimeout = (int)Widgets.HorizontalSlider(new Rect(320, cy + 4, 120, 16f), settings.requestTimeout, 10, 300);
+                Widgets.CheckboxLabeled(new Rect(460, cy, width - 470, CompactRowHeight), "启用重试", ref settings.enableRetry);
+                cy += CompactRowHeight + 4;
                 
-                listing.Gap(8f);
-                
-                // 启用重试
-                listing.CheckboxLabeled("启用重试机制", ref settings.enableRetry);
+                return cy;
             });
             
-            listing.Gap(20f);
+            // ===== 5. TTS 配置 =====
+            y = DrawSectionCompact(viewRect, y, "TTS 配置", (float startY) =>
+            {
+                float cy = startY;
+                
+                // 启用开关
+                Widgets.CheckboxLabeled(new Rect(0, cy, width / 2, CompactRowHeight), "启用 TTS", ref settings.enableTTS);
+                Widgets.CheckboxLabeled(new Rect(width / 2, cy, width / 2, CompactRowHeight), "自动播放", ref settings.autoPlayTTS);
+                cy += CompactRowHeight + 4;
+                
+                if (settings.enableTTS)
+                {
+                    // 提供商
+                    Widgets.Label(new Rect(0, cy, LabelWidth, CompactRowHeight), "提供商:");
+                    float btnWidth = (width - LabelWidth - 10) / 4f;
+                    if (Widgets.ButtonText(new Rect(LabelWidth, cy, btnWidth - 2, CompactRowHeight - 2), "Edge", true, true, settings.ttsProvider == "edge"))
+                        settings.ttsProvider = "edge";
+                    if (Widgets.ButtonText(new Rect(LabelWidth + btnWidth, cy, btnWidth - 2, CompactRowHeight - 2), "Azure", true, true, settings.ttsProvider == "azure"))
+                        settings.ttsProvider = "azure";
+                    if (Widgets.ButtonText(new Rect(LabelWidth + btnWidth * 2, cy, btnWidth - 2, CompactRowHeight - 2), "本地", true, true, settings.ttsProvider == "local"))
+                        settings.ttsProvider = "local";
+                    if (Widgets.ButtonText(new Rect(LabelWidth + btnWidth * 3, cy, btnWidth - 2, CompactRowHeight - 2), "OpenAI", true, true, settings.ttsProvider == "openai"))
+                        settings.ttsProvider = "openai";
+                    cy += CompactRowHeight + 4;
+                    
+                    // Azure 配置（仅 Azure 提供商显示）
+                    if (settings.ttsProvider == "azure")
+                    {
+                        cy = DrawCompactTextField(cy, width, "API 密钥:", ref settings.ttsApiKey, true);
+                        cy = DrawCompactTextField(cy, width, "区域:", ref settings.ttsRegion);
+                    }
+                    
+                    // 语速和音量 - 同一行
+                    Widgets.Label(new Rect(0, cy, 80, CompactRowHeight), $"语速: {settings.ttsSpeechRate:F2}");
+                    settings.ttsSpeechRate = Widgets.HorizontalSlider(new Rect(80, cy + 4, 150, 16f), settings.ttsSpeechRate, 0.5f, 2f);
+                    Widgets.Label(new Rect(250, cy, 80, CompactRowHeight), $"音量: {settings.ttsVolume:P0}");
+                    settings.ttsVolume = Widgets.HorizontalSlider(new Rect(330, cy + 4, 150, 16f), settings.ttsVolume, 0f, 1f);
+                    cy += CompactRowHeight + 4;
+                    
+                    // 保存和测试按钮
+                    if (Widgets.ButtonText(new Rect(width - 180, cy, 80, 22), "保存 TTS"))
+                    {
+                        SaveTTSSettings();
+                    }
+                    if (Widgets.ButtonText(new Rect(width - 90, cy, 85, 22), "测试 TTS"))
+                    {
+                        _ = TestTTSAsync();
+                    }
+                    cy += 26;
+                }
+                
+                return cy;
+            });
+            
+            Widgets.EndScrollView();
             
             // ===== 底部按钮 =====
-            if (listing.ButtonText("应用设置"))
+            float btnY = inRect.height - 40f;
+            if (Widgets.ButtonText(new Rect(10, btnY, 120, 32), "应用全部设置"))
             {
                 ApplySettings();
                 Messages.Message("Agent 配置已应用", MessageTypeDefOf.PositiveEvent);
             }
             
-            if (listing.ButtonText("测试连接"))
+            if (Widgets.ButtonText(new Rect(140, btnY, 100, 32), "测试 LLM"))
             {
                 _ = TestConnectionAsync();
             }
             
-            listing.End();
-            Widgets.EndScrollView();
+            if (Widgets.ButtonText(new Rect(250, btnY, 100, 32), "测试 TTS"))
+            {
+                _ = TestTTSAsync();
+            }
             
-            // 关闭按钮
-            if (Widgets.ButtonText(new Rect(inRect.width - 120f, inRect.height - 45f, 110f, 35f), "关闭"))
+            if (Widgets.ButtonText(new Rect(inRect.width - 80, btnY, 70, 32), "关闭"))
             {
                 Close();
             }
         }
         
         /// <summary>
-        /// 绘制分组区域
+        /// 绘制紧凑型文本输入行
         /// </summary>
-        private void DrawSection(Listing_Standard listing, string title, Action drawContent)
+        private float DrawCompactTextField(float y, float width, string label, ref string value, bool isPassword = false)
         {
-            // 标题背景
-            var titleRect = listing.GetRect(30f);
-            Widgets.DrawBoxSolid(titleRect, new Color(0.2f, 0.2f, 0.2f, 0.5f));
+            Widgets.Label(new Rect(0, y, LabelWidth, CompactRowHeight), label);
             
-            Text.Font = GameFont.Medium;
-            Text.Anchor = TextAnchor.MiddleLeft;
-            var labelRect = titleRect.ContractedBy(5f);
-            Widgets.Label(labelRect, title);
-            Text.Font = GameFont.Small;
-            Text.Anchor = TextAnchor.UpperLeft;
+            Rect inputRect = new Rect(LabelWidth, y, width - LabelWidth - 5, CompactRowHeight - 2);
             
-            listing.Gap(8f);
+            if (isPassword && !string.IsNullOrEmpty(value))
+            {
+                // 密码字段 - 显示遮罩但编辑时显示真实值
+                string displayValue = new string('*', Math.Min(value.Length, 30));
+                if (Mouse.IsOver(inputRect))
+                {
+                    value = Widgets.TextField(inputRect, value);
+                }
+                else
+                {
+                    Widgets.Label(inputRect, displayValue);
+                    if (Widgets.ButtonInvisible(inputRect))
+                    {
+                        // 点击时启动编辑
+                    }
+                }
+            }
+            else
+            {
+                value = Widgets.TextField(inputRect, value ?? "");
+            }
             
-            // 内容
-            drawContent();
-            
-            listing.Gap(12f);
-            listing.GapLine();
+            return y + CompactRowHeight + 2;
         }
         
         /// <summary>
-        /// 应用设置
+        /// 绘制紧凑型分组区域
+        /// </summary>
+        private float DrawSectionCompact(Rect viewRect, float startY, string title, Func<float, float> drawContent)
+        {
+            float y = startY;
+            float width = viewRect.width;
+            
+            // 标题背景
+            Rect titleRect = new Rect(0, y, width, 22f);
+            Widgets.DrawBoxSolid(titleRect, new Color(0.15f, 0.15f, 0.15f, 0.8f));
+            
+            Text.Font = GameFont.Small;
+            Text.Anchor = TextAnchor.MiddleLeft;
+            Widgets.Label(new Rect(8, y, width - 10, 22f), title);
+            Text.Anchor = TextAnchor.UpperLeft;
+            y += 24f;
+            
+            // 内容
+            y = drawContent(y);
+            
+            y += 6f;
+            
+            return y;
+        }
+        
+        /// <summary>
+        /// 保存 LLM 设置
+        /// </summary>
+        private void SaveLLMSettings()
+        {
+            try
+            {
+                LLM.LLMService.Instance.Configure(
+                    settings.apiEndpoint,
+                    settings.apiKey,
+                    settings.modelName,
+                    settings.llmProvider
+                );
+                settings.Write();
+                Messages.Message("LLM 设置已保存", MessageTypeDefOf.PositiveEvent);
+            }
+            catch (Exception ex)
+            {
+                Messages.Message($"保存失败: {ex.Message}", MessageTypeDefOf.NegativeEvent);
+            }
+        }
+        
+        /// <summary>
+        /// 保存多模态设置
+        /// </summary>
+        private void SaveMultimodalSettings()
+        {
+            try
+            {
+                if (settings.enableMultimodalAnalysis)
+                {
+                    PersonaGeneration.MultimodalAnalysisService.Instance.Configure(
+                        settings.multimodalProvider,
+                        settings.multimodalApiKey,
+                        settings.visionModel,
+                        settings.textAnalysisModel
+                    );
+                }
+                settings.Write();
+                Messages.Message("多模态设置已保存", MessageTypeDefOf.PositiveEvent);
+            }
+            catch (Exception ex)
+            {
+                Messages.Message($"保存失败: {ex.Message}", MessageTypeDefOf.NegativeEvent);
+            }
+        }
+        
+        /// <summary>
+        /// 应用并保存所有设置
         /// </summary>
         private void ApplySettings()
         {
@@ -266,7 +407,10 @@ namespace TheSecondSeat.UI
                     settings.enableRetry
                 );
                 
-                Log.Message("[UnifiedAgentSettings] 配置已应用");
+                // 保存到磁盘
+                settings.Write();
+                
+                Log.Message("[UnifiedAgentSettings] 配置已应用并保存");
             }
             catch (Exception ex)
             {
@@ -276,7 +420,70 @@ namespace TheSecondSeat.UI
         }
         
         /// <summary>
-        /// 测试连接
+        /// 保存 TTS 设置
+        /// </summary>
+        private void SaveTTSSettings()
+        {
+            try
+            {
+                TTS.TTSService.Instance.Configure(
+                    settings.ttsProvider,
+                    settings.ttsApiKey,
+                    settings.ttsRegion,
+                    settings.ttsVoice,
+                    settings.ttsSpeechRate,
+                    settings.ttsVolume
+                );
+                settings.Write();
+                Log.Message($"[TTS Settings] Saved - Provider: {settings.ttsProvider}, Key: {(string.IsNullOrEmpty(settings.ttsApiKey) ? "empty" : "***")}, Region: {settings.ttsRegion}");
+                Messages.Message("TTS 设置已保存并应用", MessageTypeDefOf.PositiveEvent);
+            }
+            catch (Exception ex)
+            {
+                Messages.Message($"保存 TTS 设置失败: {ex.Message}", MessageTypeDefOf.NegativeEvent);
+            }
+        }
+        
+        /// <summary>
+        /// 测试 TTS
+        /// </summary>
+        private async System.Threading.Tasks.Task TestTTSAsync()
+        {
+            try
+            {
+                Messages.Message("正在测试 TTS...", MessageTypeDefOf.NeutralEvent);
+                
+                // 先保存当前设置
+                TTS.TTSService.Instance.Configure(
+                    settings.ttsProvider,
+                    settings.ttsApiKey,
+                    settings.ttsRegion,
+                    settings.ttsVoice,
+                    settings.ttsSpeechRate,
+                    settings.ttsVolume
+                );
+                
+                string testText = "你好，这是语音测试。Hello, this is a voice test.";
+                string filePath = await TTS.TTSService.Instance.SpeakAsync(testText);
+                
+                if (!string.IsNullOrEmpty(filePath))
+                {
+                    Messages.Message($"TTS 测试成功！音频已保存。", MessageTypeDefOf.PositiveEvent);
+                }
+                else
+                {
+                    Messages.Message("TTS 测试失败 - 未能生成音频", MessageTypeDefOf.NegativeEvent);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[Dialog_UnifiedAgentSettings] TestTTS failed: {ex.Message}");
+                Messages.Message($"TTS 测试失败: {ex.Message}", MessageTypeDefOf.NegativeEvent);
+            }
+        }
+        
+        /// <summary>
+        /// 测试 LLM 连接
         /// </summary>
         private async System.Threading.Tasks.Task TestConnectionAsync()
         {

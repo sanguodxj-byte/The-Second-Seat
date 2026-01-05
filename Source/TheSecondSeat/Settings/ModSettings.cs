@@ -175,6 +175,7 @@ namespace TheSecondSeat.Settings
         // 难度图标
         private Texture2D assistantModeIcon;
         private Texture2D opponentModeIcon;
+        private Texture2D engineerModeIcon;
 
         public TheSecondSeatMod(ModContentPack content) : base(content)
         {
@@ -274,6 +275,10 @@ namespace TheSecondSeat.Settings
             if (opponentModeIcon == null)
             {
                 opponentModeIcon = ContentFinder<Texture2D>.Get("UI/DifficultyMode/opponent_large", false);
+            }
+            if (engineerModeIcon == null)
+            {
+                engineerModeIcon = ContentFinder<Texture2D>.Get("UI/DifficultyMode/engineer_large", false);
             }
         }
 
@@ -397,12 +402,12 @@ namespace TheSecondSeat.Settings
                 SettingsUIComponents.DrawSettingsGroup(difficultyRect, "难度模式", SettingsUIComponents.AccentYellow, (contentRect) =>
                 {
                     float cardSpacing = 12f;
-                    float modeCardWidth = (contentRect.width - cardSpacing) / 2f;
+                    float modeCardWidth = (contentRect.width - (cardSpacing * 2)) / 3f;
                     float modeCardHeight = 140f;
                     
                     // 助手模式卡片
                     Rect assistantCardRect = new Rect(contentRect.x, contentRect.y, modeCardWidth, modeCardHeight);
-                    if (SettingsUIComponents.DrawModeCard(assistantCardRect, "助手", "无条件支持", 
+                    if (SettingsUIComponents.DrawModeCard(assistantCardRect, "助手", "无条件支持",
                         "主动建议、协助管理\n成为你的得力助手",
                         settings.difficultyMode == PersonaGeneration.AIDifficultyMode.Assistant,
                         SettingsUIComponents.AccentGreen, assistantModeIcon))
@@ -418,6 +423,16 @@ namespace TheSecondSeat.Settings
                         SettingsUIComponents.AccentRed, opponentModeIcon))
                     {
                         settings.difficultyMode = PersonaGeneration.AIDifficultyMode.Opponent;
+                    }
+
+                    // 工程师模式卡片
+                    Rect engineerCardRect = new Rect(contentRect.x + (modeCardWidth + cardSpacing) * 2, contentRect.y, modeCardWidth, modeCardHeight);
+                    if (SettingsUIComponents.DrawModeCard(engineerCardRect, "工程师", "技术支持",
+                        "日志诊断、排错修复\n专业的Mod技术顾问",
+                        settings.difficultyMode == PersonaGeneration.AIDifficultyMode.Engineer,
+                        SettingsUIComponents.AccentBlue, engineerModeIcon))
+                    {
+                        settings.difficultyMode = PersonaGeneration.AIDifficultyMode.Engineer;
                     }
                 });
                 y += difficultyHeight + SettingsUIComponents.MediumGap;
@@ -669,16 +684,56 @@ namespace TheSecondSeat.Settings
                 });
                 y += voiceHeight + SettingsUIComponents.MediumGap;
                 
-                // === 测试按钮 ===
-                float buttonHeight = 40f;
-                Rect testButtonRect = new Rect(viewRect.x, y, cardWidth, buttonHeight);
-                if (SettingsUIComponents.DrawButton(testButtonRect, "测试 TTS", SettingsUIComponents.AccentPurple))
+                // === 操作按钮 ===
+                float buttonHeight = 80f;
+                Rect buttonAreaRect = new Rect(viewRect.x, y, cardWidth, buttonHeight);
+                
+                // 保存 TTS 设置按钮
+                Rect saveRect = new Rect(viewRect.x, y, cardWidth / 2 - 5, 32f);
+                if (SettingsUIComponents.DrawButton(saveRect, "保存 TTS 设置", SettingsUIComponents.AccentGreen))
+                {
+                    SaveTTSSettings();
+                }
+                
+                // 测试 TTS 按钮
+                Rect testRect = new Rect(viewRect.x + cardWidth / 2 + 5, y, cardWidth / 2 - 5, 32f);
+                if (SettingsUIComponents.DrawButton(testRect, "测试 TTS", SettingsUIComponents.AccentPurple))
                 {
                     _ = TestTTSAsync();
                 }
             });
             
             tabManager.SetScrollPosition(scrollPos);
+        }
+        
+        /// <summary>
+        /// 保存 TTS 设置并重新配置服务
+        /// </summary>
+        private void SaveTTSSettings()
+        {
+            try
+            {
+                // 配置 TTS 服务
+                TTS.TTSService.Instance.Configure(
+                    settings.ttsProvider,
+                    settings.ttsApiKey,
+                    settings.ttsRegion,
+                    settings.ttsVoice,
+                    settings.ttsSpeechRate,
+                    settings.ttsVolume
+                );
+                
+                // 保存到磁盘
+                settings.Write();
+                
+                Log.Message($"[TTS Settings] Saved - Provider: {settings.ttsProvider}, Key: {(string.IsNullOrEmpty(settings.ttsApiKey) ? "empty" : "***")}, Region: {settings.ttsRegion}");
+                Messages.Message("TTS 设置已保存并应用", MessageTypeDefOf.PositiveEvent);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[TTS Settings] Save failed: {ex.Message}");
+                Messages.Message($"保存 TTS 设置失败: {ex.Message}", MessageTypeDefOf.NegativeEvent);
+            }
         }
 
         #endregion
@@ -822,8 +877,11 @@ namespace TheSecondSeat.Settings
             {
                 ConfigureTTS();
             }
+            
+            // 保存到磁盘
+            settings.Write();
 
-            Messages.Message("所有设置已应用", MessageTypeDefOf.PositiveEvent);
+            Messages.Message("所有设置已应用并保存", MessageTypeDefOf.PositiveEvent);
         }
 
         private async System.Threading.Tasks.Task TestConnectionAsync()
@@ -893,22 +951,22 @@ namespace TheSecondSeat.Settings
 
         private string GetExampleGlobalPrompt()
         {
-            return @"# 全局指令示例
+            return @"# Global Instructions Example
 
-## 语言风格
-- 使用简洁明了的语言
-- 保持友好且专业的态度
-- 适当使用一些中文成语增添趣味性
+## Language Style
+- Use clear and concise language.
+- Maintain a friendly yet professional attitude.
+- Use idioms appropriately to add flavor.
 
-## 行为准则
-- 优先考虑殖民者的安全
-- 提供有建设性的建议和观察
-- 在危机情况下保持冷静分析
+## Behavioral Guidelines
+- Prioritize the safety of colonists.
+- Provide constructive suggestions and observations.
+- Maintain calm analysis during crises.
 
-## 回复特点
-- 保持适度的专业性
-- 偶尔展现幽默感
-- 给出实用的建议";
+## Response Characteristics
+- Maintain appropriate professionalism.
+- Occasionally show a sense of humor.
+- Give practical advice.";
         }
 
         #endregion

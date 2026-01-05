@@ -28,7 +28,7 @@ namespace TheSecondSeat.PersonaGeneration
         public string Name { get; set; }
         public string Path { get; set; }
         public PortraitSource Source { get; set; }
-        public Texture2D Texture { get; set; }
+        public Texture Texture { get; set; }
         public string ModName { get; set; }
     }
     
@@ -41,8 +41,9 @@ namespace TheSecondSeat.PersonaGeneration
         // ✅ 修复内存泄漏：添加缓存条目类和大小限制
         private class CacheEntry
         {
-            public Texture2D Texture;
+            public Texture Texture;
             public int LastAccessTick;
+            public bool IsOwned; // ✅ 标识是否为该类拥有的资源（需要销毁）
         }
         
         private static Dictionary<string, CacheEntry> cache = new Dictionary<string, CacheEntry>();
@@ -55,8 +56,9 @@ namespace TheSecondSeat.PersonaGeneration
         /// 加载立绘（支持 Mod资源、外部文件、占位符）
         /// ✅ 消除未找到立绘时的报错日志
         /// ✅ v1.6.28: 分层立绘直接调用LayeredPortraitCompositor，不单独缓存
+        /// ? v1.7.0: 返回类型改为 Texture 以支持 RenderTexture
         /// </summary>
-        public static Texture2D LoadPortrait(NarratorPersonaDef def, ExpressionType? expression = null)
+        public static Texture LoadPortrait(NarratorPersonaDef def, ExpressionType? expression = null)
         {
             if (def == null)
             {
@@ -90,10 +92,13 @@ namespace TheSecondSeat.PersonaGeneration
                 return cached.Texture;
             }
             
-            Texture2D texture = null;
+            Texture texture = null;
+            bool isOwned = false;
             
             // 2. ✅ 修复：使用统一的加载方法，静默处理失败
-            texture = LoadExpressionOrBase(def, expression);
+            var result = LoadExpressionOrBase(def, expression);
+            texture = result.Item1;
+            isOwned = result.Item2;
             
             // 3. 如果还是没有，生成占位符
             if (texture == null)
@@ -104,6 +109,7 @@ namespace TheSecondSeat.PersonaGeneration
                     Log.Warning($"[PortraitLoader] Portrait not found for {def.defName}{expressionSuffix}, using placeholder");
                 }
                 texture = GeneratePlaceholder(def.primaryColor);
+                isOwned = true; // 占位符是新创建的纹理，需要销毁
             }
             
             // ✅ 修复：检查缓存大小，必要时清理
@@ -116,7 +122,8 @@ namespace TheSecondSeat.PersonaGeneration
             cache[cacheKey] = new CacheEntry
             {
                 Texture = texture,
-                LastAccessTick = Find.TickManager.TicksGame
+                LastAccessTick = Find.TickManager.TicksGame,
+                IsOwned = isOwned
             };
             return texture;
         }
@@ -125,8 +132,9 @@ namespace TheSecondSeat.PersonaGeneration
         /// ✅ 加载分层立绘（新增）
         /// ✅ v1.6.27: 静默处理失败，完全移除成功日志
         /// ✅ v1.6.28: 修复缓存键不一致问题，复用LayeredPortraitCompositor的缓存
+        /// ? v1.7.0: 返回类型改为 Texture 以支持 RenderTexture
         /// </summary>
-        private static Texture2D LoadLayeredPortrait(NarratorPersonaDef def, ExpressionType? expression)
+        private static Texture LoadLayeredPortrait(NarratorPersonaDef def, ExpressionType? expression)
         {
             try
             {
@@ -151,7 +159,7 @@ namespace TheSecondSeat.PersonaGeneration
                 // LayeredPortraitCompositor内部已经有完整的缓存机制
                 // ✅ v1.6.81: 使用 #pragma warning 抑制CS0618警告（同步方法内部调用已废弃方法）
                 #pragma warning disable CS0618
-                Texture2D composite = LayeredPortraitCompositor.CompositeLayers(
+                Texture composite = LayeredPortraitCompositor.CompositeLayers(
                     config,
                     currentExpression,
                     currentOutfit
@@ -191,8 +199,9 @@ namespace TheSecondSeat.PersonaGeneration
         /// 3. 回退到面部覆盖模式（同样支持变体回退）
         /// 4. 加载基础立绘
         /// ✅ 优化：静默回退，不刷屏日志
+        /// ? v1.7.0: 返回类型改为 Texture
         /// </summary>
-        private static Texture2D LoadExpressionOrBase(NarratorPersonaDef def, ExpressionType? expression)
+        private static (Texture, bool) LoadExpressionOrBase(NarratorPersonaDef def, ExpressionType? expression)
         {
             string personaName = GetPersonaFolderName(def);
             
@@ -208,21 +217,24 @@ namespace TheSecondSeat.PersonaGeneration
                 {
                     SetTextureQuality(expressionTexture);
                     // ✅ 移除成功日志，静默返回
-                    return expressionTexture;
+                    // ContentFinder 加载的纹理不属于我们，不需要销毁
+                    return (expressionTexture, false);
                 }
                 
                 // ✅ 尝试面部覆盖模式（静默）
                 var overlayTexture = LoadWithFaceOverlayAndFallback(def, expression.Value);
                 if (overlayTexture != null)
                 {
-                    return overlayTexture;
+                    // 合成后的纹理属于我们，需要销毁
+                    return (overlayTexture, true);
                 }
                 
                 // ✅ 移除回退警告，静默继续
             }
             
             // 2. 没有表情或表情文件不存在，加载基础立绘
-            return LoadBasePortrait(def);
+            var baseResult = LoadBasePortrait(def);
+            return (baseResult.Item1, baseResult.Item2);
         }
         
         /// <summary>
@@ -305,13 +317,14 @@ namespace TheSecondSeat.PersonaGeneration
         /// ✅ 带回退机制的面部覆盖加载（支持变体回退）
         /// 回退顺序：_happy3_face → _happy_face
         /// ✅ 优化：静默回退，不刷屏日志
+        /// ? v1.7.0: 返回类型改为 Texture
         /// </summary>
-        private static Texture2D LoadWithFaceOverlayAndFallback(NarratorPersonaDef def, ExpressionType expression)
+        private static Texture LoadWithFaceOverlayAndFallback(NarratorPersonaDef def, ExpressionType expression)
         {
             try
             {
                 // 1. 加载基础立绘
-                Texture2D baseTexture = LoadBasePortrait(def);
+                var (baseTexture, _) = LoadBasePortrait(def);
                 if (baseTexture == null)
                 {
                     return null;
@@ -354,10 +367,11 @@ namespace TheSecondSeat.PersonaGeneration
                 
                 // 4. 合成表情
                 string cacheKey = def.defName + faceSuffix + "_composite";
-                var composite = ExpressionCompositor.CompositeExpression(
-                    baseTexture, 
-                    faceTexture, 
-                    faceRegion, 
+                // ? v1.7.0: ExpressionCompositor 现在返回 Texture (可能是 RenderTexture)
+                Texture composite = ExpressionCompositor.CompositeExpression(
+                    baseTexture,
+                    faceTexture,
+                    faceRegion,
                     cacheKey
                 );
                 
@@ -381,7 +395,7 @@ namespace TheSecondSeat.PersonaGeneration
         /// ✅ v1.6.27: 静默处理失败，只在DevMode下输出
         /// ✅ v1.6.55: 增强缓存检查，避免重复加载
         /// </summary>
-        private static Texture2D LoadBasePortrait(NarratorPersonaDef def)
+        private static (Texture2D, bool) LoadBasePortrait(NarratorPersonaDef def)
         {
             string personaName = GetPersonaFolderName(def);
             
@@ -390,7 +404,7 @@ namespace TheSecondSeat.PersonaGeneration
             if (cache.TryGetValue(baseCacheKey, out CacheEntry cachedBase))
             {
                 cachedBase.LastAccessTick = Find.TickManager.TicksGame;
-                return cachedBase.Texture;
+                return (cachedBase.Texture as Texture2D, cachedBase.IsOwned);
             }
             
             // ✅ 尝试路径1：9x16文件夹的 base.png
@@ -400,13 +414,14 @@ namespace TheSecondSeat.PersonaGeneration
             if (texture != null)
             {
                 SetTextureQuality(texture);
-                // ✅ 缓存基础纹理
+                // ✅ 缓存基础纹理 (ContentFinder 资源，不拥有)
                 cache[baseCacheKey] = new CacheEntry
                 {
                     Texture = texture,
-                    LastAccessTick = Find.TickManager.TicksGame
+                    LastAccessTick = Find.TickManager.TicksGame,
+                    IsOwned = false
                 };
-                return texture;
+                return (texture, false);
             }
             
             // ✅ 尝试路径2：直接用 personaName（不加 /base）
@@ -418,9 +433,10 @@ namespace TheSecondSeat.PersonaGeneration
                 cache[baseCacheKey] = new CacheEntry
                 {
                     Texture = texture,
-                    LastAccessTick = Find.TickManager.TicksGame
+                    LastAccessTick = Find.TickManager.TicksGame,
+                    IsOwned = false
                 };
-                return texture;
+                return (texture, false);
             }
             
             // ✅ 尝试路径3：使用 portraitPath
@@ -433,9 +449,10 @@ namespace TheSecondSeat.PersonaGeneration
                     cache[baseCacheKey] = new CacheEntry
                     {
                         Texture = texture,
-                        LastAccessTick = Find.TickManager.TicksGame
+                        LastAccessTick = Find.TickManager.TicksGame,
+                        IsOwned = false
                     };
-                    return texture;
+                    return (texture, false);
                 }
             }
             
@@ -445,12 +462,16 @@ namespace TheSecondSeat.PersonaGeneration
                 texture = LoadFromExternalFile(def.customPortraitPath);
                 if (texture != null)
                 {
+                    // 判断是否为拥有的资源（非 ContentFinder 加载）
+                    bool isOwned = !def.customPortraitPath.StartsWith("UI/");
+                    
                     cache[baseCacheKey] = new CacheEntry
                     {
                         Texture = texture,
-                        LastAccessTick = Find.TickManager.TicksGame
+                        LastAccessTick = Find.TickManager.TicksGame,
+                        IsOwned = isOwned
                     };
-                    return texture;
+                    return (texture, isOwned);
                 }
             }
             
@@ -463,9 +484,10 @@ namespace TheSecondSeat.PersonaGeneration
                 cache[baseCacheKey] = new CacheEntry
                 {
                     Texture = texture,
-                    LastAccessTick = Find.TickManager.TicksGame
+                    LastAccessTick = Find.TickManager.TicksGame,
+                    IsOwned = false
                 };
-                return texture;
+                return (texture, false);
             }
             
             // ✅ 所有路径都失败，只在DevMode下输出警告
@@ -480,7 +502,7 @@ namespace TheSecondSeat.PersonaGeneration
                 Log.Warning($"  - Textures/{heroArtPath}.png");
             }
             
-            return null;
+            return (null, false);
         }
         
         /// <summary>
@@ -761,10 +783,8 @@ namespace TheSecondSeat.PersonaGeneration
             
             foreach (var entry in oldEntries)
             {
-                if (entry.Value.Texture != null)
-                {
-                    UnityEngine.Object.Destroy(entry.Value.Texture);
-                }
+                // ✅ 修复：不再销毁纹理，防止误删 ContentFinder 管理的共享资源
+                // 即使是 IsOwned，为了安全起见（防止第二次读档丢失），也建议由 Unity 自动回收
                 cache.Remove(entry.Key);
             }
             
@@ -776,13 +796,7 @@ namespace TheSecondSeat.PersonaGeneration
         /// </summary>
         public static void ClearCache()
         {
-            foreach (var entry in cache.Values)
-            {
-                if (entry.Texture != null)
-                {
-                    UnityEngine.Object.Destroy(entry.Texture);
-                }
-            }
+            // ✅ 修复：不再销毁纹理
             cache.Clear();
             if (Prefs.DevMode)
             {
@@ -795,13 +809,7 @@ namespace TheSecondSeat.PersonaGeneration
         /// </summary>
         public static void ClearAllCache()
         {
-            foreach (var entry in cache.Values)
-            {
-                if (entry.Texture != null)
-                {
-                    UnityEngine.Object.Destroy(entry.Texture);
-                }
-            }
+            // ✅ 修复：不再销毁纹理
             cache.Clear();
             if (Prefs.DevMode)
             {
@@ -815,14 +823,11 @@ namespace TheSecondSeat.PersonaGeneration
         public static void ClearPortraitCache(string personaDefName, ExpressionType expression)
         {
             string expressionSuffix = ExpressionSystem.GetExpressionSuffix(personaDefName, expression);
-            string cacheKey = personaDefName + expressionSuffix;
+            string cacheKey = $"{personaDefName}_portrait_{expressionSuffix}";
             
             if (cache.TryGetValue(cacheKey, out CacheEntry entry))
             {
-                if (entry.Texture != null)
-                {
-                    UnityEngine.Object.Destroy(entry.Texture);
-                }
+                // ✅ 修复：不再销毁纹理
                 cache.Remove(cacheKey);
                 if (Prefs.DevMode)
                 {
@@ -1270,8 +1275,9 @@ namespace TheSecondSeat.PersonaGeneration
         /// </summary>
         /// <param name="def">人格定义</param>
         /// <param name="layerName">图层名称（如 "base_body", "happy_eyes", "descent_pose"）</param>
+        /// <param name="suppressWarning">是否抑制警告日志（用于尝试加载可能不存在的图层）</param>
         /// <returns>图层纹理，如果未找到则返回null</returns>
-        public static Texture2D GetLayerTexture(NarratorPersonaDef def, string layerName)
+        public static Texture2D GetLayerTexture(NarratorPersonaDef def, string layerName, bool suppressWarning = false)
         {
             if (def == null || string.IsNullOrEmpty(layerName))
             {
@@ -1286,28 +1292,41 @@ namespace TheSecondSeat.PersonaGeneration
             if (cache.TryGetValue(cacheKey, out CacheEntry cachedTexture))
             {
                 cachedTexture.LastAccessTick = Find.TickManager.TicksGame;
-                return cachedTexture.Texture;
+                return cachedTexture.Texture as Texture2D;
             }
             
             // 3. ⭐ v1.6.74: 多路径回退机制（支持扁平化无子文件夹结构）
             Texture2D texture = null;
-            
-            // 路径1：主 Mod 9x16 分层路径（带子文件夹）
-            string layerPath1 = $"UI/Narrators/9x16/Layered/{personaName}/{layerName}";
-            texture = ContentFinder<Texture2D>.Get(layerPath1, false);
-            
-            if (texture == null)
+            bool isOwned = false; // 图层通常是从 ContentFinder 加载的，不属于我们
+            string foundPath = ""; // 记录找到的路径用于调试
+
+            // ⭐ 路径优先级调整：如果定义了 portraitPath，优先尝试它
+            // 这对于子 Mod (如 Sideria) 至关重要，避免回退到错误的默认路径
+            if (!string.IsNullOrEmpty(def.portraitPath))
             {
-                // 路径2：子 Mod 分层路径（带子文件夹）
-                string layerPath2 = $"Narrators/Layered/{personaName}/{layerName}";
-                texture = ContentFinder<Texture2D>.Get(layerPath2, false);
+                // ⭐ 路径0：使用 portraitPath 前缀作为基础路径（支持子 Mod 独立路径，如 Sideria/Narrators/Layered/）
+                string basePath = def.portraitPath;
+                
+                // 如果 portraitPath 包含完整路径（如 "Sideria/Narrators/Layered/base"）
+                // 提取目录部分，拼接图层名称
+                int lastSlashIndex = basePath.LastIndexOf('/');
+                if (lastSlashIndex >= 0)
+                {
+                    string baseDir = basePath.Substring(0, lastSlashIndex + 1);
+                    string layerPath0 = $"{baseDir}{layerName}";
+                    texture = ContentFinder<Texture2D>.Get(layerPath0, false);
+                    if (texture != null) foundPath = layerPath0;
+                }
             }
+            
+            // 路径1 & 2 (主 Mod 默认路径) 已移除，不再支持主 Mod 的旧版路径结构
             
             if (texture == null)
             {
                 // ⭐ 路径3：子 Mod 分层路径（无子文件夹）- 适配扁平结构
                 string layerPath3 = $"Narrators/Layered/{layerName}";
                 texture = ContentFinder<Texture2D>.Get(layerPath3, false);
+                if (texture != null) foundPath = layerPath3;
             }
             
             if (texture == null && (layerName.Contains("descent") || layerName.Contains("pose")))
@@ -1345,22 +1364,40 @@ namespace TheSecondSeat.PersonaGeneration
                 cache[cacheKey] = new CacheEntry
                 {
                     Texture = texture,
-                    LastAccessTick = Find.TickManager.TicksGame
+                    LastAccessTick = Find.TickManager.TicksGame,
+                    IsOwned = isOwned
                 };
                 
                 if (Prefs.DevMode)
                 {
-                    Log.Message($"[PortraitLoader] ✅ 加载图层: {layerName} ({texture.width}x{texture.height})");
+                    Log.Message($"[PortraitLoader] ✅ 加载图层: {layerName} from {foundPath} ({texture.width}x{texture.height})");
                 }
             }
-            else if (Prefs.DevMode)
+            else if (Prefs.DevMode && !suppressWarning)
             {
-                Log.Warning($"[PortraitLoader] ⚠️ 图层未找到: {layerName} (persona: {personaName})");
-                Log.Warning($"[PortraitLoader]   尝试的路径:");
-                Log.Warning($"[PortraitLoader]     • UI/Narrators/9x16/Layered/{personaName}/{layerName}");
-                Log.Warning($"[PortraitLoader]     • Narrators/Layered/{personaName}/{layerName}");
-                Log.Warning($"[PortraitLoader]     • Narrators/Layered/{layerName}");
+                // ⭐ v1.8.3: 诊断日志 - 显示尝试的所有路径
+                Log.Warning($"[PortraitLoader] ⚠️ 图层加载失败: {layerName}");
+                Log.Warning($"[PortraitLoader]   persona: {def.defName}, portraitPath: {def.portraitPath}");
+                if (!string.IsNullOrEmpty(def.portraitPath))
+                {
+                    int lastSlashIndex = def.portraitPath.LastIndexOf('/');
+                    if (lastSlashIndex >= 0)
+                    {
+                        string baseDir = def.portraitPath.Substring(0, lastSlashIndex + 1);
+                        Log.Warning($"[PortraitLoader]   尝试的路径: {baseDir}{layerName}");
+                    }
+                }
+                Log.Warning($"[PortraitLoader]   尝试的路径: Narrators/Layered/{layerName}");
             }
+            // else if (Prefs.DevMode && !suppressWarning)
+            // {
+            //     // 用户请求关闭此类报错日志
+            //     // Log.Warning($"[PortraitLoader] ⚠️ 图层未找到: {layerName} (persona: {personaName})");
+            //     // Log.Warning($"[PortraitLoader]   尝试的路径:");
+            //     // Log.Warning($"[PortraitLoader]     • UI/Narrators/9x16/Layered/{personaName}/{layerName}");
+            //     // Log.Warning($"[PortraitLoader]     • Narrators/Layered/{personaName}/{layerName}");
+            //     // Log.Warning($"[PortraitLoader]     • Narrators/Layered/{layerName}");
+            // }
             
             return texture;
         }

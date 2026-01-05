@@ -15,7 +15,15 @@ namespace TheSecondSeat.PersonaGeneration
     public static class LayeredPortraitCompositor
     {
         // ✅ 修复内存泄漏：添加缓存大小限制
-        private static Dictionary<string, Texture2D> compositeCache = new Dictionary<string, Texture2D>();
+        private class CacheEntry
+        {
+            public Texture Texture;
+            public bool IsOwned; // ✅ 标识是否为合成产生的纹理（需要销毁）
+        }
+
+        // ? v1.7.0: 改为 Texture 以支持 RenderTexture
+        private static Dictionary<string, CacheEntry> compositeCache = new Dictionary<string, CacheEntry>();
+        private static List<Texture> _staleTextures = new List<Texture>(); // 待销毁的旧纹理
         private const int MaxCacheSize = 30; // 最大缓存数量
         
         // 基础纹理路径
@@ -28,7 +36,7 @@ namespace TheSecondSeat.PersonaGeneration
         /// ? v1.6.27: 使用base_body作为底图，其他部件覆盖；异步合成避免卡顿
         /// ? v1.6.29: Neutral表情直接使用base_body（底图已包含睁眼闭嘴）
         /// </summary>
-        public static Task<Texture2D> CompositeLayersAsync(
+        public static Task<Texture> CompositeLayersAsync(
             LayeredPortraitConfig config,
             ExpressionType expression = ExpressionType.Neutral,
             string outfit = "default")
@@ -37,9 +45,9 @@ namespace TheSecondSeat.PersonaGeneration
             string cacheKey = $"{config.PersonaDefName}_{expression}_default";
             
             // 2. 检查缓存
-            if (compositeCache.TryGetValue(cacheKey, out Texture2D cachedTexture))
+            if (compositeCache.TryGetValue(cacheKey, out CacheEntry cachedEntry))
             {
-                return Task.FromResult(cachedTexture);
+                return Task.FromResult(cachedEntry.Texture);
             }
 
             try
@@ -49,7 +57,7 @@ namespace TheSecondSeat.PersonaGeneration
                 
                 // ⚠️ v1.6.80: 所有纹理加载必须在主线程完成
                 // 3. ? 加载base_body作为底图
-                var baseBodyTexture = LoadLayerTexture(personaName, "base_body");
+                var baseBodyTexture = LoadLayerTexture(config, "base_body");
                 
                 if (baseBodyTexture == null)
                 {
@@ -58,14 +66,19 @@ namespace TheSecondSeat.PersonaGeneration
                     {
                         Log.Warning($"[LayeredPortraitCompositor] base_body.png not found for {personaName}");
                     }
-                    return Task.FromResult<Texture2D>(null);
+                    return Task.FromResult<Texture>(null);
                 }
 
                 // ? v1.6.29: 如果是Neutral表情，直接返回底图（底图已包含睁眼闭嘴）
+                // 注意：这里返回的是 Texture2D (资源)，不需要 Release
                 if (expression == ExpressionType.Neutral)
                 {
-                    compositeCache[cacheKey] = baseBodyTexture;
-                    return Task.FromResult(baseBodyTexture);
+                    compositeCache[cacheKey] = new CacheEntry
+                    {
+                        Texture = baseBodyTexture,
+                        IsOwned = false // ✅ 共享资源，不可销毁
+                    };
+                    return Task.FromResult<Texture>(baseBodyTexture);
                 }
 
                 // 创建图层列表，base_body作为第一层
@@ -79,7 +92,7 @@ namespace TheSecondSeat.PersonaGeneration
                 // ? 只加载非默认的部件（避免加载opened_eyes和opened_mouth）
                 if (eyesLayerName != "opened_eyes")
                 {
-                    var eyesTexture = LoadLayerTexture(personaName, eyesLayerName);
+                    var eyesTexture = LoadLayerTexture(config, eyesLayerName);
                     if (eyesTexture != null)
                     {
                         layers.Add(eyesTexture);
@@ -88,7 +101,7 @@ namespace TheSecondSeat.PersonaGeneration
                 
                 if (mouthLayerName != "opened_mouth")
                 {
-                    var mouthTexture = LoadLayerTexture(personaName, mouthLayerName);
+                    var mouthTexture = LoadLayerTexture(config, mouthLayerName);
                     if (mouthTexture != null)
                     {
                         layers.Add(mouthTexture);
@@ -96,37 +109,57 @@ namespace TheSecondSeat.PersonaGeneration
                 }
                 
                 // 5. ? 可选：腮红/特效层
-                var flushTexture = LoadLayerTexture(personaName, $"{GetExpressionPrefix(expression)}_flush");
+                var flushTexture = LoadLayerTexture(config, $"{GetExpressionPrefix(expression)}_flush");
                 if (flushTexture != null)
                 {
                     layers.Add(flushTexture);
                 }
                 
-                // ⚠️ v1.6.80: 像素合成可以同步完成，避免跨线程问题
-                // 因为纹理已在主线程加载，像素操作也必须在主线程
-                Texture2D composite = CompositeAllLayers(layers);
+                // ⚠️ v1.7.0: 使用 GPU 渲染系统
+                // 返回的是 RenderTexture
+                Texture composite = PortraitRenderSystem.CompositeLayers(layers);
                 
                 // 7. ✅ 修复：替换前先销毁旧纹理，限制缓存大小
                 if (composite != null)
                 {
                     // 销毁旧纹理（如果存在）
-                    if (compositeCache.TryGetValue(cacheKey, out var oldTexture))
+                    if (compositeCache.TryGetValue(cacheKey, out var oldEntry))
                     {
-                        UnityEngine.Object.Destroy(oldTexture);
+                        if (oldEntry.IsOwned)
+                        {
+                            ReleaseTexture(oldEntry.Texture);
+                        }
                     }
                     
                     // 限制缓存大小
                     if (compositeCache.Count >= MaxCacheSize)
                     {
                         var firstKey = compositeCache.Keys.First();
-                        if (compositeCache.TryGetValue(firstKey, out var oldestTexture))
+                        if (compositeCache.TryGetValue(firstKey, out var oldestEntry))
                         {
-                            UnityEngine.Object.Destroy(oldestTexture);
+                            if (oldestEntry.IsOwned)
+                            {
+                                ReleaseTexture(oldestEntry.Texture);
+                            }
                         }
                         compositeCache.Remove(firstKey);
                     }
                     
-                    compositeCache[cacheKey] = composite;
+                    compositeCache[cacheKey] = new CacheEntry
+                    {
+                        Texture = composite,
+                        IsOwned = true // ✅ 合成纹理，属于我们，需要销毁
+                    };
+
+                    // 清理待销毁的旧纹理 (在生成新纹理后销毁，避免闪烁)
+                    if (_staleTextures.Count > 0)
+                    {
+                        for (int i = _staleTextures.Count - 1; i >= 0; i--)
+                        {
+                            ReleaseTexture(_staleTextures[i]);
+                        }
+                        _staleTextures.Clear();
+                    }
                 }
                 
                 return Task.FromResult(composite);
@@ -138,7 +171,7 @@ namespace TheSecondSeat.PersonaGeneration
                 {
                     Log.Error($"[LayeredPortraitCompositor] Composite failed: {ex}");
                 }
-                return Task.FromResult<Texture2D>(null);
+                return Task.FromResult<Texture>(null);
             }
         }
         
@@ -148,18 +181,18 @@ namespace TheSecondSeat.PersonaGeneration
         /// ? v1.6.29: Neutral表情直接使用base_body（底图已包含睁眼闭嘴）
         /// </summary>
         [Obsolete("Use CompositeLayersAsync instead to avoid blocking the main thread")]
-        public static Texture2D CompositeLayers(
-            LayeredPortraitConfig config, 
-            ExpressionType expression = ExpressionType.Neutral, 
+        public static Texture CompositeLayers(
+            LayeredPortraitConfig config,
+            ExpressionType expression = ExpressionType.Neutral,
             string outfit = "default")
         {
             // 1. 生成缓存键
             string cacheKey = $"{config.PersonaDefName}_{expression}_default";
             
             // 2. 检查缓存
-            if (compositeCache.TryGetValue(cacheKey, out Texture2D cachedTexture))
+            if (compositeCache.TryGetValue(cacheKey, out CacheEntry cachedEntry))
             {
-                return cachedTexture;
+                return cachedEntry.Texture;
             }
 
             try
@@ -168,7 +201,7 @@ namespace TheSecondSeat.PersonaGeneration
                 string personaName = config.PersonaName;
                 
                 // 3. ? 加载base_body作为底图
-                var baseBodyTexture = LoadLayerTexture(personaName, "base_body");
+                var baseBodyTexture = LoadLayerTexture(config, "base_body");
                 
                 if (baseBodyTexture == null)
                 {
@@ -183,7 +216,11 @@ namespace TheSecondSeat.PersonaGeneration
                 // ? v1.6.29: 如果是Neutral表情，直接返回底图（底图已包含睁眼闭嘴）
                 if (expression == ExpressionType.Neutral)
                 {
-                    compositeCache[cacheKey] = baseBodyTexture;
+                    compositeCache[cacheKey] = new CacheEntry
+                    {
+                        Texture = baseBodyTexture,
+                        IsOwned = false // ✅ 共享资源
+                    };
                     return baseBodyTexture;
                 }
                 
@@ -198,8 +235,8 @@ namespace TheSecondSeat.PersonaGeneration
                 // ? 只加载非默认的部件（避免加载opened_eyes和opened_mouth）
                 if (eyesLayerName != "opened_eyes")
                 {
-                    var eyesTexture = LoadLayerTexture(personaName, eyesLayerName);
-                    if (eyesTexture != null) 
+                    var eyesTexture = LoadLayerTexture(config, eyesLayerName);
+                    if (eyesTexture != null)
                     {
                         layers.Add(eyesTexture);
                     }
@@ -207,44 +244,54 @@ namespace TheSecondSeat.PersonaGeneration
                 
                 if (mouthLayerName != "opened_mouth")
                 {
-                    var mouthTexture = LoadLayerTexture(personaName, mouthLayerName);
-                    if (mouthTexture != null) 
+                    var mouthTexture = LoadLayerTexture(config, mouthLayerName);
+                    if (mouthTexture != null)
                     {
                         layers.Add(mouthTexture);
                     }
                 }
                 
                 // 5. ? 可选：腮红/特效层
-                var flushTexture = LoadLayerTexture(personaName, $"{GetExpressionPrefix(expression)}_flush");
+                var flushTexture = LoadLayerTexture(config, $"{GetExpressionPrefix(expression)}_flush");
                 if (flushTexture != null)
                 {
                     layers.Add(flushTexture);
                 }
                 
-                // 6. 合成所有层
-                Texture2D composite = CompositeAllLayers(layers);
+                // 6. 合成所有层 (GPU)
+                Texture composite = PortraitRenderSystem.CompositeLayers(layers);
                 
                 // 7. ✅ 修复：替换前先销毁旧纹理，限制缓存大小
                 if (composite != null)
                 {
                     // 销毁旧纹理（如果存在）
-                    if (compositeCache.TryGetValue(cacheKey, out var oldTexture))
+                    if (compositeCache.TryGetValue(cacheKey, out var oldEntry))
                     {
-                        UnityEngine.Object.Destroy(oldTexture);
+                        if (oldEntry.IsOwned)
+                        {
+                            ReleaseTexture(oldEntry.Texture);
+                        }
                     }
                     
                     // 限制缓存大小
                     if (compositeCache.Count >= MaxCacheSize)
                     {
                         var firstKey = compositeCache.Keys.First();
-                        if (compositeCache.TryGetValue(firstKey, out var oldestTexture))
+                        if (compositeCache.TryGetValue(firstKey, out var oldestEntry))
                         {
-                            UnityEngine.Object.Destroy(oldestTexture);
+                            if (oldestEntry.IsOwned)
+                            {
+                                ReleaseTexture(oldestEntry.Texture);
+                            }
                         }
                         compositeCache.Remove(firstKey);
                     }
                     
-                    compositeCache[cacheKey] = composite;
+                    compositeCache[cacheKey] = new CacheEntry
+                    {
+                        Texture = composite,
+                        IsOwned = true // ✅ 合成纹理
+                    };
                 }
                 
                 return composite;
@@ -261,42 +308,42 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ? 根据表情类型获取眼睛层名称
-        /// ? v1.6.29: 修复Neutral使用opened_eyes（睁眼）
+        /// ⭐ 根据表情类型获取眼睛层名称
+        /// ⭐ v1.8.1: 修复 Confused 使用 confused_eyes，支持更多眼睛纹理
         /// </summary>
         private static string GetEyesLayerName(ExpressionType expression)
         {
             return expression switch
             {
-                ExpressionType.Neutral => "opened_eyes",  // ? 修复：中性表情应该睁眼
-                ExpressionType.Happy => "happy_eyes",     // ? 如果没有则回退到opened_eyes
-                ExpressionType.Sad => "sad_eyes",
-                ExpressionType.Angry => "angry_eyes",
+                ExpressionType.Neutral => "opened_eyes",   // 中性表情睁眼（使用 base_body 默认）
+                ExpressionType.Happy => "happy_eyes",      // 开心眼
+                ExpressionType.Sad => "sad_eyes",          // 悲伤眼
+                ExpressionType.Angry => "angry_eyes",      // 愤怒眼
                 ExpressionType.Surprised => "opened_eyes", // 惊讶睁大眼睛
-                ExpressionType.Confused => "opened_eyes",  // 困惑睁眼
-                ExpressionType.Smug => "opened_eyes",      // 得意睁眼
-                ExpressionType.Shy => "opened_eyes",       // 害羞睁眼
+                ExpressionType.Confused => "confused_eyes",// ⭐ 修复：困惑眼
+                ExpressionType.Smug => "happy_eyes",       // 得意用开心眼
+                ExpressionType.Shy => "closed_eyes",       // ⭐ 害羞闭眼
                 _ => "opened_eyes"
             };
         }
 
         /// <summary>
-        /// ? 根据表情类型获取嘴巴层名称
-        /// ? v1.6.29: 修复Neutral使用opened_mouth（闭嘴）
+        /// ⭐ 根据表情类型获取嘴巴层名称
+        /// ⭐ v1.8.1: 修复映射，与 Sideria 纹理文件名对齐
         /// </summary>
         private static string GetMouthLayerName(ExpressionType expression)
         {
             return expression switch
             {
-                ExpressionType.Neutral => "opened_mouth",   // ? 修复：中性表情应该闭嘴
-                ExpressionType.Happy => "larger_mouth",     // ? 开心用大嘴
-                ExpressionType.Sad => "sad_mouth",
-                ExpressionType.Angry => "angry_mouth",
+                ExpressionType.Neutral => "Closed_mouth",   // ⭐ 修复：中性表情闭嘴
+                ExpressionType.Happy => "happy_mouth",      // ⭐ 修复：开心用 happy_mouth
+                ExpressionType.Sad => "sad_mouth",          // 悲伤嘴
+                ExpressionType.Angry => "angry_mouth",      // 愤怒嘴
                 ExpressionType.Surprised => "larger_mouth", // 惊讶张大嘴
-                ExpressionType.Confused => "opened_mouth",  // 困惑闭嘴
-                ExpressionType.Smug => "small1_mouth",      // 使用小嘴变体
-                ExpressionType.Shy => "opened_mouth",       // 害羞闭嘴
-                _ => "opened_mouth"
+                ExpressionType.Confused => "Neutral_mouth", // ⭐ 修复：困惑用微张嘴
+                ExpressionType.Smug => "Neutral_mouth",     // ⭐ 修复：得意用微张嘴
+                ExpressionType.Shy => "Closed_mouth",       // ⭐ 修复：害羞闭嘴
+                _ => "Closed_mouth"
             };
         }
         
@@ -316,10 +363,25 @@ namespace TheSecondSeat.PersonaGeneration
         /// <summary>
         /// 加载单个图层纹理
         /// ⭐ v1.6.74: 支持多路径回退（主 Mod 和子 Mod 路径）
+        /// ✅ v1.7.1: 优先使用 PortraitLoader.GetLayerTexture 以支持 portraitPath
         /// ? v1.6.27: 完全静默，不输出任何日志
         /// </summary>
-        private static Texture2D LoadLayerTexture(string personaName, string layerName)
+        private static Texture2D LoadLayerTexture(LayeredPortraitConfig config, string layerName)
         {
+            // 1. 尝试通过 Def 获取（支持 portraitPath）
+            if (!string.IsNullOrEmpty(config.PersonaDefName))
+            {
+                var def = DefDatabase<NarratorPersonaDef>.GetNamedSilentFail(config.PersonaDefName);
+                if (def != null)
+                {
+                    // 使用 PortraitLoader 的高级路径查找逻辑
+                    return PortraitLoader.GetLayerTexture(def, layerName);
+                }
+            }
+
+            // 2. 回退到基于名称的查找（旧逻辑）
+            string personaName = config.PersonaName;
+            
             // ⭐ v1.6.74: 尝试多个路径（按优先级）
             string[] pathsToTry = new[]
             {
@@ -388,130 +450,25 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// 合成所有图层
-        /// ? v1.6.27: 静默处理尺寸不匹配
+        /// 释放纹理资源
         /// </summary>
-        private static Texture2D CompositeAllLayers(List<Texture2D> layers)
+        private static void ReleaseTexture(Texture texture)
         {
-            if (layers.Count == 0)
-            {
-                return null;
-            }
-            
-            // 使用第一个图层作为基础
-            Texture2D baseLayer = layers[0];
-            int width = baseLayer.width;
-            int height = baseLayer.height;
-            
-            // 创建最终纹理
-            Texture2D result = new Texture2D(width, height, TextureFormat.RGBA32, false);
-            
-            // 初始化为透明
-            Color[] pixels = new Color[width * height];
-            for (int i = 0; i < pixels.Length; i++)
-            {
-                pixels[i] = Color.clear;
-            }
-            
-            // 逐层混合
-            foreach (var layer in layers)
-            {
-                if (layer == null) continue;
-                
-                // ? v1.6.83: 自动处理尺寸不匹配（通过 GetReadablePixels 缩放）
-                if (layer.width != width || layer.height != height)
-                {
-                    if (Prefs.DevMode)
-                    {
-                        Log.Warning($"[LayeredPortraitCompositor] Resizing layer {layer.name}: {layer.width}x{layer.height} -> {width}x{height}");
-                    }
-                }
-                
-                try
-                {
-                    // 获取图层像素（使用 RenderTexture 避免 "not readable" 错误，并自动缩放）
-                    Color[] layerPixels = GetReadablePixels(layer, width, height);
-                    
-                    // Alpha 混合
-                    for (int i = 0; i < pixels.Length; i++)
-                    {
-                        Color srcColor = pixels[i];
-                        Color dstColor = layerPixels[i];
-                        
-                        // 标准 Alpha 混合公式
-                        float alpha = dstColor.a;
-                        pixels[i] = new Color(
-                            srcColor.r * (1 - alpha) + dstColor.r * alpha,
-                            srcColor.g * (1 - alpha) + dstColor.g * alpha,
-                            srcColor.b * (1 - alpha) + dstColor.b * alpha,
-                            Mathf.Max(srcColor.a, dstColor.a)
-                        );
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // ? 只在DevMode下输出错误
-                    if (Prefs.DevMode)
-                    {
-                        Log.Error($"[LayeredPortraitCompositor] Failed to blend layer: {ex}");
-                    }
-                }
-            }
-            
-            // 应用最终像素
-            result.SetPixels(pixels);
-            result.Apply();
-            
-            return result;
-        }
-        
-        /// <summary>
-        /// 获取纹理的可读像素（避免 "not readable" 错误，并支持自动缩放）
-        /// </summary>
-        private static Color[] GetReadablePixels(Texture2D texture, int targetWidth, int targetHeight)
-        {
-            // 如果尺寸匹配且可读，尝试直接读取（性能优化）
-            if (texture.width == targetWidth && texture.height == targetHeight)
-            {
-                try
-                {
-                    return texture.GetPixels();
-                }
-                catch
-                {
-                    // 如果不可读，回退到 RenderTexture 方法
-                }
-            }
+            if (texture == null) return;
 
-            // 使用 RenderTexture 转换（支持缩放和不可读纹理）
-            RenderTexture renderTex = RenderTexture.GetTemporary(
-                targetWidth,
-                targetHeight,
-                0,
-                RenderTextureFormat.Default,
-                RenderTextureReadWrite.Linear
-            );
-            
-            // Blit 会自动处理缩放
-            Graphics.Blit(texture, renderTex);
-            
-            RenderTexture previous = RenderTexture.active;
-            RenderTexture.active = renderTex;
-            
-            Texture2D readable = new Texture2D(targetWidth, targetHeight, TextureFormat.RGBA32, false);
-            readable.ReadPixels(new Rect(0, 0, targetWidth, targetHeight), 0, 0);
-            readable.Apply();
-            
-            Color[] pixels = readable.GetPixels();
-            
-            RenderTexture.active = previous;
-            RenderTexture.ReleaseTemporary(renderTex);
-            
-            return pixels;
+            // 如果是 RenderTexture，使用专用释放方法
+            if (texture is RenderTexture rt)
+            {
+                PortraitRenderSystem.Release(rt);
+            }
+            // 如果是 Texture2D，且不是资源（例如旧的合成结果），可能需要 Destroy
+            // 但在新管线中，Texture2D 通常是资源，不应 Destroy
+            // 为了安全起见，这里不 Destroy Texture2D，依靠 Unity 资源管理
         }
         
         /// <summary>
-        /// ? v1.6.27: 预加载所有表情到缓存（加载存档时调用）
+        /// ⭐ v1.6.27: 预加载所有表情到缓存（加载存档时调用）
+        /// ⭐ v1.8.2: 新增口型图层预加载（A_mouth, E_mouth, O_mouth, U_mouth）
         /// </summary>
         public static void PreloadAllExpressions(LayeredPortraitConfig config)
         {
@@ -551,9 +508,62 @@ namespace TheSecondSeat.PersonaGeneration
                 }
             }
             
+            // ⭐ v1.8.2: 预加载口型同步专用图层（TTS 唇形同步用）
+            PreloadVisemeLayers(config);
+            
             if (Prefs.DevMode && loadedCount > 0)
             {
                 Log.Message($"[LayeredPortraitCompositor] Preloaded {loadedCount} expressions for {config.PersonaName}");
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ v1.8.2: 预加载口型图层（TTS 唇形同步用）
+        /// 口型图层：A_mouth, E_mouth, O_mouth, U_mouth, Closed_mouth, Neutral_mouth
+        /// </summary>
+        public static void PreloadVisemeLayers(LayeredPortraitConfig config)
+        {
+            if (config == null) return;
+            
+            // 口型图层列表（与 VisemeHelper.VisemeToTextureName 对应）
+            string[] visemeLayers = new[]
+            {
+                "A_mouth",        // Large - 大张嘴
+                "E_mouth",        // Smile - 咧嘴
+                "O_mouth",        // OShape - 圆嘴
+                "U_mouth",        // Medium - 嘟嘴
+                "Closed_mouth",   // Closed - 闭嘴
+                "Neutral_mouth"   // Small - 微张
+            };
+            
+            int loadedCount = 0;
+            
+            foreach (var layerName in visemeLayers)
+            {
+                try
+                {
+                    var texture = LoadLayerTexture(config, layerName);
+                    if (texture != null)
+                    {
+                        loadedCount++;
+                        if (Prefs.DevMode)
+                        {
+                            Log.Message($"[LayeredPortraitCompositor] ✅ 预加载口型图层: {layerName} ({texture.width}x{texture.height})");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (Prefs.DevMode)
+                    {
+                        Log.Warning($"[LayeredPortraitCompositor] 口型图层加载失败: {layerName} - {ex.Message}");
+                    }
+                }
+            }
+            
+            if (Prefs.DevMode && loadedCount > 0)
+            {
+                Log.Message($"[LayeredPortraitCompositor] 预加载 {loadedCount} 个口型图层 for {config.PersonaName}");
             }
         }
         
@@ -572,9 +582,14 @@ namespace TheSecondSeat.PersonaGeneration
             
             string cacheKey = $"{personaDefName}_{expression}_default";
             
-            if (compositeCache.TryGetValue(cacheKey, out var texture))
+            if (compositeCache.TryGetValue(cacheKey, out var entry))
             {
-                UnityEngine.Object.Destroy(texture);
+                // ✅ 修复：不要立即销毁，而是加入待销毁列表，等待新纹理生成后再销毁
+                // UnityEngine.Object.Destroy(texture);
+                if (entry.Texture != null && entry.IsOwned)
+                {
+                    _staleTextures.Add(entry.Texture);
+                }
                 compositeCache.Remove(cacheKey);
                 
                 // 日志已静默
@@ -587,11 +602,11 @@ namespace TheSecondSeat.PersonaGeneration
         /// </summary>
         public static void ClearAllCache()
         {
-            foreach (var texture in compositeCache.Values)
+            foreach (var entry in compositeCache.Values)
             {
-                if (texture != null)
+                if (entry.Texture != null && entry.IsOwned)
                 {
-                    UnityEngine.Object.Destroy(texture);
+                    ReleaseTexture(entry.Texture);
                 }
             }
             compositeCache.Clear();

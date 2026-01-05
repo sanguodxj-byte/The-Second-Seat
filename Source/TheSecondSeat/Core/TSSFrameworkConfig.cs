@@ -111,19 +111,19 @@ namespace TheSecondSeat.Core
             
             /// <summary>
             /// ⭐ 降临姿态路径模板（{0} = personaName, {1} = postureName）
-            /// 示例结果: "Sideria/Narrators/Descent/Postures/casting"
+            /// 示例结果: "PersonaName/Narrators/Descent/Postures/casting"
             /// </summary>
             public static string PosturePathTemplate { get; set; } = "{0}/Narrators/Descent/Postures/{1}";
             
             /// <summary>
             /// ⭐ 降临特效路径模板（{0} = personaName, {1} = effectName）
-            /// 示例结果: "Sideria/Narrators/Descent/Effects/assist"
+            /// 示例结果: "PersonaName/Narrators/Descent/Effects/assist"
             /// </summary>
             public static string EffectPathTemplate { get; set; } = "{0}/Narrators/Descent/Effects/{1}";
             
             /// <summary>
             /// ⭐ 降临阴影路径模板（{0} = personaName）
-            /// 示例结果: "Sideria/Narrators/Descent/Effects/DragonShadow"
+            /// 示例结果: "PersonaName/Narrators/Descent/Effects/DragonShadow"
             /// </summary>
             public static string ShadowPathTemplate { get; set; } = "{0}/Narrators/Descent/Effects/DragonShadow";
             
@@ -191,7 +191,7 @@ namespace TheSecondSeat.Core
             
             /// <summary>
             /// ⭐ 立绘基础路径模板（{0} = personaName）
-            /// 示例结果: "UI/Narrators/9x16/Sideria/base"
+            /// 示例结果: "UI/Narrators/9x16/PersonaName/base"
             /// </summary>
             public static string BasePathTemplate { get; set; } = "UI/Narrators/9x16/{0}/base";
             

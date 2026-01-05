@@ -69,7 +69,7 @@
     <ItemGroup>
       <ModAssemblies Include="$(TargetDir)*.dll" Exclude="$(TargetDir)Newtonsoft.Json.dll" />
     </ItemGroup>
-    <Copy SourceFiles="@(ModAssemblies)" DestinationFolder="..\..\Assemblies\" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(ModAssemblies)" DestinationFolder="..\..\1.6\Assemblies\" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

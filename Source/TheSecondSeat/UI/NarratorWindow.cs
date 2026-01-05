@@ -12,12 +12,15 @@ namespace TheSecondSeat.UI
     /// <summary>
     /// 现代化聊天界面 UI - 深色主题，无 emoji
     /// ? 不暂停游戏
-    /// ? 回车键发送消息
     /// ? AI 回复显示在聊天框内
     /// </summary>
     public class NarratorWindow : Window
     {
         private string userInput = "";
+        
+        // ? 用于安全处理消息发送（避免在 Layout/Repaint 期间修改 UI 状态）
+        private bool pendingSend = false;
+        private string pendingMessage = "";
 
         private Vector2 chatScrollPosition = Vector2.zero;
         private NarratorController? controller;
@@ -141,26 +144,66 @@ namespace TheSecondSeat.UI
             // 不再添加 "你好，我是 AI 叙事者..." 的默认消息
         }
 
-        public override void DoWindowContents(Rect inRect)
+        public override void WindowUpdate()
         {
-            // 获取组件
-            if (controller == null)
+            base.WindowUpdate();
+
+            // ? 在 Update 中处理消息发送，避免在 OnGUI (Layout/Repaint) 期间修改 UI 状态导致 Layout Mismatch
+            if (pendingSend)
             {
-                controller = Current.Game?.GetComponent<NarratorController>();
+                pendingSend = false;
+                SendMessage(pendingMessage);
             }
+
+            // ? 在 Update 中更新动画状态，确保帧率独立且一致
             if (manager == null)
             {
                 manager = Current.Game?.GetComponent<NarratorManager>();
             }
+            
+            if (manager != null)
+            {
+                var persona = manager.GetCurrentPersona();
+                if (persona != null)
+                {
+                    // 更新呼吸动画 (60FPS)
+                    ExpressionSystem_WithBreathing.UpdateBreathingTransition(persona.defName, 0.016f);
+                }
+            }
+        }
 
-            // 布局：左侧边栏 + 右侧聊天区域
-            float sidebarWidth = 220f;
-            Rect sidebarRect = new Rect(inRect.x, inRect.y, sidebarWidth, inRect.height);
-            Rect chatAreaRect = new Rect(inRect.x + sidebarWidth + 10f, inRect.y, 
-                inRect.width - sidebarWidth - 10f, inRect.height);
+        public override void DoWindowContents(Rect inRect)
+        {
+            try
+            {
+                // 获取组件
+                if (controller == null)
+                {
+                    controller = Current.Game?.GetComponent<NarratorController>();
+                }
+                if (manager == null)
+                {
+                    manager = Current.Game?.GetComponent<NarratorManager>();
+                }
 
-            DrawSidebar(sidebarRect);
-            DrawChatArea(chatAreaRect);
+                // 布局：左侧边栏 + 右侧聊天区域
+                float sidebarWidth = 220f;
+                Rect sidebarRect = new Rect(inRect.x, inRect.y, sidebarWidth, inRect.height);
+                Rect chatAreaRect = new Rect(inRect.x + sidebarWidth + 10f, inRect.y,
+                    inRect.width - sidebarWidth - 10f, inRect.height);
+
+                DrawSidebar(sidebarRect);
+                DrawChatArea(chatAreaRect);
+            }
+            catch (System.Exception ex)
+            {
+                // ? 捕获并记录 GUI 错误，防止整个 UI 崩溃
+                // 只在 Repaint 事件中记录，避免刷屏
+                if (Event.current.type == EventType.Repaint)
+                {
+                    Log.Warning($"[NarratorWindow] GUI Error: {ex.Message}");
+                }
+            }
         }
 
         /// <summary>
@@ -276,8 +319,8 @@ namespace TheSecondSeat.UI
             // ? 应用呼吸动画偏移
             float breathingOffset = ExpressionSystem.GetBreathingOffset(persona.defName);
             
-            // ? 更新高级呼吸动画过渡
-            ExpressionSystem_WithBreathing.UpdateBreathingTransition(persona.defName, 0.016f);
+            // ? 动画更新已移至 WindowUpdate
+            // ExpressionSystem_WithBreathing.UpdateBreathingTransition(persona.defName, 0.016f);
             
             portraitRect.y += breathingOffset;
             
@@ -338,14 +381,27 @@ namespace TheSecondSeat.UI
             string mouthLayerName = MouthAnimationSystem.GetMouthLayerName(persona.defName);
             if (!string.IsNullOrEmpty(mouthLayerName))
             {
-                var mouthTexture = PortraitLoader.GetLayerTexture(persona, mouthLayerName);
+                // ⭐ v1.8.3: 修复口型回退逻辑，优先使用子 Mod 纹理
+                // 回退顺序：高保真口型 → Closed_mouth（子 Mod）→ Neutral_mouth → 不绘制
+                var mouthTexture = PortraitLoader.GetLayerTexture(persona, mouthLayerName, suppressWarning: true);
+                
+                if (mouthTexture == null && mouthLayerName != "Closed_mouth")
+                {
+                    // 第1级回退：Closed_mouth（子 Mod 的闭嘴纹理）
+                    mouthTexture = PortraitLoader.GetLayerTexture(persona, "Closed_mouth", suppressWarning: true);
+                }
+                
+                if (mouthTexture == null && mouthLayerName != "Neutral_mouth")
+                {
+                    // 第2级回退：Neutral_mouth（子 Mod 的微张纹理）
+                    mouthTexture = PortraitLoader.GetLayerTexture(persona, "Neutral_mouth", suppressWarning: true);
+                }
+                
+                // 不再回退到 opened_mouth（主 Mod 旧纹理）
+
                 if (mouthTexture != null)
                 {
                     GUI.DrawTexture(rect, mouthTexture, ScaleMode.ScaleToFit);
-                }
-                else if (Prefs.DevMode)
-                {
-                    Log.Warning($"[NarratorWindow] Mouth layer '{mouthLayerName}' not found for {persona.defName}");
                 }
             }
             
@@ -527,7 +583,6 @@ namespace TheSecondSeat.UI
 
         /// <summary>
         /// 绘制输入区域
-        /// ? 修复：回车键发送，移除冗余提示
         /// </summary>
         private void DrawInputArea(Rect rect)
         {
@@ -539,38 +594,25 @@ namespace TheSecondSeat.UI
             
             // 输入框 + 发送按钮布局
             float buttonWidth = 80f;
-            Rect textFieldRect = new Rect(innerRect.x + 10f, innerRect.y + 10f, 
+            Rect textFieldRect = new Rect(innerRect.x + 10f, innerRect.y + 10f,
                 innerRect.width - buttonWidth - 25f, 35f);
-            Rect sendButtonRect = new Rect(innerRect.xMax - buttonWidth - 10f, innerRect.y + 10f, 
+            Rect sendButtonRect = new Rect(innerRect.xMax - buttonWidth - 10f, innerRect.y + 10f,
                 buttonWidth, 35f);
 
             // ? 输入框（设置控件名称）
             GUI.SetNextControlName("UserInputField");
             Text.Font = GameFont.Small;
             
-            // ? 先绘制输入框
+            // ? 绘制输入框
             userInput = Widgets.TextField(textFieldRect, userInput);
-            
-            // ? 然后检测回车键（必须在 TextField 之后）
-            if (Event.current.type == EventType.KeyDown && 
-                Event.current.keyCode == KeyCode.Return && 
-                GUI.GetNameOfFocusedControl() == "UserInputField")
-            {
-                if (!string.IsNullOrWhiteSpace(userInput))
-                {
-                    SendMessage(userInput);
-                    userInput = "";
-                    Event.current.Use();
-                    GUI.FocusControl("UserInputField"); // 保持焦点
-                }
-            }
 
             // 发送按钮
             if (DrawModernButton(sendButtonRect, "发送", AccentCyan))
             {
                 if (!string.IsNullOrWhiteSpace(userInput))
                 {
-                    SendMessage(userInput);
+                    pendingSend = true;
+                    pendingMessage = userInput;
                     userInput = "";
                     GUI.FocusControl("UserInputField");
                 }
@@ -589,12 +631,12 @@ namespace TheSecondSeat.UI
             // ? 空输入框时的占位符提示（简洁版）
             else if (string.IsNullOrWhiteSpace(userInput))
             {
-                var hintRect = new Rect(textFieldRect.x + 5f, textFieldRect.y, 
+                var hintRect = new Rect(textFieldRect.x + 5f, textFieldRect.y,
                     textFieldRect.width - 10f, textFieldRect.height);
                 Text.Font = GameFont.Small;
                 Text.Anchor = TextAnchor.MiddleLeft;
                 GUI.color = new Color(TextDim.r, TextDim.g, TextDim.b, 0.5f);
-                Widgets.Label(hintRect, "输入消息...（回车发送）");
+                Widgets.Label(hintRect, "输入消息...");
                 GUI.color = Color.white;
                 Text.Anchor = TextAnchor.UpperLeft;
             }

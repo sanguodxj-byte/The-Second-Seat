@@ -8,7 +8,7 @@ namespace TheSecondSeat.UI
     /// <summary>
     /// 快速对话窗口
     /// ? 右键 AI 按钮打开，快速发送消息
-    /// ? 回车键发送，ESC 关闭
+    /// ? ESC 关闭
     /// ? 极简设计：输入框、发送按钮、快速回复按钮
     /// </summary>
     public class QuickDialogueWindow : Window
@@ -21,7 +21,7 @@ namespace TheSecondSeat.UI
         private const float WindowHeight = 120f;  // ? 固定总高度，确保所有元素可见
         private const float SendButtonWidth = 60f;
         
-        // ? 用于跟踪是否需要发送（回车键触发）
+        // ? 用于跟踪是否需要发送
         private bool pendingSend = false;
         private string pendingMessage = "";
         
@@ -58,21 +58,6 @@ namespace TheSecondSeat.UI
 
         public override void DoWindowContents(Rect inRect)
         {
-            // ? 先处理回车键事件（在任何控件之前）
-            Event evt = Event.current;
-            if (evt.type == EventType.KeyDown)
-            {
-                if (evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter)
-                {
-                    if (!string.IsNullOrWhiteSpace(userInput))
-                    {
-                        pendingSend = true;
-                        pendingMessage = userInput;
-                        evt.Use();
-                    }
-                }
-            }
-            
             float curY = Padding;
             
             // ? 输入框区域（单倍高度，紧凑显示）

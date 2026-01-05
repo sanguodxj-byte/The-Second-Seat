@@ -82,5 +82,15 @@ namespace TheSecondSeat.RimAgent
         public string Error { get; set; }
         public DateTime ExecutedAt { get; set; }
         public ToolResult() { ExecutedAt = DateTime.Now; }
+
+        public static ToolResult Failure(string error)
+        {
+            return new ToolResult { Success = false, Error = error };
+        }
+
+        public static ToolResult Successful(object data)
+        {
+            return new ToolResult { Success = true, Data = data };
+        }
     }
 }

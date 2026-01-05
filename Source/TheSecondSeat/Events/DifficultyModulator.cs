@@ -219,8 +219,9 @@ namespace TheSecondSeat.Events
 
     /// <summary>
     /// Harmony Patch：拦截事件权重计算
+    /// RimWorld 1.5: protected float IncidentChanceFinal(IncidentDef def, IIncidentTarget target)
     /// </summary>
-    [HarmonyPatch(typeof(StorytellerComp), "IncidentChanceFinal")]
+    [HarmonyPatch(typeof(StorytellerComp), "IncidentChanceFinal", typeof(IncidentDef), typeof(IIncidentTarget))]
     public static class Patch_StorytellerComp_IncidentChanceFinal
     {
         [HarmonyPostfix]

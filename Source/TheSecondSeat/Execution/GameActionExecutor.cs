@@ -5,6 +5,7 @@ using RimWorld;
 using Verse;
 using Verse.AI;
 using TheSecondSeat.NaturalLanguage;
+using TheSecondSeat.Commands;
 using TheSecondSeat.Commands.Implementations;
 using TheSecondSeat.Utils;
 
@@ -13,6 +14,7 @@ namespace TheSecondSeat.Execution
     /// <summary>
     /// 游戏动作执行器 - 命令路由器
     /// ⭐ v1.6.84: 修复线程安全问题，确保在主线程执行
+    /// ⭐ v1.7.00: 重构 - 使用 CommandRegistry 进行动态命令查找
     /// </summary>
     public static class GameActionExecutor
     {
@@ -25,6 +27,13 @@ namespace TheSecondSeat.Execution
             if (command == null)
             {
                 return ExecutionResult.Failed("命令为空");
+            }
+
+            // ⭐ v1.7.00: 检查命令是否存在于注册表中
+            var cmdInstance = CommandRegistry.GetCommand(command.action);
+            if (cmdInstance == null)
+            {
+                return ExecutionResult.Failed($"未知命令: {command.action}");
             }
 
             Log.Message($"[GameActionExecutor] 执行命令: {command.action} (Target={command.parameters.target}, Scope={command.parameters.scope})");

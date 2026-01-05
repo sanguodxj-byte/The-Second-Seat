@@ -45,7 +45,12 @@ namespace TheSecondSeat.Framework
         
         private int lastCheckTick = 0;
         private int lastHighPriorityCheckTick = 0;
+        private int lastContextUpdateTick = -1;
         
+        // 缓存的事件列表，避免每帧重新排序和过滤
+        private List<NarratorEventDef> cachedSortedEvents;
+        private List<NarratorEventDef> cachedHighPriorityEvents;
+
         /// <summary>
         /// 事件执行统计
         /// </summary>
@@ -100,15 +105,14 @@ namespace TheSecondSeat.Framework
                 // 高优先级事件检查（更频繁）
                 if (currentTick - lastHighPriorityCheckTick >= HIGH_PRIORITY_CHECK_INTERVAL)
                 {
-                    CheckHighPriorityEvents();
                     lastHighPriorityCheckTick = currentTick;
+                    CheckHighPriorityEvents();
                 }
-                
-                // 普通事件检查
-                if (currentTick - lastCheckTick >= CHECK_INTERVAL)
+                // 普通事件检查（避免与高优先级检查在同一帧运行，如果可能）
+                else if (currentTick - lastCheckTick >= CHECK_INTERVAL)
                 {
-                    CheckAllEvents();
                     lastCheckTick = currentTick;
+                    CheckAllEvents();
                 }
             }
             catch (Exception ex)
@@ -237,6 +241,13 @@ namespace TheSecondSeat.Framework
         /// </summary>
         private void UpdateContext()
         {
+            // 如果在同一 Tick 内已经更新过，则跳过
+            if (Find.TickManager.TicksGame == lastContextUpdateTick)
+            {
+                return;
+            }
+            
+            lastContextUpdateTick = Find.TickManager.TicksGame;
             cachedContext.Clear();
             
             try
@@ -306,9 +317,13 @@ namespace TheSecondSeat.Framework
         /// </summary>
         private List<NarratorEventDef> GetSortedEvents()
         {
-            return DefDatabase<NarratorEventDef>.AllDefsListForReading
-                .OrderByDescending(e => e.priority)
-                .ToList();
+            if (cachedSortedEvents == null)
+            {
+                cachedSortedEvents = DefDatabase<NarratorEventDef>.AllDefsListForReading
+                    .OrderByDescending(e => e.priority)
+                    .ToList();
+            }
+            return cachedSortedEvents;
         }
         
         /// <summary>
@@ -316,10 +331,14 @@ namespace TheSecondSeat.Framework
         /// </summary>
         private List<NarratorEventDef> GetHighPriorityEvents()
         {
-            return DefDatabase<NarratorEventDef>.AllDefsListForReading
-                .Where(e => e.priority >= 100)
-                .OrderByDescending(e => e.priority)
-                .ToList();
+            if (cachedHighPriorityEvents == null)
+            {
+                cachedHighPriorityEvents = DefDatabase<NarratorEventDef>.AllDefsListForReading
+                    .Where(e => e.priority >= 100)
+                    .OrderByDescending(e => e.priority)
+                    .ToList();
+            }
+            return cachedHighPriorityEvents;
         }
         
         // ============================================
@@ -376,6 +395,9 @@ namespace TheSecondSeat.Framework
             }
             
             eventExecutionCounts.Clear();
+            // 清除缓存列表以强制刷新
+            cachedSortedEvents = null;
+            cachedHighPriorityEvents = null;
             
             if (Prefs.DevMode)
             {

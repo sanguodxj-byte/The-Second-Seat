@@ -13,13 +13,22 @@ namespace TheSecondSeat.UI
         {
         }
 
+        private int logTick = 0;
+
         public override void MapComponentOnGUI()
         {
             base.MapComponentOnGUI();
             
+            if (Prefs.DevMode && logTick++ > 600)
+            {
+                logTick = 0;
+                Log.Message($"[The Second Seat] NarratorButtonManager running on map {map.uniqueID}. Button exists: {screenButton != null}");
+            }
+
             // 确保按钮始终显示
             if (screenButton == null || !Find.WindowStack.IsOpen(screenButton))
             {
+                if (Prefs.DevMode) Log.Message("[The Second Seat] NarratorButtonManager attempting to show button.");
                 ShowButton();
             }
         }

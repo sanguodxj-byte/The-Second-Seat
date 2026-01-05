@@ -155,6 +155,7 @@ namespace TheSecondSeat.Descent
             
             if (!string.IsNullOrEmpty(texturePath))
             {
+                Log.Message($"[DragonFlybyAnimationProvider] 准备加载实体阴影纹理，路径: '{texturePath}'");
                 bool loaded = DragonShadowRenderer.LoadCustomTexture(texturePath);
                 if (loaded)
                 {
@@ -200,15 +201,26 @@ namespace TheSecondSeat.Descent
         /// </summary>
         private void StartEntityShadowAnimation(Map map, IntVec3 target)
         {
+            if (map == null)
+            {
+                Log.Warning("[DragonFlybyAnimationProvider] 地图为空，无法启动阴影动画");
+                return;
+            }
+            
             var shadowRenderer = DragonShadowRenderer.GetRenderer(map);
-            if (shadowRenderer != null)
+            
+            // ⭐ 如果组件不存在，动态创建并添加到地图
+            if (shadowRenderer == null)
             {
-                shadowRenderer.StartAnimation(target, AnimationDuration * 0.8f); // 阴影动画稍短
+                Log.Message("[DragonFlybyAnimationProvider] DragonShadowRenderer 组件不存在，正在动态创建...");
+                shadowRenderer = new DragonShadowRenderer(map);
+                map.components.Add(shadowRenderer);
+                Log.Message("[DragonFlybyAnimationProvider] ✅ DragonShadowRenderer 组件已动态添加到地图");
             }
-            else
-            {
-                Log.Warning("[DragonFlybyAnimationProvider] 地图上没有 DragonShadowRenderer 组件");
-            }
+            
+            // 启动动画
+            shadowRenderer.StartAnimation(target, AnimationDuration * 0.8f); // 阴影动画稍短
+            Log.Message($"[DragonFlybyAnimationProvider] 已启动阴影动画，HasTexture={DragonShadowRenderer.HasCustomTexture}");
         }
         
         /// <summary>

@@ -12,7 +12,7 @@ namespace TheSecondSeat.PersonaGeneration
     /// </summary>
     public static class AvatarLoader
     {
-        private static Dictionary<string, Texture2D> cache = new Dictionary<string, Texture2D>();
+        private static Dictionary<string, Texture> cache = new Dictionary<string, Texture>();
         
         // 头像文件路径（512x512 头像资源）
         private const string AVATARS_PATH = "UI/Narrators/Avatars/";
@@ -26,7 +26,7 @@ namespace TheSecondSeat.PersonaGeneration
         /// <param name="def">人格定义</param>
         /// <param name="expression">表情类型</param>
         /// <returns>头像纹理</returns>
-        public static Texture2D LoadAvatar(NarratorPersonaDef def, ExpressionType? expression = null)
+        public static Texture LoadAvatar(NarratorPersonaDef def, ExpressionType? expression = null)
         {
             if (def == null)
             {
@@ -46,35 +46,58 @@ namespace TheSecondSeat.PersonaGeneration
             // 缓存检查
             // ? v1.6.21: 添加 _avatar_ 标识，避免与 PortraitLoader 缓存冲突
             string cacheKey = $"{def.defName}_avatar_{expressionSuffix}";
-            if (cache.TryGetValue(cacheKey, out Texture2D cached))
+            if (cache.TryGetValue(cacheKey, out Texture cached))
             {
                 return cached;
             }
             
-            Texture2D texture = null;
+            Texture texture = null;
             
             // 1. 尝试加载表情头像文件（多路径回退）
             string personaName = GetPersonaName(def);
+
+            // ⭐ 智能路径推导：基于 portraitPath
+            string derivedAvatarPath = null;
+            if (!string.IsNullOrEmpty(def.portraitPath))
+            {
+                // 假设 portraitPath = "Sideria/Narrators/Layered/base_body"
+                // 目标 = "Sideria/Narrators/Avatars/"
+                string portraitDir = System.IO.Path.GetDirectoryName(def.portraitPath)?.Replace('\\', '/');
+                if (!string.IsNullOrEmpty(portraitDir))
+                {
+                    string parentDir = System.IO.Path.GetDirectoryName(portraitDir)?.Replace('\\', '/');
+                    if (!string.IsNullOrEmpty(parentDir))
+                    {
+                        derivedAvatarPath = $"{parentDir}/Avatars";
+                    }
+                }
+            }
             
             if (expression.HasValue && expression.Value != ExpressionType.Neutral)
             {
                 // ? 从后缀中获取文件名（已经包含变体号）
                 string expressionFileName = expressionSuffix.TrimStart('_').ToLower();
                 
-                // ⭐ v1.6.74: 尝试多个路径（按优先级）
-                string[] expressionPathsToTry = new[]
+                List<string> pathsToTry = new List<string>();
+
+                // 路径 0: 智能推导路径 (Sideria/Narrators/Avatars/...)
+                if (!string.IsNullOrEmpty(derivedAvatarPath))
                 {
-                    // 路径 1: 主 Mod 路径（UI/Narrators/Avatars/PersonaName/）
-                    $"{AVATARS_PATH}{personaName}/{expressionFileName}",
-                    
-                    // 路径 2: 子 Mod 路径（Narrators/Avatars/）- 适配扁平结构
-                    $"Narrators/Avatars/{expressionFileName}",
-                    
-                    // 路径 3: 旧版路径（向后兼容）
-                    $"UI/Narrators/{personaName}/{expressionFileName}"
-                };
+                    pathsToTry.Add($"{derivedAvatarPath}/{expressionFileName}");
+                    // 同时也尝试带 PersonaName 的子目录结构
+                    pathsToTry.Add($"{derivedAvatarPath}/{personaName}/{expressionFileName}");
+                }
+
+                // 路径 1: 主 Mod 路径（UI/Narrators/Avatars/PersonaName/）
+                pathsToTry.Add($"{AVATARS_PATH}{personaName}/{expressionFileName}");
                 
-                foreach (var path in expressionPathsToTry)
+                // 路径 2: 子 Mod 路径（Narrators/Avatars/）- 适配扁平结构
+                pathsToTry.Add($"Narrators/Avatars/{expressionFileName}");
+                
+                // 路径 3: 旧版路径（向后兼容）
+                pathsToTry.Add($"UI/Narrators/{personaName}/{expressionFileName}");
+                
+                foreach (var path in pathsToTry)
                 {
                     texture = ContentFinder<Texture2D>.Get(path, false);
                     
@@ -96,18 +119,23 @@ namespace TheSecondSeat.PersonaGeneration
                 
                 foreach (var baseName in baseFileNames)
                 {
-                    // ⭐ v1.6.74: 尝试多个路径（按优先级）
-                    string[] basePathsToTry = new[]
+                    List<string> basePathsToTry = new List<string>();
+
+                    // 路径 0: 智能推导路径
+                    if (!string.IsNullOrEmpty(derivedAvatarPath))
                     {
-                        // 路径 1: 主 Mod 路径（UI/Narrators/Avatars/PersonaName/）
-                        $"{AVATARS_PATH}{personaName}/{baseName}",
-                        
-                        // 路径 2: 子 Mod 路径（Narrators/Avatars/）- 适配扁平结构
-                        $"Narrators/Avatars/{baseName}",
-                        
-                        // 路径 3: 旧版路径（向后兼容）
-                        $"UI/Narrators/{personaName}/{baseName}"
-                    };
+                        basePathsToTry.Add($"{derivedAvatarPath}/{baseName}");
+                        basePathsToTry.Add($"{derivedAvatarPath}/{personaName}/{baseName}");
+                    }
+
+                    // 路径 1: 主 Mod 路径
+                    basePathsToTry.Add($"{AVATARS_PATH}{personaName}/{baseName}");
+                    
+                    // 路径 2: 子 Mod 路径
+                    basePathsToTry.Add($"Narrators/Avatars/{baseName}");
+                    
+                    // 路径 3: 旧版路径
+                    basePathsToTry.Add($"UI/Narrators/{personaName}/{baseName}");
                     
                     foreach (var path in basePathsToTry)
                     {
@@ -140,6 +168,10 @@ namespace TheSecondSeat.PersonaGeneration
                 {
                     Log.Warning($"[AvatarLoader] 未找到头像文件，使用占位符: {def.defName}{expressionSuffix}");
                     Log.Warning($"[AvatarLoader]   尝试的路径：");
+                    if (!string.IsNullOrEmpty(derivedAvatarPath))
+                    {
+                        Log.Warning($"[AvatarLoader]     • {derivedAvatarPath}/base (Derived)");
+                    }
                     Log.Warning($"[AvatarLoader]     • UI/Narrators/Avatars/{personaName}/base");
                     Log.Warning($"[AvatarLoader]     • Narrators/Avatars/base");
                 }
@@ -348,7 +380,7 @@ namespace TheSecondSeat.PersonaGeneration
         /// <summary>
         /// ? 设置纹理高质量参数（安全版本）
         /// </summary>
-        private static void SetTextureQualitySafe(Texture2D texture)
+        private static void SetTextureQualitySafe(Texture texture)
         {
             if (texture == null) return;
             

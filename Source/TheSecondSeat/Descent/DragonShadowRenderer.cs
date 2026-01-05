@@ -203,6 +203,12 @@ namespace TheSecondSeat.Descent
                 return;
             }
             
+            // 🔍 DEBUG: 确认渲染阶段被调用
+            if (Prefs.DevMode && Find.TickManager.TicksGame % 60 == 0)
+            {
+                Log.Message($"[DragonShadowRenderer] DEBUG: MapComponentOnGUI 被调用, Progress={animationProgress:F2}, HasTexture={dragonShadowTexture != null}");
+            }
+            
             try
             {
                 DrawEntityShadow();
@@ -290,6 +296,12 @@ namespace TheSecondSeat.Descent
         /// </summary>
         private void DrawFallbackEffect()
         {
+            // 🔍 DEBUG: 记录备用效果被调用（说明纹理为null）
+            if (Prefs.DevMode && Find.TickManager.TicksGame % 60 == 0)
+            {
+                Log.Warning("[DragonShadowRenderer] DEBUG: DrawFallbackEffect 被调用 - 纹理为 null！");
+            }
+            
             // ⭐ v1.6.91: 移除备用烟雾效果，避免产生"空投仓烟雾"的视觉误导
             // 如果没有纹理，什么都不显示
         }
@@ -389,7 +401,17 @@ namespace TheSecondSeat.Descent
                 // 🔍 调试日志：明确打印尝试加载的路径
                 Log.Message($"[DragonShadowRenderer] 尝试加载纹理: '{texturePath}'");
                 
+                // 1. 尝试直接加载
                 Texture2D texture = ContentFinder<Texture2D>.Get(texturePath, false);
+                
+                // 2. 如果失败且路径包含 .png，尝试去除扩展名加载
+                if (texture == null && texturePath.EndsWith(".png"))
+                {
+                    string pathWithoutExt = texturePath.Substring(0, texturePath.Length - 4);
+                    Log.Message($"[DragonShadowRenderer] 尝试去除扩展名加载: '{pathWithoutExt}'");
+                    texture = ContentFinder<Texture2D>.Get(pathWithoutExt, false);
+                }
+                
                 if (texture != null)
                 {
                     SetCustomTexture(texture);
@@ -398,6 +420,9 @@ namespace TheSecondSeat.Descent
                 else
                 {
                     Log.Error($"[DragonShadowRenderer] ❌ 未找到纹理: '{texturePath}'。请检查文件是否存在于 Textures/ 目录下，且文件名大小写匹配。");
+                    
+                    // 尝试列出该目录下的一些文件（如果可能）- 仅作为提示
+                    // 无法直接列出 ContentFinder 的文件，只能提示用户
                     return false;
                 }
             }

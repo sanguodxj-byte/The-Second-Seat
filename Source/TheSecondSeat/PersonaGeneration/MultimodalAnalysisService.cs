@@ -172,116 +172,96 @@ namespace TheSecondSeat.PersonaGeneration
         }
 
         /// <summary>
-        /// 获取 Vision 分析的提示词（优化版 - 要求返回中文）
+        /// Get Vision Analysis Prompt (Generic English Version)
         /// </summary>
         private string GetVisionPrompt()
         {
             return @"Analyze this character portrait in detail and provide a comprehensive JSON response.
 
-**CRITICAL: The characterDescription field MUST be written in Simplified Chinese (简体中文)!**
+**CRITICAL: The characterDescription field MUST be written in English!**
 
 {
   ""dominantColors"": [
     {""hex"": ""#RRGGBB"", ""percentage"": 0-100, ""name"": ""color name in English""}
   ],
   ""visualElements"": [""element1"", ""element2"", ""element3""],
-  ""characterDescription"": ""【必须用简体中文写】详细的300-500字外观描述和性格推断"",
+  ""characterDescription"": ""Detailed 300-500 word appearance description and personality inference in English"",
   ""mood"": ""overall mood/atmosphere in English"",
   ""suggestedPersonality"": ""Benevolent/Sadistic/Chaotic/Strategic/Protective/Manipulative"",
   ""styleKeywords"": [""keyword1"", ""keyword2"", ""keyword3""]
 }
 
-**CRITICAL REQUIREMENTS for characterDescription (必须用简体中文!):**
+**CRITICAL REQUIREMENTS for characterDescription (MUST be in English!):**
 
-**第一部分：详细的外观描述 (40%)**
+**Part 1: Detailed Appearance Description (40%)**
 
-用中文描述所有可见细节：
-- **种族**: 人类？精灵？龙人？兽人？机械生命？
-- **发型**: 颜色、长度、风格、质地（例如：""银白色长发如瀑布般倾泻而下，用深红色丝带束起""）
-- **眼睛**: 颜色、形状、表情（例如：""猩红色竖瞳眼眸，流露出智慧与危险的气息""）
-- **面部特征**: 表情、年龄、伤疤、纹饰
-- **体型**: 身形、姿态、站姿
-- **服装与护甲**: 
-  * 主要服饰
-  * 护甲配件
-  * 配饰
-  * 材质和状态
-- **特殊特征**: 翅膀、尾巴、角、武器、魔法效果
-- **整体印象**: 姿态、光线、构图传达的情绪
+Describe all visible details:
+- **Race**: Human? Elf? Dragon-kin? Orc? Android?
+- **Hair**: Color, length, style, texture (e.g., ""Silky silver hair cascading down like a waterfall, tied with a crimson ribbon"")
+- **Eyes**: Color, shape, expression (e.g., ""Crimson vertical slit pupils, revealing wisdom and danger"")
+- **Facial Features**: Expression, age, scars, markings
+- **Body**: Build, posture, stance
+- **Clothing & Armor**:
+  * Main attire
+  * Armor pieces
+  * Accessories
+  * Material and condition
+- **Special Features**: Wings, tails, horns, weapons, magical effects
+- **Overall Impression**: Mood conveyed by posture, lighting, composition
 
-**第二部分：从外观推断性格 (40%)**
+**Part 2: Personality Inference from Appearance (40%)**
 
-用中文从外观推断特质：
+Infer traits from visual cues:
 
-**从表情和肢体语言推断**:
-- 冷峻的面容 → 情感内敛、自律、自制
-- 自信的姿态 → 果断、经验丰富、领导气质
-- 警惕的站姿 → 谨慎、防备、可能经历过创伤
-- 放松的表情 → 和蔼可亲、友善、容易信任
+**From Expression & Body Language**:
+- Stern face → Reserved, disciplined, self-controlled
+- Confident stance → Decisive, experienced, leadership qualities
+- Guarded posture → Cautious, defensive, possible past trauma
+- Relaxed expression → Approachable, friendly, trusting
 
-**从服装和护甲推断**:
-- 厚重护甲 → 重视防护、随时准备战斗、纪律严明
-- 深色系 → 神秘、严肃、可能内向或有秘密
-- 精致设计 → 注重细节、可能自负或在意身份地位
-- 简单实用的装备 → 务实、注重功能而非形式
+**From Clothing & Armor**:
+- Heavy armor → Values protection, combat-ready, disciplined
+- Dark colors → Mysterious, serious, introverted or secretive
+- Intricate designs → Detail-oriented, perhaps vain or status-conscious
+- Simple utilitarian gear → Pragmatic, values function over form
 
-**从武器和装备推断**:
-- 明显武器 → 随时准备冲突、果断、可能具有攻击性
-- 隐藏武器 → 具有战略眼光、谨慎、喜欢出其不意
-- 魔法 artefacts → 知识渊博、爱好研究、与古老智慧相连
-- 无武器 → 和平、信任他人、或依赖其他优势
+**From Weapons & Equipment**:
+- Obvious weapons → Conflict-ready, decisive, potentially aggressive
+- Concealed weapons → Strategic, cautious, prefers surprise
+- Magical artifacts → Knowledgeable, academic, connected to ancient wisdom
+- No weapons → Peaceful, trusting, or relies on other advantages
 
-**从种族/人种特征推断**:
-- 龙族特征 → 骄傲、强大、可能傲慢或有领地意识
-- 精灵特征 → 优雅、长寿视角、可能超然物外
-- 兽人特征 → 原始本能、热情、直接的沟通方式
+**Part 3: Dialogue & Behavior Prediction (20%)**
 
-**第三部分：对话和行为预测 (20%)**
+Predict based on visual analysis:
 
-基于视觉分析，用中文预测：
+**Speaking Style**:
+- ""She might speak with a [calm/passionate/stern/gentle] tone""
+- ""Her expression suggests [formal/casual/professional/poetic] language""
+- ""She likely communicates with [concise commands/rich descriptions/military jargon]""
 
-**说话风格**:
-- ""她可能用[冷静/热情/严厉/温柔]的语气说话""
-- ""她的表情暗示使用[正式/随意/专业/诗意]的语言""
-- ""她可能用[简洁的命令/丰富的描述/军事用语]进行交流""
+**Emotional Expression**:
+- ""Rarely shows strong emotion publicly"" or ""Wears heart on sleeve""
+- ""Carefully controlled reactions"" or ""Impulsive responses""
 
-**情感表达**:
-- ""很少公开表露强烈情感"" 或 ""心直口快""
-- ""谨慎控制反应"" 或 ""冲动反应""
-
-**互动风格**:
-- ""与陌生人保持距离"" 或 ""立即热情友好""
-- ""观察后发言"" 或 ""主动与人交谈""
-- ""重视行动而非言辞"" 或 ""信仰言辞外交""
-
-**EXAMPLE of GOOD characterDescription (用简体中文!):**
-
-""这是一位拥有龙族血统的少女。她有一头银白色的长发如瀑布般倾泻至肩下，与深邃的猩红色竖瞳眼眸形成鲜明对比。她的太阳穴处长着两只小巧的弯曲角，长袍下延伸出一条覆盖着红色鳞片的长尾，在光线下闪烁着微光。
-
-她身穿一件由高品质布料制成的深色连帽长袍，优雅地环绕着她的身形。袍子下是棕色皮革护甲，关键部位经过加固——肩甲上可见战斗的痕迹，但保养得当，功能完好。护甲上装饰着精致的深红色图案，呼应着她天然鳞片的颜色，暗示着个人定制或文化意义。
-
-她的面部表情明显冷峻而沉着，眉间隐约可见的纹路暗示着多年的自律或磨难。她的身姿笔挺而警觉，带有军人训练的痕迹。她的举止透露出源于经验而非傲慢的自信。她锐利的目光表明高度的智慧和对周围环境的持续警觉。
-
-从这些视觉线索判断，她可能具有战略型或守护型的性格。军人般的气质和实用的护甲表明纪律和准备。她冷峻的表情暗示情感控制和压力下的沉着。她可能用沉稳、深思熟虑的语气说话，谨慎地选择措辞。她的对话会简洁直接，偏好清晰而非华丽的语言。
-
-在交谈中，她可能最初保持专业距离，先观察他人再决定是否信任。她重视能力和可靠性胜于魅力。她的情感表达在公共场合会有所克制，尽管她信任的人可能会看到更柔软的一面。她对逻辑和实际考虑的反应超出情感诉求。
-
-龙族特征暗示着一种自豪和自力更生的倾向。她可能对个人空间和价值观有所领地意识。她的装备维护良好，显示出对细节的关注和自给自足的能力。贯穿她外表的深红色调暗示着平静外表下的受控激情——她有坚定的信念，但通过纪律而非情绪爆发来表达。""
+**Interaction Style**:
+- ""Keeps distance from strangers"" or ""Immediately warm and friendly""
+- ""Observes before speaking"" or ""Initiates conversation""
 
 **REMEMBER**:
-- characterDescription 必须用简体中文写!
-- 要具体：不要只说""护甲""——描述材质、状态、设计
-- 从每个细节推断性格
-- 预测行为：他们会如何说话？反应？互动？
-- 300-500字
-- 只返回有效的JSON
+- characterDescription MUST be in English!
+- Be specific: Don't just say ""armor"" - describe material, condition, design
+- Infer personality from every detail
+- Predict behavior: How would they speak? React? Interact?
+- 300-500 words
+- Return ONLY valid JSON
 
 Focus on:
 - Top 3-4 dominant colors with accurate percentages
 - All visual elements visible in the portrait
-- Detailed appearance analysis (IN CHINESE!)
-- Personality inference from visual cues (IN CHINESE!)
-- Behavioral predictions (IN CHINESE!)
+- Detailed appearance analysis (IN ENGLISH!)
+- Personality inference from visual cues (IN ENGLISH!)
+- Behavioral predictions (IN ENGLISH!)
 - Style keywords for System Prompt (in English)";
         }
 
@@ -518,7 +498,7 @@ Focus on:
   ""mood"": ""overall mood"",
   ""suggestedPersonality"": ""Benevolent/Sadistic/Chaotic/Strategic/Protective/Manipulative"",
   ""styleKeywords"": [""keyword1"", ""keyword2"", ""keyword3""],
-  ""personalityTags"": [""中文个性标签1"", ""中文个性标签2"", ""中文个性标签3"", ...]
+  ""personalityTags"": [""Tag1"", ""Tag2"", ""Tag3"", ...]
 }
 
 Focus on:
@@ -853,7 +833,7 @@ Biography:
         }
         
         /// <summary>
-        /// 📌 v1.6.62: 增强版 Vision Prompt（支持特质和用户补充）
+        /// 📌 v1.6.62: Enhanced Vision Prompt (Supports Traits & Supplement) - Generic English
         /// </summary>
         private string GetVisionPromptWithTraits(List<string> selectedTraits, string userSupplement)
         {
@@ -861,10 +841,10 @@ Biography:
             
             sb.AppendLine("Analyze this character portrait in detail and provide a comprehensive JSON response.");
             sb.AppendLine();
-            sb.AppendLine("**CRITICAL: The characterDescription field MUST be written in Simplified Chinese (简体中文)!**");
+            sb.AppendLine("**CRITICAL: The characterDescription field MUST be written in English!**");
             sb.AppendLine();
             
-            // 📌 添加用户选择的特质和补充描述
+            // 📌 Add user selected traits and supplement
             if (selectedTraits != null && selectedTraits.Count > 0)
             {
                 sb.AppendLine("**USER SELECTED TRAITS:**");
@@ -891,9 +871,9 @@ Biography:
                 sb.AppendLine("5. Your job is to ADD visual details to their personality, not replace it.");
                 sb.AppendLine();
                 sb.AppendLine("**PERSONALITY TAGS REQUIREMENT:**");
-                sb.AppendLine("6. Based on the image and user description, suggest 3-6 personality tags in Chinese.");
-                sb.AppendLine("7. Examples: \"善良\", \"坚强\", \"爱撒娇\", \"病娇\", \"傲娇\", \"温柔\", \"冷酷\"");
-                sb.AppendLine("8. Include the user's selected traits if they match the分析.");
+                sb.AppendLine("6. Based on the image and user description, suggest 3-6 personality tags in English.");
+                sb.AppendLine("7. Examples: \"Kind\", \"Strong\", \"Clingy\", \"Yandere\", \"Tsundere\", \"Gentle\", \"Cold\"");
+                sb.AppendLine("8. Include the user's selected traits if they match the analysis.");
                 sb.AppendLine();
             }
             
@@ -902,69 +882,69 @@ Biography:
     {""hex"": ""#RRGGBB"", ""percentage"": 0-100, ""name"": ""color name in English""}
   ],
   ""visualElements"": [""element1"", ""element2"", ""element3""],
-  ""characterDescription"": ""必须用简体中文书写的详细描述（300-500字），包含外貌和性格推断"",
+  ""characterDescription"": ""Detailed 300-500 word appearance description and personality inference in English"",
   ""mood"": ""overall mood/atmosphere in English"",
   ""suggestedPersonality"": ""Benevolent/Sadistic/Chaotic/Strategic/Protective/Manipulative"",
   ""styleKeywords"": [""keyword1"", ""keyword2"", ""keyword3""],
-  ""personalityTags"": [""中文个性标签1"", ""中文个性标签2"", ""中文个性标签3"", ...]
+  ""personalityTags"": [""Tag1"", ""Tag2"", ""Tag3"", ...]
 }");
             
             sb.AppendLine();
             sb.AppendLine("**REMEMBER**:");
-            sb.AppendLine("- characterDescription 必须用简体中文书写!");
-            sb.AppendLine("- personalityTags 必须用简体中文!");
+            sb.AppendLine("- characterDescription MUST be in English!");
+            sb.AppendLine("- personalityTags MUST be in English!");
             if (!string.IsNullOrEmpty(userSupplement))
             {
                 sb.AppendLine("- RESPECT the user's personality description - ADD visual details, don't replace!");
             }
             sb.AppendLine("- Suggest 3-6 personality tags that match the character");
             sb.AppendLine("- Focus on visual appearance first, then personality inference");
-            sb.AppendLine("- 300-500 characters in Chinese");
+            sb.AppendLine("- 300-500 words in English");
             sb.AppendLine("- Return ONLY valid JSON");
             
             return sb.ToString();
         }
         
         /// <summary>
-        /// ? 根据分析结果生成对话风格
+        /// ? Generate dialogue style from analysis (Generic English support)
         /// </summary>
         private DialogueStyleDef GenerateDialogueStyleFromAnalysis(VisionAnalysisResult visionResult, string userBio = null)
         {
             var style = new DialogueStyleDef();
             
-            // 如果有用户简介，尝试从简介中提取对话风格
+            // Try to extract dialogue style from user bio if available
             if (!string.IsNullOrEmpty(userBio))
             {
                 var lowerBio = userBio.ToLower();
                 
-                // 检测正式程度
-                if (lowerBio.Contains("正式") || lowerBio.Contains("专业"))
+                // Formality
+                if (lowerBio.Contains("formal") || lowerBio.Contains("professional") || lowerBio.Contains("正式") || lowerBio.Contains("专业"))
                     style.formalityLevel = 0.8f;
-                else if (lowerBio.Contains("随意") || lowerBio.Contains("轻松") || lowerBio.Contains("俏皮"))
+                else if (lowerBio.Contains("casual") || lowerBio.Contains("relaxed") || lowerBio.Contains("playful") || lowerBio.Contains("随意") || lowerBio.Contains("轻松"))
                     style.formalityLevel = 0.3f;
                 else
                     style.formalityLevel = 0.5f;
                 
-                // 检测情感表达
-                if (lowerBio.Contains("情感") || lowerBio.Contains("热情") || lowerBio.Contains("温柔"))
+                // Emotional Expression
+                if (lowerBio.Contains("emotional") || lowerBio.Contains("passionate") || lowerBio.Contains("gentle") || lowerBio.Contains("情感") || lowerBio.Contains("热情"))
                     style.emotionalExpression = 0.8f;
-                else if (lowerBio.Contains("冷静") || lowerBio.Contains("理性"))
+                else if (lowerBio.Contains("calm") || lowerBio.Contains("rational") || lowerBio.Contains("cold") || lowerBio.Contains("冷静") || lowerBio.Contains("理性"))
                     style.emotionalExpression = 0.3f;
                 else
                     style.emotionalExpression = 0.6f;
                 
-                // 检测话语量
-                if (lowerBio.Contains("简洁") || lowerBio.Contains("言简意赅"))
+                // Verbosity
+                if (lowerBio.Contains("concise") || lowerBio.Contains("brief") || lowerBio.Contains("简洁") || lowerBio.Contains("言简意赅"))
                     style.verbosity = 0.3f;
-                else if (lowerBio.Contains("详细") || lowerBio.Contains("喜欢聊天"))
+                else if (lowerBio.Contains("detailed") || lowerBio.Contains("chatty") || lowerBio.Contains("talkative") || lowerBio.Contains("详细") || lowerBio.Contains("喜欢聊天"))
                     style.verbosity = 0.7f;
                 else
                     style.verbosity = 0.5f;
                 
-                // 检测幽默感
-                if (lowerBio.Contains("幽默") || lowerBio.Contains("有趣") || lowerBio.Contains("搞笑"))
+                // Humor
+                if (lowerBio.Contains("humorous") || lowerBio.Contains("funny") || lowerBio.Contains("witty") || lowerBio.Contains("幽默") || lowerBio.Contains("有趣"))
                     style.humorLevel = 0.7f;
-                else if (lowerBio.Contains("严肃") || lowerBio.Contains("认真"))
+                else if (lowerBio.Contains("serious") || lowerBio.Contains("stern") || lowerBio.Contains("严肃") || lowerBio.Contains("认真"))
                     style.humorLevel = 0.2f;
                 else
                     style.humorLevel = 0.4f;

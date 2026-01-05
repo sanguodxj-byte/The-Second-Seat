@@ -39,7 +39,7 @@ namespace TheSecondSeat.UI
         private NarratorButtonState currentState = NarratorButtonState.Ready;
         
         // ✅ 动态头像相关
-        private Texture2D? currentPortrait = null;
+        private Texture? currentPortrait = null;
         private NarratorPersonaDef? currentPersona = null;
         private ExpressionType lastExpression = ExpressionType.Neutral;
         private int portraitUpdateTick = 0;
@@ -389,7 +389,7 @@ namespace TheSecondSeat.UI
             UpdatePortrait();
             
             // ✅ 优先显示人格头像，否则显示状态图标
-            Texture2D currentIcon = currentPortrait ?? GetCurrentIcon();
+            Texture currentIcon = currentPortrait ?? GetCurrentIcon();
             
             if (currentIcon != null)
             {
@@ -564,7 +564,7 @@ namespace TheSecondSeat.UI
             currentState = NarratorButtonState.Ready;
         }
 
-        private Texture2D GetCurrentIcon()
+        private Texture GetCurrentIcon()
         {
             return currentState switch
             {
@@ -634,9 +634,10 @@ namespace TheSecondSeat.UI
             // ✅ v1.6.21: 检测模式切换
             if (currentPortraitMode != lastUsePortraitMode)
             {
-                AvatarLoader.ClearAllCache();
-                PortraitLoader.ClearAllCache();
-                try { LayeredPortraitCompositor.ClearAllCache(); } catch { }
+                // [暂定] 暂停缓存清除功能，等待进一步指令
+                // AvatarLoader.ClearAllCache();
+                // PortraitLoader.ClearAllCache();
+                // try { LayeredPortraitCompositor.ClearAllCache(); } catch { }
                 
                 lastUsePortraitMode = currentPortraitMode;
                 currentPortrait = null;

@@ -875,10 +875,45 @@ namespace TheSecondSeat.UI
             string mouthLayerName = MouthAnimationSystem.GetMouthLayerName(persona.defName);
             if (!string.IsNullOrEmpty(mouthLayerName))
             {
-                var mouthTexture = PortraitLoader.GetLayerTexture(persona, mouthLayerName);
+                // ⭐ v1.8.3: 修复口型回退逻辑，优先使用子 Mod 纹理
+                // 回退顺序：高保真口型 → Closed_mouth（子 Mod）→ Neutral_mouth → 不绘制（使用 base_body 默认）
+                var mouthTexture = PortraitLoader.GetLayerTexture(persona, mouthLayerName, suppressWarning: true);
+                
+                // ⭐ v1.8.3: 诊断日志 - 口型纹理加载
+                if (Prefs.DevMode && Time.frameCount % 60 == 0)
+                {
+                    Log.Message($"[FullBodyPortraitPanel] 口型加载: persona={persona.defName}, layer={mouthLayerName}, portraitPath={persona.portraitPath}, texture={mouthTexture?.name ?? "NULL"}");
+                }
+                
+                if (mouthTexture == null && mouthLayerName != "Closed_mouth")
+                {
+                    // 第1级回退：Closed_mouth（子 Mod 的闭嘴纹理）
+                    mouthTexture = PortraitLoader.GetLayerTexture(persona, "Closed_mouth", suppressWarning: true);
+                    if (Prefs.DevMode && mouthTexture != null)
+                    {
+                        Log.Message($"[FullBodyPortraitPanel] 口型回退到 Closed_mouth: {mouthTexture.name}");
+                    }
+                }
+                
+                if (mouthTexture == null && mouthLayerName != "Neutral_mouth")
+                {
+                    // 第2级回退：Neutral_mouth（子 Mod 的微张纹理）
+                    mouthTexture = PortraitLoader.GetLayerTexture(persona, "Neutral_mouth", suppressWarning: true);
+                    if (Prefs.DevMode && mouthTexture != null)
+                    {
+                        Log.Message($"[FullBodyPortraitPanel] 口型回退到 Neutral_mouth: {mouthTexture.name}");
+                    }
+                }
+                
+                // 不再回退到 opened_mouth（主 Mod 旧纹理），避免子 Mod 使用错误纹理
+
                 if (mouthTexture != null)
                 {
                     Widgets.DrawTextureFitted(rect, mouthTexture, 1.0f);
+                }
+                else if (Prefs.DevMode && Time.frameCount % 60 == 0)
+                {
+                    Log.Warning($"[FullBodyPortraitPanel] ⚠️ 口型纹理全部加载失败: {mouthLayerName}");
                 }
             }
             
@@ -1212,8 +1247,34 @@ namespace TheSecondSeat.UI
             
             string personaName = GetPersonaName(currentPersona);
             
-            // 使用 TSS_AssetLoader 检查立绘存在性
-            return TSS_AssetLoader.HasPortrait(personaName);
+            // 1. 优先检查 XML 中定义的 portraitPath (针对 Sideria 等子 Mod)
+            if (!string.IsNullOrEmpty(currentPersona.portraitPath))
+            {
+                if (TSS_AssetLoader.TextureExists(currentPersona.portraitPath))
+                {
+                    return true;
+                }
+                
+                // 尝试加上 .png 后缀检查 (ContentFinder 不需要后缀，但 TextureExists 内部调用 LoadTexture 可能依赖 ContentFinder)
+                // TSS_AssetLoader.TextureExists 最终调用 ContentFinder<Texture2D>.Get(path, reportFailure: false)
+                // 所以不需要加后缀。
+                
+                // 调试日志：如果路径存在但检查失败
+                if (Prefs.DevMode && Time.frameCount % 300 == 0) // 每5秒打印一次避免刷屏
+                {
+                    Log.Warning($"[FullBodyPortraitPanel] portraitPath 检查失败: {currentPersona.portraitPath}");
+                }
+            }
+
+            // 2. 使用 TSS_AssetLoader 检查默认路径
+            bool hasPortrait = TSS_AssetLoader.HasPortrait(personaName);
+            
+            if (!hasPortrait && Prefs.DevMode && Time.frameCount % 300 == 0)
+            {
+                Log.Warning($"[FullBodyPortraitPanel] 立绘检查失败: {personaName}, PortraitPath: {currentPersona.portraitPath}");
+            }
+            
+            return hasPortrait;
         }
         
         /// <summary>
