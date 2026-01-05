@@ -256,7 +256,11 @@ namespace TheSecondSeat.PersonaGeneration
             if (layerName != state.lockedMouthLayer)
             {
                 state.lockedMouthLayer = layerName;
-                // 日志已静默：Viseme切换
+                // ⭐ v1.8.3: 添加诊断日志
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[MouthAnimationSystem] 口型切换 (音素模式): {defName} → {layerName} (Viseme: {state.currentViseme})");
+                }
             }
             
             return layerName;
@@ -358,7 +362,11 @@ namespace TheSecondSeat.PersonaGeneration
             {
                 state.lockedMouthLayer = layerName;
                 state.lastStateChangeTime = currentTime;
-                // 日志已静默：嘴型切换
+                // ⭐ v1.8.3: 添加诊断日志
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[MouthAnimationSystem] 口型切换 (模拟模式): {defName} → {layerName} (开合度: {state.currentOpenness:F2}, Viseme: {viseme})");
+                }
             }
             
             return layerName;
@@ -374,8 +382,19 @@ namespace TheSecondSeat.PersonaGeneration
         {
             if (!speakingStates.TryGetValue(defName, out var state))
             {
-                return;
+                // 如果状态不存在，尝试创建它（确保首次调用也能生效）
+                state = new SpeakingState
+                {
+                    IsSpeaking = false,
+                    visemeQueue = new Queue<VisemeCode>(),
+                    currentViseme = VisemeCode.Closed,
+                    targetViseme = VisemeCode.Closed
+                };
+                speakingStates[defName] = state;
             }
+            
+            // ⭐ v1.8.4: 收到 Viseme 数据时，自动启用音素模式
+            EnablePhonemeMode = true;
             
             state.visemeQueue.Clear();
             foreach (var viseme in visemes)
@@ -383,7 +402,10 @@ namespace TheSecondSeat.PersonaGeneration
                 state.visemeQueue.Enqueue(viseme);
             }
             
-            // 日志已静默：Viseme序列接收
+            if (Prefs.DevMode)
+            {
+                Log.Message($"[MouthAnimationSystem] Received {visemes.Count} visemes for {defName}. EnablePhonemeMode set to true.");
+            }
         }
         
         /// <summary>
