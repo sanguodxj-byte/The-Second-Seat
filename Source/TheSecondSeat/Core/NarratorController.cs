@@ -45,6 +45,27 @@ namespace TheSecondSeat.Core
         public string LastDialogue => lastDialogue;
         public bool IsProcessing => isProcessing;
         public string LastError => lastError;
+        
+        /// <summary>
+        /// 获取当前叙事者人格的 defName（静态属性，供外部访问）
+        /// </summary>
+        public static string? CurrentPersonaDefName
+        {
+            get
+            {
+                try
+                {
+                    var controller = Current.Game?.GetComponent<NarratorController>();
+                    if (controller?.narratorManager != null)
+                    {
+                        var persona = controller.narratorManager.GetCurrentPersona();
+                        return persona?.defName;
+                    }
+                }
+                catch { }
+                return null;
+            }
+        }
 
         public NarratorController(Game game) : base()
         {

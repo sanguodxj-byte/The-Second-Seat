@@ -1,0 +1,153 @@
+{
+  "Expressions": {
+    "Neutral": {
+      "Description": "默认状态，平静自然",
+      "Eyes": "opened_eyes",
+      "Mouth": "Closed_mouth",
+      "BlinkIntervalMin": 3.0,
+      "BlinkIntervalMax": 6.0,
+      "BreathingSpeed": 1.0,
+      "BreathingAmplitude": 1.0,
+      "DefaultMouthShape": "Neutral_mouth"
+    },
+    "Happy": {
+      "Description": "开心，愉悦",
+      "Eyes": "happy_eyes",
+      "Mouth": "happy_mouth",
+      "BlinkIntervalMin": 2.5,
+      "BlinkIntervalMax": 5.0,
+      "BreathingSpeed": 1.2,
+      "BreathingAmplitude": 0.8,
+      "DefaultMouthShape": "happy_mouth",
+      "Variants": [
+        {
+          "Level": 1,
+          "Description": "露齿笑",
+          "Mouth": "happy1_mouth"
+        },
+        {
+          "Level": 2,
+          "Description": "露齿笑(变体)",
+          "Mouth": "happy2_mouth"
+        },
+        {
+          "Level": 3,
+          "Description": "大笑",
+          "Mouth": "larger_mouth"
+        }
+      ]
+    },
+    "Sad": {
+      "Description": "悲伤，失落",
+      "Eyes": "sad_eyes",
+      "Mouth": "sad_mouth",
+      "BlinkIntervalMin": 4.0,
+      "BlinkIntervalMax": 7.0,
+      "BreathingSpeed": 0.7,
+      "BreathingAmplitude": 1.3,
+      "DefaultMouthShape": "sad_mouth"
+    },
+    "Angry": {
+      "Description": "愤怒，生气",
+      "Eyes": "angry_eyes",
+      "Mouth": "angry_mouth",
+      "Flush": "angry_flush",
+      "BlinkIntervalMin": 4.0,
+      "BlinkIntervalMax": 8.0,
+      "BreathingSpeed": 1.3,
+      "BreathingAmplitude": 1.1,
+      "DefaultMouthShape": "angry_mouth"
+    },
+    "Surprised": {
+      "Description": "惊讶，意外",
+      "Eyes": "opened_eyes",
+      "Mouth": "O_mouth",
+      "BlinkIntervalMin": 1.5,
+      "BlinkIntervalMax": 3.0,
+      "BreathingSpeed": 1.5,
+      "BreathingAmplitude": 1.2,
+      "DefaultMouthShape": "O_mouth"
+    },
+    "Worried": {
+      "Description": "担忧，焦虑",
+      "Eyes": "sad_eyes",
+      "Mouth": "medium_mouth",
+      "BlinkIntervalMin": 3.0,
+      "BlinkIntervalMax": 6.0,
+      "BreathingSpeed": 1.0,
+      "BreathingAmplitude": 3.0,
+      "DefaultMouthShape": "medium_mouth"
+    },
+    "Smug": {
+      "Description": "得意，自信",
+      "Eyes": "sumg_eyes",
+      "Mouth": "sumg_mouth",
+      "BlinkIntervalMin": 3.5,
+      "BlinkIntervalMax": 6.5,
+      "BreathingSpeed": 0.9,
+      "BreathingAmplitude": 0.9,
+      "DefaultMouthShape": "sumg_mouth"
+    },
+    "Disappointed": {
+      "Description": "失望，无奈",
+      "Eyes": "sad_eyes",
+      "Mouth": "Closed_mouth",
+      "BlinkIntervalMin": 3.0,
+      "BlinkIntervalMax": 6.0,
+      "BreathingSpeed": 0.35,
+      "BreathingAmplitude": 1.25,
+      "DefaultMouthShape": "sad_mouth"
+    },
+    "Thoughtful": {
+      "Description": "沉思，思考",
+      "Eyes": "confused_eyes",
+      "Mouth": "U_mouth",
+      "BlinkIntervalMin": 3.0,
+      "BlinkIntervalMax": 6.0,
+      "BreathingSpeed": 0.45,
+      "BreathingAmplitude": 1.75,
+      "DefaultMouthShape": "Neutral_mouth"
+    },
+    "Annoyed": {
+      "Description": "恼怒，烦躁",
+      "Eyes": "angry_eyes",
+      "Mouth": "Closed_mouth",
+      "BlinkIntervalMin": 3.0,
+      "BlinkIntervalMax": 6.0,
+      "BreathingSpeed": 1.25,
+      "BreathingAmplitude": 3.5,
+      "DefaultMouthShape": "Neutral_mouth"
+    },
+    "Playful": {
+      "Description": "调皮，玩笑",
+      "Eyes": "playful_eyes",
+      "Mouth": "happy_mouth",
+      "BlinkIntervalMin": 3.0,
+      "BlinkIntervalMax": 6.0,
+      "BreathingSpeed": 0.7,
+      "BreathingAmplitude": 2.5,
+      "DefaultMouthShape": "happy_mouth"
+    },
+    "Shy": {
+      "Description": "害羞，羞涩",
+      "Eyes": "closed_eyes",
+      "Mouth": "Closed_mouth",
+      "Flush": "shy_flush",
+      "BlinkIntervalMin": 2.0,
+      "BlinkIntervalMax": 4.0,
+      "BreathingSpeed": 1.1,
+      "BreathingAmplitude": 0.9,
+      "DefaultMouthShape": "Neutral_mouth"
+    },
+    "Confused": {
+      "Description": "困惑，疑惑",
+      "Eyes": "confused_eyes",
+      "Mouth": "Neutral_mouth",
+      "BlinkIntervalMin": 2.0,
+      "BlinkIntervalMax": 4.0,
+      "BreathingSpeed": 1.0,
+      "BreathingAmplitude": 1.0,
+      "DefaultMouthShape": "Neutral_mouth"
+    }
+  }
+}

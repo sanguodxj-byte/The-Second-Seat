@@ -61,6 +61,9 @@ namespace TheSecondSeat.PersonaGeneration
         
         // ? 新增：当前选择的变体编号（0=基础版本，1-5=变体）
         public int CurrentVariant { get; set; } = 0;
+
+        // ? 新增：表情强度（0=默认/随机，1+=指定强度级别）
+        public int Intensity { get; set; } = 0;
     }
 
     /// <summary>
@@ -105,7 +108,7 @@ namespace TheSecondSeat.PersonaGeneration
         /// ? v1.6.20: 清除分层立绘缓存，强制重新合成
         /// ? v1.6.30: 应用感情驱动动画
         /// </summary>
-        public static void SetExpression(string personaDefName, ExpressionType expression, int durationTicks = EXPRESSION_DURATION_TICKS, string reason = "")
+        public static void SetExpression(string personaDefName, ExpressionType expression, int durationTicks = EXPRESSION_DURATION_TICKS, string reason = "", int intensity = 0)
         {
             var state = GetExpressionState(personaDefName);
             
@@ -119,8 +122,8 @@ namespace TheSecondSeat.PersonaGeneration
                 return;
             }
             
-            // 如果表情相同，跳过
-            if (state.CurrentExpression == expression)
+            // 如果表情相同且强度相同，跳过
+            if (state.CurrentExpression == expression && state.Intensity == intensity)
             {
                 return;
             }
@@ -142,15 +145,27 @@ namespace TheSecondSeat.PersonaGeneration
                 LayeredPortraitCompositor.ClearCache(personaDefName, expression);
             }
             
-            // ? 随机选择变体编号（1-5）
+            // ? 设置变体编号/强度
             // Neutral 表情不使用变体（variant = 0）
             if (expression == ExpressionType.Neutral)
             {
                 state.CurrentVariant = 0;
+                state.Intensity = 0;
             }
             else
             {
-                state.CurrentVariant = UnityEngine.Random.Range(1, 6); // 1-5
+                if (intensity > 0)
+                {
+                    // 如果指定了强度，使用强度作为变体
+                    state.Intensity = intensity;
+                    state.CurrentVariant = intensity;
+                }
+                else
+                {
+                    // 否则随机选择变体编号（1-5）
+                    state.Intensity = 0;
+                    state.CurrentVariant = UnityEngine.Random.Range(1, 6); // 1-5
+                }
             }
             
             // 开始过渡
@@ -169,12 +184,12 @@ namespace TheSecondSeat.PersonaGeneration
         /// <summary>
         /// ? SetExpression重载 - 接受ExpressionTrigger参数
         /// </summary>
-        public static void SetExpression(string personaDefName, ExpressionType expression, ExpressionTrigger trigger, int durationTicks = EXPRESSION_DURATION_TICKS)
+        public static void SetExpression(string personaDefName, ExpressionType expression, ExpressionTrigger trigger, int durationTicks = EXPRESSION_DURATION_TICKS, int intensity = 0)
         {
             var state = GetExpressionState(personaDefName);
             state.LastTrigger = trigger;  // 设置触发器类型
             
-            SetExpression(personaDefName, expression, durationTicks, trigger.ToString());
+            SetExpression(personaDefName, expression, durationTicks, trigger.ToString(), intensity);
         }
         
         /// <summary>
@@ -191,19 +206,23 @@ namespace TheSecondSeat.PersonaGeneration
         public static void UpdateExpressionByAffinity(string personaDefName, float affinity)
         {
             ExpressionType expression;
+            int intensity = 0;
             
-            // ? 修改：30以上好感度默认为Happy
+            // ? 修改：30以上好感度默认为Happy，根据程度分级
             if (affinity >= 80f)
             {
-                expression = ExpressionType.Happy; // 未来可以用 Happy2 或 Happy3
+                expression = ExpressionType.Happy;
+                intensity = 3; // Happy Level 3 (larger_mouth)
             }
             else if (affinity >= 60f)
             {
                 expression = ExpressionType.Happy;
+                intensity = 2; // Happy Level 2 (happy2_mouth)
             }
             else if (affinity >= 30f)
             {
-                expression = ExpressionType.Happy; // ? 30以上也是Happy
+                expression = ExpressionType.Happy;
+                intensity = 1; // Happy Level 1 (happy1_mouth)
             }
             else if (affinity >= 0f)
             {
@@ -222,7 +241,7 @@ namespace TheSecondSeat.PersonaGeneration
                 expression = ExpressionType.Angry;
             }
             
-            SetExpression(personaDefName, expression, ExpressionTrigger.Affinity);
+            SetExpression(personaDefName, expression, ExpressionTrigger.Affinity, EXPRESSION_DURATION_TICKS, intensity);
         }
         
         /// <summary>
@@ -521,18 +540,20 @@ namespace TheSecondSeat.PersonaGeneration
                 _ => ""
             };
 
-            // ? 使用缓存的变体编号
+            // ? 使用缓存的变体编号或强度
             var state = GetExpressionState(personaDefName);
-            int variant = state.CurrentVariant;
+            
+            // 优先使用 Intensity，如果没有则使用 CurrentVariant
+            int suffixNum = state.Intensity > 0 ? state.Intensity : state.CurrentVariant;
             
             // 如果是变体 0（基础版本），直接返回基础后缀
-            if (variant == 0 || string.IsNullOrEmpty(baseSuffix))
+            if (suffixNum == 0 || string.IsNullOrEmpty(baseSuffix))
             {
                 return baseSuffix;
             }
             
             // 返回带变体编号的后缀（如 _happy1, _happy2, _sad3...）
-            return $"{baseSuffix}{variant}";
+            return $"{baseSuffix}{suffixNum}";
         }
 
         /// <summary>

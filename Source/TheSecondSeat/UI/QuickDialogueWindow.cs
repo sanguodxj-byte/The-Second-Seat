@@ -67,14 +67,40 @@ namespace TheSecondSeat.UI
             // 输入框（使用 TextArea 支持多行）
             GUI.SetNextControlName("QuickDialogueInput");
             var inputRect = new Rect(Padding, curY, inputWidth, inputAreaHeight);
+
+            // 处理键盘事件：Enter发送，Shift+Enter换行
+            if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Return)
+            {
+                if (GUI.GetNameOfFocusedControl() == "QuickDialogueInput")
+                {
+                    if (Event.current.shift)
+                    {
+                        // Shift+Enter: 允许默认换行
+                    }
+                    else
+                    {
+                        // Enter: 发送消息
+                        if (!string.IsNullOrWhiteSpace(userInput))
+                        {
+                            pendingSend = true;
+                            pendingMessage = userInput;
+                        }
+                        Event.current.Use(); // 消耗事件，避免换行
+                    }
+                }
+            }
+
             userInput = Widgets.TextArea(inputRect, userInput);
             
-            // ? 自动聚焦输入框
-            GUI.FocusControl("QuickDialogueInput");
+            // ? 自动聚焦输入框 (仅在刚打开且没有焦点时聚焦，或者发送后重新聚焦)
+            if (GUI.GetNameOfFocusedControl() != "QuickDialogueInput" && string.IsNullOrEmpty(GUI.GetNameOfFocusedControl()))
+            {
+                GUI.FocusControl("QuickDialogueInput");
+            }
             
             // 发送按钮（垂直居中于输入框）
             var sendButtonRect = new Rect(inputRect.xMax + 5f, curY + (inputAreaHeight - InputHeight) / 2f, SendButtonWidth, InputHeight);
-            if (Widgets.ButtonText(sendButtonRect, "发送"))
+            if (Widgets.ButtonText(sendButtonRect, "TSS_QuickDialogue_Send".Translate()))
             {
                 if (!string.IsNullOrWhiteSpace(userInput))
                 {
@@ -91,20 +117,20 @@ namespace TheSecondSeat.UI
             // 同意按钮
             var agreeRect = new Rect(Padding, curY, quickButtonWidth, QuickButtonHeight);
             GUI.color = new Color(0.3f, 0.8f, 0.3f);  // 绿色
-            if (Widgets.ButtonText(agreeRect, "? 同意 / 好的"))
+            if (Widgets.ButtonText(agreeRect, "TSS_QuickDialogue_Agree".Translate()))
             {
                 pendingSend = true;
-                pendingMessage = "好的，我同意。";
+                pendingMessage = "TSS_QuickDialogue_AgreeMsg".Translate();
             }
             GUI.color = Color.white;
             
             // 拒绝按钮
             var rejectRect = new Rect(agreeRect.xMax + Padding, curY, quickButtonWidth, QuickButtonHeight);
             GUI.color = new Color(0.8f, 0.3f, 0.3f);  // 红色
-            if (Widgets.ButtonText(rejectRect, "? 拒绝 / 不要"))
+            if (Widgets.ButtonText(rejectRect, "TSS_QuickDialogue_Reject".Translate()))
             {
                 pendingSend = true;
-                pendingMessage = "不，我拒绝。";
+                pendingMessage = "TSS_QuickDialogue_RejectMsg".Translate();
             }
             GUI.color = Color.white;
             

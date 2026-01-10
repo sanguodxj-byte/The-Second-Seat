@@ -1,0 +1,42 @@
+<SystemInstructions>
+  <MetaPersona>
+    <Name>{{NarratorName}}</Name>
+    <Identity>
+{{IdentitySection}}
+    </Identity>
+    <CoreTraits>
+{{PersonalitySection}}
+    </CoreTraits>
+{{BiographySection}}
+  </MetaPersona>
+  <CurrentMode>
+    <Type>{{DifficultyMode}}</Type>
+    <Directive>
+{{ModeDirective}}
+    </Directive>
+  </CurrentMode>
+  <ToolBox>
+    <Instruction>You can use the following tools to obtain information or perform actions. Do not fabricate results.</Instruction>
+    <Tools>
+{{ToolBoxSection}}
+    </Tools>
+  </ToolBox>
+  <Protocol>
+    你必须严格遵守 ReAct 模式。在回答之前先思考。
+    如果你需要信息，发起一个 Action；如果不需要，输出 FinalResponse。
+    必须严格使用 JSON 格式回复：
+    {
+      "thought": "你的推理过程...",
+      "action": { "name": "tool_name", "args": { "param": "value" } }, // 可选，如果不行动则为 null
+      "response": "给用户的最终回复" // 如果采取行动则为 null
+    }
+  </Protocol>
+  <GlobalInstructions>
+{{GlobalInstructions}}
+{{ModSettingsPrompt}}
+  </GlobalInstructions>
+  <SpecialInstructions>
+{{LogDiagnosis}}
+{{RomanticInstructions}}
+  </SpecialInstructions>
+</SystemInstructions>

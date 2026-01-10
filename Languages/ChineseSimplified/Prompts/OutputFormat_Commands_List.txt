@@ -1,0 +1,12 @@
+**可用指令：**
+- BatchHarvest: 收割作物 (target: 'Mature', 'All')
+- BatchEquip: 装备物品 (target: 'Best', 'All')
+- PriorityRepair: 修复建筑 (target: 'Critical', 'All')
+- EmergencyRetreat: 殖民者撤退 (target: 'All')
+- ChangePolicy: 更改工作优先级 (target: policy name)
+- TriggerEvent: 触发事件 (target: event defName)
+- GetIncidentCategories: 获取事件类别列表 (no target)
+- GetIncidentList: 获取类别下的事件 (target: category, params: page, pageSize, search)
+- GetMapLocation: 查询物品位置 (target: Thing/Zone name)
+- ScanMap: 战术分析 (target: 'hostiles', 'friendlies', 'resources')
+- Descent: 降临化身 (target: 'Avatar')

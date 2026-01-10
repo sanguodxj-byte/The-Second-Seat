@@ -166,9 +166,16 @@ namespace TheSecondSeat.TTS
                 
                 // 静默保存
 
+                // ⭐ v1.8.6: 统一生成模拟 Viseme 序列（如果提供了 personaDefName）
+                // 确保所有 TTS Provider (Azure, Edge, Local, OpenAI) 都能有口型动画
+                if (!string.IsNullOrEmpty(personaDefName))
+                {
+                    GenerateSimpleVisemeSequence(cleanText, personaDefName);
+                }
+
                 // 在主线程自动打开音频播放器（传递 personaDefName）
                 string capturedPersonaDefName = personaDefName;  // 捕获变量用于闭包
-                Verse.LongEventHandler.ExecuteWhenFinished(() => 
+                Verse.LongEventHandler.ExecuteWhenFinished(() =>
                 {
                     AutoPlayAudioFile(filePath, capturedPersonaDefName);
                 });
@@ -461,11 +468,7 @@ namespace TheSecondSeat.TTS
                 
                 
                 // ⭐ v1.6.74: 备用方案 - 使用简单的 Viseme 序列模拟
-                // 基于文本长度估算 Viseme 序列（粗略估计）
-                if (!string.IsNullOrEmpty(personaDefName))
-                {
-                    GenerateSimpleVisemeSequence(text, personaDefName);
-                }
+                // 已移至 SpeakAsync 统一处理
                 
                 return audioData;
             }
@@ -485,7 +488,7 @@ namespace TheSecondSeat.TTS
         /// ⭐ v1.6.74: 【备用方案】生成简单的 Viseme 序列
         /// 基于文本分析粗略估算口型变化
         /// 注意：这不是真正的音素同步，仅作为演示和备用方案
-        /// ⭐ v1.8.4: 改进 - 增加每字符的帧数以匹配语速
+        /// ⭐ v1.8.6: 改进算法 - 引入"辅音-元音"结构，增加口型动态感
         /// </summary>
         private void GenerateSimpleVisemeSequence(string text, string personaDefName)
         {
@@ -493,61 +496,98 @@ namespace TheSecondSeat.TTS
             {
                 var visemes = new List<PersonaGeneration.VisemeCode>();
                 
-                // 简单规则：基于字符类型估算 Viseme
-                // MouthAnimationSystem 每 0.1s 消耗一个 Viseme
-                // 正常语速约每秒 3-5 个字，即每个字持续 0.2-0.3s (2-3 帧)
+                // 预设缓冲
+                visemes.Add(PersonaGeneration.VisemeCode.Closed);
+
                 foreach (char c in text)
                 {
-                    PersonaGeneration.VisemeCode mainViseme;
+                    if (char.IsWhiteSpace(c) || char.IsPunctuation(c))
+                    {
+                        visemes.Add(PersonaGeneration.VisemeCode.Closed);
+                        visemes.Add(PersonaGeneration.VisemeCode.Closed);
+                        continue;
+                    }
 
-                    // 中文字符
-                    if (c >= 0x4E00 && c <= 0x9FA5)
+                    // 1. 核心口型选择 (Core Viseme)
+                    // 增加大口型 (Large, OShape) 和特色口型 (Smile) 的权重，避免单调
+                    int hash = Math.Abs(c.GetHashCode());
+                    PersonaGeneration.VisemeCode coreViseme;
+                    
+                    // 中文/日文/韩文等宽字符 (Unicode 范围粗略判断)
+                    if (c >= 0x2E80)
                     {
-                        // 随机 Medium/Large（中文张嘴较大）
-                        mainViseme = UnityEngine.Random.value > 0.5f
-                            ? PersonaGeneration.VisemeCode.Medium
-                            : PersonaGeneration.VisemeCode.Large;
-                            
-                        // 生成 3 帧：[主口型, 主口型, 微张]
-                        visemes.Add(mainViseme);
-                        visemes.Add(mainViseme);
+                        int val = hash % 100;
+                        if (val < 30) coreViseme = PersonaGeneration.VisemeCode.Large;      // A (30%)
+                        else if (val < 55) coreViseme = PersonaGeneration.VisemeCode.OShape; // O (25%)
+                        else if (val < 80) coreViseme = PersonaGeneration.VisemeCode.Smile;  // E (25%)
+                        else coreViseme = PersonaGeneration.VisemeCode.Medium;               // U (20%)
+                        // Small (Neutral) 很少作为核心口型，因为不够明显
+                    }
+                    else // 英文/拉丁字符
+                    {
+                         // 简单元音映射
+                         char lower = char.ToLowerInvariant(c);
+                         if ("aeiou".IndexOf(lower) >= 0)
+                         {
+                             coreViseme = lower switch
+                             {
+                                 'a' => PersonaGeneration.VisemeCode.Large,
+                                 'e' => PersonaGeneration.VisemeCode.Smile,
+                                 'i' => PersonaGeneration.VisemeCode.Smile,
+                                 'o' => PersonaGeneration.VisemeCode.OShape,
+                                 'u' => PersonaGeneration.VisemeCode.Medium,
+                                 _ => PersonaGeneration.VisemeCode.Medium
+                             };
+                         }
+                         else
+                         {
+                             // 辅音：随机 Small 或 Closed
+                             coreViseme = (hash % 2 == 0) ? PersonaGeneration.VisemeCode.Small : PersonaGeneration.VisemeCode.Closed;
+                         }
+                    }
+
+                    // 2. 构建 "辅音-元音-保持" 结构 (每字约 3 帧 / 0.3s)
+                    
+                    // 帧1: 起始/辅音 (Onset) - 快速过渡
+                    // 如果核心是大口型，起始帧用 Small/Smile 过渡；如果是辅音，直接 Closed
+                    if (coreViseme == PersonaGeneration.VisemeCode.Large || coreViseme == PersonaGeneration.VisemeCode.OShape)
+                    {
                         visemes.Add(PersonaGeneration.VisemeCode.Small);
                     }
-                    // 英文元音
-                    else if ("aeiouAEIOU".IndexOf(c) >= 0)
+                    else if (coreViseme == PersonaGeneration.VisemeCode.Smile)
                     {
-                        mainViseme = PersonaGeneration.VisemeCode.Medium;
-                        // 生成 2 帧：[主口型, 微张]
-                        visemes.Add(mainViseme);
                         visemes.Add(PersonaGeneration.VisemeCode.Small);
                     }
-                    // 标点符号 (停顿)
-                    else if (char.IsPunctuation(c) || char.IsWhiteSpace(c))
+                    else
                     {
-                         // 生成 2 帧闭嘴
-                        visemes.Add(PersonaGeneration.VisemeCode.Closed);
+                        // 辅音或小口型，起始帧可以是闭合
                         visemes.Add(PersonaGeneration.VisemeCode.Closed);
                     }
-                    // 其他字符 (辅音等)
-                    else if (char.IsLetter(c))
+
+                    // 帧2: 核心口型 (Nucleus) - 爆发
+                    visemes.Add(coreViseme);
+
+                    // 帧3: 保持或收尾 (Coda)
+                    // 大口型保持一帧，增强视觉冲击力
+                    if (coreViseme == PersonaGeneration.VisemeCode.Large || coreViseme == PersonaGeneration.VisemeCode.OShape || coreViseme == PersonaGeneration.VisemeCode.Smile)
                     {
-                        mainViseme = PersonaGeneration.VisemeCode.Small;
-                        // 生成 1 帧
-                        visemes.Add(mainViseme);
+                        visemes.Add(coreViseme);
+                    }
+                    else
+                    {
+                        // 辅音或小口型，快速收尾
+                        visemes.Add(PersonaGeneration.VisemeCode.Small);
                     }
                 }
                 
+                // 结束缓冲
+                visemes.Add(PersonaGeneration.VisemeCode.Closed);
+                visemes.Add(PersonaGeneration.VisemeCode.Closed);
+
                 // 如果序列不为空，推送到动画系统
                 if (visemes.Count > 0)
                 {
-                    // 添加开始和结束的缓冲
-                    visemes.Insert(0, PersonaGeneration.VisemeCode.Closed);
-                    visemes.Add(PersonaGeneration.VisemeCode.Closed);
-                    visemes.Add(PersonaGeneration.VisemeCode.Closed);
-                    
-                    // 推送到 MouthAnimationSystem
                     PersonaGeneration.MouthAnimationSystem.PushVisemeSequence(personaDefName, visemes);
-                    
                 }
             }
             catch (Exception ex)

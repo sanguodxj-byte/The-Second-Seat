@@ -40,6 +40,10 @@ namespace TheSecondSeat.Narrator
         private int ticksSinceLoad = 0;
         private const int GreetingDelayTicks = 60; // 1秒后问候（60 ticks）
 
+        // ? 日志收集
+        private static List<LogError> recentErrors = new List<LogError>();
+        private static readonly object logLock = new object();
+
         public float Favorability => favorability;
         public List<FavorabilityEvent> RecentEvents => recentEvents;
 
@@ -51,6 +55,32 @@ namespace TheSecondSeat.Narrator
             
             // ⭐ v1.6.65: 初始化 RimAgent
             InitializeRimAgent();
+
+            // 注册日志监听（防止重复注册）
+            Application.logMessageReceived -= HandleLogMessage;
+            Application.logMessageReceived += HandleLogMessage;
+        }
+
+        private void HandleLogMessage(string condition, string stackTrace, LogType type)
+        {
+            if (type != LogType.Error && type != LogType.Exception) return;
+            if (ShouldIgnoreError(condition)) return;
+
+            lock (logLock)
+            {
+                recentErrors.Add(new LogError
+                {
+                    Message = TruncateMessage(condition, 200),
+                    StackTrace = TruncateMessage(stackTrace, 300),
+                    IsException = type == LogType.Exception || condition.Contains("Exception")
+                });
+
+                // 保持最近 50 条
+                if (recentErrors.Count > 50)
+                {
+                    recentErrors.RemoveAt(0);
+                }
+            }
         }
         
         /// <summary>
@@ -561,135 +591,15 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
         }
         
         /// <summary>
-        /// ? 新增：检查最近的日志错误
+        /// ? 新增：检查最近的日志错误 (Optimized)
         /// </summary>
         private List<LogError> CheckRecentLogErrors()
         {
-            var errors = new List<LogError>();
-            
-            try
+            lock (logLock)
             {
-                // 使用反射获取 RimWorld 日志消息队列
-                var logType = typeof(Log);
-                var messageQueueField = logType.GetField("messageQueue", 
-                    System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
-                
-                if (messageQueueField == null)
-                {
-                    return errors;
-                }
-                
-                var messageQueue = messageQueueField.GetValue(null);
-                if (messageQueue == null)
-                    return errors;
-                
-                // 尝试获取消息列表
-                var messagesProperty = messageQueue.GetType().GetProperty("Messages");
-                if (messagesProperty == null)
-                {
-                    // 尝试其他方式：直接转为 IEnumerable
-                    var enumerableQueue = messageQueue as System.Collections.IEnumerable;
-                    if (enumerableQueue == null)
-                        return errors;
-                    
-                    var logMessages = new List<object>();
-                    foreach (var item in enumerableQueue)
-                    {
-                        logMessages.Add(item);
-                    }
-                    
-                    ProcessLogMessages(logMessages, errors);
-                }
-                else
-                {
-                    var messages = messagesProperty.GetValue(messageQueue) as System.Collections.IList;
-                    if (messages != null)
-                    {
-                        var logMessages = new List<object>();
-                        foreach (var item in messages)
-                        {
-                            logMessages.Add(item);
-                        }
-                        ProcessLogMessages(logMessages, errors);
-                    }
-                }
-            }
-            catch
-            {
-                // 静默处理日志检查失败
-            }
-            
-            return errors;
-        }
-        
-        /// <summary>
-        /// ? 处理日志消息列表
-        /// </summary>
-        private void ProcessLogMessages(List<object> logMessages, List<LogError> errors)
-        {
-            if (logMessages.Count == 0)
-                return;
-            
-            // 只检查最近的 50 条日志
-            int startIndex = Math.Max(0, logMessages.Count - 50);
-            
-            for (int i = startIndex; i < logMessages.Count; i++)
-            {
-                var msg = logMessages[i];
-                if (msg == null) continue;
-                
-                // 使用反射获取消息类型和内容
-                var msgType = msg.GetType();
-                var typeProperty = msgType.GetProperty("type") ?? msgType.GetField("type")?.GetValue(msg) as System.Reflection.PropertyInfo;
-                var textProperty = msgType.GetProperty("text") ?? msgType.GetField("text")?.GetValue(msg) as System.Reflection.PropertyInfo;
-                
-                // 尝试直接访问字段
-                var typeField = msgType.GetField("type");
-                var textField = msgType.GetField("text");
-                var stackTraceField = msgType.GetField("stackTrace");
-                
-                object? typeValue = null;
-                string? textValue = null;
-                string? stackTraceValue = null;
-                
-                if (typeField != null)
-                    typeValue = typeField.GetValue(msg);
-                else if (typeProperty != null)
-                    typeValue = ((System.Reflection.PropertyInfo)typeProperty).GetValue(msg);
-                
-                if (textField != null)
-                    textValue = textField.GetValue(msg) as string;
-                else if (textProperty != null)
-                    textValue = ((System.Reflection.PropertyInfo)textProperty).GetValue(msg) as string;
-                
-                if (stackTraceField != null)
-                    stackTraceValue = stackTraceField.GetValue(msg) as string;
-                
-                // 检查是否为错误类型
-                bool isError = false;
-                if (typeValue != null)
-                {
-                    string typeStr = typeValue.ToString() ?? "";
-                    isError = typeStr.Contains("Error") || typeStr == "2"; // LogMessageType.Error 的值
-                }
-                
-                if (isError && !string.IsNullOrEmpty(textValue))
-                {
-                    // 排除一些常见的无害错误
-                    if (ShouldIgnoreError(textValue))
-                        continue;
-                    
-                    errors.Add(new LogError
-                    {
-                        Message = TruncateMessage(textValue, 200),
-                        StackTrace = TruncateMessage(stackTraceValue ?? "", 300),
-                        IsException = textValue.Contains("Exception") || textValue.Contains("NullReference")
-                    });
-                    
-                    // 最多收集 5 个错误
-                    if (errors.Count >= 5)
-                        break;
-                }
+                // 返回最近5个错误的副本
+                int count = recentErrors.Count;
+                return recentErrors.Skip(Math.Max(0, count - 5)).ToList();
             }
         }
         

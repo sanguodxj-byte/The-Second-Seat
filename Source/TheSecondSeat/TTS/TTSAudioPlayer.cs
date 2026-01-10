@@ -84,6 +84,40 @@ namespace TheSecondSeat.TTS
         }
 
         /// <summary>
+        /// ? v1.6.30: 获取当前音频的 RMS 值（用于口型同步频谱模式）
+        /// </summary>
+        /// <param name="personaDefName">可选：指定人格DefName以确保只获取该人格的音频强度</param>
+        /// <returns>音频 RMS 值 (0.0 - 1.0)</returns>
+        public static float GetAudioRMS(string personaDefName = "")
+        {
+            // 如果指定了人格，且该人格不在说话，则返回 0
+            if (!string.IsNullOrEmpty(personaDefName) && !IsSpeaking(personaDefName))
+            {
+                return 0f;
+            }
+
+            var player = Instance;
+            if (player == null || player.currentAudioSource == null || !player.currentAudioSource.isPlaying)
+            {
+                return 0f;
+            }
+
+            // 获取音频采样数据
+            // 使用 256 个样本进行计算
+            float[] samples = new float[256];
+            player.currentAudioSource.GetOutputData(samples, 0);
+
+            float sum = 0f;
+            for (int i = 0; i < samples.Length; i++)
+            {
+                sum += samples[i] * samples[i]; // 平方
+            }
+
+            // 均方根
+            return Mathf.Sqrt(sum / samples.Length);
+        }
+
+        /// <summary>
         /// ? v1.6.30: 设置播放状态
         /// </summary>
         private static void SetSpeakingState(string personaDefName, bool isSpeaking)

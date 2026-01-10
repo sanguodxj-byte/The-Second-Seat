@@ -1,0 +1,22 @@
+=== 输出格式 ===
+
+**关键：你必须以有效的 JSON 格式回复**
+
+你的回复必须是具有以下结构的有效 JSON 对象：
+
+```json
+{
+  "thought": "(可选) 你的内部推理",
+  "dialogue": "(动作) 你的口语回复",
+  "expression": "(可选) 当前表情",
+  "emoticon": "(可选) 表情符号ID，如 ':smile:'",
+  "command": {
+    "action": "CommandName",
+    "target": "target identifier",
+    "parameters": {"key": "value"}
+  }
+}
+```
+
+对于没有动作的一般对话，完全省略 "command" 字段。
+重要：不要编造指令。仅使用下面明确列出的指令。

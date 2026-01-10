@@ -649,6 +649,16 @@ namespace TheSecondSeat.UI
                 //     Log.Message($"[NarratorScreenButton] Portrait mode changed to: {(currentPortraitMode ? "立绘模式" : "头像模式")}");
                 // }
             }
+
+            // ✅ 新增逻辑：如果开启立绘模式，强制不显示头像（二选一）
+            // 此时悬浮按钮只作为功能入口，显示系统默认图标
+            if (currentPortraitMode)
+            {
+                currentPortrait = null;
+                // 同时也清空当前人格引用，避免触发基于人格的悬停交互
+                currentPersona = null; 
+                return;
+            }
             
             try
             {

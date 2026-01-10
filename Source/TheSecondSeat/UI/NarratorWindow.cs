@@ -134,7 +134,7 @@ namespace TheSecondSeat.UI
             closeOnAccept = false;
             absorbInputAroundWindow = false;
             draggable = true;
-            resizeable = true;
+            resizeable = false; // ? 用户反馈：固定大小以避免布局问题
             
             // ? 不暂停游戏
             forcePause = false;
@@ -427,7 +427,8 @@ namespace TheSecondSeat.UI
         {
             Widgets.DrawBoxSolid(rect, BackgroundDark);
             
-            float inputHeight = 80f;
+            // ? 增加输入区域高度，以适应多行输入
+            float inputHeight = 130f; // 稍微增加高度以确保多行可见性
             Rect chatHistoryRect = new Rect(rect.x, rect.y, rect.width, rect.height - inputHeight - 15f);
             Rect inputAreaRect = new Rect(rect.x, rect.yMax - inputHeight, rect.width, inputHeight);
 
@@ -450,12 +451,25 @@ namespace TheSecondSeat.UI
             float contentHeight = 20f; // 顶部padding
             foreach (var msg in messages)
             {
-                float msgHeight = CalculateMessageHeight(msg, innerRect.width - 100f);
-                contentHeight += msgHeight + 15f; // 消息高度 + 间距
+                // ? 修复：计算高度时必须包含表情包高度
+                float emoticonHeight = (msg.emoticon != null && msg.emoticon.texture != null) ? 120f : 0f;
+                
+                // 注意：这里使用的宽度计算需要与 DrawChatMessage 中的保持一致
+                // DrawChatMessage 中 bubbleWidth = rect.width * 0.7f
+                // rect.width 在这里对应 innerRect.width - 20f (滚动条)
+                float bubbleWidth = (innerRect.width - 20f) * 0.7f;
+                
+                // ? 修复：计算高度时，给宽度减去一个小的缓冲值 (5f)，防止因浮点数精度或 UI 缩放导致换行计算不一致
+                // 如果 CalcHeight 认为宽度够不换行，但实际绘制时换行了，就会导致高度不够。
+                // 减小计算宽度会强制 CalcHeight 倾向于算出更高的高度（更多换行），这是安全的。
+                float textHeight = CalculateMessageHeight(msg, bubbleWidth - 20f - 5f);
+                float totalMsgHeight = textHeight + 20f + emoticonHeight;
+                
+                contentHeight += totalMsgHeight + 15f; // 消息高度 + 间距
             }
             
             // ? 添加充足的底部padding，确保最后一条消息完全可见
-            contentHeight += 80f;
+            contentHeight += 150f;
             
             // ? viewRect高度必须大于等于contentHeight，否则滚动条无法到达底部
             var viewRect = new Rect(0, 0, innerRect.width - 20f, Mathf.Max(contentHeight, innerRect.height));
@@ -594,17 +608,43 @@ namespace TheSecondSeat.UI
             
             // 输入框 + 发送按钮布局
             float buttonWidth = 80f;
+            // ? 增加输入框高度 (35f -> 80f) 以支持多行显示
+            // 使用 TextArea 后，高度需要足够大以显示多行
             Rect textFieldRect = new Rect(innerRect.x + 10f, innerRect.y + 10f,
-                innerRect.width - buttonWidth - 25f, 35f);
-            Rect sendButtonRect = new Rect(innerRect.xMax - buttonWidth - 10f, innerRect.y + 10f,
+                innerRect.width - buttonWidth - 25f, innerRect.height - 20f);
+            // ? 调整发送按钮位置到右下角
+            Rect sendButtonRect = new Rect(innerRect.xMax - buttonWidth - 10f, innerRect.yMax - 45f,
                 buttonWidth, 35f);
 
             // ? 输入框（设置控件名称）
             GUI.SetNextControlName("UserInputField");
+            
+            // ? 监听回车键发送 (Shift+Enter 换行)
+            // 必须在 TextArea 绘制之前拦截，否则 TextArea 会先处理并插入换行符
+            if (Event.current.type == EventType.KeyDown && 
+                (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter) &&
+                GUI.GetNameOfFocusedControl() == "UserInputField")
+            {
+                // 如果没有按下 Shift，则作为发送指令处理
+                if (!Event.current.shift)
+                {
+                    if (!string.IsNullOrWhiteSpace(userInput))
+                    {
+                        pendingSend = true;
+                        pendingMessage = userInput;
+                        userInput = "";
+                    }
+                    // 无论是否发送，都吞噬掉这个 Enter 事件，防止在 TextArea 中换行
+                    Event.current.Use();
+                }
+                // 如果按下了 Shift，不处理事件，让 TextArea 处理（插入换行）
+            }
+
             Text.Font = GameFont.Small;
             
-            // ? 绘制输入框
-            userInput = Widgets.TextField(textFieldRect, userInput);
+            // ? 绘制输入框 (改为 TextArea 以支持多行)
+            // 注意：Widgets.TextArea 可能会在某些情况下吃掉 Enter 键，所以上面的拦截至关重要
+            userInput = Widgets.TextArea(textFieldRect, userInput);
 
             // 发送按钮
             if (DrawModernButton(sendButtonRect, "发送", AccentCyan))
@@ -621,7 +661,8 @@ namespace TheSecondSeat.UI
             // ? AI思考中的提示（如果正在处理）
             if (controller?.IsProcessing ?? false)
             {
-                var statusRect = new Rect(innerRect.x + 10f, innerRect.yMax - 18f, 
+                // ? 调整提示位置到输入框上方，避免被按钮遮挡
+                var statusRect = new Rect(innerRect.x + 10f, innerRect.y - 18f, 
                     innerRect.width - 20f, 15f);
                 Text.Font = GameFont.Tiny;
                 GUI.color = new Color(0.90f, 0.75f, 0.30f);

@@ -601,6 +601,7 @@ namespace TheSecondSeat.Events
 
         /// <summary>
         /// AI 主动触发事件（通过对话）
+        /// 重构：支持通过 IncidentRegistry 精确触发事件，同时保留对通用类型的模糊匹配支持。
         /// </summary>
         public bool TriggerEventByAI(string eventType, string aiComment = "")
         {
@@ -612,29 +613,49 @@ namespace TheSecondSeat.Events
             var agent = GetStorytellerAgent();
             if (agent == null) return false;
 
-            var eventGenerator = AffinityDrivenEvents.Instance;
-            
-            // ? 简化：映射事件类型到正面/负面
-            bool isPositive = eventType.ToLower() switch
+            bool success = false;
+            string resultMsg = "";
+
+            // 1. 尝试通过 IncidentRegistry 精确触发
+            if (IncidentRegistry.TryExecuteIncident(eventType, out resultMsg))
             {
-                "trader" or "商队" or "贸易" => true,
-                "wanderer" or "流浪者" or "加入者" => true,
-                "resource" or "资源" or "空投" => true,
-                _ => false
-            };
-            
-            bool success;
-            if (isPositive)
-            {
-                eventGenerator.TriggerPositiveEvent(map);
-                positiveEventsTriggered++;
                 success = true;
+                // 根据事件本身判断正负面（这里简单判断：如果是威胁则为负面）
+                IncidentDef def = DefDatabase<IncidentDef>.GetNamedSilentFail(eventType);
+                if (def != null)
+                {
+                    if (def.category == IncidentCategoryDefOf.ThreatBig || def.category == IncidentCategoryDefOf.ThreatSmall)
+                        negativeEventsTriggered++;
+                    else
+                        positiveEventsTriggered++; // 简化假设
+                }
             }
             else
             {
-                eventGenerator.TriggerNegativeEvent(map, 0.5f);
-                negativeEventsTriggered++;
-                success = true;
+                // 2. 回退到模糊匹配逻辑（向后兼容）
+                var eventGenerator = AffinityDrivenEvents.Instance;
+                
+                // ? 简化：映射事件类型到正面/负面
+                bool isPositive = eventType.ToLower() switch
+                {
+                    "trader" or "商队" or "贸易" => true,
+                    "wanderer" or "流浪者" or "加入者" => true,
+                    "resource" or "资源" or "空投" => true,
+                    _ => false
+                };
+                
+                if (isPositive)
+                {
+                    eventGenerator.TriggerPositiveEvent(map);
+                    positiveEventsTriggered++;
+                    success = true;
+                }
+                else
+                {
+                    eventGenerator.TriggerNegativeEvent(map, 0.5f);
+                    negativeEventsTriggered++;
+                    success = true;
+                }
             }
 
             if (success)
@@ -642,9 +663,17 @@ namespace TheSecondSeat.Events
                 RecordRecentEvent(eventType);
                 
                 string finalComment = !string.IsNullOrEmpty(aiComment) ? aiComment : "看你如何应对。";
-                Messages.Message($"叙事者：{finalComment}", MessageTypeDefOf.NeutralEvent);
+                // 使用正确的 MessageType
+                MessageTypeDef msgType = MessageTypeDefOf.NeutralEvent;
+                // 尝试根据 eventType 推断类型，或者默认为 Neutral
+                
+                Messages.Message($"叙事者：{finalComment}", msgType);
                 
                 Log.Message($"[OpponentEventController] AI触发事件: {eventType}");
+            }
+            else
+            {
+                Log.Warning($"[OpponentEventController] AI触发事件失败: {eventType} - {resultMsg}");
             }
 
             return success;
@@ -690,8 +719,11 @@ namespace TheSecondSeat.Events
         /// </summary>
         public List<string> GetAvailableEventTypes()
         {
+            // 引导 AI 使用 IncidentRegistry 获取完整列表
+            // 这里保留常用列表作为快速参考
             return new List<string>
             {
+                "NOTE: You can use any IncidentDefName found via IncidentRegistry.",
                 "raid (袭击)",
                 "trader (商队)",
                 "wanderer (流浪者)",

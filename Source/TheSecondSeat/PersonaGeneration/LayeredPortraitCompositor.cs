@@ -86,8 +86,8 @@ namespace TheSecondSeat.PersonaGeneration
                 layers.Add(baseBodyTexture);
                 
                 // 4. ? 根据表情选择需要覆盖的部件（眼睛和嘴巴）
-                string eyesLayerName = GetEyesLayerName(expression);
-                string mouthLayerName = GetMouthLayerName(expression);
+                string eyesLayerName = GetEyesLayerName(expression, config.PersonaDefName);
+                string mouthLayerName = GetMouthLayerName(expression, config.PersonaDefName);
                 
                 // ? 只加载非默认的部件（避免加载opened_eyes和opened_mouth）
                 if (eyesLayerName != "opened_eyes")
@@ -229,8 +229,8 @@ namespace TheSecondSeat.PersonaGeneration
                 layers.Add(baseBodyTexture);
                 
                 // 4. ? 根据表情选择需要覆盖的部件（眼睛和嘴巴）
-                string eyesLayerName = GetEyesLayerName(expression);
-                string mouthLayerName = GetMouthLayerName(expression);
+                string eyesLayerName = GetEyesLayerName(expression, config.PersonaDefName);
+                string mouthLayerName = GetMouthLayerName(expression, config.PersonaDefName);
                 
                 // ? 只加载非默认的部件（避免加载opened_eyes和opened_mouth）
                 if (eyesLayerName != "opened_eyes")
@@ -310,9 +310,20 @@ namespace TheSecondSeat.PersonaGeneration
         /// <summary>
         /// ⭐ 根据表情类型获取眼睛层名称
         /// ⭐ v1.8.1: 修复 Confused 使用 confused_eyes，支持更多眼睛纹理
+        /// ⭐ v1.9.0: 支持从 ExpressionConfig.json 加载配置
         /// </summary>
-        private static string GetEyesLayerName(ExpressionType expression)
+        private static string GetEyesLayerName(ExpressionType expression, string personaDefName = null)
         {
+            // 1. 尝试从配置加载
+            if (ExpressionConfig.Instance.Expressions.TryGetValue(expression.ToString(), out var def))
+            {
+                if (!string.IsNullOrEmpty(def.Eyes))
+                {
+                    return def.Eyes;
+                }
+            }
+
+            // 2. 回退到硬编码逻辑
             return expression switch
             {
                 ExpressionType.Neutral => "opened_eyes",   // 中性表情睁眼（使用 base_body 默认）
@@ -330,9 +341,30 @@ namespace TheSecondSeat.PersonaGeneration
         /// <summary>
         /// ⭐ 根据表情类型获取嘴巴层名称
         /// ⭐ v1.8.1: 修复映射，与 Sideria 纹理文件名对齐
+        /// ⭐ v1.9.0: 支持从 ExpressionConfig.json 加载配置，支持 Variants
         /// </summary>
-        private static string GetMouthLayerName(ExpressionType expression)
+        private static string GetMouthLayerName(ExpressionType expression, string personaDefName = null)
         {
+            // 1. 尝试从配置加载
+            if (ExpressionConfig.Instance.Expressions.TryGetValue(expression.ToString(), out var def))
+            {
+                // 获取变体等级
+                int level = 0;
+                if (!string.IsNullOrEmpty(personaDefName))
+                {
+                    var state = ExpressionSystem.GetExpressionState(personaDefName);
+                    // 优先使用 Intensity，如果没有则使用 CurrentVariant
+                    level = state.Intensity > 0 ? state.Intensity : state.CurrentVariant;
+                }
+
+                string mouth = def.GetMouthForVariant(level);
+                if (!string.IsNullOrEmpty(mouth))
+                {
+                    return mouth;
+                }
+            }
+
+            // 2. 回退到硬编码逻辑
             return expression switch
             {
                 ExpressionType.Neutral => "Closed_mouth",   // ⭐ 修复：中性表情闭嘴

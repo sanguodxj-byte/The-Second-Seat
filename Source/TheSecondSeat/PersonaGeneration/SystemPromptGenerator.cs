@@ -22,6 +22,7 @@ namespace TheSecondSeat.PersonaGeneration
     {
         /// <summary>
         /// ⭐ v1.6.77: 生成完整的 System Prompt（新增日志诊断能力）
+        /// 重构：使用 Master Template 进行生成
         /// </summary>
         public static string GenerateSystemPrompt(
             NarratorPersonaDef personaDef,
@@ -29,55 +30,77 @@ namespace TheSecondSeat.PersonaGeneration
             StorytellerAgent agent,
             AIDifficultyMode difficultyMode = AIDifficultyMode.Assistant)
         {
-            var sb = new StringBuilder();
+            // ⭐ v1.7.0: Custom System Prompt Override
+            // If the user has defined a custom prompt, use it directly.
+            // This bypasses all other generation logic, giving the user full control.
+            if (!string.IsNullOrWhiteSpace(personaDef.customSystemPrompt))
+            {
+                return personaDef.customSystemPrompt;
+            }
+
+            // 1. Load Master Template
+            string template = PromptLoader.Load("SystemPrompt_Master");
+            if (string.IsNullOrEmpty(template))
+            {
+                Log.Error("[The Second Seat] SystemPrompt_Master.txt not found!");
+                return "Error: SystemPrompt_Master.txt missing.";
+            }
+
+            // 2. Prepare Sections
             
-            // 0. 全局提示词（优先级最高）
+            // Identity
+            string identitySection = IdentitySection.Generate(personaDef, agent, difficultyMode);
+
+            // Personality
+            string personalitySection = PersonalitySection.Generate(analysis, personaDef);
+
+            // Biography
+            string biographySection = "";
+            if (!string.IsNullOrEmpty(personaDef.biography))
+            {
+                biographySection = $"    <Biography>\n{personaDef.biography}\n    </Biography>";
+            }
+
+            // Mode Directive (Updated for DM Meta-Setting)
+            string modeDirective = "";
+            if (difficultyMode == AIDifficultyMode.Engineer)
+                modeDirective = "ROLE: Technical DM. Priority: Game Stability & Mechanic Analysis. You are the architect of the simulation.";
+            else if (difficultyMode == AIDifficultyMode.Opponent)
+                modeDirective = "ROLE: Adversarial DM. Priority: Drama & Challenge. You are the source of conflict.";
+            else
+                modeDirective = "ROLE: Benevolent DM. Priority: Support & Narrative Flow. You are the player's co-author.";
+
+            // Global Instructions (Language)
+            string globalInstructions = GetLanguageInstruction();
+
+            // Mod Settings
+            string modSettingsPrompt = "";
             var modSettings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
             if (modSettings != null && !string.IsNullOrWhiteSpace(modSettings.globalPrompt))
             {
-                sb.AppendLine("=== GLOBAL INSTRUCTIONS ===");
-                sb.AppendLine(modSettings.globalPrompt.Trim());
-                sb.AppendLine();
-                sb.AppendLine("---");
-                sb.AppendLine();
+                modSettingsPrompt = modSettings.globalPrompt.Trim();
             }
 
-            // ⭐ v1.6.76: 使用模块化的 Section 类生成各部分内容
-            
-            // 1. 身份部分
-            sb.AppendLine(IdentitySection.Generate(personaDef, agent, difficultyMode));
-            sb.AppendLine();
-
-            // 2. 人格部分
-            sb.AppendLine(PersonalitySection.Generate(analysis, personaDef));
-            sb.AppendLine();
-
-            // 3. 对话风格
-            sb.AppendLine(DialogueStyleSection.Generate(agent.dialogueStyle));
-            sb.AppendLine();
-
-            // 4. 当前状态
-            sb.AppendLine(CurrentStateSection.Generate(agent, difficultyMode));
-            sb.AppendLine();
-
-            // 5. 行为规则
-            sb.AppendLine(BehaviorRulesSection.Generate(analysis, agent, difficultyMode));
-            sb.AppendLine();
-
-            // 6. 输出格式
-            sb.AppendLine(OutputFormatSection.Generate(difficultyMode));
-            sb.AppendLine();
-            
-            // ⭐ 7. 【新增】恋爱关系指令（Recency Bias - 后置以覆盖默认行为）
+            // Romantic Instructions
+            string romanticInstructions = "";
             if (difficultyMode == AIDifficultyMode.Assistant)
             {
-                sb.AppendLine(RomanticInstructionsSection.Generate(personaDef, agent.affinity));
+                romanticInstructions = RomanticInstructionsSection.Generate(personaDef, agent.affinity);
             }
-            
-            // ⭐ v1.6.77: 8. 【新增】日志诊断能力（Recency Bias - 后置以确保优先级）
-            sb.AppendLine(GenerateLogDiagnosisInstructions());
 
-            return sb.ToString();
+            // 3. Replace Placeholders
+            return template
+                .Replace("{{NarratorName}}", personaDef.narratorName)
+                .Replace("{{IdentitySection}}", identitySection)
+                .Replace("{{PersonalitySection}}", personalitySection)
+                .Replace("{{BiographySection}}", biographySection)
+                .Replace("{{DifficultyMode}}", difficultyMode.ToString())
+                .Replace("{{ModeDirective}}", modeDirective)
+                .Replace("{{ToolBoxSection}}", OutputFormatSection.Generate(difficultyMode))
+                .Replace("{{GlobalInstructions}}", globalInstructions)
+                .Replace("{{ModSettingsPrompt}}", modSettingsPrompt)
+                .Replace("{{LogDiagnosis}}", GenerateLogDiagnosisInstructions())
+                .Replace("{{RomanticInstructions}}", romanticInstructions);
         }
         
         /// <summary>
@@ -86,41 +109,18 @@ namespace TheSecondSeat.PersonaGeneration
         private static string GenerateLogDiagnosisInstructions()
         {
             var sb = new StringBuilder();
-            
-            sb.AppendLine("=== GAME DIAGNOSIS CAPABILITY ===");
-            sb.AppendLine();
-            sb.AppendLine("**[IMPORTANT] You have the ability to read game logs:**");
-            sb.AppendLine();
-            sb.AppendLine("When the player mentions the following keywords, use the `read_log` tool to automatically diagnose:");
-            sb.AppendLine("- Error, Exception, Red text, Crash, Freeze");
-            sb.AppendLine("- Mod conflict, Load failure, Bug, Issue");
-            sb.AppendLine();
-            sb.AppendLine("**Usage:**");
-            sb.AppendLine("```json");
-            sb.AppendLine("{");
-            sb.AppendLine("  \"thought\": \"The player mentioned a game error, I need to check the log to analyze the problem\",");
-            sb.AppendLine("  \"dialogue\": \"Let me check the log file to diagnose the issue...\",");
-            sb.AppendLine("  \"command\": {");
-            sb.AppendLine("    \"action\": \"read_log\",");
-            sb.AppendLine("    \"target\": null,");
-            sb.AppendLine("    \"parameters\": {}");
-            sb.AppendLine("  }");
-            sb.AppendLine("}");
-            sb.AppendLine("```");
-            sb.AppendLine();
-            sb.AppendLine("**Response after analyzing the log:**");
-            sb.AppendLine("1. Explain the cause of the error (in simple, easy-to-understand language)");
-            sb.AppendLine("2. Provide a solution (Priority: Simple -> Complex)");
-            sb.AppendLine("3. If uncertain, suggest the player check their mod list or contact the author");
-            sb.AppendLine();
-            sb.AppendLine("**Example Dialogue:**");
-            sb.AppendLine("Player: \"The game has red text errors\"");
-            sb.AppendLine("You: \"Let me take a look at the log... (calls read_log)\"");
-            sb.AppendLine("You: \"I found the problem! The log shows a conflict between Mod XXX and Mod YYY. I suggest you try disabling YYY and restarting the game.\"");
+            sb.AppendLine(PromptLoader.Load("LogDiagnosis"));
             sb.AppendLine();
             sb.AppendLine("---");
-            
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// ⭐ 获取语言强制指令
+        /// </summary>
+        private static string GetLanguageInstruction()
+        {
+            return PromptLoader.Load("Language_Instruction");
         }
         
         // ⭐ v1.6.76: 已迁移到各 Section 类
@@ -144,7 +144,7 @@ namespace TheSecondSeat.PersonaGeneration
         {
             var sb = new StringBuilder();
     
-            sb.AppendLine($"You are {personaDef.narratorName}.");
+            sb.AppendLine($"You are {personaDef.narratorName}, the Co-Storyteller/DM.");
     
             if (!string.IsNullOrEmpty(personaDef.biography))
             {
@@ -169,7 +169,7 @@ namespace TheSecondSeat.PersonaGeneration
             var sb = new StringBuilder();
             
             // 语言要求（必须保留）
-            sb.AppendLine("**CRITICAL: Respond in the language of the user's input.**");
+            sb.AppendLine(GetLanguageInstruction());
             sb.AppendLine();
             
             // 身份（简化）
@@ -187,15 +187,15 @@ namespace TheSecondSeat.PersonaGeneration
             // 难度模式（简化）
             if (difficultyMode == AIDifficultyMode.Assistant)
             {
-                sb.AppendLine("Mode: ASSISTANT - Help the player, execute all commands, offer suggestions.");
+                sb.AppendLine("Role: BENEVOLENT DM - Co-author the story, help the player succeed.");
             }
             else if (difficultyMode == AIDifficultyMode.Engineer)
             {
-                sb.AppendLine("Mode: ENGINEER - Diagnose errors, read logs, provide technical solutions.");
+                sb.AppendLine("Role: TECHNICAL DM - Maintain simulation stability, fix errors.");
             }
             else
             {
-                sb.AppendLine("Mode: OPPONENT - Challenge the player, control events, no unsolicited advice.");
+                sb.AppendLine("Role: ADVERSARIAL DM - Create dramatic conflict and challenges.");
             }
             sb.AppendLine();
             
@@ -225,8 +225,18 @@ namespace TheSecondSeat.PersonaGeneration
             sb.AppendLine();
             
             // 输出格式（简化）
-            sb.AppendLine("Format: (action) dialogue. Use first person for speech, third person for actions.");
-            sb.AppendLine("Example: (nods) I understand your concern.");
+            // ⭐ v1.6.78: 读取 Compact_Instruction.txt，移除硬编码
+            string compactInstruction = PromptLoader.Load("Compact_Instruction");
+            if (!string.IsNullOrEmpty(compactInstruction))
+            {
+                sb.AppendLine(compactInstruction);
+            }
+            else
+            {
+                // Fallback (English default)
+                sb.AppendLine("Format: (action) dialogue. Use first person for speech, third person for actions.");
+                sb.AppendLine("Example: (nods) I understand your concern.");
+            }
             
             return sb.ToString();
         }

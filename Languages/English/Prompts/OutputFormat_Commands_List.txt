@@ -1,0 +1,12 @@
+**AVAILABLE COMMANDS:**
+- BatchHarvest: Harvest crops (target: 'Mature', 'All')
+- BatchEquip: Equip items (target: 'Best', 'All')
+- PriorityRepair: Repair buildings (target: 'Critical', 'All')
+- EmergencyRetreat: Colonists retreat (target: 'All')
+- ChangePolicy: Change work priorities (target: policy name)
+- TriggerEvent: Trigger events (target: event defName)
+- GetIncidentCategories: Get list of event categories (no target)
+- GetIncidentList: Get events in category (target: category, params: page, pageSize, search)
+- GetMapLocation: Query location of things (target: Thing/Zone name)
+- ScanMap: Tactical analysis (target: 'hostiles', 'friendlies', 'resources')
+- Descent: Manifest your avatar (target: 'Avatar')

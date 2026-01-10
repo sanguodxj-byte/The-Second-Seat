@@ -392,6 +392,9 @@ namespace TheSecondSeat.UI
                     float moveDistance = Vector2.Distance(mousePos, lastMousePosition);
                     headRubProgress += moveDistance * 0.5f;
                     
+                    // 根据摸头进度动态更新表情强度
+                    UpdateExpressionByHeadRub(headRubProgress);
+                    
                     if (headRubProgress >= HEAD_RUB_THRESHOLD)
                     {
                         float currentTime = Time.realtimeSinceStartup;
@@ -496,7 +499,13 @@ namespace TheSecondSeat.UI
             float lowThreshold = TSSFrameworkConfig.Interaction.LowAffinityThreshold;
             float bonus = TSSFrameworkConfig.Interaction.HeadPatAffinityBonus;
             
-            TriggerExpression(SelectExpressionByAffinity(affinity, ExpressionType.Shy, ExpressionType.Happy), duration: 3f);
+            // 结束时使用高强度表情
+            ExpressionType exprType = SelectExpressionByAffinity(affinity, ExpressionType.Shy, ExpressionType.Happy);
+            
+            // 如果好感度高，强制使用高强度（如 happy2）
+            int intensity = (affinity >= highThreshold) ? 2 : 0;
+            
+            TriggerExpression(exprType, duration: 3f, intensity: intensity);
             AddFloatingText(InteractionPhrases.GetHeadPatPhrase(affinity), GetTextColorByAffinity(affinity));
             
             if (affinity >= highThreshold)
@@ -508,6 +517,38 @@ namespace TheSecondSeat.UI
             else if (affinity < lowThreshold)
             {
                 ModifyAffinity(-1f, "不受欢迎的触碰");
+            }
+        }
+        
+        /// <summary>
+        /// 根据摸头进度动态更新表情强度
+        /// 每2秒增加一级强度
+        /// </summary>
+        private void UpdateExpressionByHeadRub(float progress)
+        {
+            if (currentPersona == null) return;
+            
+            // 计算当前应有的强度 (每200进度约2秒 -> 1级强度)
+            // 假设 HEAD_RUB_THRESHOLD = 500 (约5秒)
+            // 0-200: 强度1
+            // 200-400: 强度2
+            // 400+: 强度3
+            int targetIntensity = 1 + Mathf.FloorToInt(progress / 200f);
+            targetIntensity = Mathf.Clamp(targetIntensity, 1, 3);
+            
+            var state = ExpressionSystem.GetExpressionState(currentPersona.defName);
+            
+            // 只有当强度改变时才更新
+            if (state.Intensity != targetIntensity)
+            {
+                // 使用当前表情，只更新强度
+                ExpressionSystem.SetExpression(
+                    currentPersona.defName, 
+                    ExpressionType.Happy, // 摸头时默认开心
+                    ExpressionTrigger.Manual, 
+                    30, // 短暂持续
+                    targetIntensity
+                );
             }
         }
         
@@ -1057,11 +1098,11 @@ namespace TheSecondSeat.UI
             }
         }
         
-        private void TriggerExpression(ExpressionType expression, float duration = 2f)
+        private void TriggerExpression(ExpressionType expression, float duration = 2f, int intensity = 0)
         {
             if (currentPersona == null) return;
             
-            ExpressionSystem.SetExpression(currentPersona.defName, expression, (int)(duration * 60), "立绘交互");
+            ExpressionSystem.SetExpression(currentPersona.defName, expression, ExpressionTrigger.Manual, (int)(duration * 60), intensity);
             
             if (lastExpression != expression)
             {

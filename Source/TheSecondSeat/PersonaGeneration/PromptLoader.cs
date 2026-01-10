@@ -1,0 +1,167 @@
+using System;
+using System.IO;
+using Verse;
+
+namespace TheSecondSeat.PersonaGeneration
+{
+    /// <summary>
+    /// Utility class to load prompt templates from language-specific folders.
+    /// Supports modular prompt design and localization.
+    /// </summary>
+    public static class PromptLoader
+    {
+        private const string PromptsFolderName = "Prompts";
+        private const string DefaultLanguage = "English";
+
+        /// <summary>
+        /// Loads a prompt template by name.
+        /// Priority:
+        /// 1. Config/TheSecondSeat/Prompts/{Language}/{file} (User Override - Specific Language)
+        /// 2. Config/TheSecondSeat/Prompts/{file} (User Override - Global)
+        /// 3. Mod/Languages/{Language}/Prompts/{file} (Mod Default)
+        /// 4. Mod/Languages/English/Prompts/{file} (Mod Fallback)
+        /// </summary>
+        /// <param name="promptName">The name of the prompt file (without extension).</param>
+        /// <returns>The content of the prompt file.</returns>
+        public static string Load(string promptName)
+        {
+            string activeLangFolder = LanguageDatabase.activeLanguage.folderName;
+            string fileName = promptName + ".txt";
+            
+            // --- User Overrides (Config Folder) ---
+            string configRoot = GenFilePaths.ConfigFolderPath;
+            
+            // 1. User Override - Specific Language
+            string userLangPath = Path.Combine(configRoot, "TheSecondSeat", PromptsFolderName, activeLangFolder, fileName);
+            if (File.Exists(userLangPath))
+            {
+                return File.ReadAllText(userLangPath);
+            }
+
+            // 2. User Override - Global (Root of Prompts folder in Config)
+            string userGlobalPath = Path.Combine(configRoot, "TheSecondSeat", PromptsFolderName, fileName);
+            if (File.Exists(userGlobalPath))
+            {
+                return File.ReadAllText(userGlobalPath);
+            }
+
+            // --- Mod Defaults ---
+            var modContent = LoadedModManager.GetMod<TheSecondSeat.Settings.TheSecondSeatMod>()?.Content;
+            if (modContent != null)
+            {
+                // 3. Mod Default - Active Language
+                string activeLangPath = Path.Combine(modContent.RootDir, "Languages", activeLangFolder, PromptsFolderName, fileName);
+                if (File.Exists(activeLangPath))
+                {
+                    return File.ReadAllText(activeLangPath);
+                }
+
+                // 4. Mod Fallback - English (Default)
+                if (activeLangFolder != DefaultLanguage)
+                {
+                    string defaultPath = Path.Combine(modContent.RootDir, "Languages", DefaultLanguage, PromptsFolderName, fileName);
+                    if (File.Exists(defaultPath))
+                    {
+                        return File.ReadAllText(defaultPath);
+                    }
+                }
+            }
+
+            Log.Warning($"[The Second Seat] Prompt file not found: {promptName}.txt");
+            return $"[Error: Prompt {promptName} not found]";
+        }
+
+        /// <summary>
+        /// Ensures the user override directory exists and optionally dumps default prompts there.
+        /// </summary>
+        public static void EnsureConfigDirectory()
+        {
+            string configPromptsPath = Path.Combine(GenFilePaths.ConfigFolderPath, "TheSecondSeat", PromptsFolderName);
+            if (!Directory.Exists(configPromptsPath))
+            {
+                Directory.CreateDirectory(configPromptsPath);
+            }
+            
+            // Ensure language subfolders exist for current language
+            string langPath = Path.Combine(configPromptsPath, LanguageDatabase.activeLanguage.folderName);
+            if (!Directory.Exists(langPath))
+            {
+                Directory.CreateDirectory(langPath);
+            }
+        }
+
+        /// <summary>
+        /// Creates a README file explaining the prompt files.
+        /// </summary>
+        public static void CreateReadme()
+        {
+            EnsureConfigDirectory();
+            string configPromptsPath = Path.Combine(GenFilePaths.ConfigFolderPath, "TheSecondSeat", PromptsFolderName);
+            string readmePath = Path.Combine(configPromptsPath, "README.txt");
+
+            string content = @"
+=== The Second Seat Custom Prompts Guide ===
+
+To customize the AI's system prompts, create .txt files with the same names as the internal prompt files in this folder.
+These files will override the mod's default prompts.
+
+You can place files directly in this folder (Global Override) or in language-specific subfolders (e.g., 'ChineseSimplified', 'English').
+Language-specific overrides take precedence over global overrides.
+
+=== File List & Descriptions ===
+
+-- Core --
+Identity_Core.txt           : Defines who the narrator is (Name, Biography, etc.)
+Language_Instruction.txt    : Critical instructions about which language to speak.
+
+-- Philosophy (Difficulty Modes) --
+Philosophy_Assistant.txt    : Mindset for Assistant Mode (Helpful, obedient)
+Philosophy_Opponent.txt     : Mindset for Opponent Mode (Challenging, controlling)
+Philosophy_Engineer.txt     : Mindset for Engineer Mode (Technical, diagnostic)
+
+-- Behavior Rules --
+BehaviorRules_Assistant.txt : Rules for Assistant Mode
+BehaviorRules_Opponent.txt  : Rules for Opponent Mode
+BehaviorRules_Engineer.txt  : Rules for Engineer Mode
+BehaviorRules_Universal.txt : Rules that apply to all modes
+
+-- Output Format --
+OutputFormat_Structure.txt  : Defines the structure of the JSON/Text response
+OutputFormat_Fields.txt     : Explains specific fields in the output
+OutputFormat_Examples.txt   : Examples of correct output
+
+-- Romantic (Affinity System) --
+Romantic_Intro.txt          : Instructions for romantic interactions
+Romantic_Soulmate.txt       : Behavior when affinity is very high (90+)
+Romantic_Partner.txt        : Behavior when affinity is high (60-89)
+Romantic_Yandere.txt        : Special behavior for Yandere trait
+Romantic_Tsundere.txt       : Special behavior for Tsundere trait
+
+-- Diagnostics --
+LogDiagnosis.txt            : Instructions for analyzing game logs
+
+";
+            File.WriteAllText(readmePath, content);
+        }
+        
+        /// <summary>
+        /// Opens the config folder in the OS file explorer.
+        /// </summary>
+        public static void OpenConfigFolder()
+        {
+            EnsureConfigDirectory();
+            string path = Path.Combine(GenFilePaths.ConfigFolderPath, "TheSecondSeat", PromptsFolderName);
+            
+            // Open folder cross-platform
+            if (System.Environment.OSVersion.Platform == System.PlatformID.Win32NT)
+            {
+                System.Diagnostics.Process.Start("explorer.exe", path);
+            }
+            else
+            {
+                // Fallback for other OS (Mac/Linux - though RimWorld mods are mostly Windows)
+                UnityEngine.Application.OpenURL(path);
+            }
+        }
+    }
+}

@@ -327,7 +327,7 @@ namespace TheSecondSeat.UI
         /// <summary>
         /// ?? 开始多模态分析
         /// </summary>
-        private void StartAnalysis()
+        private async void StartAnalysis()
         {
             if (!ValidateInput())
             {
@@ -374,7 +374,8 @@ namespace TheSecondSeat.UI
                 }
                 
                 // 调用分析（传递特质和用户补充）
-                var analysisResult = analysisService.AnalyzePersonaImageWithTraits(
+                // ⭐ Optimized: 使用异步方法
+                var analysisResult = await analysisService.AnalyzePersonaImageWithTraitsAsync(
                     portraitTexture,
                     personaName,
                     selectedTraits,
@@ -389,9 +390,8 @@ namespace TheSecondSeat.UI
                     statusMessage = "? 分析完成！人格已生成";
                     
                     // 延迟关闭窗口
-                    System.Threading.Tasks.Task.Delay(2000).ContinueWith(_ => {
-                        this.Close();
-                    });
+                    await System.Threading.Tasks.Task.Delay(2000);
+                    this.Close();
                 }
                 else
                 {

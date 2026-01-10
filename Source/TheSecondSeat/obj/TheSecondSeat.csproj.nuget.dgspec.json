@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "d:\\rim mod\\The Second Seat\\Source\\TheSecondSeat\\TheSecondSeat.csproj": {}
+    "D:\\rim mod\\The Second Seat\\Source\\TheSecondSeat\\TheSecondSeat.csproj": {}
   },
   "projects": {
-    "d:\\rim mod\\The Second Seat\\Source\\TheSecondSeat\\TheSecondSeat.csproj": {
+    "D:\\rim mod\\The Second Seat\\Source\\TheSecondSeat\\TheSecondSeat.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "d:\\rim mod\\The Second Seat\\Source\\TheSecondSeat\\TheSecondSeat.csproj",
+        "projectUniqueName": "D:\\rim mod\\The Second Seat\\Source\\TheSecondSeat\\TheSecondSeat.csproj",
         "projectName": "TheSecondSeat",
-        "projectPath": "d:\\rim mod\\The Second Seat\\Source\\TheSecondSeat\\TheSecondSeat.csproj",
+        "projectPath": "D:\\rim mod\\The Second Seat\\Source\\TheSecondSeat\\TheSecondSeat.csproj",
         "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
-        "outputPath": "d:\\rim mod\\The Second Seat\\Source\\TheSecondSeat\\obj\\",
+        "outputPath": "D:\\rim mod\\The Second Seat\\Source\\TheSecondSeat\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Administrator\\AppData\\Roaming\\NuGet\\NuGet.Config"

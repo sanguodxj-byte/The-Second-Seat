@@ -71,6 +71,11 @@ namespace TheSecondSeat.PersonaGeneration
             public VisemeCode targetViseme;              // 目标 Viseme 编码
             public Queue<VisemeCode> visemeQueue;        // Viseme 序列队列（来自 TTS）
             public float visemeTransitionProgress;       // Viseme 过渡进度（0-1）
+            public bool usePhonemeMode;                  // ⭐ v1.8.6: 当前会话是否使用音素模式
+            
+            // ⭐ v1.9.0: 直接开合度支持 (Azure BlendShapes / 0-1 Value)
+            public float externalOpenness;               // 外部输入的开合度
+            public float lastExternalOpennessTime;       // 上次接收外部开合度的时间
         }
         
         // ===== 数据存储 =====
@@ -113,11 +118,14 @@ namespace TheSecondSeat.PersonaGeneration
                         lockedMouthLayer = null,
                         currentViseme = VisemeCode.Closed,
                         targetViseme = VisemeCode.Closed,
-                        visemeQueue = new Queue<VisemeCode>(),
-                        visemeTransitionProgress = 1f
-                    };
-                    speakingStates[persona.defName] = state;
-                }
+                    visemeQueue = new Queue<VisemeCode>(),
+                    visemeTransitionProgress = 1f,
+                    usePhonemeMode = false,
+                    externalOpenness = 0f,
+                    lastExternalOpennessTime = 0f
+                };
+                speakingStates[persona.defName] = state;
+            }
                 
                 // 更新状态
                 state.IsSpeaking = isCurrentlySpeaking;
@@ -160,7 +168,10 @@ namespace TheSecondSeat.PersonaGeneration
                     currentViseme = VisemeCode.Closed,
                     targetViseme = VisemeCode.Closed,
                     visemeQueue = new Queue<VisemeCode>(),
-                    visemeTransitionProgress = 1f
+                    visemeTransitionProgress = 1f,
+                    usePhonemeMode = false,
+                    externalOpenness = 0f,
+                    lastExternalOpennessTime = 0f
                 };
                 speakingStates[defName] = state;
             }
@@ -185,7 +196,8 @@ namespace TheSecondSeat.PersonaGeneration
             }
             
             // ⭐ v1.6.74: 根据模式选择处理方式
-            if (EnablePhonemeMode)
+            // ⭐ v1.8.6: 优先使用实例级别的标志，其次是全局标志
+            if (state.usePhonemeMode || EnablePhonemeMode)
             {
                 // 音素模式：使用 TTS 音素数据（精确口型）
                 return GetMouthLayerNameFromPhoneme(state, defName, isPlayingTTS);
@@ -219,6 +231,7 @@ namespace TheSecondSeat.PersonaGeneration
                     state.targetViseme = VisemeCode.Closed;
                     state.visemeQueue.Clear();
                     state.lockedMouthLayer = null;
+                    state.usePhonemeMode = false; // ⭐ 重置模式
                     
                     // 日志已静默：TTS停止（音素模式）
                 }
@@ -267,7 +280,8 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ⭐ v1.6.74: 模拟模式 - 使用正弦波开合度（旧版逻辑，保留为备用）
+        /// ⭐ v1.6.74: 模拟模式 - 使用音频频谱分析（FFT）计算开合度
+        /// 替代旧的正弦波模拟，实现更真实的口型同步
         /// </summary>
         private static string GetMouthLayerNameFromOpenness(SpeakingState state, string defName, bool isPlayingTTS)
         {
@@ -276,15 +290,33 @@ namespace TheSecondSeat.PersonaGeneration
             
             if (isPlayingTTS)
             {
-                // TTS 播放中：动态张嘴（使用正弦波模拟说话）
                 state.isSpeaking = true;
-                state.speakingTime += Time.deltaTime;
                 
-                // 使用正弦波在 0 到 0.8 的开合度
-                float sineWave = Mathf.Sin(state.speakingTime * 10f); // 10Hz 频率
-                targetOpenness = Mathf.Lerp(0f, 0.8f, (sineWave + 1f) * 0.5f);
-                
-                state.targetRawOpenness = targetOpenness;
+                // ⭐ v1.9.0: 检查是否有外部输入的开合度 (Azure 0-1)
+                // 如果在过去 0.2 秒内接收到数据，则使用外部数据
+                if (Time.time - state.lastExternalOpennessTime < 0.2f)
+                {
+                    targetOpenness = state.externalOpenness;
+                    // 外部数据通常更精确，稍微减少平滑延迟
+                    state.targetRawOpenness = targetOpenness;
+                }
+                else
+                {
+                    // ⭐ v1.9.5: 使用 FFT 频谱分析替代正弦波
+                    float rms = TTS.TTSAudioPlayer.GetAudioRMS(defName);
+                    
+                    // 增强动态范围：将 RMS 映射到 0-1 开合度
+                    // 通常 RMS 值较小 (0.01~0.3)，需要放大
+                    // 使用非线性映射增强小音量的表现
+                    float amplifiedRMS = Mathf.Clamp01(rms * 5f);
+                    targetOpenness = Mathf.Pow(amplifiedRMS, 0.8f); // 伽马校正，使小声音也能张嘴
+                    
+                    // 添加微小的随机扰动，使保持音更自然
+                    float noise = (Mathf.PerlinNoise(Time.time * 20f, 0f) - 0.5f) * 0.1f;
+                    targetOpenness = Mathf.Clamp01(targetOpenness + noise);
+                    
+                    state.targetRawOpenness = targetOpenness;
+                }
                 
                 // 日志已静默：TTS播放时的开合度
             }
@@ -394,7 +426,8 @@ namespace TheSecondSeat.PersonaGeneration
             }
             
             // ⭐ v1.8.4: 收到 Viseme 数据时，自动启用音素模式
-            EnablePhonemeMode = true;
+            // EnablePhonemeMode = true; // 不再修改全局标志
+            state.usePhonemeMode = true; // ⭐ 仅修改当前实例
             
             state.visemeQueue.Clear();
             foreach (var viseme in visemes)
@@ -406,6 +439,34 @@ namespace TheSecondSeat.PersonaGeneration
             {
                 Log.Message($"[MouthAnimationSystem] Received {visemes.Count} visemes for {defName}. EnablePhonemeMode set to true.");
             }
+        }
+        
+        /// <summary>
+        /// ⭐ v1.9.0: 【新增】推送直接开合度数据 (0-1)
+        /// 用于 Azure BlendShapes 或其他精确的口型数据源
+        /// </summary>
+        /// <param name="defName">人格 DefName</param>
+        /// <param name="openness">开合度 (0.0 - 1.0)</param>
+        public static void PushOpenness(string defName, float openness)
+        {
+            if (!speakingStates.TryGetValue(defName, out var state))
+            {
+                state = new SpeakingState
+                {
+                    IsSpeaking = false,
+                    visemeQueue = new Queue<VisemeCode>(),
+                    currentViseme = VisemeCode.Closed,
+                    targetViseme = VisemeCode.Closed,
+                    usePhonemeMode = false // 开合度模式不使用音素逻辑
+                };
+                speakingStates[defName] = state;
+            }
+            
+            state.externalOpenness = Mathf.Clamp01(openness);
+            state.lastExternalOpennessTime = Time.time;
+            
+            // 确保不处于音素模式，以便 GetMouthLayerNameFromOpenness 被调用
+            state.usePhonemeMode = false;
         }
         
         /// <summary>
@@ -459,6 +520,7 @@ namespace TheSecondSeat.PersonaGeneration
                 state.lockedMouthLayer = null;
                 state.currentViseme = VisemeCode.Closed;
                 state.targetViseme = VisemeCode.Closed;
+                state.usePhonemeMode = false; // ⭐ 重置模式
                 // ⭐ v1.7.6: null 安全检查
                 if (state.visemeQueue != null)
                 {

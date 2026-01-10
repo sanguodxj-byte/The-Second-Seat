@@ -444,6 +444,11 @@ namespace TheSecondSeat.PersonaGeneration
         /// 来自AI分析或用户选择
         /// </summary>
         public List<string> PersonalityTags { get; set; } = new List<string>();
+
+        /// <summary>
+        /// 📌 互动短语库（来自AI生成）
+        /// </summary>
+        public List<PhraseSet> PhraseLibrary { get; set; } = new List<PhraseSet>();
         
         /// <summary>
         /// 📌 v1.6.23: 构造函数，确保所有对象都被正确初始化
@@ -460,6 +465,7 @@ namespace TheSecondSeat.PersonaGeneration
             VisualDescription = "";
             ConfidenceScore = 0.5f;
             PersonalityTags = new List<string>();  // 📌 v1.6.62: 初始化个性标签
+            PhraseLibrary = new List<PhraseSet>();
         }
     }
 }

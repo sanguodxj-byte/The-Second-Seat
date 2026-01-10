@@ -239,8 +239,8 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// ✅ 带回退机制的纹理加载方法
-        /// 回退顺序：具体变体 → 通用表情
-        /// 例如：_happy3 → _happy
+        /// 回退顺序：具体变体 → 递减变体 → 通用表情
+        /// 例如：_happy3 → _happy2 → _happy1 → _happy
         /// ✅ 优化：静默回退，不输出中间日志
         /// </summary>
         /// <param name="personaName">人格文件夹名称</param>
@@ -262,27 +262,71 @@ namespace TheSecondSeat.PersonaGeneration
             
             if (texture != null)
             {
-                // ✅ 移除成功日志，静默返回
                 return texture;
+            }
+
+            // ✅ 第1.5层：尝试递减变体（如 happy3 -> happy2 -> happy1）
+            // 提取基础名称和变体编号
+            string baseName = StripVariantNumber(fileName);
+            int variantNum = GetVariantNumber(fileName);
+            
+            if (variantNum > 1)
+            {
+                // 从当前变体编号递减尝试
+                for (int i = variantNum - 1; i >= 1; i--)
+                {
+                    string fallbackName = $"{baseName}{i}";
+                    string fallbackPath = $"{EXPRESSIONS_PATH}{personaName}/{fallbackName}";
+                    texture = ContentFinder<Texture2D>.Get(fallbackPath, false);
+                    
+                    if (texture != null)
+                    {
+                        if (Prefs.DevMode)
+                        {
+                            Log.Message($"[PortraitLoader] 表情回退: {fileName} -> {fallbackName}");
+                        }
+                        return texture;
+                    }
+                }
             }
             
             // ✅ 第2层：回退到通用表情（去掉变体编号）
-            string genericFileName = StripVariantNumber(fileName);
-            
-            if (genericFileName != fileName)  // 确实有变体编号被去掉了
+            if (baseName != fileName)  // 确实有变体编号被去掉了
             {
-                string genericPath = $"{EXPRESSIONS_PATH}{personaName}/{genericFileName}";
+                string genericPath = $"{EXPRESSIONS_PATH}{personaName}/{baseName}";
                 texture = ContentFinder<Texture2D>.Get(genericPath, false);
                 
                 if (texture != null)
                 {
-                    // ✅ 移除回退成功日志，静默返回
                     return texture;
                 }
             }
             
-            // ✅ 两层都失败，静默返回 null（不输出警告，由上层统一处理）
+            // ✅ 全部失败，静默返回 null
             return null;
+        }
+
+        /// <summary>
+        /// 从文件名中提取变体编号
+        /// </summary>
+        private static int GetVariantNumber(string fileName)
+        {
+            if (string.IsNullOrEmpty(fileName)) return 0;
+            
+            int lastIndex = fileName.Length - 1;
+            string numStr = "";
+            
+            while (lastIndex >= 0 && char.IsDigit(fileName[lastIndex]))
+            {
+                numStr = fileName[lastIndex] + numStr;
+                lastIndex--;
+            }
+            
+            if (int.TryParse(numStr, out int result))
+            {
+                return result;
+            }
+            return 0;
         }
         
         /// <summary>
@@ -1404,4 +1448,3 @@ namespace TheSecondSeat.PersonaGeneration
 
     }
 }
-

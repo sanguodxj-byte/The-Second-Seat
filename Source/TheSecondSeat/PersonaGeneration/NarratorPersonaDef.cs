@@ -19,6 +19,15 @@ namespace TheSecondSeat.PersonaGeneration
         public string combat = "";
         public string casting = "";
     }
+
+    /// <summary>
+    /// 短语集合类 (XML兼容)
+    /// </summary>
+    public class PhraseSet
+    {
+        public string key;
+        public List<string> phrases = new List<string>();
+    }
     
     /// <summary>
     /// 叙事者人格定义 - RimWorld Def类型
@@ -55,6 +64,17 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>API: 人格传记/背景故事（影响AI行为）</summary>
         public string biography = "";
+
+        // ============================================
+        // ⭐ v1.7.0: 简易提示词 API (创作者友好)
+        // ============================================
+
+        /// <summary>
+        /// API: 自定义系统提示词（最高优先级）
+        /// 如果此字段不为空，将跳过 Identity/Personality/Style 等自动生成模块，
+        /// 直接使用此内容作为核心 Prompt，仅追加必要的 JSON 格式指令。
+        /// </summary>
+        public string customSystemPrompt = "";
         
         // ============================================
         // 立绘系统 API
@@ -85,6 +105,31 @@ namespace TheSecondSeat.PersonaGeneration
         [Unsaved]
         private LayeredPortraitConfig cachedLayeredConfig;
         
+        // ============================================
+        // 互动短语系统 API
+        // ============================================
+        
+        /// <summary>
+        /// API: 互动短语库
+        /// 包含各类互动场景的台词（如：HeadPat, BodyPoke, Greeting等）
+        /// </summary>
+        public List<PhraseSet> phraseLibrary = new List<PhraseSet>();
+        
+        /// <summary>
+        /// 获取随机短语
+        /// </summary>
+        public string GetRandomPhrase(string key)
+        {
+            if (phraseLibrary == null) return "";
+            
+            var set = phraseLibrary.FirstOrDefault(s => s.key == key);
+            if (set != null && set.phrases.Count > 0)
+            {
+                return set.phrases.RandomElement();
+            }
+            return "";
+        }
+
         // ============================================
         // 视觉主题 API
         // ============================================
@@ -294,6 +339,18 @@ namespace TheSecondSeat.PersonaGeneration
         /// 例如: Sideria_BloodBloom, Sideria_DivineBody
         /// </summary>
         public List<string> requiredHediffs = new List<string>();
+
+        /// <summary>
+        /// ⭐ v1.8.7: 降临实体初始获得的技能列表 (DefName)
+        /// 用于解决 XML 中无法直接给 PawnKind 赋予技能的问题
+        /// </summary>
+        public List<string> abilitiesToGrant = new List<string>();
+
+        /// <summary>
+        /// ⭐ v1.8.8: 降临实体生成时添加的 Hediff 列表 (DefName)
+        /// 例如: Sideria_DivineBody（包含技能赋予）
+        /// </summary>
+        public List<string> hediffsToGrant = new List<string>();
         
         /// <summary>
         /// ⭐ v1.6.78: 降临姿态路径字典
@@ -460,6 +517,7 @@ namespace TheSecondSeat.PersonaGeneration
                 {
                     VisualTags = visualElements != null ? new List<string>(visualElements) : new List<string>(),
                     ToneTags = toneTags != null ? new List<string>(toneTags) : new List<string>(),
+                    PersonalityTags = personalityTags != null ? new List<string>(personalityTags) : new List<string>(),
                     SuggestedPersonality = suggestedTrait,
                     ConfidenceScore = suggestedTrait.HasValue ? 1.0f : 0.5f
                 };
@@ -544,11 +602,14 @@ namespace TheSecondSeat.PersonaGeneration
             selectedTraits ??= new List<string>();
             descentEffects ??= new List<string>();
             requiredHediffs ??= new List<string>();
+            abilitiesToGrant ??= new List<string>();
+            hediffsToGrant ??= new List<string>();
             
             // 嵌套对象
             dialogueStyle ??= new DialogueStyleDef();
             eventPreferences ??= new EventPreferencesDef();
             descentPostures ??= new DescentPostures();
+            phraseLibrary ??= new List<PhraseSet>();
             
             // 🏗️ 字符串字段使用配置类默认值
             narratorName ??= TSSFrameworkConfig.Persona.DefaultNarratorName;
@@ -577,6 +638,7 @@ namespace TheSecondSeat.PersonaGeneration
             descentSound ??= "";
             descentLetterLabel ??= "";
             descentLetterText ??= "";
+            customSystemPrompt ??= "";
             
             // 🏗️ 数值字段使用配置类默认值
             if (ttsVoicePitch <= 0f) ttsVoicePitch = TSSFrameworkConfig.TTS.DefaultPitch;

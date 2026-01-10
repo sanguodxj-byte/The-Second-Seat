@@ -828,6 +828,33 @@ namespace TheSecondSeat.Settings
                     }
                 });
                 y += promptHeight + SettingsUIComponents.MediumGap;
+
+                // === 自定义提示词文件 ===
+                float customPromptsHeight = 180f;
+                Rect customPromptsRect = new Rect(viewRect.x, y, cardWidth, customPromptsHeight);
+                SettingsUIComponents.DrawSettingsGroup(customPromptsRect, "自定义提示词文件", SettingsUIComponents.AccentOrange, (contentRect) =>
+                {
+                    float cy = contentRect.y;
+                    
+                    Rect infoRect = new Rect(contentRect.x, cy, contentRect.width, 60f);
+                    SettingsUIComponents.DrawInfoBox(infoRect, "您可以创建自定义的 .txt 文件来覆盖 Mod 默认的提示词。\n这些文件保存在配置文件夹中，不会因 Mod 更新而丢失。", InfoBoxType.Info);
+                    cy += 68f;
+                    
+                    Rect readmeBtnRect = new Rect(contentRect.x, cy, contentRect.width, 32f);
+                    if (SettingsUIComponents.DrawButton(readmeBtnRect, "生成 README 说明文件", SettingsUIComponents.AccentBlue))
+                    {
+                        PersonaGeneration.PromptLoader.CreateReadme();
+                        Messages.Message("README 文件已生成", MessageTypeDefOf.PositiveEvent);
+                    }
+                    cy += 40f;
+                    
+                    Rect openBtnRect = new Rect(contentRect.x, cy, contentRect.width, 32f);
+                    if (SettingsUIComponents.DrawButton(openBtnRect, "打开自定义提示词文件夹", SettingsUIComponents.AccentGreen))
+                    {
+                        PersonaGeneration.PromptLoader.OpenConfigFolder();
+                    }
+                });
+                y += customPromptsHeight + SettingsUIComponents.MediumGap;
                 
                 // === 操作按钮 ===
                 float buttonAreaHeight = 80f;

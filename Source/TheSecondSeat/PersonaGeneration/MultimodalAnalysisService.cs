@@ -188,7 +188,12 @@ namespace TheSecondSeat.PersonaGeneration
   ""characterDescription"": ""Detailed 300-500 word appearance description and personality inference in English"",
   ""mood"": ""overall mood/atmosphere in English"",
   ""suggestedPersonality"": ""Benevolent/Sadistic/Chaotic/Strategic/Protective/Manipulative"",
-  ""styleKeywords"": [""keyword1"", ""keyword2"", ""keyword3""]
+  ""styleKeywords"": [""keyword1"", ""keyword2"", ""keyword3""],
+  ""phraseLibrary"": [
+    { ""key"": ""HeadPat"", ""phrases"": [""phrase1"", ""phrase2""] },
+    { ""key"": ""BodyPoke"", ""phrases"": [""phrase1"", ""phrase2""] },
+    { ""key"": ""Greeting"", ""phrases"": [""phrase1"", ""phrase2""] }
+  ]
 }
 
 **CRITICAL REQUIREMENTS for characterDescription (MUST be in English!):**
@@ -256,13 +261,20 @@ Predict based on visual analysis:
 - 300-500 words
 - Return ONLY valid JSON
 
+**Phrase Library Requirements:**
+- Generate 3-5 phrases for each category:
+  - ""HeadPat"": Reaction to head pats (e.g., shy, happy, annoyed)
+  - ""BodyPoke"": Reaction to body pokes (e.g., surprised, defensive)
+  - ""Greeting"": Greeting when the player loads the game
+
 Focus on:
 - Top 3-4 dominant colors with accurate percentages
 - All visual elements visible in the portrait
 - Detailed appearance analysis (IN ENGLISH!)
 - Personality inference from visual cues (IN ENGLISH!)
 - Behavioral predictions (IN ENGLISH!)
-- Style keywords for System Prompt (in English)";
+- Style keywords for System Prompt (in English)
+- Phrase Library for interactions (HeadPat, BodyPoke, Greeting)";
         }
 
         /// <summary>
@@ -498,7 +510,12 @@ Focus on:
   ""mood"": ""overall mood"",
   ""suggestedPersonality"": ""Benevolent/Sadistic/Chaotic/Strategic/Protective/Manipulative"",
   ""styleKeywords"": [""keyword1"", ""keyword2"", ""keyword3""],
-  ""personalityTags"": [""Tag1"", ""Tag2"", ""Tag3"", ...]
+  ""personalityTags"": [""Tag1"", ""Tag2"", ""Tag3"", ...],
+  ""phraseLibrary"": [
+    { ""key"": ""HeadPat"", ""phrases"": [""...""] },
+    { ""key"": ""BodyPoke"", ""phrases"": [""...""] },
+    { ""key"": ""Greeting"", ""phrases"": [""...""] }
+  ]
 }
 
 Focus on:
@@ -663,63 +680,100 @@ Biography:
                 
                 var visionResult = visionTask.Result;
                 
-                if (visionResult == null)
-                {
-                    Log.Warning($"[MultimodalAnalysis] Vision 分析失败，返回默认结果");
-                    return CreateDefaultAnalysisResult(userSupplement);
-                }
-                
-                // 2. 构建 PersonaAnalysisResult
-                var result = new PersonaAnalysisResult
-                {
-                    VisualTags = visionResult.visualElements ?? new List<string>(),
-                    ToneTags = visionResult.styleKeywords ?? new List<string>(),
-                    ConfidenceScore = 0.9f  // 因为有用户输入，置信度更高
-                };
-                
-                // 3. 📌 提取个性标签（来自AI分析）
-                if (visionResult.personalityTags != null && visionResult.personalityTags.Count > 0)
-                {
-                    result.PersonalityTags = visionResult.personalityTags;
-                }
-                else
-                {
-                    // 如果AI没有返回，至少使用用户选择的特质
-                    result.PersonalityTags = selectedTraits.ToList();
-                }
-                
-                // 4. 解析人格类型
-                if (!string.IsNullOrEmpty(visionResult.suggestedPersonality))
-                {
-                    if (Enum.TryParse<Storyteller.PersonalityTrait>(visionResult.suggestedPersonality, true, out var trait))
-                    {
-                        result.SuggestedPersonality = trait;
-                    }
-                }
-                
-                // 5. 📌 生成增强版 biography（结合用户输入和AI分析）
-                result.GeneratedBiography = visionResult.characterDescription;
-                result.VisualDescription = visionResult.characterDescription;
-                
-                // 6. 📌 生成对话风格（基于用户描述 + 图片分析）
-                result.SuggestedDialogueStyle = GenerateDialogueStyleFromAnalysis(visionResult, userSupplement);
-                
-                if (Prefs.DevMode)
-                {
-                    Log.Message($"[MultimodalAnalysis] AnalyzePersonaImageWithTraits 完成:");
-                    Log.Message($"  - Visual Tags: {result.VisualTags.Count}");
-                    Log.Message($"  - Tone Tags: {result.ToneTags.Count}");
-                    Log.Message($"  - Personality Tags: {result.PersonalityTags.Count}");
-                    Log.Message($"  - Personality: {result.SuggestedPersonality}");
-                }
-                
-                return result;
+                return ProcessAnalysisResult(visionResult, selectedTraits, userSupplement);
             }
             catch (Exception ex)
             {
                 Log.Error($"[MultimodalAnalysis] AnalyzePersonaImageWithTraits 失败: {ex.Message}");
                 return CreateDefaultAnalysisResult(userSupplement);
             }
+        }
+
+        /// <summary>
+        /// 📌 v1.6.62: 异步分析人格图片（支持特质和用户补充）
+        /// </summary>
+        public async Task<PersonaAnalysisResult> AnalyzePersonaImageWithTraitsAsync(
+            Texture2D texture,
+            string personaName,
+            List<string> selectedTraits,
+            string userSupplement)
+        {
+            try
+            {
+                // 1. 调用异步方法进行多模态分析
+                var visionResult = await AnalyzeTextureWithTraitsAsync(texture, selectedTraits, userSupplement);
+                
+                return ProcessAnalysisResult(visionResult, selectedTraits, userSupplement);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[MultimodalAnalysis] AnalyzePersonaImageWithTraitsAsync 失败: {ex.Message}");
+                return CreateDefaultAnalysisResult(userSupplement);
+            }
+        }
+
+        /// <summary>
+        /// 处理分析结果的通用逻辑
+        /// </summary>
+        private PersonaAnalysisResult ProcessAnalysisResult(VisionAnalysisResult visionResult, List<string> selectedTraits, string userSupplement)
+        {
+            if (visionResult == null)
+            {
+                Log.Warning($"[MultimodalAnalysis] Vision 分析失败，返回默认结果");
+                return CreateDefaultAnalysisResult(userSupplement);
+            }
+            
+            // 2. 构建 PersonaAnalysisResult
+            var result = new PersonaAnalysisResult
+            {
+                VisualTags = visionResult.visualElements ?? new List<string>(),
+                ToneTags = visionResult.styleKeywords ?? new List<string>(),
+                ConfidenceScore = 0.9f  // 因为有用户输入，置信度更高
+            };
+            
+            // 3. 📌 提取个性标签（来自AI分析）
+            if (visionResult.personalityTags != null && visionResult.personalityTags.Count > 0)
+            {
+                result.PersonalityTags = visionResult.personalityTags;
+            }
+            else
+            {
+                // 如果AI没有返回，至少使用用户选择的特质
+                result.PersonalityTags = selectedTraits.ToList();
+            }
+            
+            // 4. 解析人格类型
+            if (!string.IsNullOrEmpty(visionResult.suggestedPersonality))
+            {
+                if (Enum.TryParse<Storyteller.PersonalityTrait>(visionResult.suggestedPersonality, true, out var trait))
+                {
+                    result.SuggestedPersonality = trait;
+                }
+            }
+            
+            // 5. 📌 生成增强版 biography（结合用户输入和AI分析）
+            result.GeneratedBiography = visionResult.characterDescription;
+            result.VisualDescription = visionResult.characterDescription;
+            
+            // 6. 📌 生成对话风格（基于用户描述 + 图片分析）
+            result.SuggestedDialogueStyle = GenerateDialogueStyleFromAnalysis(visionResult, userSupplement);
+            
+            // 7. 📌 提取短语库
+            if (visionResult.phraseLibrary != null && visionResult.phraseLibrary.Count > 0)
+            {
+                result.PhraseLibrary = visionResult.phraseLibrary;
+            }
+
+            if (Prefs.DevMode)
+            {
+                Log.Message($"[MultimodalAnalysis] 分析完成:");
+                Log.Message($"  - Visual Tags: {result.VisualTags.Count}");
+                Log.Message($"  - Tone Tags: {result.ToneTags.Count}");
+                Log.Message($"  - Personality Tags: {result.PersonalityTags.Count}");
+                Log.Message($"  - Personality: {result.SuggestedPersonality}");
+            }
+            
+            return result;
         }
         
         /// <summary>
@@ -886,13 +940,19 @@ Biography:
   ""mood"": ""overall mood/atmosphere in English"",
   ""suggestedPersonality"": ""Benevolent/Sadistic/Chaotic/Strategic/Protective/Manipulative"",
   ""styleKeywords"": [""keyword1"", ""keyword2"", ""keyword3""],
-  ""personalityTags"": [""Tag1"", ""Tag2"", ""Tag3"", ...]
+  ""personalityTags"": [""Tag1"", ""Tag2"", ""Tag3"", ...],
+  ""phraseLibrary"": [
+    { ""key"": ""HeadPat"", ""phrases"": [""phrase1"", ""phrase2""] },
+    { ""key"": ""BodyPoke"", ""phrases"": [""phrase1"", ""phrase2""] },
+    { ""key"": ""Greeting"", ""phrases"": [""phrase1"", ""phrase2""] }
+  ]
 }");
             
             sb.AppendLine();
             sb.AppendLine("**REMEMBER**:");
             sb.AppendLine("- characterDescription MUST be in English!");
             sb.AppendLine("- personalityTags MUST be in English!");
+            sb.AppendLine("- phraseLibrary phrases MUST match the character's personality!");
             if (!string.IsNullOrEmpty(userSupplement))
             {
                 sb.AppendLine("- RESPECT the user's personality description - ADD visual details, don't replace!");
@@ -1028,6 +1088,11 @@ Biography:
         /// 📌 v1.6.62: 个性标签（如：善良、坚强、爱撒娇、病娇等）
         /// </summary>
         public List<string> personalityTags { get; set; } = new List<string>();
+
+        /// <summary>
+        /// 📌 互动短语库
+        /// </summary>
+        public List<PhraseSet> phraseLibrary { get; set; } = new List<PhraseSet>();
 
         /// <summary>
         /// 获取主色调（占比最高的颜色）

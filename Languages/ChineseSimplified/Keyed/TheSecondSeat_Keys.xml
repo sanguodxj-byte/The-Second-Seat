@@ -13,10 +13,10 @@
 
   <!-- 设置部分 -->
   <TSS_Settings_Title>The Second Seat 设置</TSS_Settings_Title>
-  <TSS_Settings_LLM_Title>?? LLM 设置</TSS_Settings_LLM_Title>
-  <TSS_Settings_WebSearch_Title>?? 网络搜索设置</TSS_Settings_WebSearch_Title>
-  <TSS_Settings_Multimodal_Title>?? 多模态分析设置</TSS_Settings_Multimodal_Title>
-  <TSS_Settings_Debug_Title>?? 调试设置</TSS_Settings_Debug_Title>
+  <TSS_Settings_LLM_Title>LLM 设置</TSS_Settings_LLM_Title>
+  <TSS_Settings_WebSearch_Title>网络搜索设置</TSS_Settings_WebSearch_Title>
+  <TSS_Settings_Multimodal_Title>多模态分析设置</TSS_Settings_Multimodal_Title>
+  <TSS_Settings_Debug_Title>调试设置</TSS_Settings_Debug_Title>
   <TSS_Settings_Affinity_Title>好感度系统</TSS_Settings_Affinity_Title>
 
   <!-- LLM 设置 -->
@@ -236,4 +236,54 @@
   <TSS_Tier_Devoted_Desc>叙事者对你忠诚，主动关心你的殖民地。</TSS_Tier_Devoted_Desc>
   <TSS_Tier_Adoration_Desc>叙事者深深爱慕你，会尽力帮助和保护你。</TSS_Tier_Adoration_Desc>
   <TSS_Tier_SoulBound_Desc>叙事者与你灵魂相连，你们是真正的挚友。</TSS_Tier_SoulBound_Desc>
+  
+  <!-- 可征召动物系统 -->
+  <TSS_DraftableAnimal_Draft>征召</TSS_DraftableAnimal_Draft>
+  <TSS_DraftableAnimal_Undraft>解除征召</TSS_DraftableAnimal_Undraft>
+  <TSS_DraftableAnimal_DraftDesc>切换征召模式。征召时，该生物将服从你的直接命令，而不是自由游荡。</TSS_DraftableAnimal_DraftDesc>
+  <TSS_DraftableAnimal_Stop>停止</TSS_DraftableAnimal_Stop>
+  <TSS_DraftableAnimal_StopDesc>取消所有当前命令。</TSS_DraftableAnimal_StopDesc>
+  <TSS_DraftableAnimal_Drafted>{0} 已被征召，等待命令。</TSS_DraftableAnimal_Drafted>
+  <TSS_DraftableAnimal_Undrafted>{0} 已解除征召状态。</TSS_DraftableAnimal_Undrafted>
+
+  <!-- Quick Dialogue Window -->
+  <TSS_QuickDialogue_Send>发送</TSS_QuickDialogue_Send>
+  <TSS_QuickDialogue_Agree>? 同意 / 好的</TSS_QuickDialogue_Agree>
+  <TSS_QuickDialogue_Reject>? 拒绝 / 不要</TSS_QuickDialogue_Reject>
+  <TSS_QuickDialogue_AgreeMsg>好的，我同意。</TSS_QuickDialogue_AgreeMsg>
+  <TSS_QuickDialogue_RejectMsg>不，我拒绝。</TSS_QuickDialogue_RejectMsg>
+
+  <!-- Persona Editor -->
+  <TSS_PersonaEditor_Title>编辑人格: {0}</TSS_PersonaEditor_Title>
+  <TSS_PersonaEditor_BasicInfo>基本信息</TSS_PersonaEditor_BasicInfo>
+  <TSS_PersonaEditor_Name>人格名称:</TSS_PersonaEditor_Name>
+  <TSS_PersonaEditor_Biography>人格传记:</TSS_PersonaEditor_Biography>
+  <TSS_PersonaEditor_Tags>个性标签 (Personality Tags)</TSS_PersonaEditor_Tags>
+  <TSS_PersonaEditor_TagsHelp>个性标签用于定义 AI 的性格特征，每个标签会影响对话风格和行为模式。\n例如: cheerful, serious, sarcastic, gentle, protective 等</TSS_PersonaEditor_TagsHelp>
+  <TSS_PersonaEditor_NoTags>(暂无标签)</TSS_PersonaEditor_NoTags>
+  <TSS_PersonaEditor_AddTag>添加标签:</TSS_PersonaEditor_AddTag>
+  <TSS_PersonaEditor_Add>添加</TSS_PersonaEditor_Add>
+  <TSS_PersonaEditor_Delete>删除</TSS_PersonaEditor_Delete>
+  <TSS_PersonaEditor_Style>对话风格</TSS_PersonaEditor_Style>
+  <TSS_PersonaEditor_Style_Formality>正式程度</TSS_PersonaEditor_Style_Formality>
+  <TSS_PersonaEditor_Style_Emotional>情感表达</TSS_PersonaEditor_Style_Emotional>
+  <TSS_PersonaEditor_Style_Verbosity>话语详细度</TSS_PersonaEditor_Style_Verbosity>
+  <TSS_PersonaEditor_Style_Humor>幽默程度</TSS_PersonaEditor_Style_Humor>
+  <TSS_PersonaEditor_Style_Sarcasm>讽刺程度</TSS_PersonaEditor_Style_Sarcasm>
+  <TSS_PersonaEditor_CustomPrompt>自定义系统提示词 (高级 / Custom System Prompt)</TSS_PersonaEditor_CustomPrompt>
+  <TSS_PersonaEditor_CustomPromptHelp>⚠️ 高级功能：如果在此处填写内容，将完全覆盖默认的 Prompt 生成逻辑。\nAI 将直接使用此处的文本作为 System Prompt。请确保包含必要的指令（如 JSON 格式要求）。\n留空则使用默认生成逻辑。</TSS_PersonaEditor_CustomPromptHelp>
+  <TSS_PersonaEditor_AutoGen>自动生成默认模板</TSS_PersonaEditor_AutoGen>
+  <TSS_PersonaEditor_SystemPrompt>System Prompt:</TSS_PersonaEditor_SystemPrompt>
+  <TSS_PersonaEditor_Save>保存修改</TSS_PersonaEditor_Save>
+  <TSS_PersonaEditor_Cancel>取消</TSS_PersonaEditor_Cancel>
+  <TSS_PersonaEditor_Export>导出为文件</TSS_PersonaEditor_Export>
+  <TSS_PersonaEditor_SaveSuccess>人格 '{0}' 已成功保存到 XML 文件！\n文件位置: {1}</TSS_PersonaEditor_SaveSuccess>
+  <TSS_PersonaEditor_SaveLog>[Dialog_PersonaEditor] 人格已保存: {0}</TSS_PersonaEditor_SaveLog>
+  <TSS_PersonaEditor_SaveWarning>人格 '{0}' 修改已应用，但未能保存到文件</TSS_PersonaEditor_SaveWarning>
+  <TSS_PersonaEditor_SaveError>保存失败: {0}</TSS_PersonaEditor_SaveError>
+  <TSS_PersonaEditor_ExportSuccess>人格 '{0}' 已导出到 Defs 文件夹！\n文件位置: {1}</TSS_PersonaEditor_ExportSuccess>
+  <TSS_PersonaEditor_ExportFail>导出失败</TSS_PersonaEditor_ExportFail>
+  <TSS_PersonaEditor_ExportError>导出失败: {0}</TSS_PersonaEditor_ExportError>
+  <TSS_PersonaEditor_AutoGenSuccess>已生成默认 System Prompt 模板</TSS_PersonaEditor_AutoGenSuccess>
+  <TSS_PersonaEditor_AutoGenError>生成失败: {0}</TSS_PersonaEditor_AutoGenError>
 </LanguageData>

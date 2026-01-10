@@ -156,4 +156,67 @@ namespace TheSecondSeat.Commands.Implementations
             return false;
         }
     }
+
+    /// <summary>
+    /// Get available incident categories
+    /// </summary>
+    public class GetIncidentCategoriesCommand : BaseAICommand
+    {
+        public override string ActionName => "GetIncidentCategories";
+
+        public override string GetDescription()
+        {
+            return "Get list of available incident categories. No target or parameters required.";
+        }
+
+        public override bool Execute(string? target = null, object? parameters = null)
+        {
+            var categories = TheSecondSeat.Storyteller.IncidentRegistry.GetAvailableCategories();
+            LogExecution($"Available Categories: {string.Join(", ", categories)}");
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// Get list of incidents in a category with optional pagination and search
+    /// </summary>
+    public class GetIncidentListCommand : BaseAICommand
+    {
+        public override string ActionName => "GetIncidentList";
+
+        public override string GetDescription()
+        {
+            return "Get incidents in a category. Target: CategoryName. Parameters: page=<int>, pageSize=<int>, search=<string>";
+        }
+
+        public override bool Execute(string? target = null, object? parameters = null)
+        {
+            if (string.IsNullOrEmpty(target))
+            {
+                LogError("Category name is required as Target");
+                return false;
+            }
+
+            int pageIndex = 0;
+            int pageSize = 10;
+            string searchTerm = "";
+
+            if (parameters is Dictionary<string, object> paramsDict)
+            {
+                if (paramsDict.TryGetValue("page", out var pageObj))
+                    int.TryParse(pageObj.ToString(), out pageIndex);
+
+                if (paramsDict.TryGetValue("pageSize", out var sizeObj))
+                    int.TryParse(sizeObj.ToString(), out pageSize);
+
+                if (paramsDict.TryGetValue("search", out var searchObj))
+                    searchTerm = searchObj?.ToString() ?? "";
+            }
+
+            var result = TheSecondSeat.Storyteller.IncidentRegistry.GetIncidentList(target, pageIndex, pageSize, searchTerm);
+            string resultStr = string.Join(", ", result.Select(i => $"{i.defName} ({i.label})"));
+            LogExecution($"Incidents in {target}: {resultStr}");
+            return true;
+        }
+    }
 }

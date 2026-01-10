@@ -12,6 +12,7 @@ using TheSecondSeat.RimAgent.Tools; // ⭐ v1.6.77: 新增 - 引入 Tools
 using TheSecondSeat.Utils; // ⭐ v1.6.80: 新增 - 引入 Utils
 using TheSecondSeat.Framework; // ⭐ v1.6.83: 新增 - 引入 Framework
 using TheSecondSeat.Descent; // ⭐ v1.6.83: 新增 - 引入 Descent
+using TheSecondSeat.Components; // ⭐ v1.6.97: 新增 - 引入 Components (DraftableAnimal)
 using System.Reflection;
 
 namespace TheSecondSeat
@@ -31,6 +32,9 @@ namespace TheSecondSeat
             // This will also apply patches in ComponentRegistrar
             var harmony = new Harmony("yourname.thesecondseat");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
+            
+            // ⭐ v1.6.97: 手动应用 DraftableAnimal Patches
+            DraftableAnimalHarmonyPatches.ApplyPatches(harmony);
             
             // ✅ v1.6.84: 简化初始化日志，只输出一条
             Log.Message("[The Second Seat] AI Narrator Assistant v1.0.0 初始化完成");

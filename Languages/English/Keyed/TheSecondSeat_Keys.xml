@@ -236,4 +236,54 @@ Click to talk with the AI Narrator</TSS_NarratorButton_Tooltip>
   <TSS_Tier_Devoted_Desc>The narrator is loyal to you, actively caring about your colony.</TSS_Tier_Devoted_Desc>
   <TSS_Tier_Adoration_Desc>The narrator deeply adores you, striving to help and protect you.</TSS_Tier_Adoration_Desc>
   <TSS_Tier_SoulBound_Desc>The narrator is soul-bound to you, a true and eternal companion.</TSS_Tier_SoulBound_Desc>
+  
+  <!-- Draftable Animal System -->
+  <TSS_DraftableAnimal_Draft>Draft</TSS_DraftableAnimal_Draft>
+  <TSS_DraftableAnimal_Undraft>Undraft</TSS_DraftableAnimal_Undraft>
+  <TSS_DraftableAnimal_DraftDesc>Toggle draft mode. When drafted, this creature will follow your direct commands instead of wandering freely.</TSS_DraftableAnimal_DraftDesc>
+  <TSS_DraftableAnimal_Stop>Stop</TSS_DraftableAnimal_Stop>
+  <TSS_DraftableAnimal_StopDesc>Cancel all current orders.</TSS_DraftableAnimal_StopDesc>
+  <TSS_DraftableAnimal_Drafted>{0} is now drafted and awaiting orders.</TSS_DraftableAnimal_Drafted>
+  <TSS_DraftableAnimal_Undrafted>{0} has been released from draft.</TSS_DraftableAnimal_Undrafted>
+
+  <!-- Quick Dialogue Window -->
+  <TSS_QuickDialogue_Send>Send</TSS_QuickDialogue_Send>
+  <TSS_QuickDialogue_Agree>? Agree / OK</TSS_QuickDialogue_Agree>
+  <TSS_QuickDialogue_Reject>? Reject / No</TSS_QuickDialogue_Reject>
+  <TSS_QuickDialogue_AgreeMsg>Okay, I agree.</TSS_QuickDialogue_AgreeMsg>
+  <TSS_QuickDialogue_RejectMsg>No, I refuse.</TSS_QuickDialogue_RejectMsg>
+
+  <!-- Persona Editor -->
+  <TSS_PersonaEditor_Title>Edit Persona: {0}</TSS_PersonaEditor_Title>
+  <TSS_PersonaEditor_BasicInfo>Basic Info</TSS_PersonaEditor_BasicInfo>
+  <TSS_PersonaEditor_Name>Persona Name:</TSS_PersonaEditor_Name>
+  <TSS_PersonaEditor_Biography>Biography:</TSS_PersonaEditor_Biography>
+  <TSS_PersonaEditor_Tags>Personality Tags</TSS_PersonaEditor_Tags>
+  <TSS_PersonaEditor_TagsHelp>Tags define the AI's character traits, affecting dialogue style and behavior patterns.\nExamples: cheerful, serious, sarcastic, gentle, protective, etc.</TSS_PersonaEditor_TagsHelp>
+  <TSS_PersonaEditor_NoTags>(No tags)</TSS_PersonaEditor_NoTags>
+  <TSS_PersonaEditor_AddTag>Add Tag:</TSS_PersonaEditor_AddTag>
+  <TSS_PersonaEditor_Add>Add</TSS_PersonaEditor_Add>
+  <TSS_PersonaEditor_Delete>Delete</TSS_PersonaEditor_Delete>
+  <TSS_PersonaEditor_Style>Dialogue Style</TSS_PersonaEditor_Style>
+  <TSS_PersonaEditor_Style_Formality>Formality</TSS_PersonaEditor_Style_Formality>
+  <TSS_PersonaEditor_Style_Emotional>Emotional Expression</TSS_PersonaEditor_Style_Emotional>
+  <TSS_PersonaEditor_Style_Verbosity>Verbosity</TSS_PersonaEditor_Style_Verbosity>
+  <TSS_PersonaEditor_Style_Humor>Humor Level</TSS_PersonaEditor_Style_Humor>
+  <TSS_PersonaEditor_Style_Sarcasm>Sarcasm Level</TSS_PersonaEditor_Style_Sarcasm>
+  <TSS_PersonaEditor_CustomPrompt>Custom System Prompt (Advanced)</TSS_PersonaEditor_CustomPrompt>
+  <TSS_PersonaEditor_CustomPromptHelp>⚠️ Advanced Feature: Content here will completely override the default prompt generation logic.\nThe AI will use this text directly as the System Prompt. Ensure necessary instructions (e.g., JSON format) are included.\nLeave empty to use default generation.</TSS_PersonaEditor_CustomPromptHelp>
+  <TSS_PersonaEditor_AutoGen>Auto-Generate Default Template</TSS_PersonaEditor_AutoGen>
+  <TSS_PersonaEditor_SystemPrompt>System Prompt:</TSS_PersonaEditor_SystemPrompt>
+  <TSS_PersonaEditor_Save>Save Changes</TSS_PersonaEditor_Save>
+  <TSS_PersonaEditor_Cancel>Cancel</TSS_PersonaEditor_Cancel>
+  <TSS_PersonaEditor_Export>Export to File</TSS_PersonaEditor_Export>
+  <TSS_PersonaEditor_SaveSuccess>Persona '{0}' successfully saved to XML file!\nFile location: {1}</TSS_PersonaEditor_SaveSuccess>
+  <TSS_PersonaEditor_SaveLog>[Dialog_PersonaEditor] Persona saved: {0}</TSS_PersonaEditor_SaveLog>
+  <TSS_PersonaEditor_SaveWarning>Persona '{0}' changes applied but failed to save to file</TSS_PersonaEditor_SaveWarning>
+  <TSS_PersonaEditor_SaveError>Save failed: {0}</TSS_PersonaEditor_SaveError>
+  <TSS_PersonaEditor_ExportSuccess>Persona '{0}' exported to Defs folder!\nFile location: {1}</TSS_PersonaEditor_ExportSuccess>
+  <TSS_PersonaEditor_ExportFail>Export failed</TSS_PersonaEditor_ExportFail>
+  <TSS_PersonaEditor_ExportError>Export failed: {0}</TSS_PersonaEditor_ExportError>
+  <TSS_PersonaEditor_AutoGenSuccess>Default System Prompt template generated</TSS_PersonaEditor_AutoGenSuccess>
+  <TSS_PersonaEditor_AutoGenError>Generation failed: {0}</TSS_PersonaEditor_AutoGenError>
 </LanguageData>
