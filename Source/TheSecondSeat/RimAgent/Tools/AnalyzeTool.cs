@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Verse;
 using RimWorld;
-using TheSecondSeat.Observer;
+using TheSecondSeat.Monitoring;
 
 namespace TheSecondSeat.RimAgent.Tools
 {
@@ -22,7 +22,7 @@ namespace TheSecondSeat.RimAgent.Tools
             Log.Message(string.Format("[AnalyzeTool] ExecuteAsync called with parameters: {0}", string.Join(", ", parameters.Keys)));
             try
             {
-                var snapshot = GameStateObserver.CaptureSnapshotSafe();
+                var snapshot = GameStateSnapshotUtility.CaptureSnapshotSafe();
                 
                 var analysis = new Dictionary<string, object>
                 {

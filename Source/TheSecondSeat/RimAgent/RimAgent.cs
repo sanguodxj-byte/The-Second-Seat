@@ -52,6 +52,14 @@ namespace TheSecondSeat.RimAgent
         /// </summary>
         public async Task<AgentResponse> ExecuteAsync(string userMessage, string gameState = "", float temperature = 0.7f, int maxTokens = 500)
         {
+            return await ExecuteAsync(userMessage, () => gameState, temperature, maxTokens);
+        }
+
+        /// <summary>
+        /// ⭐ v1.6.85: 执行 Agent 逻辑（支持动态 GameState 获取）
+        /// </summary>
+        public async Task<AgentResponse> ExecuteAsync(string userMessage, Func<string> gameStateProvider, float temperature = 0.7f, int maxTokens = 500)
+        {
             if (State == AgentState.Running)
             {
                 return new AgentResponse { Success = false, Error = "Agent is busy" };
@@ -74,7 +82,10 @@ namespace TheSecondSeat.RimAgent
                 // ReAct 循环变量
                 int maxIterations = 5;
                 int currentIteration = 0;
-                string currentPrompt = userMessage; // 初始 Prompt 为用户输入
+                // ⭐ v1.6.86: 优化上下文管理，避免 Token 爆炸
+                // 我们不再每次都追加整个 conversationBuilder，而是只保留最近的 N 轮交互，或者只传递必要的增量信息。
+                // 但由于 LLMService 每次都是无状态调用，我们必须传递完整的上下文。
+                // 这里的优化是：限制 conversationBuilder 的最大长度。
                 StringBuilder conversationBuilder = new StringBuilder();
                 conversationBuilder.Append(userMessage);
 
@@ -82,20 +93,48 @@ namespace TheSecondSeat.RimAgent
                 {
                     currentIteration++;
                     
-                    // 调用 LLM (注意：Provider.SendMessageAsync 会自动处理 gameState 的拼接，但不支持 history，所以我们需要手动构建 prompt)
-                    // 为了避免 Provider 重复拼接 gameState，我们在后续循环中可能需要技巧，
-                    // 但目前 Provider 接口是固定的。
-                    // 策略：我们将完整的 conversation history 作为 userMessage 传递。
-                    // 缺点：gameState 会被重复拼接在最前面。这是 ReAct 的标准做法（每次请求都带上完整状态）。
+                    // 动态获取最新的游戏状态
+                    // ⭐ 修复：强制在主线程获取状态，避免多线程访问游戏对象导致的崩溃
+                    string currentGameState = "";
+                    var tcs = new TaskCompletionSource<bool>();
                     
-                    string llmResponseRaw = await Provider.SendMessageAsync(SystemPrompt, gameState, conversationBuilder.ToString(), temperature, maxTokens);
+                    Verse.LongEventHandler.ExecuteWhenFinished(() => {
+                        try
+                        {
+                            currentGameState = gameStateProvider?.Invoke() ?? "";
+                            tcs.SetResult(true);
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Error($"[RimAgent] Error getting game state: {ex.Message}");
+                            tcs.SetResult(false);
+                        }
+                    });
+                    
+                    // 等待主线程执行完毕
+                    await tcs.Task;
+
+                    // ⭐ v1.6.86: 上下文长度截断保护
+                    if (conversationBuilder.Length > 8000)
+                    {
+                        // 如果上下文过长，保留开头（用户原始请求）和结尾（最近的思考过程）
+                        string fullContext = conversationBuilder.ToString();
+                        string start = fullContext.Substring(0, 1000);
+                        string end = fullContext.Substring(fullContext.Length - 6000);
+                        conversationBuilder.Clear();
+                        conversationBuilder.Append(start).Append("\n...[Context Truncated]...\n").Append(end);
+                    }
+
+                    string llmResponseRaw = await Provider.SendMessageAsync(SystemPrompt, currentGameState, conversationBuilder.ToString(), temperature, maxTokens);
                     
                     // 解析响应
                     ReActResponse response = ParseReActResponse(llmResponseRaw);
                     
+                    // ⭐ v1.6.86: 解析失败重试逻辑（简单的回退）
                     if (response == null)
                     {
-                        // 解析失败，假设是普通文本响应
+                        // 尝试再次解析，也许是 JSON 格式有细微错误
+                        // 这里我们简单地将非 JSON 响应视为最终回复（假设模型放弃了 ReAct 格式直接回答）
                         SuccessfulRequests++;
                         State = AgentState.Idle;
                         return new AgentResponse { Success = true, Content = llmResponseRaw, AgentId = AgentId };
@@ -120,6 +159,12 @@ namespace TheSecondSeat.RimAgent
                         string observation = toolResult.Success ? 
                             (toolResult.Data?.ToString() ?? "Success") : 
                             $"Error: {toolResult.Error}";
+                            
+                        // 限制 Observation 长度，防止输出过大导致下一次请求 Token 爆炸
+                        if (observation.Length > 1000)
+                        {
+                            observation = observation.Substring(0, 1000) + "...[Observation Truncated]";
+                        }
                             
                         Log.Message($"[RimAgent] ReAct Observation: {observation}");
                         conversationBuilder.AppendLine($"\nObservation: {observation}");

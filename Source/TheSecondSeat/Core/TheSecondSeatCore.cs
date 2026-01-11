@@ -26,7 +26,15 @@ namespace TheSecondSeat
         static TheSecondSeatCore()
         {
             // ⚠️ v1.6.80: 初始化主线程ID（必须在所有资源加载前调用）
-            TSS_AssetLoader.InitializeMainThread();
+            // ? 优化：添加异常捕获，防止初始化失败导致 Mod 加载崩溃
+            try
+            {
+                TSS_AssetLoader.InitializeMainThread();
+            }
+            catch (System.Exception ex)
+            {
+                Log.Warning($"[The Second Seat] 主线程ID初始化警告: {ex.Message}. 将在后续通过 lazy load 重试。");
+            }
             
             // Apply Harmony patches
             // This will also apply patches in ComponentRegistrar

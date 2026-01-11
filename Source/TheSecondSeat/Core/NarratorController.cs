@@ -5,7 +5,7 @@ using System.Linq;
 using TheSecondSeat.Commands;
 using TheSecondSeat.LLM;
 using TheSecondSeat.Narrator;
-using TheSecondSeat.Observer;
+using TheSecondSeat.Monitoring;
 using TheSecondSeat.NaturalLanguage;
 using TheSecondSeat.Execution;
 using TheSecondSeat.Integration;
@@ -256,8 +256,8 @@ namespace TheSecondSeat.Core
             try
             {
                 // 1. 在主线程捕获游戏状态（必须！）
-                snapshot = GameStateObserver.CaptureSnapshotSafe();
-                gameStateJson = GameStateObserver.SnapshotToJson(snapshot);
+                snapshot = GameStateSnapshotUtility.CaptureSnapshotSafe();
+                gameStateJson = GameStateSnapshotUtility.SnapshotToJson(snapshot);
 
                 // ? 捕获玩家当前选中的物体
                 if (Find.Selector != null && Find.Selector.SelectedObjects.Count > 0)
@@ -486,7 +486,8 @@ namespace TheSecondSeat.Core
                     if (persona != null)
                     {
                         narratorDefName = persona.defName;
-                        narratorName = persona.narratorName;
+                        // ? 优先使用本地化名字 (label)，避免中文环境显示英文名
+                        narratorName = !string.IsNullOrEmpty(persona.label) ? persona.label : persona.narratorName;
                     }
                 }
 
@@ -550,12 +551,13 @@ namespace TheSecondSeat.Core
                 // 添加到聊天窗口（带表情符）
                 UI.NarratorWindow.AddAIMessage(displayText, emoticonId);
 
-                // ? 同时发送到系统消息
-                SendAsSystemMessage(displayText);
-
+                // ? 准备流式消息（但先不显示，等待 TTS 或超时）
+                UI.DialogueOverlayPanel.SetStreamingMessage($"【{narratorName}】{displayText}");
+                
                 Log.Message($"[NarratorController] AI says: {displayText}");
 
                 // ? 自动播放 TTS（根据设置）
+                // 如果 TTS 禁用，将立即触发流式显示
                 AutoPlayTTS(displayText);
 
                 // 执行命令（默认执行）
@@ -571,32 +573,41 @@ namespace TheSecondSeat.Core
         }
         
         /// <summary>
-        /// ? 自动播放 TTS（叙事者发言时）
-        /// ? 优化：添加加载状态提示
-        /// ? v1.6.51: 修复嘴部动画 - 传递 personaDefName 参数
+        /// ⭐ 自动播放 TTS（叙事者发言时）
+        /// ⭐ v1.6.90: 修复 TTS 与对话同步 - 对话框等待 TTS 加载完成后同时开始
+        /// - 启用 TTS 时：由 TTSAudioPlayer 在音频开始播放时触发 StartStreaming(clip.length)
+        /// - 禁用 TTS 时：使用估算时长立即开始流式显示
         /// </summary>
         private void AutoPlayTTS(string text)
         {
             try
             {
+                // 清除动作标记（括号内的内容）- 提前计算以便估算时长
+                string cleanText = System.Text.RegularExpressions.Regex.Replace(text, @"\([^)]*\)", "").Trim();
+                
+                // ⭐ 估算文本阅读时长（中文约每秒5个字符，最少2秒）
+                float estimatedDuration = Math.Max(2f, cleanText.Length / 5f);
+                
                 // 检查是否启用 TTS
                 var modSettings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
                 
                 if (modSettings == null || !modSettings.enableTTS || !modSettings.autoPlayTTS)
                 {
-                    return; // TTS 未启用，跳过
+                    // ⭐ TTS 未启用，使用估算时长开始流式显示
+                    Log.Message($"[NarratorController] TTS disabled. Streaming with estimated duration: {estimatedDuration:F2}s");
+                    UI.DialogueOverlayPanel.StartStreaming(estimatedDuration);
+                    return;
                 }
-                
-                // 清除动作标记（括号内的内容）
-                string cleanText = System.Text.RegularExpressions.Regex.Replace(text, @"\([^)]*\)", "").Trim();
                 
                 if (string.IsNullOrEmpty(cleanText))
                 {
-                    return; // 没有实际文本，跳过
+                    // 没有语音内容，使用最短时长显示
+                    UI.DialogueOverlayPanel.StartStreaming(1f);
+                    return;
                 }
                 
-                // ? v1.6.51: ????????? defName?????? TTS ?????????
-                string personaDefName = "Cassandra_Classic"; // ????
+                // 获取当前叙事者 defName
+                string personaDefName = "Cassandra_Classic";
                 if (narratorManager != null)
                 {
                     var persona = narratorManager.GetCurrentPersona();
@@ -606,60 +617,70 @@ namespace TheSecondSeat.Core
                     }
                 }
                 
-                // ? ???"??????????"???
-                Messages.Message("?? ??????????...", MessageTypeDefOf.SilentInput);
+                // 显示加载提示
+                Messages.Message("正在生成语音...", MessageTypeDefOf.SilentInput);
                 
-                // ? ??????????? TTS ???
-                Task.Run(async () => 
+                // ⭐ 在后台线程生成 TTS 音频
+                // 注意：此时不调用 StartStreaming！等待 TTSAudioPlayer 在音频播放时触发
+                Task.Run(async () =>
                 {
                     try
                     {
-                        // ? v1.6.51: ?????? - ???? personaDefName ????
                         string? audioPath = await TTS.TTSService.Instance.SpeakAsync(cleanText, personaDefName);
                         
                         if (!string.IsNullOrEmpty(audioPath))
                         {
-                            Log.Message($"[NarratorController] TTS ?????????: {audioPath} (Persona: {personaDefName})");
+                            Log.Message($"[NarratorController] TTS 音频生成完成: {audioPath} (Persona: {personaDefName})");
                             
-                            // ? ?????? TTS ???????????????
-                            Verse.LongEventHandler.ExecuteWhenFinished(() => 
+                            // ⭐ 在主线程播放音频
+                            // TTSAudioPlayer.PlayAndDelete 内部会在音频开始播放时调用 StartStreaming(clip.length)
+                            Verse.LongEventHandler.ExecuteWhenFinished(() =>
                             {
                                 try
                                 {
-                                    // ? v1.6.51: ?????? - ???? personaDefName ????
+                                    // ⭐ 播放音频 - TTSAudioPlayer 会自动触发 StartStreaming(clip.length)
                                     TTS.TTSAudioPlayer.Instance.PlayAndDelete(audioPath, personaDefName);
-                                    Messages.Message($"? ??????????: {System.IO.Path.GetFileName(audioPath)}", MessageTypeDefOf.TaskCompletion);
                                 }
                                 catch (Exception playEx)
                                 {
-                                    Log.Error($"[NarratorController] ??????????: {playEx.Message}");
+                                    Log.Error($"[NarratorController] TTS playback failed: {playEx.Message}");
+                                    // ⭐ 出错时使用估算时长回退
+                                    float fallbackDuration = Math.Max(2f, cleanText.Length / 5f);
+                                    Log.Warning($"[NarratorController] TTS playback failed. Falling back to estimated duration: {fallbackDuration:F2}s");
+                                    UI.DialogueOverlayPanel.StartStreaming(fallbackDuration);
                                 }
                             });
                         }
                         else
                         {
-                            // ? ??????????
-                            Verse.LongEventHandler.ExecuteWhenFinished(() => 
+                            // ⭐ TTS 生成失败，使用估算时长回退
+                            Verse.LongEventHandler.ExecuteWhenFinished(() =>
                             {
-                                Messages.Message("? ?????????????????????????", MessageTypeDefOf.RejectInput);
+                                Log.Warning("[NarratorController] TTS audio generation returned null. Falling back to estimated duration.");
+                                float fallbackDuration = Math.Max(2f, cleanText.Length / 5f);
+                                UI.DialogueOverlayPanel.StartStreaming(fallbackDuration);
                             });
                         }
                     }
                     catch (Exception ex)
                     {
-                        Log.Warning($"[NarratorController] TTS ??????????: {ex.Message}");
+                        Log.Error($"[NarratorController] TTS processing task failed: {ex.Message}");
                         
-                        // ? ??????????
-                        Verse.LongEventHandler.ExecuteWhenFinished(() => 
+                        // ⭐ TTS 异常，使用估算时长回退
+                        Verse.LongEventHandler.ExecuteWhenFinished(() =>
                         {
-                            Messages.Message($"? ???????????: {ex.Message}", MessageTypeDefOf.RejectInput);
+                            float fallbackDuration = Math.Max(2f, cleanText.Length / 5f);
+                            Log.Warning($"[NarratorController] TTS task failed. Falling back to estimated duration: {fallbackDuration:F2}s");
+                            UI.DialogueOverlayPanel.StartStreaming(fallbackDuration);
                         });
                     }
                 });
             }
             catch (Exception ex)
             {
-                Log.Warning($"[NarratorController] AutoPlayTTS ???: {ex.Message}");
+                Log.Warning($"[NarratorController] AutoPlayTTS 异常: {ex.Message}");
+                // ⭐ 最外层异常使用最小时长回退
+                UI.DialogueOverlayPanel.StartStreaming(2f);
             }
         }
         

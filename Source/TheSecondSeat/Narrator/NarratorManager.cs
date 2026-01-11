@@ -7,6 +7,7 @@ using RimWorld;
 using TheSecondSeat.Storyteller;
 using TheSecondSeat.PersonaGeneration;
 using TheSecondSeat.RimAgent;
+using TheSecondSeat.Monitoring;
 using UnityEngine;
 
 namespace TheSecondSeat.Narrator
@@ -35,10 +36,10 @@ namespace TheSecondSeat.Narrator
         // ? 新增：用于存档保存的人格 defName
         private string savedPersonaDefName = "Cassandra_Classic";
         
-        // ? 新增：自动问候标记
-        private bool hasGreetedThisSession = false;
-        private int ticksSinceLoad = 0;
-        private const int GreetingDelayTicks = 60; // 1秒后问候（60 ticks）
+        // ? v1.6.84: 移除自动问候标记 - 统一由 NarratorController 处理
+        // private bool hasGreetedThisSession = false;
+        // private int ticksSinceLoad = 0;
+        // private const int GreetingDelayTicks = 60;
 
         // ? 日志收集
         private static List<LogError> recentErrors = new List<LogError>();
@@ -138,10 +139,23 @@ namespace TheSecondSeat.Narrator
                     InitializeRimAgent();
                 }
                 
+                // ⭐ v1.6.85: 动态获取游戏状态
+                Func<string> gameStateProvider = () => {
+                    try {
+                        // 注意：如果在后台线程调用，需要确保 CaptureSnapshotSafe 是线程安全的
+                        var snapshot = GameStateSnapshotUtility.CaptureSnapshotSafe();
+                        return GameStateSnapshotUtility.SnapshotToJson(snapshot);
+                    } catch (Exception ex) {
+                        Log.Warning($"[NarratorManager] Failed to capture game state: {ex.Message}");
+                        return "";
+                    }
+                };
+
                 // 使用 ConcurrentRequestManager 管理请求
                 var response = await ConcurrentRequestManager.Instance.EnqueueAsync(
                     async () => await narratorAgent.ExecuteAsync(
                         userInput,
+                        gameStateProvider, // 使用动态 provider
                         temperature: 0.7f,
                         maxTokens: 500
                     ),
@@ -509,9 +523,9 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
                     storytellerAgent.AdjustDialogueStyleByAffinity();
                 }
                 
-                // ? 重置自动问候标记，允许自动问候
-                hasGreetedThisSession = false;
-                ticksSinceLoad = 0;
+                // ? v1.6.84: 移除自动问候逻辑 - 统一由 NarratorController 处理
+                // hasGreetedThisSession = false;
+                // ticksSinceLoad = 0;
             }
         }
         
@@ -543,17 +557,8 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
                     ExpressionSystem.CleanupOldStates();
                 }
                 
-                // 检查是否需要自动问候
-                if (!hasGreetedThisSession && Current.ProgramState == ProgramState.Playing)
-                {
-                    ticksSinceLoad++;
-                    
-                    if (ticksSinceLoad >= GreetingDelayTicks)
-                    {
-                        hasGreetedThisSession = true;
-                        TriggerAutoGreeting();
-                    }
-                }
+                // ? v1.6.84: 移除自动问候逻辑 - 统一由 NarratorController 处理
+                // 避免重复发送问候消息（之前 NarratorManager 和 NarratorController 各自触发一次）
             }
             catch (Exception ex)
             {
@@ -562,38 +567,13 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
             }
         }
         
-        /// <summary>
-        /// ? 触发自动问候（带日志错误检查）
-        /// </summary>
-        private void TriggerAutoGreeting()
-        {
-            try
-            {
-                var controller = Current.Game?.GetComponent<Core.NarratorController>();
-                if (controller != null && !controller.IsProcessing)
-                {
-                    // 构建问候消息（带时间上下文）
-                    DateTime now = DateTime.Now;
-                    
-                    // ? 新增：检查日志错误
-                    var logErrors = CheckRecentLogErrors();
-                    
-                    string greetingContext = BuildGreetingContext(now, logErrors);
-                    
-                    // 触发 AI 问候
-                    controller.TriggerNarratorUpdate(greetingContext);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[NarratorManager] 自动问候失败: {ex.Message}");
-            }
-        }
+        // ? v1.6.84: TriggerAutoGreeting 已移除 - 统一由 NarratorController.TriggerLoadGreeting() 处理
+        // 这避免了重复发送问候消息的问题
         
         /// <summary>
-        /// ? 新增：检查最近的日志错误 (Optimized)
+        /// ? 检查最近的日志错误 (供外部调用)
         /// </summary>
-        private List<LogError> CheckRecentLogErrors()
+        public List<LogError> GetRecentLogErrors()
         {
             lock (logLock)
             {
@@ -642,51 +622,7 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
             return message.Substring(0, maxLength) + "...";
         }
         
-        /// <summary>
-        /// ? 构建问候上下文（带错误检查）
-        /// </summary>
-        private string BuildGreetingContext(DateTime now, List<LogError> logErrors)
-        {
-            string timePeriod = GetTimePeriod(now.Hour);
-            string dayOfWeek = now.ToString("dddd", System.Globalization.CultureInfo.GetCultureInfo("zh-CN"));
-            bool isWeekend = now.DayOfWeek == DayOfWeek.Saturday || now.DayOfWeek == DayOfWeek.Sunday;
-            
-            // 构建自然语言的问候请求
-            var context = "[玩家刚刚加载了存档，请主动向玩家打招呼]\n";
-            context += $"当前真实时间: {now:yyyy年MM月dd日 HH:mm} {dayOfWeek}";
-            if (isWeekend) context += "（周末）";
-            context += $"\n时段: {timePeriod}\n";
-            
-            // ? 新增：如果有严重错误，在问候中提及
-            if (logErrors.Count > 0)
-            {
-                context += "\n?? **检测到游戏日志中存在严重错误！**\n";
-                context += $"发现 {logErrors.Count} 个错误/异常：\n";
-                
-                for (int i = 0; i < logErrors.Count; i++)
-                {
-                    var error = logErrors[i];
-                    context += $"\n【错误 {i + 1}】\n";
-                    context += $"消息: {error.Message}\n";
-                    if (!string.IsNullOrEmpty(error.StackTrace))
-                    {
-                        context += $"堆栈: {error.StackTrace}\n";
-                    }
-                }
-                
-                context += "\n**请在问候玩家后，询问玩家是否需要帮助处理这些错误。**\n";
-                context += "如果玩家同意，你可以：\n";
-                context += "1. 根据错误信息分析可能的原因\n";
-                context += "2. 使用联网搜索功能查找解决方案\n";
-                context += "3. 提供具体的修复建议\n";
-            }
-            else
-            {
-                context += "请根据当前时间和好感度，用合适的语气向玩家问候。可以提及时间、关心玩家状态、或者简单打个招呼。";
-            }
-            
-            return context;
-        }
+        // ? v1.6.84: BuildGreetingContext 已移除 - 问候逻辑统一由 NarratorController 处理
         
         /// <summary>
         /// ? 获取时间段描述

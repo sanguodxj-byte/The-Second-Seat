@@ -39,7 +39,10 @@ namespace TheSecondSeat.LLM
                 }
             };
 
-            string jsonContent = JsonConvert.SerializeObject(request);
+            string jsonContent = JsonConvert.SerializeObject(request, new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore
+            });
             return await SendOpenAIRawRequestAsync(endpoint, apiKey, jsonContent);
         }
 

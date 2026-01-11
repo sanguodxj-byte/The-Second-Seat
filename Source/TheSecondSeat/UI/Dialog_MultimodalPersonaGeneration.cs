@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
 using Verse;
 using RimWorld;
@@ -30,7 +31,13 @@ namespace TheSecondSeat.UI
         
         // 状态
         private bool isAnalyzing = false;
+        private bool isGeneratingPhrases = false;
         private string statusMessage = "";
+        private float phraseGenerationProgress = 0f;
+        
+        // 创建完成的人格（用于后续生成短语库）
+        private NarratorPersonaDef createdPersona = null;
+        private bool personaCreated = false;
         
         // 可选特质列表（最多3个）
         private static readonly string[] AvailableTraits = new[]
@@ -272,6 +279,28 @@ namespace TheSecondSeat.UI
                 this.Close();
             }
             
+            // 如果人格已创建，显示"生成短语库"按钮（中间）
+            if (personaCreated && createdPersona != null)
+            {
+                float middleButtonWidth = 180f;
+                Rect phraseRect = new Rect(
+                    rect.x + (rect.width - middleButtonWidth) / 2f,
+                    rect.y,
+                    middleButtonWidth,
+                    rect.height
+                );
+                
+                GUI.enabled = !isGeneratingPhrases;
+                string phraseButtonText = isGeneratingPhrases 
+                    ? $"生成中... {phraseGenerationProgress:P0}" 
+                    : "🎤 生成短语库";
+                if (Widgets.ButtonText(phraseRect, phraseButtonText))
+                {
+                    StartPhraseLibraryGeneration();
+                }
+                GUI.enabled = true;
+            }
+            
             // 开始分析按钮（右侧）
             Rect analyzeRect = new Rect(
                 rect.x + rect.width - buttonWidth,
@@ -280,10 +309,13 @@ namespace TheSecondSeat.UI
                 rect.height
             );
             
-            GUI.enabled = !isAnalyzing;
-            if (Widgets.ButtonText(analyzeRect, isAnalyzing ? "分析中..." : "开始分析"))
+            GUI.enabled = !isAnalyzing && !personaCreated;
+            if (Widgets.ButtonText(analyzeRect, isAnalyzing ? "分析中..." : (personaCreated ? "✓ 已完成" : "开始分析")))
             {
-                StartAnalysis();
+                if (!personaCreated)
+                {
+                    StartAnalysis();
+                }
             }
             GUI.enabled = true;
         }
@@ -387,11 +419,10 @@ namespace TheSecondSeat.UI
                     // 4. 创建人格定义
                     CreatePersonaFromAnalysis(analysisResult);
                     
-                    statusMessage = "? 分析完成！人格已生成";
+                    statusMessage = "✅ 分析完成！人格已生成\n\n点击「生成短语库」按钮为此人格创建互动短语";
+                    personaCreated = true;
                     
-                    // 延迟关闭窗口
-                    await System.Threading.Tasks.Task.Delay(2000);
-                    this.Close();
+                    // 不再自动关闭窗口，等待用户决定是否生成短语库
                 }
                 else
                 {
@@ -533,6 +564,9 @@ namespace TheSecondSeat.UI
                 
                 Messages.Message(successMsg, MessageTypeDefOf.PositiveEvent);
                 
+                // 保存创建的人格引用
+                createdPersona = newPersona;
+                
                 if (Prefs.DevMode)
                 {
                     Log.Message($"[Dialog_MultimodalPersonaGeneration] 人格创建成功: {personaName}");
@@ -545,6 +579,120 @@ namespace TheSecondSeat.UI
                 Log.Error($"[Dialog_MultimodalPersonaGeneration] 创建人格失败: {ex}");
                 Messages.Message($"创建人格失败: {ex.Message}", MessageTypeDefOf.RejectInput);
             }
+        }
+        
+        /// <summary>
+        /// 🎤 开始生成短语库
+        /// </summary>
+        private async void StartPhraseLibraryGeneration()
+        {
+            if (isGeneratingPhrases || createdPersona == null)
+            {
+                return;
+            }
+            
+            isGeneratingPhrases = true;
+            phraseGenerationProgress = 0f;
+            statusMessage = "正在生成短语库...\n这可能需要2-5分钟（每个好感等级约30秒）";
+            
+            try
+            {
+                var modSettings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
+                if (modSettings == null)
+                {
+                    statusMessage = "错误: 无法读取Mod设置";
+                    isGeneratingPhrases = false;
+                    return;
+                }
+                
+                // 创建生成器
+                var generator = new PhraseLibraryGenerator();
+                generator.OnProgressUpdate = (progress, message) =>
+                {
+                    phraseGenerationProgress = progress;
+                    statusMessage = $"生成短语库中... ({progress:P0})\n{message}";
+                };
+                
+                // 确定 API 提供商和密钥
+                string apiProvider = modSettings.multimodalProvider ?? "gemini";
+                string apiKey = modSettings.multimodalApiKey;
+                string modelName = modSettings.textAnalysisModel ?? "gemini-2.0-flash-exp";
+                
+                if (string.IsNullOrEmpty(apiKey))
+                {
+                    statusMessage = "错误: API密钥未配置";
+                    Messages.Message("请在Mod设置中配置多模态API密钥", MessageTypeDefOf.RejectInput);
+                    isGeneratingPhrases = false;
+                    return;
+                }
+                
+                // 生成完整短语库
+                var phraseLibrary = await generator.GenerateFullLibraryAsync(
+                    createdPersona,
+                    apiProvider,
+                    apiKey,
+                    modelName
+                );
+                
+                if (phraseLibrary != null)
+                {
+                    // 导出到 XML
+                    string exportPath = generator.ExportToXml(phraseLibrary);
+                    
+                    // 加载到运行时
+                    PhraseManager.Instance.RegisterLibrary(phraseLibrary);
+                    
+                    statusMessage = $"✅ 短语库生成完成！\n\n已生成 {CountTotalPhrases(phraseLibrary)} 条短语\n已保存到: {exportPath}";
+                    Messages.Message($"短语库生成成功！共 {CountTotalPhrases(phraseLibrary)} 条短语", MessageTypeDefOf.PositiveEvent);
+                    
+                    if (Prefs.DevMode)
+                    {
+                        Log.Message($"[Dialog_MultimodalPersonaGeneration] 短语库生成成功: {phraseLibrary.defName}");
+                        Log.Message($"  - 导出路径: {exportPath}");
+                    }
+                }
+                else
+                {
+                    statusMessage = "❌ 短语库生成失败，请检查日志";
+                    Messages.Message("短语库生成失败", MessageTypeDefOf.RejectInput);
+                }
+            }
+            catch (Exception ex)
+            {
+                statusMessage = $"错误: {ex.Message}";
+                Messages.Message($"短语库生成失败: {ex.Message}", MessageTypeDefOf.RejectInput);
+                Log.Error($"[Dialog_MultimodalPersonaGeneration] 短语库生成失败: {ex}");
+            }
+            finally
+            {
+                isGeneratingPhrases = false;
+            }
+        }
+        
+        /// <summary>
+        /// 统计短语库中的总短语数
+        /// </summary>
+        private int CountTotalPhrases(PhraseLibraryDef library)
+        {
+            if (library?.affinityPhrases == null) return 0;
+            
+            int total = 0;
+            foreach (var tier in library.affinityPhrases)
+            {
+                total += tier.headPatPhrases?.Count ?? 0;
+                total += tier.bodyPokePhrases?.Count ?? 0;
+                total += tier.greetingPhrases?.Count ?? 0;
+                total += tier.eventReactionPhrases?.Count ?? 0;
+                total += tier.goodEventPhrases?.Count ?? 0;
+                total += tier.badEventPhrases?.Count ?? 0;
+                total += tier.combatStartPhrases?.Count ?? 0;
+                total += tier.combatVictoryPhrases?.Count ?? 0;
+                total += tier.takeDamagePhrases?.Count ?? 0;
+                total += tier.healedPhrases?.Count ?? 0;
+                total += tier.idlePhrases?.Count ?? 0;
+                total += tier.farewellPhrases?.Count ?? 0;
+            }
+            return total;
         }
 
         /// <summary>

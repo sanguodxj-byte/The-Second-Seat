@@ -22,6 +22,9 @@ namespace TheSecondSeat.LLM
         private string apiKey = "";
         private string modelName = "gpt-4";
         private string provider = "openai"; // ? 新增：记录 provider 类型
+        
+        // ⭐ v1.6.86: 可配置的上下文长度限制
+        public static int MaxGameStateLength { get; set; } = 12000; 
 
         public LLMService()
         {
@@ -47,12 +50,29 @@ namespace TheSecondSeat.LLM
 
         /// <summary>
         /// Implement ILLMProvider.SendMessageAsync
+        /// ⭐ v1.7.0: 支持 CancellationToken (虽然接口未变，但底层支持)
         /// </summary>
         public async Task<string> SendMessageAsync(string systemPrompt, string gameState, string userMessage, float temperature = 0.7f, int maxTokens = 500)
         {
-            var response = await SendStateAndGetActionAsync(systemPrompt, gameState, userMessage);
+            // 创建一个默认的 CancellationToken (未来可以从外部传入)
+            var cts = new System.Threading.CancellationTokenSource();
+            // 设定一个合理的超时，例如 60 秒
+            cts.CancelAfter(TimeSpan.FromSeconds(60));
+
+            var response = await SendStateAndGetActionAsync(systemPrompt, gameState, userMessage, cts.Token);
             
             if (response == null) return "Error: No response from LLM";
+            
+            // ⭐ v1.6.85: 如果有原始 JSON 内容，优先返回（用于 ReAct Agent 解析）
+            // 检查是否为有效的 JSON 对象
+            if (!string.IsNullOrEmpty(response.rawContent))
+            {
+                string trimmed = response.rawContent.Trim();
+                if (trimmed.StartsWith("{") && trimmed.EndsWith("}"))
+                {
+                    return response.rawContent;
+                }
+            }
             
             // If there's a thought, include it (ReAct agent might parse it)
             if (!string.IsNullOrEmpty(response.thought))
@@ -66,11 +86,13 @@ namespace TheSecondSeat.LLM
         /// <summary>
         /// Send game state to LLM and receive AI response asynchronously
         /// ⭐ v1.6.65: 使用 ConcurrentRequestManager 管理并发
+        /// ⭐ v1.7.0: 添加 CancellationToken
         /// </summary>
         public async Task<LLMResponse> SendStateAndGetActionAsync(
             string systemPrompt, 
             string gameStateJson, 
-            string userMessage = "")
+            string userMessage = "",
+            System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
@@ -80,11 +102,12 @@ namespace TheSecondSeat.LLM
                         // ? 使用 provider 字段判断
                         if (provider == "gemini")
                         {
+                            // Gemini 暂时不支持取消令牌，这里简单透传
                             return await SendToGeminiAsync(systemPrompt, gameStateJson, userMessage);
                         }
                         else
                         {
-                            return await SendToOpenAICompatibleAsync(systemPrompt, gameStateJson, userMessage);
+                            return await SendToOpenAICompatibleAsync(systemPrompt, gameStateJson, userMessage, cancellationToken);
                         }
                     },
                     maxRetries: 3
@@ -129,12 +152,17 @@ namespace TheSecondSeat.LLM
         /// <summary>
         /// OpenAI 兼容格式（OpenAI、DeepSeek、本地 LLM）
         /// 使用 UnityWebRequest 替代 HttpClient
+        /// ⭐ v1.7.0: 修复僵尸任务和内存泄漏，支持 CancellationToken
         /// </summary>
-        private async Task<LLMResponse?> SendToOpenAICompatibleAsync(string systemPrompt, string gameStateJson, string userMessage)
+        private async Task<LLMResponse?> SendToOpenAICompatibleAsync(string systemPrompt, string gameStateJson, string userMessage, System.Threading.CancellationToken cancellationToken)
         {
-            
+            // ⭐ v1.6.86: 线程安全快照（避免在异步过程中配置发生变化）
+            string currentEndpoint = this.apiEndpoint;
+            string currentKey = this.apiKey;
+            string currentModel = this.modelName;
+
             // ✅ 修复：限制 gameState 大小（防止 JSON 过大）
-            const int MaxGameStateLength = 8000;  // 8KB 限制
+            // 使用静态属性 MaxGameStateLength
             string truncatedGameState = gameStateJson ?? "";
             if (truncatedGameState.Length > MaxGameStateLength)
             {
@@ -153,7 +181,7 @@ namespace TheSecondSeat.LLM
             // 构建请求
             var request = new OpenAIRequest
             {
-                model = modelName,
+                model = currentModel,
                 temperature = 0.7f,
                 max_tokens = 500,
                 messages = new[]
@@ -171,28 +199,35 @@ namespace TheSecondSeat.LLM
                 Formatting = Formatting.None  // 不格式化（减少大小）
             });
 
+            // 使用 UnityWebRequest
+            using var webRequest = new UnityWebRequest(currentEndpoint, "POST");
+            webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonContent));
+            webRequest.downloadHandler = new DownloadHandlerBuffer();
+            webRequest.SetRequestHeader("Content-Type", "application/json");
+            webRequest.timeout = 60; // 60秒超时
+
+            if (!string.IsNullOrEmpty(currentKey))
+            {
+                webRequest.SetRequestHeader("Authorization", $"Bearer {currentKey}");
+            }
+
             try
             {
-                // 使用 UnityWebRequest
-                using var webRequest = new UnityWebRequest(apiEndpoint, "POST");
-                webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonContent));
-                webRequest.downloadHandler = new DownloadHandlerBuffer();
-                webRequest.SetRequestHeader("Content-Type", "application/json");
-                webRequest.timeout = 60;
-
-                // ? 添加 Authorization 头（如果有 API Key）
-                if (!string.IsNullOrEmpty(apiKey))
-                {
-                    webRequest.SetRequestHeader("Authorization", $"Bearer {apiKey}");
-                }
-
                 // 异步发送请求
                 var asyncOperation = webRequest.SendWebRequest();
 
+                // ⭐ v1.7.0: 循环等待，检查 CancellationToken 和请求状态
                 while (!asyncOperation.isDone)
                 {
-                    if (Current.Game == null) return null; // 游戏退出
-                    await Task.Delay(100);
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        webRequest.Abort(); // 中止请求
+                        Log.Message("[The Second Seat] LLM request cancelled by user/system.");
+                        return null;
+                    }
+                    
+                    // 移除 Current.Game 的不安全访问
+                    await Task.Delay(50, cancellationToken);
                 }
 
                 // 检查响应
@@ -245,17 +280,23 @@ namespace TheSecondSeat.LLM
                 var llmResponse = JsonConvert.DeserializeObject<LLMResponse>(jsonContent);
                 
                 // ? 验证是否成功解析
-                if (llmResponse != null && !string.IsNullOrEmpty(llmResponse.dialogue))
+                if (llmResponse != null)
                 {
+                    // ⭐ v1.6.85: 保存原始响应内容
+                    llmResponse.rawContent = jsonContent;
+                    
+                    // 如果 dialogue 不为空，或者是有效的 ReAct 响应（即使 dialogue 为空），都返回
+                    // 注意：ReAct 响应可能没有 dialogue 字段，只有 thought 和 action
                     return llmResponse;
                 }
                 
-                // 如果 dialogue 为空，可能解析失败，返回纯文本
+                // 如果反序列化为 null，返回纯文本
                 return new LLMResponse
                 {
                     thought = "",
                     dialogue = messageContent, // 使用原始内容
-                    command = null
+                    command = null,
+                    rawContent = messageContent
                 };
             }
             catch
@@ -265,7 +306,8 @@ namespace TheSecondSeat.LLM
                 {
                     thought = "",
                     dialogue = messageContent,
-                    command = null
+                    command = null,
+                    rawContent = messageContent
                 };
             }
         }
@@ -355,9 +397,14 @@ namespace TheSecondSeat.LLM
         /// </summary>
         private async Task<bool> TestOpenAICompatibleConnectionAsync()
         {
+            // ⭐ v1.6.86: 线程安全快照
+            string currentEndpoint = this.apiEndpoint;
+            string currentKey = this.apiKey;
+            string currentModel = this.modelName;
+
             var testRequest = new OpenAIRequest
             {
-                model = modelName,
+                model = currentModel,
                 temperature = 0.5f,
                 max_tokens = 50,
                 messages = new[]
@@ -371,22 +418,22 @@ namespace TheSecondSeat.LLM
             try
             {
                 // 使用 UnityWebRequest
-                using var webRequest = new UnityWebRequest(apiEndpoint, "POST");
+                using var webRequest = new UnityWebRequest(currentEndpoint, "POST");
                 webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonContent));
                 webRequest.downloadHandler = new DownloadHandlerBuffer();
                 webRequest.SetRequestHeader("Content-Type", "application/json");
                 webRequest.timeout = 60;
 
-                if (!string.IsNullOrEmpty(apiKey))
+                if (!string.IsNullOrEmpty(currentKey))
                 {
-                    webRequest.SetRequestHeader("Authorization", $"Bearer {apiKey}");
+                    webRequest.SetRequestHeader("Authorization", $"Bearer {currentKey}");
                 }
 
                 var asyncOperation = webRequest.SendWebRequest();
 
                 while (!asyncOperation.isDone)
                 {
-                    if (Current.Game == null) return false;
+                    // ⭐ v1.6.86: 移除 Current.Game 不安全访问
                     await Task.Delay(100);
                 }
 

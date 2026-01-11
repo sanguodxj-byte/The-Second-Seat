@@ -5,7 +5,7 @@ using Verse;
 using RimWorld;
 using Newtonsoft.Json;
 
-namespace TheSecondSeat.Observer
+namespace TheSecondSeat.Monitoring
 {
     /// <summary>
     /// Simplified game state snapshot for LLM consumption
@@ -63,10 +63,11 @@ namespace TheSecondSeat.Observer
     }
 
     /// <summary>
-    /// Observes and captures the current game state in a token-efficient format
+    /// Utility class for capturing game state snapshots in a token-efficient format
     /// ? v1.6.42: 添加线程安全的快照接口
+    /// ? v1.6.50: 重命名为 GameStateSnapshotUtility 以避免与 GameComponent 冲突
     /// </summary>
-    public static class GameStateObserver
+    public static class GameStateSnapshotUtility
     {
         /// <summary>
         /// ? v1.6.42: 线程安全的快照获取（供后台 AI 线程调用）
@@ -91,7 +92,7 @@ namespace TheSecondSeat.Observer
             // 而后台 AI 线程并不能保证何时何地被调用，因此直接在主线程捕获状态比较可靠
             if (Prefs.DevMode)
             {
-                Log.Warning("[GameStateObserver] Cache system disabled, using direct capture (main thread only)");
+                Log.Warning("[GameStateSnapshotUtility] Cache system disabled, using direct capture (main thread only)");
             }
             return CaptureSnapshotUnsafe();
         }

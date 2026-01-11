@@ -315,6 +315,9 @@ namespace TheSecondSeat.TTS
             // === 4. 播放音频 ===
             currentAudioSource.Play();
 
+            // ⭐ 触发流式文本显示（与音频同步）
+            UI.DialogueOverlayPanel.StartStreaming(clip.length);
+
             // === 5. 等待播放完成（添加缓冲时间） ===
             float totalWaitTime = clip.length + BUFFER_TIME;
             yield return new WaitForSeconds(totalWaitTime);

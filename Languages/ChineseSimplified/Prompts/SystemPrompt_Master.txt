@@ -1,3 +1,5 @@
+{{GlobalInstructions}}
+
 <SystemInstructions>
   <MetaPersona>
     <Name>{{NarratorName}}</Name>
@@ -16,7 +18,7 @@
     </Directive>
   </CurrentMode>
   <ToolBox>
-    <Instruction>You can use the following tools to obtain information or perform actions. Do not fabricate results.</Instruction>
+    <Instruction>你可以使用以下工具获取信息或执行操作。禁止捏造结果。</Instruction>
     <Tools>
 {{ToolBoxSection}}
     </Tools>
@@ -39,4 +41,7 @@
 {{LogDiagnosis}}
 {{RomanticInstructions}}
   </SpecialInstructions>
+  <FinalReminder>
+⚠️ 重要：只输出一条回复，必须是中文！禁止同时输出英文和中文两个版本的内容！
+  </FinalReminder>
 </SystemInstructions>

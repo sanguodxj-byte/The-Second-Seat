@@ -10,6 +10,9 @@ namespace TheSecondSeat.LLM
     [Serializable]
     public class LLMResponse
     {
+        // ⭐ v1.6.85: 存储原始响应内容（用于 ReAct 循环解析）
+        public string rawContent { get; set; } = "";
+
         public string thought { get; set; } = "";
         public string dialogue { get; set; } = "";
         

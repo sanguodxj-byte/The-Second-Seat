@@ -341,19 +341,28 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// 清空缓存
+        /// ? 修复：显式销毁纹理资源，防止内存泄漏
         /// </summary>
         public static void ClearCache()
         {
+            foreach (var texture in cache.Values)
+            {
+                if (texture != null)
+                {
+                    UnityEngine.Object.Destroy(texture);
+                }
+            }
             cache.Clear();
-            Log.Message("[AvatarLoader] 头像缓存已清空");
+            Log.Message("[AvatarLoader] 头像缓存已清空 (资源已释放)");
         }
         
         /// <summary>
         /// ? v1.6.21: 清空所有缓存（用于模式切换）
+        /// ? 修复：显式销毁纹理资源
         /// </summary>
         public static void ClearAllCache()
         {
-            cache.Clear();
+            ClearCache(); // 复用清理逻辑
             Log.Message("[AvatarLoader] 所有头像缓存已清空");
         }
 

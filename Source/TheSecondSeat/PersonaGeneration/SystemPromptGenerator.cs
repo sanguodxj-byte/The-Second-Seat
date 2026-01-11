@@ -55,20 +55,21 @@ namespace TheSecondSeat.PersonaGeneration
             string personalitySection = PersonalitySection.Generate(analysis, personaDef);
 
             // Biography
+            // ? 修复：限制 Biography 长度，防止撑爆 Token
             string biographySection = "";
             if (!string.IsNullOrEmpty(personaDef.biography))
             {
-                biographySection = $"    <Biography>\n{personaDef.biography}\n    </Biography>";
+                string safeBio = personaDef.biography;
+                const int MaxBioLength = 1500;
+                
+                if (safeBio.Length > MaxBioLength)
+                {
+                    Log.Warning($"[The Second Seat] Persona {personaDef.defName} biography too long ({safeBio.Length} chars). Truncating to {MaxBioLength}.");
+                    safeBio = safeBio.Substring(0, MaxBioLength) + "...(truncated)";
+                }
+                
+                biographySection = $"    <Biography>\n{safeBio}\n    </Biography>";
             }
-
-            // Mode Directive (Updated for DM Meta-Setting)
-            string modeDirective = "";
-            if (difficultyMode == AIDifficultyMode.Engineer)
-                modeDirective = "ROLE: Technical DM. Priority: Game Stability & Mechanic Analysis. You are the architect of the simulation.";
-            else if (difficultyMode == AIDifficultyMode.Opponent)
-                modeDirective = "ROLE: Adversarial DM. Priority: Drama & Challenge. You are the source of conflict.";
-            else
-                modeDirective = "ROLE: Benevolent DM. Priority: Support & Narrative Flow. You are the player's co-author.";
 
             // Global Instructions (Language)
             string globalInstructions = GetLanguageInstruction();
@@ -95,7 +96,7 @@ namespace TheSecondSeat.PersonaGeneration
                 .Replace("{{PersonalitySection}}", personalitySection)
                 .Replace("{{BiographySection}}", biographySection)
                 .Replace("{{DifficultyMode}}", difficultyMode.ToString())
-                .Replace("{{ModeDirective}}", modeDirective)
+                .Replace("{{ModeDirective}}", "") // Removed - no longer used
                 .Replace("{{ToolBoxSection}}", OutputFormatSection.Generate(difficultyMode))
                 .Replace("{{GlobalInstructions}}", globalInstructions)
                 .Replace("{{ModSettingsPrompt}}", modSettingsPrompt)
@@ -117,10 +118,22 @@ namespace TheSecondSeat.PersonaGeneration
 
         /// <summary>
         /// ⭐ 获取语言强制指令
+        /// ⭐ v1.6.86: 添加容错处理
         /// </summary>
         private static string GetLanguageInstruction()
         {
-            return PromptLoader.Load("Language_Instruction");
+            try 
+            {
+                string content = PromptLoader.Load("Language_Instruction");
+                if (!string.IsNullOrEmpty(content)) return content;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[The Second Seat] Failed to load Language_Instruction: {ex.Message}");
+            }
+            
+            // 默认回退（硬编码）
+            return "LANGUAGE REQUIREMENT: Respond in the user's preferred language (likely Chinese Simplified based on mod settings).";
         }
         
         // ⭐ v1.6.76: 已迁移到各 Section 类

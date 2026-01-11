@@ -26,7 +26,8 @@ namespace TheSecondSeat.Commands
             }
 
             // Normalize action name
-            var actionName = llmCommand.action.Trim();
+            // ? 增强健壮性：移除常见的中英文引号、多余符号
+            var actionName = CleanActionName(llmCommand.action);
 
             var command = CommandRegistry.GetCommand(actionName);
             if (command == null)
@@ -67,6 +68,25 @@ namespace TheSecondSeat.Commands
         public static void RegisterCommand(IAICommand command)
         {
             CommandRegistry.RegisterCommand(command);
+        }
+
+        /// <summary>
+        /// ? 清洗命令名称，移除干扰字符
+        /// </summary>
+        private static string CleanActionName(string rawAction)
+        {
+            if (string.IsNullOrEmpty(rawAction)) return "";
+            
+            // 1. 去除首尾空白
+            string cleaned = rawAction.Trim();
+            
+            // 2. 去除常见的引号 (包括中文引号)
+            cleaned = cleaned.Trim('"', '\'', '“', '”', '‘', '’');
+            
+            // 3. 去除可能存在的末尾句号（AI 常见错误）
+            cleaned = cleaned.TrimEnd('.', '。');
+            
+            return cleaned;
         }
 
         /// <summary>

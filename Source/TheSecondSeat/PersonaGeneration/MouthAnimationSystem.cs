@@ -270,10 +270,10 @@ namespace TheSecondSeat.PersonaGeneration
             {
                 state.lockedMouthLayer = layerName;
                 // ⭐ v1.8.3: 添加诊断日志
-                if (Prefs.DevMode)
-                {
-                    Log.Message($"[MouthAnimationSystem] 口型切换 (音素模式): {defName} → {layerName} (Viseme: {state.currentViseme})");
-                }
+                // if (Prefs.DevMode)
+                // {
+                //     Log.Message($"[MouthAnimationSystem] 口型切换 (音素模式): {defName} → {layerName} (Viseme: {state.currentViseme})");
+                // }
             }
             
             return layerName;
@@ -395,10 +395,10 @@ namespace TheSecondSeat.PersonaGeneration
                 state.lockedMouthLayer = layerName;
                 state.lastStateChangeTime = currentTime;
                 // ⭐ v1.8.3: 添加诊断日志
-                if (Prefs.DevMode)
-                {
-                    Log.Message($"[MouthAnimationSystem] 口型切换 (模拟模式): {defName} → {layerName} (开合度: {state.currentOpenness:F2}, Viseme: {viseme})");
-                }
+                // if (Prefs.DevMode)
+                // {
+                //     Log.Message($"[MouthAnimationSystem] 口型切换 (模拟模式): {defName} → {layerName} (开合度: {state.currentOpenness:F2}, Viseme: {viseme})");
+                // }
             }
             
             return layerName;

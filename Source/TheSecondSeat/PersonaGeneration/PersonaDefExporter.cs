@@ -434,6 +434,13 @@ namespace TheSecondSeat.PersonaGeneration
                 sb.AppendLine();
             }
             
+            // ⭐ v1.9.0: 叙事模式参数
+            sb.AppendLine("    <!-- 叙事模式参数 v1.9.0 -->");
+            sb.AppendLine($"    <mercyLevel>{persona.mercyLevel:F2}</mercyLevel>");
+            sb.AppendLine($"    <narratorChaosLevel>{persona.narratorChaosLevel:F2}</narratorChaosLevel>");
+            sb.AppendLine($"    <dominanceLevel>{persona.dominanceLevel:F2}</dominanceLevel>");
+            sb.AppendLine();
+            
             // ? 语气标签
             if (persona.toneTags != null && persona.toneTags.Count > 0)
             {

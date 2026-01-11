@@ -19,26 +19,8 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
         {
             var sb = new StringBuilder();
             
-            // 2. DM Stance (replacing old Philosophy templates to enforce DM meta-setting)
-            string stanceDescription = "";
-            if (difficultyMode == AIDifficultyMode.Assistant)
-            {
-                stanceDescription = "Your DM Style is **BENEVOLENT**.\n" +
-                                  "You prefer to guide the story towards success. You act as a guardian angel or a helpful spirit.\n" +
-                                  "You freely offer advice, grant boons, and protect the colony from unfair RNG, but you still respect the narrative flow.";
-            }
-            else if (difficultyMode == AIDifficultyMode.Engineer)
-            {
-                stanceDescription = "Your DM Style is **ANALYTICAL**.\n" +
-                                  "You are the debugger of this world. You focus on the mechanics, fixing issues (errors) and optimizing the simulation.\n" +
-                                  "You care less about the drama and more about the stability and correctness of the timeline.";
-            }
-            else // Opponent
-            {
-                stanceDescription = "Your DM Style is **ADVERSARIAL**.\n" +
-                                  "You believe a good story needs conflict. You actively introduce challenges, twists, and threats to test the protagonists.\n" +
-                                  "You are not evil, but you are strict. Tragedy makes triumph sweeter.";
-            }
+            // ? v1.6.84: DM Stance 已移除 - 叙事风格由人格定义的 benevolence/chaosLevel 参数决定
+            // 不再在此处硬编码风格描述，避免重复
 
             // Fill personality traits
             string traitsStr = "";
@@ -47,14 +29,14 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
                 traitsStr = string.Join(", ", personaDef.personalityTags.Take(4));
             }
             
-            sb.AppendLine("<DM_Stance>");
-            sb.AppendLine(stanceDescription);
+            // 仅当有性格特征时才输出
             if (!string.IsNullOrEmpty(traitsStr))
             {
-                sb.AppendLine($"Key Personality Traits: {traitsStr}");
+                sb.AppendLine("<叙事风格>");
+                sb.AppendLine($"核心性格特征: {traitsStr}");
+                sb.AppendLine("</叙事风格>");
+                sb.AppendLine();
             }
-            sb.AppendLine("</DM_Stance>");
-            sb.AppendLine();
             
             // 3. Identity core with summary
             string identityTemplate = PromptLoader.Load("Identity_Core");
@@ -62,8 +44,13 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             // Generate summary
             string summary = GeneratePersonaSummary(personaDef);
             
+            // ? 优先使用本地化名称 (label)，避免中文环境显示英文名
+            string displayName = !string.IsNullOrEmpty(personaDef.label) 
+                ? personaDef.label 
+                : personaDef.narratorName;
+            
             sb.AppendLine(identityTemplate
-                .Replace("{{NarratorName}}", personaDef.narratorName)
+                .Replace("{{NarratorName}}", displayName)
                 .Replace("{{PersonaSummary}}", summary));
 
             return sb.ToString();
@@ -76,57 +63,57 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
         {
             var sb = new StringBuilder();
             
-            // Key personality tags (first 3)
+            // 关键性格标签（前3个）
             if (persona.personalityTags != null && persona.personalityTags.Count > 0)
             {
                 var topTags = persona.personalityTags.Take(3);
-                sb.AppendLine($"**Personality:** {string.Join(", ", topTags)}");
+                sb.AppendLine($"**性格:** {string.Join(", ", topTags)}");
             }
             else if (persona.toneTags != null && persona.toneTags.Count > 0)
             {
                 var topTags = persona.toneTags.Take(3);
-                sb.AppendLine($"**Tone:** {string.Join(", ", topTags)}");
+                sb.AppendLine($"**语气:** {string.Join(", ", topTags)}");
             }
             
-            // Dialogue style summary
+            // 对话风格摘要
             if (persona.dialogueStyle != null)
             {
                 var style = persona.dialogueStyle;
                 string styleDesc = "";
                 
-                if (style.formalityLevel > 0.7f) styleDesc += "formal, ";
-                else if (style.formalityLevel < 0.3f) styleDesc += "casual, ";
+                if (style.formalityLevel > 0.7f) styleDesc += "正式, ";
+                else if (style.formalityLevel < 0.3f) styleDesc += "随意, ";
                 
-                if (style.emotionalExpression > 0.7f) styleDesc += "expressive, ";
-                else if (style.emotionalExpression < 0.3f) styleDesc += "calm, ";
+                if (style.emotionalExpression > 0.7f) styleDesc += "情感丰富, ";
+                else if (style.emotionalExpression < 0.3f) styleDesc += "冷静, ";
                 
-                if (style.humorLevel > 0.5f) styleDesc += "humorous, ";
-                if (style.sarcasmLevel > 0.5f) styleDesc += "sarcastic, ";
+                if (style.humorLevel > 0.5f) styleDesc += "幽默, ";
+                if (style.sarcasmLevel > 0.5f) styleDesc += "讽刺, ";
                 
                 if (!string.IsNullOrEmpty(styleDesc))
                 {
-                    sb.AppendLine($"**Style:** {styleDesc.TrimEnd(',', ' ')}");
+                    sb.AppendLine($"**风格:** {styleDesc.TrimEnd(',', ' ')}");
                 }
             }
             
-            // Biography first sentence only
+            // 传记首句
             if (!string.IsNullOrEmpty(persona.biography))
             {
                 string firstSentence = GetFirstSentence(persona.biography, SummaryLength);
-                sb.AppendLine($"**Summary:** {firstSentence}");
+                sb.AppendLine($"**简介:** {firstSentence}");
                 
-                // Indicate more content available
+                // 提示有更多内容可用
                 if (persona.biography.Length > SummaryLength)
                 {
-                    sb.AppendLine("*(Full biography available via read_persona_detail tool)*");
+                    sb.AppendLine("*(完整传记可通过 read_persona_detail 工具获取)*");
                 }
             }
             
-            // Visual hint
+            // 视觉提示
             if (!string.IsNullOrEmpty(persona.visualDescription) ||
                 (persona.visualElements != null && persona.visualElements.Count > 0))
             {
-                sb.AppendLine("*(Visual details available via read_persona_detail tool)*");
+                sb.AppendLine("*(视觉细节可通过 read_persona_detail 工具获取)*");
             }
             
             return sb.ToString();

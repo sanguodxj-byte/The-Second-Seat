@@ -7,6 +7,7 @@ using Verse;
 using TheSecondSeat.RimAgent.Tools;
 using TheSecondSeat.Monitoring;
 using TheSecondSeat.Integration;
+using TheSecondSeat.Commands; // 引入命名空间
 
 namespace TheSecondSeat.RimAgent
 {
@@ -42,7 +43,8 @@ namespace TheSecondSeat.RimAgent
         
         // ========== 正则表达式 ==========
         private static readonly Regex ThoughtPattern = new Regex(@"\[THOUGHT\]:\s*(.+?)(?=\[ACTION\]|\[ANSWER\]|$)", RegexOptions.Singleline);
-        private static readonly Regex ActionPattern = new Regex(@"\[ACTION\]:\s*(\w+)\(([^)]*)\)");
+        // ⭐ 修复：使用非贪婪匹配 (.*?) 避免吞噬后续内容，配合 SplitParams 处理参数
+        private static readonly Regex ActionPattern = new Regex(@"\[ACTION\]:\s*(\w+)\((.*?)\)");
         private static readonly Regex AnswerPattern = new Regex(@"\[ANSWER\]:\s*(.+)$", RegexOptions.Singleline);
         
         // ========== 系统提示词模板 (Fallback) ==========
@@ -104,6 +106,8 @@ namespace TheSecondSeat.RimAgent
             RegisterTool(new GetColonistsTool());
             RegisterTool(new CheckThreatsTool());
             RegisterTool(new LogReaderTool());
+            // ⭐ 修复：注册命令工具，赋予 Agent 执行能力
+            RegisterTool(new CommandTool());
         }
         
         /// <summary>
@@ -263,8 +267,20 @@ namespace TheSecondSeat.RimAgent
             foreach (var tool in tools.Values)
             {
                 sb.AppendLine($"- {tool.Name}: {tool.Description}");
-                // ITool 不一定有 ParameterDescription，如果有就显示
-                // 这里假设 description 包含了参数说明
+                
+                // ⭐ 注入具体的命令列表
+                if (tool.Name == "command")
+                {
+                    sb.AppendLine("  可用命令列表:");
+                    // 调用 CommandToolLibrary 生成精简列表
+                    string commandList = CommandToolLibrary.GenerateCompactCommandList();
+                    // 缩进处理，使其看起来像 command 工具的子项
+                    var lines = commandList.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var line in lines)
+                    {
+                        sb.AppendLine($"  {line}");
+                    }
+                }
             }
             return sb.ToString();
         }
@@ -310,10 +326,14 @@ namespace TheSecondSeat.RimAgent
                 
                 if (!string.IsNullOrEmpty(paramsStr))
                 {
-                    result.ActionParams = paramsStr.Split(',');
-                    for (int i = 0; i < result.ActionParams.Length; i++)
+                    // ⭐ 修复：使用正则分割参数，忽略引号内的逗号
+                    // 解决 command(TriggerEvent, raid, comment="Let's fight, warrior!") 被错误分割的问题
+                    string[] rawParams = Regex.Split(paramsStr, ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+                    
+                    result.ActionParams = new string[rawParams.Length];
+                    for (int i = 0; i < rawParams.Length; i++)
                     {
-                        result.ActionParams[i] = result.ActionParams[i].Trim().Trim('"', '\'');
+                        result.ActionParams[i] = rawParams[i].Trim().Trim('"', '\'');
                     }
                 }
             }
@@ -343,8 +363,9 @@ namespace TheSecondSeat.RimAgent
                 // 转换参数: string[] -> Dictionary<string, object>
                 // 支持 key=value 格式和位置参数智能映射
                 var paramDict = new Dictionary<string, object>();
-                int positionalIndex = 0;
+                var positionalParams = new List<string>();
 
+                // 1. 第一遍：解析所有参数，分离命名参数和位置参数
                 foreach (var param in parameters)
                 {
                     var trimmedParam = param.Trim();
@@ -352,30 +373,83 @@ namespace TheSecondSeat.RimAgent
 
                     if (trimmedParam.Contains("="))
                     {
-                        // 命名参数: key=value
                         var parts = trimmedParam.Split(new[] { '=' }, 2);
                         string key = parts[0].Trim();
-                        string value = parts[1].Trim().Trim('"', '\''); // 去除引号
+                        string value = parts[1].Trim().Trim('"', '\'');
                         paramDict[key] = value;
                     }
                     else
                     {
-                        // 位置参数
-                        string value = trimmedParam.Trim('"', '\'');
-                        
-                        // command 工具的特殊位置映射
-                        if (toolName == "command")
+                        positionalParams.Add(trimmedParam.Trim('"', '\''));
+                    }
+                }
+
+                // 2. 特殊处理 command 工具的位置参数映射
+                if (toolName == "command")
+                {
+                    // 尝试从位置参数或命名参数中获取 action
+                    string actionName = "";
+                    
+                    if (positionalParams.Count > 0)
+                    {
+                        actionName = positionalParams[0];
+                        paramDict["action"] = actionName;
+                    }
+                    else if (paramDict.ContainsKey("action"))
+                    {
+                        actionName = paramDict["action"].ToString();
+                    }
+
+                    // 如果有第2个位置参数，设为 target
+                    if (positionalParams.Count > 1)
+                    {
+                        string targetVal = positionalParams[1];
+                        if (targetVal != "null" && targetVal != "")
                         {
-                            if (positionalIndex == 0) paramDict["action"] = value;
-                            else if (positionalIndex == 1 && value != "null" && value != "") paramDict["target"] = value;
-                            // 超过2个的位置参数仍作为 argN 保留，防止丢失
-                            else if (positionalIndex >= 2) paramDict[$"arg{positionalIndex}"] = value;
+                            paramDict["target"] = targetVal;
+                        }
+                    }
+
+                    // 映射剩余的位置参数 (index >= 2)
+                    if (!string.IsNullOrEmpty(actionName) && positionalParams.Count > 2)
+                    {
+                        var cmdDef = CommandToolLibrary.GetCommand(actionName);
+                        if (cmdDef != null)
+                        {
+                            for (int i = 2; i < positionalParams.Count; i++)
+                            {
+                                int paramIndex = i - 2;
+                                if (paramIndex < cmdDef.parameters.Count)
+                                {
+                                    string paramName = cmdDef.parameters[paramIndex].name;
+                                    // 仅当该命名参数未被设置时才使用位置参数覆盖
+                                    if (!paramDict.ContainsKey(paramName))
+                                    {
+                                        paramDict[paramName] = positionalParams[i];
+                                    }
+                                }
+                                else
+                                {
+                                    paramDict[$"arg{i}"] = positionalParams[i];
+                                }
+                            }
                         }
                         else
                         {
-                             paramDict[$"arg{positionalIndex}"] = value;
+                            // 未知命令，保留 argN
+                            for (int i = 2; i < positionalParams.Count; i++)
+                            {
+                                paramDict[$"arg{i}"] = positionalParams[i];
+                            }
                         }
-                        positionalIndex++;
+                    }
+                }
+                else
+                {
+                    // 普通工具：直接映射 argN
+                    for (int i = 0; i < positionalParams.Count; i++)
+                    {
+                        paramDict[$"arg{i}"] = positionalParams[i];
                     }
                 }
                 

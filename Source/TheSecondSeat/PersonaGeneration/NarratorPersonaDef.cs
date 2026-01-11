@@ -217,6 +217,28 @@ namespace TheSecondSeat.PersonaGeneration
         public float baseAffinityBias = 0f;
         
         // ============================================
+        // ⭐ v1.9.0: 叙事模式参数 API
+        // ============================================
+        
+        /// <summary>
+        /// API: 仁慈度（0.0-1.0）
+        /// 影响事件的残酷程度：0=残酷无情，1=仁慈宽容
+        /// </summary>
+        public float mercyLevel = 0.5f;
+        
+        /// <summary>
+        /// API: 混乱度（0.0-1.0）
+        /// 影响事件的合理性：0=逻辑严谨，1=随机混乱
+        /// </summary>
+        public float narratorChaosLevel = 0.5f;
+        
+        /// <summary>
+        /// API: 强势度（0.0-1.0）
+        /// 影响玩家交流对事件的影响程度：0=顺从玩家，1=无视玩家意见
+        /// </summary>
+        public float dominanceLevel = 0.5f;
+        
+        // ============================================
         // AI行为模式 API
         // ============================================
         

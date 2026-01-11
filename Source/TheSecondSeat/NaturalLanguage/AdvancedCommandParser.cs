@@ -245,7 +245,7 @@ namespace TheSecondSeat.NaturalLanguage
         /// <summary>
         /// 根据游戏状态生成命令建议
         /// </summary>
-        public static List<string> GenerateSuggestions(Observer.GameStateSnapshot gameState)
+        public static List<string> GenerateSuggestions(Monitoring.GameStateSnapshot gameState)
         {
             var suggestions = new List<string>();
 

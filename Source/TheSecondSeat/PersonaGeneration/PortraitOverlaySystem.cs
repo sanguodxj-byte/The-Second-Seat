@@ -123,6 +123,9 @@ namespace TheSecondSeat.Core
                 {
                     Log.Error($"[PortraitOverlaySystem] 绘制立绘时发生错误: {ex.Message}\n{ex.StackTrace}");
                 }
+
+                // ? 6. DialogueOverlayPanel 是一个 Window，它会通过 Find.WindowStack 自动绘制
+                // 不需要手动调用 Draw()，Window 的 DoWindowContents() 会自动被调用
             }
         }
     }

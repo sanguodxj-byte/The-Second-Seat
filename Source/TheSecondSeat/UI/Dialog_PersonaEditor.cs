@@ -56,13 +56,56 @@ namespace TheSecondSeat.UI
             Text.Font = GameFont.Medium;
             Text.Anchor = TextAnchor.MiddleCenter;
             Rect titleRect = new Rect(0f, 0f, inRect.width, 40f);
-            Widgets.Label(titleRect, "TSS_PersonaEditor_Title".Translate(persona.label));
+            Widgets.Label(titleRect, "TSS_PersonaEditor_Title".Translate(persona.label) + " (UI v1.1)"); // 添加版本标识
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
 
             // 内容区域
             Rect contentRect = new Rect(MARGIN, 50f, inRect.width - MARGIN * 2, inRect.height - 110f);
-            Rect viewRect = new Rect(0f, 0f, contentRect.width - 20f, 800f);
+            // 动态计算 viewRect 高度，先预设一个足够大的值
+            Rect viewRect = new Rect(0f, 0f, contentRect.width - 20f, 1200f);
+            
+            // 滚动视图开始前，所有计算都基于 viewRect 的宽度
+            float dynamicHeight = 0f;
+            
+            // ===== 计算动态高度 =====
+            // 基本信息
+            dynamicHeight += 35f + 10f; // Section Header
+            dynamicHeight += (INPUT_HEIGHT + 10f); // Name
+            dynamicHeight += (INPUT_HEIGHT + 5f); // Bio Label
+            dynamicHeight += 110f; // Bio TextArea
+
+            // 个性标签
+            dynamicHeight += 35f + 10f; // Section Header
+            // string tagsHelp = "TSS_PersonaEditor_TagsHelp".Translate(); // 在下面声明
+            dynamicHeight += Text.CalcHeight("TSS_PersonaEditor_TagsHelp".Translate(), viewRect.width) + 10f; // Help text
+            dynamicHeight += CalculateTagsHeight(viewRect.width, editPersonalityTags) + 10f; // Tags
+            dynamicHeight += INPUT_HEIGHT + 20f; // Add tag row
+
+            // 对话风格
+            dynamicHeight += 35f + 10f; // Section Header
+            if(persona.dialogueStyle != null) dynamicHeight += (INPUT_HEIGHT + 5f) * 5;
+            dynamicHeight += 20f;
+
+            // 叙事模式
+            dynamicHeight += 35f + 10f; // Section Header
+            // string narrativeHelp = "TSS_PersonaEditor_NarrativeModeHelp".Translate(); // 在下面声明
+            dynamicHeight += Text.CalcHeight("TSS_PersonaEditor_NarrativeModeHelp".Translate(), viewRect.width) + 10f;
+            dynamicHeight += (INPUT_HEIGHT + 5f) * 3; // 3 sliders
+            dynamicHeight += 20f;
+
+            // 自定义提示词
+            dynamicHeight += 35f + 10f; // Section Header
+            // string promptHelp = "TSS_PersonaEditor_CustomPromptHelp".Translate(); // 在下面声明
+            dynamicHeight += Text.CalcHeight("TSS_PersonaEditor_CustomPromptHelp".Translate(), viewRect.width) + 10f;
+            dynamicHeight += BUTTON_HEIGHT + 5f; // Auto-gen button
+            dynamicHeight += INPUT_HEIGHT; // Prompt label
+            dynamicHeight += 310f; // Prompt text area
+            
+            // 最终设置 viewRect 的高度
+            viewRect.height = dynamicHeight;
+
+            // ===== 绘制 =====
             Widgets.BeginScrollView(contentRect, ref scrollPosition, viewRect);
             
             float curY = 0f;
@@ -94,35 +137,8 @@ namespace TheSecondSeat.UI
             GUI.color = Color.white;
             curY += helpHeight + 10f;
             
-            // 现有标签列表
-            if (editPersonalityTags.Count > 0)
-            {
-                for (int i = 0; i < editPersonalityTags.Count; i++)
-                {
-                    Rect tagRowRect = new Rect(0f, curY, viewRect.width, INPUT_HEIGHT);
-                    
-                    // 标签输入框
-                    Rect tagInputRect = new Rect(0f, curY, viewRect.width - 100f, INPUT_HEIGHT);
-                    editPersonalityTags[i] = Widgets.TextField(tagInputRect, editPersonalityTags[i]);
-                    
-                    // 删除按钮
-                    Rect deleteButtonRect = new Rect(viewRect.width - 90f, curY, 80f, INPUT_HEIGHT);
-                    if (Widgets.ButtonText(deleteButtonRect, "TSS_PersonaEditor_Delete".Translate()))
-                    {
-                        editPersonalityTags.RemoveAt(i);
-                        break;
-                    }
-                    
-                    curY += INPUT_HEIGHT + 5f;
-                }
-            }
-            else
-            {
-                GUI.color = Color.gray;
-                Widgets.Label(new Rect(0f, curY, viewRect.width, INPUT_HEIGHT), "TSS_PersonaEditor_NoTags".Translate());
-                GUI.color = Color.white;
-                curY += INPUT_HEIGHT + 5f;
-            }
+            // ⭐ 优化：紧凑化标签绘制
+            curY = DrawTags(viewRect.width, curY, editPersonalityTags);
             
             // 添加新标签
             curY += 10f;
@@ -154,6 +170,28 @@ namespace TheSecondSeat.UI
             
             curY += 20f;
 
+            // ===== 叙事模式 v1.9.0 =====
+            DrawSectionHeader(viewRect.width, ref curY, "TSS_PersonaEditor_NarrativeMode".Translate());
+            
+            // 叙事模式说明
+            GUI.color = Color.yellow;
+            string narrativeHelp = "TSS_PersonaEditor_NarrativeModeHelp".Translate();
+            float narrativeHelpHeight = Text.CalcHeight(narrativeHelp, viewRect.width);
+            Widgets.Label(new Rect(0f, curY, viewRect.width, narrativeHelpHeight), narrativeHelp);
+            GUI.color = Color.white;
+            curY += narrativeHelpHeight + 10f;
+            
+            // 仁慈度滑条
+            DrawSlider(viewRect.width, ref curY, "TSS_PersonaEditor_Narrative_Mercy".Translate(), ref persona.mercyLevel);
+            
+            // 混乱度滑条
+            DrawSlider(viewRect.width, ref curY, "TSS_PersonaEditor_Narrative_Chaos".Translate(), ref persona.narratorChaosLevel);
+            
+            // 强势度滑条
+            DrawSlider(viewRect.width, ref curY, "TSS_PersonaEditor_Narrative_Dominance".Translate(), ref persona.dominanceLevel);
+            
+            curY += 20f;
+
             // ===== 自定义系统提示词 (高级) =====
             DrawSectionHeader(viewRect.width, ref curY, "TSS_PersonaEditor_CustomPrompt".Translate());
             
@@ -170,6 +208,14 @@ namespace TheSecondSeat.UI
             {
                 GenerateDefaultPrompt();
             }
+            
+            // ⭐ v1.6.97: 生成短语库按钮
+            Rect genPhraseRect = new Rect(210f, curY, 200f, BUTTON_HEIGHT);
+            if (Widgets.ButtonText(genPhraseRect, "TSS_PersonaEditor_GenPhraseLib".Translate()))
+            {
+                GeneratePhraseLibrary();
+            }
+            
             curY += BUTTON_HEIGHT + 5f;
 
             // 提示词输入框
@@ -228,6 +274,86 @@ namespace TheSecondSeat.UI
             value = Widgets.HorizontalSlider(sliderRect, value, 0f, 1f, true, value.ToString("F2"));
             
             curY += INPUT_HEIGHT + 5f;
+        }
+
+        private float CalculateTagsHeight(float width, List<string> tags)
+        {
+            if (tags.NullOrEmpty()) return INPUT_HEIGHT + 5f;
+
+            float x = 0f;
+            float y = 0f;
+            float rowHeight = 0f;
+            const float tagPadding = 8f;
+            const float deleteButtonWidth = 24f;
+
+            foreach (var tag in tags)
+            {
+                float tagWidth = Text.CalcSize(tag).x + tagPadding * 2 + deleteButtonWidth;
+                rowHeight = Mathf.Max(rowHeight, INPUT_HEIGHT);
+
+                if (x + tagWidth > width)
+                {
+                    y += rowHeight + 5f;
+                    x = 0f;
+                    rowHeight = 0f;
+                }
+                x += tagWidth + 5f;
+            }
+            return y + rowHeight;
+        }
+
+        private float DrawTags(float width, float startY, List<string> tags)
+        {
+            if (tags.NullOrEmpty())
+            {
+                GUI.color = Color.gray;
+                Widgets.Label(new Rect(0f, startY, width, INPUT_HEIGHT), "TSS_PersonaEditor_NoTags".Translate());
+                GUI.color = Color.white;
+                return startY + INPUT_HEIGHT + 5f;
+            }
+
+            float x = 0f;
+            float y = startY;
+            float rowHeight = 0f;
+            const float tagPadding = 8f;
+            const float deleteButtonWidth = 24f;
+            string? tagToRemove = null;
+
+            foreach (var tag in tags)
+            {
+                float tagWidth = Text.CalcSize(tag).x + tagPadding * 2 + deleteButtonWidth;
+                rowHeight = Mathf.Max(rowHeight, INPUT_HEIGHT);
+
+                if (x + tagWidth > width)
+                {
+                    y += rowHeight + 5f;
+                    x = 0f;
+                    rowHeight = 0f;
+                }
+
+                Rect tagRect = new Rect(x, y, tagWidth, INPUT_HEIGHT);
+                Widgets.DrawOptionBackground(tagRect, false);
+
+                Rect labelRect = new Rect(tagRect.x + tagPadding, tagRect.y, tagRect.width - tagPadding * 2 - deleteButtonWidth, tagRect.height);
+                Text.Anchor = TextAnchor.MiddleLeft;
+                Widgets.Label(labelRect, tag);
+                Text.Anchor = TextAnchor.UpperLeft;
+
+                Rect deleteRect = new Rect(tagRect.xMax - deleteButtonWidth - 4, tagRect.y + (tagRect.height - deleteButtonWidth) / 2, deleteButtonWidth, deleteButtonWidth);
+                if (Widgets.ButtonImage(deleteRect, TexButton.CloseXSmall, Color.white, Color.red))
+                {
+                    tagToRemove = tag;
+                }
+
+                x += tagWidth + 5f;
+            }
+
+            if (tagToRemove != null)
+            {
+                tags.Remove(tagToRemove);
+            }
+
+            return y + rowHeight;
         }
         
         private void SaveChanges()
@@ -293,6 +419,137 @@ namespace TheSecondSeat.UI
                 Log.Error($"[Dialog_PersonaEditor] 导出人格失败: {ex}");
                 Messages.Message("TSS_PersonaEditor_ExportError".Translate(ex.Message), MessageTypeDefOf.RejectInput);
             }
+        }
+
+        private void GeneratePhraseLibrary()
+        {
+            // 1. 检查 LLM 是否可用
+            if (!LLM.LLMService.Instance.IsAvailable)
+            {
+                Messages.Message("TSS_LLMNotReady".Translate(), MessageTypeDefOf.RejectInput);
+                return;
+            }
+
+            // 2. 准备 Prompt
+            string prompt = BuildPhraseGenerationPrompt();
+            
+            // 3. 显示加载提示
+            Messages.Message("TSS_GeneratingPhraseLibrary".Translate(), MessageTypeDefOf.NeutralEvent);
+            
+            // 4. 异步调用 LLM
+            System.Threading.Tasks.Task.Run(async () =>
+            {
+                try
+                {
+                    // 使用 SendMessageAsync，gameState 为空
+                    string response = await LLM.LLMService.Instance.SendMessageAsync(
+                        "You are a creative writer specializing in RimWorld modding.", 
+                        "", 
+                        prompt
+                    );
+                    
+                    // 5. 回到主线程处理结果
+                    Verse.LongEventHandler.ExecuteWhenFinished(() =>
+                    {
+                        ProcessPhraseLibraryResponse(response);
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"[Dialog_PersonaEditor] 生成短语库失败: {ex}");
+                    Verse.LongEventHandler.ExecuteWhenFinished(() =>
+                    {
+                        Messages.Message("TSS_GenPhraseLibError".Translate(ex.Message), MessageTypeDefOf.RejectInput);
+                    });
+                }
+            });
+        }
+
+        private string BuildPhraseGenerationPrompt()
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("Task: Generate a Phrase Library for a RimWorld AI Narrator.");
+            sb.AppendLine("Output Format: XML only. No markdown, no explanations.");
+            sb.AppendLine("Structure:");
+            sb.AppendLine("<PhraseLibraryDef>");
+            sb.AppendLine($"  <defName>PhraseLib_{persona.defName}_{DateTime.Now.Ticks}</defName>");
+            sb.AppendLine($"  <personaDefName>{persona.defName}</personaDefName>");
+            sb.AppendLine("  <tiers>");
+            sb.AppendLine("    <li>");
+            sb.AppendLine("      <tier>Neutral</tier>");
+            sb.AppendLine("      <minAffinity>-20</minAffinity>");
+            sb.AppendLine("      <maxAffinity>60</maxAffinity>");
+            sb.AppendLine("      <headPatPhrases><li>...</li></headPatPhrases>");
+            sb.AppendLine("      <bodyPokePhrases><li>...</li></bodyPokePhrases>");
+            sb.AppendLine("    </li>");
+            sb.AppendLine("    <!-- Add High and Low tiers as well -->");
+            sb.AppendLine("  </tiers>");
+            sb.AppendLine("</PhraseLibraryDef>");
+            sb.AppendLine();
+            sb.AppendLine("Persona Information:");
+            sb.AppendLine($"Name: {editNarratorName}");
+            sb.AppendLine($"Biography: {editBiography}");
+            sb.AppendLine($"Tags: {string.Join(", ", editPersonalityTags)}");
+            sb.AppendLine();
+            sb.AppendLine("Requirements:");
+            sb.AppendLine("1. Generate 3 tiers: High (Affinity > 60), Neutral (-20 to 60), Low (Affinity < -20).");
+            sb.AppendLine("2. For each tier, provide at least 5 phrases for 'headPatPhrases' and 'bodyPokePhrases'.");
+            sb.AppendLine("3. Phrases should reflect the persona's personality and current affinity level.");
+            sb.AppendLine("4. Use the specified XML structure.");
+            
+            return sb.ToString();
+        }
+
+        private void ProcessPhraseLibraryResponse(string response)
+        {
+            try
+            {
+                // 提取 XML
+                string xml = ExtractXml(response);
+                if (string.IsNullOrEmpty(xml))
+                {
+                    Messages.Message("TSS_GenPhraseLibInvalidFormat".Translate(), MessageTypeDefOf.RejectInput);
+                    return;
+                }
+
+                // 解析并保存
+                // 这里我们需要一个临时的方法来解析 XML 并转换为 PhraseLibraryDef
+                // 或者直接保存到文件并让 PhraseManager 加载
+                
+                string cacheDir = System.IO.Path.Combine(GenFilePaths.ConfigFolderPath, "TheSecondSeat", "PhraseLibraries");
+                if (!System.IO.Directory.Exists(cacheDir))
+                {
+                    System.IO.Directory.CreateDirectory(cacheDir);
+                }
+                
+                string fileName = $"PhraseLib_{persona.defName}.xml";
+                string filePath = System.IO.Path.Combine(cacheDir, fileName);
+                
+                System.IO.File.WriteAllText(filePath, xml, System.Text.Encoding.UTF8);
+                
+                // 重新加载 PhraseManager
+                PhraseManager.Instance.Initialize(); // 或者添加一个 Reload 方法
+                
+                Messages.Message("TSS_GenPhraseLibSuccess".Translate(), MessageTypeDefOf.PositiveEvent);
+                Log.Message($"[Dialog_PersonaEditor] 短语库已保存到: {filePath}");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[Dialog_PersonaEditor] 处理短语库响应失败: {ex}");
+                Messages.Message("TSS_GenPhraseLibError".Translate(ex.Message), MessageTypeDefOf.RejectInput);
+            }
+        }
+
+        private string ExtractXml(string text)
+        {
+            int start = text.IndexOf("<PhraseLibraryDef>");
+            int end = text.IndexOf("</PhraseLibraryDef>");
+            
+            if (start != -1 && end != -1)
+            {
+                return text.Substring(start, end - start + "</PhraseLibraryDef>".Length);
+            }
+            return null;
         }
 
         private void GenerateDefaultPrompt()

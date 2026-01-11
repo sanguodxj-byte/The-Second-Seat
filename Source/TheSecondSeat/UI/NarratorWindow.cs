@@ -65,19 +65,6 @@ namespace TheSecondSeat.UI
                 timestamp = System.DateTime.Now
             };
             
-            // ? 如果有表情包ID，加载表情包
-            if (!string.IsNullOrEmpty(emoticonId))
-            {
-                try
-                {
-                    msg.emoticon = Emoticons.EmoticonManager.Instance.GetEmoticonById(emoticonId);
-                }
-                catch (System.Exception ex)
-                {
-                    Log.Warning($"[NarratorWindow] 加载表情包失败 {emoticonId}: {ex.Message}");
-                }
-            }
-            
             chatHistory.Add(msg);
         }
 
@@ -451,9 +438,6 @@ namespace TheSecondSeat.UI
             float contentHeight = 20f; // 顶部padding
             foreach (var msg in messages)
             {
-                // ? 修复：计算高度时必须包含表情包高度
-                float emoticonHeight = (msg.emoticon != null && msg.emoticon.texture != null) ? 120f : 0f;
-                
                 // 注意：这里使用的宽度计算需要与 DrawChatMessage 中的保持一致
                 // DrawChatMessage 中 bubbleWidth = rect.width * 0.7f
                 // rect.width 在这里对应 innerRect.width - 20f (滚动条)
@@ -463,13 +447,16 @@ namespace TheSecondSeat.UI
                 // 如果 CalcHeight 认为宽度够不换行，但实际绘制时换行了，就会导致高度不够。
                 // 减小计算宽度会强制 CalcHeight 倾向于算出更高的高度（更多换行），这是安全的。
                 float textHeight = CalculateMessageHeight(msg, bubbleWidth - 20f - 5f);
-                float totalMsgHeight = textHeight + 20f + emoticonHeight;
+                float totalMsgHeight = textHeight + 20f;
                 
-                contentHeight += totalMsgHeight + 15f; // 消息高度 + 间距
+                // ? 修复累积误差：每条消息额外增加 10f 的预计算高度
+                // 用户反馈随着消息增多截断越严重，说明存在每条消息的固定高度偏差。
+                // 这里的 +10f 是为了抵消这种累积误差，宁可底部留白也不要截断。
+                contentHeight += totalMsgHeight + 15f + 10f; // 消息高度 + 间距 + 累积误差缓冲
             }
             
             // ? 添加充足的底部padding，确保最后一条消息完全可见
-            contentHeight += 150f;
+            contentHeight += 200f;
             
             // ? viewRect高度必须大于等于contentHeight，否则滚动条无法到达底部
             var viewRect = new Rect(0, 0, innerRect.width - 20f, Mathf.Max(contentHeight, innerRect.height));
@@ -510,16 +497,8 @@ namespace TheSecondSeat.UI
             
             float bubbleWidth = rect.width * 0.7f;
             
-            // ? 计算表情包所需高度
-            float emoticonHeight = 0f;
-            bool hasEmoticon = message.emoticon != null && message.emoticon.texture != null;
-            if (hasEmoticon)
-            {
-                emoticonHeight = 120f; // 表情包显示高度
-            }
-            
             float textHeight = CalculateMessageHeight(message, bubbleWidth - 20f);
-            float bubbleHeight = textHeight + 20f + emoticonHeight;
+            float bubbleHeight = textHeight + 20f;
             
             Rect bubbleRect;
             Color bubbleColor;
@@ -547,37 +526,8 @@ namespace TheSecondSeat.UI
             // 绘制气泡背景
             Widgets.DrawBoxSolid(bubbleRect, bubbleColor);
             
-            // ? 如果有表情包，先绘制表情包
-            var textRect = bubbleRect.ContractedBy(10f);
-            if (hasEmoticon)
-            {
-                // 表情包区域（居中显示）
-                float emoticonSize = 100f;
-                var emoticonRect = new Rect(
-                    bubbleRect.x + (bubbleRect.width - emoticonSize) / 2f,
-                    textRect.y,
-                    emoticonSize,
-                    emoticonSize
-                );
-                
-                GUI.DrawTexture(emoticonRect, message.emoticon.texture, ScaleMode.ScaleToFit);
-                
-                // 表情包下方显示名称（小字，半透明）
-                Text.Font = GameFont.Tiny;
-                GUI.color = new Color(TextLight.r, TextLight.g, TextLight.b, 0.6f);
-                var nameRect = new Rect(emoticonRect.x, emoticonRect.yMax + 2f, emoticonRect.width, 15f);
-                Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(nameRect, message.emoticon.displayName);
-                Text.Anchor = TextAnchor.UpperLeft;
-                GUI.color = Color.white;
-                Text.Font = GameFont.Small;
-                
-                // 文字区域下移
-                textRect.y += emoticonHeight;
-                textRect.height -= emoticonHeight;
-            }
-            
             // 绘制文字内容
+            var textRect = bubbleRect.ContractedBy(10f);
             Text.Font = GameFont.Small;
             GUI.color = TextLight;
             Widgets.Label(textRect, message.content);
@@ -841,9 +791,6 @@ namespace TheSecondSeat.UI
             public string sender = "";
             public string content = "";
             public System.DateTime timestamp;
-            
-            // ? 新增：表情包数据
-            public Emoticons.EmoticonData emoticon = null;
         }
     }
 

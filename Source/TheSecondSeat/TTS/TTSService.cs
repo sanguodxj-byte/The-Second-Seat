@@ -30,6 +30,10 @@ namespace TheSecondSeat.TTS
         private string openAI_ApiUrl = "http://127.0.0.1:9880/v1/audio/speech"; // 默认本地 GPT-SoVITS
         private string openAI_Model = "gpt-sovits"; // 模型名称
 
+        // ? 新增：SiliconFlow (IndexTTS) 配置
+        private string siliconFlow_ApiUrl = "https://api.siliconflow.cn/v1/audio/speech";
+        private string siliconFlow_Model = "IndexTeam/IndexTTS-2";
+
         private string audioOutputDir = "";
         
         // ? 语音播放状态（用于唇形同步）
@@ -86,8 +90,13 @@ namespace TheSecondSeat.TTS
                 {
                     openAI_Model = modelName;
                 }
-                
-                // 静默配置
+            }
+            // 配置 SiliconFlow
+            else if (ttsProvider == "siliconflow")
+            {
+                // 允许覆盖默认 URL 和 Model (虽然通常固定)
+                if (!string.IsNullOrEmpty(apiUrl)) siliconFlow_ApiUrl = apiUrl;
+                if (!string.IsNullOrEmpty(modelName)) siliconFlow_Model = modelName;
             }
         }
 
@@ -143,6 +152,9 @@ namespace TheSecondSeat.TTS
                         break;
                     case "openai":
                         audioData = await GenerateOpenAITTSAsync(cleanText);
+                        break;
+                    case "siliconflow":
+                        audioData = await GenerateSiliconFlowTTSAsync(cleanText);
                         break;
                     default:
                         if (Prefs.DevMode)
@@ -251,6 +263,67 @@ namespace TheSecondSeat.TTS
                 Log.Warning("[TTSService] Please use Azure TTS or Local TTS for now.");
             }
             return Task.FromResult<byte[]?>(null);
+        }
+
+        /// <summary>
+        /// ? 生成 SiliconFlow (IndexTTS) 语音
+        /// 兼容 OpenAI Speech API 格式
+        /// </summary>
+        private async Task<byte[]?> GenerateSiliconFlowTTSAsync(string text)
+        {
+            try
+            {
+                // IndexTTS 特有参数处理
+                // 注意：SiliconFlow 文档可能要求特定的 voice 名称
+                // 如果 voiceName 是 Azure 格式 (zh-CN-...), 可能需要映射或直接使用
+                // IndexTTS 通常支持 "alex", "anna" 等，或者特定中文名。
+                // 暂时直接透传 voiceName，由用户在设置中配置正确的 IndexTTS 语音名。
+
+                var requestBody = new
+                {
+                    model = siliconFlow_Model,      // "IndexTeam/IndexTTS-2"
+                    input = text,
+                    voice = voiceName,              // e.g. "alex"
+                    response_format = "wav",        // 推荐 wav 以获得最佳兼容性
+                    speed = speechRate,
+                    sample_rate = 24000             // IndexTTS 可能支持采样率设置
+                };
+
+                string jsonBody = JsonConvert.SerializeObject(requestBody);
+
+                using var webRequest = new UnityWebRequest(siliconFlow_ApiUrl, "POST");
+                webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonBody));
+                webRequest.downloadHandler = new DownloadHandlerBuffer();
+                webRequest.SetRequestHeader("Content-Type", "application/json");
+                
+                if (!string.IsNullOrEmpty(apiKey))
+                {
+                    webRequest.SetRequestHeader("Authorization", $"Bearer {apiKey}");
+                }
+
+                var op = webRequest.SendWebRequest();
+                while (!op.isDone) await Task.Delay(50);
+
+                if (webRequest.result != UnityWebRequest.Result.Success)
+                {
+                    if (Prefs.DevMode)
+                    {
+                        Log.Error($"[TTSService] SiliconFlow error: {webRequest.responseCode} - {webRequest.error}");
+                        Log.Error($"[TTSService] Details: {webRequest.downloadHandler.text}");
+                    }
+                    return null;
+                }
+
+                return webRequest.downloadHandler.data;
+            }
+            catch (Exception ex)
+            {
+                if (Prefs.DevMode)
+                {
+                    Log.Error($"[TTSService] SiliconFlow exception: {ex.Message}");
+                }
+                return null;
+            }
         }
 
         /// <summary>

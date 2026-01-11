@@ -7,6 +7,7 @@ using TheSecondSeat.Storyteller;
 using TheSecondSeat.Narrator;
 using TheSecondSeat.PersonaGeneration;
 using TheSecondSeat.Settings;
+using TheSecondSeat.UI;
 
 namespace TheSecondSeat.Events
 {
@@ -236,11 +237,14 @@ namespace TheSecondSeat.Events
 
             var eventGenerator = AffinityDrivenEvents.Instance;
             
-            // ? 简化：直接使用TriggerEvent方法
+            // 🎤 简化：直接使用TriggerEvent方法
             eventGenerator.TriggerEvent(map, evt.eventDefName, 0.5f);
             
             Log.Message($"[OpponentEventController] 触发预定事件: {evt.eventDefName}");
             RecordRecentEvent(evt.eventDefName);
+            
+            // 🎤 触发事件反应短语
+            TriggerEventPhrase(evt.eventDefName, agent.affinity);
             
             if (!string.IsNullOrEmpty(evt.aiComment))
             {
@@ -273,6 +277,10 @@ namespace TheSecondSeat.Events
             {
                 eventGenerator.TriggerPositiveEvent(map);
                 positiveEventsTriggered++;
+                
+                // 🎤 触发好事件反应短语
+                TriggerEventPhrase("positive", agent.affinity, true);
+                
                 string aiComment = GenerateStrategyComment(null, strategy, agent);
                 Messages.Message($"叙事者：{aiComment}", MessageTypeDefOf.PositiveEvent);
             }
@@ -288,6 +296,10 @@ namespace TheSecondSeat.Events
                 
                 eventGenerator.TriggerNegativeEvent(map, severity);
                 negativeEventsTriggered++;
+                
+                // 🎤 触发坏事件反应短语
+                TriggerEventPhrase("negative", agent.affinity, false);
+                
                 string aiComment = GenerateStrategyComment(null, strategy, agent);
                 Messages.Message($"叙事者：{aiComment}", MessageTypeDefOf.NegativeEvent);
             }
@@ -662,6 +674,19 @@ namespace TheSecondSeat.Events
             {
                 RecordRecentEvent(eventType);
                 
+                // 🎤 触发事件反应短语
+                if (agent != null)
+                {
+                    bool isPositiveEvent = eventType.ToLower() switch
+                    {
+                        "trader" or "商队" or "贸易" => true,
+                        "wanderer" or "流浪者" or "加入者" => true,
+                        "resource" or "资源" or "空投" => true,
+                        _ => false
+                    };
+                    TriggerEventPhrase(eventType, agent.affinity, isPositiveEvent);
+                }
+                
                 string finalComment = !string.IsNullOrEmpty(aiComment) ? aiComment : "看你如何应对。";
                 // 使用正确的 MessageType
                 MessageTypeDef msgType = MessageTypeDefOf.NeutralEvent;
@@ -776,6 +801,87 @@ namespace TheSecondSeat.Events
         private StorytellerAgent? GetStorytellerAgent()
         {
             return Current.Game?.GetComponent<NarratorManager>()?.GetStorytellerAgent();
+        }
+
+        /// <summary>
+        /// 🎤 触发事件反应短语
+        /// </summary>
+        /// <param name="eventType">事件类型</param>
+        /// <param name="affinity">好感度</param>
+        /// <param name="isPositive">是否为正面事件</param>
+        private void TriggerEventPhrase(string eventType, float affinity, bool isPositive = false)
+        {
+            try
+            {
+                // 获取当前人格
+                var narratorManager = Current.Game?.GetComponent<NarratorManager>();
+                if (narratorManager == null) return;
+                
+                var currentPersona = narratorManager.GetCurrentPersona();
+                if (currentPersona == null) return;
+                
+                string personaDefName = currentPersona.defName;
+                
+                // 设置好感度
+                PhraseManager.Instance.SetAffinity(personaDefName, affinity);
+                
+                // 选择短语类别
+                PhraseCategory category;
+                if (isPositive)
+                {
+                    category = PhraseCategory.GoodEventReaction;
+                }
+                else
+                {
+                    // 根据事件类型选择更具体的类别
+                    category = eventType.ToLower() switch
+                    {
+                        "raid" or "袭击" or "mechanoidraid" => PhraseCategory.CombatStart,
+                        "disease" or "疾病" or "瘟疫" => PhraseCategory.BadEventReaction,
+                        "eclipse" or "日蚀" or "solarpinhole" => PhraseCategory.BadEventReaction,
+                        "toxic" or "毒尘" or "toxicfallout" => PhraseCategory.BadEventReaction,
+                        _ => PhraseCategory.EventReaction
+                    };
+                }
+                
+                // 获取短语
+                string phrase = PhraseManager.Instance.TriggerPhrase(personaDefName, category);
+                
+                if (!string.IsNullOrEmpty(phrase))
+                {
+                    // 显示短语（通过 FullBodyPortraitPanel 或字幕系统）
+                    ShowEventPhrase(phrase);
+                    
+                    if (Prefs.DevMode)
+                    {
+                        Log.Message($"[OpponentEventController] 🎤 事件短语 ({category}): {phrase}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[OpponentEventController] 事件短语触发失败: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// 🎤 显示事件短语
+        /// </summary>
+        private void ShowEventPhrase(string phrase)
+        {
+            // 方式1：通过字幕系统
+            try
+            {
+                SubtitleManager.Instance?.ShowSubtitle(phrase, 3.0f);
+                return;
+            }
+            catch
+            {
+                // 忽略字幕系统错误
+            }
+            
+            // 方式2：作为消息显示（最后的回退）
+            Messages.Message(phrase, MessageTypeDefOf.SilentInput);
         }
 
         public override void ExposeData()

@@ -4,7 +4,7 @@ using System.Linq;
 using Verse;
 using RimWorld;
 using TheSecondSeat.Storyteller;
-using TheSecondSeat.Observer;
+using TheSecondSeat.Monitoring;
 using TheSecondSeat.NaturalLanguage;
 using TheSecondSeat.Execution;
 using TheSecondSeat.Integration;
@@ -51,7 +51,7 @@ namespace TheSecondSeat.Autonomous
             // 只有在高好感度时才主动提出建议
             if (agent.affinity < 30f) return;
 
-            var snapshot = GameStateObserver.CaptureSnapshotSafe();
+            var snapshot = GameStateSnapshotUtility.CaptureSnapshotSafe();
             var suggestions = GenerateSuggestions(snapshot, agent);
 
             foreach (var suggestion in suggestions)

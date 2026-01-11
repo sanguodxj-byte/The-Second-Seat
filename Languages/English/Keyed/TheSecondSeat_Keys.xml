@@ -286,4 +286,41 @@ Click to talk with the AI Narrator</TSS_NarratorButton_Tooltip>
   <TSS_PersonaEditor_ExportError>Export failed: {0}</TSS_PersonaEditor_ExportError>
   <TSS_PersonaEditor_AutoGenSuccess>Default System Prompt template generated</TSS_PersonaEditor_AutoGenSuccess>
   <TSS_PersonaEditor_AutoGenError>Generation failed: {0}</TSS_PersonaEditor_AutoGenError>
+  
+  <!-- ⭐ v1.9.0: Narrative Mode -->
+  <TSS_PersonaEditor_NarrativeMode>Narrative Mode</TSS_PersonaEditor_NarrativeMode>
+  <TSS_PersonaEditor_NarrativeModeHelp>These parameters affect how the narrator decides on events and responds to player input.\n• Mercy: Lower = more brutal events\n• Chaos: Higher = more unreasonable/random events\n• Dominance: Higher = less influenced by player requests</TSS_PersonaEditor_NarrativeModeHelp>
+  <TSS_PersonaEditor_Narrative_Mercy>Mercy Level</TSS_PersonaEditor_Narrative_Mercy>
+  <TSS_PersonaEditor_Narrative_Chaos>Chaos Level</TSS_PersonaEditor_Narrative_Chaos>
+  <TSS_PersonaEditor_Narrative_Dominance>Dominance Level</TSS_PersonaEditor_Narrative_Dominance>
+  
+  <!-- ⭐ v1.9.1: Phrase Library System -->
+  <TSS_PhraseLibrary_Title>Phrase Library</TSS_PhraseLibrary_Title>
+  <TSS_PhraseLibrary_Description>Quick reaction phrases for different affinity levels and interaction types.</TSS_PhraseLibrary_Description>
+  <TSS_PhraseLibrary_GenerateButton>Generate Phrase Library</TSS_PhraseLibrary_GenerateButton>
+  <TSS_PhraseLibrary_Generating>Generating phrases...</TSS_PhraseLibrary_Generating>
+  <TSS_PhraseLibrary_GenerateSuccess>Phrase library generated successfully! ({0} phrases)</TSS_PhraseLibrary_GenerateSuccess>
+  <TSS_PhraseLibrary_GenerateFailed>Failed to generate phrase library: {0}</TSS_PhraseLibrary_GenerateFailed>
+  <TSS_PhraseLibrary_LoadSuccess>Phrase library loaded for {0}</TSS_PhraseLibrary_LoadSuccess>
+  <TSS_PhraseLibrary_NotFound>No phrase library found for this persona</TSS_PhraseLibrary_NotFound>
+  <TSS_PhraseLibrary_ExportSuccess>Phrase library exported to: {0}</TSS_PhraseLibrary_ExportSuccess>
+  
+  <!-- Phrase Categories -->
+  <TSS_PhraseCategory_HeadPat>Head Pat</TSS_PhraseCategory_HeadPat>
+  <TSS_PhraseCategory_BodyPoke>Body Poke</TSS_PhraseCategory_BodyPoke>
+  <TSS_PhraseCategory_Greeting>Greeting</TSS_PhraseCategory_Greeting>
+  <TSS_PhraseCategory_EventReaction>Event Reaction</TSS_PhraseCategory_EventReaction>
+  <TSS_PhraseCategory_GoodEventReaction>Good Event</TSS_PhraseCategory_GoodEventReaction>
+  <TSS_PhraseCategory_BadEventReaction>Bad Event</TSS_PhraseCategory_BadEventReaction>
+  <TSS_PhraseCategory_CombatStart>Combat Start</TSS_PhraseCategory_CombatStart>
+  <TSS_PhraseCategory_CombatVictory>Combat Victory</TSS_PhraseCategory_CombatVictory>
+  <TSS_PhraseCategory_TakeDamage>Take Damage</TSS_PhraseCategory_TakeDamage>
+  <TSS_PhraseCategory_Healed>Healed</TSS_PhraseCategory_Healed>
+  <TSS_PhraseCategory_Idle>Idle</TSS_PhraseCategory_Idle>
+  <TSS_PhraseCategory_Farewell>Farewell</TSS_PhraseCategory_Farewell>
+  
+  <!-- Interaction Feedback -->
+  <TSS_Interaction_HeadPat>*pats head*</TSS_Interaction_HeadPat>
+  <TSS_Interaction_BodyPoke>*pokes*</TSS_Interaction_BodyPoke>
+  <TSS_Interaction_CtrlHint>Hold Ctrl and click to interact</TSS_Interaction_CtrlHint>
 </LanguageData>

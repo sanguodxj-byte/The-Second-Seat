@@ -51,8 +51,7 @@ namespace TheSecondSeat.RimAgent.Tools
                     isAllowed = true;
                 }
 
-                // 允许路径 B: 本 Mod 及其子 Mod 的安装目录
-                // 遍历所有已加载的 Mod，找到 The Second Seat 相关的
+                // 允许路径 B: 本 Mod 及其子 Mod 的安装目录, 但仅限于 .txt 文件
                 if (!isAllowed)
                 {
                     foreach (var mod in LoadedModManager.RunningModsListForReading)
@@ -62,8 +61,12 @@ namespace TheSecondSeat.RimAgent.Tools
                             string modDir = Path.GetFullPath(mod.RootDir);
                             if (fullPath.StartsWith(modDir, StringComparison.OrdinalIgnoreCase))
                             {
-                                isAllowed = true;
-                                break;
+                                // ⭐ 安全增强：只允许修改 .txt 文件
+                                if (Path.GetExtension(fullPath).Equals(".txt", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    isAllowed = true;
+                                    break;
+                                }
                             }
                         }
                     }
@@ -72,7 +75,7 @@ namespace TheSecondSeat.RimAgent.Tools
                 if (!isAllowed)
                 {
                     return ToolResult.Failure($"Security Violation: Access denied to '{path}'. " +
-                                              "You can only modify files in the Mod Config folder or 'The Second Seat' mod directories.");
+                                              "You can only modify files in the Mod Config folder or '.txt' files within 'The Second Seat' mod directories.");
                 }
 
                 if (!File.Exists(fullPath))

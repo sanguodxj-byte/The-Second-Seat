@@ -75,6 +75,31 @@ namespace TheSecondSeat.Commands
             initialized = true;
             
             Log.Message($"[CommandToolLibrary] 已注册 {commandRegistry.Count} 个命令");
+
+            // ⭐ 校验：检查是否有对应的实现类
+            ValidateImplementations();
+        }
+
+        /// <summary>
+        /// 校验所有注册的命令是否有对应的 IAICommand 实现
+        /// </summary>
+        private static void ValidateImplementations()
+        {
+            var missingImpls = new List<string>();
+            foreach (var cmdId in commandRegistry.Keys)
+            {
+                if (CommandRegistry.GetCommand(cmdId) == null)
+                {
+                    missingImpls.Add(cmdId);
+                }
+            }
+
+            if (missingImpls.Count > 0)
+            {
+                Log.Error($"[CommandToolLibrary] ⚠️ 严重警告：发现 {missingImpls.Count} 个命令没有对应的 C# 实现类！LLM 调用这些命令时将失败。");
+                Log.Error($"缺失的命令: {string.Join(", ", missingImpls)}");
+                Log.Error("请确保为每个命令创建了实现 IAICommand 接口的类，且 ActionName 与 commandId 一致。");
+            }
         }
         
         /// <summary>
@@ -339,6 +364,36 @@ namespace TheSecondSeat.Commands
                 },
                 example = "{ \"action\": \"ScanMap\", \"target\": \"hostiles\" }",
                 notes = "报告目标相对于居住区中心的方位和数量"
+            });
+
+            // 7.3 获取事件类别列表
+            Register(new CommandDefinition
+            {
+                commandId = "GetIncidentCategories",
+                category = "Query",
+                displayName = "获取事件类别",
+                description = "获取所有可用的事件类别列表",
+                parameters = new List<ParameterDef>(),
+                example = "{ \"action\": \"GetIncidentCategories\" }",
+                notes = "返回类别列表，如：ThreatBig, ThreatSmall, Misc, etc."
+            });
+
+            // 7.4 获取特定类别的事件列表
+            Register(new CommandDefinition
+            {
+                commandId = "GetIncidentList",
+                category = "Query",
+                displayName = "获取事件列表",
+                description = "获取指定类别下的所有事件定义",
+                parameters = new List<ParameterDef>
+                {
+                    new ParameterDef { name = "target", type = "string", required = true, description = "事件类别名称 (CategoryName)" },
+                    new ParameterDef { name = "page", type = "int", required = false, defaultValue = "0", description = "页码" },
+                    new ParameterDef { name = "pageSize", type = "int", required = false, defaultValue = "10", description = "每页数量" },
+                    new ParameterDef { name = "search", type = "string", required = false, description = "搜索关键词" }
+                },
+                example = "{ \"action\": \"GetIncidentList\", \"target\": \"ThreatBig\", \"page\": 0, \"pageSize\": 5 }",
+                notes = "支持分页和搜索"
             });
         }
         

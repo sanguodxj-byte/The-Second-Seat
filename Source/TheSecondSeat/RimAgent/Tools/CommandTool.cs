@@ -17,10 +17,6 @@ namespace TheSecondSeat.RimAgent.Tools
         public string Name => "command";
         public string Description => "执行游戏命令（如批量收获、批量装备等）";
         
-        // 用于主线程同步的结果容器
-        private volatile ToolResult? _pendingResult;
-        private volatile bool _executionComplete;
-        
         public async Task<ToolResult> ExecuteAsync(Dictionary<string, object> parameters)
         {
             Log.Message($"[CommandTool] ExecuteAsync called with parameters: {string.Join(", ", parameters.Keys)}");
@@ -34,20 +30,23 @@ namespace TheSecondSeat.RimAgent.Tools
                 
                 string action = actionObj?.ToString() ?? "";
                 
-                // ⭐ v1.6.84: 修复参数传递 - 收集所有非 action 参数
+                // ⭐ v1.6.84: 修复参数传递 - 优先使用 params 内部参数，然后用顶层参数覆盖
                 var commandParams = new Dictionary<string, object>();
-                foreach (var kvp in parameters)
+
+                // 1. 优先提取 params 内部的参数 (如果 LLM 输出的是 JSON 对象结构)
+                if (parameters.TryGetValue("params", out var paramsObj) && paramsObj is Dictionary<string, object> nestedParams)
                 {
-                    if (kvp.Key != "action")
+                    foreach (var kvp in nestedParams)
                     {
                         commandParams[kvp.Key] = kvp.Value;
                     }
                 }
-                
-                // 如果有嵌套的 params 对象，也合并进来
-                if (parameters.TryGetValue("params", out var paramsObj) && paramsObj is Dictionary<string, object> nestedParams)
+
+                // 2. 合并顶层参数 (ReActAgent 解析出的 kwargs)，覆盖前者
+                // 这样即使 LLM 混用了格式，也能优先保证顶层解析结果（如 target）的正确性
+                foreach (var kvp in parameters)
                 {
-                    foreach (var kvp in nestedParams)
+                    if (kvp.Key != "action" && kvp.Key != "target" && kvp.Key != "params")
                     {
                         commandParams[kvp.Key] = kvp.Value;
                     }
@@ -70,9 +69,8 @@ namespace TheSecondSeat.RimAgent.Tools
                 
                 Log.Message($"[CommandTool] Prepared command: action={action}, target={target}, params={commandParams.Count}");
                 
-                // ⭐ v1.6.84: 确保在主线程执行
-                _executionComplete = false;
-                _pendingResult = null;
+                // ⭐ 优化：使用 TaskCompletionSource 实现优雅的异步等待
+                var tcs = new TaskCompletionSource<ToolResult>();
                 
                 // 使用 LongEventHandler 确保主线程执行
                 Verse.LongEventHandler.ExecuteWhenFinished(() =>
@@ -83,42 +81,32 @@ namespace TheSecondSeat.RimAgent.Tools
                         
                         if (result.Success)
                         {
-                            _pendingResult = new ToolResult { Success = true, Data = result.Message };
+                            tcs.SetResult(new ToolResult { Success = true, Data = result.Message });
                         }
                         else
                         {
-                            _pendingResult = new ToolResult { Success = false, Error = result.Message };
+                            tcs.SetResult(new ToolResult { Success = false, Error = result.Message });
                         }
                     }
                     catch (Exception ex)
                     {
                         Log.Error($"[CommandTool] Main thread execution error: {ex.Message}");
-                        _pendingResult = new ToolResult { Success = false, Error = $"执行异常: {ex.Message}" };
-                    }
-                    finally
-                    {
-                        _executionComplete = true;
+                        tcs.SetResult(new ToolResult { Success = false, Error = $"执行异常: {ex.Message}" });
                     }
                 });
                 
                 // 等待主线程执行完成（最多等待 5 秒）
-                int waitCount = 0;
-                const int maxWaitMs = 5000;
-                const int checkIntervalMs = 50;
+                var completedTask = await Task.WhenAny(tcs.Task, Task.Delay(5000));
                 
-                while (!_executionComplete && waitCount < maxWaitMs)
+                if (completedTask == tcs.Task)
                 {
-                    await Task.Delay(checkIntervalMs);
-                    waitCount += checkIntervalMs;
+                    return await tcs.Task;
                 }
-                
-                if (!_executionComplete)
+                else
                 {
                     Log.Warning("[CommandTool] Command execution timed out");
                     return new ToolResult { Success = false, Error = "命令执行超时" };
                 }
-                
-                return _pendingResult ?? new ToolResult { Success = false, Error = "未知错误" };
             }
             catch (Exception ex)
             {

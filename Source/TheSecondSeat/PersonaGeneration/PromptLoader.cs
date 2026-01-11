@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Verse;
 
@@ -7,11 +8,24 @@ namespace TheSecondSeat.PersonaGeneration
     /// <summary>
     /// Utility class to load prompt templates from language-specific folders.
     /// Supports modular prompt design and localization.
+    /// ⭐ v1.7.0: 添加内存缓存，减少同步 IO 造成的卡顿
     /// </summary>
     public static class PromptLoader
     {
         private const string PromptsFolderName = "Prompts";
         private const string DefaultLanguage = "English";
+        
+        // ⭐ v1.7.0: 静态缓存
+        private static Dictionary<string, string> _promptCache = new Dictionary<string, string>();
+
+        /// <summary>
+        /// Clears the prompt cache (e.g. when language changes)
+        /// </summary>
+        public static void ClearCache()
+        {
+            _promptCache.Clear();
+            Log.Message("[The Second Seat] Prompt cache cleared.");
+        }
 
         /// <summary>
         /// Loads a prompt template by name.
@@ -25,7 +39,15 @@ namespace TheSecondSeat.PersonaGeneration
         /// <returns>The content of the prompt file.</returns>
         public static string Load(string promptName)
         {
+            // ⭐ v1.7.0: 检查缓存
             string activeLangFolder = LanguageDatabase.activeLanguage.folderName;
+            string cacheKey = $"{activeLangFolder}_{promptName}";
+
+            if (_promptCache.TryGetValue(cacheKey, out string cachedContent))
+            {
+                return cachedContent;
+            }
+
             string fileName = promptName + ".txt";
             
             // --- User Overrides (Config Folder) ---
@@ -35,14 +57,14 @@ namespace TheSecondSeat.PersonaGeneration
             string userLangPath = Path.Combine(configRoot, "TheSecondSeat", PromptsFolderName, activeLangFolder, fileName);
             if (File.Exists(userLangPath))
             {
-                return File.ReadAllText(userLangPath);
+                return CacheAndReturn(cacheKey, File.ReadAllText(userLangPath));
             }
 
             // 2. User Override - Global (Root of Prompts folder in Config)
             string userGlobalPath = Path.Combine(configRoot, "TheSecondSeat", PromptsFolderName, fileName);
             if (File.Exists(userGlobalPath))
             {
-                return File.ReadAllText(userGlobalPath);
+                return CacheAndReturn(cacheKey, File.ReadAllText(userGlobalPath));
             }
 
             // --- Mod Defaults ---
@@ -53,7 +75,7 @@ namespace TheSecondSeat.PersonaGeneration
                 string activeLangPath = Path.Combine(modContent.RootDir, "Languages", activeLangFolder, PromptsFolderName, fileName);
                 if (File.Exists(activeLangPath))
                 {
-                    return File.ReadAllText(activeLangPath);
+                    return CacheAndReturn(cacheKey, File.ReadAllText(activeLangPath));
                 }
 
                 // 4. Mod Fallback - English (Default)
@@ -62,13 +84,24 @@ namespace TheSecondSeat.PersonaGeneration
                     string defaultPath = Path.Combine(modContent.RootDir, "Languages", DefaultLanguage, PromptsFolderName, fileName);
                     if (File.Exists(defaultPath))
                     {
-                        return File.ReadAllText(defaultPath);
+                        return CacheAndReturn(cacheKey, File.ReadAllText(defaultPath));
                     }
                 }
             }
 
             Log.Warning($"[The Second Seat] Prompt file not found: {promptName}.txt");
-            return $"[Error: Prompt {promptName} not found]";
+            string errorContent = $"[Error: Prompt {promptName} not found]";
+            
+            // 即使失败也缓存错误信息，避免重复尝试读取不存在的文件
+            _promptCache[cacheKey] = errorContent;
+            return errorContent;
+        }
+
+        // ⭐ v1.7.0: 将结果存入缓存
+        private static string CacheAndReturn(string key, string content)
+        {
+            _promptCache[key] = content;
+            return content;
         }
 
         /// <summary>

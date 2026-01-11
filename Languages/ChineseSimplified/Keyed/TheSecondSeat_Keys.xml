@@ -286,4 +286,41 @@
   <TSS_PersonaEditor_ExportError>导出失败: {0}</TSS_PersonaEditor_ExportError>
   <TSS_PersonaEditor_AutoGenSuccess>已生成默认 System Prompt 模板</TSS_PersonaEditor_AutoGenSuccess>
   <TSS_PersonaEditor_AutoGenError>生成失败: {0}</TSS_PersonaEditor_AutoGenError>
+  
+  <!-- ⭐ v1.9.0: 叙事模式 -->
+  <TSS_PersonaEditor_NarrativeMode>叙事模式</TSS_PersonaEditor_NarrativeMode>
+  <TSS_PersonaEditor_NarrativeModeHelp>这些参数影响叙事者如何决定事件以及如何回应玩家输入。\n• 仁慈度：越低 = 事件越残酷\n• 混乱度：越高 = 事件越不合理/随机\n• 强势度：越高 = 越不受玩家请求影响</TSS_PersonaEditor_NarrativeModeHelp>
+  <TSS_PersonaEditor_Narrative_Mercy>仁慈度</TSS_PersonaEditor_Narrative_Mercy>
+  <TSS_PersonaEditor_Narrative_Chaos>混乱度</TSS_PersonaEditor_Narrative_Chaos>
+  <TSS_PersonaEditor_Narrative_Dominance>强势度</TSS_PersonaEditor_Narrative_Dominance>
+  
+  <!-- ⭐ v1.9.1: 短语库系统 -->
+  <TSS_PhraseLibrary_Title>短语库</TSS_PhraseLibrary_Title>
+  <TSS_PhraseLibrary_Description>针对不同好感等级和交互类型的快速反应短语。</TSS_PhraseLibrary_Description>
+  <TSS_PhraseLibrary_GenerateButton>生成短语库</TSS_PhraseLibrary_GenerateButton>
+  <TSS_PhraseLibrary_Generating>正在生成短语...</TSS_PhraseLibrary_Generating>
+  <TSS_PhraseLibrary_GenerateSuccess>短语库生成成功！（共 {0} 条短语）</TSS_PhraseLibrary_GenerateSuccess>
+  <TSS_PhraseLibrary_GenerateFailed>短语库生成失败：{0}</TSS_PhraseLibrary_GenerateFailed>
+  <TSS_PhraseLibrary_LoadSuccess>已为 {0} 加载短语库</TSS_PhraseLibrary_LoadSuccess>
+  <TSS_PhraseLibrary_NotFound>未找到此人格的短语库</TSS_PhraseLibrary_NotFound>
+  <TSS_PhraseLibrary_ExportSuccess>短语库已导出至：{0}</TSS_PhraseLibrary_ExportSuccess>
+  
+  <!-- 短语类别 -->
+  <TSS_PhraseCategory_HeadPat>摸头</TSS_PhraseCategory_HeadPat>
+  <TSS_PhraseCategory_BodyPoke>戳一戳</TSS_PhraseCategory_BodyPoke>
+  <TSS_PhraseCategory_Greeting>问候</TSS_PhraseCategory_Greeting>
+  <TSS_PhraseCategory_EventReaction>事件反应</TSS_PhraseCategory_EventReaction>
+  <TSS_PhraseCategory_GoodEventReaction>好事件</TSS_PhraseCategory_GoodEventReaction>
+  <TSS_PhraseCategory_BadEventReaction>坏事件</TSS_PhraseCategory_BadEventReaction>
+  <TSS_PhraseCategory_CombatStart>战斗开始</TSS_PhraseCategory_CombatStart>
+  <TSS_PhraseCategory_CombatVictory>战斗胜利</TSS_PhraseCategory_CombatVictory>
+  <TSS_PhraseCategory_TakeDamage>受到伤害</TSS_PhraseCategory_TakeDamage>
+  <TSS_PhraseCategory_Healed>治愈</TSS_PhraseCategory_Healed>
+  <TSS_PhraseCategory_Idle>闲置</TSS_PhraseCategory_Idle>
+  <TSS_PhraseCategory_Farewell>道别</TSS_PhraseCategory_Farewell>
+  
+  <!-- 交互反馈 -->
+  <TSS_Interaction_HeadPat>*摸摸头*</TSS_Interaction_HeadPat>
+  <TSS_Interaction_BodyPoke>*戳一下*</TSS_Interaction_BodyPoke>
+  <TSS_Interaction_CtrlHint>按住 Ctrl 并点击以进行交互</TSS_Interaction_CtrlHint>
 </LanguageData>

@@ -4,8 +4,10 @@ using System.Linq;
 using UnityEngine;
 using Verse;
 using RimWorld;
-using TheSecondSeat.Narrator;
 using TheSecondSeat.PersonaGeneration;
+using TheSecondSeat.Narrator;
+// 使用别名避免 AffinityTier 冲突
+using AffinityTier = TheSecondSeat.Narrator.AffinityTier;
 
 namespace TheSecondSeat.UI
 {

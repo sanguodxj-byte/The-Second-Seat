@@ -132,7 +132,7 @@ namespace TheSecondSeat.Integration
             try
             {
                 // ✅ 修复：使用线程安全的 GameStateObserver 代替直接访问 map.mapPawns
-                var snapshot = Observer.GameStateObserver.CaptureSnapshotSafe();
+                var snapshot = Monitoring.GameStateSnapshotUtility.CaptureSnapshotSafe();
                 
                 if (snapshot == null)
                 {
