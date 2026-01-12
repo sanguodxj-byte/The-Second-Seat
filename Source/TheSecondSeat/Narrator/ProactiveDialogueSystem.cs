@@ -214,15 +214,15 @@ namespace TheSecondSeat.Core
             context += "[注意: 不要说'我注意到你5分钟没操作'，而是自然地找话题]\n";
             
             // 根据好感度选择对话方向
-            if (affinity >= 600)
+            if (affinity >= 60)
             {
                 context += "建议话题: 关心玩家状态、轻微撒娇、询问是否需要帮助\n";
             }
-            else if (affinity >= 100)
+            else if (affinity >= 10)
             {
                 context += "建议话题: 汇报殖民地近况、提出建议、闲聊\n";
             }
-            else if (affinity >= -100)
+            else if (affinity >= -10)
             {
                 context += "建议话题: 简短问候、观察评论\n";
             }
@@ -392,11 +392,11 @@ namespace TheSecondSeat.Core
             // 根据好感度调整反应建议
             if (importance == LetterImportance.Critical)
             {
-                if (affinity >= 300)
+                if (affinity >= 30)
                 {
                     context += "建议反应: 担忧、警告、准备帮助\n";
                 }
-                else if (affinity >= -100)
+                else if (affinity >= -10)
                 {
                     context += "建议反应: 提醒、评论\n";
                 }

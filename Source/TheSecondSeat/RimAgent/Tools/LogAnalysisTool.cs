@@ -65,6 +65,17 @@ namespace TheSecondSeat.RimAgent.Tools
             _initialized = true;
         }
 
+        /// <summary>
+        /// ✅ v1.7.0: 注销日志监听，防止内存泄漏
+        /// </summary>
+        public static void Cleanup()
+        {
+            if (!_initialized) return;
+
+            Application.logMessageReceived -= HandleLog;
+            _initialized = false;
+        }
+
         private static void HandleLog(string condition, string stackTrace, LogType type)
         {
             if (type == LogType.Error || type == LogType.Exception)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using RimWorld;
 using Verse;
 
 namespace TheSecondSeat.PersonaGeneration
@@ -143,20 +144,16 @@ Language-specific overrides take precedence over global overrides.
 
 === File List & Descriptions ===
 
--- Core --
-Identity_Core.txt           : Defines who the narrator is (Name, Biography, etc.)
+-- Core (高维TTRPG框架) --
+Identity_Core.txt           : Defines the meta-identity (Higher-dimensional TTRPG framework, GMPC protocol)
+SystemPrompt_Master.txt     : Master system prompt integrating all components
 Language_Instruction.txt    : Critical instructions about which language to speak.
 
--- Philosophy (Difficulty Modes) --
-Philosophy_Assistant.txt    : Mindset for Assistant Mode (Helpful, obedient)
-Philosophy_Opponent.txt     : Mindset for Opponent Mode (Challenging, controlling)
-Philosophy_Engineer.txt     : Mindset for Engineer Mode (Technical, diagnostic)
-
--- Behavior Rules --
-BehaviorRules_Assistant.txt : Rules for Assistant Mode
-BehaviorRules_Opponent.txt  : Rules for Opponent Mode
-BehaviorRules_Engineer.txt  : Rules for Engineer Mode
-BehaviorRules_Universal.txt : Rules that apply to all modes
+-- Behavior Rules (双频道意识) --
+BehaviorRules_Assistant.txt : Rules for Assistant Mode (Meta Channel & IC Channel)
+BehaviorRules_Opponent.txt  : Rules for Opponent Mode (Challenging, controlling)
+BehaviorRules_Engineer.txt  : Rules for Engineer Mode (Technical, diagnostic)
+BehaviorRules_Universal.txt : Universal rules (真实契约 Reality Pact)
 
 -- Output Format --
 OutputFormat_Structure.txt  : Defines the structure of the JSON/Text response
@@ -195,6 +192,57 @@ LogDiagnosis.txt            : Instructions for analyzing game logs
                 // Fallback for other OS (Mac/Linux - though RimWorld mods are mostly Windows)
                 UnityEngine.Application.OpenURL(path);
             }
+        }
+
+        /// <summary>
+        /// Initializes user prompts by copying default prompts to the config folder.
+        /// </summary>
+        public static void InitializeUserPrompts()
+        {
+            EnsureConfigDirectory();
+            CreateReadme();
+            
+            string configPromptsPath = Path.Combine(GenFilePaths.ConfigFolderPath, "TheSecondSeat", PromptsFolderName);
+            string activeLangFolder = LanguageDatabase.activeLanguage.folderName;
+            string targetFolder = Path.Combine(configPromptsPath, activeLangFolder);
+            
+            var modContent = LoadedModManager.GetMod<TheSecondSeat.Settings.TheSecondSeatMod>()?.Content;
+            if (modContent == null) return;
+            
+            // Source path: Mod/Languages/{Language}/Prompts/
+            string sourcePath = Path.Combine(modContent.RootDir, "Languages", activeLangFolder, PromptsFolderName);
+            
+            // Fallback source: Mod/Languages/English/Prompts/
+            if (!Directory.Exists(sourcePath) && activeLangFolder != DefaultLanguage)
+            {
+                sourcePath = Path.Combine(modContent.RootDir, "Languages", DefaultLanguage, PromptsFolderName);
+            }
+            
+            if (Directory.Exists(sourcePath))
+            {
+                string[] files = Directory.GetFiles(sourcePath, "*.txt");
+                foreach (string file in files)
+                {
+                    string fileName = Path.GetFileName(file);
+                    string destFile = Path.Combine(targetFolder, fileName);
+                    
+                    // Only copy if not exists to avoid overwriting user changes
+                    if (!File.Exists(destFile))
+                    {
+                        File.Copy(file, destFile);
+                    }
+                }
+                Log.Message($"[The Second Seat] Initialized {files.Length} prompt files to {targetFolder}");
+                Messages.Message("提示词初始化完成", MessageTypeDefOf.PositiveEvent, false);
+            }
+            else
+            {
+                Log.Warning($"[The Second Seat] Could not find source prompts at {sourcePath}");
+                Messages.Message("未找到源提示词文件", MessageTypeDefOf.RejectInput, false);
+            }
+            
+            // Clear cache to ensure new files are used
+            ClearCache();
         }
     }
 }

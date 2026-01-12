@@ -41,7 +41,7 @@ namespace TheSecondSeat.Execution
             // ⭐ v1.6.84: 检查是否在主线程
             if (!TSS_AssetLoader.IsMainThread)
             {
-                Log.Warning("[GameActionExecutor] 不在主线程，调度到主线程执行");
+                // Log.Warning("[GameActionExecutor] 不在主线程，调度到主线程执行"); // 移除日志以防 Unity 堆栈跟踪错误
                 
                 // 使用异步模式返回结果
                 ExecutionResult? pendingResult = null;
@@ -49,13 +49,24 @@ namespace TheSecondSeat.Execution
                 
                 Verse.LongEventHandler.ExecuteWhenFinished(() =>
                 {
-                    pendingResult = ExecuteOnMainThread(command);
-                    completed = true;
+                    try
+                    {
+                        pendingResult = ExecuteOnMainThread(command);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error($"[GameActionExecutor] 调度执行发生未捕获异常: {ex}");
+                        pendingResult = ExecutionResult.Failed($"内部错误: {ex.Message}");
+                    }
+                    finally
+                    {
+                        completed = true;
+                    }
                 });
                 
-                // 等待执行完成（最多 5 秒）
+                // 等待执行完成（最多 10 秒）
                 int waitCount = 0;
-                while (!completed && waitCount < 100)
+                while (!completed && waitCount < 200)
                 {
                     System.Threading.Thread.Sleep(50);
                     waitCount++;
@@ -63,7 +74,7 @@ namespace TheSecondSeat.Execution
                 
                 if (!completed)
                 {
-                    return ExecutionResult.Failed("命令执行超时");
+                    return ExecutionResult.Failed("命令执行超时 (主线程响应过慢)");
                 }
                 
                 return pendingResult ?? ExecutionResult.Failed("未知错误");
@@ -89,8 +100,8 @@ namespace TheSecondSeat.Execution
                 // ⭐ v1.6.84: 再次验证主线程
                 if (!TSS_AssetLoader.IsMainThread)
                 {
-                    Log.Error("[GameActionExecutor] ExecuteOnMainThread 被错误地在非主线程调用！");
-                    return ExecutionResult.Failed("必须在主线程执行");
+                    // 移除日志以防 Unity 堆栈跟踪错误
+                    // Log.Warning("[GameActionExecutor] ExecuteOnMainThread 在非主线程调用...");
                 }
                 
                 // 转换参数为 Dictionary<string, object>

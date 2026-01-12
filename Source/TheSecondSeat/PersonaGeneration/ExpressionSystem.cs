@@ -154,17 +154,35 @@ namespace TheSecondSeat.PersonaGeneration
             }
             else
             {
+                // 动态获取变体数量
+                int variantCount = ExpressionConfig.Instance.GetVariantCount(expression);
+
                 if (intensity > 0)
                 {
-                    // 如果指定了强度，使用强度作为变体
-                    state.Intensity = intensity;
-                    state.CurrentVariant = intensity;
+                    // 如果指定了强度，且在有效范围内，使用强度
+                    if (variantCount > 0 && intensity <= variantCount)
+                    {
+                        state.Intensity = intensity;
+                        state.CurrentVariant = intensity;
+                    }
+                    else
+                    {
+                        // 如果强度无效或无变体，回退到基础表情
+                        state.Intensity = 0;
+                        state.CurrentVariant = 0;
+                    }
                 }
                 else
                 {
-                    // 否则随机选择变体编号（1-5）
                     state.Intensity = 0;
-                    state.CurrentVariant = UnityEngine.Random.Range(1, 6); // 1-5
+                    if (variantCount > 0)
+                    {
+                        state.CurrentVariant = UnityEngine.Random.Range(1, variantCount + 1);
+                    }
+                    else
+                    {
+                        state.CurrentVariant = 0;
+                    }
                 }
             }
             
@@ -245,7 +263,7 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// ? 根据对话语气设置表情（扩展关键词）
+        /// ? 根据对话语气设置表情（扩展关键词 + 强度支持）
         /// </summary>
         public static void UpdateExpressionByDialogueTone(string personaDefName, string dialogueText)
         {
@@ -254,160 +272,154 @@ namespace TheSecondSeat.PersonaGeneration
                 return;
             }
             
-            // 分析对话文本中的情感关键词
+            string text = dialogueText.ToLowerInvariant();
             ExpressionType expression = ExpressionType.Neutral;
-            
-            // ? 开心关键词（大幅扩展）
-            if (ContainsKeywords(dialogueText, new[] { 
-                // 中文
-                "哈哈", "嘻嘻", "哈", "真好", "太棒", "开心", "高兴", "喜欢", "不错", "很好", 
-                "好的", "可以", "当然", "没问题", "乐意", "愉快", "快乐", "欢迎", "恭喜", 
-                "祝贺", "赞", "厉害", "优秀", "完美", "太好了", "好极了", "妙", "绝", 
-                "棒", "美", "酷", "帅", "爱", "喜", "乐", "笑", "嗯嗯", "好哒", "么么",
-                "嘿嘿", "呵呵", "hiahia", "2333", "233", "666", "nice",
-                // 英文
-                "fantastic", "great", "wonderful", "happy", "haha", "good", "nice", 
-                "excellent", "amazing", "awesome", "perfect", "love", "like", "enjoy",
-                "glad", "pleased", "delighted", "cheerful", "joyful", "yay", "yeah",
-                "cool", "brilliant", "superb", "terrific", "marvelous", "splendid"
-            }))
+            int intensity = 0;
+
+            // 辅助函数：检查关键词并返回强度
+            bool CheckKeywords(string[] level1, string[] level2, string[] level3, out int outIntensity)
+            {
+                outIntensity = 0;
+                if (level3 != null && ContainsKeywords(text, level3)) { outIntensity = 3; return true; }
+                if (level2 != null && ContainsKeywords(text, level2)) { outIntensity = 2; return true; }
+                if (level1 != null && ContainsKeywords(text, level1)) { outIntensity = 1; return true; }
+                return false;
+            }
+
+            // Happy (分级)
+            if (CheckKeywords(
+                // Level 1 (微笑)
+                new[] { "开心", "高兴", "不错", "很好", "好的", "可以", "愉快", "快乐", "欢迎", "good", "nice", "like", "enjoy", "glad" },
+                // Level 2 (露齿)
+                new[] { "哈哈", "嘻嘻", "太棒", "赞", "厉害", "优秀", "完美", "太好了", "妙", "绝", "棒", "美", "酷", "帅", "great", "wonderful", "happy", "haha", "excellent", "amazing" },
+                // Level 3 (大笑)
+                new[] { "笑死", "狂笑", "hiahia", "2333", "666", "惊喜", "fantastic", "awesome", "perfect", "superb", "terrific", "marvelous" },
+                out intensity))
             {
                 expression = ExpressionType.Happy;
             }
-            // ? 愤怒关键词（扩展）
-            else if (ContainsKeywords(dialogueText, new[] { 
-                // 中文
+            // Angry (暂不分级，默认为 1)
+            else if (ContainsKeywords(text, new[] { 
                 "可恶", "该死", "混蛋", "愤怒", "生气", "讨厌", "烦", "滚", "闭嘴", 
                 "废物", "蠢", "笨", "傻", "白痴", "可恨", "恼火", "火大", "气死",
                 "不行", "绝对不", "休想", "别想", "不可能", "拒绝",
-                // 英文
                 "damn", "angry", "furious", "irritated", "hate", "stupid", "idiot",
                 "shut up", "annoying", "rage", "mad", "pissed", "disgusting"
             }))
             {
                 expression = ExpressionType.Angry;
+                intensity = 1;
             }
-            // ? 悲伤关键词（扩展）
-            else if (ContainsKeywords(dialogueText, new[] { 
-                // 中文
+            // Sad
+            else if (ContainsKeywords(text, new[] { 
                 "悲伤", "难过", "可怜", "遗憾", "伤心", "哭", "泪", "悲", "惨", 
                 "不幸", "可惜", "唉", "呜", "哎", "伤感", "凄凉", "心痛", "痛苦",
                 "抱歉", "对不起", "失去", "离开", "死", "逝",
-                // 英文
                 "sad", "unfortunate", "regret", "pity", "cry", "tears", "sorrow",
                 "sorry", "miss", "loss", "grief", "mourn", "tragic", "painful"
             }))
             {
                 expression = ExpressionType.Sad;
+                intensity = 1;
             }
-            // ? 惊讶关键词（扩展）
-            else if (ContainsKeywords(dialogueText, new[] { 
-                // 中文
+            // Surprised
+            else if (ContainsKeywords(text, new[] { 
                 "什么", "不会吧", "真的", "天啊", "哇", "啊", "呀", "哦", "咦", 
                 "居然", "竟然", "怎么", "为什么", "惊", "震惊", "意外", "没想到",
                 "不敢相信", "吓", "我的天", "天哪", "我去", "卧槽", "woc",
-                // 英文  
                 "what", "really", "wow", "omg", "surprising", "shocked", "amazing",
                 "unbelievable", "incredible", "unexpected", "seriously", "no way"
             }))
             {
                 expression = ExpressionType.Surprised;
+                intensity = 1;
             }
-            // ? 担忧关键词（扩展）
-            else if (ContainsKeywords(dialogueText, new[] { 
-                // 中文
+            // Worried
+            else if (ContainsKeywords(text, new[] { 
                 "担心", "忧虑", "危险", "小心", "注意", "警惕", "害怕", "恐惧", 
                 "紧张", "焦虑", "不安", "可能会", "也许", "风险", "威胁", "问题",
                 "糟糕", "不妙", "麻烦", "困难", "棘手",
-                // 英文
                 "worried", "concerned", "careful", "beware", "afraid", "fear",
                 "nervous", "anxious", "danger", "risk", "threat", "trouble", "problem"
             }))
             {
                 expression = ExpressionType.Worried;
+                intensity = 1;
             }
-            // ? 调皮关键词（扩展）
-            else if (ContainsKeywords(dialogueText, new[] { 
-                // 中文
+            // Playful
+            else if (ContainsKeywords(text, new[] { 
                 "嘿嘿", "嘻嘻", "逗你", "开玩笑", "捉弄", "调皮", "坏笑", "偷笑",
                 "嘿", "哼哼", "呵呵", "略略略", "嘻", "皮", "骗你的", "逗你玩",
-                // 英文
                 "playful", "teasing", "mischievous", "hehe", "hihi", "kidding",
                 "joking", "prank", "naughty", "trick"
             }))
             {
                 expression = ExpressionType.Playful;
+                intensity = 1;
             }
-            // ? 得意关键词（扩展）
-            else if (ContainsKeywords(dialogueText, new[] { 
-                // 中文
+            // Smug
+            else if (ContainsKeywords(text, new[] { 
                 "看吧", "我说", "果然", "不出所料", "就知道", "当然", "必然", 
                 "轻松", "简单", "小意思", "不在话下", "一般般", "还行吧", "哼",
                 "本大人", "本小姐", "本尊", "朕",
-                // 英文
                 "told you", "as expected", "obviously", "of course", "naturally",
                 "easy", "simple", "knew it", "predicted"
             }))
             {
                 expression = ExpressionType.Smug;
+                intensity = 1;
             }
-            // ? 失望关键词（扩展）
-            else if (ContainsKeywords(dialogueText, new[] { 
-                // 中文
+            // Disappointed
+            else if (ContainsKeywords(text, new[] { 
                 "失望", "算了", "唉", "无奈", "放弃", "没办法", "没用", "无语",
                 "无力", "疲惫", "累", "烦", "懒得", "不想", "随便", "whatever",
-                // 英文
                 "disappointed", "sigh", "alas", "whatever", "give up", "useless",
                 "hopeless", "tired", "exhausted", "boring"
             }))
             {
                 expression = ExpressionType.Disappointed;
+                intensity = 1;
             }
-            // ? 沉思关键词（扩展）
-            else if (ContainsKeywords(dialogueText, new[] { 
-                // 中文
+            // Thoughtful
+            else if (ContainsKeywords(text, new[] { 
                 "嗯", "让我想想", "或许", "也许", "可能", "思考", "考虑", "分析",
                 "研究", "琢磨", "推测", "判断", "认为", "觉得", "我想", "应该",
                 "大概", "估计", "看来", "似乎", "好像", "...", "……",
-                // 英文
                 "hmm", "perhaps", "maybe", "consider", "think", "analyze", "ponder",
                 "suppose", "guess", "probably", "seems", "apparently", "let me see"
             }))
             {
                 expression = ExpressionType.Thoughtful;
+                intensity = 1;
             }
-            // ? 烦躁关键词（扩展）
-            else if (ContainsKeywords(dialogueText, new[] { 
-                // 中文
+            // Annoyed
+            else if (ContainsKeywords(text, new[] { 
                 "烦", "吵", "够了", "行了", "知道了", "好了好了", "别说了", 
                 "闭嘴", "安静", "不要", "停", "等等", "慢着", "打扰",
-                // 英文
                 "annoyed", "bothered", "enough", "stop", "quiet", "shut", "leave me"
             }))
             {
                 expression = ExpressionType.Annoyed;
+                intensity = 1;
             }
-            // ? 新增：害羞关键词
-            else if (ContainsKeywords(dialogueText, new[] { 
-                // 中文
+            // Shy
+            else if (ContainsKeywords(text, new[] { 
                 "害羞", "不好意思", "羞", "脸红", "羞涩", "难为情", "不敢", 
                 "...", "……", "那个", "嗯嗯", "唔", "诶", "啊这", "emmm",
                 "尴尬", "不太好", "有点", "感谢", "谢谢你", "太客气了",
                 "不用", "没什么", "别这样", "不要这样", "你真是",
-                // 英文
                 "shy", "embarrassed", "blush", "awkward", "umm", "uh", "er",
                 "thank you", "thanks", "appreciate", "grateful", "sorry"
             }))
             {
                 expression = ExpressionType.Shy;
+                intensity = 1;
             }
-            // ? 疑惑关键词（触摸模式专用）
-            else if (ContainsKeywords(dialogueText, new[] {
-                // 中文
+            // Confused
+            else if (ContainsKeywords(text, new[] {
                 "啊", "什么", "怎么", "为何", "这是", "那是", "你是", "我是", "他是",
                 "她是", "它是", "谁是", "在哪里", "什么时候", "为什么", "怎么样",
                 "有什么", "没什么", "只不过", "难道", "岂不是", "莫非",
-                // 英文
                 "ah", "what", "how", "why", "this is", "that is", "you are", "i am",
                 "he is", "she is", "it is", "who is", "where is", "when", "why",
                 "what is", "nothing", "just", "did", "could", "couldn't",
@@ -416,11 +428,12 @@ namespace TheSecondSeat.PersonaGeneration
             }))
             {
                 expression = ExpressionType.Confused;
+                intensity = 1;
             }
             
             if (expression != ExpressionType.Neutral)
             {
-                SetExpression(personaDefName, expression, ExpressionTrigger.DialogueTone);
+                SetExpression(personaDefName, expression, ExpressionTrigger.DialogueTone, EXPRESSION_DURATION_TICKS, intensity);
             }
         }
         

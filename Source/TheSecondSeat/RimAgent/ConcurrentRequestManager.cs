@@ -15,7 +15,8 @@ namespace TheSecondSeat.RimAgent
         private static ConcurrentRequestManager instance;
         public static ConcurrentRequestManager Instance => instance ?? (instance = new ConcurrentRequestManager());
         
-        private readonly Queue<RequestItem> requestQueue = new Queue<RequestItem>();
+        // ❌ 移除未使用的队列
+        // private readonly Queue<RequestItem> requestQueue = new Queue<RequestItem>();
         private readonly SemaphoreSlim semaphore = new SemaphoreSlim(5, 5);
         private readonly object lockObj = new object();
         private int activeRequests = 0;
@@ -27,16 +28,21 @@ namespace TheSecondSeat.RimAgent
         
         private ConcurrentRequestManager() { }
         
-        public async Task<T> EnqueueAsync<T>(Func<Task<T>> requestFunc, int maxRetries = 3)
+        /// <summary>
+        /// Enqueue a request with concurrency control and retry logic
+        /// ✅ v1.7.0: Added CancellationToken support
+        /// </summary>
+        public async Task<T> EnqueueAsync<T>(Func<Task<T>> requestFunc, int maxRetries = 3, CancellationToken cancellationToken = default)
         {
-            await semaphore.WaitAsync();
+            // 等待信号量，支持取消
+            await semaphore.WaitAsync(cancellationToken);
             
             try
             {
                 Interlocked.Increment(ref activeRequests);
                 Interlocked.Increment(ref totalRequests);
                 
-                return await ExecuteWithRetryAsync(requestFunc, maxRetries);
+                return await ExecuteWithRetryAsync(requestFunc, maxRetries, cancellationToken);
             }
             finally
             {
@@ -45,16 +51,23 @@ namespace TheSecondSeat.RimAgent
             }
         }
         
-        private async Task<T> ExecuteWithRetryAsync<T>(Func<Task<T>> requestFunc, int maxRetries)
+        private async Task<T> ExecuteWithRetryAsync<T>(Func<Task<T>> requestFunc, int maxRetries, CancellationToken cancellationToken)
         {
             int attempts = 0;
             Exception lastException = null;
             
             while (attempts < maxRetries)
             {
+                // 检查取消
+                cancellationToken.ThrowIfCancellationRequested();
+
                 try
                 {
                     return await requestFunc();
+                }
+                catch (OperationCanceledException)
+                {
+                    throw; // 直接抛出取消异常
                 }
                 catch (Exception ex)
                 {
@@ -64,7 +77,8 @@ namespace TheSecondSeat.RimAgent
                     if (attempts < maxRetries)
                     {
                         int delayMs = (int)Math.Pow(2, attempts) * 1000;
-                        await Task.Delay(delayMs);
+                        // 延迟也支持取消
+                        await Task.Delay(delayMs, cancellationToken);
                         Log.Warning($"[ConcurrentRequestManager] Retry {attempts}/{maxRetries}: {ex.Message}");
                     }
                 }
@@ -108,19 +122,24 @@ namespace TheSecondSeat.RimAgent
         {
             lock (lockObj)
             {
-                requestQueue.Clear();
+                // requestQueue.Clear(); // 已移除
                 activeRequests = 0;
                 totalRequests = 0;
                 failedRequests = 0;
             }
+
+            // 强制释放信号量防止死锁（慎用，仅在重置时）
+            // 注意：这可能会导致信号量计数超过初始最大值，如果此时还有线程持有信号量
+            // 但在 Reset 场景下，我们假设是紧急恢复
+            while(semaphore.CurrentCount < MaxConcurrentRequests)
+            {
+                semaphore.Release();
+            }
+            Log.Message("[ConcurrentRequestManager] Reset complete, semaphore released.");
         }
         
         public int GetActiveRequestCount() => activeRequests;
         
-        private class RequestItem
-        {
-            public Func<Task<object>> RequestFunc { get; set; }
-            public DateTime EnqueuedAt { get; set; }
-        }
+        // private class RequestItem ... // 已移除
     }
 }

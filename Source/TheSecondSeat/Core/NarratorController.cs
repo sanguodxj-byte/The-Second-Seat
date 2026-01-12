@@ -548,9 +548,6 @@ namespace TheSecondSeat.Core
                     Log.Message($"[NarratorController] AI 使用表情符: {emoticonId}");
                 }
                 
-                // 添加到聊天窗口（带表情符）
-                UI.NarratorWindow.AddAIMessage(displayText, emoticonId);
-
                 // ? 准备流式消息（但先不显示，等待 TTS 或超时）
                 UI.DialogueOverlayPanel.SetStreamingMessage($"【{narratorName}】{displayText}");
                 
@@ -558,7 +555,8 @@ namespace TheSecondSeat.Core
 
                 // ? 自动播放 TTS（根据设置）
                 // 如果 TTS 禁用，将立即触发流式显示
-                AutoPlayTTS(displayText);
+                // ? 传递 emoticonId 以便在显示消息时使用
+                AutoPlayTTS(displayText, emoticonId);
 
                 // 执行命令（默认执行）
                 if (response.command != null)
@@ -578,7 +576,7 @@ namespace TheSecondSeat.Core
         /// - 启用 TTS 时：由 TTSAudioPlayer 在音频开始播放时触发 StartStreaming(clip.length)
         /// - 禁用 TTS 时：使用估算时长立即开始流式显示
         /// </summary>
-        private void AutoPlayTTS(string text)
+        private void AutoPlayTTS(string text, string emoticonId = "")
         {
             try
             {
@@ -595,6 +593,7 @@ namespace TheSecondSeat.Core
                 {
                     // ⭐ TTS 未启用，使用估算时长开始流式显示
                     Log.Message($"[NarratorController] TTS disabled. Streaming with estimated duration: {estimatedDuration:F2}s");
+                    UI.NarratorWindow.AddAIMessage(text, emoticonId); // 立即显示
                     UI.DialogueOverlayPanel.StartStreaming(estimatedDuration);
                     return;
                 }
@@ -602,6 +601,7 @@ namespace TheSecondSeat.Core
                 if (string.IsNullOrEmpty(cleanText))
                 {
                     // 没有语音内容，使用最短时长显示
+                    UI.NarratorWindow.AddAIMessage(text, emoticonId); // 立即显示
                     UI.DialogueOverlayPanel.StartStreaming(1f);
                     return;
                 }
@@ -639,6 +639,7 @@ namespace TheSecondSeat.Core
                                 try
                                 {
                                     // ⭐ 播放音频 - TTSAudioPlayer 会自动触发 StartStreaming(clip.length)
+                                    UI.NarratorWindow.AddAIMessage(text, emoticonId); // 播放时显示
                                     TTS.TTSAudioPlayer.Instance.PlayAndDelete(audioPath, personaDefName);
                                 }
                                 catch (Exception playEx)
@@ -647,6 +648,7 @@ namespace TheSecondSeat.Core
                                     // ⭐ 出错时使用估算时长回退
                                     float fallbackDuration = Math.Max(2f, cleanText.Length / 5f);
                                     Log.Warning($"[NarratorController] TTS playback failed. Falling back to estimated duration: {fallbackDuration:F2}s");
+                                    UI.NarratorWindow.AddAIMessage(text, emoticonId); // 回退时显示
                                     UI.DialogueOverlayPanel.StartStreaming(fallbackDuration);
                                 }
                             });
@@ -658,6 +660,7 @@ namespace TheSecondSeat.Core
                             {
                                 Log.Warning("[NarratorController] TTS audio generation returned null. Falling back to estimated duration.");
                                 float fallbackDuration = Math.Max(2f, cleanText.Length / 5f);
+                                UI.NarratorWindow.AddAIMessage(text, emoticonId); // 回退时显示
                                 UI.DialogueOverlayPanel.StartStreaming(fallbackDuration);
                             });
                         }
@@ -671,6 +674,7 @@ namespace TheSecondSeat.Core
                         {
                             float fallbackDuration = Math.Max(2f, cleanText.Length / 5f);
                             Log.Warning($"[NarratorController] TTS task failed. Falling back to estimated duration: {fallbackDuration:F2}s");
+                            UI.NarratorWindow.AddAIMessage(text, emoticonId); // 回退时显示
                             UI.DialogueOverlayPanel.StartStreaming(fallbackDuration);
                         });
                     }
@@ -680,6 +684,7 @@ namespace TheSecondSeat.Core
             {
                 Log.Warning($"[NarratorController] AutoPlayTTS 异常: {ex.Message}");
                 // ⭐ 最外层异常使用最小时长回退
+                UI.NarratorWindow.AddAIMessage(text, emoticonId); // 异常时显示
                 UI.DialogueOverlayPanel.StartStreaming(2f);
             }
         }
@@ -866,19 +871,33 @@ namespace TheSecondSeat.Core
             // 3. 单表情模式 (expression)
             if (!string.IsNullOrEmpty(response.expression))
             {
-                if (System.Enum.TryParse<PersonaGeneration.ExpressionType>(response.expression, true, out var expressionType))
+                // ? 修复：如果 expression 包含管道符，视为紧凑序列处理
+                if (response.expression.Contains("|"))
+                {
+                    Log.Warning($"[NarratorController] 检测到 expression 字段包含多个表情 ({response.expression})，自动转为序列处理");
+                    ApplyCompactEmotionSequence(response.expression, narratorDefName, dialogueText);
+                    return;
+                }
+
+                // 使用 EmotionParser 解析
+                var (expressionType, intensity) = PersonaGeneration.EmotionParser.Parse(response.expression);
+
+                if (expressionType != PersonaGeneration.ExpressionType.Neutral || intensity > 0)
                 {
                     PersonaGeneration.ExpressionSystem.SetExpression(
                         narratorDefName,
                         expressionType,
                         180,  // 3 秒
-                        "对话触发"
+                        "对话触发",
+                        intensity // 传递解析出的强度
                     );
-                    Log.Message($"[NarratorController] AI 表情切换: {response.expression}");
+                    Log.Message($"[NarratorController] AI 表情切换: {expressionType} (强度: {intensity})");
                 }
                 else
                 {
-                    Log.Warning($"[NarratorController] 无效的表情类型: {response.expression}");
+                    Log.Warning($"[NarratorController] 解析表情失败或为中性: {response.expression}");
+                    // 回退到自动推断
+                    PersonaGeneration.ExpressionSystem.UpdateExpressionByDialogueTone(narratorDefName, dialogueText);
                 }
                 return;
             }
@@ -913,8 +932,9 @@ namespace TheSecondSeat.Core
                 float delay = accumulatedDelay;
                 
                 // 解析情绪标签
-                string emotionStr = NormalizeEmotionString(segment.emotion);
-                if (System.Enum.TryParse<PersonaGeneration.ExpressionType>(emotionStr, true, out var expressionType))
+                var (expressionType, intensity) = PersonaGeneration.EmotionParser.Parse(segment.emotion);
+                
+                if (expressionType != PersonaGeneration.ExpressionType.Neutral || intensity > 0)
                 {
                     // 使用延迟任务设置表情
                     int delayTicks = (int)(delay * 60); // 秒转换为 ticks
@@ -924,7 +944,7 @@ namespace TheSecondSeat.Core
                     int durationTicks = (int)(segmentDuration * 60);
                     
                     // 记录延迟执行
-                    ScheduleExpressionChange(narratorDefName, expressionType, delayTicks, durationTicks);
+                    ScheduleExpressionChange(narratorDefName, expressionType, delayTicks, durationTicks, intensity);
                     
                     accumulatedDelay += segmentDuration;
                 }
@@ -952,146 +972,36 @@ namespace TheSecondSeat.Core
             // 设置第一个表情（立即）
             if (emotions.Length > 0)
             {
-                string firstEmotion = NormalizeEmotionString(emotions[0].Trim());
-                if (System.Enum.TryParse<PersonaGeneration.ExpressionType>(firstEmotion, true, out var firstExpressionType))
+                var (firstExpressionType, firstIntensity) = PersonaGeneration.EmotionParser.Parse(emotions[0].Trim());
+                
+                if (firstExpressionType != PersonaGeneration.ExpressionType.Neutral || firstIntensity > 0)
                 {
                     int firstDuration = (int)(durationPerEmotion * 60);
                     PersonaGeneration.ExpressionSystem.SetExpression(
                         narratorDefName,
                         firstExpressionType,
                         firstDuration,
-                        "情绪序列-1"
+                        "情绪序列-1",
+                        firstIntensity
                     );
-                    Log.Message($"[NarratorController] 情绪 1/{emotions.Length}: {firstEmotion} (立即)");
+                    Log.Message($"[NarratorController] 情绪 1/{emotions.Length}: {firstExpressionType} (强度: {firstIntensity}) (立即)");
                 }
             }
             
             // 调度后续表情切换
             for (int i = 1; i < emotions.Length; i++)
             {
-                string emotion = NormalizeEmotionString(emotions[i].Trim());
-                if (System.Enum.TryParse<PersonaGeneration.ExpressionType>(emotion, true, out var expressionType))
+                var (expressionType, intensity) = PersonaGeneration.EmotionParser.Parse(emotions[i].Trim());
+                
+                if (expressionType != PersonaGeneration.ExpressionType.Neutral || intensity > 0)
                 {
                     // 延迟时间 = 前面所有表情的持续时间总和
                     int delayTicks = (int)(i * durationPerEmotion * 60);
                     int durationTicks = (int)(durationPerEmotion * 60);
                     
-                    ScheduleExpressionChange(narratorDefName, expressionType, delayTicks, durationTicks);
-                    Log.Message($"[NarratorController] 情绪 {i+1}/{emotions.Length}: {emotion} (延迟 {delayTicks} ticks)");
+                    ScheduleExpressionChange(narratorDefName, expressionType, delayTicks, durationTicks, intensity);
+                    Log.Message($"[NarratorController] 情绪 {i+1}/{emotions.Length}: {expressionType} (强度: {intensity}) (延迟 {delayTicks} ticks)");
                 }
-            }
-        }
-        
-        /// <summary>
-        /// ? 标准化表情字符串 (处理大小写和别名)
-        /// ? v1.6.83: 修复映射 - 确保返回值匹配 ExpressionType 枚举
-        /// </summary>
-        private string NormalizeEmotionString(string emotion)
-        {
-            if (string.IsNullOrEmpty(emotion)) return "Neutral";
-            
-            // 首字母大写，其余小写
-            string normalized = emotion.Trim().ToLower();
-            
-            // 处理常见别名映射 - 返回值必须匹配 ExpressionType 枚举
-            // ExpressionType: Neutral, Happy, Sad, Angry, Surprised, Worried, Disappointed, Annoyed, Smug, Thoughtful, Playful, Shy, Confused
-            switch (normalized)
-            {
-                // 开心相关
-                case "happy":
-                case "joy":
-                case "smile":
-                case "cheerful":
-                case "delighted":
-                    return "Happy";
-                    
-                // 悲伤相关
-                case "sad":
-                case "crying":
-                case "sorrowful":
-                    return "Sad";
-                    
-                // 愤怒相关
-                case "angry":
-                case "mad":
-                case "furious":
-                case "rage":
-                    return "Angry";
-                    
-                // 惊讶相关
-                case "surprised":
-                case "shocked":
-                case "amazed":
-                    return "Surprised";
-                    
-                // 担忧相关
-                case "worried":
-                case "anxious":
-                case "concerned":
-                case "fear":
-                case "afraid":
-                    return "Worried";
-                    
-                // 失望相关
-                case "disappointed":
-                case "let down":
-                    return "Disappointed";
-                    
-                // 烦躁相关
-                case "annoyed":
-                case "irritated":
-                case "frustrated":
-                    return "Annoyed";
-                    
-                // 得意相关
-                case "smug":
-                case "proud":
-                case "satisfied":
-                    return "Smug";
-                    
-                // 沉思相关
-                case "thoughtful":
-                case "thinking":
-                case "pondering":
-                case "contemplative":
-                    return "Thoughtful";
-                    
-                // 调皮相关
-                case "playful":
-                case "mischievous":
-                case "teasing":
-                    return "Playful";
-                    
-                // 害羞相关
-                case "shy":
-                case "bashful":
-                case "embarrassed":
-                case "blushing":
-                case "flustered":
-                    return "Shy";
-                    
-                // 疑惑相关
-                case "confused":
-                case "puzzled":
-                case "bewildered":
-                    return "Confused";
-                    
-                // 中性
-                case "neutral":
-                case "calm":
-                case "normal":
-                default:
-                    // 尝试首字母大写返回（可能已经是有效的枚举名）
-                    if (normalized.Length > 0)
-                    {
-                        string titleCase = char.ToUpper(normalized[0]) + normalized.Substring(1);
-                        // 验证是否为有效的枚举值
-                        if (Enum.TryParse<PersonaGeneration.ExpressionType>(titleCase, true, out _))
-                        {
-                            return titleCase;
-                        }
-                    }
-                    return "Neutral";
             }
         }
         
@@ -1103,6 +1013,7 @@ namespace TheSecondSeat.Core
             public PersonaGeneration.ExpressionType expression;
             public int triggerTick; // 触发的游戏 tick
             public int durationTicks;
+            public int intensity; // 新增
         }
         
         private List<ScheduledExpression> scheduledExpressions = new List<ScheduledExpression>();
@@ -1110,7 +1021,7 @@ namespace TheSecondSeat.Core
         /// <summary>
         /// ? 调度一个延迟的表情切换
         /// </summary>
-        private void ScheduleExpressionChange(string narratorDefName, PersonaGeneration.ExpressionType expression, int delayTicks, int durationTicks)
+        private void ScheduleExpressionChange(string narratorDefName, PersonaGeneration.ExpressionType expression, int delayTicks, int durationTicks, int intensity = 0)
         {
             int currentTick = GenTicks.TicksGame;
             scheduledExpressions.Add(new ScheduledExpression
@@ -1118,7 +1029,8 @@ namespace TheSecondSeat.Core
                 narratorDefName = narratorDefName,
                 expression = expression,
                 triggerTick = currentTick + delayTicks,
-                durationTicks = durationTicks
+                durationTicks = durationTicks,
+                intensity = intensity
             });
         }
         
@@ -1142,7 +1054,8 @@ namespace TheSecondSeat.Core
                         item.narratorDefName,
                         item.expression,
                         item.durationTicks,
-                        "定时情绪序列"
+                        "定时情绪序列",
+                        item.intensity // 传递 intensity
                     );
                     
                     // 从列表中移除

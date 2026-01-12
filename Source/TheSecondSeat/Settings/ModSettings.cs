@@ -87,8 +87,26 @@ namespace TheSecondSeat.Settings
         // 主动对话设置
         public bool enableProactiveDialogue = true;
 
-        // 对话框位置
-        public Rect dialogueRect = new Rect(0, 0, 600, 200);
+        // 对话框位置 - 使用四个独立的 float 字段避免区域设置兼容性问题
+        public float dialogueRectX = 0f;
+        public float dialogueRectY = 0f;
+        public float dialogueRectWidth = 600f;
+        public float dialogueRectHeight = 200f;
+        
+        /// <summary>
+        /// 获取或设置对话框矩形位置
+        /// </summary>
+        public Rect dialogueRect
+        {
+            get => new Rect(dialogueRectX, dialogueRectY, dialogueRectWidth, dialogueRectHeight);
+            set
+            {
+                dialogueRectX = value.x;
+                dialogueRectY = value.y;
+                dialogueRectWidth = value.width;
+                dialogueRectHeight = value.height;
+            }
+        }
 
         public override void ExposeData()
         {
@@ -169,8 +187,11 @@ namespace TheSecondSeat.Settings
             // 主动对话设置
             Scribe_Values.Look(ref enableProactiveDialogue, "enableProactiveDialogue", true);
             
-            // 对话框位置
-            Scribe_Values.Look(ref dialogueRect, "dialogueRect", new Rect(0, 0, 600, 200));
+            // 对话框位置 - 分别保存四个值避免 Rect 序列化的区域设置问题
+            Scribe_Values.Look(ref dialogueRectX, "dialogueRectX", 0f);
+            Scribe_Values.Look(ref dialogueRectY, "dialogueRectY", 0f);
+            Scribe_Values.Look(ref dialogueRectWidth, "dialogueRectWidth", 600f);
+            Scribe_Values.Look(ref dialogueRectHeight, "dialogueRectHeight", 200f);
         }
     }
 

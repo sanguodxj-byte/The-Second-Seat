@@ -17,11 +17,21 @@ namespace TheSecondSeat.Utils
     {
         // ⚠️ v1.6.80: 主线程ID，用于检测跨线程调用
         private static int? mainThreadId;
+
+        static TSS_AssetLoader()
+        {
+            // 静态构造函数由 RimWorld 在主线程调用
+            InitializeMainThread();
+        }
         
         /// <summary>初始化主线程ID（必须在游戏启动时调用）</summary>
         public static void InitializeMainThread()
         {
-            mainThreadId = Thread.CurrentThread.ManagedThreadId;
+            if (mainThreadId == null)
+            {
+                mainThreadId = Thread.CurrentThread.ManagedThreadId;
+                // Log.Message($"[TSS_AssetLoader] Main thread ID initialized: {mainThreadId}");
+            }
         }
         
         /// <summary>检查是否在主线程</summary>

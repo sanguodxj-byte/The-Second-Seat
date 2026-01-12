@@ -80,14 +80,14 @@ namespace TheSecondSeat.Descent
 
             AbilityDef ability = null;
             
-            if (pawnKind.defName == "Sideria_BloodThornDragon")
-            {
-                ability = DefDatabase<AbilityDef>.GetNamedSilentFail("Sideria_Skill_DestructiveRend");
-            }
-            else if (pawnKind.defName == "Sideria_RadiantDragon")
-            {
-                ability = DefDatabase<AbilityDef>.GetNamedSilentFail("Sideria_Skill_PunishingStrike");
-            }
+            // if (pawnKind.defName == "Sideria_BloodThornDragon")
+            // {
+            //     ability = DefDatabase<AbilityDef>.GetNamedSilentFail("Sideria_Skill_DestructiveRend");
+            // }
+            // else if (pawnKind.defName == "Sideria_RadiantDragon")
+            // {
+            //     ability = DefDatabase<AbilityDef>.GetNamedSilentFail("Sideria_Skill_PunishingStrike");
+            // }
             
             if (ability != null)
             {

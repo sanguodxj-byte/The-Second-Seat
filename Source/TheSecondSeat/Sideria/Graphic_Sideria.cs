@@ -3,32 +3,28 @@ using Verse;
 
 namespace TheSecondSeat.Sideria
 {
-    public class Graphic_Sideria : Graphic_Multi
+    /// <summary>
+    /// Custom Graphic class for Sideria Avatar Animal form.
+    /// Implementation follows Koelime's Graphic_KoelimeAnimal pattern.
+    /// </summary>
+    public class Graphic_SideriaAnimal : Graphic_Multi
     {
-        public override Material MatSingle
+        public override Mesh MeshAt(Rot4 rot)
         {
-            get
+            Vector2 vector2 = this.drawSize;
+            // 不再额外放大，使用与殖民者相同的尺寸
+            if (rot.IsHorizontal && !this.ShouldDrawRotated)
             {
-                // South is default
-                return this.MatSouth;
+                vector2 = vector2.Rotated();
             }
+            return (rot == Rot4.West && this.WestFlipped) || (rot == Rot4.East && this.EastFlipped)
+                ? MeshPool.GridPlaneFlip(vector2)
+                : MeshPool.GridPlane(vector2);
         }
 
-        public override Material MatAt(Rot4 rot, Thing thing = null)
+        public override Graphic GetColoredVersion(Shader newShader, Color newColor, Color newColorTwo)
         {
-            switch (rot.AsInt)
-            {
-                case 0: // North
-                    return this.MatNorth;
-                case 1: // East
-                    return this.MatEast;
-                case 2: // South
-                    return this.MatSouth;
-                case 3: // West
-                    return this.MatEast; // Use East texture and let the engine flip it
-                default:
-                    return this.MatSouth;
-            }
+            return GraphicDatabase.Get<Graphic_SideriaAnimal>(this.path, newShader, this.drawSize, newColor, newColorTwo, this.data, this.maskPath);
         }
     }
 }

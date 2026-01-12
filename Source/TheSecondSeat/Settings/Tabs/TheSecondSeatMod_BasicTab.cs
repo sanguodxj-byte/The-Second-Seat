@@ -106,6 +106,34 @@ namespace TheSecondSeat.Settings
                 });
                 y += uiHeight + SettingsUIComponents.MediumGap;
                 
+                // === 提示词管理 ===
+                float promptHeight = 120f;
+                Rect promptRect = new Rect(viewRect.x, y, cardWidth, promptHeight);
+                SettingsUIComponents.DrawSettingsGroup(promptRect, "提示词管理", SettingsUIComponents.AccentBlue, (contentRect) =>
+                {
+                    float cy = contentRect.y;
+                    
+                    Rect initBtnRect = new Rect(contentRect.x, cy, 180f, 30f);
+                    if (Widgets.ButtonText(initBtnRect, "初始化提示词"))
+                    {
+                        PromptLoader.InitializeUserPrompts();
+                    }
+                    TooltipHandler.TipRegion(initBtnRect, "将 Mod 内置提示词复制到 Config 目录，以便进行自定义修改。");
+                    
+                    Rect manageBtnRect = new Rect(contentRect.x + 190f, cy, 180f, 30f);
+                    if (Widgets.ButtonText(manageBtnRect, "管理提示词"))
+                    {
+                        Find.WindowStack.Add(new UI.PromptManagementWindow());
+                    }
+                    TooltipHandler.TipRegion(manageBtnRect, "打开提示词管理窗口，编辑自定义提示词。");
+                    
+                    cy += 35f;
+                    
+                    Rect descRect = new Rect(contentRect.x, cy, contentRect.width, 40f);
+                    Widgets.Label(descRect, "提示：修改提示词后，需要重启游戏或重新加载存档才能生效。自定义提示词位于 Config/TheSecondSeat/Prompts 目录下。");
+                });
+                y += promptHeight + SettingsUIComponents.MediumGap;
+
                 // === 全局提示词 ===
                 float globalPromptHeight = 180f;
                 Rect globalRect = new Rect(viewRect.x, y, cardWidth, globalPromptHeight);

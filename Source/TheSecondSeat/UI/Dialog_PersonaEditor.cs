@@ -23,7 +23,10 @@ namespace TheSecondSeat.UI
         private string editNarratorName;
         private string editBiography;
         private List<string> editPersonalityTags;
+        private List<string> editVisualElements; // ⭐ 新增：外观标签编辑
         private string editCustomSystemPrompt;
+        
+        private string newVisualTag = ""; // ⭐ 新增：新外观标签输入框
         
         private const float WINDOW_WIDTH = 900f;
         private const float WINDOW_HEIGHT = 700f;
@@ -45,6 +48,7 @@ namespace TheSecondSeat.UI
             editNarratorName = persona.narratorName ?? "";
             editBiography = persona.biography ?? "";
             editPersonalityTags = new List<string>(persona.personalityTags ?? new List<string>());
+            editVisualElements = new List<string>(persona.visualElements ?? new List<string>()); // ⭐ 初始化
             editCustomSystemPrompt = persona.customSystemPrompt ?? "";
         }
 
@@ -364,6 +368,7 @@ namespace TheSecondSeat.UI
                 persona.narratorName = editNarratorName;
                 persona.biography = editBiography;
                 persona.personalityTags = new List<string>(editPersonalityTags);
+                persona.visualElements = new List<string>(editVisualElements); // ⭐ 保存外观标签
                 persona.customSystemPrompt = editCustomSystemPrompt;
                 
                 // ? 修复：直接生成和保存 XML，不处理立绘
@@ -398,6 +403,7 @@ namespace TheSecondSeat.UI
                 persona.narratorName = editNarratorName;
                 persona.biography = editBiography;
                 persona.personalityTags = new List<string>(editPersonalityTags);
+                persona.visualElements = new List<string>(editVisualElements); // ⭐ 保存外观标签
                 persona.customSystemPrompt = editCustomSystemPrompt;
                 
                 // ? 修复：直接生成和保存 XML

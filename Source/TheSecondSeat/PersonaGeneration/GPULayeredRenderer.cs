@@ -213,11 +213,88 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
+        /// ⭐ 动态立绘渲染：支持整体透明度控制
+        ///
+        /// 在 OnGUI 中渲染多层纹理，并应用统一的 Alpha 值。
+        /// 用于幽灵模式（鼠标悬停时半透明）和动画效果。
+        /// </summary>
+        /// <param name="rect">目标绘制区域</param>
+        /// <param name="layers">按顺序排列的图层纹理（底层在前）</param>
+        /// <param name="alpha">整体透明度（0-1）</param>
+        public static void DrawDynamicPortrait(Rect rect, List<Texture2D> layers, float alpha)
+        {
+            if (layers == null || layers.Count == 0) return;
+            
+            // 优化：如果不透明，直接绘制（避免 RT 开销）
+            if (alpha >= 0.99f)
+            {
+                DrawLayersOnGUI(rect, layers);
+                return;
+            }
+
+            // 1. 准备 RenderTexture
+            // 使用第一层的分辨率作为基准
+            int width = layers[0].width;
+            int height = layers[0].height;
+            
+            RenderTexture tempRT = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.ARGB32);
+            
+            // 保存当前 RT
+            RenderTexture previousRT = RenderTexture.active;
+            
+            try 
+            {
+                // 2. 合成阶段 (100% 不透明)
+                RenderTexture.active = tempRT;
+                GL.Clear(true, true, Color.clear); // 清空背景
+                
+                // 设置矩阵以匹配纹理坐标 (左上角为原点)
+                GL.PushMatrix();
+                GL.LoadPixelMatrix(0, width, height, 0);
+                
+                foreach (var layer in layers)
+                {
+                    if (layer != null)
+                    {
+                        // 绘制每一层，不带额外 alpha
+                        // Graphics.DrawTexture 默认使用 alpha 混合
+                        Graphics.DrawTexture(new Rect(0, 0, width, height), layer);
+                    }
+                }
+                
+                GL.PopMatrix();
+                
+                // 3. 输出阶段 (应用透明度)
+                RenderTexture.active = previousRT; // 恢复 RT
+                
+                Color originalColor = GUI.color;
+                GUI.color = new Color(originalColor.r, originalColor.g, originalColor.b, originalColor.a * alpha);
+                
+                // 绘制合成后的 RT
+                GUI.DrawTexture(rect, tempRT, ScaleMode.ScaleToFit, true);
+                
+                GUI.color = originalColor;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[GPULayeredRenderer] DrawDynamicPortrait failed: {ex}");
+                // 降级方案：直接绘制（会有叠加问题，但至少能显示）
+                RenderTexture.active = previousRT;
+                DrawLayersOnGUI(rect, layers);
+            }
+            finally
+            {
+                RenderTexture.active = previousRT;
+                RenderTexture.ReleaseTemporary(tempRT);
+            }
+        }
+        
+        /// <summary>
         /// ⭐ 最佳实践：直接在 OnGUI 中渲染多层（零分配）
-        /// 
+        ///
         /// 此方法不产生任何 GC，也不进行像素复制。
         /// 直接利用 GPU 绘制多个重叠的 Rect。
-        /// 
+        ///
         /// 用法：在 UI 绘制代码中调用此方法替代绘制单张合成纹理
         /// </summary>
         /// <param name="rect">目标绘制区域</param>

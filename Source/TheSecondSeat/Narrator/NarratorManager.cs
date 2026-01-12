@@ -22,7 +22,7 @@ namespace TheSecondSeat.Narrator
         private RimAgent.RimAgent narratorAgent;
         
         // ? 好感度系统变量
-        private float favorability = 0f; // -1000 (仇恨) 到 +1000 (挚爱/灵魂绑定/契)
+        private float favorability = 0f; // -100 (仇恨) 到 +100 (挚爱/灵魂绑定/契)
         private List<FavorabilityEvent> recentEvents = new List<FavorabilityEvent>();
         private const int MaxRecentEvents = 20;
         
@@ -35,6 +35,15 @@ namespace TheSecondSeat.Narrator
         
         // ? 新增：用于存档保存的人格 defName
         private string savedPersonaDefName = "Cassandra_Classic";
+        
+        // ? 新增：用于存档保存的对话框位置
+        private Rect? dialogueOverlayRect = null;
+
+        public Rect? DialogueOverlayRect
+        {
+            get => dialogueOverlayRect;
+            set => dialogueOverlayRect = value;
+        }
         
         // ? v1.6.84: 移除自动问候标记 - 统一由 NarratorController 处理
         // private bool hasGreetedThisSession = false;
@@ -261,23 +270,19 @@ namespace TheSecondSeat.Narrator
             if (resetAffinity)
             {
                 // initialAffinity: -100 ~ 100 (直接映射到 StorytellerAgent)
-                // baseAffinityBias: -1.0 ~ 1.0 (乘以500后作为 NarratorManager.favorability)
                 if (personaDef.initialAffinity != 0f)
                 {
                     // 使用 initialAffinity 直接设置 StorytellerAgent 的 affinity
                     storytellerAgent.affinity = Mathf.Clamp(personaDef.initialAffinity, -100f, 100f);
                     
-                    // 同步到 NarratorManager 的 favorability（扩展到 -1000~1000）
-                    favorability = storytellerAgent.affinity * 10f;
+                    // 同步到 NarratorManager 的 favorability（现在也是 -100~100）
+                    favorability = storytellerAgent.affinity;
                 }
                 else if (personaDef.baseAffinityBias != 0f)
                 {
-                    // 兼容旧版：使用 baseAffinityBias
-                    favorability = personaDef.baseAffinityBias * 500f;
-                    
-                    // 转换到 StorytellerAgent 的 -100~100 范围
-                    float normalizedAffinity = favorability / 10f;
-                    storytellerAgent.affinity = normalizedAffinity;
+                    // 兼容旧版：使用 baseAffinityBias (-1.0 ~ 1.0) -> -100 ~ 100
+                    favorability = personaDef.baseAffinityBias * 100f;
+                    storytellerAgent.affinity = favorability;
                 }
             }
             // 存档恢复时，好感度已经从存档加载，无需重置
@@ -312,12 +317,12 @@ namespace TheSecondSeat.Narrator
         }
 
         /// <summary>
-        /// ? 修改好感度（-1000 到 +1000）
+        /// ? 修改好感度（-100 到 +100）
         /// </summary>
         public void ModifyFavorability(float amount, string reason)
         {
             float oldValue = favorability;
-            favorability = Mathf.Clamp(favorability + amount, -1000f, 1000f);
+            favorability = Mathf.Clamp(favorability + amount, -100f, 100f);
 
             recentEvents.Add(new FavorabilityEvent
             {
@@ -332,11 +337,10 @@ namespace TheSecondSeat.Narrator
                 recentEvents.RemoveAt(0);
             }
 
-            // ? 更新 StorytellerAgent（转换到 -100~100 范围）
+            // ? 更新 StorytellerAgent（同步更新）
             if (storytellerAgent != null)
             {
-                float normalizedAmount = amount / 10f; // -1000~1000 → -100~100
-                storytellerAgent.ModifyAffinity(normalizedAmount, reason);
+                storytellerAgent.ModifyAffinity(amount, reason);
             }
 
         }
@@ -353,20 +357,18 @@ namespace TheSecondSeat.Narrator
         }
 
         /// <summary>
-        /// ? 重新定义好感度等级（移除"中立"）
+        /// ? 重新定义好感度等级（与 StorytellerAgent 保持一致）
         /// </summary>
         public AffinityTier CurrentTier
         {
             get
             {
-                if (favorability >= 850f) return AffinityTier.SoulBound;      // 魂之友/主 (850~1000)
-                if (favorability >= 600f) return AffinityTier.Adoration;      // 爱慕 (600~849)
-                if (favorability >= 300f) return AffinityTier.Devoted;        // 倾心 (300~599)
-                if (favorability >= 100f) return AffinityTier.Warm;           // 温暖 (100~299)
-                if (favorability >= -100f) return AffinityTier.Indifferent;   // 冷淡 (-100~99)
-                if (favorability >= -400f) return AffinityTier.Cold;          // 疏远 (-400~-101)
-                if (favorability >= -700f) return AffinityTier.Hostile;       // 敌意 (-700~-401)
-                return AffinityTier.Hatred;                                   // 憎恨 (-1000~-701)
+                if (favorability >= 90f) return AffinityTier.SoulBound;      // 灵魂伴侣 (90+)
+                if (favorability >= 60f) return AffinityTier.Adoration;      // 浪漫伴侣 (60-89)
+                if (favorability >= 30f) return AffinityTier.Devoted;        // 亲密好友 (30-59)
+                if (favorability >= -10f) return AffinityTier.Indifferent;   // 中性 (-10-29)
+                if (favorability >= -50f) return AffinityTier.Cold;          // 疏远 (-50~-11)
+                return AffinityTier.Hostile;                                 // 敌对 (<-50)
             }
         }
 
@@ -496,8 +498,33 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
             // ? 使用成员变量保存人格 defName
             Scribe_Values.Look(ref savedPersonaDefName, "currentPersonaDefName", "Cassandra_Classic");
             
+            // ? 保存对话框位置 (修复：使用新的键名以避免旧存档格式错误导致的解析异常)
+            // 旧的 "dialogueOverlayRect" 可能包含错误的格式 (x:..., y:...)，导致加载崩溃
+            // 改用 "dialogueOverlayRect_v2" 并手动处理
+            if (Scribe.mode == LoadSaveMode.Saving && dialogueOverlayRect.HasValue)
+            {
+                Rect r = dialogueOverlayRect.Value;
+                Scribe_Values.Look(ref r, "dialogueOverlayRect_v2");
+            }
+            else if (Scribe.mode == LoadSaveMode.LoadingVars)
+            {
+                Rect r = default;
+                Scribe_Values.Look(ref r, "dialogueOverlayRect_v2");
+                if (r != default)
+                {
+                    dialogueOverlayRect = r;
+                }
+            }
+            
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
+                // ? 迁移旧存档数据：如果好感度超出 -100~100 范围，则除以 10
+                if (Math.Abs(favorability) > 100f)
+                {
+                    favorability /= 10f;
+                    Log.Message($"[NarratorManager] Migrated favorability from old scale to new scale: {favorability}");
+                }
+
                 // ⭐ v1.6.82: 从存档恢复人格（不重置好感度）
                 if (!string.IsNullOrEmpty(savedPersonaDefName))
                 {
@@ -520,6 +547,8 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
                 // ? **关键修复**：加载存档后，根据好感度调整对话风格
                 if (storytellerAgent != null)
                 {
+                    // 确保 StorytellerAgent 的好感度也同步
+                    storytellerAgent.affinity = favorability;
                     storytellerAgent.AdjustDialogueStyleByAffinity();
                 }
                 
@@ -667,18 +696,18 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
     }
 
     /// <summary>
-    /// ? 重新定义好感度等级（移除"中立"，覆盖 -1000 到 +1000）
+    /// ? 重新定义好感度等级（覆盖 -100 到 +100）
     /// </summary>
     public enum AffinityTier
     {
-        Hatred,        // 憎恨 (-1000 ~ -701)
-        Hostile,       // 敌意 (-700 ~ -401)
-        Cold,          // 疏远 (-400 ~ -101)
-        Indifferent,   // 冷淡 (-100 ~ 99)  ← 起始点 0
-        Warm,          // 温暖 (100 ~ 299)
-        Devoted,       // 倾心 (300 ~ 599)
-        Adoration,     // 爱慕 (600 ~ 849)
-        SoulBound      // 魂之友/主 (850 ~ 1000)
+        Hatred,        // 憎恨 (未使用)
+        Hostile,       // 敌意 (<-50)
+        Cold,          // 疏远 (-50 ~ -11)
+        Indifferent,   // 中性 (-10 ~ 29)
+        Warm,          // 温暖 (未使用)
+        Devoted,       // 亲密好友 (30 ~ 59)
+        Adoration,     // 浪漫伴侣 (60 ~ 89)
+        SoulBound      // 灵魂伴侣 (90+)
     }
     
     /// <summary>

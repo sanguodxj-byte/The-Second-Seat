@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using Verse;
 using TheSecondSeat.PersonaGeneration;
@@ -55,25 +56,19 @@ namespace TheSecondSeat.UI
             float breathingOffset = panel.AnimationHandler.IsPlayingAnimation ? 0f : ExpressionSystem.GetBreathingOffset(panel.GetPersonaResourceName());
             Rect animatedRect = new Rect(panel.DrawRect.x, panel.DrawRect.y + breathingOffset, panel.DrawRect.width, panel.DrawRect.height);
 
-            // 统一设置颜色
-            GUI.color = new Color(1f, 1f, 1f, alpha);
-
-            // 绘制
-            bool isGhostMode = !panel.AnimationHandler.IsPlayingAnimation && mouseOver && !shiftHeld;
-            DrawLayeredPortrait(animatedRect, panel.CurrentPersona, isGhostMode);
+            // 绘制 (使用 GPU 加速渲染)
+            DrawLayeredPortraitGPU(animatedRect, panel.CurrentPersona, alpha);
             
             if (panel.AnimationHandler.IsPlayingAnimation)
             {
                 DrawEffectLayer(animatedRect);
             }
-
-            // 恢复颜色
-            GUI.color = Color.white;
         }
         
-        private void DrawLayeredPortrait(Rect rect, NarratorPersonaDef persona, bool isGhostMode)
+        private void DrawLayeredPortraitGPU(Rect rect, NarratorPersonaDef persona, float alpha)
         {
             string personaName = panel.GetPersonaResourceName();
+            List<Texture2D> layers = new List<Texture2D>();
             
             // Layer 1: 身体层
             if (panel.AnimationHandler.IsPlayingAnimation && !string.IsNullOrEmpty(panel.AnimationHandler.OverridePosture))
@@ -86,17 +81,20 @@ namespace TheSecondSeat.UI
                     float targetWidth = targetHeight * aspect;
                     float xOffset = (rect.width - targetWidth) / 2f;
                     Rect drawRect = new Rect(rect.x + xOffset, rect.y, targetWidth, targetHeight);
-                    GUI.DrawTexture(drawRect, postureTexture);
+                    
+                    // 单层也走 GPU 渲染以应用统一的 Alpha
+                    GPULayeredRenderer.DrawDynamicPortrait(drawRect, new List<Texture2D> { postureTexture }, alpha);
                 }
                 else if (cachedBodyBase != null)
                 {
-                    Widgets.DrawTextureFitted(rect, cachedBodyBase, 1.0f);
+                    layers.Add(cachedBodyBase);
                 }
                 else
                 {
                     DrawMinimalPlaceholder(rect, persona);
                 }
-                return; // 降临姿态不支持分层
+                
+                if (layers.Count == 0) return; // 如果是 postureTexture 路径已经处理了，或者没有 bodyBase
             }
             else
             {
@@ -105,10 +103,11 @@ namespace TheSecondSeat.UI
                     DrawMinimalPlaceholder(rect, persona);
                     return;
                 }
-                Widgets.DrawTextureFitted(rect, cachedBodyBase, 1.0f);
+                layers.Add(cachedBodyBase);
             }
             
-            if (isGhostMode) return;
+            // 如果已经处理了特殊姿态（layers为空但已返回），则不再继续
+            if (layers.Count == 0) return;
 
             // Layer 2: 嘴巴层
             string mouthLayerName = MouthAnimationSystem.GetMouthLayerName(persona.defName);
@@ -120,7 +119,7 @@ namespace TheSecondSeat.UI
                 
                 if (mouthTexture != null)
                 {
-                    Widgets.DrawTextureFitted(rect, mouthTexture, 1.0f);
+                    layers.Add(mouthTexture);
                 }
             }
 
@@ -131,7 +130,7 @@ namespace TheSecondSeat.UI
                 var eyeTexture = PortraitLoader.GetLayerTexture(persona, eyeLayerName);
                 if (eyeTexture != null)
                 {
-                    Widgets.DrawTextureFitted(rect, eyeTexture, 1.0f);
+                    layers.Add(eyeTexture);
                 }
             }
             
@@ -143,9 +142,12 @@ namespace TheSecondSeat.UI
                 var flushTexture = PortraitLoader.GetLayerTexture(persona, flushLayerName);
                 if (flushTexture != null)
                 {
-                    Widgets.DrawTextureFitted(rect, flushTexture, 1.0f);
+                    layers.Add(flushTexture);
                 }
             }
+            
+            // 统一 GPU 渲染
+            GPULayeredRenderer.DrawDynamicPortrait(rect, layers, alpha);
         }
         
         private void DrawEffectLayer(Rect rect)

@@ -24,10 +24,10 @@ namespace TheSecondSeat.Descent
             if (pawn == null) return true;
 
             // Lazy load Def
-            if (divineBodyDef == null)
-            {
-                divineBodyDef = DefDatabase<HediffDef>.GetNamedSilentFail("Sideria_DivineBody");
-            }
+            // if (divineBodyDef == null)
+            // {
+            //     divineBodyDef = DefDatabase<HediffDef>.GetNamedSilentFail("Sideria_DivineBody");
+            // }
 
             // If Def not found or Pawn doesn't have the Hediff, execute original logic
             if (divineBodyDef == null || pawn.health?.hediffSet == null || !pawn.health.hediffSet.HasHediff(divineBodyDef))

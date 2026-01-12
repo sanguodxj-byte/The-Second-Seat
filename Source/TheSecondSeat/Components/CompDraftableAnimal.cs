@@ -5,15 +5,11 @@ using Verse.AI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using HarmonyLib;
 
 namespace TheSecondSeat.Components
 {
-    /// <summary>
-    /// CompDraftableAnimal - 最终修正版
-    /// 逻辑回归：不修改 Pawn.Drafted，只通过组件控制 UI 和行为。
-    /// 这是最稳定、最符合 Koelime 原理的写法。
-    /// </summary>
     public class CompDraftableAnimal : ThingComp
     {
         public bool isDrafted = false;
@@ -27,36 +23,42 @@ namespace TheSecondSeat.Components
 
         public override IEnumerable<Gizmo> CompGetGizmosExtra()
         {
-            // 只有属于玩家阵营才显示
             if (parent.Faction != Faction.OfPlayer) yield break;
 
-            // 征召开关
-            Command_Toggle cmd = new Command_Toggle();
-            cmd.defaultLabel = "CommandDraft".Translate();
-            cmd.defaultDesc = "CommandDraftDesc".Translate();
-            cmd.icon = TexCommand.Draft;
-            cmd.isActive = () => isDrafted;
-            cmd.toggleAction = delegate ()
+            // 降临体使用自定义征召系统
+            // Pawn.Drafted getter patch 会读取我们的 isDrafted 状态，使右键菜单正常工作
+            // 注意：降临体作为动物没有原版 drafter 组件，我们提供替代的征召按钮
+            
+            // 使用原版征召/解除征召的标签
+            string draftLabel = isDrafted ? "CommandUndraft".Translate() : "CommandDraft".Translate();
+            string draftDesc = isDrafted ? "CommandUndraftDesc".Translate() : "CommandDraftDesc".Translate();
+            
+            Command_Toggle cmd = new Command_Toggle
             {
-                isDrafted = !isDrafted;
-                // 切换状态时打断当前发呆/乱跑
-                Pawn p = parent as Pawn;
-                if (p != null && p.jobs != null)
+                defaultLabel = draftLabel,
+                defaultDesc = draftDesc,
+                icon = TexCommand.Draft,
+                isActive = () => isDrafted,
+                toggleAction = delegate
                 {
-                    p.jobs.EndCurrentJob(JobCondition.InterruptForced);
-                }
+                    isDrafted = !isDrafted;
+                    if (isDrafted)
+                    {
+                        // 进入征召状态: 打断当前工作，进入待命
+                        Pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
+                        var newJob = JobMaker.MakeJob(JobDefOf.Wait_Combat, 2500);
+                        newJob.playerForced = true;
+                        Pawn.jobs.TryTakeOrderedJob(newJob, JobTag.DraftedOrder);
+                    }
+                    else
+                    {
+                        // 退出征召状态: 允许AI自由活动
+                        Pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
+                    }
+                },
+                hotKey = KeyBindingDefOf.Command_ColonistDraft
             };
-            cmd.hotKey = KeyBindingDefOf.Command_ColonistDraft;
             yield return cmd;
-
-            // 技能按钮
-            if (Pawn != null && Pawn.abilities != null)
-            {
-                foreach (Ability ability in Pawn.abilities.abilities)
-                {
-                    foreach (Gizmo gizmo in ability.GetGizmos()) yield return gizmo;
-                }
-            }
         }
     }
 
@@ -64,144 +66,79 @@ namespace TheSecondSeat.Components
     {
         public CompProperties_DraftableAnimal()
         {
-            this.compClass = typeof(CompDraftableAnimal);
+            compClass = typeof(CompDraftableAnimal);
         }
     }
 
-    // ==================== Harmony Patches ====================
+    [HarmonyPatch]
     public static class DraftableAnimalHarmonyPatches
     {
-        private static bool patched = false;
+        public static bool isPatched = false;
 
         public static void ApplyPatches(Harmony harmony)
         {
-            if (patched) return;
+            if (isPatched) return;
+            
+            var targetMethod = AccessTools.GetDeclaredMethods(typeof(FloatMenuMakerMap))
+                .FirstOrDefault(m => m.Name == "GetOptions" && m.GetParameters().Length >= 2 && m.GetParameters()[0].ParameterType == typeof(List<Pawn>));
 
-            try
+            if (targetMethod != null)
             {
-                // Patch 1: 过滤原版动物按钮 (比如"屠宰")
-                var getGizmosMethod = AccessTools.Method(typeof(Pawn), "GetGizmos");
-                if (getGizmosMethod != null)
-                {
-                    harmony.Patch(getGizmosMethod, postfix: new HarmonyMethod(typeof(DraftableAnimalHarmonyPatches), nameof(Pawn_GetGizmos_Postfix)));
-                    Log.Message("[TSS] Patched Pawn.GetGizmos");
-                }
-                else
-                {
-                    Log.Warning("[TSS] Could not find Pawn.GetGizmos method");
-                }
-
-                // Patch 2: 注入右键菜单 (核心逻辑)
-                // 使用精确的方法签名查找
-                var choicesAtForMethod = AccessTools.Method(
-                    typeof(FloatMenuMakerMap),
-                    "ChoicesAtFor",
-                    new Type[] { typeof(Vector3), typeof(Pawn), typeof(bool) }
-                );
-                
-                if (choicesAtForMethod != null)
-                {
-                    harmony.Patch(choicesAtForMethod, postfix: new HarmonyMethod(typeof(DraftableAnimalHarmonyPatches), nameof(ChoicesAtFor_Postfix)));
-                    Log.Message("[TSS] Patched FloatMenuMakerMap.ChoicesAtFor");
-                }
-                else
-                {
-                    Log.Warning("[TSS] Could not find FloatMenuMakerMap.ChoicesAtFor method, trying alternative...");
-                    // 尝试不带参数的查找
-                    var altMethod = AccessTools.Method(typeof(FloatMenuMakerMap), "ChoicesAtFor");
-                    if (altMethod != null)
-                    {
-                        harmony.Patch(altMethod, postfix: new HarmonyMethod(typeof(DraftableAnimalHarmonyPatches), nameof(ChoicesAtFor_Postfix)));
-                        Log.Message("[TSS] Patched FloatMenuMakerMap.ChoicesAtFor (alt)");
-                    }
-                    else
-                    {
-                        Log.Warning("[TSS] FloatMenuMakerMap.ChoicesAtFor not found - right-click menu won't work");
-                    }
-                }
-
-                // ⚠️ 删除了 Pawn.Drafted 和 AddHumanlikeOrders 的所有 Patch
-                // 只要不乱改 Drafted 属性，就不会导致生成时崩溃。
-                
-                patched = true;
-                Log.Message("[TSS] DraftableAnimal patches applied (Clean Strategy).");
+                harmony.Patch(targetMethod, postfix: new HarmonyMethod(typeof(DraftableAnimalHarmonyPatches), nameof(GetOptions_Postfix)));
+                Log.Message("[TSS] Successfully patched FloatMenuMakerMap.GetOptions for custom drafting.");
             }
-            catch (Exception ex)
+            else
             {
-                Log.Error($"[TSS] Patch Failed: {ex}");
+                Log.Warning("[TSS] FAILED to find target method for right-click menu patch.");
             }
+
+            isPatched = true;
         }
 
-        // 过滤不需要的动物按钮
-        public static IEnumerable<Gizmo> Pawn_GetGizmos_Postfix(IEnumerable<Gizmo> __result, Pawn __instance)
+        public static void GetOptions_Postfix(ref List<FloatMenuOption> __result, Vector3 clickPos, List<Pawn> selectedPawns)
         {
-            if (__instance.GetComp<CompDraftableAnimal>() == null)
-            {
-                foreach (var g in __result) yield return g;
-                yield break;
-            }
-            foreach (var g in __result)
-            {
-                if (g is Command cmd && cmd.defaultLabel != null)
-                {
-                    string label = cmd.defaultLabel.ToString().ToLower();
-                    if (label.Contains("slaughter") || label.Contains("release") || label.Contains("train")) continue;
-                }
-                yield return g;
-            }
-        }
+            if (selectedPawns == null || selectedPawns.Count != 1) return;
+            var pawn = selectedPawns[0];
 
-        // 核心：手动添加移动和攻击指令
-        // 原理：因为 Pawn.Drafted 是 false，原版只会生成基本交互（如救援）。
-        // 我们在这里追加"伪征召"的战斗指令。
-        public static void ChoicesAtFor_Postfix(ref List<FloatMenuOption> __result, Vector3 clickPos, Pawn pawn, bool suppressAutoTakeableGoto = false)
-        {
             if (pawn == null || pawn.Faction != Faction.OfPlayer) return;
             
             var comp = pawn.GetComp<CompDraftableAnimal>();
-            // 只有当组件存在 且 处于我们自定义的征召状态时
             if (comp == null || !comp.isDrafted) return;
 
             IntVec3 clickCell = IntVec3.FromVector3(clickPos);
             Map map = pawn.Map;
             if (map == null) return;
 
-            // 1. 移动命令 (Go Here)
+            // 移动命令
             if (clickCell.Standable(map) && pawn.CanReach(clickCell, PathEndMode.OnCell, Danger.Deadly))
             {
-                // 检查是否重复
-                if (!__result.Any(o => o.Label.Contains("GoHere".Translate()) || o.Label.Contains("Go here")))
+                if (!__result.Any(o => o.Label.Contains("GoHere".Translate())))
                 {
-                    Pawn p = pawn;
-                    IntVec3 dest = clickCell;
-                    Map destMap = map;
-                    __result.Add(new FloatMenuOption("GoHere".Translate(), delegate()
+                    Action action = delegate
                     {
-                        Job job = JobMaker.MakeJob(JobDefOf.Goto, dest);
-                        job.playerForced = true; // 强制执行，打断发呆
-                        p.jobs.TryTakeOrderedJob(job, JobTag.Misc);
-                    }, MenuOptionPriority.GoHere));
+                        Job job = JobMaker.MakeJob(JobDefOf.Goto, clickCell);
+                        pawn.jobs.TryTakeOrderedJob(job, JobTag.DraftedOrder);
+                    };
+                    __result.Add(new FloatMenuOption("GoHere".Translate(), action, MenuOptionPriority.GoHere));
                 }
             }
 
-            // 2. 攻击命令 (Attack)
+            // 攻击命令 - 允许攻击任何目标（敌对或友好）
             foreach (Thing t in clickCell.GetThingList(map))
             {
-                if (t is Pawn target && target != pawn && target.HostileTo(pawn))
+                // 近战攻击目标
+                if (t is Pawn target && target != pawn && !target.Downed)
                 {
-                    Pawn p = pawn;
-                    string label = "MeleeAttack".Translate(target.LabelShort, target);
-                    
+                    string label = "Melee".Translate() + " " + target.LabelCap;
                     if (!__result.Any(o => o.Label == label))
                     {
-                        Pawn attackTarget = target;
-                        // 插入到最前面，方便操作
-                        __result.Insert(0, new FloatMenuOption(label, delegate()
+                        Action action = delegate
                         {
-                            Job job = JobMaker.MakeJob(JobDefOf.AttackMelee, attackTarget);
+                            Job job = JobMaker.MakeJob(JobDefOf.AttackMelee, target);
                             job.playerForced = true;
-                            p.jobs.TryTakeOrderedJob(job, JobTag.Misc);
-                        }, MenuOptionPriority.AttackEnemy));
+                            pawn.jobs.TryTakeOrderedJob(job, JobTag.DraftedOrder);
+                        };
+                        __result.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption(label, action, MenuOptionPriority.AttackEnemy, null, target), pawn, target));
                     }
                 }
             }

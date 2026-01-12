@@ -17,6 +17,10 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
         {
             var sb = new StringBuilder();
             
+            // ✅ 显式添加当前好感度数值，确保 AI 知道当前状态
+            sb.AppendLine($"[Current Affinity: {affinity:F1}/100]");
+            sb.AppendLine();
+
             sb.AppendLine(PromptLoader.Load("Romantic_Intro"));
             sb.AppendLine();
             

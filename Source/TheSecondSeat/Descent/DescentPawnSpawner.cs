@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Verse;
+using Verse.AI;
 using RimWorld;
 using TheSecondSeat.PersonaGeneration;
 using TheSecondSeat.Components;
@@ -177,21 +178,31 @@ namespace TheSecondSeat.Descent
         }
 
         /// <summary>
-        /// 自动征召
+        /// 自动征召 - 使用 CompDraftableAnimal 组件
         /// </summary>
         private static void AutoDraft(Pawn pawn)
         {
             if (pawn.Faction != Faction.OfPlayer) return;
 
+            // 优先使用 CompDraftableAnimal (用于动物智力的 Pawn)
             var draftComp = pawn.GetComp<CompDraftableAnimal>();
             if (draftComp != null)
             {
                 draftComp.isDrafted = true;
-                Log.Message($"[DescentPawnSpawner] Auto-drafted via CompDraftableAnimal");
+                // 进入征召状态: 打断当前工作，进入待命
+                pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
+                var newJob = JobMaker.MakeJob(JobDefOf.Wait_Combat, 2500);
+                newJob.playerForced = true;
+                pawn.jobs.TryTakeOrderedJob(newJob, JobTag.DraftedOrder);
+                Log.Message($"[DescentPawnSpawner] Auto-drafted {pawn.LabelShort} using CompDraftableAnimal");
+                return;
             }
-            else if (pawn.drafter != null)
+
+            // 回退到原生 drafter (用于人形智力的 Pawn)
+            if (pawn.drafter != null)
             {
                 pawn.drafter.Drafted = true;
+                Log.Message($"[DescentPawnSpawner] Auto-drafted {pawn.LabelShort} using native drafter");
             }
         }
     }

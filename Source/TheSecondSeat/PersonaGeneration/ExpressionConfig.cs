@@ -27,6 +27,19 @@ namespace TheSecondSeat.PersonaGeneration
             }
         }
 
+        /// <summary>
+        /// 获取指定表情类型的变体数量
+        /// </summary>
+        public int GetVariantCount(ExpressionType type)
+        {
+            string key = type.ToString();
+            if (Expressions.TryGetValue(key, out var def))
+            {
+                return def.Variants?.Count ?? 0;
+            }
+            return 0;
+        }
+
         public static void Load()
         {
             // 查找 Mod

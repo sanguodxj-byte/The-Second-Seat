@@ -55,20 +55,18 @@ namespace TheSecondSeat.PersonaGeneration
             string personalitySection = PersonalitySection.Generate(analysis, personaDef);
 
             // Biography
-            // ? 修复：限制 Biography 长度，防止撑爆 Token
+            // ⭐ v1.9.0: 移除传记逻辑，改用结构化外观标签
             string biographySection = "";
-            if (!string.IsNullOrEmpty(personaDef.biography))
+            // if (!string.IsNullOrEmpty(personaDef.biography)) ... (Removed)
+
+            // Visual Elements (Structured)
+            // ⭐ v1.9.0: 自动格式化为 {{Tag}} 递归结构
+            string visualElementsSection = "";
+            if (personaDef.visualElements != null && personaDef.visualElements.Count > 0)
             {
-                string safeBio = personaDef.biography;
-                const int MaxBioLength = 1500;
-                
-                if (safeBio.Length > MaxBioLength)
-                {
-                    Log.Warning($"[The Second Seat] Persona {personaDef.defName} biography too long ({safeBio.Length} chars). Truncating to {MaxBioLength}.");
-                    safeBio = safeBio.Substring(0, MaxBioLength) + "...(truncated)";
-                }
-                
-                biographySection = $"    <Biography>\n{safeBio}\n    </Biography>";
+                // 将每个标签包装为 {{Tag}} 并用逗号连接
+                var formattedTags = personaDef.visualElements.Select(tag => $"{{{{{tag}}}}}");
+                visualElementsSection = string.Join(", ", formattedTags);
             }
 
             // Global Instructions (Language)
@@ -94,7 +92,8 @@ namespace TheSecondSeat.PersonaGeneration
                 .Replace("{{NarratorName}}", personaDef.narratorName)
                 .Replace("{{IdentitySection}}", identitySection)
                 .Replace("{{PersonalitySection}}", personalitySection)
-                .Replace("{{BiographySection}}", biographySection)
+                .Replace("{{BiographySection}}", "") // ⭐ 移除传记内容
+                .Replace("{{VisualElements}}", visualElementsSection) // ⭐ 新增结构化外观标签
                 .Replace("{{DifficultyMode}}", difficultyMode.ToString())
                 .Replace("{{ModeDirective}}", "") // Removed - no longer used
                 .Replace("{{ToolBoxSection}}", OutputFormatSection.Generate(difficultyMode))

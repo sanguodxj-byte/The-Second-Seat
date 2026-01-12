@@ -695,8 +695,8 @@ namespace TheSecondSeat.UI
         /// </summary>
         private void DrawIntegratedFavorabilityBar(Rect rect, float value, Narrator.AffinityTier tier)
         {
-            // 归一化：-1000~1000 → 0~1
-            var normalized = (value + 1000f) / 2000f;
+            // 归一化：-100~100 → 0~1
+            var normalized = (value + 100f) / 200f;
             
             // 背景
             Widgets.DrawBoxSolid(rect, new Color(0.08f, 0.08f, 0.08f, 0.9f));
@@ -769,17 +769,17 @@ namespace TheSecondSeat.UI
 
         /// <summary>
         /// 获取好感度颜色（用于进度条）
-        /// ? 更新为新的范围 -1000~1000
+        /// ? 更新为新的范围 -100~100
         /// </summary>
         private Color GetFavorabilityColor(float value)
         {
-            if (value < -700f) return new Color(0.60f, 0.10f, 0.10f);  // 憎恨：深红
-            if (value < -400f) return new Color(0.80f, 0.25f, 0.25f);  // 敌意：红色
-            if (value < -100f) return new Color(0.70f, 0.50f, 0.70f);  // 疏远：冷蓝紫
-            if (value < 100f) return new Color(0.65f, 0.65f, 0.65f);   // 冷淡：灰色
-            if (value < 300f) return new Color(0.80f, 0.75f, 0.40f);   // 温暖：暖黄
-            if (value < 600f) return new Color(0.80f, 0.50f, 0.75f);   // 倾心：粉紫
-            if (value < 850f) return new Color(0.90f, 0.40f, 0.70f);   // 爱慕：亮粉
+            if (value < -70f) return new Color(0.60f, 0.10f, 0.10f);  // 憎恨：深红
+            if (value < -40f) return new Color(0.80f, 0.25f, 0.25f);  // 敌意：红色
+            if (value < -10f) return new Color(0.70f, 0.50f, 0.70f);  // 疏远：冷蓝紫
+            if (value < 10f) return new Color(0.65f, 0.65f, 0.65f);   // 冷淡：灰色
+            if (value < 30f) return new Color(0.80f, 0.75f, 0.40f);   // 温暖：暖黄
+            if (value < 60f) return new Color(0.80f, 0.50f, 0.75f);   // 倾心：粉紫
+            if (value < 85f) return new Color(0.90f, 0.40f, 0.70f);   // 爱慕：亮粉
             return new Color(1.00f, 0.80f, 0.20f);                     // 魂之友：金色
         }
 
