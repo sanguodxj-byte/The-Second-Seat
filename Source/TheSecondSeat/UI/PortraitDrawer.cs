@@ -109,18 +109,50 @@ namespace TheSecondSeat.UI
             // 如果已经处理了特殊姿态（layers为空但已返回），则不再继续
             if (layers.Count == 0) return;
 
-            // Layer 2: 嘴巴层
+            // Layer 2: 嘴巴层 - TTS口型优先，静默时使用闭嘴
+            // 设计原则：表情系统不干涉口型动画
             string mouthLayerName = MouthAnimationSystem.GetMouthLayerName(persona.defName);
-            if (!string.IsNullOrEmpty(mouthLayerName))
+            bool isTTSSpeaking = !string.IsNullOrEmpty(mouthLayerName);
+            
+            // ⭐ v1.13.0: 诊断日志
+            if (Prefs.DevMode && Time.frameCount % 120 == 0)
             {
-                var mouthTexture = PortraitLoader.GetLayerTexture(persona, mouthLayerName, suppressWarning: true)
-                    ?? PortraitLoader.GetLayerTexture(persona, "Closed_mouth", suppressWarning: true)
-                    ?? PortraitLoader.GetLayerTexture(persona, "Neutral_mouth", suppressWarning: true);
-                
-                if (mouthTexture != null)
+                bool ttsSpeaking = TTS.TTSAudioPlayer.IsSpeaking(persona.defName);
+                bool anyoneSpeaking = TTS.TTSAudioPlayer.IsAnyoneSpeaking();
+                Log.Message($"[PortraitDrawer] {persona.defName}: mouthLayerName={mouthLayerName ?? "null"}, isTTSSpeaking={isTTSSpeaking}, ttsSpeaking={ttsSpeaking}, anyoneSpeaking={anyoneSpeaking}");
+            }
+            
+            Texture2D mouthTexture = null;
+            
+            if (isTTSSpeaking)
+            {
+                // ⭐ v1.11.3: 处理 "USE_BASE" 特殊标记
+                // 当 Viseme 为 Small（微张）时，使用 base_body 自带的默认嘴型，不添加额外图层
+                if (mouthLayerName != "USE_BASE")
                 {
-                    layers.Add(mouthTexture);
+                    // 说话中：完全由 TTS 口型系统控制，表情系统不干涉
+                    mouthTexture = PortraitLoader.GetLayerTexture(persona, mouthLayerName, suppressWarning: true);
+                    
+                    // ⭐ v1.13.0: 诊断纹理加载
+                    if (Prefs.DevMode && mouthTexture == null && Time.frameCount % 120 == 0)
+                    {
+                        Log.Warning($"[PortraitDrawer] Failed to load mouth texture: {mouthLayerName}");
+                    }
                 }
+                // 如果是 "USE_BASE"，mouthTexture 保持为 null，不加载任何嘴巴层
+            }
+            
+            // 回退：仅在非说话状态下使用默认闭嘴
+            // ⭐ v1.11.3: 说话状态下如果 mouthLayerName 是 "USE_BASE"，不回退到闭嘴
+            if (mouthTexture == null && !(isTTSSpeaking && mouthLayerName == "USE_BASE"))
+            {
+                mouthTexture = PortraitLoader.GetLayerTexture(persona, "Closed_mouth", suppressWarning: true)
+                    ?? PortraitLoader.GetLayerTexture(persona, "Neutral_mouth", suppressWarning: true);
+            }
+            
+            if (mouthTexture != null)
+            {
+                layers.Add(mouthTexture);
             }
 
             // Layer 3: 眼睛层
@@ -134,12 +166,20 @@ namespace TheSecondSeat.UI
                 }
             }
             
-            // Layer 4: 特效层 (腮红等)
+            // Layer 4: 特效层 (腮红等) - 支持变体
             var expressionState = ExpressionSystem.GetExpressionState(persona.defName);
-            if (expressionState.CurrentExpression == ExpressionType.Shy || expressionState.CurrentExpression == ExpressionType.Angry)
+            if (expressionState != null && (expressionState.CurrentExpression == ExpressionType.Shy || expressionState.CurrentExpression == ExpressionType.Angry))
             {
-                string flushLayerName = expressionState.CurrentExpression == ExpressionType.Shy ? "flush_shy" : "flush_angry";
-                var flushTexture = PortraitLoader.GetLayerTexture(persona, flushLayerName);
+                string flushLayerName = GetFlushLayerName(persona.defName, expressionState);
+                var flushTexture = PortraitLoader.GetLayerTexture(persona, flushLayerName, suppressWarning: true);
+                
+                // 如果变体不存在，尝试基础腮红
+                if (flushTexture == null)
+                {
+                    string baseFlush = expressionState.CurrentExpression == ExpressionType.Shy ? "flush_shy" : "flush_angry";
+                    flushTexture = PortraitLoader.GetLayerTexture(persona, baseFlush, suppressWarning: true);
+                }
+                
                 if (flushTexture != null)
                 {
                     layers.Add(flushTexture);
@@ -220,6 +260,28 @@ namespace TheSecondSeat.UI
             Text.Anchor = TextAnchor.UpperLeft;
         }
 
+        /// <summary>
+        /// 获取腮红图层名称，支持变体
+        /// </summary>
+        private string GetFlushLayerName(string defName, ExpressionState state)
+        {
+            if (state == null) return "flush_shy";
+            
+            string exprName = state.CurrentExpression.ToString().ToLower();
+            string baseName = state.CurrentExpression == ExpressionType.Shy ? "flush_shy" : "flush_angry";
+            
+            // 获取变体编号
+            int variant = state.Intensity > 0 ? state.Intensity : state.CurrentVariant;
+            
+            if (variant <= 0)
+            {
+                return baseName;
+            }
+            
+            // 返回变体名：flush_shy1, flush_shy2, flush_angry1, flush_angry2 等
+            return $"flush_{exprName}{variant}";
+        }
+        
         private void DrawMinimalPlaceholder(Rect rect, NarratorPersonaDef persona)
         {
             Color bgColor = persona.primaryColor;

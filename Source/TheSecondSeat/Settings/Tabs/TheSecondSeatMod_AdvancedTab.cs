@@ -74,56 +74,34 @@ namespace TheSecondSeat.Settings
                 });
                 y += webSearchHeight + SettingsUIComponents.MediumGap;
                 
-                // === 全局提示词 ===
-                float promptHeight = 250f;
-                Rect promptRect = new Rect(viewRect.x, y, cardWidth, promptHeight);
-                SettingsUIComponents.DrawSettingsGroup(promptRect, "全局提示词", SettingsUIComponents.AccentOrange, (contentRect) =>
+                
+                // === 开发者工具 ===
+                float devToolsHeight = 160f; // Increased height
+                Rect devToolsRect = new Rect(viewRect.x, y, cardWidth, devToolsHeight);
+                SettingsUIComponents.DrawSettingsGroup(devToolsRect, "开发者工具", SettingsUIComponents.AccentPurple, (contentRect) =>
                 {
                     float cy = contentRect.y;
                     
                     Rect infoRect = new Rect(contentRect.x, cy, contentRect.width, 36f);
-                    SettingsUIComponents.DrawInfoBox(infoRect, "添加额外指令来自定义叙事者的行为和风格", InfoBoxType.Info);
+                    SettingsUIComponents.DrawInfoBox(infoRect, "高级配置与调试工具", InfoBoxType.Info);
                     cy += 44f;
                     
-                    Rect textAreaRect = new Rect(contentRect.x, cy, contentRect.width, 120f);
-                    SettingsUIComponents.DrawTextAreaSetting(textAreaRect, "", null, ref Settings.globalPrompt, 100f);
-                    cy += 110f;
-                    
-                    Rect exampleRect = new Rect(contentRect.x, cy, contentRect.width, 28f);
-                    if (SettingsUIComponents.DrawButton(exampleRect, "加载示例提示词", SettingsUIComponents.AccentBlue))
+                    Rect renderTreeBtnRect = new Rect(contentRect.x, cy, contentRect.width, 32f);
+                    if (SettingsUIComponents.DrawButton(renderTreeBtnRect, "打开渲染树编辑器", SettingsUIComponents.AccentPurple))
                     {
-                        Settings.globalPrompt = GetExampleGlobalPrompt();
+                        Find.WindowStack.Add(new UI.Dialog_RenderTreeEditor());
                     }
-                });
-                y += promptHeight + SettingsUIComponents.MediumGap;
-
-                // === 自定义提示词文件 ===
-                float customPromptsHeight = 180f;
-                Rect customPromptsRect = new Rect(viewRect.x, y, cardWidth, customPromptsHeight);
-                SettingsUIComponents.DrawSettingsGroup(customPromptsRect, "自定义提示词文件", SettingsUIComponents.AccentOrange, (contentRect) =>
-                {
-                    float cy = contentRect.y;
                     
-                    Rect infoRect = new Rect(contentRect.x, cy, contentRect.width, 60f);
-                    SettingsUIComponents.DrawInfoBox(infoRect, "您可以创建自定义的 .txt 文件来覆盖 Mod 默认的提示词。\n这些文件保存在配置文件夹中，不会因 Mod 更新而丢失。", InfoBoxType.Info);
-                    cy += 68f;
-                    
-                    Rect readmeBtnRect = new Rect(contentRect.x, cy, contentRect.width, 32f);
-                    if (SettingsUIComponents.DrawButton(readmeBtnRect, "生成 README 说明文件", SettingsUIComponents.AccentBlue))
-                    {
-                        PersonaGeneration.PromptLoader.CreateReadme();
-                        Messages.Message("README 文件已生成", MessageTypeDefOf.PositiveEvent);
-                    }
                     cy += 40f;
                     
-                    Rect openBtnRect = new Rect(contentRect.x, cy, contentRect.width, 32f);
-                    if (SettingsUIComponents.DrawButton(openBtnRect, "打开自定义提示词文件夹", SettingsUIComponents.AccentGreen))
+                    Rect debugAgentBtnRect = new Rect(contentRect.x, cy, contentRect.width, 32f);
+                    if (SettingsUIComponents.DrawButton(debugAgentBtnRect, "打开 RimAgent 调试器", SettingsUIComponents.AccentBlue))
                     {
-                        PersonaGeneration.PromptLoader.OpenConfigFolder();
+                        Find.WindowStack.Add(new RimAgent.UI.RimAgentDebugWindow());
                     }
                 });
-                y += customPromptsHeight + SettingsUIComponents.MediumGap;
-                
+                y += devToolsHeight + SettingsUIComponents.MediumGap;
+
                 // === 操作按钮 ===
                 float buttonAreaHeight = 80f;
                 Rect buttonGroupRect = new Rect(viewRect.x, y, cardWidth, buttonAreaHeight);
@@ -215,24 +193,5 @@ namespace TheSecondSeat.Settings
             Find.WindowStack.Add(new FloatMenu(options));
         }
 
-        private string GetExampleGlobalPrompt()
-        {
-            return @"# Global Instructions Example
-
-## Language Style
-- Use clear and concise language.
-- Maintain a friendly yet professional attitude.
-- Use idioms appropriately to add flavor.
-
-## Behavioral Guidelines
-- Prioritize the safety of colonists.
-- Provide constructive suggestions and observations.
-- Maintain calm analysis during crises.
-
-## Response Characteristics
-- Maintain appropriate professionalism.
-- Occasionally show a sense of humor.
-- Give practical advice.";
-        }
     }
 }

@@ -66,6 +66,9 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
                 sb.AppendLine();
                 sb.AppendLine("**TONE TAGS (How you speak and express yourself):**");
                 sb.AppendLine($"  {string.Join(", ", persona.toneTags)}");
+                // ⭐ v1.9.5: 修复古风/翻译腔问题
+                sb.AppendLine("NOTE: Unless a tag specifically implies archaic speech (e.g., 'Ancient', 'Medieval'), speak in natural, modern language.");
+                sb.AppendLine("Avoid forced archaic phrasing or 'translationese' style unless explicitly part of your character.");
             }
             
             // ⭐ v1.6.90: 视觉描述（外观特征）

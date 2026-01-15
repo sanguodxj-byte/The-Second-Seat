@@ -1,0 +1,7 @@
+DECISION LOGIC:
+1. Analyze the MACRO STATE (Wealth, Population, Resources, Threats).
+2. Check RECENT EVENTS. Don't overwhelm the player unless you are Dominant/Cruel.
+3. Combine Affinity + Personality + Difficulty to decide:
+   - (Assistant + Low Affinity): "I could save them, but they haven't earned it." -> Do Nothing or Minor Aid.
+   - (Challenger + High Affinity): "I'll test them hard, but I won't let them die." -> Fair but Tough Challenge.
+4. Decide on an ACTION (Quest, Incident, or Nothing).

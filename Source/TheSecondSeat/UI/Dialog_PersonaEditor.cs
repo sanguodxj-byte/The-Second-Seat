@@ -371,6 +371,32 @@ namespace TheSecondSeat.UI
                 persona.visualElements = new List<string>(editVisualElements); // ⭐ 保存外观标签
                 persona.customSystemPrompt = editCustomSystemPrompt;
                 
+                // ⭐ v1.9.3: 尝试同步更新当前运行时的 StorytellerAgent
+                // 这样用户修改后无需重启游戏即可生效
+                try
+                {
+                    if (Current.Game != null)
+                    {
+                        var manager = Current.Game.GetComponent<NarratorManager>();
+                        if (manager != null)
+                        {
+                            var agent = manager.GetStorytellerAgent();
+                            // 只有当正在编辑的人格是当前激活的人格时才更新
+                            // 简单判断：名字相同 (或者更严谨地，NarratorManager 应该暴露当前 PersonaDef)
+                            var currentPersona = manager.GetCurrentPersona();
+                            if (agent != null && currentPersona != null && currentPersona.defName == persona.defName)
+                            {
+                                agent.activePersonalityTags = new List<string>(editPersonalityTags);
+                                Log.Message($"[Dialog_PersonaEditor] 已同步更新运行时 Agent 的性格标签: {string.Join(", ", editPersonalityTags)}");
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning($"[Dialog_PersonaEditor] 同步更新运行时 Agent 失败 (非致命): {ex.Message}");
+                }
+                
                 // ? 修复：直接生成和保存 XML，不处理立绘
                 string xmlContent = PersonaDefExporter.GeneratePersonaDefXml(persona);
                 string xmlFilePath = PersonaDefExporter.SavePersonaDefXml(persona.defName, xmlContent);
@@ -478,18 +504,18 @@ namespace TheSecondSeat.UI
             sb.AppendLine("Output Format: XML only. No markdown, no explanations.");
             sb.AppendLine("Structure:");
             sb.AppendLine("<PhraseLibraryDef>");
-            sb.AppendLine($"  <defName>PhraseLib_{persona.defName}_{DateTime.Now.Ticks}</defName>");
+            sb.AppendLine($"  <defName>Phrases_{persona.defName}</defName>");
             sb.AppendLine($"  <personaDefName>{persona.defName}</personaDefName>");
-            sb.AppendLine("  <tiers>");
+            sb.AppendLine("  <affinityPhrases>");
             sb.AppendLine("    <li>");
-            sb.AppendLine("      <tier>Neutral</tier>");
-            sb.AppendLine("      <minAffinity>-20</minAffinity>");
-            sb.AppendLine("      <maxAffinity>60</maxAffinity>");
+            sb.AppendLine("      <tier>Warm</tier>");
             sb.AppendLine("      <headPatPhrases><li>...</li></headPatPhrases>");
             sb.AppendLine("      <bodyPokePhrases><li>...</li></bodyPokePhrases>");
+            sb.AppendLine("      <greetingPhrases><li>...</li></greetingPhrases>");
+            sb.AppendLine("      <eventReactionPhrases><li>...</li></eventReactionPhrases>");
             sb.AppendLine("    </li>");
-            sb.AppendLine("    <!-- Add High and Low tiers as well -->");
-            sb.AppendLine("  </tiers>");
+            sb.AppendLine("    <!-- Add other tiers: Indifferent, Cold, Devoted etc. -->");
+            sb.AppendLine("  </affinityPhrases>");
             sb.AppendLine("</PhraseLibraryDef>");
             sb.AppendLine();
             sb.AppendLine("Persona Information:");
@@ -518,26 +544,53 @@ namespace TheSecondSeat.UI
                     return;
                 }
 
-                // 解析并保存
-                // 这里我们需要一个临时的方法来解析 XML 并转换为 PhraseLibraryDef
-                // 或者直接保存到文件并让 PhraseManager 加载
+                // 1. 获取保存路径 (优先使用 Mod 目录)
+                string personaName = persona.defName.Split('_')[0];
+                string defsDir = PersonaFolderManager.GetPersonaDefsDirectory(personaName);
+                string filePath;
                 
-                string cacheDir = System.IO.Path.Combine(GenFilePaths.ConfigFolderPath, "TheSecondSeat", "PhraseLibraries");
-                if (!System.IO.Directory.Exists(cacheDir))
+                if (!string.IsNullOrEmpty(defsDir))
                 {
-                    System.IO.Directory.CreateDirectory(cacheDir);
+                    // 保存到 Mod 目录
+                    string fileName = $"Phrases_{personaName}.xml";
+                    filePath = System.IO.Path.Combine(defsDir, fileName);
+                }
+                else
+                {
+                    // 回退到 Config 目录 (缓存)
+                    string cacheDir = System.IO.Path.Combine(GenFilePaths.ConfigFolderPath, "TheSecondSeat", "PhraseLibraries");
+                    if (!System.IO.Directory.Exists(cacheDir))
+                    {
+                        System.IO.Directory.CreateDirectory(cacheDir);
+                    }
+                    string fileName = $"PhraseLib_{persona.defName}.xml";
+                    filePath = System.IO.Path.Combine(cacheDir, fileName);
+                    Log.Warning("[Dialog_PersonaEditor] 无法找到 Mod 目录，短语库保存到 Config 缓存。");
                 }
                 
-                string fileName = $"PhraseLib_{persona.defName}.xml";
-                string filePath = System.IO.Path.Combine(cacheDir, fileName);
-                
+                // 2. 包装 XML (添加头部信息)
+                if (!xml.TrimStart().StartsWith("<?xml"))
+                {
+                    xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<Defs>\n" + xml + "\n</Defs>";
+                }
+                else if (!xml.Contains("<Defs>"))
+                {
+                    // 如果有 xml声明但没有 Defs 包裹，替换 xml 声明或直接包裹
+                    // 简单起见，我们假设 LLM 生成的是 PhraseLibraryDef 节点
+                    xml = xml.Replace("<?xml version=\"1.0\" encoding=\"utf-8\"?>", "");
+                    xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<Defs>\n" + xml + "\n</Defs>";
+                }
+
+                // 3. 保存文件
                 System.IO.File.WriteAllText(filePath, xml, System.Text.Encoding.UTF8);
                 
-                // 重新加载 PhraseManager
-                PhraseManager.Instance.Initialize(); // 或者添加一个 Reload 方法
+                // 4. 尝试热重载 (如果在 Mod 目录，需要 DefDatabase 重新加载；如果在 Config，PhraseManager 重新加载)
+                // 这里我们简单触发 PhraseManager 的重新初始化，它会重新扫描 Defs (如果游戏支持运行时加载新 Defs) 和 Cache
+                // 注意：运行时添加 Defs 到 DefDatabase 是复杂的，通常需要重启游戏。
+                // 但如果是开发模式，我们可以提示用户。
                 
                 Messages.Message("TSS_GenPhraseLibSuccess".Translate(), MessageTypeDefOf.PositiveEvent);
-                Log.Message($"[Dialog_PersonaEditor] 短语库已保存到: {filePath}");
+                Log.Message($"[Dialog_PersonaEditor] 短语库已保存到: {filePath}\n注意：如果保存到 Mod 目录，可能需要重启游戏才能生效。");
             }
             catch (Exception ex)
             {

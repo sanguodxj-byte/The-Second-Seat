@@ -149,7 +149,7 @@ namespace TheSecondSeat.UI
             if (!string.IsNullOrEmpty(phrase) && CurrentPersona != null)
             {
                 string narratorName = !string.IsNullOrEmpty(CurrentPersona.label) ? CurrentPersona.label : CurrentPersona.narratorName;
-                DialogueOverlayPanel.SetStreamingMessage($"【{narratorName}】{phrase}");
+                DialogueOverlayPanel.SetStreamingMessage(phrase);
                 DialogueOverlayPanel.StartStreaming(0f); // 交互文本瞬时出现
             }
         }

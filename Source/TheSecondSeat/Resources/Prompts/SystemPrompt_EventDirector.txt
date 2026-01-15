@@ -1,0 +1,13 @@
+{{Event_Identity}}
+
+{{IdentitySection}}
+
+{{PersonalitySection}}
+
+{{Event_Context}}
+
+{{Event_Logic}}
+
+{{Event_Actions}}
+
+{{Event_Format}}

@@ -323,4 +323,41 @@
   <TSS_Interaction_HeadPat>*摸摸头*</TSS_Interaction_HeadPat>
   <TSS_Interaction_BodyPoke>*戳一下*</TSS_Interaction_BodyPoke>
   <TSS_Interaction_CtrlHint>按住 Ctrl 并点击以进行交互</TSS_Interaction_CtrlHint>
+  
+  <!-- ⭐ 技能系统翻译键 -->
+  <!-- 灾厄投掷 (Calamity Throw) -->
+  <TSS_CalamityThrow_InvalidTarget>目标无效。</TSS_CalamityThrow_InvalidTarget>
+  <TSS_CalamityThrow_TargetTooLarge>目标体型过大无法抓取。</TSS_CalamityThrow_TargetTooLarge>
+  <TSS_CalamityThrow_TargetTooLargeShort>目标体型过大</TSS_CalamityThrow_TargetTooLargeShort>
+  <TSS_CalamityThrow_GrabAction>抓取 (100%成功, {0}x 伤害)</TSS_CalamityThrow_GrabAction>
+  
+  <!-- 猩红绽放 (Crimson Bloom) -->
+  <TSS_CrimsonBloom_MarkLabel>猩红标记 x{0}</TSS_CrimsonBloom_MarkLabel>
+  <TSS_CrimsonBloom_TipMain>猩红标记层数: {0}/3</TSS_CrimsonBloom_TipMain>
+  <TSS_CrimsonBloom_TipWarning>达到3层后将摧毁核心器官</TSS_CrimsonBloom_TipWarning>
+  <TSS_CrimsonBloom_OrganDestroyed>{0}的{1}被猩红标记摧毁!</TSS_CrimsonBloom_OrganDestroyed>
+  <TSS_CrimsonBloom_Message>{0}被施加了猩红标记！</TSS_CrimsonBloom_Message>
+  <TSS_CrimsonBloom_Detonate>{0}的猩红标记引爆，{1}受到{2:F0}点伤害！</TSS_CrimsonBloom_Detonate>
+  <TSS_CrimsonBloom_NoTargets>范围内没有敌对目标</TSS_CrimsonBloom_NoTargets>
+  <TSS_CrimsonBloom_TargetDead>目标已死亡。</TSS_CrimsonBloom_TargetDead>
+  
+  <!-- 唤龙之门 (Dragon Gate) -->
+  <TSS_DragonGate_Summon>{0}召唤了{1}!</TSS_DragonGate_Summon>
+  <TSS_DragonGate_SummonMessage>{0}召唤了{1}！</TSS_DragonGate_SummonMessage>
+  <TSS_DragonGate_Failure>龙召唤失败：无法找到有效的生成位置。</TSS_DragonGate_Failure>
+  <TSS_DragonGate_NotOnMap>施法者不在地图上。</TSS_DragonGate_NotOnMap>
+  
+  <!-- 龙消散 (Dragon Dissipation) -->
+  <TSS_DragonDissipation_Start>{0}的灵体形态开始消散，返回灵界...</TSS_DragonDissipation_Start>
+  <TSS_DragonDissipation_Timer>灵体将在 {0} 秒后消散</TSS_DragonDissipation_Timer>
+  
+  <!-- 血染领域 (Crimson Domain) - 光环版猩红绽放 -->
+  <TSS_CrimsonDomain_Activated>{0}释放了血染领域！</TSS_CrimsonDomain_Activated>
+  <TSS_CrimsonDomain_Applied>{0}被血染领域笼罩！</TSS_CrimsonDomain_Applied>
+  <TSS_CrimsonDomain_Description>释放猩红之力形成领域，持续对范围内敌人施加猩红标记。</TSS_CrimsonDomain_Description>
+  
+  <!-- 「世界」(The World) - 时停能力 -->
+  <TSS_TheWorld_Activated>{0}发动了「世界」！时间停止！</TSS_TheWorld_Activated>
+  <TSS_TheWorld_Ended>时间恢复流动...</TSS_TheWorld_Ended>
+  <TSS_TheWorld_Description>停止时间的流动，除施法者外的所有单位都将陷入静止。</TSS_TheWorld_Description>
 </LanguageData>

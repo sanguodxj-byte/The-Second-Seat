@@ -11,6 +11,7 @@ namespace TheSecondSeat.PersonaGeneration
     /// 分层立绘合成器
     /// 负责将多个图层纹理合成为最终立绘
     /// ? v1.6.27: 使用base_body.png作为底图，其他部件覆盖
+    /// ✅ v1.12.0: 添加图层加载失败计数，失败3次后使用默认纹理
     /// </summary>
     public static class LayeredPortraitCompositor
     {
@@ -25,6 +26,10 @@ namespace TheSecondSeat.PersonaGeneration
         private static Dictionary<string, CacheEntry> compositeCache = new Dictionary<string, CacheEntry>();
         private static List<Texture> _staleTextures = new List<Texture>(); // 待销毁的旧纹理
         private const int MaxCacheSize = 30; // 最大缓存数量
+        
+        // ⭐ v1.12.0: 图层加载失败计数
+        private static Dictionary<string, int> layerFailureCounter = new Dictionary<string, int>();
+        private const int MaxLayerFailureCount = 3; // 失败阈值
         
         // 基础纹理路径
         private const string LAYERED_BASE_PATH = "UI/Narrators/9x16/Layered/";
@@ -311,10 +316,29 @@ namespace TheSecondSeat.PersonaGeneration
         /// ⭐ 根据表情类型获取眼睛层名称
         /// ⭐ v1.8.1: 修复 Confused 使用 confused_eyes，支持更多眼睛纹理
         /// ⭐ v1.9.0: 支持从 ExpressionConfig.json 加载配置
+        /// ⭐ v1.11.0: 优先使用 RenderTreeDef 配置
         /// </summary>
         private static string GetEyesLayerName(ExpressionType expression, string personaDefName = null)
         {
-            // 1. 尝试从配置加载
+            // 1. 尝试从 RenderTreeDef 加载
+            if (!string.IsNullOrEmpty(personaDefName))
+            {
+                var renderTree = RenderTreeDefManager.GetRenderTree(personaDefName);
+                if (renderTree != null)
+                {
+                    var state = ExpressionSystem.GetExpressionState(personaDefName);
+                    // 优先使用 Intensity，如果没有则使用 CurrentVariant
+                    int level = state.Intensity > 0 ? state.Intensity : state.CurrentVariant;
+                    
+                    string eyes = renderTree.GetEyesTexture(expression, level);
+                    if (!string.IsNullOrEmpty(eyes))
+                    {
+                        return eyes;
+                    }
+                }
+            }
+
+            // 2. 尝试从旧配置 (ExpressionConfig) 加载 (兼容性)
             if (ExpressionConfig.Instance.Expressions.TryGetValue(expression.ToString(), out var def))
             {
                 if (!string.IsNullOrEmpty(def.Eyes))
@@ -323,7 +347,7 @@ namespace TheSecondSeat.PersonaGeneration
                 }
             }
 
-            // 2. 回退到硬编码逻辑
+            // 3. 回退到硬编码逻辑
             return expression switch
             {
                 ExpressionType.Neutral => "opened_eyes",   // 中性表情睁眼（使用 base_body 默认）
@@ -342,21 +366,36 @@ namespace TheSecondSeat.PersonaGeneration
         /// ⭐ 根据表情类型获取嘴巴层名称
         /// ⭐ v1.8.1: 修复映射，与 Sideria 纹理文件名对齐
         /// ⭐ v1.9.0: 支持从 ExpressionConfig.json 加载配置，支持 Variants
+        /// ⭐ v1.11.0: 优先使用 RenderTreeDef 配置
         /// </summary>
         private static string GetMouthLayerName(ExpressionType expression, string personaDefName = null)
         {
-            // 1. 尝试从配置加载
+            // 获取变体等级
+            int level = 0;
+            if (!string.IsNullOrEmpty(personaDefName))
+            {
+                var state = ExpressionSystem.GetExpressionState(personaDefName);
+                // 优先使用 Intensity，如果没有则使用 CurrentVariant
+                level = state.Intensity > 0 ? state.Intensity : state.CurrentVariant;
+            }
+
+            // 1. 尝试从 RenderTreeDef 加载
+            if (!string.IsNullOrEmpty(personaDefName))
+            {
+                var renderTree = RenderTreeDefManager.GetRenderTree(personaDefName);
+                if (renderTree != null)
+                {
+                    string mouth = renderTree.GetMouthTexture(expression, level);
+                    if (!string.IsNullOrEmpty(mouth))
+                    {
+                        return mouth;
+                    }
+                }
+            }
+
+            // 2. 尝试从旧配置 (ExpressionConfig) 加载 (兼容性)
             if (ExpressionConfig.Instance.Expressions.TryGetValue(expression.ToString(), out var def))
             {
-                // 获取变体等级
-                int level = 0;
-                if (!string.IsNullOrEmpty(personaDefName))
-                {
-                    var state = ExpressionSystem.GetExpressionState(personaDefName);
-                    // 优先使用 Intensity，如果没有则使用 CurrentVariant
-                    level = state.Intensity > 0 ? state.Intensity : state.CurrentVariant;
-                }
-
                 string mouth = def.GetMouthForVariant(level);
                 if (!string.IsNullOrEmpty(mouth))
                 {
@@ -364,7 +403,7 @@ namespace TheSecondSeat.PersonaGeneration
                 }
             }
 
-            // 2. 回退到硬编码逻辑
+            // 3. 回退到硬编码逻辑
             return expression switch
             {
                 ExpressionType.Neutral => "Closed_mouth",   // ⭐ 修复：中性表情闭嘴

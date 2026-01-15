@@ -8,6 +8,7 @@ using TheSecondSeat.Narrator;
 
 namespace TheSecondSeat.UI
 {
+    [StaticConstructorOnStartup]
     public class DialogueOverlayPanel : Window
     {
         private static List<string> messages = new List<string>();
@@ -16,6 +17,9 @@ namespace TheSecondSeat.UI
         
         // 自定义缩放状态
         private bool isResizing = false;
+        
+        // 记录上一帧的位置，用于检测移动
+        private Rect lastWindowRect;
 
         private string currentFullMessage = "";
         private string currentDisplayedMessage = "";
@@ -71,6 +75,8 @@ namespace TheSecondSeat.UI
             this.drawShadow = false; // ? v1.6.91: 移除阴影
             this.optionalTitle = null; // ? v1.6.91: 移除标题
             this.doWindowBackground = false; // ? v1.6.91: 禁用默认背景
+            
+            this.lastWindowRect = this.windowRect;
         }
         
         public static void AddMessage(string text)
@@ -171,25 +177,49 @@ namespace TheSecondSeat.UI
         public override void PreClose()
         {
             base.PreClose();
-            SaveWindowPosition();
+            SaveWindowPosition(saveToDisk: true);
         }
         
-        private void SaveWindowPosition()
+        private void SaveWindowPosition(bool saveToDisk = false)
         {
-            // 保存到全局设置
-            TheSecondSeatMod.Settings.dialogueRect = this.windowRect;
-            TheSecondSeatMod.Settings.Write();
-            
-            // 保存到存档 (NarratorManager)
-            var narratorManager = Current.Game?.GetComponent<NarratorManager>();
-            if (narratorManager != null)
+            try
             {
-                narratorManager.DialogueOverlayRect = this.windowRect;
+                // 保存到存档 (NarratorManager) - 内存操作，总是执行
+                var narratorManager = Current.Game?.GetComponent<NarratorManager>();
+                if (narratorManager != null)
+                {
+                    narratorManager.DialogueOverlayRect = this.windowRect;
+                }
+
+                // 保存到全局设置 - 磁盘操作，仅在需要时执行
+                if (saveToDisk)
+                {
+                    if (TheSecondSeatMod.Settings != null)
+                    {
+                        TheSecondSeatMod.Settings.dialogueRect = this.windowRect;
+                        TheSecondSeatMod.Settings.Write();
+                    }
+                    else
+                    {
+                        Log.Warning("[DialogueOverlayPanel] TheSecondSeatMod.Settings is null, cannot save window position to disk.");
+                    }
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Log.Error($"[DialogueOverlayPanel] Failed to save window position: {ex.Message}");
             }
         }
 
         public override void DoWindowContents(Rect inRect)
         {
+            // 检测窗口位置变化（拖动或缩放）
+            if (this.windowRect != lastWindowRect)
+            {
+                lastWindowRect = this.windowRect;
+                SaveWindowPosition(saveToDisk: false); // 仅更新内存中的 NarratorManager
+            }
+
             UpdateStreaming();
             
             // ? v1.6.99: 移除自动清除逻辑 - 对话框将一直显示直到下一条消息到来
@@ -222,7 +252,9 @@ namespace TheSecondSeat.UI
                 GUI.skin.verticalScrollbar = flatScrollbarStyle;
                 GUI.skin.verticalScrollbarThumb = flatScrollbarThumbStyle;
 
-                Widgets.BeginScrollView(innerRect, ref scrollPosition, viewRect);
+                // 在流式传输时隐藏滚动条，避免闪烁
+                bool showScrollbar = !isStreaming;
+                Widgets.BeginScrollView(innerRect, ref scrollPosition, viewRect, showScrollbar);
 
                 float curY = 0f;
                 Text.Font = GameFont.Small;
@@ -267,7 +299,7 @@ namespace TheSecondSeat.UI
                 else if (Event.current.type == EventType.MouseUp)
                 {
                     isResizing = false;
-                    SaveWindowPosition();
+                    SaveWindowPosition(saveToDisk: true); // 缩放结束时保存到磁盘
                     Event.current.Use();
                 }
             }

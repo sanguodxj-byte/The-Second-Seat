@@ -323,4 +323,41 @@ Click to talk with the AI Narrator</TSS_NarratorButton_Tooltip>
   <TSS_Interaction_HeadPat>*pats head*</TSS_Interaction_HeadPat>
   <TSS_Interaction_BodyPoke>*pokes*</TSS_Interaction_BodyPoke>
   <TSS_Interaction_CtrlHint>Hold Ctrl and click to interact</TSS_Interaction_CtrlHint>
+  
+  <!-- ⭐ Ability System Translation Keys -->
+  <!-- Calamity Throw -->
+  <TSS_CalamityThrow_InvalidTarget>Target is invalid.</TSS_CalamityThrow_InvalidTarget>
+  <TSS_CalamityThrow_TargetTooLarge>Target is too large to grab.</TSS_CalamityThrow_TargetTooLarge>
+  <TSS_CalamityThrow_TargetTooLargeShort>Target too large</TSS_CalamityThrow_TargetTooLargeShort>
+  <TSS_CalamityThrow_GrabAction>Grab (100% success, {0}x damage)</TSS_CalamityThrow_GrabAction>
+  
+  <!-- Crimson Bloom -->
+  <TSS_CrimsonBloom_MarkLabel>Crimson Mark x{0}</TSS_CrimsonBloom_MarkLabel>
+  <TSS_CrimsonBloom_TipMain>Crimson Mark Stacks: {0}/3</TSS_CrimsonBloom_TipMain>
+  <TSS_CrimsonBloom_TipWarning>At 3 stacks, a vital organ will be destroyed</TSS_CrimsonBloom_TipWarning>
+  <TSS_CrimsonBloom_OrganDestroyed>{0}'s {1} was destroyed by Crimson Mark!</TSS_CrimsonBloom_OrganDestroyed>
+  <TSS_CrimsonBloom_Message>{0} has been marked by Crimson!</TSS_CrimsonBloom_Message>
+  <TSS_CrimsonBloom_Detonate>{0}'s Crimson Mark detonates, {1} takes {2:F0} damage!</TSS_CrimsonBloom_Detonate>
+  <TSS_CrimsonBloom_NoTargets>No hostile targets in range</TSS_CrimsonBloom_NoTargets>
+  <TSS_CrimsonBloom_TargetDead>Target is already dead.</TSS_CrimsonBloom_TargetDead>
+  
+  <!-- Dragon Gate -->
+  <TSS_DragonGate_Summon>{0} summoned {1}!</TSS_DragonGate_Summon>
+  <TSS_DragonGate_SummonMessage>{0} has summoned {1}!</TSS_DragonGate_SummonMessage>
+  <TSS_DragonGate_NotOnMap>Caster is not on a map.</TSS_DragonGate_NotOnMap>
+  <TSS_DragonGate_Failure>Dragon summoning failed: Unable to find valid spawn position.</TSS_DragonGate_Failure>
+  
+  <!-- Dragon Dissipation -->
+  <TSS_DragonDissipation_Start>{0}'s spirit form begins to fade, returning to the spirit realm...</TSS_DragonDissipation_Start>
+  <TSS_DragonDissipation_Timer>Spirit will dissipate in {0} seconds</TSS_DragonDissipation_Timer>
+  
+  <!-- Crimson Domain - Aura version of Crimson Bloom -->
+  <TSS_CrimsonDomain_Activated>{0} unleashes Crimson Domain!</TSS_CrimsonDomain_Activated>
+  <TSS_CrimsonDomain_Applied>{0} is engulfed by Crimson Domain!</TSS_CrimsonDomain_Applied>
+  <TSS_CrimsonDomain_Description>Unleashes crimson power to form a domain, continuously applying Crimson Marks to enemies within range.</TSS_CrimsonDomain_Description>
+  
+  <!-- The World - Time Stop ability -->
+  <TSS_TheWorld_Activated>{0} activates "The World"! Time has stopped!</TSS_TheWorld_Activated>
+  <TSS_TheWorld_Ended>Time resumes its flow...</TSS_TheWorld_Ended>
+  <TSS_TheWorld_Description>Stops the flow of time. All units except the caster are frozen in place.</TSS_TheWorld_Description>
 </LanguageData>

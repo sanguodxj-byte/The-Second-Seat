@@ -101,6 +101,13 @@ namespace TheSecondSeat.PersonaGeneration
         /// <summary>API: 分层配置文件路径（可选，留空使用默认配置）</summary>
         public string layeredConfigPath = "";
         
+        /// <summary>
+        /// ⭐ v1.11.0: 渲染树定义（表情/口型纹理映射配置）
+        /// 通过 XML 定义表情变体和口型动画的纹理映射规则，
+        /// 避免硬编码，支持不同角色使用不同的纹理映射方案。
+        /// </summary>
+        public RenderTreeDef renderTreeDef;
+        
         // 运行时分层配置缓存（不从XML加载）
         [Unsaved]
         private LayeredPortraitConfig cachedLayeredConfig;

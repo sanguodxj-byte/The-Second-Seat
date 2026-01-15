@@ -529,12 +529,33 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// 获取表情对应的文件名后缀
-        /// ? 支持所有表情类型的变体（1-5）
-        /// ? 根据缓存的变体编号返回一致的后缀
+        /// ⭐ v1.11.0: 重构为使用 RenderTreeDef 配置系统
+        /// 支持所有表情类型的变体（通过 XML 配置）
+        /// 根据缓存的变体编号返回一致的后缀
         /// </summary>
         public static string GetExpressionSuffix(string personaDefName, ExpressionType expression)
         {
-            // 基础后缀映射
+            // 获取变体编号
+            var state = GetExpressionState(personaDefName);
+            int variantIndex = state.Intensity > 0 ? state.Intensity : state.CurrentVariant;
+            
+            // ⭐ v1.11.0: 优先尝试从 RenderTreeDef 获取（新配置系统）
+            var renderTree = RenderTreeDefManager.GetRenderTree(personaDefName);
+            if (renderTree != null)
+            {
+                return renderTree.GetExpressionSuffix(expression, variantIndex);
+            }
+            
+            // 回退到硬编码逻辑（向后兼容）
+            return GetExpressionSuffixLegacy(expression, variantIndex);
+        }
+        
+        /// <summary>
+        /// ⭐ v1.11.0: 旧版硬编码表情后缀逻辑（向后兼容）
+        /// </summary>
+        private static string GetExpressionSuffixLegacy(ExpressionType expression, int variantIndex)
+        {
+            // 基础后缀映射（硬编码，已过时）
             string baseSuffix = expression switch
             {
                 ExpressionType.Neutral => "",
@@ -553,20 +574,14 @@ namespace TheSecondSeat.PersonaGeneration
                 _ => ""
             };
 
-            // ? 使用缓存的变体编号或强度
-            var state = GetExpressionState(personaDefName);
-            
-            // 优先使用 Intensity，如果没有则使用 CurrentVariant
-            int suffixNum = state.Intensity > 0 ? state.Intensity : state.CurrentVariant;
-            
             // 如果是变体 0（基础版本），直接返回基础后缀
-            if (suffixNum == 0 || string.IsNullOrEmpty(baseSuffix))
+            if (variantIndex == 0 || string.IsNullOrEmpty(baseSuffix))
             {
                 return baseSuffix;
             }
             
             // 返回带变体编号的后缀（如 _happy1, _happy2, _sad3...）
-            return $"{baseSuffix}{suffixNum}";
+            return $"{baseSuffix}{variantIndex}";
         }
 
         /// <summary>

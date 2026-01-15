@@ -54,10 +54,7 @@ namespace TheSecondSeat.PersonaGeneration
             // Personality
             string personalitySection = PersonalitySection.Generate(analysis, personaDef);
 
-            // Biography
-            // ⭐ v1.9.0: 移除传记逻辑，改用结构化外观标签
-            string biographySection = "";
-            // if (!string.IsNullOrEmpty(personaDef.biography)) ... (Removed)
+            // Biography - Removed in v1.9.0, replaced with structured visual elements
 
             // Visual Elements (Structured)
             // ⭐ v1.9.0: 自动格式化为 {{Tag}} 递归结构
@@ -84,20 +81,40 @@ namespace TheSecondSeat.PersonaGeneration
             string romanticInstructions = "";
             if (difficultyMode == AIDifficultyMode.Assistant)
             {
-                romanticInstructions = RomanticInstructionsSection.Generate(personaDef, agent.affinity);
+                romanticInstructions = RomanticInstructionsSection.Generate(personaDef, agent);
             }
 
             // 3. Replace Placeholders
+            // 1. 模块化组件替换
+            template = template
+                .Replace("{{Narrator_RealityPact}}", PromptLoader.Load("Narrator_RealityPact"))
+                .Replace("{{Narrator_MetaSetting}}", PromptLoader.Load("Narrator_MetaSetting"))
+                .Replace("{{Narrator_DualConsciousness}}", PromptLoader.Load("Narrator_DualConsciousness"))
+                .Replace("{{Narrator_Channels}}", PromptLoader.Load("Narrator_Channels"))
+                .Replace("{{Narrator_ToolBox}}", PromptLoader.Load("Narrator_ToolBox"))
+                .Replace("{{Narrator_Protocol}}", PromptLoader.Load("Narrator_Protocol"));
+
+            // 2. 准备 Philosophy（难度模式哲学）
+            string philosophyFile = $"Philosophy_{difficultyMode}";
+            string philosophy = PromptLoader.Load(philosophyFile);
+            if (string.IsNullOrEmpty(philosophy) || philosophy.StartsWith("[Error:"))
+            {
+                string behaviorFile = $"BehaviorRules_{difficultyMode}";
+                philosophy = PromptLoader.Load(behaviorFile);
+            }
+            if (philosophy.StartsWith("[Error:")) philosophy = "";
+            
+            // 3. 动态变量替换
             return template
                 .Replace("{{NarratorName}}", personaDef.narratorName)
                 .Replace("{{IdentitySection}}", identitySection)
                 .Replace("{{PersonalitySection}}", personalitySection)
-                .Replace("{{BiographySection}}", "") // ⭐ 移除传记内容
-                .Replace("{{VisualElements}}", visualElementsSection) // ⭐ 新增结构化外观标签
+                .Replace("{{VisualElements}}", visualElementsSection)
                 .Replace("{{DifficultyMode}}", difficultyMode.ToString())
-                .Replace("{{ModeDirective}}", "") // Removed - no longer used
+                .Replace("{{Philosophy}}", philosophy)
                 .Replace("{{ToolBoxSection}}", OutputFormatSection.Generate(difficultyMode))
                 .Replace("{{GlobalInstructions}}", globalInstructions)
+                .Replace("{{Language_Instruction}}", globalInstructions)
                 .Replace("{{ModSettingsPrompt}}", modSettingsPrompt)
                 .Replace("{{LogDiagnosis}}", GenerateLogDiagnosisInstructions())
                 .Replace("{{RomanticInstructions}}", romanticInstructions);
@@ -171,6 +188,7 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// 生成精简版 System Prompt（减少 token 数量，加快响应速度）
+        /// ⭐ v1.9.5: 完全模板化重构 - 使用 {{}} 占位符
         /// </summary>
         public static string GenerateCompactSystemPrompt(
             NarratorPersonaDef personaDef,
@@ -178,47 +196,46 @@ namespace TheSecondSeat.PersonaGeneration
             StorytellerAgent agent,
             AIDifficultyMode difficultyMode = AIDifficultyMode.Assistant)
         {
-            var sb = new StringBuilder();
+            // 1. 加载 Compact 模板
+            string template = PromptLoader.Load("SystemPrompt_Compact");
+            if (string.IsNullOrEmpty(template) || template.StartsWith("[Error:"))
+            {
+                // 回退到硬编码版本
+                return GenerateCompactSystemPromptFallback(personaDef, analysis, agent, difficultyMode);
+            }
             
-            // 语言要求（必须保留）
-            sb.AppendLine(GetLanguageInstruction());
-            sb.AppendLine();
+            // 2. 准备替换变量
             
-            // 身份（简化）
-            sb.AppendLine($"You are **{personaDef.narratorName}**.");
+            // 显示名称：优先使用本地化 label
+            string displayName = !string.IsNullOrEmpty(personaDef.label) 
+                ? personaDef.label 
+                : personaDef.narratorName;
+            
+            // 简介：截取前200字符
+            string biography = "";
             if (!string.IsNullOrEmpty(personaDef.biography))
             {
-                // 只取简介的前200个字符
-                string shortBio = personaDef.biography.Length > 200 
+                biography = personaDef.biography.Length > 200 
                     ? personaDef.biography.Substring(0, 200) + "..." 
                     : personaDef.biography;
-                sb.AppendLine(shortBio);
-            }
-            sb.AppendLine();
-            
-            // 难度模式（简化）
-            if (difficultyMode == AIDifficultyMode.Assistant)
-            {
-                sb.AppendLine("Role: BENEVOLENT DM - Co-author the story, help the player succeed.");
-            }
-            else if (difficultyMode == AIDifficultyMode.Engineer)
-            {
-                sb.AppendLine("Role: TECHNICAL DM - Maintain simulation stability, fix errors.");
-            }
-            else
-            {
-                sb.AppendLine("Role: ADVERSARIAL DM - Create dramatic conflict and challenges.");
-            }
-            sb.AppendLine();
-            
-            // 好感度（简化）
-            if (difficultyMode != AIDifficultyMode.Engineer)
-            {
-                sb.AppendLine($"Affinity: {agent.affinity:F0}/100");
-                sb.AppendLine();
             }
             
-            // 对话风格（简化）
+            // 难度模式哲学
+            string philosophyFile = $"Philosophy_{difficultyMode}";
+            string philosophy = PromptLoader.Load(philosophyFile);
+            if (string.IsNullOrEmpty(philosophy) || philosophy.StartsWith("[Error:"))
+            {
+                string behaviorFile = $"BehaviorRules_{difficultyMode}";
+                philosophy = PromptLoader.Load(behaviorFile);
+            }
+            if (philosophy.StartsWith("[Error:")) philosophy = "";
+            
+            // 好感度（工程师模式不显示）
+            string affinity = difficultyMode != AIDifficultyMode.Engineer 
+                ? agent.affinity.ToString("F0") 
+                : "";
+            
+            // 风格标签
             var style = agent.dialogueStyle;
             var styleNotes = new System.Collections.Generic.List<string>();
             if (style.formalityLevel > 0.6f) styleNotes.Add("formal");
@@ -229,28 +246,146 @@ namespace TheSecondSeat.PersonaGeneration
             else if (style.verbosity < 0.4f) styleNotes.Add("brief");
             if (style.humorLevel > 0.5f) styleNotes.Add("humorous");
             if (style.sarcasmLevel > 0.5f) styleNotes.Add("sarcastic");
+            string styleNotesStr = styleNotes.Count > 0 ? string.Join(", ", styleNotes) : "";
             
-            if (styleNotes.Count > 0)
+            // Compact 指令
+            string compactInstruction = PromptLoader.Load("Compact_Instruction");
+            if (compactInstruction.StartsWith("[Error:")) compactInstruction = "";
+            
+            // 3. 替换占位符
+            return template
+                .Replace("{{Language_Instruction}}", GetLanguageInstruction())
+                .Replace("{{NarratorName}}", displayName)
+                .Replace("{{Biography}}", biography)
+                .Replace("{{Philosophy}}", philosophy)
+                .Replace("{{Affinity}}", affinity)
+                .Replace("{{StyleNotes}}", styleNotesStr)
+                .Replace("{{Compact_Instruction}}", compactInstruction);
+        }
+        
+        /// <summary>
+        /// Compact System Prompt 的硬编码回退版本
+        /// </summary>
+        private static string GenerateCompactSystemPromptFallback(
+            NarratorPersonaDef personaDef,
+            PersonaAnalysisResult analysis,
+            StorytellerAgent agent,
+            AIDifficultyMode difficultyMode)
+        {
+            var sb = new StringBuilder();
+            
+            sb.AppendLine(GetLanguageInstruction());
+            sb.AppendLine();
+            
+            string displayName = !string.IsNullOrEmpty(personaDef.label) 
+                ? personaDef.label 
+                : personaDef.narratorName;
+            
+            sb.AppendLine($"You are **{displayName}**.");
+            if (!string.IsNullOrEmpty(personaDef.biography))
             {
-                sb.AppendLine($"Style: {string.Join(", ", styleNotes)}");
+                string shortBio = personaDef.biography.Length > 200 
+                    ? personaDef.biography.Substring(0, 200) + "..." 
+                    : personaDef.biography;
+                sb.AppendLine(shortBio);
             }
             sb.AppendLine();
             
-            // 输出格式（简化）
-            // ⭐ v1.6.78: 读取 Compact_Instruction.txt，移除硬编码
-            string compactInstruction = PromptLoader.Load("Compact_Instruction");
-            if (!string.IsNullOrEmpty(compactInstruction))
+            if (difficultyMode != AIDifficultyMode.Engineer)
             {
-                sb.AppendLine(compactInstruction);
-            }
-            else
-            {
-                // Fallback (English default)
-                sb.AppendLine("Format: (action) dialogue. Use first person for speech, third person for actions.");
-                sb.AppendLine("Example: (nods) I understand your concern.");
+                sb.AppendLine($"Affinity: {agent.affinity:F0}/100");
             }
             
+            sb.AppendLine("Format: (action) dialogue.");
+            
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// ⭐ v1.9.2: 生成 Event Director 专用 Prompt
+        /// 专注于决策逻辑，剥离对话指令，包含完整人格核心
+        /// </summary>
+        public static string GenerateEventDirectorPrompt(
+            NarratorPersonaDef personaDef,
+            PersonaAnalysisResult analysis,
+            StorytellerAgent agent,
+            AIDifficultyMode difficultyMode = AIDifficultyMode.Assistant)
+        {
+            // 尝试加载外部模板
+            string template = PromptLoader.Load("SystemPrompt_EventDirector");
+            if (string.IsNullOrEmpty(template))
+            {
+                // 默认模板 (Hardcoded Fallback)
+                template = @"You are {{NarratorName}}, the Event Director of this RimWorld story.
+Your role is NOT to chat, but to ACT. You are the Dungeon Master.
+
+{{IdentitySection}}
+
+{{PersonalitySection}}
+
+RELATIONSHIP & DIFFICULTY CONTEXT:
+Current Affinity: {{Affinity}}/100
+Difficulty Mode: {{DifficultyMode}}
+
+1. AFFINITY determines your WILLINGNESS TO HELP:
+   - High Affinity (>60): You are eager to assist. You proactively offer help and ensure the player's success.
+   - Low Affinity (<-20): You are reluctant. You may refuse to help, or provide aid with a heavy cost (""Monkey's Paw"").
+   - Neutral: You are transactional. You help if it benefits the story or if paid.
+
+2. PERSONALITY determines your INTERVENTION STYLE:
+   - Dominant/Cruel: You force events upon the player. You believe you know what's best (even if it hurts).
+   - Submissive/Kind: You wait for the player to struggle before stepping in. You are gentle and reactive.
+
+3. DIFFICULTY MODE determines your GOAL:
+   - Assistant: Your goal is the colony's SURVIVAL.
+   - Challenger: Your goal is DRAMA and CHALLENGE.
+
+DECISION LOGIC:
+1. Analyze the MACRO STATE (Wealth, Population, Resources, Threats).
+2. Check RECENT EVENTS. Don't overwhelm the player unless you are Dominant/Cruel.
+3. Combine Affinity + Personality + Difficulty to decide:
+   - (Assistant + Low Affinity): ""I could save them, but they haven't earned it."" -> Do Nothing or Minor Aid.
+   - (Challenger + High Affinity): ""I'll test them hard, but I won't let them die."" -> Fair but Tough Challenge.
+4. Decide on an ACTION (Quest, Incident, or Nothing).
+
+AVAILABLE ACTIONS (Examples):
+- 'SpawnRaid': Trigger a raid (use sparingly, only if threat is low).
+- 'GiveQuest': Generate a quest (Trade, Item Stash, Rescue).
+- 'ResourceDrop': Drop pods with resources (Food, Medicine, Weapons).
+- 'WeatherChange': Change weather (Rain, Fog, Heatwave).
+- 'DoNothing': If the colony is busy or you want to observe.
+
+OUTPUT FORMAT:
+You must respond in strictly valid JSON. No markdown, no conversational text.
+{
+  ""thought"": ""Analysis of the situation and why you chose this action based on your personality."",
+  ""action"": ""ActionName"",
+  ""parameters"": { ""key"": ""value"" }
+}
+";
+            }
+
+            // 准备 Section
+            string identitySection = IdentitySection.Generate(personaDef, agent, AIDifficultyMode.Assistant);
+            string personalitySection = PersonalitySection.Generate(analysis, personaDef);
+
+            // 替换占位符
+            // 1. 模块化组件替换
+            template = template
+                .Replace("{{Event_Identity}}", PromptLoader.Load("Event_Identity"))
+                .Replace("{{Event_Context}}", PromptLoader.Load("Event_Context"))
+                .Replace("{{Event_Logic}}", PromptLoader.Load("Event_Logic"))
+                .Replace("{{Event_Actions}}", PromptLoader.Load("Event_Actions"))
+                .Replace("{{Event_Format}}", PromptLoader.Load("Event_Format"));
+
+            // 2. 动态变量替换
+            return template
+                .Replace("{{Language_Instruction}}", GetLanguageInstruction()) // ⭐ v1.9.3: 注入语言指令
+                .Replace("{{NarratorName}}", personaDef.narratorName)
+                .Replace("{{IdentitySection}}", identitySection)
+                .Replace("{{PersonalitySection}}", personalitySection)
+                .Replace("{{Affinity}}", agent.affinity.ToString("F0"))
+                .Replace("{{DifficultyMode}}", difficultyMode.ToString());
         }
     }
 }

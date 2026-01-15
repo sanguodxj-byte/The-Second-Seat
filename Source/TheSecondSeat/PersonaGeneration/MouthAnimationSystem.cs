@@ -28,18 +28,21 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// ✅ v1.6.74: 平滑因子（Viseme 过渡速度）
+        /// ⭐ v1.12.1: 降低平滑因子以提高响应速度 (0.15f -> 0.05f)
         /// </summary>
-        private const float SMOOTHING_FACTOR = 0.15f;
+        private const float SMOOTHING_FACTOR = 0.05f;
         
         /// <summary>
         /// ✅ v1.6.74: 最小保持时间（秒）
+        /// ⭐ v1.12.1: 缩短保持时间以允许更快的口型变化 (0.12f -> 0.05f)
         /// </summary>
-        private const float MIN_HOLD_TIME = 0.12f;
+        private const float MIN_HOLD_TIME = 0.05f;
         
         /// <summary>
         /// ✅ v1.6.74: Viseme 切换间隔（秒）
+        /// ⭐ v1.12.1: 缩短切换间隔 (0.1f -> 0.05f)
         /// </summary>
-        private const float VISEME_CHANGE_INTERVAL = 0.1f;
+        private const float VISEME_CHANGE_INTERVAL = 0.05f;
         
         /// <summary>
         /// ⭐ v1.6.74: 是否启用音素映射模式（默认 false，使用开合度模拟）
@@ -139,6 +142,7 @@ namespace TheSecondSeat.PersonaGeneration
         /// 支持两种模式：
         /// 1. 音素模式（EnablePhonemeMode=true）：使用 TTS 音素数据
         /// 2. 模拟模式（EnablePhonemeMode=false）：使用正弦波开合度
+        /// ⭐ v1.13.0: 添加详细诊断日志
         /// </summary>
         /// <param name="defName">人格 DefName</param>
         /// <returns>嘴部图层名称（如果不需要则返回 null）</returns>
@@ -148,6 +152,9 @@ namespace TheSecondSeat.PersonaGeneration
             {
                 return null;
             }
+            
+            // ⭐ v1.13.0: 诊断日志（每 120 帧输出一次）
+            bool shouldLog = Prefs.DevMode && Time.frameCount % 120 == 0;
             
             // 获取或创建状态
             if (!speakingStates.TryGetValue(defName, out var state))
@@ -185,6 +192,15 @@ namespace TheSecondSeat.PersonaGeneration
             try
             {
                 isPlayingTTS = TTS.TTSAudioPlayer.IsSpeaking(defName);
+                
+                // ⭐ v1.13.0: 检查是否有任何人在说话（用于诊断）
+                bool anyoneSpeaking = TTS.TTSAudioPlayer.IsAnyoneSpeaking();
+                string currentSpeaker = TTS.TTSAudioPlayer.GetCurrentSpeaker();
+                
+                if (shouldLog)
+                {
+                    Log.Message($"[MouthAnim-DEBUG] defName={defName}, isPlayingTTS={isPlayingTTS}, anyoneSpeaking={anyoneSpeaking}, currentSpeaker={currentSpeaker}");
+                }
             }
             catch (System.Exception ex)
             {
@@ -197,21 +213,31 @@ namespace TheSecondSeat.PersonaGeneration
             
             // ⭐ v1.6.74: 根据模式选择处理方式
             // ⭐ v1.8.6: 优先使用实例级别的标志，其次是全局标志
+            string result;
             if (state.usePhonemeMode || EnablePhonemeMode)
             {
                 // 音素模式：使用 TTS 音素数据（精确口型）
-                return GetMouthLayerNameFromPhoneme(state, defName, isPlayingTTS);
+                result = GetMouthLayerNameFromPhoneme(state, defName, isPlayingTTS);
             }
             else
             {
                 // 模拟模式：使用正弦波开合度（旧版逻辑）
-                return GetMouthLayerNameFromOpenness(state, defName, isPlayingTTS);
+                result = GetMouthLayerNameFromOpenness(state, defName, isPlayingTTS);
             }
+            
+            // ⭐ v1.13.0: 记录最终返回的嘴型
+            if (shouldLog)
+            {
+                Log.Message($"[MouthAnim-DEBUG] → returning: {result ?? "null"} (openness={state.currentOpenness:F2})");
+            }
+            
+            return result;
         }
         
         /// <summary>
         /// ⭐ v1.6.74: 音素模式 - 从 TTS 音素数据获取嘴型
         /// ⭐ v1.7.6: 添加 visemeQueue null 安全检查
+        /// ⭐ v1.11.0: 支持 RenderTreeDef 配置化纹理映射
         /// </summary>
         private static string GetMouthLayerNameFromPhoneme(SpeakingState state, string defName, bool isPlayingTTS)
         {
@@ -263,8 +289,18 @@ namespace TheSecondSeat.PersonaGeneration
                 }
             }
             
-            // 返回对应的纹理名称
-            string layerName = VisemeHelper.VisemeToTextureName(state.currentViseme);
+            // ⭐ v1.11.0: 优先使用 RenderTreeDef 配置化映射
+            string layerName;
+            var renderTree = RenderTreeDefManager.GetRenderTree(defName);
+            if (renderTree != null)
+            {
+                layerName = renderTree.GetVisemeTextureName(state.currentViseme);
+            }
+            else
+            {
+                // 回退到硬编码（向后兼容）
+                layerName = VisemeHelper.VisemeToTextureName(state.currentViseme);
+            }
             
             if (layerName != state.lockedMouthLayer)
             {
@@ -281,7 +317,7 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// ⭐ v1.6.74: 模拟模式 - 使用音频频谱分析（FFT）计算开合度
-        /// 替代旧的正弦波模拟，实现更真实的口型同步
+        /// ⭐ v1.12.0: 简化 RMS 处理，降低阈值，确保嘴型能够响应
         /// </summary>
         private static string GetMouthLayerNameFromOpenness(SpeakingState state, string defName, bool isPlayingTTS)
         {
@@ -291,34 +327,45 @@ namespace TheSecondSeat.PersonaGeneration
             if (isPlayingTTS)
             {
                 state.isSpeaking = true;
+                state.speakingTime += Time.deltaTime;
                 
                 // ⭐ v1.9.0: 检查是否有外部输入的开合度 (Azure 0-1)
-                // 如果在过去 0.2 秒内接收到数据，则使用外部数据
                 if (Time.time - state.lastExternalOpennessTime < 0.2f)
                 {
                     targetOpenness = state.externalOpenness;
-                    // 外部数据通常更精确，稍微减少平滑延迟
                     state.targetRawOpenness = targetOpenness;
                 }
                 else
                 {
-                    // ⭐ v1.9.5: 使用 FFT 频谱分析替代正弦波
+                    // ⭐ v1.12.0: 获取音频 RMS
                     float rms = TTS.TTSAudioPlayer.GetAudioRMS(defName);
                     
-                    // 增强动态范围：将 RMS 映射到 0-1 开合度
-                    // 通常 RMS 值较小 (0.01~0.3)，需要放大
-                    // 使用非线性映射增强小音量的表现
-                    float amplifiedRMS = Mathf.Clamp01(rms * 5f);
-                    targetOpenness = Mathf.Pow(amplifiedRMS, 0.8f); // 伽马校正，使小声音也能张嘴
+                    // ⭐ v1.12.2: 移除 RMS 模拟，使用真实值
+                    // 直接线性放大：RMS * 5 映射到开合度
+                    float amplifiedRMS = rms * 5f;
+                    targetOpenness = Mathf.Clamp01(amplifiedRMS);
                     
-                    // 添加微小的随机扰动，使保持音更自然
-                    float noise = (Mathf.PerlinNoise(Time.time * 20f, 0f) - 0.5f) * 0.1f;
-                    targetOpenness = Mathf.Clamp01(targetOpenness + noise);
+                    // 添加微小的随机扰动 (仅在有声音时)
+                    if (targetOpenness > 0.01f)
+                    {
+                        float noise = (Mathf.PerlinNoise(Time.time * 20f, 0f) - 0.5f) * 0.1f;
+                        targetOpenness = Mathf.Clamp01(targetOpenness + noise);
+                    }
+
+                    // 诊断日志 (当 RMS 异常低时警告)
+                    if (rms < 0.0001f && state.speakingTime > 0.5f && Time.frameCount % 60 == 0)
+                    {
+                        Log.Warning($"[MouthAnimationSystem] RMS is effectively zero ({rms}) while speaking. AudioSource data might be missing.");
+                    }
                     
                     state.targetRawOpenness = targetOpenness;
                 }
                 
-                // 日志已静默：TTS播放时的开合度
+                // ⭐ v1.12.0: 诊断日志
+                if (Prefs.DevMode && Time.frameCount % 60 == 0)
+                {
+                    Log.Message($"[MouthAnim] {defName}: TTS=true, targetOpenness={targetOpenness:F3}, currentOpenness={state.currentOpenness:F3}");
+                }
             }
             else
             {
@@ -334,33 +381,25 @@ namespace TheSecondSeat.PersonaGeneration
                     // 日志已静默：TTS停止（模拟模式）
                 }
                 
-                // 根据表情获取静态开合度
-                targetOpenness = GetMouthOpennessForExpression(state.currentExpression);
-                state.targetRawOpenness = targetOpenness;
+                // ⭐ v1.11.0: TTS停止时返回null，交由PortraitDrawer使用静态表情嘴型
+                return null;
             }
             
             // 平滑阻尼算法
-            if (isPlayingTTS)
+            // 检测突变（大声说话时）
+            float opennessDelta = Mathf.Abs(state.targetRawOpenness - state.currentOpenness);
+            // ⭐ v1.12.1: 降低突变判定阈值，提高响应灵敏度 (0.5f -> 0.2f)
+            bool isSuddenChange = opennessDelta > 0.2f;
+            
+            if (isSuddenChange)
             {
-                // 检测突变（大声说话时）
-                float opennessDelta = Mathf.Abs(state.targetRawOpenness - state.currentOpenness);
-                bool isSuddenChange = opennessDelta > 0.5f;
-                
-                if (isSuddenChange)
-                {
-                    // 突变：快速跟随
-                    state.currentOpenness = Mathf.Lerp(state.currentOpenness, state.targetRawOpenness, SMOOTHING_FACTOR * 3f);
-                }
-                else
-                {
-                    // 正常平滑过渡
-                    state.currentOpenness = Mathf.Lerp(state.currentOpenness, state.targetRawOpenness, SMOOTHING_FACTOR);
-                }
+                // 突变时加快响应 (20f -> 25f)
+                state.currentOpenness = Mathf.Lerp(state.currentOpenness, state.targetRawOpenness, Time.deltaTime * 25f);
             }
             else
             {
-                // TTS 停止后：直接设置为目标值
-                state.currentOpenness = targetOpenness;
+                // 正常情况平滑过渡
+                state.currentOpenness = Mathf.Lerp(state.currentOpenness, state.targetRawOpenness, Time.deltaTime / SMOOTHING_FACTOR);
             }
             
             // 应用闭嘴阈值（过滤噪音）
@@ -370,10 +409,21 @@ namespace TheSecondSeat.PersonaGeneration
             }
             
             // ⭐ v1.6.74: 从开合度转换为 Viseme 编码
-            VisemeCode viseme = VisemeHelper.OpennessToViseme(state.currentOpenness);
-            
-            // 根据 Viseme 返回对应的嘴部图层名称
-            string layerName = VisemeHelper.VisemeToTextureName(viseme);
+            // ⭐ v1.11.0: 优先使用 RenderTreeDef 配置化映射
+            VisemeCode viseme;
+            string layerName;
+            var renderTree = RenderTreeDefManager.GetRenderTree(defName);
+            if (renderTree != null)
+            {
+                viseme = renderTree.GetVisemeFromOpenness(state.currentOpenness);
+                layerName = renderTree.GetVisemeTextureName(viseme);
+            }
+            else
+            {
+                // 回退到硬编码（向后兼容）
+                viseme = VisemeHelper.OpennessToViseme(state.currentOpenness);
+                layerName = VisemeHelper.VisemeToTextureName(viseme);
+            }
             
             // 最小保持时间机制
             float currentTime = Time.time;
@@ -382,8 +432,8 @@ namespace TheSecondSeat.PersonaGeneration
             if (!canChange && state.lockedMouthLayer != null)
             {
                 // 除非是突变，否则保持当前嘴型
-                float opennessDelta = Mathf.Abs(state.targetRawOpenness - state.currentOpenness);
-                if (opennessDelta < 0.5f)
+                float currentDelta = Mathf.Abs(state.targetRawOpenness - state.currentOpenness);
+                if (currentDelta < 0.5f)
                 {
                     layerName = state.lockedMouthLayer;
                 }
@@ -486,6 +536,41 @@ namespace TheSecondSeat.PersonaGeneration
                 ExpressionType.Neutral => 0f,      // 平静：闭嘴
                 _ => 0f
             };
+        }
+        
+        /// <summary>
+        /// ⭐ v1.9.8: 获取静态表情嘴部图层名（支持变体）
+        /// 用于 TTS 未播放时，返回带变体的表情嘴型
+        /// </summary>
+        /// <param name="defName">人格 DefName</param>
+        /// <returns>嘴部图层名称（如 happy1_mouth, sad2_mouth）</returns>
+        public static string GetStaticMouthLayerName(string defName)
+        {
+            if (string.IsNullOrEmpty(defName)) return "Closed_mouth";
+            
+            var expressionState = ExpressionSystem.GetExpressionState(defName);
+            if (expressionState == null) return "Closed_mouth";
+            
+            var expression = expressionState.CurrentExpression;
+            
+            // Neutral 表情使用闭嘴
+            if (expression == ExpressionType.Neutral)
+            {
+                return "Closed_mouth";
+            }
+            
+            // 获取变体编号
+            int variant = expressionState.Intensity > 0 ? expressionState.Intensity : expressionState.CurrentVariant;
+            string exprName = expression.ToString().ToLower();
+            
+            if (variant <= 0)
+            {
+                // 基础嘴型：happy_mouth, sad_mouth 等
+                return $"{exprName}_mouth";
+            }
+            
+            // 变体嘴型：happy1_mouth, sad2_mouth 等
+            return $"{exprName}{variant}_mouth";
         }
         
         /// <summary>

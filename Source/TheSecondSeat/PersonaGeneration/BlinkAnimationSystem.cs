@@ -92,7 +92,7 @@ namespace TheSecondSeat.PersonaGeneration
                 }
             }
             
-            // ? 返回眼睛层名称
+            // ✅ 返回眼睛层名称
             if (state.isBlinking && state.blinkProgress > 0.3f && state.blinkProgress < 0.7f)
             {
                 // 眨眼过程中：闭眼
@@ -100,23 +100,75 @@ namespace TheSecondSeat.PersonaGeneration
             }
             else
             {
-                // ? 睁眼：根据表情选择对应的eyes
-                return GetEyesForExpression(state.currentExpression);
+                // ✅ v1.6.81: 睁眼时根据表情+变体选择对应的eyes
+                return GetEyesForExpression(personaDefName, state.currentExpression);
             }
         }
         
         /// <summary>
-        /// ? v1.6.33: 根据表情获取对应的眼睛层
+        /// ✅ v1.6.81: 根据表情获取对应的眼睛层
+        /// 支持变体：happy_eyes, happy1_eyes, happy2_eyes, happy3_eyes 等
+        /// 添加空值防护和图层存在性检查
         /// </summary>
-        private static string GetEyesForExpression(ExpressionType expression)
+        private static string GetEyesForExpression(string personaDefName, ExpressionType expression)
+        {
+            // ✅ 空值防护
+            if (string.IsNullOrEmpty(personaDefName))
+            {
+                return GetBaseEyesName(expression);
+            }
+            
+            // 获取变体信息
+            var expressionState = ExpressionSystem.GetExpressionState(personaDefName);
+            int variant = 0;
+            
+            if (expressionState != null)
+            {
+                // 优先使用 Intensity，如果没有则使用 CurrentVariant
+                variant = expressionState.Intensity > 0 ? expressionState.Intensity : expressionState.CurrentVariant;
+            }
+            
+            // Neutral 表情不使用变体
+            if (expression == ExpressionType.Neutral)
+            {
+                return null; // Neutral 表情使用 Base 图层
+            }
+            
+            // 获取基础眼睛名称
+            string baseName = GetBaseEyesName(expression);
+            
+            // 如果没有变体（0），返回基础名称
+            if (variant <= 0)
+            {
+                return baseName;
+            }
+            
+            // 构建变体名称：如 happy1_eyes, sad2_eyes
+            string expressionName = expression.ToString().ToLower();
+            return $"{expressionName}{variant}_eyes";
+        }
+        
+        /// <summary>
+        /// ✅ 获取基础眼睛层名称（不带变体编号）
+        /// </summary>
+        private static string GetBaseEyesName(ExpressionType expression)
         {
             return expression switch
             {
+                ExpressionType.Neutral => null, // Neutral 表情使用 Base 图层
                 ExpressionType.Happy => "happy_eyes",
                 ExpressionType.Sad => "sad_eyes",
                 ExpressionType.Angry => "angry_eyes",
                 ExpressionType.Confused => "confused_eyes",
-                _ => "happy_eyes"  // 默认使用happy_eyes（作为通用睁眼状态）
+                ExpressionType.Shy => "shy_eyes",
+                ExpressionType.Surprised => "surprised_eyes",
+                ExpressionType.Smug => "smug_eyes",
+                ExpressionType.Worried => "worried_eyes",
+                ExpressionType.Disappointed => "disappointed_eyes",
+                ExpressionType.Thoughtful => "thoughtful_eyes",
+                ExpressionType.Annoyed => "annoyed_eyes",
+                ExpressionType.Playful => "playful_eyes",
+                _ => null  // 默认使用 Base 图层
             };
         }
         

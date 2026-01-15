@@ -87,6 +87,9 @@ namespace TheSecondSeat.Settings
         // 主动对话设置
         public bool enableProactiveDialogue = true;
 
+        // 生物节律系统
+        public bool enableBioRhythm = true;
+
         // 对话框位置 - 使用四个独立的 float 字段避免区域设置兼容性问题
         public float dialogueRectX = 0f;
         public float dialogueRectY = 0f;
@@ -186,6 +189,9 @@ namespace TheSecondSeat.Settings
             
             // 主动对话设置
             Scribe_Values.Look(ref enableProactiveDialogue, "enableProactiveDialogue", true);
+            
+            // 生物节律系统
+            Scribe_Values.Look(ref enableBioRhythm, "enableBioRhythm", true);
             
             // 对话框位置 - 分别保存四个值避免 Rect 序列化的区域设置问题
             Scribe_Values.Look(ref dialogueRectX, "dialogueRectX", 0f);

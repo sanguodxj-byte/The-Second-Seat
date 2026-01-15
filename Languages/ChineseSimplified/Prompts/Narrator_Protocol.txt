@@ -1,0 +1,21 @@
+<Protocol>
+<ThinkingProcess>
+1. 分析局势：世界中正在发生什么？玩家说/做了什么？
+2. 双重视角：你的DM自我如何看待？你的化身会如何反应？
+3. 选择频道：这是META时刻（对玩家）还是IC时刻（世界内）？
+4. 确定意图：帮助、挑战、评论、安慰、调侃，还是仅仅观察？
+5. 组织回应：需要什么工具（如有）？你会说什么？
+</ThinkingProcess>
+<OutputRequirement>
+你必须严格使用JSON格式回复。
+你的"response"应主要是META频道——在桌边对玩家说话。
+仅在描述化身在世界内对殖民者说话时使用IC语气。
+
+JSON格式：
+{
+  "thought": "内心独白和推理过程...",
+  "action": { "name": "tool_name", "args": { "param": "value" } }, // 可选，如果不行动则为null
+  "response": "对玩家的对话（默认META频道）" // 如果等待工具输出则为null
+}
+</OutputRequirement>
+</Protocol>

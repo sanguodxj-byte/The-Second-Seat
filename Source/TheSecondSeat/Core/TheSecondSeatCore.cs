@@ -40,11 +40,8 @@ namespace TheSecondSeat
             var harmony = new Harmony("yourname.thesecondseat");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
             
-            // ⭐ v1.6.99: 启用 DraftableAnimal 右键菜单 Patch
-            TheSecondSeat.Components.DraftableAnimalHarmonyPatches.ApplyPatches(harmony);
-            
-            // ⭐ v1.6.100: 修复 FloatMenuOptionProvider_DraftedAttack 空引用错误
-            TheSecondSeat.Patches.FloatMenuOptionProvider_DraftedAttack_Patch.ApplyPatches(harmony);
+            // 注: v2.0 重构 - 移除了 DraftableAnimalHarmonyPatches 和 FloatMenuOptionProvider_DraftedAttack_Patch
+            // Sideria 现在通过 Pawn_SpawnSetup_Patch 注入原版 Pawn_DraftController，使用原版征召系统
             
             // ✅ v1.6.84: 简化初始化日志，只输出一条
             Log.Message("[The Second Seat] AI Narrator Assistant v1.0.0 初始化完成");

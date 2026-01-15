@@ -394,6 +394,27 @@ namespace TheSecondSeat.PersonaGeneration
                 sb.AppendLine();
             }
             
+            // ⭐ v1.9.3: 导出 personalityTags
+            if (persona.personalityTags != null && persona.personalityTags.Count > 0)
+            {
+                sb.AppendLine("    <personalityTags>");
+                foreach (var tag in persona.personalityTags)
+                {
+                    sb.AppendLine($"      <li>{EscapeXml(tag)}</li>");
+                }
+                sb.AppendLine("    </personalityTags>");
+                sb.AppendLine();
+            }
+            
+            // ⭐ v1.9.3: 导出 customSystemPrompt
+            if (!string.IsNullOrEmpty(persona.customSystemPrompt))
+            {
+                sb.AppendLine("    <customSystemPrompt>");
+                sb.AppendLine(IndentText(EscapeXml(persona.customSystemPrompt), 6));
+                sb.AppendLine("    </customSystemPrompt>");
+                sb.AppendLine();
+            }
+            
             // ? 对话风格
             if (persona.dialogueStyle != null)
             {
@@ -463,6 +484,7 @@ namespace TheSecondSeat.PersonaGeneration
         /// <summary>
         /// 保存人格定义XML文件
         /// ✅ v1.6.71: 使用 PersonaFolderManager，支持子文件夹隔离
+        /// ⭐ v1.9.4: 智能搜索现有文件并覆盖，避免重复文件导致 Def 冲突
         /// </summary>
         public static string SavePersonaDefXml(string defName, string xmlContent)
         {
@@ -480,16 +502,61 @@ namespace TheSecondSeat.PersonaGeneration
                     return null;
                 }
                 
-                // 生成文件名
                 string fileName = $"{SanitizeFileName(defName)}.xml";
-                string filePath = Path.Combine(defsDir, fileName);
+                string targetPath = Path.Combine(defsDir, fileName);
+
+                // ⭐ 智能搜索：检查 Defs 目录下（递归）是否存在同名文件或包含该 Def 的文件
+                // 如果存在，优先覆盖现有文件，保持原有目录结构
+                try
+                {
+                    // 1. 首先尝试基于内容的搜索（最准确，但稍慢）
+                    string foundFile = FindFileContainingDef(defsDir, defName);
+                    
+                    if (!string.IsNullOrEmpty(foundFile))
+                    {
+                        targetPath = foundFile;
+                        Log.Message($"[PersonaDefExporter] 基于内容找到现有文件，将覆盖: {targetPath}");
+                    }
+                    else
+                    {
+                        // 2. 如果没找到内容匹配，尝试文件名匹配
+                        string[] existingFiles = Directory.GetFiles(defsDir, fileName, SearchOption.AllDirectories);
+                        if (existingFiles.Length > 0)
+                        {
+                            targetPath = existingFiles[0];
+                            Log.Message($"[PersonaDefExporter] 基于文件名找到现有文件，将覆盖: {targetPath}");
+                        }
+                        else
+                        {
+                            // 3. 如果都没找到，但存在以 personaName 命名的子目录，建议放入该子目录
+                            // 例如 Defs/Sideria/Sideria.xml 而不是 Defs/Sideria.xml
+                            string personaSubDir = Path.Combine(defsDir, personaName);
+                            if (Directory.Exists(personaSubDir))
+                            {
+                                targetPath = Path.Combine(personaSubDir, fileName);
+                                Log.Message($"[PersonaDefExporter] 未找到现有文件，但存在子目录，将保存到: {targetPath}");
+                            }
+                        }
+                    }
+                }
+                catch (Exception searchEx)
+                {
+                    Log.Warning($"[PersonaDefExporter] 搜索现有文件失败，将使用默认路径: {searchEx.Message}");
+                }
                 
                 // 保存文件（UTF-8编码，无BOM）
-                File.WriteAllText(filePath, xmlContent, new UTF8Encoding(false));
+                // 确保目标目录存在（如果是新路径）
+                string targetDir = Path.GetDirectoryName(targetPath);
+                if (!Directory.Exists(targetDir))
+                {
+                    Directory.CreateDirectory(targetDir);
+                }
+
+                File.WriteAllText(targetPath, xmlContent, new UTF8Encoding(false));
                 
-                Log.Message($"[PersonaDefExporter] 已保存人格定义: {filePath}");
+                Log.Message($"[PersonaDefExporter] 已保存人格定义: {targetPath}");
                 
-                return filePath;
+                return targetPath;
             }
             catch (Exception ex)
             {
@@ -498,6 +565,38 @@ namespace TheSecondSeat.PersonaGeneration
             }
         }
         
+        /// <summary>
+        /// 在指定目录递归查找包含特定 defName 的 XML 文件
+        /// </summary>
+        private static string FindFileContainingDef(string directory, string defName)
+        {
+            if (!Directory.Exists(directory)) return null;
+
+            // 获取所有 XML 文件
+            string[] xmlFiles = Directory.GetFiles(directory, "*.xml", SearchOption.AllDirectories);
+            string searchPattern = $"<defName>{defName}</defName>";
+
+            foreach (string file in xmlFiles)
+            {
+                try
+                {
+                    // 简单读取文件内容查找字符串，避免完全解析 XML 的开销
+                    // 对于大型 Def 库，这比 XDocument.Load 快得多
+                    string content = File.ReadAllText(file);
+                    if (content.Contains(searchPattern))
+                    {
+                        return file;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning($"[PersonaDefExporter] 无法读取文件 {file}: {ex.Message}");
+                }
+            }
+
+            return null;
+        }
+
         /// <summary>
         /// 清理文件名中的非法字符
         /// </summary>

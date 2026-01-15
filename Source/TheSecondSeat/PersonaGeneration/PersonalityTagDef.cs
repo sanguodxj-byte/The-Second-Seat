@@ -186,6 +186,11 @@ namespace TheSecondSeat.PersonaGeneration
         public float? verbosity;
         public float? humorLevel;
         public float? sarcasmLevel;
+
+        // 标点符号偏好
+        public bool? useEmoticons;
+        public bool? useEllipsis;
+        public bool? useExclamation;
         
         // 特殊行为参数
         public float? possessiveness;      // 占有欲（Yandere）
@@ -214,6 +219,15 @@ namespace TheSecondSeat.PersonaGeneration
             
             if (sarcasmLevel.HasValue)
                 style.sarcasmLevel = sarcasmLevel.Value;
+
+            if (useEmoticons.HasValue)
+                style.useEmoticons = useEmoticons.Value;
+
+            if (useEllipsis.HasValue)
+                style.useEllipsis = useEllipsis.Value;
+
+            if (useExclamation.HasValue)
+                style.useExclamation = useExclamation.Value;
         }
     }
 }

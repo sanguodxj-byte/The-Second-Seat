@@ -9,6 +9,7 @@ using TheSecondSeat.PersonaGeneration;
 using TheSecondSeat.RimAgent;
 using TheSecondSeat.Monitoring;
 using UnityEngine;
+using Newtonsoft.Json;
 
 namespace TheSecondSeat.Narrator
 {
@@ -16,10 +17,15 @@ namespace TheSecondSeat.Narrator
     /// Manages the AI narrator's favorability and state
     /// ⭐ v1.6.65: 集成 RimAgent 系统
     /// </summary>
-    public class NarratorManager : GameComponent
+    public partial class NarratorManager : GameComponent
     {
-        // ⭐ v1.6.65: RimAgent 实例
+        // ⭐ v1.6.65: RimAgent 实例 (Narrator - 负责对话)
         private RimAgent.RimAgent narratorAgent;
+
+        // ⭐ v1.9.2: Event Director Agent (DM - 负责行动)
+        private RimAgent.RimAgent eventAgent;
+        private float lastEventCheckRealTime = 0f;
+        private float nextEventCheckInterval = 300f; // 动态间隔
         
         // ? 好感度系统变量
         private float favorability = 0f; // -100 (仇恨) 到 +100 (挚爱/灵魂绑定/契)
@@ -96,15 +102,40 @@ namespace TheSecondSeat.Narrator
         /// <summary>
         /// ⭐ v1.6.65: 初始化 RimAgent
         /// ✅ v1.6.76: 修复工具注册 - 同时注册到RimAgentTools和Agent
+        /// ⭐ v1.9.2: 同时初始化 EventDirector
         /// </summary>
         private void InitializeRimAgent()
         {
             try
             {
                 var provider = LLMProviderFactory.GetProvider("auto");
+                
+                // 1. 初始化 Narrator Agent (对话)
                 narratorAgent = new RimAgent.RimAgent(
                     "main-narrator",
                     GetDynamicSystemPrompt(),
+                    provider
+                );
+
+                // 2. 初始化 Event Director Agent (行动)
+                // 注意：这里需要先确保 storytellerAgent 已初始化
+                if (storytellerAgent == null) storytellerAgent = new StorytellerAgent();
+                
+                // 获取当前难度模式
+                var modSettings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?
+                    .GetSettings<Settings.TheSecondSeatSettings>();
+                var difficultyMode = modSettings?.difficultyMode ?? AIDifficultyMode.Assistant;
+
+                string eventPrompt = SystemPromptGenerator.GenerateEventDirectorPrompt(
+                    currentPersonaDef ?? DefDatabase<NarratorPersonaDef>.GetNamed("Cassandra_Classic"),
+                    currentAnalysis ?? new PersonaAnalysisResult(),
+                    storytellerAgent,
+                    difficultyMode
+                );
+
+                eventAgent = new RimAgent.RimAgent(
+                    "event-director",
+                    eventPrompt,
                     provider
                 );
                 
@@ -113,21 +144,34 @@ namespace TheSecondSeat.Narrator
                 var analyzeTool = new RimAgent.Tools.AnalyzeTool();
                 var commandTool = new RimAgent.Tools.CommandTool();
                 var personaDetailTool = new RimAgent.Tools.PersonaDetailTool();
+                var promptModifierTool = new RimAgent.Tools.PromptModifierTool();
+                var logReaderTool = new RimAgent.Tools.LogReaderTool();
+                var logAnalysisTool = new RimAgent.Tools.LogAnalysisTool();
+                var filePatcherTool = new RimAgent.Tools.FilePatcherTool();
                 
+                // 注册到全局库 (如果已存在会自动跳过或覆盖)
                 RimAgent.RimAgentTools.RegisterTool(searchTool.Name, searchTool);
                 RimAgent.RimAgentTools.RegisterTool(analyzeTool.Name, analyzeTool);
                 RimAgent.RimAgentTools.RegisterTool(commandTool.Name, commandTool);
                 RimAgent.RimAgentTools.RegisterTool(personaDetailTool.Name, personaDetailTool);
+                RimAgent.RimAgentTools.RegisterTool(promptModifierTool.Name, promptModifierTool);
+                RimAgent.RimAgentTools.RegisterTool(logReaderTool.Name, logReaderTool);
+                RimAgent.RimAgentTools.RegisterTool(logAnalysisTool.Name, logAnalysisTool);
+                RimAgent.RimAgentTools.RegisterTool(filePatcherTool.Name, filePatcherTool);
                 
-                // 注册工具到Agent（用于列表显示）
+                // 注册工具到 Narrator Agent
                 narratorAgent.RegisterTool(searchTool.Name);
                 narratorAgent.RegisterTool(analyzeTool.Name);
                 narratorAgent.RegisterTool(commandTool.Name);
                 narratorAgent.RegisterTool(personaDetailTool.Name);
-                
-                // ⭐ 修复：注册调试日志工具
-                narratorAgent.RegisterTool("read_log");
-                narratorAgent.RegisterTool("analyze_last_error");
+                narratorAgent.RegisterTool(promptModifierTool.Name);
+                narratorAgent.RegisterTool(logReaderTool.Name);
+                narratorAgent.RegisterTool(logAnalysisTool.Name);
+                narratorAgent.RegisterTool(filePatcherTool.Name);
+
+                // 注册工具到 Event Director Agent
+                // EventDirector 主要需要 CommandTool 来执行 Incident/Quest
+                eventAgent.RegisterTool(commandTool.Name);
                 
             }
             catch (Exception ex)
@@ -148,23 +192,10 @@ namespace TheSecondSeat.Narrator
                     InitializeRimAgent();
                 }
                 
-                // ⭐ v1.6.85: 动态获取游戏状态
-                Func<string> gameStateProvider = () => {
-                    try {
-                        // 注意：如果在后台线程调用，需要确保 CaptureSnapshotSafe 是线程安全的
-                        var snapshot = GameStateSnapshotUtility.CaptureSnapshotSafe();
-                        return GameStateSnapshotUtility.SnapshotToJson(snapshot);
-                    } catch (Exception ex) {
-                        Log.Warning($"[NarratorManager] Failed to capture game state: {ex.Message}");
-                        return "";
-                    }
-                };
-
                 // 使用 ConcurrentRequestManager 管理请求
                 var response = await ConcurrentRequestManager.Instance.EnqueueAsync(
                     async () => await narratorAgent.ExecuteAsync(
                         userInput,
-                        gameStateProvider, // 使用动态 provider
                         temperature: 0.7f,
                         maxTokens: 500
                     ),
@@ -264,6 +295,17 @@ namespace TheSecondSeat.Narrator
             if (currentAnalysis.DialogueStyle != null)
             {
                 storytellerAgent.dialogueStyle = currentAnalysis.DialogueStyle;
+            }
+            
+            // ⭐ v1.9.3: 初始化或重置性格标签
+            // 如果是新游戏/切换人格 (resetAffinity=true) 或者旧存档迁移 (activePersonalityTags=null)
+            if (resetAffinity || storytellerAgent.activePersonalityTags == null)
+            {
+                storytellerAgent.activePersonalityTags = new List<string>();
+                if (personaDef.personalityTags != null)
+                {
+                    storytellerAgent.activePersonalityTags.AddRange(personaDef.personalityTags);
+                }
             }
             
             // ⭐ v1.6.82: 只在非存档恢复时设置初始好感度
@@ -500,19 +542,31 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
             
             // ? 保存对话框位置 (修复：使用新的键名以避免旧存档格式错误导致的解析异常)
             // 旧的 "dialogueOverlayRect" 可能包含错误的格式 (x:..., y:...)，导致加载崩溃
-            // 改用 "dialogueOverlayRect_v2" 并手动处理
+            // 改用 "dialogueOverlayRect_v3" 并分别保存坐标，彻底解决格式问题
             if (Scribe.mode == LoadSaveMode.Saving && dialogueOverlayRect.HasValue)
             {
-                Rect r = dialogueOverlayRect.Value;
-                Scribe_Values.Look(ref r, "dialogueOverlayRect_v2");
+                float x = dialogueOverlayRect.Value.x;
+                float y = dialogueOverlayRect.Value.y;
+                float w = dialogueOverlayRect.Value.width;
+                float h = dialogueOverlayRect.Value.height;
+                
+                Scribe_Values.Look(ref x, "dialogueOverlayRect_x");
+                Scribe_Values.Look(ref y, "dialogueOverlayRect_y");
+                Scribe_Values.Look(ref w, "dialogueOverlayRect_w");
+                Scribe_Values.Look(ref h, "dialogueOverlayRect_h");
             }
             else if (Scribe.mode == LoadSaveMode.LoadingVars)
             {
-                Rect r = default;
-                Scribe_Values.Look(ref r, "dialogueOverlayRect_v2");
-                if (r != default)
+                // 尝试加载新格式 (v3)
+                float x = 0f, y = 0f, w = 0f, h = 0f;
+                Scribe_Values.Look(ref x, "dialogueOverlayRect_x", -9999f);
+                
+                if (x != -9999f)
                 {
-                    dialogueOverlayRect = r;
+                    Scribe_Values.Look(ref y, "dialogueOverlayRect_y");
+                    Scribe_Values.Look(ref w, "dialogueOverlayRect_w");
+                    Scribe_Values.Look(ref h, "dialogueOverlayRect_h");
+                    dialogueOverlayRect = new Rect(x, y, w, h);
                 }
             }
             
@@ -585,6 +639,37 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
                     PortraitLoader.CleanOldCache();
                     ExpressionSystem.CleanupOldStates();
                 }
+
+                // ? 随时间自然增长好感度 (每2小时 +0.05)
+                // 每天增加 0.6，非常缓慢
+                if (Find.TickManager.TicksGame % 5000 == 0)
+                {
+                    if (favorability < 100f)
+                    {
+                        // 静默增加，不记录到事件日志
+                        favorability = Mathf.Min(favorability + 0.05f, 100f);
+                        
+                        // 同步到 StorytellerAgent
+                        if (storytellerAgent != null)
+                        {
+                            storytellerAgent.affinity = favorability;
+                        }
+                    }
+                }
+
+                // ⭐ v1.9.2: Event Director 现实时间心跳检查
+                // 仅在地图加载且非暂停状态下检查
+                if (Time.realtimeSinceStartup - lastEventCheckRealTime > nextEventCheckInterval)
+                {
+                    lastEventCheckRealTime = Time.realtimeSinceStartup;
+                    
+                    // 设置下一次检查的随机波动 (4~8分钟)
+                    // 这样玩家无法预测 AI 何时会介入
+                    nextEventCheckInterval = UnityEngine.Random.Range(240f, 480f);
+                    
+                    // 异步触发，不阻塞主线程
+                    _ = ProcessEventTickAsync();
+                }
                 
                 // ? v1.6.84: 移除自动问候逻辑 - 统一由 NarratorController 处理
                 // 避免重复发送问候消息（之前 NarratorManager 和 NarratorController 各自触发一次）
@@ -593,6 +678,172 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
             {
                 // ✅ v1.6.82: 捕获所有异常，防止游戏崩溃
                 Log.Error($"[NarratorManager] GameComponentTick error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// ⭐ v1.9.2: Event Director 核心循环
+        /// 获取宏观状态 -> 决策 -> 执行 -> 清空历史
+        /// </summary>
+        private async Task ProcessEventTickAsync()
+        {
+            try
+            {
+                if (eventAgent == null) return;
+
+                // ⭐ 关键修复：每次执行前动态更新 System Prompt
+                // 确保 AI 知道最新的好感度、人格状态和难度设置
+                var modSettings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?
+                    .GetSettings<Settings.TheSecondSeatSettings>();
+                var difficultyMode = modSettings?.difficultyMode ?? AIDifficultyMode.Assistant;
+
+                eventAgent.SystemPrompt = SystemPromptGenerator.GenerateEventDirectorPrompt(
+                    currentPersonaDef ?? DefDatabase<NarratorPersonaDef>.GetNamed("Cassandra_Classic"),
+                    currentAnalysis ?? new PersonaAnalysisResult(),
+                    storytellerAgent,
+                    difficultyMode
+                );
+
+                // 1. 获取宏观状态 (Macro State)
+                string macroState = GetMacroGameState();
+                
+                // 2. 构建请求
+                string request = $"Current Time: {GenDate.DateFullStringAt(Find.TickManager.TicksAbs, Find.WorldGrid.LongLatOf(Find.CurrentMap.Tile))}\n" +
+                                 $"Macro State: {macroState}\n" +
+                                 $"Task: Analyze the situation and decide on an action. Respond in JSON.";
+
+                // 3. 执行 Agent (无状态模式)
+                // 我们不使用 ConcurrentRequestManager，因为这是后台任务，不应阻塞玩家对话
+                // 但为了线程安全，我们依然需要小心
+                var response = await eventAgent.ExecuteAsync(request, temperature: 0.7f, maxTokens: 300);
+
+                if (response.Success)
+                {
+                    // 4. 解析并执行 Action
+                    Log.Message($"[EventDirector] Decision: {response.Content}");
+                    
+                    try 
+                    {
+                        // 尝试提取 JSON (处理可能存在的 markdown 代码块)
+                        string jsonContent = response.Content;
+                        if (jsonContent.Contains("```json"))
+                        {
+                            int start = jsonContent.IndexOf("```json") + 7;
+                            int end = jsonContent.IndexOf("```", start);
+                            if (end > start) jsonContent = jsonContent.Substring(start, end - start).Trim();
+                        }
+                        else if (jsonContent.Contains("```"))
+                        {
+                            int start = jsonContent.IndexOf("```") + 3;
+                            int end = jsonContent.IndexOf("```", start);
+                            if (end > start) jsonContent = jsonContent.Substring(start, end - start).Trim();
+                        }
+
+                        var decision = JsonConvert.DeserializeObject<EventDecision>(jsonContent);
+                        if (decision != null && !string.IsNullOrEmpty(decision.action) && decision.action != "DoNothing")
+                        {
+                            var toolParams = MapActionToToolParams(decision.action, decision.parameters);
+                            if (toolParams != null)
+                            {
+                                string actionName = toolParams.ContainsKey("action") ? toolParams["action"].ToString() : "Unknown";
+                                Log.Message($"[EventDirector] Executing tool action: {actionName}");
+                                
+                                // 使用 CommandTool 执行
+                                var commandTool = new RimAgent.Tools.CommandTool();
+                                await commandTool.ExecuteAsync(toolParams);
+                            }
+                        }
+                    }
+                    catch (Exception parseEx)
+                    {
+                        Log.Warning($"[EventDirector] Failed to parse decision: {parseEx.Message}");
+                    }
+                }
+
+                // 5. 关键：清空历史，保持无状态
+                eventAgent.ClearHistory();
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[EventDirector] Tick failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// ⭐ v1.9.2: 获取宏观游戏状态 (Token 优化版)
+        /// </summary>
+        private string GetMacroGameState()
+        {
+            try
+            {
+                Map map = Find.CurrentMap;
+                if (map == null) return "No active map.";
+
+                var sb = new System.Text.StringBuilder();
+                sb.Append("{");
+
+                // 1. Wealth
+                sb.Append($"\"Wealth\":{map.wealthWatcher.WealthTotal:F0},");
+
+                // 2. Population
+                int colonists = map.mapPawns.FreeColonistsCount;
+                int downed = map.mapPawns.FreeColonists.Count(p => p.Downed);
+                int prisoners = map.mapPawns.PrisonersOfColonyCount;
+                int animals = map.mapPawns.SpawnedColonyAnimals.Count;
+                sb.Append($"\"Population\":{{\"Colonists\":{colonists},\"Downed\":{downed},\"Prisoners\":{prisoners},\"Animals\":{animals}}},");
+
+                // 3. Resources (Aggregated)
+                float food = 0;
+                int medicine = 0;
+                int wood = 0;
+                int steel = 0;
+                int components = 0;
+                int weapons = 0;
+
+                // 使用 ResourceCounter 高效统计
+                // 注意：ResourceCounter 可能不包含所有东西，需要结合 ThingCategory
+                // 这里为了性能，我们只统计仓库里的
+                foreach (var def in map.resourceCounter.AllCountedAmounts.Keys)
+                {
+                    int count = map.resourceCounter.GetCount(def);
+                    if (count <= 0) continue;
+
+                    if (def.IsNutritionGivingIngestible) food += def.GetStatValueAbstract(StatDefOf.Nutrition) * count;
+                    if (def.IsMedicine) medicine += count;
+                    if (def == ThingDefOf.WoodLog) wood += count;
+                    if (def == ThingDefOf.Steel) steel += count;
+                    if (def == ThingDefOf.ComponentIndustrial || def == ThingDefOf.ComponentSpacer) components += count;
+                    if (def.IsWeapon) weapons += count;
+                }
+                sb.Append($"\"Resources\":{{\"FoodNutrition\":{food:F0},\"Medicine\":{medicine},\"Wood\":{wood},\"Steel\":{steel},\"Components\":{components},\"Weapons\":{weapons}}},");
+
+                // 4. Power (Grid)
+                // 简单遍历所有 PowerNet
+                float powerGain = 0;
+                float powerStored = 0;
+                if (map.powerNetManager != null)
+                {
+                    foreach (var net in map.powerNetManager.AllNetsListForReading)
+                    {
+                        powerGain += net.CurrentEnergyGainRate() * 60000f; // W -> W/Day approx? No, just W
+                        powerStored += net.CurrentStoredEnergy();
+                    }
+                }
+                sb.Append($"\"Power\":{{\"GridGain\":{powerGain:F0},\"Stored\":{powerStored:F0}}},");
+
+                // 5. Tech Level
+                sb.Append($"\"TechLevel\":\"{Faction.OfPlayer.def.techLevel}\",");
+
+                // 6. Threats
+                float threatPoints = StorytellerUtility.DefaultThreatPointsNow(map);
+                sb.Append($"\"ThreatPoints\":{threatPoints:F0}");
+
+                sb.Append("}");
+                return sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                return $"{{\"Error\":\"{ex.Message}\"}}";
             }
         }
         
@@ -718,5 +969,71 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
         public string Message { get; set; } = "";
         public string StackTrace { get; set; } = "";
         public bool IsException { get; set; } = false;
+    }
+
+    /// <summary>
+    /// JSON 决策结构
+    /// </summary>
+    public class EventDecision
+    {
+        public string thought { get; set; }
+        public string action { get; set; }
+        public Dictionary<string, string> parameters { get; set; }
+    }
+
+    // 扩展 NarratorManager 以包含辅助方法
+    public partial class NarratorManager
+    {
+        /// <summary>
+        /// 将 AI Action 映射为 CommandTool 参数字典
+        /// </summary>
+        private Dictionary<string, object> MapActionToToolParams(string action, Dictionary<string, string> parameters)
+        {
+            var toolParams = new Dictionary<string, object>();
+            var innerParams = new Dictionary<string, object>();
+
+            // 将所有 AI 参数复制到 innerParams
+            if (parameters != null)
+            {
+                foreach (var kvp in parameters)
+                {
+                    innerParams[kvp.Key] = kvp.Value;
+                }
+            }
+
+            switch (action)
+            {
+                case "SpawnRaid":
+                    toolParams["action"] = "TriggerEvent";
+                    toolParams["target"] = "RaidEnemy"; // 默认袭击
+                    // 如果 AI 指定了 specific raid type (e.g. MechCluster), 可以在这里覆盖 target
+                    break;
+                
+                case "GiveQuest":
+                    toolParams["action"] = "TriggerEvent";
+                    toolParams["target"] = "Quest_TradeRequest"; // 默认贸易任务
+                    break;
+                
+                case "ResourceDrop":
+                    toolParams["action"] = "TriggerEvent";
+                    toolParams["target"] = "ResourcePodCrash";
+                    break;
+                
+                case "WeatherChange":
+                    // 目前没有 WeatherCommand，暂时记录日志或忽略
+                    // 或者如果以后实现了 SetWeather 命令：
+                    // toolParams["action"] = "SetWeather";
+                    // toolParams["target"] = parameters.ContainsKey("type") ? parameters["type"] : "Rain";
+                    Log.Warning("[EventDirector] WeatherChange not yet supported.");
+                    return null;
+                
+                default:
+                    Log.Warning($"[EventDirector] Unknown action: {action}");
+                    return null;
+            }
+
+            toolParams["params"] = innerParams;
+            return toolParams;
+        }
     }
 }

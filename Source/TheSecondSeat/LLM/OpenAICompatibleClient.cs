@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Networking;
 using Verse;
@@ -9,6 +10,17 @@ using Newtonsoft.Json;
 
 namespace TheSecondSeat.LLM
 {
+    // 引入一个扩展类来支持 await UnityWebRequest
+    public static class UnityWebRequestExtensions
+    {
+        public static TaskAwaiter<UnityWebRequest> GetAwaiter(this UnityWebRequestAsyncOperation reqOp)
+        {
+            var tcs = new TaskCompletionSource<UnityWebRequest>();
+            reqOp.completed += op => tcs.SetResult(((UnityWebRequestAsyncOperation)op).webRequest);
+            return tcs.Task.GetAwaiter();
+        }
+    }
+
     /// <summary>
     /// OpenAI 兼容 API 客户端（支持 OpenAI、DeepSeek 等）
     /// 支持文本和图片（Vision）分析
@@ -274,13 +286,8 @@ namespace TheSecondSeat.LLM
                     webRequest.SetRequestHeader("Authorization", $"Bearer {apiKey}");
                 }
 
-                var asyncOperation = webRequest.SendWebRequest();
-
-                while (!asyncOperation.isDone)
-                {
-                    if (Current.Game == null) return null;
-                    await Task.Delay(100);
-                }
+                // 使用扩展方法进行异步等待，避免忙等待
+                await webRequest.SendWebRequest();
 
                 if (webRequest.result == UnityWebRequest.Result.Success)
                 {

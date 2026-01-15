@@ -1,14 +1,14 @@
 using HarmonyLib;
 using RimWorld;
 using Verse;
-using TheSecondSeat.Components;
+using TheSecondSeat.Descent;
 
 namespace TheSecondSeat.Patches
 {
     /// <summary>
     /// Harmony patch for MapPawns.IsValidColonyPawn to include Descent entities.
     /// This is the core method RimWorld uses to determine if a pawn counts as "our pawn".
-    /// By patching this, Descent entities (identified by CompDraftableAnimal) will be
+    /// By patching this, Descent entities (registered via NarratorPersonaDef) will be
     /// properly recognized as colony pawns throughout the game's systems.
     /// </summary>
     [HarmonyPatch(typeof(MapPawns), "IsValidColonyPawn")]
@@ -30,9 +30,8 @@ namespace TheSecondSeat.Patches
             if (pawn == null)
                 return;
             
-            // Check if this is a Descent entity (has CompDraftableAnimal component)
-            var draftComp = pawn.GetComp<CompDraftableAnimal>();
-            if (draftComp == null)
+            // Check if this is a Descent entity (via registry)
+            if (!DescentEntityRegistry.IsDescentEntity(pawn))
                 return;
             
             // Additional validation: must belong to player faction and not be dead

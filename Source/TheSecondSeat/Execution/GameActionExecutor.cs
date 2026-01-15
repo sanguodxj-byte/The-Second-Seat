@@ -64,9 +64,9 @@ namespace TheSecondSeat.Execution
                     }
                 });
                 
-                // 等待执行完成（最多 10 秒）
+                // 等待执行完成（最多 30 秒）
                 int waitCount = 0;
-                while (!completed && waitCount < 200)
+                while (!completed && waitCount < 600)
                 {
                     System.Threading.Thread.Sleep(50);
                     waitCount++;
@@ -123,6 +123,13 @@ namespace TheSecondSeat.Execution
                     // === 对弈者模式事件命令 ===
                     "TriggerEvent" => new TriggerEventCommand().Execute(command.parameters.target, paramsDict),
                     "ScheduleEvent" => new ScheduleEventCommand().Execute(command.parameters.target, paramsDict),
+                    "Descent" => new DescentCommand().Execute(command.parameters.target, paramsDict),
+                    
+                    // === 查询命令 ===
+                    "GetMapLocation" => new GetMapLocationCommand().Execute(command.parameters.target, paramsDict),
+                    "ScanMap" => new ScanMapCommand().Execute(command.parameters.target, paramsDict),
+                    "GetIncidentCategories" => new GetIncidentCategoriesCommand().Execute(command.parameters.target, paramsDict),
+                    "GetIncidentList" => new GetIncidentListCommand().Execute(command.parameters.target, paramsDict),
                     
                     // === ? v1.6.40: 殖民者操作命令（已迁移） ===
                     "DraftPawn" => new DraftPawnCommand().Execute(command.parameters.target, paramsDict),

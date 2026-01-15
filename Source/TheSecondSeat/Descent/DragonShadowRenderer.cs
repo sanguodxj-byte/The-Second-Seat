@@ -383,16 +383,49 @@ namespace TheSecondSeat.Descent
             }
         }
         
+        // ⭐ v1.6.92: 用于跨线程传递加载结果
+        private static bool lastLoadResult = false;
+        private static string pendingTexturePath = null;
+        
         /// <summary>
         /// ⭐ v1.6.81: 从路径加载并设置自定义阴影纹理（由子Mod调用）
+        /// ⭐ v1.6.92: 添加主线程检查，确保资源加载安全
         /// </summary>
         /// <param name="texturePath">纹理路径（相对于子Mod的Textures文件夹）</param>
-        /// <returns>是否加载成功</returns>
+        /// <returns>是否加载成功（如果在非主线程调用，返回false但会异步加载）</returns>
         public static bool LoadCustomTexture(string texturePath)
         {
             if (string.IsNullOrEmpty(texturePath))
             {
                 Log.Warning("[DragonShadowRenderer] 纹理路径为空");
+                return false;
+            }
+            
+            // ⭐ v1.6.92: 检查是否在主线程
+            if (!UnityData.IsInMainThread)
+            {
+                Log.Warning($"[DragonShadowRenderer] 检测到非主线程调用，将在主线程异步加载纹理: '{texturePath}'");
+                pendingTexturePath = texturePath;
+                
+                // 使用 LongEventHandler 确保在主线程执行
+                LongEventHandler.ExecuteWhenFinished(() =>
+                {
+                    LoadCustomTextureInternal(pendingTexturePath);
+                });
+                
+                return false; // 异步加载，当前返回false
+            }
+            
+            return LoadCustomTextureInternal(texturePath);
+        }
+        
+        /// <summary>
+        /// ⭐ v1.6.92: 内部纹理加载方法（必须在主线程调用）
+        /// </summary>
+        private static bool LoadCustomTextureInternal(string texturePath)
+        {
+            if (string.IsNullOrEmpty(texturePath))
+            {
                 return false;
             }
             
@@ -415,6 +448,7 @@ namespace TheSecondSeat.Descent
                 if (texture != null)
                 {
                     SetCustomTexture(texture);
+                    lastLoadResult = true;
                     return true;
                 }
                 else
@@ -423,12 +457,14 @@ namespace TheSecondSeat.Descent
                     
                     // 尝试列出该目录下的一些文件（如果可能）- 仅作为提示
                     // 无法直接列出 ContentFinder 的文件，只能提示用户
+                    lastLoadResult = false;
                     return false;
                 }
             }
             catch (Exception ex)
             {
                 Log.Error($"[DragonShadowRenderer] 加载纹理失败: {ex}");
+                lastLoadResult = false;
                 return false;
             }
         }

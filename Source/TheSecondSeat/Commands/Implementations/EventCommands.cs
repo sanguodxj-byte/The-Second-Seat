@@ -107,7 +107,7 @@ namespace TheSecondSeat.Commands.Implementations
 
         public override string GetDescription()
         {
-            return "Trigger narrator descent sequence. Target: NarratorDefName (e.g. TSS_Narrator_Sideria)";
+            return "Trigger narrator descent sequence. Parameters: mode=assist|attack, x=<int>, z=<int>. If no coordinates provided, uses player's selected position or random.";
         }
 
         public override bool Execute(string? target = null, object? parameters = null)
@@ -129,6 +129,7 @@ namespace TheSecondSeat.Commands.Implementations
 
             // Parse parameters
             bool isHostile = false; // Default to assist/friendly
+            IntVec3? targetLocation = null;
             
             if (parameters is Dictionary<string, object> paramsDict)
             {
@@ -143,12 +144,61 @@ namespace TheSecondSeat.Commands.Implementations
                 {
                     isHostile = parsedHostile;
                 }
+
+                // Parse coordinates if provided by LLM
+                if (paramsDict.TryGetValue("x", out var xObj) && 
+                    paramsDict.TryGetValue("z", out var zObj))
+                {
+                    if (int.TryParse(xObj.ToString(), out int x) &&
+                        int.TryParse(zObj.ToString(), out int z))
+                    {
+                        var loc = new IntVec3(x, 0, z);
+                        // Validate location is within map bounds and walkable
+                        if (loc.InBounds(map) && loc.Standable(map))
+                        {
+                            targetLocation = loc;
+                            Log.Message($"[DescentCommand] Using LLM-specified location: ({x}, {z})");
+                        }
+                        else
+                        {
+                            Log.Warning($"[DescentCommand] LLM-specified location ({x}, {z}) is invalid, will use fallback");
+                        }
+                    }
+                }
             }
 
-            // Trigger the descent (uses current persona)
-            if (descentSystem.TriggerDescent(isHostile))
+            // Fallback: Use player's selected position if no valid LLM coordinates
+            if (targetLocation == null)
             {
-                LogExecution($"Triggered descent sequence (Hostile: {isHostile})");
+                var selectedObjects = Find.Selector.SelectedObjects;
+                if (selectedObjects != null && selectedObjects.Count > 0)
+                {
+                    // Get position of first selected object
+                    var firstSelected = selectedObjects[0];
+                    if (firstSelected is Thing thing && thing.Map == map)
+                    {
+                        targetLocation = thing.Position;
+                        Log.Message($"[DescentCommand] Using player-selected position: {targetLocation}");
+                    }
+                    else if (firstSelected is IntVec3 cell && cell.InBounds(map))
+                    {
+                        targetLocation = cell;
+                        Log.Message($"[DescentCommand] Using player-selected cell: {targetLocation}");
+                    }
+                }
+            }
+
+            // Final fallback: null = random (handled by NarratorDescentSystem)
+            if (targetLocation == null)
+            {
+                Log.Message("[DescentCommand] No location specified, will use random position");
+            }
+
+            // Trigger the descent with optional location
+            if (descentSystem.TriggerDescent(isHostile, targetLocation))
+            {
+                string locStr = targetLocation.HasValue ? $" at ({targetLocation.Value.x}, {targetLocation.Value.z})" : " at random location";
+                LogExecution($"Triggered descent sequence (Hostile: {isHostile}){locStr}");
                 return true;
             }
 

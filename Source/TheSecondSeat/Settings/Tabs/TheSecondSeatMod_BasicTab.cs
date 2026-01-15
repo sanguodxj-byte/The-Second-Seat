@@ -93,7 +93,7 @@ namespace TheSecondSeat.Settings
                 y += basicHeight + SettingsUIComponents.MediumGap;
                 
                 // === UI 设置 ===
-                float uiHeight = 100f;
+                float uiHeight = 140f;
                 Rect uiRect = new Rect(viewRect.x, y, cardWidth, uiHeight);
                 SettingsUIComponents.DrawSettingsGroup(uiRect, "界面设置", SettingsUIComponents.AccentBlue, (contentRect) =>
                 {
@@ -101,8 +101,18 @@ namespace TheSecondSeat.Settings
                     
                     // 立绘模式
                     Rect portraitRect = new Rect(contentRect.x, cy, contentRect.width, 28f);
-                    SettingsUIComponents.DrawToggleSetting(portraitRect, "立绘模式", 
+                    SettingsUIComponents.DrawToggleSetting(portraitRect, "立绘模式",
                         "在对话时显示全身立绘", ref Settings.usePortraitMode);
+                    
+                    cy += 34f;
+
+                    // 渲染树配置
+                    Rect renderTreeBtnRect = new Rect(contentRect.x, cy, 180f, 30f);
+                    if (Widgets.ButtonText(renderTreeBtnRect, "配置渲染树"))
+                    {
+                        Find.WindowStack.Add(new UI.Dialog_RenderTreeEditor());
+                    }
+                    TooltipHandler.TipRegion(renderTreeBtnRect, "打开渲染树编辑器，自定义立绘表情和口型映射。");
                 });
                 y += uiHeight + SettingsUIComponents.MediumGap;
                 
@@ -132,23 +142,7 @@ namespace TheSecondSeat.Settings
                     Rect descRect = new Rect(contentRect.x, cy, contentRect.width, 40f);
                     Widgets.Label(descRect, "提示：修改提示词后，需要重启游戏或重新加载存档才能生效。自定义提示词位于 Config/TheSecondSeat/Prompts 目录下。");
                 });
-                y += promptHeight + SettingsUIComponents.MediumGap;
-
-                // === 全局提示词 ===
-                float globalPromptHeight = 180f;
-                Rect globalRect = new Rect(viewRect.x, y, cardWidth, globalPromptHeight);
-                SettingsUIComponents.DrawSettingsGroup(globalRect, "全局提示词", SettingsUIComponents.AccentBlue, (contentRect) =>
-                {
-                    float cy = contentRect.y;
-                    
-                    Rect labelRect = new Rect(contentRect.x, cy, contentRect.width, 24f);
-                    Widgets.Label(labelRect, "附加到所有对话的自定义提示词：");
-                    cy += 28f;
-                    
-                    Rect textRect = new Rect(contentRect.x, cy, contentRect.width, 100f);
-                    //Widgets.DrawBox(textRect); // for debugging
-                    Settings.globalPrompt = Widgets.TextArea(textRect, Settings.globalPrompt);
-                });
+                // 全局提示词已移至高级选项卡
             });
             
             tabManager.SetScrollPosition(scrollPos);

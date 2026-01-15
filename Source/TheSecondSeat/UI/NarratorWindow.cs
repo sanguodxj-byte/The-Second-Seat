@@ -313,6 +313,9 @@ namespace TheSecondSeat.UI
             
             // ? v1.6.34: 运行时分层绘制（每帧重新组合）
             DrawLayeredPortraitRuntime(portraitRect, persona);
+
+            // ? 生物节律心情指示器 (右上角)
+            DrawBioRhythmIndicator(portraitRect);
             
             // 名字区域（底部，缩小字体）
             var nameRect = new Rect(innerRect.x, innerRect.yMax - 20f, innerRect.width, 18f);
@@ -326,6 +329,48 @@ namespace TheSecondSeat.UI
             Text.Font = GameFont.Small;
         }
         
+        /// <summary>
+        /// ? 绘制生物节律心情指示器
+        /// </summary>
+        private void DrawBioRhythmIndicator(Rect portraitRect)
+        {
+            var bioSystem = Current.Game?.GetComponent<NarratorBioRhythm>();
+            if (bioSystem == null) return;
+
+            var settings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
+            if (settings != null && !settings.enableBioRhythm) return;
+
+            // 直接获取公开属性
+            float mood = bioSystem.CurrentMood;
+
+            // 颜色映射
+            Color moodColor;
+            if (mood > 80f) { moodColor = new Color(1f, 0.8f, 0.2f); } // 金色
+            else if (mood > 60f) { moodColor = new Color(0.4f, 0.8f, 0.4f); } // 绿色
+            else if (mood > 40f) { moodColor = new Color(0.4f, 0.6f, 0.8f); } // 蓝色
+            else if (mood > 20f) { moodColor = new Color(0.7f, 0.7f, 0.7f); } // 灰色
+            else { moodColor = new Color(0.8f, 0.3f, 0.3f); } // 红色
+
+            // 绘制指示器 (右上角小圆点)
+            float indicatorSize = 12f;
+            Rect indicatorRect = new Rect(portraitRect.xMax - indicatorSize - 8f, portraitRect.y + 8f, indicatorSize, indicatorSize);
+            
+            // 外圈光晕
+            GUI.color = new Color(moodColor.r, moodColor.g, moodColor.b, 0.3f);
+            Widgets.DrawBoxSolid(indicatorRect.ExpandedBy(2f), GUI.color);
+            
+            // 核心
+            GUI.color = moodColor;
+            Widgets.DrawBoxSolid(indicatorRect, moodColor);
+            GUI.color = Color.white;
+
+            // Tooltip
+            if (Mouse.IsOver(indicatorRect))
+            {
+                TooltipHandler.TipRegion(indicatorRect, bioSystem.GetCurrentBioContext());
+            }
+        }
+
         /// <summary>
         /// ? v1.6.34: 运行时分层绘制立绘（支持眨眼和张嘴动画）
         /// ? v1.6.35: 修复路径错误，确保使用分层立绘系统

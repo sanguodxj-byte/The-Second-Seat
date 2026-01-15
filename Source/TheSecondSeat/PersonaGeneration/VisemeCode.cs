@@ -253,14 +253,22 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
-        /// 开合度转视素编码
+        /// ⭐ v1.10.1: 开合度转视素编码（修正版）
+        /// 使用 5 级口型：Closed → Neutral → U(medium) → A → O
+        /// 注意：E_mouth 不适合用于口型动画，已移除
         /// </summary>
+        /// <remarks>
+        /// ⚠️ v1.11.0: 已废弃 - 请使用 RenderTreeDef.GetVisemeFromOpenness() 替代
+        /// 该方法仅用于向后兼容，新代码应使用 RenderTreeDef XML 配置
+        /// </remarks>
+        [Obsolete("Use RenderTreeDef.GetVisemeFromOpenness() instead. This method is kept for backward compatibility.")]
         public static VisemeCode OpennessToViseme(float openness)
         {
-            if (openness < 0.2f) return VisemeCode.Closed;
-            if (openness < 0.5f) return VisemeCode.Small;
-            if (openness < 0.8f) return VisemeCode.Medium;
-            return VisemeCode.Large;
+            if (openness < 0.10f) return VisemeCode.Closed;   // < 10%: 闭嘴 → Closed_mouth
+        if (openness < 0.30f) return VisemeCode.Small;    // 10-30%: 微张 → Neutral_mouth
+        if (openness < 0.55f) return VisemeCode.Medium;   // 30-55%: 中等张 → medium_mouth
+        if (openness < 0.80f) return VisemeCode.Large;    // 55-80%: 大张嘴 → A_mouth
+            return VisemeCode.OShape;                          // 80%+: 圆嘴 → O_mouth
         }
         
         /// <summary>
@@ -284,23 +292,30 @@ namespace TheSecondSeat.PersonaGeneration
         /// <summary>
         /// 获取对应的纹理名称
         /// ⭐ v1.8.0: 更新为新的纹理命名规范
-        /// - A_mouth: 大张嘴 (Ah)
-        /// - E_mouth: 咧嘴/扁嘴 (Ee)
+        /// ⭐ v1.10.2: 修复纹理名称 - larger_mouth, O_mouth
+        /// ⭐ v1.10.3: 修复纹理名称 - U_mouth -> Medium_mouth
+        /// - larger_mouth: 大张嘴 (Ah)
+        /// - happy_mouth: 咧嘴/扁嘴 (Ee)
         /// - O_mouth: 圆嘴 (Oh)
-        /// - U_mouth: 嘟嘴/小孔 (Oo)
+        /// - medium_mouth: 嘟嘴/小孔 (Oo)
         /// - Neutral_mouth: 微张/自然
         /// - Closed_mouth: 闭合 (M)
         /// </summary>
+        /// <remarks>
+        /// ⚠️ v1.11.0: 已废弃 - 请使用 RenderTreeDef.GetVisemeTextureName() 替代
+        /// 该方法仅用于向后兼容，新代码应使用 RenderTreeDef XML 配置
+        /// </remarks>
+        [Obsolete("Use RenderTreeDef.GetVisemeTextureName() instead. This method is kept for backward compatibility.")]
         public static string GetTextureName(VisemeCode viseme)
         {
             return viseme switch
             {
                 VisemeCode.Closed => "Closed_mouth",    // 闭合 (M/B/P)
-                VisemeCode.Small => "U_mouth",          // 嘟嘴/小孔 (Oo/U)
-                VisemeCode.Medium => "Neutral_mouth",   // 微张/自然
-                VisemeCode.Large => "A_mouth",          // 大张嘴 (Ah/A)
-                VisemeCode.Smile => "E_mouth",          // 咧嘴/扁嘴 (Ee/I)
-                VisemeCode.OShape => "O_mouth",         // 圆嘴 (Oh/O)
+                VisemeCode.Small => "USE_BASE",         // ⭐ 微张/自然 (Base层自带，特殊标记)
+                VisemeCode.Medium => "medium_mouth",    // ⭐ 嘟嘴/小孔 (Oo/U)
+                VisemeCode.Large => "larger_mouth",     // ⭐ v1.10.2: 大张嘴 (Ah/A)
+                VisemeCode.Smile => "happy_mouth",      // 咧嘴/扁嘴 (Ee/I)
+                VisemeCode.OShape => "O_mouth",         // ⭐ 圆嘴 (Oh/O)
                 _ => "Closed_mouth"
             };
         }
@@ -309,17 +324,24 @@ namespace TheSecondSeat.PersonaGeneration
         /// ⭐ v1.8.0: 获取 Viseme 对应的纹理名称（兼容 MouthAnimationSystem）
         /// ⭐ v1.8.1: 修复 Closed 应返回 "Closed_mouth" 以支持 Sideria 等子 Mod
         /// ⭐ v1.8.2: 修复 Small/Medium 对调 - Small=微张, Medium=嘟嘴
+        /// ⭐ v1.10.2: 修复纹理名称 - Large=larger_mouth, OShape=O_mouth
+        /// ⭐ v1.10.3: 修复纹理名称 - U_mouth -> medium_mouth
         /// </summary>
+        /// <remarks>
+        /// ⚠️ v1.11.0: 已废弃 - 请使用 RenderTreeDef.GetVisemeTextureName() 替代
+        /// 该方法仅用于向后兼容，新代码应使用 RenderTreeDef XML 配置
+        /// </remarks>
+        [Obsolete("Use RenderTreeDef.GetVisemeTextureName() instead. This method is kept for backward compatibility.")]
         public static string VisemeToTextureName(VisemeCode viseme)
         {
             return viseme switch
             {
                 VisemeCode.Closed => "Closed_mouth",    // 闭合嘴型 (M/B/P) - 支持子 Mod 纹理
-                VisemeCode.Small => "Neutral_mouth",    // ⭐ 修复：微张/自然 (轻微开口)
-                VisemeCode.Medium => "U_mouth",         // ⭐ 修复：嘟嘴/小孔 (Oo/U)
-                VisemeCode.Large => "A_mouth",          // 大张嘴 (Ah/A)
-                VisemeCode.Smile => "E_mouth",          // 咧嘴/扁嘴 (Ee/I)
-                VisemeCode.OShape => "O_mouth",         // 圆嘴 (Oh/O)
+                VisemeCode.Small => "USE_BASE",         // ⭐ 微张/自然 (Base层自带，特殊标记)
+                VisemeCode.Medium => "medium_mouth",    // ⭐ 嘟嘴/小孔 (Oo/U)
+                VisemeCode.Large => "larger_mouth",     // ⭐ v1.10.2: 大张嘴 (Ah/A)
+                VisemeCode.Smile => "happy_mouth",      // 咧嘴/扁嘴 (Ee/I)
+                VisemeCode.OShape => "O_mouth",         // ⭐ 圆嘴 (Oh/O)
                 _ => "Closed_mouth"
             };
         }
@@ -386,11 +408,16 @@ namespace TheSecondSeat.PersonaGeneration
         /// 映射规则（匹配新纹理文件）：
         /// - Closed_mouth: ID 0 (Sil), ID 21 (P/B/M 闭唇音)
         /// - A_mouth: ID 1 (Ae/Ax/Ah), ID 2 (Aa), ID 9 (Ao), ID 11 (Ah)
-        /// - E_mouth: ID 6 (Eh), ID 7 (Y/Iy/Ih), ID 8 (Ey)
+        /// - happy_mouth: ID 6 (Eh), ID 7 (Y/Iy/Ih), ID 8 (Ey)
         /// - O_mouth: ID 3 (Ao/awe), ID 13 (Ow), ID 14 (Oy)
-        /// - U_mouth: ID 4 (Uh), ID 5 (Er), ID 10 (O), ID 15 (Uw), ID 16 (Uh)
+        /// - medium_mouth: ID 4 (Uh), ID 5 (Er), ID 10 (O), ID 15 (Uw), ID 16 (Uh)
         /// - Neutral_mouth: ID 12 (H), ID 17 (R), ID 18 (F/V), ID 19 (Th/Dh), ID 20 (S/Z), 其他
         /// </summary>
+        /// <remarks>
+        /// ⚠️ v1.11.0: 已废弃 - 请使用 RenderTreeDef.GetTextureFromAzureVisemeId() 替代
+        /// 该方法仅用于向后兼容，新代码应使用 RenderTreeDef XML 配置
+        /// </remarks>
+        [Obsolete("Use RenderTreeDef.GetTextureFromAzureVisemeId() instead. This method is kept for backward compatibility.")]
         public static VisemeCode ParseAzureVisemeId(int visemeId)
         {
             return visemeId switch
@@ -435,8 +462,15 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// ⭐ v1.8.0: 直接从 Azure Viseme ID 获取纹理名称（快捷方法）
+        /// ⭐ v1.10.2: 修复纹理名称 - larger_mouth, O_mouth
+        /// ⭐ v1.10.3: 修复纹理名称 - U_mouth -> medium_mouth
         /// 跳过 VisemeCode 中间层，直接返回纹理文件名
         /// </summary>
+        /// <remarks>
+        /// ⚠️ v1.11.0: 已废弃 - 请使用 RenderTreeDef.GetTextureFromAzureVisemeId() 替代
+        /// 该方法仅用于向后兼容，新代码应使用 RenderTreeDef XML 配置
+        /// </remarks>
+        [Obsolete("Use RenderTreeDef.GetTextureFromAzureVisemeId() instead. This method is kept for backward compatibility.")]
         public static string MapAzureVisemeToTexture(int azureVisemeId)
         {
             return azureVisemeId switch
@@ -444,20 +478,20 @@ namespace TheSecondSeat.PersonaGeneration
                 // === 1. 闭合 (Closed_mouth) ===
                 0 or 21 => "Closed_mouth",
                 
-                // === 2. 大张嘴 (A_mouth) ===
-                1 or 2 or 9 or 11 => "A_mouth",
+                // === 2. 大张嘴 (larger_mouth) ===
+                1 or 2 or 9 or 11 => "larger_mouth",
                 
-                // === 3. 咧嘴/扁嘴 (E_mouth) ===
-                6 or 7 or 8 => "E_mouth",
+                // === 3. 咧嘴/扁嘴 (happy_mouth) ===
+                6 or 7 or 8 => "happy_mouth",
                 
                 // === 4. 圆嘴 (O_mouth) ===
                 3 or 13 or 14 => "O_mouth",
                 
-                // === 5. 嘟嘴 (U_mouth) ===
-                4 or 5 or 10 or 15 or 16 => "U_mouth",
+                // === 5. 嘟嘴 (medium_mouth) ===
+                4 or 5 or 10 or 15 or 16 => "medium_mouth",
                 
                 // === 6. 微张/自然 (Neutral_mouth) ===
-                _ => "Neutral_mouth"
+                _ => "USE_BASE" // Base层自带
             };
         }
     }

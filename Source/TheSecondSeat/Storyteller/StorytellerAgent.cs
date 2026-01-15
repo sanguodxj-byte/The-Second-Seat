@@ -44,6 +44,9 @@ namespace TheSecondSeat.Storyteller
         public MoodState currentMood = MoodState.Neutral;
         public PersonalityTrait primaryTrait = PersonalityTrait.Strategic;
         public PersonalityTrait? secondaryTrait = null;
+        
+        // ⭐ v1.9.3: 运行时性格标签（支持动态修改）
+        public List<string> activePersonalityTags = null;
 
         // Dialogue style used when generating prompts
         public PersonaGeneration.DialogueStyleDef dialogueStyle = new PersonaGeneration.DialogueStyleDef();
@@ -551,6 +554,7 @@ namespace TheSecondSeat.Storyteller
             Scribe_Values.Look(ref currentMood, "currentMood", MoodState.Neutral);
             Scribe_Values.Look(ref primaryTrait, "primaryTrait", PersonalityTrait.Strategic);
             Scribe_Values.Look(ref secondaryTrait, "secondaryTrait", null);
+            Scribe_Collections.Look(ref activePersonalityTags, "activePersonalityTags", LookMode.Value);
             Scribe_Values.Look(ref moodValue, "moodValue", 0f);
             Scribe_Values.Look(ref ticksSinceLastMoodShift, "ticksSinceLastMoodShift", 0);
             Scribe_Values.Look(ref totalConversations, "totalConversations", 0);

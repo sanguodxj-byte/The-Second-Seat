@@ -4,7 +4,6 @@ using Verse;
 using Verse.AI;
 using RimWorld;
 using TheSecondSeat.PersonaGeneration;
-using TheSecondSeat.Components;
 
 namespace TheSecondSeat.Descent
 {
@@ -178,31 +177,21 @@ namespace TheSecondSeat.Descent
         }
 
         /// <summary>
-        /// 自动征召 - 使用 CompDraftableAnimal 组件
+        /// 自动征召 - 使用原版 drafter 组件（通过 Pawn_SpawnSetup_Patch 注入）
         /// </summary>
         private static void AutoDraft(Pawn pawn)
         {
             if (pawn.Faction != Faction.OfPlayer) return;
 
-            // 优先使用 CompDraftableAnimal (用于动物智力的 Pawn)
-            var draftComp = pawn.GetComp<CompDraftableAnimal>();
-            if (draftComp != null)
-            {
-                draftComp.isDrafted = true;
-                // 进入征召状态: 打断当前工作，进入待命
-                pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
-                var newJob = JobMaker.MakeJob(JobDefOf.Wait_Combat, 2500);
-                newJob.playerForced = true;
-                pawn.jobs.TryTakeOrderedJob(newJob, JobTag.DraftedOrder);
-                Log.Message($"[DescentPawnSpawner] Auto-drafted {pawn.LabelShort} using CompDraftableAnimal");
-                return;
-            }
-
-            // 回退到原生 drafter (用于人形智力的 Pawn)
+            // 使用原版 drafter（Sideria 通过 Pawn_SpawnSetup_Patch 注入了 drafter 组件）
             if (pawn.drafter != null)
             {
                 pawn.drafter.Drafted = true;
                 Log.Message($"[DescentPawnSpawner] Auto-drafted {pawn.LabelShort} using native drafter");
+            }
+            else
+            {
+                Log.Warning($"[DescentPawnSpawner] Cannot auto-draft {pawn.LabelShort}: no drafter component");
             }
         }
     }

@@ -35,6 +35,7 @@ namespace TheSecondSeat.PersonaGeneration
     /// <summary>
     /// 立绘加载管理器
     /// ✅ v1.6.27: 消除未找到立绘时的报错日志
+    /// ✅ v1.12.0: 添加全局空值防护和失败计数，失败3次后退回默认纹理
     /// </summary>
     public static class PortraitLoader
     {
@@ -49,8 +50,13 @@ namespace TheSecondSeat.PersonaGeneration
         private static Dictionary<string, CacheEntry> cache = new Dictionary<string, CacheEntry>();
         private const int MaxCacheSize = 50; // 最大缓存数量
         
-        private const string BASE_PATH_9x16 = "UI/Narrators/9x16";
-        private const string EXPRESSIONS_PATH = "UI/Narrators/9x16/Expressions";
+        // ⭐ v1.12.0: 全局失败计数器 - 跟踪每个纹理路径的失败次数
+        private static Dictionary<string, int> failureCounter = new Dictionary<string, int>();
+        private const int MaxFailureCount = 3; // 失败阈值：3次后退回默认
+        private static Texture2D _fallbackPlaceholder = null; // 全局默认占位符（复用）
+        
+        private const string BASE_PATH_9x16 = "UI/Narrators/9x16/";
+        private const string EXPRESSIONS_PATH = "UI/Narrators/9x16/Expressions/";
         
         /// <summary>
         /// 加载立绘（支持 Mod资源、外部文件、占位符）
@@ -62,10 +68,6 @@ namespace TheSecondSeat.PersonaGeneration
         {
             if (def == null)
             {
-                if (Prefs.DevMode)
-                {
-                    Log.Warning("[PortraitLoader] PersonaDef is null");
-                }
                 return GeneratePlaceholder(Color.gray);
             }
             
@@ -103,11 +105,7 @@ namespace TheSecondSeat.PersonaGeneration
             // 3. 如果还是没有，生成占位符
             if (texture == null)
             {
-                // ✅ 只在DevMode下输出警告
-                if (Prefs.DevMode)
-                {
-                    Log.Warning($"[PortraitLoader] Portrait not found for {def.defName}{expressionSuffix}, using placeholder");
-                }
+                // ✅ 静默处理：未找到立绘时直接使用占位符，不报错
                 texture = GeneratePlaceholder(def.primaryColor);
                 isOwned = true; // 占位符是新创建的纹理，需要销毁
             }
@@ -142,10 +140,6 @@ namespace TheSecondSeat.PersonaGeneration
                 var config = def.GetLayeredConfig();
                 if (config == null)
                 {
-                    if (Prefs.DevMode)
-                    {
-                        Log.Warning($"[PortraitLoader] Layered config is null for {def.defName}");
-                    }
                     return GeneratePlaceholder(def.primaryColor);
                 }
                 
@@ -168,11 +162,7 @@ namespace TheSecondSeat.PersonaGeneration
                 
                 if (composite == null)
                 {
-                    // ✅ 只在DevMode下输出错误
-                    if (Prefs.DevMode)
-                    {
-                        Log.Error($"[PortraitLoader] Layered composite failed for {def.defName}");
-                    }
+                    // ✅ 静默处理合成失败
                     return GeneratePlaceholder(def.primaryColor);
                 }
                 
@@ -180,13 +170,9 @@ namespace TheSecondSeat.PersonaGeneration
                 
                 return composite;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                // ✅ 只在DevMode下输出异常
-                if (Prefs.DevMode)
-                {
-                    Log.Error($"[PortraitLoader] Layered portrait loading failed: {ex}");
-                }
+                // ✅ 静默处理异常
                 return GeneratePlaceholder(def.primaryColor);
             }
         }
@@ -281,10 +267,6 @@ namespace TheSecondSeat.PersonaGeneration
                     
                     if (texture != null)
                     {
-                        if (Prefs.DevMode)
-                        {
-                            Log.Message($"[PortraitLoader] 表情回退: {fileName} -> {fallbackName}");
-                        }
                         return texture;
                     }
                 }
@@ -419,17 +401,12 @@ namespace TheSecondSeat.PersonaGeneration
                     cacheKey
                 );
                 
-                // ✅ 移除合成成功日志，只在DevMode下输出
-                if (composite != null && Prefs.DevMode)
-                {
-                    Log.Message($"[PortraitLoader] ✓ 面部叠加合成: {personaName}");
-                }
+                // ✅ 移除合成成功日志
                 return composite;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                // ✅ 保留异常日志（这是真正的错误）
-                Log.Error($"[PortraitLoader] 面部叠加合成失败: {ex}");
+                // ✅ 静默处理合成失败
                 return null;
             }
         }
@@ -500,149 +477,36 @@ namespace TheSecondSeat.PersonaGeneration
                 }
             }
             
-            // ✅ 尝试路径4：自定义路径
-            if (def.useCustomPortrait && !string.IsNullOrEmpty(def.customPortraitPath))
-            {
-                texture = LoadFromExternalFile(def.customPortraitPath);
-                if (texture != null)
-                {
-                    // 判断是否为拥有的资源（非 ContentFinder 加载）
-                    bool isOwned = !def.customPortraitPath.StartsWith("UI/");
-                    
-                    cache[baseCacheKey] = new CacheEntry
-                    {
-                        Texture = texture,
-                        LastAccessTick = Find.TickManager.TicksGame,
-                        IsOwned = isOwned
-                    };
-                    return (texture, isOwned);
-                }
-            }
-            
-            // ✅ 尝试路径5：原版叙事者路径 UI/HeroArt/{Name}
-            string heroArtPath = $"UI/HeroArt/{personaName}";
-            texture = ContentFinder<Texture2D>.Get(heroArtPath, false);
-            if (texture != null)
-            {
-                SetTextureQuality(texture);
-                cache[baseCacheKey] = new CacheEntry
-                {
-                    Texture = texture,
-                    LastAccessTick = Find.TickManager.TicksGame,
-                    IsOwned = false
-                };
-                return (texture, false);
-            }
-            
-            // ✅ 所有路径都失败，只在DevMode下输出警告
-            if (Prefs.DevMode)
-            {
-                Log.Warning($"[PortraitLoader] Portrait not found for {personaName}");
-                Log.Warning($"[PortraitLoader] Tried paths:");
-                Log.Warning($"  - Textures/{basePath}.png");
-                Log.Warning($"  - Textures/{path2}.png");
-                if (!string.IsNullOrEmpty(def.portraitPath))
-                    Log.Warning($"  - Textures/{def.portraitPath}.png");
-                Log.Warning($"  - Textures/{heroArtPath}.png");
-            }
-            
+            // 未找到任何立绘
             return (null, false);
         }
         
         /// <summary>
-        /// 获取表情后缀的路径
+        /// 获取人格文件夹名称
         /// </summary>
-        private static string GetExpressionPath(string basePath, string expressionSuffix)
+        private static string GetPersonaFolderName(NarratorPersonaDef def)
         {
-            if (string.IsNullOrEmpty(expressionSuffix))
+            if (!string.IsNullOrEmpty(def.narratorName))
             {
-                return basePath;
+                // 取第一个单词（如 "Cassandra Classic" → "Cassandra"）
+                return def.narratorName.Split(' ')[0].Trim();
             }
             
-            // 分离文件名和扩展名
-            string directory = Path.GetDirectoryName(basePath) ?? "";
-            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(basePath);
-            string extension = Path.GetExtension(basePath);
-            
-            // 拼接新的文件路径
-            string newFileName = fileNameWithoutExt + expressionSuffix + extension;
-            
-            if (string.IsNullOrEmpty(directory))
+            string defName = def.defName;
+            string[] suffixesToRemove = new[] { "_Default", "_Classic", "_Custom", "_Persona" };
+            foreach (var suffix in suffixesToRemove)
             {
-                return newFileName;
+                if (defName.EndsWith(suffix))
+                {
+                    return defName.Substring(0, defName.Length - suffix.Length);
+                }
             }
             
-            return Path.Combine(directory, newFileName);
+            return defName;
         }
         
         /// <summary>
-        /// 从外部文件加载纹理
-        /// 支持文件路径和ContentFinder路径
-        /// ✅ v1.6.27: 静默处理文件不存在的情况
-        /// </summary>
-        public static Texture2D? LoadFromExternalFile(string filePath)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(filePath))
-                {
-                    return null;
-                }
-                
-                // ✅ 如果是ContentFinder路径（UI/开头），直接用ContentFinder
-                if (filePath.StartsWith("UI/"))
-                {
-                    var tex = ContentFinder<Texture2D>.Get(filePath, false);
-                    if (tex != null)
-                    {
-                        // ✅ 设置高质量过滤模式
-                        SetTextureQuality(tex);
-                    }
-                    return tex;
-                }
-                
-                // 否则作为文件路径处理
-                if (!File.Exists(filePath))
-                {
-                    // ✅ 只在DevMode下输出警告
-                    if (Prefs.DevMode)
-                    {
-                        Log.Warning($"[PortraitLoader] 文件不存在: {filePath}");
-                    }
-                    return null;
-                }
-                
-                byte[] fileData = File.ReadAllBytes(filePath);
-                Texture2D loadedTexture = new Texture2D(2, 2);
-                
-                if (!loadedTexture.LoadImage(fileData))
-                {
-                    // ✅ 只在DevMode下输出错误
-                    if (Prefs.DevMode)
-                    {
-                        Log.Error($"[PortraitLoader] 无法加载图片: {filePath}");
-                    }
-                    return null;
-                }
-                
-                // ✅ 设置高质量过滤模式
-                SetTextureQuality(loadedTexture);
-                
-                return loadedTexture;
-            }
-            catch (Exception ex)
-            {
-                // ✅ 只在DevMode下输出异常
-                if (Prefs.DevMode)
-                {
-                    Log.Error($"[PortraitLoader] 加载失败: {filePath}\n{ex}");
-                }
-                return null;
-            }
-        }
-        
-        /// <summary>
-        /// ✅ 设置纹理高质量参数（安全版本）
+        /// 设置纹理高质量参数
         /// </summary>
         private static void SetTextureQuality(Texture2D texture)
         {
@@ -650,34 +514,24 @@ namespace TheSecondSeat.PersonaGeneration
             
             try
             {
-                // ✅ 只设置过滤模式，不调用 Apply（避免不可读纹理错误）
                 texture.filterMode = FilterMode.Bilinear;
                 texture.anisoLevel = 4;
-                
-                // ? [核心修复] 2. 循环模式设为 Clamp (钳制)
-                // 这行代码是消除边缘黑线/杂色的关键！
-                // 它告诉 GPU：不要去采样对面的像素，边缘是什么就是什么。
-                texture.wrapMode = TextureWrapMode.Clamp;
-                
-                // 注意：不调用 texture.Apply()，因为 ContentFinder 加载的纹理是只读的
-                // Apply 会触发 "Texture not readable" 错误
             }
             catch
             {
-                // 静默忽略，纹理设置不是关键功能
+                // 静默忽略
             }
         }
         
         /// <summary>
-        /// 生成改良版占位符纹理 - 带不同颜色标识
-        /// 用不同颜色的占位符纹理来区分
+        /// 生成占位符纹理
         /// </summary>
         private static Texture2D GeneratePlaceholder(Color color)
         {
             int size = 512;
             Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
             
-            // 1. 绘制渐变背景（深色到浅色）
+            // 简单渐变
             Color darkColor = color * 0.3f;
             Color lightColor = color * 1.2f;
             
@@ -688,277 +542,448 @@ namespace TheSecondSeat.PersonaGeneration
                 
                 for (int x = 0; x < size; x++)
                 {
-                    // 添加径向渐变效果
-                    float distFromCenter = Vector2.Distance(
-                        new Vector2(x, y), 
-                        new Vector2(size / 2f, size / 2f)
-                    ) / (size / 2f);
-                    
-                    Color finalColor = Color.Lerp(gradientColor, darkColor, distFromCenter * 0.3f);
-                    texture.SetPixel(x, y, finalColor);
+                    texture.SetPixel(x, y, gradientColor);
                 }
             }
-            
-            // 2. 绘制两个圆形装饰
-            DrawCircle(texture, size / 2, size / 2, size / 3, Color.white * 0.1f, 4);
-            DrawCircle(texture, size / 2, size / 2, size / 4, Color.white * 0.15f, 3);
-            
-            // 3. 绘制角落装饰线（科技感）
-            DrawCornerLines(texture, color * 1.5f);
             
             texture.Apply();
             return texture;
         }
         
         /// <summary>
-        /// 在纹理上画一个圆环
+        /// ⭐ v1.12.0: 获取全局默认占位符（复用单例，避免重复创建）
         /// </summary>
-        private static void DrawCircle(Texture2D texture, int centerX, int centerY, int radius, Color color, int thickness)
+        public static Texture2D GetFallbackPlaceholder()
         {
-            for (int angle = 0; angle < 360; angle += 2)
+            if (_fallbackPlaceholder == null)
             {
-                float rad = angle * Mathf.Deg2Rad;
-                
-                for (int t = 0; t < thickness; t++)
-                {
-                    int r = radius + t - thickness / 2;
-                    int x = centerX + Mathf.RoundToInt(r * Mathf.Cos(rad));
-                    int y = centerY + Mathf.RoundToInt(r * Mathf.Sin(rad));
-                    
-                    if (x >= 0 && x < texture.width && y >= 0 && y < texture.height)
-                    {
-                        texture.SetPixel(x, y, color);
-                    }
-                }
+                _fallbackPlaceholder = GeneratePlaceholder(new Color(0.3f, 0.3f, 0.4f)); // 深灰蓝色
+            }
+            return _fallbackPlaceholder;
+        }
+        
+        /// <summary>
+        /// ⭐ v1.12.0: 带失败计数的纹理加载方法（核心防护）
+        /// 失败3次后直接返回默认占位符，不再尝试加载
+        /// </summary>
+        /// <param name="texturePath">纹理路径</param>
+        /// <param name="fallbackColor">失败时占位符颜色（可选）</param>
+        /// <returns>加载的纹理或占位符</returns>
+        public static Texture2D TryLoadTextureWithFailureCount(string texturePath, Color? fallbackColor = null)
+        {
+            if (string.IsNullOrEmpty(texturePath))
+            {
+                return GetFallbackPlaceholder();
+            }
+            
+            // ⭐ 检查失败计数：如果已经失败3次，直接返回默认
+            if (failureCounter.TryGetValue(texturePath, out int count) && count >= MaxFailureCount)
+            {
+                // 已达到失败阈值，静默返回占位符
+                return GetFallbackPlaceholder();
+            }
+            
+            // 尝试加载
+            var texture = ContentFinder<Texture2D>.Get(texturePath, false);
+            
+            if (texture != null)
+            {
+                // 成功加载，清除失败计数
+                failureCounter.Remove(texturePath);
+                return texture;
+            }
+            
+            // 加载失败，增加计数
+            if (failureCounter.ContainsKey(texturePath))
+            {
+                failureCounter[texturePath]++;
+            }
+            else
+            {
+                failureCounter[texturePath] = 1;
+            }
+            
+            // 只在首次失败时输出警告（DevMode）
+            if (failureCounter[texturePath] == 1 && Prefs.DevMode)
+            {
+                Log.Warning($"[PortraitLoader] 纹理加载失败 (1/{MaxFailureCount}): {texturePath}");
+            }
+            else if (failureCounter[texturePath] == MaxFailureCount && Prefs.DevMode)
+            {
+                Log.Warning($"[PortraitLoader] 纹理加载失败已达阈值，将使用默认占位符: {texturePath}");
+            }
+            
+            // 返回占位符
+            return fallbackColor.HasValue 
+                ? GeneratePlaceholder(fallbackColor.Value) 
+                : GetFallbackPlaceholder();
+        }
+        
+        /// <summary>
+        /// ⭐ v1.12.0: 重置特定路径的失败计数（例如用户修复了纹理文件后）
+        /// </summary>
+        public static void ResetFailureCount(string texturePath)
+        {
+            if (!string.IsNullOrEmpty(texturePath))
+            {
+                failureCounter.Remove(texturePath);
             }
         }
         
         /// <summary>
-        /// 绘制角落装饰线（科技感）
+        /// ⭐ v1.12.0: 重置所有失败计数
         /// </summary>
-        private static void DrawCornerLines(Texture2D texture, Color color)
+        public static void ResetAllFailureCounts()
         {
-            int size = texture.width;
-            int lineLength = size / 8;
-            int thickness = 3;
-            
-            // 四个角落的 L 形装饰
-            Color lineColor = new Color(color.r, color.g, color.b, 0.3f);
-            
-            // 左上角
-            DrawLine(texture, 20, 20, 20 + lineLength, 20, lineColor, thickness);
-            DrawLine(texture, 20, 20, 20, 20 + lineLength, lineColor, thickness);
-            
-            // 右上角
-            DrawLine(texture, size - 20, 20, size - 20 - lineLength, 20, lineColor, thickness);
-            DrawLine(texture, size - 20, 20, size - 20, 20 + lineLength, lineColor, thickness);
-            
-            // 左下角
-            DrawLine(texture, 20, size - 20, 20 + lineLength, size - 20, lineColor, thickness);
-            DrawLine(texture, 20, size - 20, 20, size - 20 - lineLength, lineColor, thickness);
-            
-            // 右下角
-            DrawLine(texture, size - 20, size - 20, size - 20 - lineLength, size - 20, lineColor, thickness);
-            DrawLine(texture, size - 20, size - 20, size - 20, size - 20 - lineLength, lineColor, thickness);
-        }
-        
-        /// <summary>
-        /// 绘制直线
-        /// </summary>
-        private static void DrawLine(Texture2D texture, int x1, int y1, int x2, int y2, Color color, int thickness)
-        {
-            int dx = Mathf.Abs(x2 - x1);
-            int dy = Mathf.Abs(y2 - y1);
-            int sx = x1 < x2 ? 1 : -1;
-            int sy = y1 < y2 ? 1 : -1;
-            int err = dx - dy;
-            
-            while (true)
+            failureCounter.Clear();
+            if (Prefs.DevMode)
             {
-                // 绘制粗线
-                for (int tx = -thickness / 2; tx <= thickness / 2; tx++)
-                {
-                    for (int ty = -thickness / 2; ty <= thickness / 2; ty++)
-                    {
-                        int px = x1 + tx;
-                        int py = y1 + ty;
-                        
-                        if (px >= 0 && px < texture.width && py >= 0 && py < texture.height)
-                        {
-                            texture.SetPixel(px, py, color);
-                        }
-                    }
-                }
-                
-                if (x1 == x2 && y1 == y2) break;
-                
-                int e2 = 2 * err;
-                if (e2 > -dy)
-                {
-                    err -= dy;
-                    x1 += sx;
-                }
-                if (e2 < dx)
-                {
-                    err += dx;
-                    y1 += sy;
-                }
+                Log.Message("[PortraitLoader] 所有纹理失败计数已重置");
             }
-        }
-        
-        /// <summary>
-        /// ✅ 新增：清理旧缓存（LRU机制）
-        /// ⭐ v1.6.92: 跳过关键图层（base_body, body, base）避免分层立绘丢失
-        /// </summary>
-        public static void CleanOldCache()
-        {
-            int currentTick = Find.TickManager.TicksGame;
-            
-            // ⭐ 关键图层名称（不应被自动清理）
-            var criticalLayers = new HashSet<string> { "base_body", "body", "base", "base_", "_base" };
-            
-            var oldEntries = cache
-                .Where(kv => currentTick - kv.Value.LastAccessTick > 36000) // 10分钟未访问
-                // ⭐ 跳过关键图层
-                .Where(kv => !criticalLayers.Any(cl => kv.Key.Contains(cl)))
-                .OrderBy(kv => kv.Value.LastAccessTick)
-                .Take(10) // 每次最多清理10个
-                .ToList();
-            
-            foreach (var entry in oldEntries)
-            {
-                // ✅ 修复：不再销毁纹理，防止误删 ContentFinder 管理的共享资源
-                // 即使是 IsOwned，为了安全起见（防止第二次读档丢失），也建议由 Unity 自动回收
-                cache.Remove(entry.Key);
-            }
-            
-            // 日志已静默
         }
         
         /// <summary>
         /// 清空缓存
+        /// ✅ 修复：显式销毁拥有的纹理资源，防止内存泄漏
         /// </summary>
         public static void ClearCache()
         {
-            // ✅ 修复：不再销毁纹理
+            foreach (var entry in cache.Values)
+            {
+                if (entry.IsOwned && entry.Texture != null)
+                {
+                    UnityEngine.Object.Destroy(entry.Texture);
+                }
+            }
             cache.Clear();
+            
             if (Prefs.DevMode)
             {
-                Log.Message("[PortraitLoader] 立绘缓存已清空");
+                Log.Message("[PortraitLoader] 立绘缓存已清空 (资源已释放)");
             }
         }
         
         /// <summary>
-        /// 清空所有缓存（用于模式切换）
-        /// </summary>
-        public static void ClearAllCache()
-        {
-            // ✅ 修复：不再销毁纹理
-            cache.Clear();
-            if (Prefs.DevMode)
-            {
-                Log.Message("[PortraitLoader] 所有立绘缓存已清空");
-            }
-        }
-        
-        /// <summary>
-        /// 清除特定人格特定表情的缓存
+        /// ⭐ 清除特定人格和表情的缓存
+        /// ⭐ v1.6.92: 支持按人格+表情清除特定缓存条目
         /// </summary>
         public static void ClearPortraitCache(string personaDefName, ExpressionType expression)
         {
+            if (string.IsNullOrEmpty(personaDefName)) return;
+            
             string expressionSuffix = ExpressionSystem.GetExpressionSuffix(personaDefName, expression);
             string cacheKey = $"{personaDefName}_portrait_{expressionSuffix}";
             
             if (cache.TryGetValue(cacheKey, out CacheEntry entry))
             {
-                // ✅ 修复：不再销毁纹理
-                cache.Remove(cacheKey);
-                if (Prefs.DevMode)
+                if (entry.IsOwned && entry.Texture != null)
                 {
-                    Log.Message($"[PortraitLoader] 清除缓存: {cacheKey}");
+                    UnityEngine.Object.Destroy(entry.Texture);
                 }
+                cache.Remove(cacheKey);
             }
         }
         
         /// <summary>
-        /// 获取Mod立绘目录路径
+        /// ⭐ 清理过期缓存（公共方法）
+        /// ⭐ v1.6.76: 从 private 改为 public 以供 NarratorManager 调用
+        /// </summary>
+        public static void CleanOldCache()
+        {
+            if (cache.Count < MaxCacheSize / 2)
+            {
+                return; // 缓存未满一半，不需要清理
+            }
+            
+            // 找出最久未访问的条目
+            var entriesToRemove = new List<string>();
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            int maxAge = 60000 * 5; // 5 天游戏时间
+            
+            foreach (var kvp in cache)
+            {
+                if (currentTick - kvp.Value.LastAccessTick > maxAge)
+                {
+                    entriesToRemove.Add(kvp.Key);
+                }
+            }
+            
+            // 如果按时间清理后仍然过多，按访问时间排序后清理
+            if (cache.Count - entriesToRemove.Count > MaxCacheSize)
+            {
+                var sortedEntries = new List<KeyValuePair<string, CacheEntry>>(cache);
+                sortedEntries.Sort((a, b) => a.Value.LastAccessTick.CompareTo(b.Value.LastAccessTick));
+                
+                int toRemove = cache.Count - MaxCacheSize / 2;
+                for (int i = 0; i < toRemove && i < sortedEntries.Count; i++)
+                {
+                    if (!entriesToRemove.Contains(sortedEntries[i].Key))
+                    {
+                        entriesToRemove.Add(sortedEntries[i].Key);
+                    }
+                }
+            }
+            
+            // 执行清理
+            foreach (var key in entriesToRemove)
+            {
+                if (cache.TryGetValue(key, out CacheEntry entry))
+                {
+                    // 只销毁我们拥有的资源
+                    if (entry.IsOwned && entry.Texture != null)
+                    {
+                        UnityEngine.Object.Destroy(entry.Texture);
+                    }
+                    cache.Remove(key);
+                }
+            }
+            
+            if (Prefs.DevMode && entriesToRemove.Count > 0)
+            {
+                Log.Message($"[PortraitLoader] 清理了 {entriesToRemove.Count} 个过期缓存条目");
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ 获取图层纹理（用于分层立绘系统）
+        /// ⭐ v1.6.74: 支持多路径查找和 portraitPath
+        /// ✅ v1.12.0: 添加失败计数机制，失败3次后返回默认占位符
+        /// </summary>
+        /// <param name="persona">人格定义</param>
+        /// <param name="layerName">图层名称（如 base_body, opened_eyes, closed_mouth）</param>
+        /// <param name="suppressWarning">是否抑制警告日志</param>
+        /// <returns>纹理，如果未找到且失败次数未达阈值返回 null，达到阈值后返回占位符</returns>
+        public static Texture2D GetLayerTexture(NarratorPersonaDef persona, string layerName, bool suppressWarning = false)
+        {
+            if (persona == null || string.IsNullOrEmpty(layerName)) return GetFallbackPlaceholder();
+            
+            string personaName = GetPersonaFolderName(persona);
+            
+            // 缓存键：包含人格名和图层名
+            string cacheKey = $"layer_{personaName}_{layerName}";
+            
+            // ✅ v1.12.0: 检查失败计数阈值
+            if (failureCounter.TryGetValue(cacheKey, out int count) && count >= MaxFailureCount)
+            {
+                // 已达到失败阈值，静默返回 null (避免紫色色块)
+                return null;
+            }
+            
+            if (cache.TryGetValue(cacheKey, out CacheEntry cached))
+            {
+                cached.LastAccessTick = Find.TickManager?.TicksGame ?? 0;
+                return cached.Texture as Texture2D;
+            }
+            
+            // 多路径查找
+            string[] pathsToTry = new[]
+            {
+                // 路径 1: Layered 文件夹（主 Mod）
+                $"UI/Narrators/9x16/Layered/{personaName}/{layerName}",
+                
+                // ⭐ 路径 2: 子 Mod 路径（Sideria 格式）
+                $"{personaName}/Narrators/Layered/{layerName}",
+                
+                // 路径 3: 子 Mod 路径（扁平结构）
+                $"Narrators/Layered/{layerName}",
+                
+                // 路径 4: 使用 portraitPath 的基础目录
+                !string.IsNullOrEmpty(persona.portraitPath)
+                    ? $"{Path.GetDirectoryName(persona.portraitPath)?.Replace("\\", "/")}/{layerName}"
+                    : null,
+                
+                // 路径 5: 通用回退
+                $"UI/Narrators/Layered/{personaName}/{layerName}"
+            };
+            
+            foreach (var path in pathsToTry)
+            {
+                if (string.IsNullOrEmpty(path)) continue;
+                
+                var texture = ContentFinder<Texture2D>.Get(path, false);
+                if (texture != null)
+                {
+                    // ✅ 成功加载，清除失败计数
+                    failureCounter.Remove(cacheKey);
+                    
+                    // 缓存并返回
+                    cache[cacheKey] = new CacheEntry
+                    {
+                        Texture = texture,
+                        LastAccessTick = Find.TickManager?.TicksGame ?? 0,
+                        IsOwned = false // ContentFinder 加载的不属于我们
+                    };
+                    return texture;
+                }
+            }
+            
+            // ✅ v1.12.0: 所有路径都失败，增加失败计数
+            if (failureCounter.ContainsKey(cacheKey))
+            {
+                failureCounter[cacheKey]++;
+            }
+            else
+            {
+                failureCounter[cacheKey] = 1;
+            }
+            
+            // 只在首次失败时输出警告
+            if (!suppressWarning && Prefs.DevMode && failureCounter[cacheKey] == 1)
+            {
+                Log.Warning($"[PortraitLoader] Layer texture not found (1/{MaxFailureCount}): {layerName} for {personaName}");
+            }
+            else if (Prefs.DevMode && failureCounter[cacheKey] == MaxFailureCount)
+            {
+                Log.Warning($"[PortraitLoader] Layer texture failed {MaxFailureCount} times, using fallback: {layerName} for {personaName}");
+            }
+            
+            // ✅ v1.12.0: 达到阈值后返回 null (避免紫色色块)
+            if (failureCounter[cacheKey] >= MaxFailureCount)
+            {
+                return null;
+            }
+            
+            return null;
+        }
+        
+        /// <summary>
+        /// ⭐ 获取所有可用立绘列表
+        /// 扫描原版叙事者、其他Mod、本Mod和用户自定义立绘
+        /// </summary>
+        public static List<PortraitFileInfo> GetAllAvailablePortraits()
+        {
+            var result = new List<PortraitFileInfo>();
+            
+            try
+            {
+                // 1. 扫描原版叙事者立绘
+                string[] vanillaNarrators = { "Cassandra", "Phoebe", "Randy" };
+                foreach (var narrator in vanillaNarrators)
+                {
+                    string path = $"UI/HeroArt/{narrator}";
+                    var texture = ContentFinder<Texture2D>.Get(path, false);
+                    if (texture != null)
+                    {
+                        result.Add(new PortraitFileInfo
+                        {
+                            Name = narrator,
+                            Path = path,
+                            Source = PortraitSource.Vanilla,
+                            Texture = texture,
+                            ModName = "Core"
+                        });
+                    }
+                }
+                
+                // 2. 扫描本 Mod 的立绘（UI/Narrators/9x16/）
+                string thisModPath = "UI/Narrators/9x16/";
+                foreach (var def in DefDatabase<NarratorPersonaDef>.AllDefsListForReading)
+                {
+                    string personaName = GetPersonaFolderName(def);
+                    string basePath = $"{thisModPath}{personaName}/base";
+                    var texture = ContentFinder<Texture2D>.Get(basePath, false);
+                    
+                    if (texture != null)
+                    {
+                        result.Add(new PortraitFileInfo
+                        {
+                            Name = def.narratorName ?? personaName,
+                            Path = basePath,
+                            Source = PortraitSource.ThisMod,
+                            Texture = texture,
+                            ModName = "The Second Seat"
+                        });
+                    }
+                }
+                
+                // 3. 扫描用户自定义立绘目录
+                string userDir = GetUserPortraitsDirectory();
+                if (Directory.Exists(userDir))
+                {
+                    foreach (var file in Directory.GetFiles(userDir, "*.png"))
+                    {
+                        result.Add(new PortraitFileInfo
+                        {
+                            Name = Path.GetFileNameWithoutExtension(file),
+                            Path = file,
+                            Source = PortraitSource.User,
+                            Texture = null, // 延迟加载
+                            ModName = "User"
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[PortraitLoader] Error scanning portraits: {ex.Message}");
+            }
+            
+            return result;
+        }
+        
+        /// <summary>
+        /// ⭐ 获取 Mod 立绘目录路径
         /// </summary>
         public static string GetModPortraitsDirectory()
         {
-            // 获取 Mod 的目录
-            var modContentPack = LoadedModManager.RunningModsListForReading
-                .FirstOrDefault(mod => mod.PackageId.ToLower().Contains("thesecondseat") || 
-                                      mod.Name.Contains("Second Seat"));
+            // 查找本 Mod 的路径
+            var thisMod = LoadedModManager.RunningMods
+                .FirstOrDefault(m => m.Name.Contains("The Second Seat") || m.PackageId.Contains("thesecondseat"));
             
-            if (modContentPack != null)
+            if (thisMod != null)
             {
-                string path = Path.Combine(modContentPack.RootDir, "Textures", "UI", "Narrators");
-                
-                try
-                {
-                    if (!Directory.Exists(path))
-                    {
-                        Directory.CreateDirectory(path);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log.Error($"[PortraitLoader] 无法创建 Mod 目录: {path}\n{ex}");
-                }
-                
-                return path;
+                return Path.Combine(thisMod.RootDir, "Textures", "UI", "Narrators", "9x16");
             }
             
-            // 备用路径（如果找不到 Mod）
-            return Path.Combine(GenFilePaths.SaveDataFolderPath, "TheSecondSeat", "Portraits");
+            // 回退到配置目录
+            return Path.Combine(GenFilePaths.ConfigFolderPath, "TheSecondSeat", "Portraits");
         }
         
         /// <summary>
-        /// 打开 Mod 立绘目录
-        /// 引导用户将立绘文件放到该目录
+        /// ⭐ 获取用户立绘目录路径
+        /// </summary>
+        private static string GetUserPortraitsDirectory()
+        {
+            string path = Path.Combine(GenFilePaths.ConfigFolderPath, "TheSecondSeat", "UserPortraits");
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+            return path;
+        }
+        
+        /// <summary>
+        /// ⭐ 打开 Mod 立绘目录（使用系统文件浏览器）
         /// </summary>
         public static void OpenModPortraitsDirectory()
         {
             string path = GetModPortraitsDirectory();
             
-            try
+            if (!Directory.Exists(path))
             {
-                Application.OpenURL("file://" + path);
-                Messages.Message($"已打开 Mod 立绘目录:\n{path}\n\n请将 PNG 文件放到该目录", MessageTypeDefOf.NeutralEvent);
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[PortraitLoader] 无法打开目录: {ex}");
-                Messages.Message($"请手动打开目录:\n{path}", MessageTypeDefOf.RejectInput);
-            }
-        }
-        
-        /// <summary>
-        /// 获取推荐的用户立绘目录
-        /// 保留原有功能，更加容易使用
-        /// </summary>
-        public static string GetUserPortraitsDirectory()
-        {
-            string path = Path.Combine(GenFilePaths.SaveDataFolderPath, "TheSecondSeat", "Portraits");
-            
-            try
-            {
-                if (!Directory.Exists(path))
+                try
                 {
                     Directory.CreateDirectory(path);
                 }
+                catch (Exception ex)
+                {
+                    Log.Warning($"[PortraitLoader] Failed to create directory: {ex.Message}");
+                }
+            }
+            
+            try
+            {
+                Application.OpenURL("file://" + path.Replace("\\", "/"));
             }
             catch (Exception ex)
             {
-                Log.Error($"[PortraitLoader] 无法创建目录: {path}\n{ex}");
+                Log.Warning($"[PortraitLoader] Failed to open directory: {ex.Message}");
+                Messages.Message($"无法打开目录：{path}", MessageTypeDefOf.RejectInput);
             }
-            
-            return path;
         }
         
         /// <summary>
-        /// 打开用户立绘目录
-        /// 保留原有功能，更加容易使用
+        /// ⭐ 打开用户立绘目录（使用系统文件浏览器）
         /// </summary>
         public static void OpenUserPortraitsDirectory()
         {
@@ -966,485 +991,49 @@ namespace TheSecondSeat.PersonaGeneration
             
             try
             {
-                Application.OpenURL("file://" + path);
-                Messages.Message($"已打开用户立绘目录:\n{path}\n\n请将立绘 PNG 或 JPG 文件复制到该目录", MessageTypeDefOf.NeutralEvent);
+                Application.OpenURL("file://" + path.Replace("\\", "/"));
             }
             catch (Exception ex)
             {
-                Log.Error($"[PortraitLoader] 无法打开目录: {ex}");
-                Messages.Message($"请手动打开目录:\n{path}", MessageTypeDefOf.RejectInput);
+                Log.Warning($"[PortraitLoader] Failed to open user directory: {ex.Message}");
+                Messages.Message($"无法打开目录：{path}", MessageTypeDefOf.RejectInput);
             }
         }
         
         /// <summary>
-        /// 获取 Mod 立绘文件列表
-        /// 获取所有可用的 Mod 目录中的立绘文件
+        /// ⭐ 从外部文件加载纹理
         /// </summary>
-        public static List<string> GetModPortraitFiles()
+        /// <param name="filePath">文件完整路径</param>
+        /// <returns>加载的纹理，失败返回 null</returns>
+        public static Texture2D LoadFromExternalFile(string filePath)
         {
-            List<string> files = new List<string>();
-            
-            try
-            {
-                string modDir = GetModPortraitsDirectory();
-                
-                if (Directory.Exists(modDir))
-                {
-                    // PNG 文件
-                    files.AddRange(Directory.GetFiles(modDir, "*.png"));
-                    // JPG 文件
-                    files.AddRange(Directory.GetFiles(modDir, "*.jpg"));
-                    files.AddRange(Directory.GetFiles(modDir, "*.jpeg"));
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[PortraitLoader] 获取 Mod 立绘失败: {ex}");
-            }
-            
-            return files;
-        }
-        
-        /// <summary>
-        /// 获取用户立绘文件列表
-        /// </summary>
-        public static List<string> GetUserPortraitFiles()
-        {
-            List<string> files = new List<string>();
-            
-            try
-            {
-                string userDir = GetUserPortraitsDirectory();
-                
-                if (Directory.Exists(userDir))
-                {
-                    // PNG 文件
-                    files.AddRange(Directory.GetFiles(userDir, "*.png"));
-                    // JPG 文件
-                    files.AddRange(Directory.GetFiles(userDir, "*.jpg"));
-                    files.AddRange(Directory.GetFiles(userDir, "*.jpeg"));
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[PortraitLoader] 获取用户立绘失败: {ex}");
-            }
-            
-            return files;
-        }
-        
-        /// <summary>
-        /// 获取所有可用的立绘列表（多源）
-        /// 包含所有来源：原版叙事者立绘 + Mod立绘 + 用户立绘
-        /// </summary>
-        public static List<PortraitFileInfo> GetAllAvailablePortraits()
-        {
-            var portraits = new List<PortraitFileInfo>();
-            
-            try
-            {
-                // 1. 添加原版 RimWorld 叙事者立绘
-                portraits.AddRange(GetVanillaStorytellerPortraits());
-                
-                // 2. 添加其他 Mod 的叙事者立绘
-                portraits.AddRange(GetModStorytellerPortraits());
-                
-                // 3. 添加本 Mod 自带立绘
-                portraits.AddRange(GetModPortraitFilesWithInfo());
-                
-                // 4. 添加用户自定义立绘
-                portraits.AddRange(GetUserPortraitFilesWithInfo());
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[PortraitLoader] 获取可用立绘列表失败: {ex}");
-            }
-            
-            return portraits;
-        }
-        
-        /// <summary>
-        /// 获取原版 RimWorld 叙事者立绘
-        /// Cassandra, Phoebe, Randy 等
-        /// </summary>
-        private static List<PortraitFileInfo> GetVanillaStorytellerPortraits()
-        {
-            var portraits = new List<PortraitFileInfo>();
-            
-            try
-            {
-                // 原版叙事者列表
-                var vanillaStorytellers = new[]
-                {
-                    "Cassandra",
-                    "Phoebe", 
-                    "Randy",
-                    "Igor"  // DLC 叙事者
-                };
-                
-                foreach (var storyteller in vanillaStorytellers)
-                {
-                    // RimWorld 原版立绘路径：UI/HeroArt/{StorytellerName}
-                    string texturePath = $"UI/HeroArt/{storyteller}";
-                    var texture = ContentFinder<Texture2D>.Get(texturePath, false);
-                    
-                    if (texture != null)
-                    {
-                        portraits.Add(new PortraitFileInfo
-                        {
-                            Name = $"{storyteller} (原版)",
-                            Path = texturePath,
-                            Source = PortraitSource.Vanilla,
-                            Texture = texture
-                        });
-                        
-                        // ✅ v1.6.61: 关闭调试日志
-                        // Log.Message($"[PortraitLoader] 找到并添加原版立绘: {storyteller}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"[PortraitLoader] 获取原版立绘失败: {ex.Message}");
-            }
-            
-            return portraits;
-        }
-        
-        /// <summary>
-        /// 获取其他 Mod 的叙事者立绘
-        /// 自动检测其他 Mod 的 StorytellerDefs
-        /// </summary>
-        private static List<PortraitFileInfo> GetModStorytellerPortraits()
-        {
-            var portraits = new List<PortraitFileInfo>();
-            
-            try
-            {
-                // 获取所有叙事者定义（包括 Mod 添加的）
-                var allStorytellers = DefDatabase<StorytellerDef>.AllDefsListForReading;
-                
-                foreach (var storyteller in allStorytellers)
-                {
-                    // 跳过原版叙事者，已在前面处理
-                    if (storyteller.defName == "Cassandra" || 
-                        storyteller.defName == "Phoebe" || 
-                        storyteller.defName == "Randy" ||
-                        storyteller.defName == "Igor")
-                    {
-                        continue;
-                    }
-                    
-                    // 修改：StorytellerDef.portraitLargeTex 是 Texture2D，而非 string
-                    // 所以需要通过 defName 构建路径
-                    var texture = storyteller.portraitLargeTex;
-                    
-                    if (texture != null)
-                    {
-                        // 获取 Mod 名称
-                        string modName = storyteller.modContentPack?.Name ?? "未知Mod";
-                        
-                        // 立绘纹理路径（通常是 UI/HeroArt/{DefName}）
-                        string portraitPath = $"UI/HeroArt/{storyteller.defName}";
-                        
-                        var portraitInfo = new PortraitFileInfo();
-                        portraitInfo.Name = $"{storyteller.LabelCap} ({modName})";
-                        portraitInfo.Path = portraitPath;
-                        portraitInfo.Source = PortraitSource.OtherMod;
-                        portraitInfo.Texture = texture;
-                        portraitInfo.ModName = modName;
-                        
-                        portraits.Add(portraitInfo);
-                        
-                        // ✅ v1.6.61: 关闭调试日志
-                        // Log.Message($"[PortraitLoader] 找到Mod立绘: {storyteller.LabelCap} from {modName}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"[PortraitLoader] 获取Mod立绘失败: {ex.Message}");
-            }
-            
-            return portraits;
-        }
-        
-        /// <summary>
-        /// 获取本 Mod 立绘文件（含详细信息）
-        /// </summary>
-        private static List<PortraitFileInfo> GetModPortraitFilesWithInfo()
-        {
-            var portraits = new List<PortraitFileInfo>();
-            
-            try
-            {
-                var files = GetModPortraitFiles();
-                
-                foreach (var file in files)
-                {
-                    portraits.Add(new PortraitFileInfo
-                    {
-                        Name = Path.GetFileNameWithoutExtension(file),
-                        Path = file,
-                        Source = PortraitSource.ThisMod,
-                        ModName = "The Second Seat"
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"[PortraitLoader] 获取本Mod立绘失败: {ex.Message}");
-            }
-            
-            return portraits;
-        }
-        
-        /// <summary>
-        /// 获取用户自定义立绘文件信息
-        /// ? 逐个文件检查并构建信息
-        /// </summary>
-        private static List<PortraitFileInfo> GetUserPortraitFilesWithInfo()
-        {
-            var portraits = new List<PortraitFileInfo>();
-            
-            try
-            {
-                var files = GetUserPortraitFiles();
-                
-                foreach (var file in files)
-                {
-                    portraits.Add(new PortraitFileInfo
-                    {
-                        Name = Path.GetFileNameWithoutExtension(file) + " (用户)",
-                        Path = file,
-                        Source = PortraitSource.User
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"[PortraitLoader] 获取用户立绘失败: {ex.Message}");
-            }
-            
-            return portraits;
-        }
-        
-        /// <summary>
-        /// 获取调试信息
-        /// </summary>
-        public static string GetDebugInfo()
-        {
-            var allPortraits = GetAllAvailablePortraits();
-            
-            var vanillaCount = allPortraits.Count(p => p.Source == PortraitSource.Vanilla);
-            var modCount = allPortraits.Count(p => p.Source == PortraitSource.OtherMod);
-            var thisModCount = allPortraits.Count(p => p.Source == PortraitSource.ThisMod);
-            var userCount = allPortraits.Count(p => p.Source == PortraitSource.User);
-            
-            return $"[PortraitLoader] 缓存数量: {cache.Count}\n" +
-                   $"可用立绘总数: {allPortraits.Count}\n" +
-                   $"  - 原版立绘: {vanillaCount}\n" +
-                   $"  - 其他Mod立绘: {modCount}\n" +
-                   $"  - 本Mod立绘: {thisModCount}\n" +
-                   $"  - 用户立绘: {userCount}\n" +
-                   $"Mod 立绘目录: {GetModPortraitsDirectory()}\n" +
-                   $"用户立绘目录: {GetUserPortraitsDirectory()}";
-        }
-        
-        /// <summary>
-        /// 应用服装差分
-        /// </summary>
-        private static Texture2D ApplyOutfit(Texture2D baseTexture, string personaDefName)
-        {
-            // ✅ 直接返回基础纹理，不进行服装合成
-            // 原因：ContentFinder加载的纹理默认不可读，无法调用GetPixel()
-            // 如果需要服装系统，应该预先合成好完整立绘，而不是运行时合成
-            return baseTexture;
-        }
-        
-        /// <summary>
-        /// 合成多层纹理（基础立绘 + 服装/差分）
-        /// </summary>
-        private static Texture2D CompositeTextures(Texture2D bottom, Texture2D top)
-        {
-            try
-            {
-                // 确保纹理尺寸一致
-                int width = Mathf.Min(bottom.width, top.width);
-                int height = Mathf.Min(bottom.height, top.height);
-                
-                Texture2D result = new Texture2D(width, height, TextureFormat.RGBA32, false);
-                
-                for (int y = 0; y < height; y++)
-                {
-                    for (int x = 0; x < width; x++)
-                    {
-                        Color bottomColor = bottom.GetPixel(x, y);
-                        Color topColor = top.GetPixel(x, y);
-                        
-                        // Alpha blending
-                        Color blended = Color.Lerp(bottomColor, topColor, topColor.a);
-                        result.SetPixel(x, y, blended);
-                    }
-                }
-                
-                result.Apply();
-                return result;
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[PortraitLoader] 合成纹理失败: {ex}");
-                return bottom;
-            }
-        }
-        
-        /// <summary>
-        /// 获取人格文件夹名称
-        /// ✅ v1.6.82: 使用 GetResourceName() 方法，支持本地化独立的资源路径
-        /// </summary>
-        private static string GetPersonaFolderName(NarratorPersonaDef def)
-        {
-            return def.GetResourceName();
-        }
-        
-        /// <summary>
-        /// ✅ v1.6.34: 获取单个图层纹理（支持子 Mod 路径）
-        /// ⭐ v1.6.74 更新：支持扁平结构的子 Mod 路径
-        /// ⭐ 路径回退机制：
-        ///   1. 主 Mod 路径: UI/Narrators/9x16/Layered/{PersonaName}/{layerName}
-        ///   2. 子 Mod 路径（带子文件夹）: Narrators/Layered/{PersonaName}/{layerName}
-        ///   3. ⭐ 子 Mod 路径（无子文件夹）: Narrators/Layered/{layerName} - 适配扁平结构
-        ///   4. 降临姿态路径: UI/Narrators/Descent/Postures/{PersonaName}/{layerName}
-        ///   5. 降临特效路径: UI/Narrators/Descent/Effects/{PersonaName}/{layerName}
-        /// </summary>
-        /// <param name="def">人格定义</param>
-        /// <param name="layerName">图层名称（如 "base_body", "happy_eyes", "descent_pose"）</param>
-        /// <param name="suppressWarning">是否抑制警告日志（用于尝试加载可能不存在的图层）</param>
-        /// <returns>图层纹理，如果未找到则返回null</returns>
-        public static Texture2D GetLayerTexture(NarratorPersonaDef def, string layerName, bool suppressWarning = false)
-        {
-            if (def == null || string.IsNullOrEmpty(layerName))
+            if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
             {
                 return null;
             }
             
-            // 1. 生成缓存键
-            string personaName = GetPersonaFolderName(def);
-            string cacheKey = $"{personaName}_layer_{layerName}";
-            
-            // 2. 检查缓存
-            if (cache.TryGetValue(cacheKey, out CacheEntry cachedTexture))
+            try
             {
-                cachedTexture.LastAccessTick = Find.TickManager.TicksGame;
-                return cachedTexture.Texture as Texture2D;
-            }
-            
-            // 3. ⭐ v1.6.74: 多路径回退机制（支持扁平化无子文件夹结构）
-            Texture2D texture = null;
-            bool isOwned = false; // 图层通常是从 ContentFinder 加载的，不属于我们
-            string foundPath = ""; // 记录找到的路径用于调试
-
-            // ⭐ 路径优先级调整：如果定义了 portraitPath，优先尝试它
-            // 这对于子 Mod (如 Sideria) 至关重要，避免回退到错误的默认路径
-            if (!string.IsNullOrEmpty(def.portraitPath))
-            {
-                // ⭐ 路径0：使用 portraitPath 前缀作为基础路径（支持子 Mod 独立路径，如 Sideria/Narrators/Layered/）
-                string basePath = def.portraitPath;
+                byte[] fileData = File.ReadAllBytes(filePath);
+                Texture2D texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
                 
-                // 如果 portraitPath 包含完整路径（如 "Sideria/Narrators/Layered/base"）
-                // 提取目录部分，拼接图层名称
-                int lastSlashIndex = basePath.LastIndexOf('/');
-                if (lastSlashIndex >= 0)
+                if (texture.LoadImage(fileData))
                 {
-                    string baseDir = basePath.Substring(0, lastSlashIndex + 1);
-                    string layerPath0 = $"{baseDir}{layerName}";
-                    texture = ContentFinder<Texture2D>.Get(layerPath0, false);
-                    if (texture != null) foundPath = layerPath0;
+                    texture.filterMode = FilterMode.Bilinear;
+                    texture.anisoLevel = 4;
+                    return texture;
+                }
+                else
+                {
+                    UnityEngine.Object.Destroy(texture);
+                    return null;
                 }
             }
-            
-            // 路径1 & 2 (主 Mod 默认路径) 已移除，不再支持主 Mod 的旧版路径结构
-            
-            if (texture == null)
+            catch (Exception ex)
             {
-                // ⭐ 路径3：子 Mod 分层路径（无子文件夹）- 适配扁平结构
-                string layerPath3 = $"Narrators/Layered/{layerName}";
-                texture = ContentFinder<Texture2D>.Get(layerPath3, false);
-                if (texture != null) foundPath = layerPath3;
+                Log.Warning($"[PortraitLoader] Failed to load external file: {filePath} - {ex.Message}");
+                return null;
             }
-            
-            if (texture == null && (layerName.Contains("descent") || layerName.Contains("pose")))
-            {
-                // 路径4：降临姿态路径（主 Mod）
-                string descentPath1 = $"UI/Narrators/Descent/Postures/{personaName}/{layerName}";
-                texture = ContentFinder<Texture2D>.Get(descentPath1, false);
-                
-                if (texture == null)
-                {
-                    // 路径5：降临姿态路径（子 Mod，无子文件夹）
-                    string descentPath2 = $"Narrators/Descent/Postures/{layerName}";
-                    texture = ContentFinder<Texture2D>.Get(descentPath2, false);
-                }
-            }
-            
-            if (texture == null && (layerName.Contains("effect") || layerName.Contains("assist") || layerName.Contains("attack")))
-            {
-                // 路径6：降临特效路径（主 Mod）
-                string effectPath1 = $"UI/Narrators/Descent/Effects/{personaName}/{layerName}";
-                texture = ContentFinder<Texture2D>.Get(effectPath1, false);
-                
-                if (texture == null)
-                {
-                    // 路径7：降临特效路径（子 Mod，无子文件夹）
-                    string effectPath2 = $"Narrators/Descent/Effects/{layerName}";
-                    texture = ContentFinder<Texture2D>.Get(effectPath2, false);
-                }
-            }
-            
-            // 4. 设置纹理质量并缓存
-            if (texture != null)
-            {
-                SetTextureQuality(texture);
-                cache[cacheKey] = new CacheEntry
-                {
-                    Texture = texture,
-                    LastAccessTick = Find.TickManager.TicksGame,
-                    IsOwned = isOwned
-                };
-                
-                if (Prefs.DevMode)
-                {
-                    Log.Message($"[PortraitLoader] ✅ 加载图层: {layerName} from {foundPath} ({texture.width}x{texture.height})");
-                }
-            }
-            else if (Prefs.DevMode && !suppressWarning)
-            {
-                // ⭐ v1.8.3: 诊断日志 - 显示尝试的所有路径
-                Log.Warning($"[PortraitLoader] ⚠️ 图层加载失败: {layerName}");
-                Log.Warning($"[PortraitLoader]   persona: {def.defName}, portraitPath: {def.portraitPath}");
-                if (!string.IsNullOrEmpty(def.portraitPath))
-                {
-                    int lastSlashIndex = def.portraitPath.LastIndexOf('/');
-                    if (lastSlashIndex >= 0)
-                    {
-                        string baseDir = def.portraitPath.Substring(0, lastSlashIndex + 1);
-                        Log.Warning($"[PortraitLoader]   尝试的路径: {baseDir}{layerName}");
-                    }
-                }
-                Log.Warning($"[PortraitLoader]   尝试的路径: Narrators/Layered/{layerName}");
-            }
-            // else if (Prefs.DevMode && !suppressWarning)
-            // {
-            //     // 用户请求关闭此类报错日志
-            //     // Log.Warning($"[PortraitLoader] ⚠️ 图层未找到: {layerName} (persona: {personaName})");
-            //     // Log.Warning($"[PortraitLoader]   尝试的路径:");
-            //     // Log.Warning($"[PortraitLoader]     • UI/Narrators/9x16/Layered/{personaName}/{layerName}");
-            //     // Log.Warning($"[PortraitLoader]     • Narrators/Layered/{personaName}/{layerName}");
-            //     // Log.Warning($"[PortraitLoader]     • Narrators/Layered/{layerName}");
-            // }
-            
-            return texture;
         }
-
     }
 }

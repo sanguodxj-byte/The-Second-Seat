@@ -73,19 +73,27 @@ namespace TheSecondSeat.PersonaGeneration
             if (modContent != null)
             {
                 // 3. Mod Default - Active Language
-                string activeLangPath = Path.Combine(modContent.RootDir, "Languages", activeLangFolder, PromptsFolderName, fileName);
-                if (File.Exists(activeLangPath))
+                string modPromptsDir = GetModPromptsPath(modContent, activeLangFolder);
+                if (modPromptsDir != null)
                 {
-                    return CacheAndReturn(cacheKey, File.ReadAllText(activeLangPath));
+                    string activeLangPath = Path.Combine(modPromptsDir, fileName);
+                    if (File.Exists(activeLangPath))
+                    {
+                        return CacheAndReturn(cacheKey, File.ReadAllText(activeLangPath));
+                    }
                 }
 
                 // 4. Mod Fallback - English (Default)
                 if (activeLangFolder != DefaultLanguage)
                 {
-                    string defaultPath = Path.Combine(modContent.RootDir, "Languages", DefaultLanguage, PromptsFolderName, fileName);
-                    if (File.Exists(defaultPath))
+                    string defaultPromptsDir = GetModPromptsPath(modContent, DefaultLanguage);
+                    if (defaultPromptsDir != null)
                     {
-                        return CacheAndReturn(cacheKey, File.ReadAllText(defaultPath));
+                        string defaultPath = Path.Combine(defaultPromptsDir, fileName);
+                        if (File.Exists(defaultPath))
+                        {
+                            return CacheAndReturn(cacheKey, File.ReadAllText(defaultPath));
+                        }
                     }
                 }
             }
@@ -103,6 +111,35 @@ namespace TheSecondSeat.PersonaGeneration
         {
             _promptCache[key] = content;
             return content;
+        }
+
+        /// <summary>
+        /// Helper to find the prompts directory for a specific language in the mod content.
+        /// Performs case-insensitive search to be robust.
+        /// </summary>
+        private static string GetModPromptsPath(ModContentPack modContent, string langFolder)
+        {
+            if (modContent == null) return null;
+
+            string languagesDir = Path.Combine(modContent.RootDir, "Languages");
+            string specificPath = Path.Combine(languagesDir, langFolder, PromptsFolderName);
+
+            if (Directory.Exists(specificPath)) return specificPath;
+
+            // Case-insensitive search
+            if (Directory.Exists(languagesDir))
+            {
+                foreach (string dir in Directory.GetDirectories(languagesDir))
+                {
+                    if (Path.GetFileName(dir).Equals(langFolder, StringComparison.OrdinalIgnoreCase))
+                    {
+                        string p = Path.Combine(dir, PromptsFolderName);
+                        if (Directory.Exists(p)) return p;
+                    }
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -182,15 +219,18 @@ LogDiagnosis.txt            : Instructions for analyzing game logs
             EnsureConfigDirectory();
             string path = Path.Combine(GenFilePaths.ConfigFolderPath, "TheSecondSeat", PromptsFolderName);
             
-            // Open folder cross-platform
-            if (System.Environment.OSVersion.Platform == System.PlatformID.Win32NT)
+            // ⭐ 修复：使用 Application.OpenURL 处理路径，避免 Windows 上因空格导致的路径错误
+            try 
             {
-                System.Diagnostics.Process.Start("explorer.exe", path);
-            }
-            else
-            {
-                // Fallback for other OS (Mac/Linux - though RimWorld mods are mostly Windows)
                 UnityEngine.Application.OpenURL(path);
+            }
+            catch
+            {
+                // 回退方案
+                if (System.Environment.OSVersion.Platform == System.PlatformID.Win32NT)
+                {
+                    System.Diagnostics.Process.Start("explorer.exe", $"\"{path}\"");
+                }
             }
         }
 
@@ -210,15 +250,28 @@ LogDiagnosis.txt            : Instructions for analyzing game logs
             if (modContent == null) return;
             
             // Source path: Mod/Languages/{Language}/Prompts/
-            string sourcePath = Path.Combine(modContent.RootDir, "Languages", activeLangFolder, PromptsFolderName);
-            
-            // Fallback source: Mod/Languages/English/Prompts/
-            if (!Directory.Exists(sourcePath) && activeLangFolder != DefaultLanguage)
+            Log.Message($"[The Second Seat] Initializing User Prompts. Active Language: {activeLangFolder}");
+
+            string sourcePath = GetModPromptsPath(modContent, activeLangFolder);
+
+            // Special handling for Chinese: if active language is Chinese-variant but exact folder not found, try standard "ChineseSimplified"
+            if (sourcePath == null && (activeLangFolder.Contains("Chinese") || activeLangFolder.Contains("CN")))
             {
-                sourcePath = Path.Combine(modContent.RootDir, "Languages", DefaultLanguage, PromptsFolderName);
+                sourcePath = GetModPromptsPath(modContent, "ChineseSimplified");
+                if (sourcePath != null)
+                {
+                    Log.Message($"[The Second Seat] Exact match for '{activeLangFolder}' not found, falling back to 'ChineseSimplified'.");
+                }
             }
             
-            if (Directory.Exists(sourcePath))
+            // Fallback source: Mod/Languages/English/Prompts/
+            if (sourcePath == null && activeLangFolder != DefaultLanguage)
+            {
+                Log.Warning($"[The Second Seat] Prompts for language '{activeLangFolder}' not found. Falling back to English.");
+                sourcePath = GetModPromptsPath(modContent, DefaultLanguage);
+            }
+            
+            if (sourcePath != null && Directory.Exists(sourcePath))
             {
                 string[] files = Directory.GetFiles(sourcePath, "*.txt");
                 foreach (string file in files)
@@ -226,18 +279,15 @@ LogDiagnosis.txt            : Instructions for analyzing game logs
                     string fileName = Path.GetFileName(file);
                     string destFile = Path.Combine(targetFolder, fileName);
                     
-                    // Only copy if not exists to avoid overwriting user changes
-                    if (!File.Exists(destFile))
-                    {
-                        File.Copy(file, destFile);
-                    }
+                    // Always overwrite to ensure correct language version
+                    File.Copy(file, destFile, true);
                 }
                 Log.Message($"[The Second Seat] Initialized {files.Length} prompt files to {targetFolder}");
                 Messages.Message("提示词初始化完成", MessageTypeDefOf.PositiveEvent, false);
             }
             else
             {
-                Log.Warning($"[The Second Seat] Could not find source prompts at {sourcePath}");
+                Log.Warning($"[The Second Seat] Could not find source prompts for language {activeLangFolder} or fallback.");
                 Messages.Message("未找到源提示词文件", MessageTypeDefOf.RejectInput, false);
             }
             

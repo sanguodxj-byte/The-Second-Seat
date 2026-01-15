@@ -318,15 +318,19 @@ namespace TheSecondSeat.Commands
                 commandId = "Descent",
                 category = "Event",
                 displayName = "叙事者降临",
-                description = "以实体化身降临到战场，协助殖民者战斗或进行互动。这将消耗大量能量并有冷却时间。",
+                description = "以实体化身降临到战场，协助殖民者战斗或进行互动。可指定降临坐标，不指定则使用玩家选中位置或随机。这将消耗大量能量并有冷却时间。",
                 parameters = new List<ParameterDef>
                 {
                     new ParameterDef { name = "mode", type = "string", required = false, defaultValue = "assist",
                         validValues = new List<string> { "assist", "hostile" },
-                        description = "降临模式：assist(协助战斗), hostile(敌对)" }
+                        description = "降临模式：assist(协助战斗), hostile(敌对)" },
+                    new ParameterDef { name = "x", type = "int", required = false, 
+                        description = "降临目标X坐标（可选，不填则使用玩家选中位置或随机）" },
+                    new ParameterDef { name = "z", type = "int", required = false, 
+                        description = "降临目标Z坐标（可选，不填则使用玩家选中位置或随机）" }
                 },
-                example = "{ \"action\": \"Descent\", \"mode\": \"assist\" }",
-                notes = "当殖民地遭遇严重危机时使用"
+                example = "{ \"action\": \"Descent\", \"mode\": \"assist\", \"x\": 120, \"z\": 80 }",
+                notes = "当殖民地遭遇严重危机时使用。可用ScanMap获取敌人位置后指定降临坐标"
             });
             
         }

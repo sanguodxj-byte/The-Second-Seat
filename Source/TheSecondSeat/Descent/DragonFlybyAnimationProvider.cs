@@ -66,7 +66,7 @@ namespace TheSecondSeat.Descent
 
             if (isPlaying)
             {
-                Log.Warning("[DragonFlybyAnimationProvider] 动画正在播放中，忽略新请求");
+                // 动画正在播放中，忽略新请求 (静默)
                 return;
             }
             
@@ -83,6 +83,7 @@ namespace TheSecondSeat.Descent
             try
             {
                 // 1. 加载实体阴影纹理（从人格配置读取路径）
+                // ⭐ 修复线程问题：确保在主线程加载纹理
                 LoadEntityShadowTexture(persona);
 
                 // 2. 播放降临音效
@@ -156,15 +157,21 @@ namespace TheSecondSeat.Descent
             if (!string.IsNullOrEmpty(texturePath))
             {
                 Log.Message($"[DragonFlybyAnimationProvider] 准备加载实体阴影纹理，路径: '{texturePath}'");
-                bool loaded = DragonShadowRenderer.LoadCustomTexture(texturePath);
-                if (loaded)
+                
+                // ⭐ 修复线程安全问题：纹理加载必须在主线程执行
+                // 降临序列可能在后台线程触发
+                LongEventHandler.ExecuteWhenFinished(() => 
                 {
-                    Log.Message($"[DragonFlybyAnimationProvider] 加载实体阴影纹理: {texturePath}");
-                }
-                else
-                {
-                    Log.Warning($"[DragonFlybyAnimationProvider] 实体阴影纹理未找到: {texturePath}，使用备用粒子效果");
-                }
+                    bool loaded = DragonShadowRenderer.LoadCustomTexture(texturePath);
+                    if (loaded)
+                    {
+                        Log.Message($"[DragonFlybyAnimationProvider] 加载实体阴影纹理: {texturePath}");
+                    }
+                    else
+                    {
+                        // 纹理未找到，静默失败（使用备用效果）
+                    }
+                });
             }
             else
             {
@@ -191,7 +198,7 @@ namespace TheSecondSeat.Descent
                 }
                 else
                 {
-                    Log.Warning($"[DragonFlybyAnimationProvider] 音效未找到: {soundDefName}");
+                    // 音效未找到，静默
                 }
             }
         }
@@ -203,7 +210,7 @@ namespace TheSecondSeat.Descent
         {
             if (map == null)
             {
-                Log.Warning("[DragonFlybyAnimationProvider] 地图为空，无法启动阴影动画");
+                // 地图为空，静默
                 return;
             }
             

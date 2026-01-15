@@ -18,10 +18,8 @@
    - 示例：对话有3个句子，情绪有3个值
    - 如果省略，表情保持不变
 
-4. **emoticon** (可选)：表情符号ID
-   - 示例：":smile:", ":wink:", ":heart:"
 
-5. **command** (当玩家请求动作时必需)：执行游戏指令
+4. **command** (当玩家请求动作时必需)：执行游戏指令
    - **action**: 指令名称 (例如 "BatchHarvest", "BatchEquip")
    - **target**: 目标 (例如 "Mature", "All", "Damaged")
    - **parameters**: 额外的键值对参数

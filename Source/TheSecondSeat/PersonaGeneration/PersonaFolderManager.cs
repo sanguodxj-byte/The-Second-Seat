@@ -22,7 +22,7 @@ namespace TheSecondSeat.PersonaGeneration
         /// </summary>
         public static string GetPersonaRootDirectory(string personaName)
         {
-            // 1. 尝试从已加载的 Mod 中查找子 Mod
+            // 1. 尝试从已加载的 Mod 中查找子 Mod (标准命名: The Second Seat - PersonaName)
             string subModName = $"The Second Seat - {personaName}";
             var subMod = LoadedModManager.RunningModsListForReading
                 .FirstOrDefault(m => m.Name == subModName);
@@ -32,7 +32,26 @@ namespace TheSecondSeat.PersonaGeneration
                 return subMod.RootDir;
             }
 
-            // 2. 尝试在主 Mod 同级目录下查找文件夹（开发环境或未加载情况）
+            // 2. 尝试查找 [TSS] 开头的 Mod (Sideria 风格: [TSS]PersonaName - Suffix)
+            var tssMod = LoadedModManager.RunningModsListForReading
+                .FirstOrDefault(m => m.Name.Contains($"[TSS]") && m.Name.Contains(personaName));
+            
+            if (tssMod != null)
+            {
+                return tssMod.RootDir;
+            }
+            
+            // 3. 尝试通过 PackageId 查找 (例如: rim.thesecondseat.personaname)
+            string targetPackageIdSuffix = $".thesecondseat.{personaName.ToLower()}";
+            var packageIdMod = LoadedModManager.RunningModsListForReading
+                .FirstOrDefault(m => m.PackageId.ToLower().EndsWith(targetPackageIdSuffix));
+
+            if (packageIdMod != null)
+            {
+                return packageIdMod.RootDir;
+            }
+
+            // 4. 尝试在主 Mod 同级目录下查找文件夹（开发环境或未加载情况）
             string mainModDir = GetMainModRootDir();
             if (mainModDir == null)
             {
@@ -41,16 +60,33 @@ namespace TheSecondSeat.PersonaGeneration
             }
 
             string parentDir = Directory.GetParent(mainModDir).FullName;
+            
+            // 4.1 检查标准命名文件夹
             string potentialSubModDir = Path.Combine(parentDir, subModName);
-
             if (Directory.Exists(potentialSubModDir))
             {
-                // 如果文件夹存在但未加载，我们也将其视为根目录
-                // 注意：如果只是为了读取资源，这可能不够（因为资源没加载），但对于文件操作是正确的
                 return potentialSubModDir;
             }
             
-            // 3. 默认为通用人格，使用主 Mod 目录
+            // 4.2 检查 [TSS] 命名文件夹
+            try 
+            {
+                var directories = Directory.GetDirectories(parentDir);
+                foreach (var dir in directories)
+                {
+                    string dirName = new DirectoryInfo(dir).Name;
+                    if (dirName.StartsWith("[TSS]") && dirName.Contains(personaName))
+                    {
+                        return dir;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[PersonaFolderManager] 遍历目录查找子 Mod 失败: {ex.Message}");
+            }
+            
+            // 5. 默认为通用人格，使用主 Mod 目录
             return mainModDir;
         }
         
@@ -272,11 +308,22 @@ namespace TheSecondSeat.PersonaGeneration
         /// </summary>
         private static string GetMainModRootDir()
         {
+            // 1. 通过 PackageId 或 Name 查找
             var modContentPack = LoadedModManager.RunningModsListForReading
                 .FirstOrDefault(mod => mod.PackageId.ToLower().Contains("thesecondseat") || 
                                       mod.Name.Contains("Second Seat"));
             
-            return modContentPack?.RootDir;
+            if (modContentPack != null) return modContentPack.RootDir;
+
+            // 2. 通过程序集查找 (更稳健)
+            var assembly = typeof(PersonaFolderManager).Assembly;
+            modContentPack = LoadedModManager.RunningModsListForReading
+                .FirstOrDefault(mod => mod.assemblies.loadedAssemblies.Contains(assembly));
+
+            if (modContentPack != null) return modContentPack.RootDir;
+
+            Log.Error("[PersonaFolderManager] 无法定位主 Mod 根目录！请检查 Mod 安装状态。");
+            return null;
         }
         
         /// <summary>
