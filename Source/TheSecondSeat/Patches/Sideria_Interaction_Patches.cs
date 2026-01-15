@@ -103,9 +103,26 @@ namespace TheSecondSeat
                     var draftGizmos = Traverse.Create(__instance.drafter).Method("GetGizmos").GetValue<IEnumerable<Gizmo>>();
                     if (draftGizmos != null)
                     {
-                        foreach (var gizmo in draftGizmos)
+                        // 同样安全地遍历 drafter.GetGizmos
+                        var draftEnumerator = draftGizmos.GetEnumerator();
+                        while (true)
                         {
-                            yield return gizmo;
+                            Gizmo gizmo = null;
+                            try
+                            {
+                                if (!draftEnumerator.MoveNext()) break;
+                                gizmo = draftEnumerator.Current;
+                            }
+                            catch (System.Exception ex)
+                            {
+                                Log.ErrorOnce($"[TheSecondSeat] Error iterating draft gizmos for {__instance}: {ex}", __instance.thingIDNumber ^ 0x5678);
+                                break;
+                            }
+                            
+                            if (gizmo != null)
+                            {
+                                yield return gizmo;
+                            }
                         }
                     }
                 }
