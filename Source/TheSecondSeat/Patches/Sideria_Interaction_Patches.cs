@@ -10,7 +10,7 @@ namespace TheSecondSeat
     {
         public static bool IsSideriaOrDragon(Thing t)
         {
-            if (t is Pawn p)
+            if (t is Pawn p && p.def != null)
             {
                 if (p.def.defName == "Sideria_DescentRace") return true;
                 if (p.def.defName.StartsWith("Sideria_SpiritDragon_")) return true;
@@ -55,8 +55,24 @@ namespace TheSecondSeat
 
             if (SideriaInteractionUtils.IsSideriaOrDragon(__instance))
             {
-                foreach (var gizmo in values)
+                // 使用 try-catch 包裹以防止其他 Mod (如 TitanGrasp) 或原版在生成 Gizmo 时抛出异常导致整个 UI 崩溃
+                // 这里的异常通常发生在 values.MoveNext() 中
+                var enumerator = values.GetEnumerator();
+                while (true)
                 {
+                    Gizmo gizmo = null;
+                    try
+                    {
+                        if (!enumerator.MoveNext()) break;
+                        gizmo = enumerator.Current;
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Log.ErrorOnce($"[TheSecondSeat] Error iterating gizmos for {__instance}: {ex}", __instance.thingIDNumber ^ 0x1234);
+                        // 如果迭代器损坏，我们无法继续
+                        break;
+                    }
+
                     if (gizmo == null) continue;
 
                     // 移除 Designator_ReleaseAnimalToWild
@@ -69,8 +85,8 @@ namespace TheSecondSeat
                     // 通过 Label 检查作为额外保障
                     if (gizmo is Command cmd)
                     {
-                        if (cmd.defaultLabel == "ReleaseToWild".Translate() || 
-                            cmd.defaultLabel == "DesignatorReleaseAnimalToWild".Translate()) 
+                        if (cmd.defaultLabel == "ReleaseToWild".Translate() ||
+                            cmd.defaultLabel == "DesignatorReleaseAnimalToWild".Translate())
                         {
                              continue;
                         }

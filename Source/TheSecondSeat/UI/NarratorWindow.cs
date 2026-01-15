@@ -398,14 +398,20 @@ namespace TheSecondSeat.UI
             string eyeLayerName = BlinkAnimationSystem.GetEyeLayerName(persona.defName);
             if (!string.IsNullOrEmpty(eyeLayerName))
             {
-                var eyeTexture = PortraitLoader.GetLayerTexture(persona, eyeLayerName);
+                // ? v1.12.3: 抑制警告，避免因缺失特定表情眼睛纹理而刷屏
+                // PortraitLoader 内部已有失败计数机制
+                var eyeTexture = PortraitLoader.GetLayerTexture(persona, eyeLayerName, suppressWarning: true);
+                
+                // 如果特定表情眼睛未找到，尝试回退到基础眼睛 (base_eyes 或 neutral_eyes)
+                if (eyeTexture == null && eyeLayerName != "base_eyes" && eyeLayerName != "neutral_eyes")
+                {
+                    eyeTexture = PortraitLoader.GetLayerTexture(persona, "base_eyes", suppressWarning: true) 
+                              ?? PortraitLoader.GetLayerTexture(persona, "neutral_eyes", suppressWarning: true);
+                }
+
                 if (eyeTexture != null)
                 {
                     GUI.DrawTexture(rect, eyeTexture, ScaleMode.ScaleToFit);
-                }
-                else if (Prefs.DevMode)
-                {
-                    Log.Warning($"[NarratorWindow] Eye layer '{eyeLayerName}' not found for {persona.defName}");
                 }
             }
             
