@@ -42,6 +42,13 @@ namespace TheSecondSeat.Patches
             {
                 Log.Message($"[TSS-Debug] DescentEntity {__instance.LabelShort} already has drafter, Drafted={__instance.drafter.Drafted}");
             }
+
+            // 总是确保有 equipment（即使是 Animal 类型的降临体），否则 Pawn_DraftController.GetGizmos 会因为空引用报错
+            if (__instance.equipment == null)
+            {
+                __instance.equipment = new Pawn_EquipmentTracker(__instance);
+                Log.Message($"[TSS] Injected NEW Pawn_EquipmentTracker for DescentEntity: {__instance.LabelShort}");
+            }
             
             // 注入 abilities tracker（如果没有）
             if (__instance.abilities == null)
