@@ -89,8 +89,8 @@ This mod is built on a robust, thread-safe asynchronous architecture:
 
 ## 📝 Credits / 致谢
 
-- **Code & Design**: [Your Name/Team]
-- **Art**: [Artist Name]
+- **Code & Design**: [Claude opus 4.5]
+- **Art**: [Nanobanana pro]
 - **Special Thanks**: The RimWorld modding community.
 
 ---
