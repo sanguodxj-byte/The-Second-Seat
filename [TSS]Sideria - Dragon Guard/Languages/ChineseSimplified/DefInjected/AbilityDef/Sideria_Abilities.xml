@@ -40,9 +40,17 @@
   <Sideria_CrimsonBloom.label>猩红绽放</Sideria_CrimsonBloom.label>
   <Sideria_CrimsonBloom.description>Sideria 用猩红能量标记目标。每次对被标记目标的攻击都会积累一层绽放之力。当层数达到三层时，积蓄的能量会瞬间爆发，摧毁目标的要害器官。</Sideria_CrimsonBloom.description>
 
-  <!-- 唤龙之门 Dragon Gate -->
-  <Sideria_DragonGate.label>唤龙之门</Sideria_DragonGate.label>
-  <Sideria_DragonGate.description>Sideria 打开通往灵界的门户，召唤一头威严的巨龙与她并肩作战。灵龙是强大的盟友，会主动攻击敌人并保护 Sideria，直到它被击败或召唤时间结束。</Sideria_DragonGate.description>
+  <!-- 唤龙之门·血刺 Dragon Gate: BloodThorn -->
+  <Sideria_DragonGate_BloodThorn.label>唤龙之门·血刺</Sideria_DragonGate_BloodThorn.label>
+  <Sideria_DragonGate_BloodThorn.description>Sideria 打开通往灵界的门户，召唤血刺龙——一头浑身覆盖着血晶荆棘的可怖灵龙。血刺龙擅长用致命的荆棘撕裂敌人。</Sideria_DragonGate_BloodThorn.description>
+
+  <!-- 唤龙之门·光辉 Dragon Gate: Radiant -->
+  <Sideria_DragonGate_Radiant.label>唤龙之门·光辉</Sideria_DragonGate_Radiant.label>
+  <Sideria_DragonGate_Radiant.description>Sideria 打开通往灵界的门户，召唤光辉龙——一头周身燃烧着圣光的庄严灵龙。光辉龙通过其耀眼的存在和强大的光属性攻击提供支援。</Sideria_DragonGate_Radiant.description>
+
+  <!-- 唤龙之门·机甲 Dragon Gate: Mecha -->
+  <Sideria_DragonGate_Mecha.label>唤龙之门·机甲</Sideria_DragonGate_Mecha.label>
+  <Sideria_DragonGate_Mecha.description>Sideria 打开通往灵界的门户，召唤机甲龙——一头被机械装甲包裹的强大灵龙。机甲龙将灵能与机械科技完美结合，具有毁灭性的火力。</Sideria_DragonGate_Mecha.description>
 
   <!-- ======================================== -->
   <!-- 新增技能 - 血染领域和「世界」 -->

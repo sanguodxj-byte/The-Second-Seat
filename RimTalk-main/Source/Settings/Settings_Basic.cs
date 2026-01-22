@@ -35,6 +35,8 @@ public partial class Settings
                 return "RimTalk.Settings.PlayerDialogueMode.Manual".Translate().ToString();
             case PlayerDialogueMode.AIDriven:
                 return "RimTalk.Settings.PlayerDialogueMode.AIDriven".Translate().ToString();
+            case PlayerDialogueMode.AIDrivenPawnOnly:
+                return "RimTalk.Settings.PlayerDialogueMode.AIDrivenPawnOnly".Translate().ToString();
             default:
                 return mode.ToString();
         }
@@ -228,7 +230,7 @@ public partial class Settings
         {
             settings.TalkInterval = 7;
             settings.ProcessNonRimTalkInteractions = true;
-            settings.AllowSimultaneousConversations = true;
+            settings.AllowSimultaneousConversations = false;
             settings.DisplayTalkWhenDrafted = true;
             settings.AllowMonologue = true;
             settings.AllowSlavesToTalk = true;

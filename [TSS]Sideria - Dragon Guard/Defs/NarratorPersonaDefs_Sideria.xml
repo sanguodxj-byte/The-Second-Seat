@@ -143,7 +143,9 @@
     <abilitiesToGrant>
       <li>Sideria_CalamityThrow</li>
       <li>Sideria_CrimsonBloom</li>
-      <li>Sideria_DragonGate</li>
+      <li>Sideria_DragonGate_BloodThorn</li>
+      <li>Sideria_DragonGate_Radiant</li>
+      <li>Sideria_DragonGate_Mecha</li>
       <li>Sideria_CrimsonDomain</li>
       <li>Sideria_TheWorld</li>
     </abilitiesToGrant>

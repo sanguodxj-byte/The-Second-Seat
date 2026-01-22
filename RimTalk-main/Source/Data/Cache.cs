@@ -49,11 +49,35 @@ public static class Cache
     public static void Refresh()
     {
         // Identify and remove ineligible pawns from all caches.
-        foreach (var pawn in PawnCache.Keys.ToList().Where(pawn => !pawn.IsTalkEligible()))
+        foreach (var pawn in PawnCache.Keys.ToList())
         {
-            if (PawnCache.TryRemove(pawn, out var removedState))
+            if (!pawn.IsTalkEligible())
             {
-                NameCache.TryRemove(removedState.Pawn.LabelShort, out _);
+                if (PawnCache.TryRemove(pawn, out var removedState))
+                {
+                    NameCache.TryRemove(removedState.Pawn.LabelShort, out _); 
+                }
+                continue;
+            }
+
+            // If eligible, ensure the NameCache points to the CURRENT name.
+            var label = pawn.LabelShort;
+            if (!string.IsNullOrEmpty(label))
+            {
+                NameCache[label] = pawn;
+            }
+        }
+
+        // Ensure player state/name is valid.
+        InitializePlayerPawn();
+
+        // Remove "Ghost Keys" (old names).
+        foreach (var entry in NameCache.ToArray())
+        {
+            var pawn = entry.Value;
+            if (pawn == null || !PawnCache.ContainsKey(pawn) || pawn.LabelShort != entry.Key)
+            {
+                NameCache.TryRemove(entry.Key, out _);
             }
         }
 
@@ -66,9 +90,6 @@ public static class Cache
                 NameCache[pawn.LabelShort] = pawn;
             }
         }
-
-        if (_playerPawn == null)
-            InitializePlayerPawn();
     }
 
     public static IEnumerable<PawnState> GetAll()
@@ -103,7 +124,7 @@ public static class Cache
             return null;
         }
 
-        // 1. Categorize pawns and calculate the total weight for each group.
+        // 1. Calculate Group Weights
         double totalColonistWeight = 0.0;
         double totalVisitorWeight = 0.0;
         double totalEnemyWeight = 0.0;
@@ -137,13 +158,9 @@ public static class Cache
             }.Max();
         }
 
-        // If no one has any weight, no one can talk
-        if (baselineWeight <= 0)
-        {
-            return null;
-        }
+        if (baselineWeight <= 0) return null;
 
-        // 2. Determine scaling factors - groups above baseline get scaled down
+        // 2. Determine scaling factors
         var colonistScaleFactor = GetScaleFactor(totalColonistWeight, baselineWeight);
         var visitorScaleFactor = GetScaleFactor(totalVisitorWeight, baselineWeight);
         var enemyScaleFactor = GetScaleFactor(totalEnemyWeight, baselineWeight);
@@ -151,29 +168,39 @@ public static class Cache
         var prisonerScaleFactor = GetScaleFactor(totalPrisonerWeight, baselineWeight);
 
         // 3. Calculate effective total weight
-        var effectiveTotalWeight = pawnList.Sum(p =>
-        {
-            var weight = Get(p)?.TalkInitiationWeight ?? 0.0;
-            if (p.IsFreeNonSlaveColonist || p.HasVocalLink()) return weight * colonistScaleFactor;
-            if (p.IsSlave) return weight * slaveScaleFactor;
-            if (p.IsPrisoner) return weight * prisonerScaleFactor;
-            if (p.IsVisitor()) return weight * visitorScaleFactor;
-            if (p.IsEnemy()) return weight * enemyScaleFactor;
-            return 0;
-        });
+        double effectiveTotalWeight = 
+            totalColonistWeight * colonistScaleFactor +
+            totalVisitorWeight * visitorScaleFactor +
+            totalEnemyWeight * enemyScaleFactor +
+            totalSlaveWeight * slaveScaleFactor +
+            totalPrisonerWeight * prisonerScaleFactor;
 
+        if (effectiveTotalWeight <= 0) return null;
+
+        // 4. Absolute Probability Check
+        // If the total weight of the colony is low (e.g. everyone sleeping or shy),
+        // we might return null to simulate silence.
+        if (effectiveTotalWeight < 1.0 && Random.NextDouble() > effectiveTotalWeight)
+        {
+            return null;
+        }
+
+        // 5. Select Pawn
         var randomWeight = Random.NextDouble() * effectiveTotalWeight;
         var cumulativeWeight = 0.0;
 
         foreach (var pawn in pawnList)
         {
             var currentPawnWeight = Get(pawn)?.TalkInitiationWeight ?? 0.0;
+            double currentEffectiveWeight = 0.0;
 
-            if (pawn.IsFreeNonSlaveColonist || pawn.HasVocalLink()) cumulativeWeight += currentPawnWeight * colonistScaleFactor;
-            else if (pawn.IsSlave) cumulativeWeight += currentPawnWeight * slaveScaleFactor;
-            else if (pawn.IsPrisoner) cumulativeWeight += currentPawnWeight * prisonerScaleFactor;
-            else if (pawn.IsVisitor()) cumulativeWeight += currentPawnWeight * visitorScaleFactor;
-            else if (pawn.IsEnemy()) cumulativeWeight += currentPawnWeight * enemyScaleFactor;
+            if (pawn.IsFreeNonSlaveColonist || pawn.HasVocalLink()) currentEffectiveWeight = currentPawnWeight * colonistScaleFactor;
+            else if (pawn.IsSlave) currentEffectiveWeight = currentPawnWeight * slaveScaleFactor;
+            else if (pawn.IsPrisoner) currentEffectiveWeight = currentPawnWeight * prisonerScaleFactor;
+            else if (pawn.IsVisitor()) currentEffectiveWeight = currentPawnWeight * visitorScaleFactor;
+            else if (pawn.IsEnemy()) currentEffectiveWeight = currentPawnWeight * enemyScaleFactor;
+            
+            cumulativeWeight += currentEffectiveWeight;
 
             if (randomWeight < cumulativeWeight)
             {

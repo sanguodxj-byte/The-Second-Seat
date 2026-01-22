@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using HarmonyLib;
+using RimTalk.API;
 using RimTalk.Data;
 using RimTalk.Source.Data;
 using RimTalk.Util;
@@ -14,7 +16,8 @@ namespace RimTalk.Service;
 
 public static class ContextBuilder
 {
-    private static readonly MethodInfo VisibleHediffsMethod = AccessTools.Method(typeof(HealthCardUtility), "VisibleHediffs");
+    private static readonly MethodInfo VisibleHediffsMethod =
+        AccessTools.Method(typeof(HealthCardUtility), "VisibleHediffs");
 
     public static string GetRaceContext(Pawn pawn, PromptService.InfoLevel infoLevel)
     {
@@ -27,7 +30,8 @@ public static class ContextBuilder
     public static string GetNotableGenesContext(Pawn pawn, PromptService.InfoLevel infoLevel)
     {
         var contextSettings = Settings.Get().Context;
-        if (!contextSettings.IncludeNotableGenes || !ModsConfig.BiotechActive || pawn.genes?.GenesListForReading == null)
+        if (!contextSettings.IncludeNotableGenes || !ModsConfig.BiotechActive ||
+            pawn.genes?.GenesListForReading == null)
             return null;
 
         var notableGenes = pawn.genes.GenesListForReading
@@ -49,6 +53,22 @@ public static class ContextBuilder
         return null;
     }
 
+    public static string GetAllGenesContext(Pawn pawn, PromptService.InfoLevel infoLevel)
+    {
+        var contextSettings = Settings.Get().Context;
+        if (!contextSettings.IncludeNotableGenes || !ModsConfig.BiotechActive ||
+            pawn.genes?.GenesListForReading == null)
+            return null;
+
+        var genes = pawn.genes.GenesListForReading
+            .Select(g => g.def?.LabelCap.ToString())
+            .Where(label => !string.IsNullOrEmpty(label));
+
+        if (genes.Any())
+            return $"Genes: {string.Join(", ", genes)}";
+        return null;
+    }
+
     public static string GetIdeologyContext(Pawn pawn, PromptService.InfoLevel infoLevel)
     {
         var contextSettings = Settings.Get().Context;
@@ -57,7 +77,7 @@ public static class ContextBuilder
 
         var sb = new StringBuilder();
         var ideo = pawn.ideo.Ideo;
-        
+
         // For Short level, skip ideology name and only show top 3 memes
         if (infoLevel == PromptService.InfoLevel.Short)
         {
@@ -95,7 +115,7 @@ public static class ContextBuilder
             return null;
 
         var sb = new StringBuilder();
-        
+
         // For Short level, only include childhood title
         if (infoLevel == PromptService.InfoLevel.Short)
         {
@@ -130,7 +150,7 @@ public static class ContextBuilder
             if (degreeData != null)
             {
                 var traitText = infoLevel == PromptService.InfoLevel.Full
-                    ? $"{degreeData.label}:{ContextHelper.Sanitize(degreeData.description, pawn)}"
+                    ? $"{degreeData.label}:{CommonUtil.Sanitize(degreeData.description, pawn)}"
                     : degreeData.label;
                 traits.Add(traitText);
             }
@@ -145,6 +165,7 @@ public static class ContextBuilder
             var separator = infoLevel == PromptService.InfoLevel.Full ? "\n" : ",";
             return $"Traits: {string.Join(separator, traits)}";
         }
+
         return null;
     }
 
@@ -167,7 +188,7 @@ public static class ContextBuilder
             return null;
 
         var hediffs = (IEnumerable<Hediff>)VisibleHediffsMethod.Invoke(null, [pawn, false]);
-        
+
         // For Short level, only show top 3 most recent/severe hediffs
         if (infoLevel == PromptService.InfoLevel.Short)
         {
@@ -203,6 +224,7 @@ public static class ContextBuilder
                     : $"Mood: {m.MoodString} ({(int)(m.CurLevelPercentage * 100)}%)";
             return mood;
         }
+
         return null;
     }
 
@@ -213,15 +235,32 @@ public static class ContextBuilder
             return null;
 
         var allThoughts = ContextHelper.GetThoughts(pawn);
-        
+
         // For Short level, only include latest 3 thoughts
         var thoughts = infoLevel == PromptService.InfoLevel.Short
-            ? allThoughts.Keys.Take(3).Select(t => ContextHelper.Sanitize(t.LabelCap))
-            : allThoughts.Keys.Select(t => ContextHelper.Sanitize(t.LabelCap));
+            ? allThoughts.Keys.Take(3).Select(t => CommonUtil.Sanitize(t.LabelCap))
+            : allThoughts.Keys.Select(t => CommonUtil.Sanitize(t.LabelCap));
 
         if (thoughts.Any())
             return $"Memory: {string.Join(", ", thoughts)}";
         return null;
+    }
+
+    public static string GetAllThoughtsContext(Pawn pawn)
+    {
+        if (pawn?.needs?.mood?.thoughts == null)
+            return null;
+
+        var allThoughts = ContextHelper.GetThoughts(pawn);
+        if (allThoughts.Count == 0)
+            return null;
+
+        var thoughts = allThoughts
+            .OrderBy(kvp => kvp.Key.LabelCap.ToString())
+            .Select(kvp =>
+                $"{CommonUtil.Sanitize(kvp.Key.LabelCap)}({kvp.Value.ToStringWithSign()})");
+
+        return $"Thoughts: {string.Join(", ", thoughts)}";
     }
 
     public static string GetPrisonerSlaveContext(Pawn pawn, PromptService.InfoLevel infoLevel)
@@ -263,13 +302,16 @@ public static class ContextBuilder
 
     public static void BuildDialogueType(StringBuilder sb, TalkRequest talkRequest, List<Pawn> pawns, string shortName, Pawn mainPawn)
     {
-        if (talkRequest.TalkType == TalkType.User)
+        if (talkRequest.TalkType.IsFromUser())
         {
-            sb.Append($"{pawns[1].LabelShort}({pawns[1].GetRole()}) said to '{shortName}: {talkRequest.Prompt}'.");
-            if (Settings.Get().PlayerDialogueMode == Settings.PlayerDialogueMode.Manual)
-                sb.Append($"Generate dialogue starting after this. Do not generate any further lines for {pawns[1].LabelShort}");
-            else if (Settings.Get().PlayerDialogueMode == Settings.PlayerDialogueMode.AIDriven)
-                sb.Append($"Generate multi turn dialogues starting after this (do not repeat initial dialogue), beginning with {mainPawn.LabelShort}");
+            sb.Append($"{pawns[1].LabelShort}({pawns[1].GetRole()}) said to {shortName}: '{talkRequest.Prompt}'. ");
+
+            var mode = Settings.Get().PlayerDialogueMode;
+            bool multiTurn = mode == Settings.PlayerDialogueMode.AIDriven || (!pawns[1].IsPlayer() && mode != Settings.PlayerDialogueMode.Manual);
+
+            sb.Append(multiTurn
+                ? $"Generate multi turn dialogues starting after this (do not repeat initial dialogue), beginning with {shortName}"
+                : $"Generate dialogue starting after this. Do not generate any further lines for {pawns[1].LabelShort}");
         }
         else
         {
@@ -303,20 +345,23 @@ public static class ContextBuilder
 
     public static void BuildLocationContext(StringBuilder sb, ContextSettings contextSettings, Pawn mainPawn)
     {
-        if (contextSettings.IncludeLocationAndTemperature)
-        {
-            var locationStatus = ContextHelper.GetPawnLocationStatus(mainPawn);
-            if (!string.IsNullOrEmpty(locationStatus))
-            {
-                var temperature = Mathf.RoundToInt(mainPawn.Position.GetTemperature(mainPawn.Map));
-                var room = mainPawn.GetRoom();
-                var roomRole = room is { PsychologicallyOutdoors: false } ? room.Role?.label ?? "Room" : "";
+        if (!contextSettings.IncludeLocationAndTemperature) return;
+        
+        var locationStatus = ContextHelper.GetPawnLocationStatus(mainPawn);
+        if (string.IsNullOrEmpty(locationStatus)) return;
+        
+        var temperature = Mathf.RoundToInt(mainPawn.Position.GetTemperature(mainPawn.Map));
+        var room = mainPawn.GetRoom();
+        var roomRole = room is { PsychologicallyOutdoors: false } ? room.Role?.label ?? "Room" : "";
 
-                sb.Append(string.IsNullOrEmpty(roomRole)
-                    ? $"\nLocation: {locationStatus};{temperature}C"
-                    : $"\nLocation: {locationStatus};{temperature}C;{roomRole}");
-            }
-        }
+        var locationInfo = string.IsNullOrEmpty(roomRole)
+            ? $"{locationStatus};{temperature}C"
+            : $"{locationStatus};{temperature}C;{roomRole}";
+        
+        // Apply pawn hooks (location is now a pawn property)
+        locationInfo = ContextHookRegistry.ApplyPawnHooks(
+            ContextCategories.Pawn.Location, mainPawn, locationInfo);
+        sb.Append($"\nLocation: {locationInfo}");
     }
 
     public static void BuildEnvironmentContext(StringBuilder sb, ContextSettings contextSettings, Pawn mainPawn)
@@ -325,7 +370,11 @@ public static class ContextBuilder
         {
             var terrain = mainPawn.Position.GetTerrain(mainPawn.Map);
             if (terrain != null)
-                sb.Append($"\nTerrain: {terrain.LabelCap}");
+            {
+                var value = ContextHookRegistry.ApplyPawnHooks(
+                    ContextCategories.Pawn.Terrain, mainPawn, terrain.LabelCap);
+                sb.Append($"\nTerrain: {value}");
+            }
         }
 
         if (contextSettings.IncludeBeauty)
@@ -334,24 +383,37 @@ public static class ContextBuilder
             if (nearbyCells.Count > 0)
             {
                 var beautySum = nearbyCells.Sum(c => BeautyUtility.CellBeauty(c, mainPawn.Map));
-                sb.Append($"\nCellBeauty: {Describer.Beauty(beautySum / nearbyCells.Count)}");
+                var value = ContextHookRegistry.ApplyPawnHooks(
+                    ContextCategories.Pawn.Beauty, mainPawn, Describer.Beauty(beautySum / nearbyCells.Count));
+                sb.Append($"\nCellBeauty: {value}");
             }
         }
 
         var pawnRoom = mainPawn.GetRoom();
         if (contextSettings.IncludeCleanliness && pawnRoom is { PsychologicallyOutdoors: false })
-            sb.Append($"\nCleanliness: {Describer.Cleanliness(pawnRoom.GetStat(RoomStatDefOf.Cleanliness))}");
+        {
+            var value = ContextHookRegistry.ApplyPawnHooks(
+                ContextCategories.Pawn.Cleanliness, mainPawn,
+                Describer.Cleanliness(pawnRoom.GetStat(RoomStatDefOf.Cleanliness)));
+            sb.Append($"\nCleanliness: {value}");
+        }
 
         if (contextSettings.IncludeSurroundings)
         {
+            var surroundingsText = ContextHelper.CollectNearbyContextText(mainPawn, 3);
+            if (!string.IsNullOrEmpty(surroundingsText))
             {
-                var surroundingsText = ContextHelper.CollectNearbyContextText(mainPawn, 3);
-                if (!string.IsNullOrEmpty(surroundingsText))
-                {
-                    sb.Append("\nSurroundings:\n");
-                    sb.Append(surroundingsText);
-                }
+                var value = ContextHookRegistry.ApplyPawnHooks(
+                    ContextCategories.Pawn.Surroundings, mainPawn, surroundingsText);
+                sb.Append("\nSurroundings:\n");
+                sb.Append(value);
             }
         }
+    }
+
+    [Obsolete("Use CommonUtil.Sanitize instead. Kept for backward compatibility.")]
+    public static string Sanitize(string text, Pawn pawn = null)
+    {
+        return CommonUtil.Sanitize(text, pawn);
     }
 }

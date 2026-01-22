@@ -24,7 +24,7 @@ public static class PawnUtil
 
         RimTalkSettings settings = Settings.Get();
         if (!settings.AllowBabiesToTalk && pawn.IsBaby()) return false;
-        
+
         return pawn.IsFreeColonist ||
                (settings.AllowSlavesToTalk && pawn.IsSlave) ||
                (settings.AllowPrisonersToTalk && pawn.IsPrisoner) ||
@@ -48,7 +48,7 @@ public static class PawnUtil
         if (pawn.health.hediffSet.PainTotal >= pawn.GetStatValue(StatDefOf.PainShockThreshold)) return true;
         if (pawn.health.hediffSet.BleedRateTotal > 0.3f) return true;
         if (pawn.IsInCombat()) return true;
-        if (pawn.CurJobDef == JobDefOf.Flee) return true;
+        if (pawn.CurJobDef == JobDefOf.Flee || pawn.CurJobDef == JobDefOf.FleeAndCower) return true;
 
         // Check severe Hediffs
         foreach (var h in pawn.health.hediffSet.hediffs)
@@ -85,6 +85,7 @@ public static class PawnUtil
                 return includeFaction && pawn.Faction != null ? $"Enemy Group({pawn.Faction.Name})" : "Enemy";
             return "Enemy Defender";
         }
+
         if (pawn.IsVisitor())
             return includeFaction && pawn.Faction != null ? $"Visitor Group({pawn.Faction.Name})" : "Visitor";
         if (pawn.IsQuestLodger()) return "Lodger";
@@ -94,12 +95,49 @@ public static class PawnUtil
 
     public static bool IsVisitor(this Pawn pawn)
     {
-        return pawn?.Faction != null && pawn.Faction != Faction.OfPlayer && !pawn.HostileTo(Faction.OfPlayer);
+        return pawn?.Faction != null && pawn.Faction != Faction.OfPlayer && !pawn.HostileTo(Faction.OfPlayer) && !pawn.IsPrisoner;
+    }
+
+    public static string GetTitle(this Pawn pawn)
+    {
+        if (pawn == null) return "";
+
+        RoyalTitleDef titleDef = null;
+        Faction titleFaction = null;
+        if (pawn.royalty != null)
+        {
+            var mostSenior = pawn.royalty.MostSeniorTitle;
+            if (mostSenior != null)
+            {
+                titleDef = mostSenior.def;
+                titleFaction = mostSenior.faction;
+            }
+
+            if (titleDef == null && Faction.OfEmpire != null)
+            {
+                titleDef = pawn.royalty.GetCurrentTitle(Faction.OfEmpire);
+                titleFaction = titleDef != null ? Faction.OfEmpire : null;
+            }
+
+            if (titleDef == null && pawn.Faction != null)
+            {
+                titleDef = pawn.royalty.GetCurrentTitle(pawn.Faction);
+                titleFaction = titleDef != null ? pawn.Faction : null;
+            }
+        }
+
+        if (titleDef != null)
+        {
+            var titleLabel = titleDef.GetLabelFor(pawn);
+            return titleFaction != null ? $"{titleFaction.Name}: {titleLabel}" : titleLabel;
+        }
+
+        return pawn.story?.title ?? "";
     }
 
     public static bool IsEnemy(this Pawn pawn)
     {
-        return pawn != null && pawn.HostileTo(Faction.OfPlayer);
+        return pawn != null && pawn.HostileTo(Faction.OfPlayer) && !pawn.IsPrisoner;
     }
 
     public static bool IsBaby(this Pawn pawn)
@@ -110,7 +148,7 @@ public static class PawnUtil
     public static (string, bool) GetPawnStatusFull(this Pawn pawn, List<Pawn> nearbyPawns)
     {
         var settings = Settings.Get();
-        
+
         if (pawn == null)
             return (null, false);
 
@@ -120,30 +158,32 @@ public static class PawnUtil
         bool isInDanger = false;
         var lines = new List<string>();
 
-        // Collect all relevant pawns for context
+        // 1. Collect Context
         var relevantPawns = CollectRelevantPawns(pawn, nearbyPawns);
         bool useOptimization = settings.Context.EnableContextOptimization;
 
-        // Main pawn activity
+        // 2. Main Pawn Line
         string pawnLabel = GetPawnLabel(pawn, relevantPawns, useOptimization);
         string pawnActivity = GetPawnActivity(pawn, relevantPawns, useOptimization);
-        lines.Add($"{pawnLabel} {pawnActivity}");
 
+        // Check if main pawn is in danger (Panic/Combat/Health)
         if (pawn.IsInDanger())
+        {
+            lines.Add($"{pawnLabel} {pawnActivity} [IN DANGER]");
             isInDanger = true;
+        }
+        else
+        {
+            lines.Add($"{pawnLabel} {pawnActivity}");
+        }
 
-        // Nearby pawns in danger
+        // 3. Combined Nearby List
         if (nearbyPawns != null && nearbyPawns.Any())
         {
-            var nearbyInDanger = GetNearbyPawnsInDanger(pawn, nearbyPawns, relevantPawns, useOptimization, settings.Context.MaxPawnContextCount);
-            if (nearbyInDanger.Any())
-            {
-                lines.Add("People in condition nearby: " + string.Join("; ", nearbyInDanger));
-                isInDanger = true;
-            }
+            // Update ref situationIsCritical inside this method
+            string nearbyList = GetCombinedNearbyList(pawn, nearbyPawns, relevantPawns,
+                useOptimization, settings.Context.MaxPawnContextCount, ref isInDanger);
 
-            // All nearby pawns list
-            string nearbyList = GetNearbyPawnsList(nearbyPawns, relevantPawns, useOptimization, settings.Context.MaxPawnContextCount);
             lines.Add("Nearby: " + nearbyList);
         }
         else
@@ -151,10 +191,64 @@ public static class PawnUtil
             lines.Add("Nearby people: none");
         }
 
-        // Contextual information
+        // 4. Global Contextual Info
         AddContextualInfo(pawn, lines, ref isInDanger);
 
         return (string.Join("\n", lines), isInDanger);
+    }
+
+    private static string GetCombinedNearbyList(Pawn mainPawn, List<Pawn> nearbyPawns,
+        HashSet<Pawn> relevantPawns, bool useOptimization, int maxCount, ref bool situationIsCritical)
+    {
+        if (nearbyPawns == null || !nearbyPawns.Any())
+            return "none";
+
+        var descriptions = new List<string>();
+        bool localDangerFound = false;
+
+        var pawnsToScan = nearbyPawns.Take(maxCount);
+
+        foreach (var p in pawnsToScan)
+        {
+            string label = GetPawnLabel(p, relevantPawns, useOptimization);
+            string extraStatus = "";
+
+            if (p.IsInDanger(true))
+            {
+                if (p.Faction == mainPawn.Faction)
+                    localDangerFound = true;
+
+                extraStatus = " [!]";
+            }
+
+            string entry;
+            var pawnState = Cache.Get(p);
+            if (pawnState != null)
+            {
+                string activity = GetPawnActivity(p, relevantPawns, useOptimization);
+                string talkRequestStr = "";
+                var talkRequest = pawnState.GetNextTalkRequest();
+                if (talkRequest != null)
+                {
+                    pawnState.MarkRequestSpoken(talkRequest);
+                    talkRequestStr = $" - {talkRequest.Prompt}";
+                }
+                entry = $"{label} {activity.StripTags()}{extraStatus}{talkRequestStr}";
+            }
+            else
+            {
+                entry = $"{label}{extraStatus}";
+            }
+
+            descriptions.Add(entry);
+        }
+
+        if (localDangerFound)
+            situationIsCritical = true;
+
+        string result = "\n- " + string.Join("\n- ", descriptions);
+
+        return result;
     }
 
     private static HashSet<Pawn> CollectRelevantPawns(Pawn mainPawn, List<Pawn> nearbyPawns)
@@ -167,7 +261,7 @@ public static class PawnUtil
         if (nearbyPawns != null)
         {
             relevantPawns.UnionWith(nearbyPawns);
-            
+
             foreach (var nearby in nearbyPawns.Where(p => p.CurJob != null))
                 AddJobTargetsToRelevantPawns(nearby.CurJob, relevantPawns);
         }
@@ -179,62 +273,20 @@ public static class PawnUtil
     {
         if (useOptimization)
             return pawn.LabelShort;
-        
-        return relevantPawns.Contains(pawn) 
-            ? ContextHelper.GetDecoratedName(pawn) 
+
+        return relevantPawns.Contains(pawn)
+            ? ContextHelper.GetDecoratedName(pawn)
             : pawn.LabelShort;
     }
 
     private static string GetPawnActivity(Pawn pawn, HashSet<Pawn> relevantPawns, bool useOptimization)
     {
         string activity = pawn.GetActivity();
-        
+
         if (useOptimization || string.IsNullOrEmpty(activity))
             return activity;
 
         return DecorateText(activity, relevantPawns);
-    }
-
-    private static List<string> GetNearbyPawnsInDanger(Pawn mainPawn, List<Pawn> nearbyPawns, 
-        HashSet<Pawn> relevantPawns, bool useOptimization, int maxCount)
-    {
-        return nearbyPawns
-            .Where(p => p.Faction == mainPawn.Faction && p.IsInDanger(true))
-            .Take(maxCount - 1)
-            .Select(p =>
-            {
-                string label = GetPawnLabel(p, relevantPawns, useOptimization);
-                string activity = GetPawnActivity(p, relevantPawns, useOptimization);
-                return $"{label} in {activity.Replace("\n", "; ")}";
-            })
-            .ToList();
-    }
-
-    private static string GetNearbyPawnsList(List<Pawn> nearbyPawns, HashSet<Pawn> relevantPawns, 
-        bool useOptimization, int maxCount)
-    {
-        if (!nearbyPawns.Any())
-            return "none";
-
-        var pawnDescriptions = nearbyPawns
-            .Select(p =>
-            {
-                string label = GetPawnLabel(p, relevantPawns, useOptimization);
-                
-                if (Cache.Get(p) != null)
-                {
-                    string activity = GetPawnActivity(p, relevantPawns, useOptimization);
-                    return $"{label} {activity.StripTags()}";
-                }
-                
-                return label;
-            })
-            .ToList();
-
-        if (pawnDescriptions.Count > maxCount)
-            return string.Join(", ", pawnDescriptions.Take(maxCount)) + ", and others";
-        
-        return string.Join(", ", pawnDescriptions);
     }
 
     private static void AddContextualInfo(Pawn pawn, List<string> lines, ref bool isInDanger)
@@ -265,6 +317,7 @@ public static class PawnUtil
             {
                 lines.Add("Fighting to protect your home from being captured");
             }
+
             return;
         }
 
@@ -280,7 +333,7 @@ public static class PawnUtil
                 lines.Add("Threat: Hostiles are dangerously close!");
             else
                 lines.Add("Alert: hostiles in the area");
-            
+
             isInDanger = true;
         }
     }
@@ -301,7 +354,7 @@ public static class PawnUtil
             .ToList();
 
         // Apply replacements
-        return replacements.Aggregate(text, (current, replacement) => 
+        return replacements.Aggregate(text, (current, replacement) =>
             current.Replace(replacement.Key, replacement.Value));
     }
 
@@ -320,7 +373,7 @@ public static class PawnUtil
 
     private static Faction GetReferenceFaction(Pawn pawn)
     {
-        if (pawn.IsPrisoner || pawn.IsSlave || pawn.IsFreeColonist || 
+        if (pawn.IsPrisoner || pawn.IsSlave || pawn.IsFreeColonist ||
             pawn.IsVisitor() || pawn.IsQuestLodger())
         {
             return Faction.OfPlayer;
@@ -329,7 +382,7 @@ public static class PawnUtil
         return pawn.Faction;
     }
 
-    private static Pawn FindClosestValidThreat(Pawn pawn, Faction referenceFaction, 
+    private static Pawn FindClosestValidThreat(Pawn pawn, Faction referenceFaction,
         IEnumerable<IAttackTarget> hostileTargets)
     {
         Pawn closestPawn = null;
@@ -362,7 +415,7 @@ public static class PawnUtil
         // Filter out prisoners/slaves as threats to colonists
         if (threat.IsPrisoner && threat.HostFaction == Faction.OfPlayer)
             return false;
-        
+
         if (threat.IsSlave && threat.HostFaction == Faction.OfPlayer)
             return false;
 
@@ -375,7 +428,7 @@ public static class PawnUtil
         // Exclude tactically retreating pawns
         if (lord is { CurLordToil: LordToil_ExitMapFighting or LordToil_ExitMap })
             return false;
-        
+
         if (threat.CurJob?.exitMapOnArrival == true)
             return false;
 
@@ -397,10 +450,12 @@ public static class PawnUtil
         "RR_LearnRemotely"
     };
 
-    private static string GetActivity(this Pawn pawn)
+    private static readonly string[] MovementJobPatterns = { "Goto", "Flee", "Wait", "Wander" };
+
+    internal static string GetActivity(this Pawn pawn)
     {
         if (pawn == null) return null;
-        
+
         if (pawn.InMentalState)
             return pawn.MentalState?.InspectLine;
 
@@ -414,13 +469,25 @@ public static class PawnUtil
         var lord = pawn.GetLord()?.LordJob?.GetReport(pawn);
         var job = pawn.jobs?.curDriver?.GetReport();
 
-        string activity = lord == null ? job : 
-                         job == null ? lord : 
-                         $"{lord} ({job})";
+        string activity = lord == null ? job :
+            job == null ? lord :
+            $"{lord} ({job})";
 
         if (ResearchJobDefNames.Contains(pawn.CurJob?.def.defName))
         {
             activity = AppendResearchProgress(activity);
+        }
+
+        bool Near(LocalTargetInfo t) => t.IsValid && pawn.Position.InHorDistOf(t.Cell, 5f);
+
+        if (pawn.pather?.Moving == true
+            && pawn.CurJob != null
+            && !Near(pawn.CurJob.targetA)
+            && !Near(pawn.CurJob.targetB)
+            && !Near(pawn.CurJob.targetC)
+            && !MovementJobPatterns.Any(p => pawn.CurJob.def.defName.IndexOf(p, StringComparison.OrdinalIgnoreCase) >= 0)) 
+        {
+            activity = $"(traveling to) {activity}";
         }
 
         return activity;
@@ -513,7 +580,7 @@ public static class PawnUtil
 
     public static bool HasVocalLink(this Pawn pawn)
     {
-        return Settings.Get().AllowNonHumanToTalk && 
+        return Settings.Get().AllowNonHumanToTalk &&
                pawn.health.hediffSet.HasHediff(Constant.VocalLinkDef);
     }
 }

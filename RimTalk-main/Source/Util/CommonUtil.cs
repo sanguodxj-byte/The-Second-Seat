@@ -10,7 +10,7 @@ public static class CommonUtil
 {
     public static bool HasPassed(int pastTick, double seconds)
     {
-        return GenTicks.TicksGame - pastTick > GetTicksForDuration(seconds);
+        return GenTicks.TicksGame - pastTick >= GetTicksForDuration(seconds);
     }
     public static int GetTicksForDuration(double seconds)
     {
@@ -87,7 +87,8 @@ public static class CommonUtil
         return GenDate.HourOfDay(absTicks, longLat.x);
     }
 
-    private static string GetInGameHour12HString(long absTicks, Vector2 longLat)
+    // Converts 24h to 12h format with am/pm suffix
+    public static string GetInGameHour12HString(long absTicks, Vector2 longLat)
     {
         int hour24 = GetInGameHour(absTicks, longLat);
 
@@ -186,5 +187,26 @@ public static class CommonUtil
             return true;
         TimeSpeed currentGameSpeed = Find.TickManager.CurTimeSpeed;
         return (int)currentGameSpeed < settings.DisableAiAtSpeed;
+    }
+    
+    public static string Sanitize(string text, Pawn pawn = null)
+    {
+        if (pawn != null)
+            text = text.Formatted(pawn.Named("PAWN")).AdjustedFor(pawn).Resolve();
+        return text.StripTags().RemoveLineBreaks();
+    }
+    
+    public static string StripFormattingTags(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return text;
+    
+        // Remove common RimWorld rich text tags
+        text = Regex.Replace(text, @"<color[^>]*>|</color>", string.Empty);
+        text = Regex.Replace(text, @"<b>|</b>", string.Empty);
+        text = Regex.Replace(text, @"<i>|</i>", string.Empty);
+        text = Regex.Replace(text, @"<size[^>]*>|</size>", string.Empty);
+    
+        return text;
     }
 }

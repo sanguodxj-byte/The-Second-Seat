@@ -140,6 +140,12 @@
     <useHitPoints>False</useHitPoints>
     <isSaveable>true</isSaveable>
     <drawOffscreen>true</drawOffscreen>
+    <!-- PawnFlyer 必需的配置 - 缺少此配置会导致 Tick() 时 NullReferenceException -->
+    <pawnFlyer>
+      <flightSpeed>15</flightSpeed>
+      <flightDurationMin>0.3</flightDurationMin>
+      <heightFactor>1.5</heightFactor>
+    </pawnFlyer>
   </ThingDef>
 
 </Defs>

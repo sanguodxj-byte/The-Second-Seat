@@ -1,8 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
+using RimTalk.API;
 using RimTalk.Data;
 using RimTalk.Util;
+using RimWorld;
 using Verse;
 using Verse.AI.Group;
 using Cache = RimTalk.Data.Cache;
@@ -20,7 +23,7 @@ public static class PromptService
     public static string BuildContext(List<Pawn> pawns)
     {
         var context = new StringBuilder();
-        
+    
         for (int i = 0; i < pawns.Count; i++)
         {
             var pawn = pawns[i];
@@ -28,6 +31,7 @@ public static class PromptService
             InfoLevel infoLevel = Settings.Get().Context.EnableContextOptimization 
                                   || i != 0 ? InfoLevel.Short : InfoLevel.Normal;
             var pawnContext = CreatePawnContext(pawn, infoLevel);
+            pawnContext = CommonUtil.StripFormattingTags(pawnContext);
 
             Cache.Get(pawn).Context = pawnContext;
             context.AppendLine($"[P{i + 1}]").AppendLine(pawnContext);
@@ -41,7 +45,8 @@ public static class PromptService
     {
         var sb = new StringBuilder();
         var name = pawn.LabelShort;
-        var title = pawn.story?.title == null ? "" : $"({pawn.story.title})";
+        var pawnTitle = pawn.GetTitle();
+        var title = string.IsNullOrWhiteSpace(pawnTitle) ? "" : $"({pawnTitle})";
         var genderAndAge = Regex.Replace(pawn.MainDesc(false), @"\(\d+\)", "").Trim();
         sb.AppendLine($"{name} {title} ({genderAndAge})");
 
@@ -49,23 +54,23 @@ public static class PromptService
         if (role != null)
             sb.AppendLine($"Role: {role}");
 
-        // Each section can be patched independently
-        AppendIfNotEmpty(sb, ContextBuilder.GetRaceContext(pawn, infoLevel));
+        // Each section applies hooks via AppendWithHook
+        AppendWithHook(sb, pawn, ContextCategories.Pawn.Race, ContextBuilder.GetRaceContext(pawn, infoLevel));
         
         if (infoLevel != InfoLevel.Short && !pawn.IsVisitor() && !pawn.IsEnemy())
-            AppendIfNotEmpty(sb, ContextBuilder.GetNotableGenesContext(pawn, infoLevel));
+            AppendWithHook(sb, pawn, ContextCategories.Pawn.Genes, ContextBuilder.GetNotableGenesContext(pawn, infoLevel));
         
-        AppendIfNotEmpty(sb, ContextBuilder.GetIdeologyContext(pawn, infoLevel));
+        AppendWithHook(sb, pawn, ContextCategories.Pawn.Ideology, ContextBuilder.GetIdeologyContext(pawn, infoLevel));
 
         // Stop here for invaders and visitors
-        if (pawn.IsEnemy() || pawn.IsVisitor())
+        if ((pawn.IsEnemy() || pawn.IsVisitor()) && !pawn.IsQuestLodger())
             return sb.ToString();
 
-        AppendIfNotEmpty(sb, ContextBuilder.GetBackstoryContext(pawn, infoLevel));
-        AppendIfNotEmpty(sb, ContextBuilder.GetTraitsContext(pawn, infoLevel));
+        AppendWithHook(sb, pawn, ContextCategories.Pawn.Backstory, ContextBuilder.GetBackstoryContext(pawn, infoLevel));
+        AppendWithHook(sb, pawn, ContextCategories.Pawn.Traits, ContextBuilder.GetTraitsContext(pawn, infoLevel));
         
         if (infoLevel != InfoLevel.Short)
-            AppendIfNotEmpty(sb, ContextBuilder.GetSkillsContext(pawn, infoLevel));
+            AppendWithHook(sb, pawn, ContextCategories.Pawn.Skills, ContextBuilder.GetSkillsContext(pawn, infoLevel));
 
         return sb.ToString();
     }
@@ -76,8 +81,8 @@ public static class PromptService
         var sb = new StringBuilder();
         sb.Append(CreatePawnBackstory(pawn, infoLevel));
 
-        // Each section can be patched independently
-        AppendIfNotEmpty(sb, ContextBuilder.GetHealthContext(pawn, infoLevel));
+        // Each section applies hooks via AppendWithHook
+        AppendWithHook(sb, pawn, ContextCategories.Pawn.Health, ContextBuilder.GetHealthContext(pawn, infoLevel));
 
         var personality = Cache.Get(pawn).Personality;
         if (personality != null)
@@ -87,9 +92,9 @@ public static class PromptService
         if (pawn.IsEnemy())
             return sb.ToString();
 
-        AppendIfNotEmpty(sb, ContextBuilder.GetMoodContext(pawn, infoLevel));
-        AppendIfNotEmpty(sb, ContextBuilder.GetThoughtsContext(pawn, infoLevel));
-        AppendIfNotEmpty(sb, ContextBuilder.GetPrisonerSlaveContext(pawn, infoLevel));
+        AppendWithHook(sb, pawn, ContextCategories.Pawn.Mood, ContextBuilder.GetMoodContext(pawn, infoLevel));
+        AppendWithHook(sb, pawn, ContextCategories.Pawn.Thoughts, ContextBuilder.GetThoughtsContext(pawn, infoLevel));
+        AppendWithHook(sb, pawn, ContextCategories.Pawn.CaptiveStatus, ContextBuilder.GetPrisonerSlaveContext(pawn, infoLevel));
         
         // Visitor activity
         if (pawn.IsVisitor())
@@ -102,10 +107,10 @@ public static class PromptService
             }
         }
 
-        AppendIfNotEmpty(sb, ContextBuilder.GetRelationsContext(pawn, infoLevel));
+        AppendWithHook(sb, pawn, ContextCategories.Pawn.Social, ContextBuilder.GetRelationsContext(pawn, infoLevel));
         
         if (infoLevel != InfoLevel.Short)
-            AppendIfNotEmpty(sb, ContextBuilder.GetEquipmentContext(pawn, infoLevel));
+            AppendWithHook(sb, pawn, ContextCategories.Pawn.Equipment, ContextBuilder.GetEquipmentContext(pawn, infoLevel));
 
         return sb.ToString();
     }
@@ -121,18 +126,17 @@ public static class PromptService
 
         // Dialogue type
         ContextBuilder.BuildDialogueType(sb, talkRequest, pawns, shortName, mainPawn);
-
-        // Time and weather
         sb.Append($"\n{status}");
-        if (contextSettings.IncludeTimeAndDate)
-        {
-            sb.Append($"\nTime: {gameData.Hour12HString}");
-            sb.Append($"\nToday: {gameData.DateString}");
-        }
+
+        // Time and weather (apply environment hooks with injections)
+        if (contextSettings.IncludeTime)
+            sb.Append($"\nTime: {ApplyEnvironmentWithHook(mainPawn.Map, ContextCategories.Environment.Time, gameData.Hour12HString)}");
+        if (contextSettings.IncludeDate)
+            sb.Append($"\nToday: {ApplyEnvironmentWithHook(mainPawn.Map, ContextCategories.Environment.Date, gameData.DateString)}");
         if (contextSettings.IncludeSeason)
-            sb.Append($"\nSeason: {gameData.SeasonString}");
+            sb.Append($"\nSeason: {ApplyEnvironmentWithHook(mainPawn.Map, ContextCategories.Environment.Season, gameData.SeasonString)}");
         if (contextSettings.IncludeWeather)
-            sb.Append($"\nWeather: {gameData.WeatherString}");
+            sb.Append($"\nWeather: {ApplyEnvironmentWithHook(mainPawn.Map, ContextCategories.Environment.Weather, gameData.WeatherString)}");
 
         // Location
         ContextBuilder.BuildLocationContext(sb, contextSettings, mainPawn);
@@ -141,7 +145,7 @@ public static class PromptService
         ContextBuilder.BuildEnvironmentContext(sb, contextSettings, mainPawn);
 
         if (contextSettings.IncludeWealth)
-            sb.Append($"\nWealth: {Describer.Wealth(mainPawn.Map.wealthWatcher.WealthTotal)}");
+            sb.Append($"\nWealth: {ApplyEnvironmentWithHook(mainPawn.Map, ContextCategories.Environment.Wealth, Describer.Wealth(mainPawn.Map.wealthWatcher.WealthTotal))}");
 
         if (AIService.IsFirstInstruction())
             sb.Append($"\nin {Constant.Lang}");
@@ -149,9 +153,60 @@ public static class PromptService
         talkRequest.Prompt = sb.ToString();
     }
     
+    /// <summary>
+    /// Appends text to StringBuilder if not empty, with optional hook application.
+    /// </summary>
     private static void AppendIfNotEmpty(StringBuilder sb, string text)
     {
         if (!string.IsNullOrEmpty(text))
             sb.AppendLine(text);
+    }
+    
+    /// <summary>
+    /// Appends pawn context text with hook and injection application.
+    /// </summary>
+    private static void AppendWithHook(StringBuilder sb, Pawn pawn, ContextCategory category, string text)
+    {
+        // Render Before injections
+        if (ContextHookRegistry.HasAnyInjections)
+            foreach (var (_, pos, _, provider) in ContextHookRegistry.GetInjectedSectionsAt(category))
+                if (pos == ContextHookRegistry.InjectPosition.Before && provider is Func<Pawn, string> p)
+                    AppendIfNotEmpty(sb, p(pawn));
+        
+        // Apply hooks (always call to allow Override hooks on empty categories)
+        var hooked = ContextHookRegistry.ApplyPawnHooks(category, pawn, text ?? "");
+        AppendIfNotEmpty(sb, hooked);
+        
+        // Render After injections
+        if (ContextHookRegistry.HasAnyInjections)
+            foreach (var (_, pos, _, provider) in ContextHookRegistry.GetInjectedSectionsAt(category))
+                if (pos == ContextHookRegistry.InjectPosition.After && provider is Func<Pawn, string> p)
+                    AppendIfNotEmpty(sb, p(pawn));
+    }
+    
+    /// <summary>
+    /// Appends environment context text with hook and injection application.
+    /// </summary>
+    private static string ApplyEnvironmentWithHook(Map map, ContextCategory category, string text)
+    {
+        var sb = new StringBuilder();
+        
+        // Render Before injections
+        if (ContextHookRegistry.HasAnyInjections)
+            foreach (var (_, pos, _, provider) in ContextHookRegistry.GetInjectedSectionsAt(category))
+                if (pos == ContextHookRegistry.InjectPosition.Before && provider is Func<Map, string> p)
+                    AppendIfNotEmpty(sb, p(map));
+        
+        // Apply hooks
+        var hooked = ContextHookRegistry.ApplyEnvironmentHooks(category, map, text ?? "");
+        AppendIfNotEmpty(sb, hooked);
+        
+        // Render After injections
+        if (ContextHookRegistry.HasAnyInjections)
+            foreach (var (_, pos, _, provider) in ContextHookRegistry.GetInjectedSectionsAt(category))
+                if (pos == ContextHookRegistry.InjectPosition.After && provider is Func<Map, string> p)
+                    AppendIfNotEmpty(sb, p(map));
+        
+        return sb.ToString().TrimEnd();
     }
 }

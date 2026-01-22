@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using RimTalk.Data;
+using RimTalk.Prompt;
 using RimTalk.Source.Data;
 using RimTalk.UI;
 using RimTalk.Util;
@@ -31,7 +32,7 @@ public static class TalkService
         if (AIService.IsBusy()) return false;
 
         PawnState pawn1 = Cache.Get(talkRequest.Initiator);
-        if (talkRequest.TalkType != TalkType.User && (pawn1 == null || !pawn1.CanGenerateTalk())) return false;
+        if (!talkRequest.TalkType.IsFromUser() && (pawn1 == null || !pawn1.CanGenerateTalk())) return false;
         
         if (!settings.AllowSimultaneousConversations && AnyPawnHasPendingResponses()) return false;
 
@@ -47,13 +48,13 @@ public static class TalkService
         var (status, isInDanger) = talkRequest.Initiator.GetPawnStatusFull(nearbyPawns);
         
         // Avoid spamming generations if the pawn's status hasn't changed recently.
-        if (talkRequest.TalkType != TalkType.User && status == pawn1.LastStatus && pawn1.RejectCount < 2)
+        if (!talkRequest.TalkType.IsFromUser() && status == pawn1.LastStatus && pawn1.RejectCount < 2)
         {
             pawn1.RejectCount++;
             return false;
         }
         
-        if (talkRequest.TalkType != TalkType.User && isInDanger) talkRequest.TalkType = TalkType.Urgent;
+        if (!talkRequest.TalkType.IsFromUser() && isInDanger) talkRequest.TalkType = TalkType.Urgent;
         
         pawn1.RejectCount = 0;
         pawn1.LastStatus = status;
@@ -72,16 +73,17 @@ public static class TalkService
         
         if (pawns.Count == 1) talkRequest.IsMonologue = true;
 
-        if (!settings.AllowMonologue && talkRequest.IsMonologue && talkRequest.TalkType != TalkType.User)
+        if (!settings.AllowMonologue && talkRequest.IsMonologue && !talkRequest.TalkType.IsFromUser())
             return false;
 
-        // Build the context and decorate the prompt with current status information.
-        talkRequest.Context = PromptService.BuildContext(pawns);
-        PromptService.DecoratePrompt(talkRequest, pawns, status);
+        // Delegate prompt assembly to PromptManager (Handles Simple/Advanced modes and fallbacks)
+        talkRequest.PromptMessages = PromptManager.Instance.BuildMessages(talkRequest, pawns, status);
         
         // Offload the AI request and processing to a background thread to avoid blocking the game's main thread.
         Task.Run(() => GenerateAndProcessTalkAsync(talkRequest));
 
+        pawn1.MarkRequestSpoken(talkRequest);
+        
         return true;
     }
 
@@ -98,11 +100,7 @@ public static class TalkService
             var receivedResponses = new List<TalkResponse>();
 
             // Call the streaming chat service. The callback is executed as each piece of dialogue is parsed.
-            await AIService.ChatStreaming(
-                talkRequest,
-                Constant.Instruction, 
-                TalkHistory.GetMessageHistory(initiator),
-                talkResponse =>
+            await AIService.ChatStreaming(talkRequest, talkResponse =>
                 {
                     Logger.Debug($"Streamed: {talkResponse}");
 
@@ -123,7 +121,7 @@ public static class TalkService
             );
 
             // Once the stream is complete, save the full conversation to history.
-            AddResponsesToHistory(receivedResponses, talkRequest.Prompt);
+            AddResponsesToHistory(receivedResponses, talkRequest);
         }
         catch (Exception ex)
         {
@@ -138,14 +136,18 @@ public static class TalkService
     /// <summary>
     /// Serializes the generated responses and adds them to the message history for all involved pawns.
     /// </summary>
-    private static void AddResponsesToHistory(List<TalkResponse> responses, string prompt)
+    private static void AddResponsesToHistory(List<TalkResponse> responses, TalkRequest talkRequest)
     {
         if (!responses.Any()) return;
-        string serializedResponses = JsonUtil.SerializeToJson(responses);
-        foreach (var talkResponse in responses)
+        var uniquePawns = responses
+            .Select(r => Cache.GetByName(r.Name)?.Pawn)
+            .Where(p => p != null)
+            .Distinct();
+
+        foreach (var pawn in uniquePawns)
         {
-            Pawn pawn = Cache.GetByName(talkResponse.Name)?.Pawn;
-            TalkHistory.AddMessageHistory(pawn, prompt, serializedResponses);
+            var serializedResponses = JsonUtil.SerializeToJson(responses);
+            TalkHistory.AddMessageHistory(pawn, talkRequest, serializedResponses);
         }
     }
 
@@ -170,11 +172,6 @@ public static class TalkService
             if (TalkHistory.IsTalkIgnored(talk.ParentTalkId) || !pawnState.CanDisplayTalk())
             {
                 pawnState.IgnoreTalkResponse();
-                continue;
-            }
-
-            if (!talk.IsReply() && !CommonUtil.HasPassed(pawnState.LastTalkTick, Settings.Get().TalkInterval))
-            {
                 continue;
             }
 

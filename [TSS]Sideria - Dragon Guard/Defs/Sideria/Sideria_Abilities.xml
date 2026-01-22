@@ -69,11 +69,11 @@
     </comps>
   </AbilityDef>
 
-  <!-- 唤龙之门 Dragon Gate - 召唤灵界巨龙 -->
+  <!-- 唤龙之门·血刺 Dragon Gate: BloodThorn - 召唤血刺灵龙 -->
   <AbilityDef>
-    <defName>Sideria_DragonGate</defName>
-    <label>dragon gate</label>
-    <description>Sideria opens a gateway to the spirit realm, summoning a majestic dragon to fight alongside her. The spirit dragon is a formidable ally that will attack enemies and protect Sideria until it is destroyed or the summoning duration expires.</description>
+    <defName>Sideria_DragonGate_BloodThorn</defName>
+    <label>dragon gate: bloodthorn</label>
+    <description>Sideria opens a gateway to the spirit realm, summoning the BloodThorn Dragon - a fearsome spirit dragon wreathed in thorns of crystallized blood. This dragon excels at tearing through enemies with its deadly thorned attacks.</description>
     <iconPath>UI/Abilities/DragonGate</iconPath>
     <cooldownTicksRange>15000</cooldownTicksRange>
     <displayGizmoWhileUndrafted>false</displayGizmoWhileUndrafted>
@@ -98,7 +98,76 @@
         <summonRadius>5</summonRadius>
         <dragonKindDefNames>
           <li>Sideria_SpiritDragon_BloodThorn_Kind</li>
+        </dragonKindDefNames>
+        <dissipationHediffDefName>Sideria_SpiritDragonDissipation</dissipationHediffDefName>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- 唤龙之门·光辉 Dragon Gate: Radiant - 召唤光辉灵龙 -->
+  <AbilityDef>
+    <defName>Sideria_DragonGate_Radiant</defName>
+    <label>dragon gate: radiant</label>
+    <description>Sideria opens a gateway to the spirit realm, summoning the Radiant Dragon - a majestic spirit dragon that blazes with holy light. This dragon provides support through its radiant presence and powerful light-based attacks.</description>
+    <iconPath>UI/Abilities/DragonGate</iconPath>
+    <cooldownTicksRange>15000</cooldownTicksRange>
+    <displayGizmoWhileUndrafted>false</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>true</disableGizmoWhileUndrafted>
+    <canUseAoeToGetTargets>false</canUseAoeToGetTargets>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>5</range>
+      <warmupTime>2.0</warmupTime>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetAnimals>false</canTargetAnimals>
+        <canTargetHumans>false</canTargetHumans>
+        <canTargetMechs>false</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetLocations>true</canTargetLocations>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="TheSecondSeat.CompProperties_AbilityDragonGate">
+        <dragonDurationTicks>15000</dragonDurationTicks>
+        <summonRadius>5</summonRadius>
+        <dragonKindDefNames>
           <li>Sideria_SpiritDragon_Radiant_Kind</li>
+        </dragonKindDefNames>
+        <dissipationHediffDefName>Sideria_SpiritDragonDissipation</dissipationHediffDefName>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- 唤龙之门·机甲 Dragon Gate: Mecha - 召唤机甲灵龙 -->
+  <AbilityDef>
+    <defName>Sideria_DragonGate_Mecha</defName>
+    <label>dragon gate: mecha</label>
+    <description>Sideria opens a gateway to the spirit realm, summoning the Mecha Dragon - a powerful spirit dragon encased in mechanoid armor. This dragon combines spirit energy with mechanoid technology for devastating firepower.</description>
+    <iconPath>UI/Abilities/DragonGate</iconPath>
+    <cooldownTicksRange>15000</cooldownTicksRange>
+    <displayGizmoWhileUndrafted>false</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>true</disableGizmoWhileUndrafted>
+    <canUseAoeToGetTargets>false</canUseAoeToGetTargets>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>5</range>
+      <warmupTime>2.0</warmupTime>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetAnimals>false</canTargetAnimals>
+        <canTargetHumans>false</canTargetHumans>
+        <canTargetMechs>false</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetLocations>true</canTargetLocations>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="TheSecondSeat.CompProperties_AbilityDragonGate">
+        <dragonDurationTicks>15000</dragonDurationTicks>
+        <summonRadius>5</summonRadius>
+        <dragonKindDefNames>
+          <li>Sideria_SpiritDragon_Mecha_Kind</li>
         </dragonKindDefNames>
         <dissipationHediffDefName>Sideria_SpiritDragonDissipation</dissipationHediffDefName>
       </li>

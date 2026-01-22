@@ -51,13 +51,13 @@ public static class ContextHelper
     public static string GetDecoratedName(Pawn pawn)
     {
         if (!pawn.RaceProps.Humanlike)
-            return $"{pawn.LabelShort}(Age:{pawn.ageTracker.AgeBiologicalYears};Race:{pawn.def.LabelCap})";
+            return $"{pawn.LabelShort}({pawn.ageTracker.AgeBiologicalYears}/{pawn.def.LabelCap})";
 
         var race = ModsConfig.BiotechActive && pawn.genes?.Xenotype != null
             ? pawn.genes.XenotypeLabel
             : pawn.def.LabelCap.RawText;
 
-        return $"{pawn.LabelShort}(Age:{pawn.ageTracker.AgeBiologicalYears};{pawn.gender.GetLabel()};ID:{pawn.GetRole(true)};{race})";
+        return $"{pawn.LabelShort}({pawn.ageTracker.AgeBiologicalYears}{pawn.gender.GetLabelShort()}/{pawn.GetRole(true)}/{race})";
     }
 
     public static bool IsWall(Thing thing)
@@ -66,18 +66,11 @@ public static class ContextHelper
         return data != null && data.linkFlags.HasFlag((Enum)LinkFlags.Wall);
     }
 
-    public static string Sanitize(string text, Pawn pawn = null)
-    {
-        if (pawn != null)
-            text = text.Formatted(pawn.Named("PAWN")).AdjustedFor(pawn).Resolve();
-        return text.StripTags().RemoveLineBreaks();
-    }
-
     public static string FormatBackstory(string label, BackstoryDef backstory, Pawn pawn, InfoLevel infoLevel)
     {
         var result = $"{label}: {backstory.title}({backstory.titleShort})";
         if (infoLevel == InfoLevel.Full)
-            result += $":{Sanitize(backstory.description, pawn)}";
+            result += $":{CommonUtil.Sanitize(backstory.description, pawn)}";
         return result;
     }
 
@@ -164,6 +157,7 @@ public static class ContextHelper
             cells = cells.Take(maxCellsToScan).ToList();
 
         var aggs = new Dictionary<string, NearbyAgg>();
+        var seenBuildingIds = new HashSet<int>();
 
         int processedTotal = 0;
         int processedItems = 0;
@@ -221,6 +215,7 @@ public static class ContextHelper
 
                 if (cat == ThingCategory.Building)
                 {
+                    if (!seenBuildingIds.Add(thing.thingIDNumber)) continue;
                     if (IsWall(thing)) continue;
                     AddAgg(aggs, thing, NearbyKind.Building);
                 }

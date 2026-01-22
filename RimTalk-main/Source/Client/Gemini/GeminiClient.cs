@@ -13,104 +13,59 @@ namespace RimTalk.Client.Gemini;
 
 public class GeminiClient : IAIClient
 {
-    private const string BaseUrl = "https://generativelanguage.googleapis.com/v1beta";
+    private static string BaseUrl => AIProvider.Google.GetEndpointUrl();
     private static string CurrentApiKey => Settings.Get().GetActiveConfig()?.ApiKey;
     private static string CurrentModel => Settings.Get().GetCurrentModel();
-    private static string EndpointUrl => $"{BaseUrl}/models/{CurrentModel}:generateContent?key={CurrentApiKey}";
-    private static string StreamEndpointUrl => $"{BaseUrl}/models/{CurrentModel}:streamGenerateContent?alt=sse&key={CurrentApiKey}";
+    
+    // Helper properties for endpoints
+    private static string GenerateEndpoint => $"{BaseUrl}/models/{CurrentModel}:generateContent?key={CurrentApiKey}";
+    private static string StreamEndpoint => $"{BaseUrl}/models/{CurrentModel}:streamGenerateContent?alt=sse&key={CurrentApiKey}";
 
-    private readonly Random _random = new();
+    private readonly Random _random = new Random();
 
-    /// <summary>
-    /// Gets a standard chat completion.
-    /// </summary>
-    public async Task<Payload> GetChatCompletionAsync(string instruction, List<(Role role, string message)> messages)
+    public async Task<Payload> GetChatCompletionAsync(List<(Role role, string message)> prefixMessages, 
+        List<(Role role, string message)> messages, 
+        Action<Payload> onRequestPrepared = null)
     {
-        string jsonContent = BuildRequestJson(instruction, messages);
-        var response = await SendRequestAsync<GeminiResponse>(EndpointUrl, jsonContent, new DownloadHandlerBuffer());
+        string jsonContent = BuildRequestJson(prefixMessages, messages);
+        onRequestPrepared?.Invoke(new Payload(BaseUrl, CurrentModel, jsonContent, null, 0));
+        string responseText = await SendRequestAsync(GenerateEndpoint, jsonContent, new DownloadHandlerBuffer());
 
+        var response = JsonUtil.DeserializeFromJson<GeminiResponse>(responseText);
         var content = response?.Candidates?[0]?.Content?.Parts?[0]?.Text;
         var tokens = response?.UsageMetadata?.TotalTokenCount ?? 0;
+        
+        // Specific check for max tokens finish reason
+        if (response?.Candidates?[0]?.FinishReason == "MAX_TOKENS")
+        {
+            var msg = "Quota exceeded (MAX_TOKENS)";
+            throw new QuotaExceededException(msg, new Payload(BaseUrl, CurrentModel, jsonContent, responseText, tokens, msg));
+        }
 
-        return new Payload(jsonContent, content, tokens);
+        return new Payload(BaseUrl, CurrentModel, jsonContent, content, tokens);
     }
 
-    /// <summary>
-    /// Streams chat completion and invokes a callback for each response chunk.
-    /// </summary>
-    public async Task<Payload> GetStreamingChatCompletionAsync<T>(string instruction,
-        List<(Role role, string message)> messages, Action<T> onResponseParsed) where T : class
+    public async Task<Payload> GetStreamingChatCompletionAsync<T>(List<(Role role, string message)> prefixMessages,
+        List<(Role role, string message)> messages, 
+        Action<T> onResponseParsed,
+        Action<Payload> onRequestPrepared = null) where T : class
     {
-        string jsonContent = BuildRequestJson(instruction, messages);
+        string jsonContent = BuildRequestJson(prefixMessages, messages);
+        onRequestPrepared?.Invoke(new Payload(BaseUrl, CurrentModel, jsonContent, null, 0));
         var jsonParser = new JsonStreamParser<T>();
-
-        var streamingHandler = new GeminiStreamHandler(jsonChunk =>
+        
+        var streamHandler = new GeminiStreamHandler(chunk =>
         {
-            var responses = jsonParser.Parse(jsonChunk);
-            foreach (var response in responses)
-            {
+            foreach (var response in jsonParser.Parse(chunk))
                 onResponseParsed?.Invoke(response);
-            }
         });
 
-        await SendRequestAsync<object>(StreamEndpointUrl, jsonContent,
-            streamingHandler); // Type param is not used here, so 'object' is a placeholder.
+        await SendRequestAsync(StreamEndpoint, jsonContent, streamHandler);
 
-        var fullResponse = streamingHandler.GetFullText();
-        var tokens = streamingHandler.GetTotalTokens();
-
-        Logger.Debug($"API response: \n{streamingHandler.GetRawJson()}");
-        return new Payload(jsonContent, fullResponse, tokens);
+        return new Payload(BaseUrl, CurrentModel, jsonContent, streamHandler.GetFullText(), streamHandler.GetTotalTokens());
     }
 
-    /// <summary>
-    /// Builds the JSON payload for the Gemini API request.
-    /// </summary>
-    private string BuildRequestJson(string instruction, List<(Role role, string message)> messages)
-    {
-        SystemInstruction systemInstruction = null;
-        var allMessages = new List<(Role role, string message)>();
-
-        if (CurrentModel.Contains("gemma"))
-        {
-            // For Gemma models, the instruction is added as a user message with a random prefix.
-            allMessages.Add((Role.User, $"{_random.Next()} {instruction}"));
-        }
-        else
-        {
-            systemInstruction = new SystemInstruction
-            {
-                Parts = [new Part { Text = instruction }]
-            };
-        }
-
-        allMessages.AddRange(messages);
-
-        var generationConfig = new GenerationConfig();
-        if (CurrentModel.Contains("flash"))
-        {
-            generationConfig.ThinkingConfig = new ThinkingConfig { ThinkingBudget = 0 };
-        }
-
-        var request = new GeminiDto()
-        {
-            SystemInstruction = systemInstruction,
-            Contents = allMessages.Select(m => new Content
-            {
-                Role = ConvertRole(m.role),
-                Parts = [new Part { Text = m.message }]
-            }).ToList(),
-            GenerationConfig = generationConfig
-        };
-
-        return JsonUtil.SerializeToJson(request);
-    }
-
-    /// <summary>
-    /// A generic method to handle sending UnityWebRequests.
-    /// </summary>
-    private async Task<T> SendRequestAsync<T>(string url, string jsonContent, DownloadHandler downloadHandler)
-        where T : class
+    private async Task<string> SendRequestAsync(string url, string jsonContent, DownloadHandler downloadHandler)
     {
         if (string.IsNullOrEmpty(CurrentApiKey))
         {
@@ -118,109 +73,154 @@ public class GeminiClient : IAIClient
             return null;
         }
 
-        try
+        Logger.Debug($"API request: {url}\n{jsonContent}");
+
+        using var webRequest = new UnityWebRequest(url, "POST");
+        webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonContent));
+        webRequest.downloadHandler = downloadHandler;
+        webRequest.SetRequestHeader("Content-Type", "application/json");
+
+        var asyncOp = webRequest.SendWebRequest();
+
+        float inactivityTimer = 0f;
+        ulong lastBytes = 0;
+        const float connectTimeout = 60f;
+        const float readTimeout = 60f;
+
+        while (!asyncOp.isDone)
         {
-            Logger.Debug($"API request: {url}\n{jsonContent}");
-
-            using var webRequest = new UnityWebRequest(url, "POST");
-            webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonContent));
-            webRequest.downloadHandler = downloadHandler;
-            webRequest.SetRequestHeader("Content-Type", "application/json");
-
-            var asyncOperation = webRequest.SendWebRequest();
-
-            while (!asyncOperation.isDone)
-            {
-                if (Current.Game == null) return null; // Exit if the game is no longer running.
-                await Task.Delay(100);
-            }
-
-            if (downloadHandler is DownloadHandlerBuffer)
-            {
-                Logger.Debug($"API response: \n{webRequest.downloadHandler.text}");
-            }
-
-            if (webRequest.responseCode == 429)
-                throw new QuotaExceededException("Quota exceeded");
-            if (webRequest.responseCode == 503)
-                throw new QuotaExceededException("Model overloaded");
-
-            if (webRequest.isNetworkError || webRequest.isHttpError)
-            {
-                var errorMessage = $"Request failed: {webRequest.responseCode} - {webRequest.error}";
-                Logger.Error(errorMessage);
-                throw new Exception(errorMessage);
-            }
-
-            // For non-streaming, deserialize the response. For streaming, the handler processes data, and we return null.
-            if (downloadHandler is DownloadHandlerBuffer)
-            {
-                var response = JsonUtil.DeserializeFromJson<GeminiResponse>(webRequest.downloadHandler.text);
-                if (response?.Candidates?[0]?.FinishReason == "MAX_TOKENS")
-                    throw new QuotaExceededException("Quota exceeded (MAX_TOKENS)");
-
-                return response as T;
-            }
-
-            return null; // For streaming, the result is handled by the callback.
-        }
-        catch (QuotaExceededException)
-        {
-            throw; // Re-throw specific exceptions to be handled upstream.
-        }
-        catch (Exception ex)
-        {
-            Logger.Error($"Exception in API request: {ex.Message}");
-            throw;
-        }
-    }
-
-    private string ConvertRole(Role role)
-    {
-        return role switch
-        {
-            Role.User => "user",
-            Role.AI => "model",
-            _ => throw new ArgumentException($"Unknown role: {role}"),
-        };
-    }
-    public static async Task<List<string>> FetchModelsAsync(string apiKey, string url)
-    {
-        var models = new List<string>();
-
-        using var webRequest = UnityWebRequest.Get($"{url}?key={apiKey}");
-        var asyncOperation = webRequest.SendWebRequest();
-
-        while (!asyncOperation.isDone)
-        {
+            if (Current.Game == null) return null;
             await Task.Delay(100);
+
+            ulong currentBytes = webRequest.downloadedBytes;
+            bool hasStartedReceiving = currentBytes > 0;
+
+            if (currentBytes > lastBytes)
+            {
+                inactivityTimer = 0f;
+                lastBytes = currentBytes;
+            }
+            else
+            {
+                inactivityTimer += 0.1f;
+            }
+
+            // Cloud Timeout Logic
+            if (!hasStartedReceiving && inactivityTimer > connectTimeout)
+            {
+                webRequest.Abort();
+                throw new TimeoutException($"Connection timed out ({connectTimeout}s)");
+            }
+            
+            if (hasStartedReceiving && inactivityTimer > readTimeout)
+            {
+                webRequest.Abort();
+                throw new TimeoutException($"Read timed out ({readTimeout}s)");
+            }
+        }
+
+        string responseText = downloadHandler.text;
+
+        // For streaming, sometimes text is in the buffer but not fully in .text property depending on handler implementation, 
+        // or we need to extract from the stream handler if the request failed.
+        if ((webRequest.responseCode >= 400 || webRequest.isNetworkError || webRequest.isHttpError) && 
+            downloadHandler is GeminiStreamHandler streamHandler)
+        {
+            responseText = streamHandler.GetAllReceivedText();
+            if (string.IsNullOrEmpty(responseText)) responseText = streamHandler.GetRawJson();
+        }
+
+        if (webRequest.responseCode == 429 || webRequest.responseCode == 503)
+        {
+            string errorMsg = ErrorUtil.ExtractErrorMessage(responseText) ?? "Quota exceeded/Overloaded";
+            throw new QuotaExceededException(errorMsg, new Payload(BaseUrl, CurrentModel, jsonContent, responseText, 0, errorMsg));
         }
 
         if (webRequest.isNetworkError || webRequest.isHttpError)
         {
-            Logger.Error($"Failed to fetch Google models: {webRequest.error}");
-        }
-        else
-        {
-            try
-            {
-                var response = JsonUtil.DeserializeFromJson<GoogleModelsResponse>(webRequest.downloadHandler.text);
-                if (response != null && response.Models != null)
-                {
-                    models = response.Models
-                        .Where(m => m.SupportedGenerationMethods != null &&
-                                    m.SupportedGenerationMethods.Contains("generateContent"))
-                        .Select(m => m.Name.StartsWith("models/") ? m.Name.Substring(7) : m.Name)
-                        .OrderBy(m => m)
-                        .ToList();
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.Error($"Failed to parse Google models response: {ex.Message}");
-            }
+            string errorMsg = ErrorUtil.ExtractErrorMessage(responseText) ?? $"Request failed: {webRequest.responseCode} - {webRequest.error}";
+            Logger.Error(errorMsg);
+            throw new AIRequestException(errorMsg, new Payload(BaseUrl, CurrentModel, jsonContent, responseText, 0, errorMsg));
         }
 
-        return models;
+        if (downloadHandler is DownloadHandlerBuffer)
+        {
+            Logger.Debug($"API response: \n{responseText}");
+        }
+        else if (downloadHandler is GeminiStreamHandler sHandler)
+        {
+            Logger.Debug($"API response: \n{sHandler.GetRawJson()}");
+        }
+
+        return responseText;
+    }
+
+    private string BuildRequestJson(List<(Role role, string message)> prefixMessages, List<(Role role, string message)> messages)
+    {
+        var allMessages = (prefixMessages ?? new List<(Role role, string message)>()).Concat(messages ?? new List<(Role role, string message)>()).ToList();
+        
+        SystemInstruction systemInstruction = null;
+        var contents = new List<Content>();
+
+        // Handle System Instruction (if first message)
+        if (allMessages.Count > 0 && allMessages[0].role == Role.System)
+        {
+            var instruction = allMessages[0].message;
+            if (CurrentModel.Contains("gemma"))
+            {
+                contents.Add(new Content { Role = "user", Parts = new List<Part> { new Part { Text = $"{_random.Next()} {instruction}" } } });
+            }
+            else
+            {
+                systemInstruction = new SystemInstruction { Parts = new List<Part> { new Part { Text = instruction } } };
+            }
+            allMessages.RemoveAt(0);
+        }
+
+        // Add remaining messages as separate turns
+        contents.AddRange(allMessages.Select(m => new Content
+        {
+            Role = m.role == Role.User ? "user" : "model",
+            Parts = new List<Part> { new Part { Text = m.message } }
+        }));
+
+        var config = new GenerationConfig();
+        if (CurrentModel.Contains("flash"))
+            config.ThinkingConfig = new ThinkingConfig { ThinkingBudget = 0 };
+
+        return JsonUtil.SerializeToJson(new GeminiDto
+        {
+            SystemInstruction = systemInstruction,
+            Contents = contents,
+            GenerationConfig = config
+        });
+    }
+    
+    public static async Task<List<string>> FetchModelsAsync(string apiKey, string url)
+    {
+        using var webRequest = UnityWebRequest.Get($"{url}?key={apiKey}");
+        var asyncOp = webRequest.SendWebRequest();
+        while (!asyncOp.isDone) await Task.Delay(100);
+
+        if (webRequest.isNetworkError || webRequest.isHttpError)
+        {
+            Logger.Error($"Failed to fetch Google models: {webRequest.error}");
+            return new List<string>();
+        }
+
+        try
+        {
+            var response = JsonUtil.DeserializeFromJson<GoogleModelsResponse>(webRequest.downloadHandler.text);
+            return response?.Models?
+                .Where(m => m.SupportedGenerationMethods?.Contains("generateContent") ?? false)
+                .Select(m => m.Name.StartsWith("models/") ? m.Name.Substring(7) : m.Name)
+                .OrderBy(m => m)
+                .ToList() ?? new List<string>();
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Failed to parse Google models: {ex.Message}");
+            return new List<string>();
+        }
     }
 }

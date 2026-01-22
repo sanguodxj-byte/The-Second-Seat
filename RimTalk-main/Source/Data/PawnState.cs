@@ -1,6 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
-using RimTalk.Service;
 using RimTalk.Source.Data;
 using RimTalk.Util;
 using RimWorld;
@@ -19,6 +17,7 @@ public class PawnState(Pawn pawn)
     public readonly List<TalkResponse> TalkResponses = [];
     public bool IsGeneratingTalk { get; set; }
     public readonly LinkedList<TalkRequest> TalkRequests = [];
+    
     public HashSet<Hediff> Hediffs { get; set; } = pawn.GetHediffs();
 
     public string Personality => PersonaService.GetPersonality(Pawn);
@@ -26,6 +25,7 @@ public class PawnState(Pawn pawn)
 
     public void AddTalkRequest(string prompt, Pawn recipient = null, TalkType talkType = TalkType.Other)
     {
+        // 1. If Urgent, clear out less important active requests
         if (talkType == TalkType.Urgent)
         {
             var currentNode = TalkRequests.First;
@@ -33,43 +33,59 @@ public class PawnState(Pawn pawn)
             {
                 var nextNode = currentNode.Next;
                 var request = currentNode.Value;
-                if (request.TalkType != TalkType.User)
+                
+                // If we overwrite a request, send it to global history as expired/overwritten
+                if (!request.TalkType.IsFromUser())
                 {
+                    TalkRequestPool.AddToHistory(request, RequestStatus.Expired);
                     TalkRequests.Remove(currentNode);
                 }
                 currentNode = nextNode;
             }
         }
 
-        if (talkType == TalkType.User)
+        // 2. Create and Enqueue
+        var newRequest = new TalkRequest(prompt, Pawn, recipient, talkType) { Status = RequestStatus.Pending };
+
+        if (talkType.IsFromUser())
         {
-            TalkRequests.AddFirst(new TalkRequest(prompt, Pawn, recipient, talkType));
+            TalkRequests.AddFirst(newRequest);
             IgnoreAllTalkResponses();
             Cache.Get(recipient)?.IgnoreAllTalkResponses();
+            UserRequestPool.Add(Pawn);
         }
         else if (talkType is TalkType.Event or TalkType.QuestOffer)
         {
-            TalkRequests.AddFirst(new TalkRequest(prompt, Pawn, recipient, talkType));
+            TalkRequests.AddFirst(newRequest);
         }
         else
         {
-            TalkRequests.AddLast(new TalkRequest(prompt, Pawn, recipient, talkType));   
+            TalkRequests.AddLast(newRequest);   
         }
     }
     
     public TalkRequest GetNextTalkRequest()
     {
-        while (TalkRequests.Count > 0)
+        var node = TalkRequests.First;
+        while (node != null)
         {
-            var request = TalkRequests.First.Value;
-            if (request.IsExpired())
-            {
-                TalkRequests.RemoveFirst();
-                continue;
-            }
-            return request;
+            var request = node.Value;
+            var next = node.Next;
+        
+            if (!request.IsExpired())
+                return request;
+            
+            TalkRequestPool.AddToHistory(request, RequestStatus.Expired);
+            TalkRequests.Remove(node);
+            node = next;
         }
         return null;
+    }
+
+    public void MarkRequestSpoken(TalkRequest request)
+    {
+        TalkRequestPool.AddToHistory(request, RequestStatus.Processed);
+        TalkRequests.Remove(request);
     }
 
     public bool CanDisplayTalk()
@@ -78,17 +94,11 @@ public class PawnState(Pawn pawn)
         
         if (WorldRendererUtility.CurrentWorldRenderMode == WorldRenderMode.Planet || Find.CurrentMap == null ||
             Pawn.Map != Find.CurrentMap || !Pawn.Spawned)
-        {
             return false;
-        }
         
         RimTalkSettings settings = Settings.Get();
-
-        if (!settings.DisplayTalkWhenDrafted && Pawn.Drafted)
-            return false;
-
-        if (!settings.ContinueDialogueWhileSleeping && !Pawn.Awake())
-            return false;
+        if (!settings.DisplayTalkWhenDrafted && Pawn.Drafted) return false;
+        if (!settings.ContinueDialogueWhileSleeping && !Pawn.Awake()) return false;
 
         return !Pawn.Dead && TalkInitiationWeight > 0;
     }
@@ -96,9 +106,8 @@ public class PawnState(Pawn pawn)
     public bool CanGenerateTalk()
     {
         if (Pawn.IsPlayer()) return true;
-        
         return !IsGeneratingTalk && CanDisplayTalk() && Pawn.Awake() && TalkResponses.Empty() 
-               && CommonUtil.HasPassed(LastTalkTick, Settings.Get().TalkInterval);;
+               && CommonUtil.HasPassed(LastTalkTick, RimTalkSettings.ReplyInterval);
     }
     
     public void IgnoreTalkResponse()

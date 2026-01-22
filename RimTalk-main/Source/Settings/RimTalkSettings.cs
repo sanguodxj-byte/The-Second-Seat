@@ -1,5 +1,8 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using RimTalk.Data;
+using RimTalk.Prompt;
 using UnityEngine;
 using Verse;
 
@@ -17,9 +20,13 @@ public class RimTalkSettings : ModSettings
     public bool IsEnabled = true;
     public int TalkInterval = 7;
     public const int ReplyInterval = 4;
-    public bool ProcessNonRimTalkInteractions;
-    public bool AllowSimultaneousConversations;
-    public string CustomInstruction = "";
+    public bool ProcessNonRimTalkInteractions = true;
+    public bool AllowSimultaneousConversations = false;
+    private string _legacyCustomInstruction = "";
+    
+    // New Prompt System
+    public PromptManager PromptSystem = new();
+    public bool UseAdvancedPromptMode = false;  // Default to Simple Mode
     public Dictionary<string, bool> EnabledArchivableTypes = new();
     public bool DisplayTalkWhenDrafted = true;
     public bool AllowMonologue = true;
@@ -41,7 +48,6 @@ public class RimTalkSettings : ModSettings
 
     // Debug mode settings
     public bool DebugModeEnabled = false;
-    public bool DebugGroupingEnabled = false;
     public string DebugSortColumn;
     public bool DebugSortAscending = true;
 
@@ -149,6 +155,13 @@ public class RimTalkSettings : ModSettings
     {
         base.ExposeData();
             
+        if (Scribe.mode == LoadSaveMode.LoadingVars)
+        {
+            string legacyCustomInstruction = "";
+            Scribe_Values.Look(ref legacyCustomInstruction, "customInstruction", "");
+            _legacyCustomInstruction = legacyCustomInstruction;
+        }
+
         Scribe_Collections.Look(ref CloudConfigs, "cloudConfigs", LookMode.Deep);
         Scribe_Deep.Look(ref LocalConfig, "localConfig");
         Scribe_Values.Look(ref UseCloudProviders, "useCloudProviders", true);
@@ -157,8 +170,7 @@ public class RimTalkSettings : ModSettings
         Scribe_Values.Look(ref IsEnabled, "isEnabled", true);
         Scribe_Values.Look(ref TalkInterval, "talkInterval", 7);
         Scribe_Values.Look(ref ProcessNonRimTalkInteractions, "processNonRimTalkInteractions", true);
-        Scribe_Values.Look(ref AllowSimultaneousConversations, "allowSimultaneousConversations", true);
-        Scribe_Values.Look(ref CustomInstruction, "customInstruction", "");
+        Scribe_Values.Look(ref AllowSimultaneousConversations, "allowSimultaneousConversations", false);
         Scribe_Values.Look(ref DisplayTalkWhenDrafted, "displayTalkWhenDrafted", true);
         Scribe_Values.Look(ref AllowMonologue, "allowMonologue", true);
         Scribe_Values.Look(ref AllowSlavesToTalk, "allowSlavesToTalk", true);
@@ -177,11 +189,14 @@ public class RimTalkSettings : ModSettings
         Scribe_Values.Look(ref ApplyMoodAndSocialEffects, "applyMoodAndSocialEffects", false);
         
         Scribe_Deep.Look(ref Context, "context");
+        
+        // New Prompt System
+        Scribe_Deep.Look(ref PromptSystem, "promptSystem");
+        Scribe_Values.Look(ref UseAdvancedPromptMode, "useAdvancedPromptMode", false);
 
         // Debug window settings
         Scribe_Values.Look(ref ButtonDisplay, "buttonDisplay", Settings.ButtonDisplayMode.Toggle, true);
         Scribe_Values.Look(ref DebugModeEnabled, "debugModeEnabled", false);
-        Scribe_Values.Look(ref DebugGroupingEnabled, "debugGroupingEnabled", false);
         Scribe_Values.Look(ref DebugSortColumn, "debugSortColumn", null);
         Scribe_Values.Look(ref DebugSortAscending, "debugSortAscending", true);
         
@@ -231,11 +246,55 @@ public class RimTalkSettings : ModSettings
 
         if (Context == null)
             Context = new ContextSettings();
+        
+        // Initialize PromptSystem if null
+        if (PromptSystem == null)
+            PromptSystem = new PromptManager();
+        
+        // Set the singleton instance
+        PromptManager.SetInstance(PromptSystem);
             
+        // One-time migration from legacy customInstruction into Base Instruction
+        if (Scribe.mode == LoadSaveMode.PostLoadInit && !string.IsNullOrWhiteSpace(_legacyCustomInstruction))
+        {
+            var preset = PromptSystem.GetActivePreset();
+            var entry = GetOrCreateBaseInstructionEntry(preset);
+            if (entry != null)
+            {
+                bool isDefault = string.IsNullOrWhiteSpace(entry.Content) || entry.Content == Constant.DefaultInstruction;
+                if (isDefault)
+                    entry.Content = _legacyCustomInstruction;
+            }
+            _legacyCustomInstruction = "";
+        }
+
         // Ensure we have at least one cloud config
         if (CloudConfigs.Count == 0)
         {
             CloudConfigs.Add(new ApiConfig());
         }
+    }
+
+    private static PromptEntry GetOrCreateBaseInstructionEntry(PromptPreset preset)
+    {
+        if (preset == null) return null;
+
+        var entry = preset.Entries.FirstOrDefault(e =>
+            string.Equals(e.Name, "Base Instruction", StringComparison.OrdinalIgnoreCase));
+        if (entry != null) return entry;
+
+        entry = preset.Entries.FirstOrDefault(e =>
+            e.Role == PromptRole.System && e.Position == PromptPosition.Relative);
+        if (entry != null) return entry;
+
+        entry = new PromptEntry
+        {
+            Name = "Base Instruction",
+            Role = PromptRole.System,
+            Position = PromptPosition.Relative,
+            Content = Constant.DefaultInstruction
+        };
+        preset.Entries.Insert(0, entry);
+        return entry;
     }
 }

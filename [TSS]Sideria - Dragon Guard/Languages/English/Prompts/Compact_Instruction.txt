@@ -1,0 +1,2 @@
+Format: (action) dialogue. Use first person for speech, third person for actions.
+Example: (nods) I understand your concern.
