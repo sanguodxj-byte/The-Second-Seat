@@ -89,7 +89,7 @@ This mod is built on a robust, thread-safe asynchronous architecture:
 
 ## 📝 Credits / 致谢
 
-- **Code & Design**: [Claude opus 4.5]
+- **Code & Design**: [Claude opus 4.5/Gemini 3 pro]
 - **Art**: [Nanobanana pro]
 - **Special Thanks**: The RimWorld modding community.
 
