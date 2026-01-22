@@ -32,12 +32,37 @@ namespace TheSecondSeat.PersonaGeneration
         /// </summary>
         public int GetVariantCount(ExpressionType type)
         {
-            string key = type.ToString();
-            if (Expressions.TryGetValue(key, out var def))
+            return GetVariantCount(type.ToString());
+        }
+        
+        /// <summary>
+        /// ⭐ v2.6.0: 获取指定表情名称的变体数量（支持动态表情）
+        /// </summary>
+        public int GetVariantCount(string expressionName)
+        {
+            if (string.IsNullOrEmpty(expressionName)) return 0;
+            
+            if (Expressions.TryGetValue(expressionName, out var def))
             {
                 return def.Variants?.Count ?? 0;
             }
             return 0;
+        }
+        
+        /// <summary>
+        /// ⭐ v2.6.0: 获取所有已配置的表情名称列表
+        /// </summary>
+        public List<string> GetAllExpressionNames()
+        {
+            return Expressions.Keys.ToList();
+        }
+        
+        /// <summary>
+        /// ⭐ v2.6.0: 检查表情是否存在
+        /// </summary>
+        public bool HasExpression(string expressionName)
+        {
+            return !string.IsNullOrEmpty(expressionName) && Expressions.ContainsKey(expressionName);
         }
 
         public static void Load()

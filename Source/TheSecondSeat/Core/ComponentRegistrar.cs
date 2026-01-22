@@ -43,6 +43,13 @@ namespace TheSecondSeat.Core
                 Log.Message("[The Second Seat] Injecting PerformanceManager...");
                 game.components.Add(new PerformanceManager(game));
             }
+
+            // 5. SemanticRadarSystem (New)
+            if (game.GetComponent<TheSecondSeat.Monitoring.SemanticRadarSystem>() == null)
+            {
+                Log.Message("[The Second Seat] Injecting SemanticRadarSystem...");
+                game.components.Add(new TheSecondSeat.Monitoring.SemanticRadarSystem(game));
+            }
         }
     }
 }

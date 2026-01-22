@@ -99,7 +99,8 @@ namespace TheSecondSeat
         {
             base.Notify_PawnPostApplyDamage(dinfo, totalDamageDealt);
 
-            if (Pawn.Map == null || Pawn.Dead || Pawn.Downed) return;
+            // 允许在倒地状态下触发，但不能在死亡状态下触发（除非添加复活逻辑）
+            if (Pawn.Map == null || Pawn.Dead) return;
 
             // 检查冷却
             if (ticksUntilReady > 0) return;
@@ -164,6 +165,9 @@ namespace TheSecondSeat
         public HediffCompProperties_MechaOmniFire Props => (HediffCompProperties_MechaOmniFire)props;
 
         private int ticksUntilFire;
+        private int burstShotsLeft;
+        private int burstCooldown;
+        private Thing currentTarget;
 
         public override void CompPostPostAdd(DamageInfo? dinfo)
         {
@@ -175,31 +179,63 @@ namespace TheSecondSeat
         {
             base.CompPostTick(ref severityAdjustment);
 
+            // 处理连射
+            if (burstShotsLeft > 0)
+            {
+                if (burstCooldown > 0)
+                {
+                    burstCooldown--;
+                }
+                else
+                {
+                    FireSingleShot();
+                    burstCooldown = 4; // 每4 ticks (约0.06秒) 发射一发
+                }
+                return; // 连射期间暂停主冷却
+            }
+
             ticksUntilFire--;
             if (ticksUntilFire <= 0)
             {
-                TryFire();
+                TryStartBurst();
                 ticksUntilFire = Props.fireIntervalRange.RandomInRange;
             }
         }
 
-        private void TryFire()
+        private void TryStartBurst()
         {
             if (Pawn.Map == null || Pawn.Downed || Pawn.Dead) return;
 
             // 寻找目标
-            Thing target = FindTarget();
-            if (target == null) return;
+            currentTarget = FindTarget();
+            if (currentTarget == null) return;
 
-            // 发射弹幕
-            // 为了避免一帧发射所有子弹造成卡顿或视觉重叠，我们可以在一帧内发射，但稍微分散位置
-            // 或者使用 Coroutine/Tick 延迟发射。
-            // 这里简单起见，仍然一次性发射，但给落点加随机散布
-            for (int i = 0; i < Props.burstCount; i++)
+            burstShotsLeft = Props.burstCount;
+            burstCooldown = 0;
+        }
+
+        private void FireSingleShot()
+        {
+            if (Pawn.Map == null || Pawn.Downed || Pawn.Dead)
             {
-                LaunchProjectile(target);
+                burstShotsLeft = 0;
+                return;
             }
-            
+
+            // 如果目标丢失或死亡，尝试重新寻找，如果找不到则停止
+            if (currentTarget == null || currentTarget.Destroyed || (currentTarget is Pawn p && p.Dead))
+            {
+                currentTarget = FindTarget();
+                if (currentTarget == null)
+                {
+                    burstShotsLeft = 0;
+                    return;
+                }
+            }
+
+            LaunchProjectile(currentTarget);
+            burstShotsLeft--;
+
             // 播放音效
             SoundDef sound = DefDatabase<SoundDef>.GetNamed("Shot_ChargeBlaster", false);
             if (sound != null)
@@ -245,6 +281,9 @@ namespace TheSecondSeat
         {
             base.CompExposeData();
             Scribe_Values.Look(ref ticksUntilFire, "ticksUntilFire", 0);
+            Scribe_Values.Look(ref burstShotsLeft, "burstShotsLeft", 0);
+            Scribe_Values.Look(ref burstCooldown, "burstCooldown", 0);
+            Scribe_References.Look(ref currentTarget, "currentTarget");
         }
     }
 }

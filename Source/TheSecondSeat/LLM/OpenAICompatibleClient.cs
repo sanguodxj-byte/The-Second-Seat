@@ -150,7 +150,7 @@ namespace TheSecondSeat.LLM
                     });
                 }
 
-                return await SendOpenAIRawRequestAsync(endpoint, apiKey, jsonContent);
+                return await SendOpenAIRawRequestAsync(endpoint, apiKey, jsonContent, "Vision");  // ⭐ v2.7.0: 标记为 Vision 请求
             }
             catch (Exception ex)
             {
@@ -163,7 +163,7 @@ namespace TheSecondSeat.LLM
         /// 将 Texture2D 转换为 Base64 编码的 PNG/JPG 字符串
         /// ? 优化：压缩大图片以减少 Base64 大小
         /// </summary>
-        private static string TextureToBase64(Texture2D texture)
+        public static string TextureToBase64(Texture2D texture)
         {
             try
             {
@@ -269,9 +269,29 @@ namespace TheSecondSeat.LLM
 
         /// <summary>
         /// 发送原始 JSON 请求到 OpenAI 兼容端点
+        /// ⭐ v2.7.0: 添加 requestType 参数
         /// </summary>
-        public static async Task<OpenAIResponse?> SendOpenAIRawRequestAsync(string endpoint, string apiKey, string jsonContent)
+        public static async Task<OpenAIResponse?> SendOpenAIRawRequestAsync(string endpoint, string apiKey, string jsonContent, string requestType = "API")
         {
+            var log = new RequestLog
+            {
+                Timestamp = DateTime.Now,
+                Endpoint = endpoint,
+                RequestJson = jsonContent,
+                RequestType = requestType  // ⭐ v2.7.0: 设置请求类型
+            };
+
+            // 尝试从 JSON 中提取模型名称，用于日志记录
+            try
+            {
+                var modelMatch = System.Text.RegularExpressions.Regex.Match(jsonContent, @"""model""\s*:\s*""([^""]+)""");
+                if (modelMatch.Success)
+                {
+                    log.Model = modelMatch.Groups[1].Value;
+                }
+            }
+            catch { /* Ignore regex errors */ }
+
             try
             {
                 using var webRequest = new UnityWebRequest(endpoint, "POST");
@@ -289,14 +309,33 @@ namespace TheSecondSeat.LLM
                 // 使用扩展方法进行异步等待，避免忙等待
                 await webRequest.SendWebRequest();
 
+                log.DurationSeconds = (float)(DateTime.Now - log.Timestamp).TotalSeconds;
+
                 if (webRequest.result == UnityWebRequest.Result.Success)
                 {
                     string responseText = webRequest.downloadHandler.text;
+                    log.ResponseJson = responseText;
+                    log.Success = true;
+
                     var response = JsonConvert.DeserializeObject<OpenAIResponse>(responseText);
+                    
+                    if (response?.usage != null)
+                    {
+                        log.PromptTokens = response.usage.prompt_tokens;
+                        log.CompletionTokens = response.usage.completion_tokens;
+                        log.TotalTokens = response.usage.total_tokens;
+                    }
+
+                    LLMRequestHistory.Add(log);
                     return response;
                 }
                 else
                 {
+                    log.Success = false;
+                    log.ErrorMessage = $"{webRequest.responseCode} - {webRequest.error}";
+                    log.ResponseJson = webRequest.downloadHandler.text;
+                    LLMRequestHistory.Add(log);
+
                     Log.Error($"[OpenAICompatible] API 错误: {webRequest.responseCode} - {webRequest.error}");
                     Log.Error($"[OpenAICompatible] 响应内容: {webRequest.downloadHandler.text}");
                     return null;
@@ -304,6 +343,11 @@ namespace TheSecondSeat.LLM
             }
             catch (Exception ex)
             {
+                log.Success = false;
+                log.ErrorMessage = ex.Message;
+                log.DurationSeconds = (float)(DateTime.Now - log.Timestamp).TotalSeconds;
+                LLMRequestHistory.Add(log);
+
                 Log.Error($"[OpenAICompatible] API 异常: {ex.Message}\n{ex.StackTrace}");
                 return null;
             }

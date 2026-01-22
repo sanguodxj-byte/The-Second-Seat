@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Verse;
 using TheSecondSeat.RimAgent;
 using UnityEngine.Networking;
+using System.Collections.Generic;
 
 namespace TheSecondSeat.LLM
 {
@@ -63,18 +65,14 @@ namespace TheSecondSeat.LLM
             
             if (response == null) return "Error: No response from LLM";
             
-            // ⭐ v1.6.85: 如果有原始 JSON 内容，优先返回（用于 ReAct Agent 解析）
-            // 检查是否为有效的 JSON 对象
+            // ⭐ v1.6.85: 如果有原始响应内容，优先返回（用于 ReAct Agent 解析）
+            // 无论是 JSON 还是 Tag 格式，RimAgent 现在的解析器都能处理
             if (!string.IsNullOrEmpty(response.rawContent))
             {
-                string trimmed = response.rawContent.Trim();
-                if (trimmed.StartsWith("{") && trimmed.EndsWith("}"))
-                {
-                    return response.rawContent;
-                }
+                return response.rawContent;
             }
             
-            // If there's a thought, include it (ReAct agent might parse it)
+            // 回退逻辑（理论上不应到达这里，除非 rawContent 为空）
             if (!string.IsNullOrEmpty(response.thought))
             {
                 return $"[THOUGHT]: {response.thought}\n{response.dialogue}";
@@ -153,6 +151,7 @@ namespace TheSecondSeat.LLM
         /// OpenAI 兼容格式（OpenAI、DeepSeek、本地 LLM）
         /// 使用 UnityWebRequest 替代 HttpClient
         /// ⭐ v1.7.0: 修复僵尸任务和内存泄漏，支持 CancellationToken
+        /// ⭐ v2.7.0: 添加请求日志记录
         /// </summary>
         private async Task<LLMResponse?> SendToOpenAICompatibleAsync(string systemPrompt, string gameStateJson, string userMessage, System.Threading.CancellationToken cancellationToken)
         {
@@ -160,6 +159,15 @@ namespace TheSecondSeat.LLM
             string currentEndpoint = this.apiEndpoint;
             string currentKey = this.apiKey;
             string currentModel = this.modelName;
+
+            // ⭐ v2.7.0: 创建请求日志
+            var log = new RequestLog
+            {
+                Timestamp = DateTime.Now,
+                Endpoint = currentEndpoint,
+                Model = currentModel,
+                RequestType = "Chat"  // 默认类型
+            };
 
             // ✅ 修复：限制 gameState 大小（防止 JSON 过大）
             // 使用静态属性 MaxGameStateLength
@@ -195,9 +203,11 @@ namespace TheSecondSeat.LLM
             string jsonContent = JsonConvert.SerializeObject(request, new JsonSerializerSettings
             {
                 NullValueHandling = NullValueHandling.Ignore,  // 忽略 null 字段
-                StringEscapeHandling = StringEscapeHandling.EscapeHtml,  // 转义特殊字符
+                StringEscapeHandling = StringEscapeHandling.Default,  // ⭐ v1.7.1: 不使用 EscapeHtml，避免破坏 Prompt 中的特殊符号
                 Formatting = Formatting.None  // 不格式化（减少大小）
             });
+
+            log.RequestJson = jsonContent;
 
             // 使用 UnityWebRequest
             using var webRequest = new UnityWebRequest(currentEndpoint, "POST");
@@ -223,6 +233,10 @@ namespace TheSecondSeat.LLM
                     {
                         webRequest.Abort(); // 中止请求
                         Log.Message("[The Second Seat] LLM request cancelled by user/system.");
+                        log.Success = false;
+                        log.ErrorMessage = "Cancelled";
+                        log.DurationSeconds = (float)(DateTime.Now - log.Timestamp).TotalSeconds;
+                        LLMRequestHistory.Add(log);
                         return null;
                     }
                     
@@ -230,11 +244,26 @@ namespace TheSecondSeat.LLM
                     await Task.Delay(50, cancellationToken);
                 }
 
+                log.DurationSeconds = (float)(DateTime.Now - log.Timestamp).TotalSeconds;
+
                 // 检查响应
                 if (webRequest.result == UnityWebRequest.Result.Success)
                 {
                     string responseText = webRequest.downloadHandler.text;
+                    log.ResponseJson = responseText;
+                    log.Success = true;
+
                     var openAIResponse = JsonConvert.DeserializeObject<OpenAIResponse>(responseText);
+
+                    // ⭐ v2.7.0: 记录 Token 使用量
+                    if (openAIResponse?.usage != null)
+                    {
+                        log.PromptTokens = openAIResponse.usage.prompt_tokens;
+                        log.CompletionTokens = openAIResponse.usage.completion_tokens;
+                        log.TotalTokens = openAIResponse.usage.total_tokens;
+                    }
+
+                    LLMRequestHistory.Add(log);
 
                     if (openAIResponse?.choices == null || openAIResponse.choices.Length == 0)
                     {
@@ -253,6 +282,11 @@ namespace TheSecondSeat.LLM
                 }
                 else
                 {
+                    log.Success = false;
+                    log.ErrorMessage = $"{webRequest.responseCode} - {webRequest.error}";
+                    log.ResponseJson = webRequest.downloadHandler.text;
+                    LLMRequestHistory.Add(log);
+
                     Log.Error($"[The Second Seat] API 错误: {webRequest.responseCode} - {webRequest.error}");
                     Log.Error($"[The Second Seat] 响应内容: {webRequest.downloadHandler.text}");
                     return null;
@@ -260,56 +294,159 @@ namespace TheSecondSeat.LLM
             }
             catch (Exception ex)
             {
+                log.Success = false;
+                log.ErrorMessage = ex.Message;
+                log.DurationSeconds = (float)(DateTime.Now - log.Timestamp).TotalSeconds;
+                LLMRequestHistory.Add(log);
+
                 Log.Error($"[The Second Seat] OpenAI 兼容 API 异常: {ex.Message}\n{ex.StackTrace}");
                 return null;
             }
         }
 
         /// <summary>
-        /// 解析 LLM 响应（JSON 或纯文本）
+        /// 解析 LLM 响应（JSON 或 Tag 格式）
         /// ? 修复：从 markdown 代码块中提取 JSON
+        /// ⭐ v2.3.0: 增强 Tag 格式解析
         /// </summary>
         private LLMResponse? ParseLLMResponse(string messageContent)
         {
+            // 1. 尝试解析 JSON
             try
             {
-                // ? 提取 JSON（有时 AI 会在 markdown 代码块中返回）
                 string jsonContent = ExtractJsonFromMarkdown(messageContent);
-                
-                // 尝试解析为 JSON
-                var llmResponse = JsonConvert.DeserializeObject<LLMResponse>(jsonContent);
-                
-                // ? 验证是否成功解析
-                if (llmResponse != null)
+                if (jsonContent.Trim().StartsWith("{"))
                 {
-                    // ⭐ v1.6.85: 保存原始响应内容
-                    llmResponse.rawContent = jsonContent;
-                    
-                    // 如果 dialogue 不为空，或者是有效的 ReAct 响应（即使 dialogue 为空），都返回
-                    // 注意：ReAct 响应可能没有 dialogue 字段，只有 thought 和 action
-                    return llmResponse;
+                    var llmResponse = JsonConvert.DeserializeObject<LLMResponse>(jsonContent);
+                    if (llmResponse != null)
+                    {
+                        llmResponse.rawContent = jsonContent;
+                        return llmResponse;
+                    }
                 }
-                
-                // 如果反序列化为 null，返回纯文本
-                return new LLMResponse
-                {
-                    thought = "",
-                    dialogue = messageContent, // 使用原始内容
-                    command = null,
-                    rawContent = messageContent
-                };
             }
-            catch
+            catch { /* 忽略 JSON 解析错误 */ }
+
+            // 2. 尝试解析 Tag 格式
+            var tagResponse = ParseTagResponse(messageContent);
+            if (tagResponse != null)
             {
-                // 如果不是 JSON，作为纯文本对话
-                return new LLMResponse
-                {
-                    thought = "",
-                    dialogue = messageContent,
-                    command = null,
-                    rawContent = messageContent
-                };
+                tagResponse.rawContent = messageContent;
+                return tagResponse;
             }
+
+            // 3. 回退到纯文本
+            return new LLMResponse
+            {
+                thought = "",
+                dialogue = messageContent,
+                command = null,
+                rawContent = messageContent
+            };
+        }
+
+        /// <summary>
+        /// ⭐ v2.3.0: 解析 Tag 格式响应
+        /// 支持 [THOUGHT], [DIALOGUE], [EXPRESSION], [AFFINITY], [ACTION]
+        /// </summary>
+        private LLMResponse? ParseTagResponse(string content)
+        {
+            // 如果不包含任何标签，则不认为是 Tag 格式（或者也可以认为是只有 Dialogue 的 Tag 格式？）
+            // 为了安全，只有当至少包含一个标签时才处理
+            if (!content.Contains("[") && !content.Contains("]")) return null;
+
+            var response = new LLMResponse();
+            bool hasTag = false;
+
+            // 解析 Thought
+            var thoughtMatch = Regex.Match(content, @"\[THOUGHT\]:\s*(.+?)(?=\[|$)", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+            if (thoughtMatch.Success)
+            {
+                response.thought = thoughtMatch.Groups[1].Value.Trim();
+                hasTag = true;
+            }
+
+            // 解析 Dialogue (如果标签存在)
+            var dialogueMatch = Regex.Match(content, @"\[DIALOGUE\]:\s*(.+?)(?=\[|$)", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+            if (dialogueMatch.Success)
+            {
+                response.dialogue = dialogueMatch.Groups[1].Value.Trim();
+                hasTag = true;
+            }
+            else
+            {
+                // 如果没有显式 DIALOGUE 标签，尝试提取剩余文本作为 Dialogue
+                // 排除所有 [TAG]: ... 块
+                string cleanText = Regex.Replace(content, @"\[\w+\]:.*?(?=\[|$)", "", RegexOptions.Singleline).Trim();
+                if (!string.IsNullOrEmpty(cleanText))
+                {
+                    response.dialogue = cleanText;
+                }
+            }
+
+            // 解析 Expression
+            var exprMatch = Regex.Match(content, @"\[EXPRESSION\]:\s*(\w+)", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+            if (exprMatch.Success)
+            {
+                response.expression = exprMatch.Groups[1].Value.Trim();
+                hasTag = true;
+            }
+
+            // 解析 Affinity
+            var affinityMatch = Regex.Match(content, @"\[AFFINITY\]:\s*([+\-]?\d+(?:\.\d+)?)", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+            if (affinityMatch.Success && float.TryParse(affinityMatch.Groups[1].Value, out float delta))
+            {
+                response.affinityDelta = delta;
+                hasTag = true;
+            }
+
+            // 解析 Action (转换为 LLMCommand)
+            var actionMatch = Regex.Match(content, @"\[ACTION\]:\s*(\w+)\((.*?)\)", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+            if (actionMatch.Success)
+            {
+                string actionName = actionMatch.Groups[1].Value.Trim();
+                string paramsString = actionMatch.Groups[2].Value.Trim();
+                
+                var command = new LLMCommand
+                {
+                    action = actionName,
+                    target = "Map", // 默认 target，后续解析
+                    parameters = ParseActionParams(paramsString)
+                };
+
+                // 尝试从 parameters 中提取 target
+                if (command.parameters is Dictionary<string, object> dict)
+                {
+                    if (dict.ContainsKey("target"))
+                    {
+                        command.target = dict["target"]?.ToString();
+                        dict.Remove("target");
+                    }
+                }
+
+                response.command = command;
+                hasTag = true;
+            }
+
+            return hasTag ? response : null;
+        }
+
+        private Dictionary<string, object> ParseActionParams(string paramsString)
+        {
+            var result = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            if (string.IsNullOrEmpty(paramsString)) return result;
+
+            // 匹配 key="value" 或 key=value
+            var matches = Regex.Matches(paramsString, @"(\w+)\s*=\s*(?:""([^""]*)""|'([^']*)'|(\S+))");
+            foreach (Match match in matches)
+            {
+                string key = match.Groups[1].Value;
+                string value = match.Groups[2].Success ? match.Groups[2].Value :
+                              match.Groups[3].Success ? match.Groups[3].Value :
+                              match.Groups[4].Value;
+                result[key] = value;
+            }
+            return result;
         }
 
         /// <summary>

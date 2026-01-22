@@ -46,6 +46,7 @@ namespace TheSecondSeat.Settings
         // ? 新增：TTS API 高级配置
         public string ttsApiEndpoint = "";
         public string ttsModelName = "";
+        public string ttsAudioUri = ""; // v1.15.0: SiliconFlow 音色克隆 URI
         
         // RimAgent 设置
         public string agentName = "main-narrator";
@@ -74,6 +75,7 @@ namespace TheSecondSeat.Settings
 
         // Debug
         public bool debugMode = false;
+        public bool engineerMode = false; // 工程师模式：开启详细错误监听
 
         // 好感度系统
         public bool enableAffinitySystem = true;
@@ -96,6 +98,10 @@ namespace TheSecondSeat.Settings
         public float dialogueRectWidth = 600f;
         public float dialogueRectHeight = 200f;
         
+        // 快速对话窗口位置
+        public float quickDialogueX = -1f;
+        public float quickDialogueY = -1f;
+        
         /// <summary>
         /// 获取或设置对话框矩形位置
         /// </summary>
@@ -108,6 +114,16 @@ namespace TheSecondSeat.Settings
                 dialogueRectY = value.y;
                 dialogueRectWidth = value.width;
                 dialogueRectHeight = value.height;
+            }
+        }
+        
+        public Vector2 QuickDialoguePos
+        {
+            get => new Vector2(quickDialogueX, quickDialogueY);
+            set
+            {
+                quickDialogueX = value.x;
+                quickDialogueY = value.y;
             }
         }
 
@@ -149,6 +165,7 @@ namespace TheSecondSeat.Settings
             Scribe_Values.Look(ref autoPlayTTS, "autoPlayTTS", false);
             Scribe_Values.Look(ref ttsApiEndpoint, "ttsApiEndpoint", "");
             Scribe_Values.Look(ref ttsModelName, "ttsModelName", "");
+            Scribe_Values.Look(ref ttsAudioUri, "ttsAudioUri", "");
             
             // RimAgent 设置
             Scribe_Values.Look(ref agentName, "agentName", "main-narrator");
@@ -177,6 +194,7 @@ namespace TheSecondSeat.Settings
             
             // Debug
             Scribe_Values.Look(ref debugMode, "debugMode", false);
+            Scribe_Values.Look(ref engineerMode, "engineerMode", false);
 
             // 好感度系统
             Scribe_Values.Look(ref enableAffinitySystem, "enableAffinitySystem", true);
@@ -198,6 +216,10 @@ namespace TheSecondSeat.Settings
             Scribe_Values.Look(ref dialogueRectY, "dialogueRectY", 0f);
             Scribe_Values.Look(ref dialogueRectWidth, "dialogueRectWidth", 600f);
             Scribe_Values.Look(ref dialogueRectHeight, "dialogueRectHeight", 200f);
+            
+            // 快速对话窗口位置
+            Scribe_Values.Look(ref quickDialogueX, "quickDialogueX", -1f);
+            Scribe_Values.Look(ref quickDialogueY, "quickDialogueY", -1f);
         }
     }
 
@@ -245,6 +267,9 @@ namespace TheSecondSeat.Settings
             {
                 ConfigureTTS();
             }
+
+            // 初始化 Scriban 渲染器 (触发版本检查日志)
+            PersonaGeneration.Scriban.PromptRenderer.Init();
         }
 
         private void ConfigureWebSearch()
@@ -296,7 +321,8 @@ namespace TheSecondSeat.Settings
                     Settings.ttsSpeechRate,
                     Settings.ttsVolume,
                     Settings.ttsApiEndpoint,
-                    Settings.ttsModelName
+                    Settings.ttsModelName,
+                    Settings.ttsAudioUri
                 );
                 
                 Log.Message($"[The Second Seat] TTS configured: {Settings.ttsProvider}");

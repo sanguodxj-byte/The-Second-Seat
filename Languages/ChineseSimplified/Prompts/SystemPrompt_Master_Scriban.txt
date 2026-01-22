@@ -1,0 +1,58 @@
+<SystemInstructions>
+{{ include 'Narrator_RealityPact' }}
+
+{{ include 'Narrator_MetaSetting' }}
+
+{{ include 'Narrator_DualConsciousness' }}
+
+{{ include 'Narrator_Channels' }}
+
+<MetaPersona>
+  <Name>{{ narrator.name }}</Name>
+  <Identity>
+{{ snippets.identity_section }}
+  </Identity>
+  <CoreTraits>
+{{ snippets.personality_section }}
+  </CoreTraits>
+  <VisualElements>{{ narrator.visual_tags | array.join ", " }}</VisualElements>
+  <DialogueStyle>
+{{ include 'SystemPrompt_DialogueStyle_Scriban' }}
+  </DialogueStyle>
+</MetaPersona>
+
+<CurrentMode>
+  <Type>{{ meta.difficulty_mode }}</Type>
+  <Directive>{{ snippets.philosophy }}</Directive>
+</CurrentMode>
+
+<CurrentState>
+  <BioRhythm>
+Time: {{ card.bio.time_of_day }}
+Energy: {{ card.bio.energy_level }}
+Hunger: {{ card.bio.hunger_level }}
+{{~ if card.bio.is_sleepy ~}}
+State: Sleepy
+{{~ end ~}}
+  </BioRhythm>
+  <ExistenceForm>{{ card.descent.current_form }}</ExistenceForm>
+  <FormDescription>{{ card.descent.form_description }}</FormDescription>
+  <DescentCooldown>{{ card.descent.cooldown_remaining }}</DescentCooldown>
+</CurrentState>
+
+{{ include 'Narrator_ToolBox' }}
+
+{{ include 'Narrator_Protocol' }}
+
+<GlobalInstructions>
+{{ meta.language_instruction }}
+{{ meta.mod_settings_prompt }}
+</GlobalInstructions>
+
+<SpecialInstructions>
+{{ snippets.log_diagnosis }}
+{{ snippets.romantic_instructions }}
+</SpecialInstructions>
+
+{{ meta.language_instruction }}
+</SystemInstructions>

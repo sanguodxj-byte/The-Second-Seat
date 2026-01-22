@@ -1,5 +1,6 @@
 using System.Text;
 using System.Linq;
+using System.Collections.Generic;
 using TheSecondSeat.Storyteller;
 using TheSecondSeat.Core;
 using Verse;
@@ -7,144 +8,215 @@ using Verse;
 namespace TheSecondSeat.PersonaGeneration.PromptSections
 {
     /// <summary>
-    /// v1.6.81: Identity section generator - Smart loading version
-    /// Provides summary and tells AI to use read_persona_detail tool for more info
+    /// v1.9.9: Identity section generator - 无限标签版本
+    /// 输出格式：性格特质标签(带数值) + 外观标签 + 对话风格参数
     /// </summary>
     public static class IdentitySection
     {
-        // Summary length for initial prompt (full content via tool)
-        private const int SummaryLength = 100;
-        
         public static string Generate(NarratorPersonaDef personaDef, StorytellerAgent agent, AIDifficultyMode difficultyMode)
         {
             var sb = new StringBuilder();
             
-            // ? v1.6.84: DM Stance 已移除 - 叙事风格由人格定义的 benevolence/chaosLevel 参数决定
-            // 不再在此处硬编码风格描述，避免重复
-
-            // Fill personality traits
-            string traitsStr = "";
-            if (personaDef.personalityTags != null && personaDef.personalityTags.Count > 0)
+            // 1. 性格特质标签（带数值）- 无数量限制
+            string traitsBlock = GenerateTraitsBlock(personaDef);
+            if (!string.IsNullOrEmpty(traitsBlock))
             {
-                traitsStr = string.Join(", ", personaDef.personalityTags.Take(4));
-            }
-            
-            // 仅当有性格特征时才输出
-            if (!string.IsNullOrEmpty(traitsStr))
-            {
-                sb.AppendLine("<叙事风格>");
-                sb.AppendLine($"核心性格特征: {traitsStr}");
-                sb.AppendLine("</叙事风格>");
+                sb.AppendLine("<性格特质>");
+                sb.AppendLine(traitsBlock);
+                sb.AppendLine("</性格特质>");
                 sb.AppendLine();
             }
             
-            // 3. Identity core with summary
+            // 2. 外观标签 - 无数量限制
+            string visualBlock = GenerateVisualBlock(personaDef);
+            if (!string.IsNullOrEmpty(visualBlock))
+            {
+                sb.AppendLine("<外观特征>");
+                sb.AppendLine(visualBlock);
+                sb.AppendLine("</外观特征>");
+                sb.AppendLine();
+            }
+            
+            // 3. 对话风格参数（数值化）
+            string styleBlock = GenerateDialogueStyleBlock(personaDef);
+            if (!string.IsNullOrEmpty(styleBlock))
+            {
+                sb.AppendLine("<对话风格>");
+                sb.AppendLine(styleBlock);
+                sb.AppendLine("</对话风格>");
+                sb.AppendLine();
+            }
+            
+            // 4. 叙事模式参数
+            string narratorBlock = GenerateNarratorModeBlock(personaDef);
+            if (!string.IsNullOrEmpty(narratorBlock))
+            {
+                sb.AppendLine("<叙事模式>");
+                sb.AppendLine(narratorBlock);
+                sb.AppendLine("</叙事模式>");
+                sb.AppendLine();
+            }
+            
+            // 5. 身份核心（名称+简介）
             string identityTemplate = PromptLoader.Load("Identity_Core");
-            
-            // Generate summary
-            string summary = GeneratePersonaSummary(personaDef);
-            
-            // ? 优先使用本地化名称 (label)，避免中文环境显示英文名
             string displayName = !string.IsNullOrEmpty(personaDef.label) 
                 ? personaDef.label 
                 : personaDef.narratorName;
             
+            string briefBio = GetBriefBio(personaDef);
+            
             sb.AppendLine(identityTemplate
                 .Replace("{{NarratorName}}", displayName)
-                .Replace("{{PersonaSummary}}", summary));
+                .Replace("{{PersonaSummary}}", briefBio));
 
             return sb.ToString();
         }
         
         /// <summary>
-        /// Generate a smart summary of the persona (key traits only)
+        /// 生成性格特质块 - 格式: "特质名 数值/1.0"
+        /// 无数量限制，读取所有配置的标签
         /// </summary>
-        private static string GeneratePersonaSummary(NarratorPersonaDef persona)
+        private static string GenerateTraitsBlock(NarratorPersonaDef persona)
         {
             var sb = new StringBuilder();
             
-            // 关键性格标签（前3个）
             if (persona.personalityTags != null && persona.personalityTags.Count > 0)
             {
-                var topTags = persona.personalityTags.Take(3);
-                sb.AppendLine($"**性格:** {string.Join(", ", topTags)}");
+                // 遍历所有标签，无数量限制
+                int count = persona.personalityTags.Count;
+                for (int i = 0; i < count; i++)
+                {
+                    string tag = persona.personalityTags[i];
+                    
+                    // 检查标签是否已包含数值（格式: "温柔:0.8" 或 "温柔 0.8"）
+                    if (tag.Contains(":") || (tag.Contains(" ") && char.IsDigit(tag[tag.LastIndexOf(' ') + 1])))
+                    {
+                        // 已有数值，标准化格式
+                        sb.AppendLine(tag.Replace(":", " ") + "/1.0");
+                    }
+                    else
+                    {
+                        // 无数值，基于位置自动分配权重（第一个最高）
+                        float weight = 1.0f - (i * 0.1f);
+                        weight = System.Math.Max(weight, 0.3f);
+                        sb.AppendLine($"{tag} {weight:F1}/1.0");
+                    }
+                }
             }
             else if (persona.toneTags != null && persona.toneTags.Count > 0)
             {
-                var topTags = persona.toneTags.Take(3);
-                sb.AppendLine($"**语气:** {string.Join(", ", topTags)}");
-            }
-            
-            // 对话风格摘要
-            if (persona.dialogueStyle != null)
-            {
-                var style = persona.dialogueStyle;
-                string styleDesc = "";
-                
-                if (style.formalityLevel > 0.7f) styleDesc += "正式, ";
-                else if (style.formalityLevel < 0.3f) styleDesc += "随意, ";
-                
-                if (style.emotionalExpression > 0.7f) styleDesc += "情感丰富, ";
-                else if (style.emotionalExpression < 0.3f) styleDesc += "冷静, ";
-                
-                if (style.humorLevel > 0.5f) styleDesc += "幽默, ";
-                if (style.sarcasmLevel > 0.5f) styleDesc += "讽刺, ";
-                
-                if (!string.IsNullOrEmpty(styleDesc))
+                // 回退到语气标签，无数量限制
+                int count = persona.toneTags.Count;
+                for (int i = 0; i < count; i++)
                 {
-                    sb.AppendLine($"**风格:** {styleDesc.TrimEnd(',', ' ')}");
+                    string tag = persona.toneTags[i];
+                    float weight = 1.0f - (i * 0.15f);
+                    weight = System.Math.Max(weight, 0.3f);
+                    sb.AppendLine($"{tag} {weight:F1}/1.0");
                 }
             }
             
-            // 传记首句
-            if (!string.IsNullOrEmpty(persona.biography))
-            {
-                string firstSentence = GetFirstSentence(persona.biography, SummaryLength);
-                sb.AppendLine($"**简介:** {firstSentence}");
-                
-                // 提示有更多内容可用
-                if (persona.biography.Length > SummaryLength)
-                {
-                    sb.AppendLine("*(完整传记可通过 read_persona_detail 工具获取)*");
-                }
-            }
-            
-            // 视觉提示
-            if (!string.IsNullOrEmpty(persona.visualDescription) ||
-                (persona.visualElements != null && persona.visualElements.Count > 0))
-            {
-                sb.AppendLine("*(视觉细节可通过 read_persona_detail 工具获取)*");
-            }
-            
-            return sb.ToString();
+            return sb.ToString().TrimEnd();
         }
         
         /// <summary>
-        /// Get first sentence or up to maxLength characters
+        /// 生成外观特征块 - 无数量限制
         /// </summary>
-        private static string GetFirstSentence(string text, int maxLength)
+        private static string GenerateVisualBlock(NarratorPersonaDef persona)
         {
-            if (string.IsNullOrEmpty(text)) return "";
+            var sb = new StringBuilder();
             
-            // Find first sentence end
-            int sentenceEnd = text.IndexOfAny(new[] { '.', '!', '?', '。', '！', '？' });
-            
-            if (sentenceEnd > 0 && sentenceEnd < maxLength)
+            // 遍历所有视觉元素，无数量限制
+            if (persona.visualElements != null && persona.visualElements.Count > 0)
             {
-                return text.Substring(0, sentenceEnd + 1);
+                sb.AppendLine(string.Join(", ", persona.visualElements));
             }
             
-            if (text.Length <= maxLength)
+            if (!string.IsNullOrEmpty(persona.visualMood))
             {
-                return text;
+                sb.AppendLine($"氛围: {persona.visualMood}");
             }
             
-            // Cut at word boundary
-            int cutPoint = text.LastIndexOf(' ', maxLength);
-            if (cutPoint < maxLength / 2) cutPoint = maxLength;
-            
-            return text.Substring(0, cutPoint) + "...";
+            return sb.ToString().TrimEnd();
         }
         
+        /// <summary>
+        /// 生成对话风格块 - 格式: "参数名: 数值/1.0"
+        /// </summary>
+        private static string GenerateDialogueStyleBlock(NarratorPersonaDef persona)
+        {
+            if (persona.dialogueStyle == null) return "";
+            
+            var style = persona.dialogueStyle;
+            var sb = new StringBuilder();
+            
+            // 核心风格参数（全部输出，让AI理解完整人格）
+            sb.AppendLine($"正式度: {style.formalityLevel:F1}/1.0");
+            sb.AppendLine($"情感度: {style.emotionalExpression:F1}/1.0");
+            sb.AppendLine($"详细度: {style.verbosity:F1}/1.0");
+            sb.AppendLine($"幽默度: {style.humorLevel:F1}/1.0");
+            sb.AppendLine($"讽刺度: {style.sarcasmLevel:F1}/1.0");
+            
+            // 标点风格（布尔转为描述）
+            var punctStyles = new List<string>();
+            if (style.useEmoticons) punctStyles.Add("表情符号");
+            if (style.useEllipsis) punctStyles.Add("省略号");
+            if (style.useExclamation) punctStyles.Add("感叹号");
+            
+            if (punctStyles.Count > 0)
+            {
+                sb.AppendLine($"标点偏好: {string.Join(", ", punctStyles)}");
+            }
+            
+            // 礼貌度（从语气标签推断）
+            float politeness = 0.5f;
+            if (persona.toneTags != null)
+            {
+                if (persona.toneTags.Any(t => t.Contains("礼貌") || t.Contains("恭敬")))
+                    politeness = 0.8f;
+                else if (persona.toneTags.Any(t => t.Contains("傲慢") || t.Contains("高冷")))
+                    politeness = 0.3f;
+            }
+            sb.AppendLine($"礼貌度: {politeness:F1}/1.0");
+            
+            return sb.ToString().TrimEnd();
+        }
+        
+        /// <summary>
+        /// 生成叙事模式块 - 基于 mercyLevel/chaosLevel/dominanceLevel
+        /// </summary>
+        private static string GenerateNarratorModeBlock(NarratorPersonaDef persona)
+        {
+            var sb = new StringBuilder();
+            
+            sb.AppendLine($"仁慈度: {persona.mercyLevel:F1}/1.0");
+            sb.AppendLine($"混乱度: {persona.narratorChaosLevel:F1}/1.0");
+            sb.AppendLine($"强势度: {persona.dominanceLevel:F1}/1.0");
+            
+            return sb.ToString().TrimEnd();
+        }
+        
+        /// <summary>
+        /// 获取简短传记（首句或前80字符）
+        /// </summary>
+        private static string GetBriefBio(NarratorPersonaDef persona)
+        {
+            if (string.IsNullOrEmpty(persona.biography)) 
+                return "(无传记)";
+            
+            string bio = persona.biography;
+            
+            // 查找首句
+            int sentenceEnd = bio.IndexOfAny(new[] { '.', '!', '?', '。', '！', '？' });
+            if (sentenceEnd > 0 && sentenceEnd < 80)
+            {
+                return bio.Substring(0, sentenceEnd + 1);
+            }
+            
+            // 截断到80字符
+            if (bio.Length <= 80) return bio;
+            
+            return bio.Substring(0, 80) + "...";
+        }
     }
 }

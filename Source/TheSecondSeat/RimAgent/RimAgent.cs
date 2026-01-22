@@ -5,23 +5,25 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Verse;
+using TheSecondSeat.NaturalLanguage;
+using Newtonsoft.Json;
 
 namespace TheSecondSeat.RimAgent
 {
     /// <summary>
     /// ⭐ v1.9.5: RimAgent - 统一智能体核心类
-    /// 
+    ///
     /// 架构合并说明：
     /// - 外壳(RimAgent)：生命周期管理、统计数据、ILLMProvider引用、对话历史
     /// - 内核(ReActAgent)：工具注册与管理、ReAct循环、正则解析、Pull模式
-    /// 
+    ///
     /// 核心能力：
     /// - ReAct 循环：Thought -> Action -> Observation
     /// - Pull 模式：不推送大量 gameState，工具按需拉取
     /// - 正则解析：[THOUGHT]:, [ACTION]:, [ANSWER]:
     /// - 工具直接执行：无需通过静态库中转
     /// </summary>
-    public class RimAgent
+    public class RimAgent : IDisposable
     {
         // ========== 外壳：生命周期与统计 ==========
         
@@ -320,17 +322,20 @@ namespace TheSecondSeat.RimAgent
         // ========== 解析方法（内核能力） ==========
         
         /// <summary>
-        /// 解析 LLM 响应
+        /// 解析 LLM 响应 - 增强版 (支持 JSON 和 NLP 回退)
         /// </summary>
         private ParsedResponse ParseLLMResponse(string response)
         {
+            // 1. 尝试使用 ReAct 正则解析 (优先支持标准格式)
             var result = new ParsedResponse();
+            bool reactMatched = false;
             
             // 尝试解析 [THOUGHT]:
             var thoughtMatch = ThoughtPattern.Match(response);
             if (thoughtMatch.Success)
             {
                 result.Thought = thoughtMatch.Groups[1].Value.Trim();
+                reactMatched = true;
             }
             
             // 尝试解析 [ACTION]:
@@ -340,6 +345,7 @@ namespace TheSecondSeat.RimAgent
                 result.ActionName = actionMatch.Groups[1].Value.Trim();
                 string paramsString = actionMatch.Groups[2].Value.Trim();
                 result.ActionParams = ParseParams(paramsString);
+                reactMatched = true;
             }
             
             // 尝试解析 [ANSWER]:
@@ -347,9 +353,61 @@ namespace TheSecondSeat.RimAgent
             if (answerMatch.Success)
             {
                 result.Answer = answerMatch.Groups[1].Value.Trim();
+                reactMatched = true;
+            }
+
+            // 如果正则解析成功提取到了关键信息，直接返回
+            if (reactMatched && (!string.IsNullOrEmpty(result.ActionName) || !string.IsNullOrEmpty(result.Answer)))
+            {
+                return result;
+            }
+
+            // 2. 第一道防线：尝试解析结构化 JSON (针对弱模型或 JSON 模式)
+            var jsonCmd = NaturalLanguageParser.ParseFromLLMResponse(response);
+            if (jsonCmd != null)
+            {
+                Log.Message($"[RimAgent] 解析到 JSON 命令: {jsonCmd.action}");
+                result.ActionName = jsonCmd.action;
+                result.ActionParams = ConvertParamsToDict(jsonCmd.parameters);
+                if (string.IsNullOrEmpty(result.Thought)) result.Thought = "Parsed from JSON";
+                return result;
+            }
+
+            // 3. 第二道防线：如果 JSON 解析失败，尝试 NLP 解析 (针对自然语言指令)
+            var nlpCmd = NaturalLanguageParser.Parse(response);
+            if (nlpCmd != null && nlpCmd.confidence > 0.6f)
+            {
+                Log.Message($"[RimAgent] JSON 格式错误，但通过 NLP 成功识别意图: {nlpCmd.action} (置信度: {nlpCmd.confidence:P0})");
+                result.ActionName = nlpCmd.action;
+                result.ActionParams = ConvertParamsToDict(nlpCmd.parameters);
+                if (string.IsNullOrEmpty(result.Thought)) result.Thought = "Parsed from Natural Language";
+                return result;
+            }
+
+            return result;
+        }
+
+        private Dictionary<string, object> ConvertParamsToDict(AdvancedCommandParams advancedParams)
+        {
+            var dict = new Dictionary<string, object>();
+            if (advancedParams == null) return dict;
+
+            // 使用 JSON 序列化再反序列化为字典，处理最全面
+            try
+            {
+                var json = JsonConvert.SerializeObject(advancedParams);
+                dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
+            }
+            catch
+            {
+                // 手动回退映射
+                if (advancedParams.target != null) dict["target"] = advancedParams.target;
+                if (advancedParams.scope != null) dict["scope"] = advancedParams.scope;
+                if (advancedParams.count != null) dict["count"] = advancedParams.count;
+                if (advancedParams.priority != null) dict["priority"] = advancedParams.priority;
             }
             
-            return result;
+            return dict;
         }
         
         /// <summary>
@@ -563,14 +621,9 @@ namespace TheSecondSeat.RimAgent
             var sb = new System.Text.StringBuilder();
             
             // 指令
-            sb.AppendLine("You are a ReAct agent. Think step by step and use tools when needed.");
-            sb.AppendLine();
-            sb.AppendLine("Response format:");
-            sb.AppendLine("[THOUGHT]: Your reasoning");
-            sb.AppendLine("[ACTION]: toolName(param1=value1, param2=value2)");
-            sb.AppendLine("OR");
-            sb.AppendLine("[ANSWER]: Your final response to the user");
-            sb.AppendLine();
+            // ⭐ v2.3.0: 移除硬编码的格式指令，完全由 System Prompt 控制输出格式 (JSON/ReAct)
+            // 这解决了与 OutputFormat_Structure.txt 的冲突
+            // sb.AppendLine("You are a ReAct agent. Think step by step and use tools when needed.");
             
             // 工具描述
             sb.AppendLine(toolsDescription);
@@ -622,6 +675,44 @@ namespace TheSecondSeat.RimAgent
         {
             ConversationHistory.Clear();
             Summary = null;
+        }
+        
+        /// <summary>
+        /// 释放资源并从全局列表移除
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        
+        /// <summary>
+        /// 释放资源
+        /// </summary>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                // 从全局列表移除
+                ActiveAgents.Remove(this);
+                
+                // 释放信号量
+                executionLock?.Dispose();
+                
+                // 清理历史
+                ConversationHistory.Clear();
+                tools.Clear();
+                
+                Log.Message($"[RimAgent] {AgentId}: Disposed and removed from ActiveAgents");
+            }
+        }
+        
+        /// <summary>
+        /// 析构函数（防止资源泄漏）
+        /// </summary>
+        ~RimAgent()
+        {
+            Dispose(false);
         }
         
         /// <summary>

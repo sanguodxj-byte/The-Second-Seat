@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using TheSecondSeat.Commands;
+using TheSecondSeat.Core;
 using TheSecondSeat.Execution;
 using TheSecondSeat.Integration;
 using TheSecondSeat.LLM;
@@ -12,6 +13,7 @@ using TheSecondSeat.PersonaGeneration;
 using TheSecondSeat.RimAgent.Tools;
 using TheSecondSeat.UI;
 using TheSecondSeat.WebSearch;
+using UnityEngine;
 using Verse;
 using RimWorld;
 
@@ -110,51 +112,61 @@ namespace TheSecondSeat.Core.Components
                 Log.Warning($"[NarratorController] 设置思考表情失败: {ex.Message}");
             }
 
-            // ? 在主线程预先获取生物节律上下文 (NarratorBioRhythm)
-            // 避免在后台线程访问 Unity 对象
-            string bioContext = "";
+            // ? 在主线程预先更新角色卡 (CharacterCard)
+            // 确保在后台线程生成 Prompt 时可以直接读取缓存，避免访问 Unity API
             try
             {
-                var bioSystem = Current.Game?.GetComponent<NarratorBioRhythm>();
-                if (bioSystem != null)
+                TheSecondSeat.CharacterCard.CharacterCardSystem.UpdateCard();
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[NarratorController] 更新角色卡失败: {ex.Message}");
+            }
+
+            // ⭐ v2.3.0: 获取影子实体 (Shadow Pawn)
+            Pawn shadowPawn = null;
+            try
+            {
+                var persona = narratorManager?.GetCurrentPersona();
+                if (persona != null && NarratorShadowManager.Instance != null)
                 {
-                    bioContext = bioSystem.GetCurrentBioContext();
+                    shadowPawn = NarratorShadowManager.Instance.GetOrCreateShadowPawn(persona);
                 }
             }
             catch (Exception ex)
             {
-                Log.Warning($"[NarratorController] 获取生物节律失败: {ex.Message}");
+                Log.Warning($"[NarratorController] 获取影子实体失败: {ex.Message}");
             }
 
-            // 2. 然后在后台线程处理（不访问游戏数据）
-            Task.Run(async () => await ProcessNarratorUpdateAsync(userMessage, gameStateJson, selectionContext, bioContext, isGreeting));
+            // 2. 在主线程异步处理 (UnityWebRequest 必须在主线程)
+            StartUpdateAsync();
         }
 
-        private async Task ProcessNarratorUpdateAsync(string userMessage, string gameStateJson, string selectionContext, string bioContext, bool isGreeting = false)
+        private async void StartUpdateAsync(string userMessage, string gameStateJson, string selectionContext, bool isGreeting, Pawn shadowPawn)
+        {
+            await ProcessNarratorUpdateAsync(userMessage, gameStateJson, selectionContext, isGreeting, shadowPawn);
+        }
+
+        private async Task ProcessNarratorUpdateAsync(string userMessage, string gameStateJson, string selectionContext, bool isGreeting = false, Pawn shadowPawn = null)
         {
             isProcessing = true;
             lastError = ""; // 清除之前的错误
 
             try
             {
-                // ? 获取本地时间信息
-                DateTime now = DateTime.Now;
-                string timeContext = BuildTimeContext(now);
-                
                 // 游戏状态已经在主线程捕获，直接使用 JSON 字符串
 
                 // 2. Get dynamic system prompt based on favorability
+                // CharacterCard 已经在主线程更新，GetDynamicSystemPrompt -> SystemPromptGenerator 会自动读取它
                 var systemPrompt = narratorManager?.GetDynamicSystemPrompt() ?? GetDefaultSystemPrompt();
                 
-                // ? 在系统提示词中添加时间信息
-                systemPrompt = InjectTimeIntoSystemPrompt(systemPrompt, now);
-
-                // ? 使用新的 SimpleRimTalkIntegration.GetMemoryPrompt（叙事者模式 pawn = null）
+                // ? 使用新的 SimpleRimTalkIntegration.GetMemoryPrompt
+                // ⭐ v2.3.0: 传入 ShadowPawn 以启用长期记忆
                 systemPrompt = SimpleRimTalkIntegration.GetMemoryPrompt(
                     basePrompt: systemPrompt,
-                    pawn: null,  // ? 叙事者 AI 模式
-                    maxPersonalMemories: 5,  // 无效（pawn == null）
-                    maxKnowledgeEntries: 3   // 自动 +5 = 8 条共通知识 + 全局状态
+                    pawn: shadowPawn,
+                    maxPersonalMemories: 5,
+                    maxKnowledgeEntries: 3
                 );
                 
                 Log.Message("[NarratorController] 已注入记忆上下文和全局游戏状态到 System Prompt");
@@ -188,14 +200,14 @@ namespace TheSecondSeat.Core.Components
                 if (isGreeting || string.IsNullOrEmpty(userMessage))
                 {
                     // ? 首次加载问候 - 简单提示，不要强调"观察状态"
-                    enhancedUserMessage = timeContext + bioContext +
-                        "玩家刚刚加载了游戏存档。请简短地打个招呼，不需要汇报殖民地状态。";
+                    enhancedUserMessage = "玩家刚刚加载了游戏存档。请简短地打个招呼，不需要汇报殖民地状态。";
                 }
                 else
                 {
                     // ? 玩家主动发送消息（不包含 memoryContext）
-                    // 包含时间、生物节律、搜索结果、选中物体上下文
-                    enhancedUserMessage = timeContext + bioContext + searchContext + selectionContext + userMessage;
+                    // 包含搜索结果、选中物体上下文
+                    // 时间和生物节律已移至 System Prompt (CharacterCard)
+                    enhancedUserMessage = searchContext + selectionContext + userMessage;
                 }
 
                 // 5. Send to LLM
@@ -237,51 +249,6 @@ namespace TheSecondSeat.Core.Components
             }
         }
         
-        /// <summary>
-        /// ? 构建时间上下文信息（供 AI 参考）
-        /// ? 简化：移除过多的提示，避免AI过度关注时间
-        /// </summary>
-        private string BuildTimeContext(DateTime now)
-        {
-            string timePeriod = GetTimePeriod(now.Hour);
-            
-            // ? 简化时间上下文，只提供基本信息
-            return $"[当前时间: {timePeriod}]\n";
-        }
-        
-        /// <summary>
-        /// ? 将时间信息注入系统提示词
-        /// ? 简化：减少对时间的强调
-        /// </summary>
-        private string InjectTimeIntoSystemPrompt(string originalPrompt, DateTime now)
-        {
-            // ? 简化：不再添加过多的时间相关指示
-            // 时间信息已经在 BuildTimeContext 中提供
-            return originalPrompt;
-        }
-        
-        /// <summary>
-        /// ? 获取时间段描述
-        /// </summary>
-        private string GetTimePeriod(int hour)
-        {
-            if (hour >= 0 && hour < 6)
-                return "深夜";
-            else if (hour >= 6 && hour < 9)
-                return "清晨";
-            else if (hour >= 9 && hour < 12)
-                return "上午";
-            else if (hour >= 12 && hour < 14)
-                return "中午";
-            else if (hour >= 14 && hour < 18)
-                return "下午";
-            else if (hour >= 18 && hour < 20)
-                return "傍晚";
-            else if (hour >= 20 && hour < 22)
-                return "晚上";
-            else
-                return "深夜";
-        }
         
         // ? 默认 System Prompt
         private string GetDefaultSystemPrompt()
@@ -293,6 +260,9 @@ namespace TheSecondSeat.Core.Components
         {
             try
             {
+                // ⭐ v2.3.0: 记录活动，唤醒打瞌睡的叙事者
+                NarratorIdleSystem.RecordActivity("AI响应");
+                
                 // 记录对话（作为一次交互）
                 var interactionMonitor = Current.Game?.GetComponent<PlayerInteractionMonitor>();
                 interactionMonitor?.RecordConversation(!string.IsNullOrEmpty(userMessage));
@@ -360,6 +330,45 @@ namespace TheSecondSeat.Core.Components
                     tags: new List<string> { "AI回复", "叙述者互动", narratorName }
                 );
                 
+                // ⭐ v1.6.95: 处理对话好感度变化
+                if (response.affinityDelta != 0f && narratorManager != null)
+                {
+                    // 限制范围 -10 ~ +10，避免异常值
+                    float clampedDelta = UnityEngine.Mathf.Clamp(response.affinityDelta, -10f, 10f);
+                    narratorManager.ModifyFavorability(clampedDelta, "对话互动");
+                    
+                    // 在 Dev 模式下显示好感度变化
+                    if (Prefs.DevMode && UnityEngine.Mathf.Abs(clampedDelta) > 0.1f)
+                    {
+                        string deltaText = clampedDelta > 0 ? $"+{clampedDelta:F1}" : $"{clampedDelta:F1}";
+                        Log.Message($"[NarratorController] 对话好感度变化: {deltaText}");
+                    }
+                }
+
+                // ⭐ v2.2.0: 处理角色卡更新
+                if (response.updateCard != null)
+                {
+                    var bio = Current.Game?.GetComponent<NarratorBioRhythm>();
+                    if (bio != null && !string.IsNullOrEmpty(response.updateCard.energy))
+                    {
+                        float newEnergy = -1f;
+                        switch (response.updateCard.energy.ToLower())
+                        {
+                            case "energetic": newEnergy = 90f; break;
+                            case "active": newEnergy = 70f; break;
+                            case "normal": newEnergy = 50f; break;
+                            case "tired": newEnergy = 30f; break;
+                            case "exhausted": newEnergy = 10f; break;
+                        }
+
+                        if (newEnergy >= 0)
+                        {
+                            bio.SetEnergy(newEnergy);
+                            Log.Message($"[NarratorController] AI 更新精力状态: {response.updateCard.energy} ({newEnergy})");
+                        }
+                    }
+                }
+                
                 // 获取表情ID（如果有）
                 string emoticonId = "";
                 if (!string.IsNullOrEmpty(response.emoticon))
@@ -369,7 +378,7 @@ namespace TheSecondSeat.Core.Components
                 }
                 
                 // ? 准备流式消息（但先不显示，等待 TTS 或超时）
-                DialogueOverlayPanel.SetStreamingMessage(displayText);
+                // DialogueOverlayPanel.SetStreamingMessage(displayText); // ? 移除此行，由 AutoPlayTTS 内部调用
                 
                 Log.Message($"[NarratorController] AI says: {displayText}");
 

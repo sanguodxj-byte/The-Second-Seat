@@ -9,13 +9,13 @@ namespace TheSecondSeat.Utils
 {
     /// <summary>
     /// 静默资源加载器 - 使用 reportFailure: false 防止红字日志
-    /// 🏗️ 使用 TSSFrameworkConfig 支持附属 Mod 扩展
-    /// ⚠️ v1.6.80: 所有资源加载方法必须在主线程调用
+    /// 使用 TSSFrameworkConfig 支持附属 Mod 扩展
+    /// v1.6.80: 所有资源加载方法必须在主线程调用
     /// </summary>
     [StaticConstructorOnStartup]
     public static class TSS_AssetLoader
     {
-        // ⚠️ v1.6.80: 主线程ID，用于检测跨线程调用
+        // v1.6.80: 主线程ID，用于检测跨线程调用
         private static int? mainThreadId;
 
         static TSS_AssetLoader()
@@ -44,7 +44,7 @@ namespace TheSecondSeat.Utils
             {
                 if (Prefs.DevMode)
                 {
-                    Log.Warning($"[TSS_AssetLoader] ⚠️ {methodName} called from non-main thread. " +
+                    Log.Warning($"[TSS_AssetLoader] {methodName} called from non-main thread. " +
                                $"Thread: {Thread.CurrentThread.ManagedThreadId}, Main: {mainThreadId}. " +
                                "Resource loading must happen on main thread!");
                 }
@@ -64,7 +64,7 @@ namespace TheSecondSeat.Utils
         private static readonly Dictionary<string, CacheEntry<AudioClip>> audioCache = new();
         private static readonly HashSet<string> missingPaths = new();
         
-        // 🏗️ 使用配置类替代硬编码常量
+        // 使用配置类替代硬编码常量
         private static int MaxCacheSize => TSSFrameworkConfig.Cache.MaxCacheSize;
         private static int CacheExpireTicks => TSSFrameworkConfig.Cache.CacheExpireTicks;
         
@@ -78,14 +78,14 @@ namespace TheSecondSeat.Utils
             if (string.IsNullOrEmpty(path) || missingPaths.Contains(path))
                 return fallback;
             
-            // ⚠️ v1.6.80: 检查缓存可以在任何线程
+            // v1.6.80: 检查缓存可以在任何线程
             if (textureCache.TryGetValue(path, out var cached))
             {
                 cached.LastAccessTick = CurrentTick;
                 return cached.IsNull ? fallback : (cached.Value ?? fallback);
             }
             
-            // ⚠️ v1.6.80: ContentFinder必须在主线程调用
+            // v1.6.80: ContentFinder必须在主线程调用
             if (!EnsureMainThread("LoadTexture"))
             {
                 return fallback;
@@ -113,7 +113,7 @@ namespace TheSecondSeat.Utils
             if (string.IsNullOrEmpty(personaName))
                 return fallback ?? GetDefaultPlaceholder();
             
-            // 🏗️ 使用配置类的路径模板
+            // 使用配置类的路径模板
             var paths = TSSFrameworkConfig.AssetPaths.PortraitSearchPaths
                 .Select(template => string.Format(template, personaName));
             
@@ -132,7 +132,7 @@ namespace TheSecondSeat.Utils
         {
             if (string.IsNullOrEmpty(assetName)) return fallback;
             
-            // 🏗️ 使用配置类的降临资源路径模板
+            // 使用配置类的降临资源路径模板
             var paths = TSSFrameworkConfig.AssetPaths.DescentAssetPaths
                 .Select(template => string.Format(template, category, personaName ?? "", assetName))
                 .Where(p => !string.IsNullOrEmpty(personaName) || !p.Contains($"/{personaName}/"));
@@ -165,7 +165,7 @@ namespace TheSecondSeat.Utils
             if (textureCache.TryGetValue(path, out var cached))
                 return !cached.IsNull && cached.Value != null;
             
-            // ⚠️ v1.6.80: 如果不在主线程，只能依赖缓存
+            // v1.6.80: 如果不在主线程，只能依赖缓存
             if (!IsMainThread)
             {
                 return false; // 无法确定，返回false避免错误
@@ -179,7 +179,7 @@ namespace TheSecondSeat.Utils
         {
             if (string.IsNullOrEmpty(personaName)) return false;
             
-            // 🏗️ 使用配置类的路径模板检查
+            // 使用配置类的路径模板检查
             return TSSFrameworkConfig.AssetPaths.PortraitSearchPaths
                 .Select(template => string.Format(template, personaName))
                 .Any(TextureExists);
@@ -190,7 +190,7 @@ namespace TheSecondSeat.Utils
         {
             if (string.IsNullOrEmpty(personaName)) return false;
             
-            // 🏗️ 使用配置类的降临检查路径
+            // 使用配置类的降临检查路径
             return TSSFrameworkConfig.AssetPaths.DescentPostureCheckPaths
                 .Select(template => string.Format(template, personaName))
                 .Any(TextureExists);
@@ -203,7 +203,7 @@ namespace TheSecondSeat.Utils
             if (defaultPlaceholder != null)
                 return defaultPlaceholder;
             
-            // ⚠️ v1.6.80: ContentFinder必须在主线程
+            // v1.6.80: ContentFinder必须在主线程
             if (!IsMainThread)
             {
                 return GeneratePlaceholder(); // 返回动态生成的占位图
@@ -216,7 +216,7 @@ namespace TheSecondSeat.Utils
         private static Texture2D GeneratePlaceholder()
         {
             var tex = new Texture2D(256, 256, TextureFormat.RGBA32, false);
-            // 🏗️ 使用配置类的颜色
+            // 使用配置类的颜色
             var bg = TSSFrameworkConfig.Colors.PlaceholderBackground;
             var border = TSSFrameworkConfig.Colors.PlaceholderBorder;
             
@@ -252,7 +252,12 @@ namespace TheSecondSeat.Utils
             textureCache.Clear();
             audioCache.Clear();
             missingPaths.Clear();
-            defaultPlaceholder = null;
+            
+            if (defaultPlaceholder != null)
+            {
+                UnityEngine.Object.Destroy(defaultPlaceholder);
+                defaultPlaceholder = null;
+            }
         }
         
         public static void InvalidatePath(string path)

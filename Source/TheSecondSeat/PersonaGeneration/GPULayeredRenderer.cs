@@ -313,6 +313,75 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
+        /// ⭐ 绘制裁剪后的动态图层 (用于头像)
+        /// 
+        /// 使用 GUI.DrawTextureWithTexCoords 只绘制纹理的指定 UV 区域，
+        /// 并将其拉伸填满目标 screenRect。零 GC，零像素操作。
+        /// 
+        /// 用法示例：
+        /// <code>
+        /// // 获取裁剪区域 (只计算一次并缓存)
+        /// Rect faceUV = SmartCropper.GetDefaultCropRect(SmartCropper.CropType.Avatar, null);
+        /// 
+        /// // 获取当前动态图层
+        /// var layers = portraitController.GetCurrentLayers();
+        /// 
+        /// // 绘制裁剪后的头像
+        /// GPULayeredRenderer.DrawCroppedLayersOnGUI(new Rect(0, 0, 64, 64), layers, faceUV);
+        /// </code>
+        /// </summary>
+        /// <param name="screenRect">屏幕上的显示区域 (例如 64x64 的框)</param>
+        /// <param name="layers">图层列表（底层在前）</param>
+        /// <param name="cropUV">归一化的裁剪区域 (来自 SmartCropper，x/y/width/height 都在 0-1 范围内)</param>
+        public static void DrawCroppedLayersOnGUI(Rect screenRect, List<Texture2D> layers, Rect cropUV)
+        {
+            if (layers == null) return;
+            
+            foreach (var layer in layers)
+            {
+                if (layer != null)
+                {
+                    // 核心魔法：只绘制纹理的 cropUV 部分，拉伸填满 screenRect
+                    GUI.DrawTextureWithTexCoords(screenRect, layer, cropUV);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ 绘制裁剪后的动态图层，支持整体透明度控制
+        /// 
+        /// 结合裁剪和透明度功能，用于幽灵模式头像等场景。
+        /// </summary>
+        /// <param name="screenRect">屏幕上的显示区域</param>
+        /// <param name="layers">图层列表（底层在前）</param>
+        /// <param name="cropUV">归一化的裁剪区域</param>
+        /// <param name="alpha">整体透明度（0-1）</param>
+        public static void DrawCroppedLayersOnGUI(Rect screenRect, List<Texture2D> layers, Rect cropUV, float alpha)
+        {
+            if (layers == null) return;
+            
+            // 保存原始颜色
+            Color originalColor = GUI.color;
+            GUI.color = new Color(originalColor.r, originalColor.g, originalColor.b, originalColor.a * alpha);
+            
+            try
+            {
+                foreach (var layer in layers)
+                {
+                    if (layer != null)
+                    {
+                        GUI.DrawTextureWithTexCoords(screenRect, layer, cropUV);
+                    }
+                }
+            }
+            finally
+            {
+                // 恢复原始颜色
+                GUI.color = originalColor;
+            }
+        }
+        
+        /// <summary>
         /// ⭐ 最佳实践：带偏移的多层渲染
         /// 
         /// 支持为每个图层指定不同的偏移（用于眨眼、嘴型动画）

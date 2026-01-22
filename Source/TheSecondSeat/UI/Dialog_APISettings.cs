@@ -7,7 +7,7 @@ using TheSecondSeat.RimAgent;
 namespace TheSecondSeat.UI
 {
     /// <summary>
-    /// ? v1.6.65: API 设置弹窗
+    /// v1.6.65: API 设置弹窗
     /// 包含 LLM API、TTS API 和并发管理器配置
     /// </summary>
     public class Dialog_APISettings : Window
@@ -116,7 +116,7 @@ namespace TheSecondSeat.UI
             
             // 标题
             Text.Font = GameFont.Medium;
-            listing.Label("?? API 配置");
+            listing.Label("API 配置");
             Text.Font = GameFont.Small;
             listing.Gap(10f);
             
@@ -132,7 +132,7 @@ namespace TheSecondSeat.UI
             // ========================================
             // LLM API 配置
             // ========================================
-            scrollListing.Label("?? LLM API 配置");
+            scrollListing.Label("LLM API 配置");
             scrollListing.GapLine(12f);
             
             // Provider 选择
@@ -189,7 +189,7 @@ namespace TheSecondSeat.UI
             scrollListing.Gap(5f);
             
             // 测试连接按钮
-            if (scrollListing.ButtonText("?? 测试 LLM 连接", "测试 LLM API 是否可用"))
+            if (scrollListing.ButtonText("测试 LLM 连接", "测试 LLM API 是否可用"))
             {
                 _ = TestLLMConnectionAsync();
             }
@@ -199,7 +199,7 @@ namespace TheSecondSeat.UI
             // ========================================
             // TTS API 配置
             // ========================================
-            scrollListing.Label("?? TTS API 配置");
+            scrollListing.Label("TTS API 配置");
             scrollListing.GapLine(12f);
             
             // TTS Provider 选择
@@ -245,7 +245,7 @@ namespace TheSecondSeat.UI
             scrollListing.Gap(5f);
             
             // 测试 TTS 按钮
-            if (scrollListing.ButtonText("?? 测试 TTS", "播放测试语音"))
+            if (scrollListing.ButtonText("测试 TTS", "播放测试语音"))
             {
                 _ = TestTTSAsync();
             }
@@ -255,7 +255,7 @@ namespace TheSecondSeat.UI
             // ========================================
             // 并发管理器配置
             // ========================================
-            scrollListing.Label("? 并发管理器");
+            scrollListing.Label("并发管理器");
             scrollListing.GapLine(12f);
             
             // 最大并发数
@@ -291,7 +291,7 @@ namespace TheSecondSeat.UI
             scrollListing.Gap(10f);
             
             // 并发管理器统计
-            scrollListing.Label("?? 并发统计:");
+            scrollListing.Label("并发统计:");
             try
             {
                 string stats = ConcurrentRequestManager.Instance.GetStats();
@@ -305,7 +305,7 @@ namespace TheSecondSeat.UI
                 scrollListing.Gap(10f);
                 
                 // 重置统计按钮
-                if (scrollListing.ButtonText("?? 重置统计", "清除并发管理器统计"))
+                if (scrollListing.ButtonText("重置统计", "清除并发管理器统计"))
                 {
                     ConcurrentRequestManager.Instance.ResetStats();
                     Messages.Message("并发统计已重置", MessageTypeDefOf.PositiveEvent);
@@ -313,7 +313,7 @@ namespace TheSecondSeat.UI
             }
             catch (Exception ex)
             {
-                scrollListing.Label($"? 获取统计失败: {ex.Message}");
+                scrollListing.Label($"获取统计失败: {ex.Message}");
             }
             
             scrollListing.End();
@@ -325,7 +325,7 @@ namespace TheSecondSeat.UI
             Rect bottomRect = new Rect(inRect.x, inRect.yMax - 50f, inRect.width, 50f);
             
             // 保存并应用按钮
-            if (Widgets.ButtonText(new Rect(bottomRect.x, bottomRect.y, 150f, 35f), "?? 保存并应用"))
+            if (Widgets.ButtonText(new Rect(bottomRect.x, bottomRect.y, 150f, 35f), "保存并应用"))
             {
                 SaveSettings();
                 Messages.Message("API 设置已保存并应用", MessageTypeDefOf.PositiveEvent);
@@ -351,16 +351,16 @@ namespace TheSecondSeat.UI
                 
                 if (success)
                 {
-                    Messages.Message("? LLM 连接测试成功！", MessageTypeDefOf.PositiveEvent);
+                    Messages.Message("LLM 连接测试成功！", MessageTypeDefOf.PositiveEvent);
                 }
                 else
                 {
-                    Messages.Message("? LLM 连接测试失败，请检查配置", MessageTypeDefOf.RejectInput);
+                    Messages.Message("LLM 连接测试失败，请检查配置", MessageTypeDefOf.RejectInput);
                 }
             }
             catch (Exception ex)
             {
-                Messages.Message($"? 测试异常: {ex.Message}", MessageTypeDefOf.RejectInput);
+                Messages.Message($"测试异常: {ex.Message}", MessageTypeDefOf.RejectInput);
                 Log.Error($"[API Settings] LLM test failed: {ex.Message}");
             }
         }
@@ -380,16 +380,16 @@ namespace TheSecondSeat.UI
                 
                 if (!string.IsNullOrEmpty(filePath))
                 {
-                    Messages.Message("? TTS 测试完成！", MessageTypeDefOf.PositiveEvent);
+                    Messages.Message("TTS 测试完成！", MessageTypeDefOf.PositiveEvent);
                 }
                 else
                 {
-                    Messages.Message("? TTS 测试失败", MessageTypeDefOf.RejectInput);
+                    Messages.Message("TTS 测试失败", MessageTypeDefOf.RejectInput);
                 }
             }
             catch (Exception ex)
             {
-                Messages.Message($"? TTS 测试失败: {ex.Message}", MessageTypeDefOf.RejectInput);
+                Messages.Message($"TTS 测试失败: {ex.Message}", MessageTypeDefOf.RejectInput);
                 Log.Error($"[API Settings] TTS test failed: {ex.Message}");
             }
         }

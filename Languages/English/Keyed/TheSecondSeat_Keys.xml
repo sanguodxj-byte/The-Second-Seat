@@ -10,6 +10,13 @@
   <TSS_CurrentTier>Current Tier</TSS_CurrentTier>
   <TSS_SwitchPersona>Switch Persona</TSS_SwitchPersona>
   <TSS_TestConnection>Test Connection</TSS_TestConnection>
+  <TSS_StatusReport>Status Report</TSS_StatusReport>
+  <TSS_CommandList>Command List</TSS_CommandList>
+  <TSS_ClearChat>Clear Chat</TSS_ClearChat>
+  <TSS_ChatCleared>Chat history cleared</TSS_ChatCleared>
+  <TSS_AIThinking>● AI is thinking...</TSS_AIThinking>
+  <TSS_InputHint>Enter message...</TSS_InputHint>
+  <TSS_Send>Send</TSS_Send>
 
   <!-- Settings Sections -->
   <TSS_Settings_Title>The Second Seat Settings</TSS_Settings_Title>
@@ -248,12 +255,18 @@ Click to talk with the AI Narrator</TSS_NarratorButton_Tooltip>
 
   <!-- Quick Dialogue Window -->
   <TSS_QuickDialogue_Send>Send</TSS_QuickDialogue_Send>
-  <TSS_QuickDialogue_Agree>? Agree / OK</TSS_QuickDialogue_Agree>
-  <TSS_QuickDialogue_Reject>? Reject / No</TSS_QuickDialogue_Reject>
+  <TSS_QuickDialogue_Agree>Agree / OK</TSS_QuickDialogue_Agree>
+  <TSS_QuickDialogue_Reject>Reject / No</TSS_QuickDialogue_Reject>
   <TSS_QuickDialogue_AgreeMsg>Okay, I agree.</TSS_QuickDialogue_AgreeMsg>
   <TSS_QuickDialogue_RejectMsg>No, I refuse.</TSS_QuickDialogue_RejectMsg>
 
   <!-- Persona Editor -->
+  <TSS_PersonaEditor_SemanticRadar>Semantic Radar (Perception)</TSS_PersonaEditor_SemanticRadar>
+  <TSS_PersonaEditor_RadarHelp>Configure game concepts for AI active monitoring. The system scans colonist memories and triggers events upon keyword matches.</TSS_PersonaEditor_RadarHelp>
+  <TSS_PersonaEditor_RadarExpand>Expand (LLM)</TSS_PersonaEditor_RadarExpand>
+  <TSS_LLMNotReady>LLM service is not available. Please check connection.</TSS_LLMNotReady>
+  <TSS_RadarExpanding>Calling LLM to expand concept: {0}...</TSS_RadarExpanding>
+  <TSS_RadarExpandSuccess>Successfully expanded concept: {0}, added {1} keywords.</TSS_RadarExpandSuccess>
   <TSS_PersonaEditor_Title>Edit Persona: {0}</TSS_PersonaEditor_Title>
   <TSS_PersonaEditor_BasicInfo>Basic Info</TSS_PersonaEditor_BasicInfo>
   <TSS_PersonaEditor_Name>Persona Name:</TSS_PersonaEditor_Name>
@@ -360,4 +373,116 @@ Click to talk with the AI Narrator</TSS_NarratorButton_Tooltip>
   <TSS_TheWorld_Activated>{0} activates "The World"! Time has stopped!</TSS_TheWorld_Activated>
   <TSS_TheWorld_Ended>Time resumes its flow...</TSS_TheWorld_Ended>
   <TSS_TheWorld_Description>Stops the flow of time. All units except the caster are frozen in place.</TSS_TheWorld_Description>
+  
+  <!-- Debug Windows -->
+  <TSS_Debug_RimAgent_Title>RimAgent Debugger</TSS_Debug_RimAgent_Title>
+  <TSS_Debug_SelectAgent>Select an agent to view details</TSS_Debug_SelectAgent>
+  <TSS_Debug_AgentId>Agent ID</TSS_Debug_AgentId>
+  <TSS_Debug_State>State</TSS_Debug_State>
+  <TSS_Debug_Requests>Requests</TSS_Debug_Requests>
+  <TSS_Debug_Success>success</TSS_Debug_Success>
+  <TSS_Debug_Failed>failed</TSS_Debug_Failed>
+  <TSS_Debug_Total>total</TSS_Debug_Total>
+  <TSS_Debug_ContextUsage>Context Usage</TSS_Debug_ContextUsage>
+  <TSS_Debug_SummaryTokens>summary tokens</TSS_Debug_SummaryTokens>
+  <TSS_Debug_HistoryTokens>history tokens</TSS_Debug_HistoryTokens>
+  <TSS_Debug_LastPrompt>Last Prompt Sent</TSS_Debug_LastPrompt>
+  <TSS_Debug_NoPrompt>(No prompt sent yet)</TSS_Debug_NoPrompt>
+  <TSS_Debug_LastResponse>Last Response Received</TSS_Debug_LastResponse>
+  <TSS_Debug_NoResponse>(No response received yet)</TSS_Debug_NoResponse>
+  <TSS_Debug_ApproxTokens>Approx. Response Tokens</TSS_Debug_ApproxTokens>
+  <TSS_Debug_NoAgents>No active agents</TSS_Debug_NoAgents>
+  <TSS_Debug_Refresh>Refresh</TSS_Debug_Refresh>
+  <TSS_Debug_Copy>Copy</TSS_Debug_Copy>
+  <TSS_Debug_Copied>Copied to clipboard</TSS_Debug_Copied>
+  <TSS_Debug_CopyMaster>Copy Master</TSS_Debug_CopyMaster>
+  <TSS_Debug_CopyEventDir>Copy EventDirector</TSS_Debug_CopyEventDir>
+  <TSS_Debug_PromptRefreshed>Prompts refreshed</TSS_Debug_PromptRefreshed>
+  <TSS_Debug_NoContext>No context data (refresh first)</TSS_Debug_NoContext>
+  
+  <!-- Debug Window Tabs -->
+  <TSS_Tab_AgentInfo>Agent Info</TSS_Tab_AgentInfo>
+  <TSS_Tab_SystemPrompt>System Prompt</TSS_Tab_SystemPrompt>
+  <TSS_Tab_ContextData>Context Data</TSS_Tab_ContextData>
+  
+  <!-- Favorability Debug Window -->
+  <TSS_Debug_Favorability_Title>[Debug] Favorability Tool</TSS_Debug_Favorability_Title>
+  <TSS_Debug_CurrentFavorability>Current Favorability: {0} ({1})</TSS_Debug_CurrentFavorability>
+  <TSS_Debug_QuickAdjust>Quick Adjust:</TSS_Debug_QuickAdjust>
+  <TSS_Debug_PreciseSet>Precise Set:</TSS_Debug_PreciseSet>
+  <TSS_Debug_Apply>Apply: {0}</TSS_Debug_Apply>
+  <TSS_Debug_QuickTier>Quick Tier:</TSS_Debug_QuickTier>
+  <TSS_Debug_Close>Close</TSS_Debug_Close>
+  
+  <!-- Expression Debug Window -->
+  <TSS_Debug_Expression_Title>[Debug] Expression - {0}</TSS_Debug_Expression_Title>
+  <TSS_Debug_CurrentExpression>Current Expression: {0}</TSS_Debug_CurrentExpression>
+  <TSS_Debug_ClickToSwitch>Click to switch expression:</TSS_Debug_ClickToSwitch>
+  <TSS_Debug_SwitchedToExpression>Switched to expression: {0}</TSS_Debug_SwitchedToExpression>
+  
+  <!-- Expression Names -->
+  <TSS_Expression_Neutral>Neutral</TSS_Expression_Neutral>
+  <TSS_Expression_Happy>Happy</TSS_Expression_Happy>
+  <TSS_Expression_Sad>Sad</TSS_Expression_Sad>
+  <TSS_Expression_Angry>Angry</TSS_Expression_Angry>
+  <TSS_Expression_Surprised>Surprised</TSS_Expression_Surprised>
+  <TSS_Expression_Worried>Worried</TSS_Expression_Worried>
+  <TSS_Expression_Smug>Smug</TSS_Expression_Smug>
+  <TSS_Expression_Disappointed>Disappointed</TSS_Expression_Disappointed>
+  <TSS_Expression_Thoughtful>Thoughtful</TSS_Expression_Thoughtful>
+  <TSS_Expression_Annoyed>Annoyed</TSS_Expression_Annoyed>
+  
+  <!-- Expression Descriptions -->
+  <TSS_Expression_Neutral_Desc>(Default)</TSS_Expression_Neutral_Desc>
+  <TSS_Expression_Happy_Desc>(Colony thriving)</TSS_Expression_Happy_Desc>
+  <TSS_Expression_Sad_Desc>(Colonist death)</TSS_Expression_Sad_Desc>
+  <TSS_Expression_Angry_Desc>(Under attack)</TSS_Expression_Angry_Desc>
+  <TSS_Expression_Surprised_Desc>(Unexpected event)</TSS_Expression_Surprised_Desc>
+  <TSS_Expression_Worried_Desc>(Danger warning)</TSS_Expression_Worried_Desc>
+  <TSS_Expression_Smug_Desc>(Major victory)</TSS_Expression_Smug_Desc>
+  <TSS_Expression_Disappointed_Desc>(Mission failed)</TSS_Expression_Disappointed_Desc>
+  <TSS_Expression_Thoughtful_Desc>(Strategic decision)</TSS_Expression_Thoughtful_Desc>
+  <TSS_Expression_Annoyed_Desc>(Frequent requests)</TSS_Expression_Annoyed_Desc>
+
+  <!-- BioRhythm UI -->
+  <TSS_Bio_Time>Time</TSS_Bio_Time>
+  <TSS_Bio_Energy>Energy</TSS_Bio_Energy>
+  <TSS_Bio_Mood>Mood</TSS_Bio_Mood>
+  <TSS_Bio_Activity>Activity</TSS_Bio_Activity>
+  <TSS_Bio_State>State</TSS_Bio_State>
+  
+  <!-- BioRhythm Descriptions -->
+  <TSS_Bio_Schedule_DeepNight>Deep Night</TSS_Bio_Schedule_DeepNight>
+  <TSS_Bio_Schedule_Morning>Morning</TSS_Bio_Schedule_Morning>
+  <TSS_Bio_Schedule_MorningWork>Morning Work</TSS_Bio_Schedule_MorningWork>
+  <TSS_Bio_Schedule_Midday>Midday</TSS_Bio_Schedule_Midday>
+  <TSS_Bio_Schedule_Afternoon>Afternoon</TSS_Bio_Schedule_Afternoon>
+  <TSS_Bio_Schedule_Evening>Evening</TSS_Bio_Schedule_Evening>
+  <TSS_Bio_Schedule_NightRest>Night Rest</TSS_Bio_Schedule_NightRest>
+  
+  <TSS_Bio_Mood_Elated>Elated</TSS_Bio_Mood_Elated>
+  <TSS_Bio_Mood_Happy>Happy</TSS_Bio_Mood_Happy>
+  <TSS_Bio_Mood_Calm>Calm</TSS_Bio_Mood_Calm>
+  <TSS_Bio_Mood_Gloomy>Gloomy</TSS_Bio_Mood_Gloomy>
+  <TSS_Bio_Mood_Irritable>Irritable</TSS_Bio_Mood_Irritable>
+  
+  <TSS_Bio_Energy_Energetic>Energetic</TSS_Bio_Energy_Energetic>
+  <TSS_Bio_Energy_Active>Active</TSS_Bio_Energy_Active>
+  <TSS_Bio_Energy_Normal>Normal</TSS_Bio_Energy_Normal>
+  <TSS_Bio_Energy_Tired>Tired</TSS_Bio_Energy_Tired>
+  <TSS_Bio_Energy_Exhausted>Exhausted</TSS_Bio_Energy_Exhausted>
+  
+  <TSS_Bio_Activity_Observing>Observing</TSS_Bio_Activity_Observing>
+  <TSS_Bio_Activity_Analyzing>Analyzing</TSS_Bio_Activity_Analyzing>
+  <TSS_Bio_Activity_Resting>Resting</TSS_Bio_Activity_Resting>
+  <TSS_Bio_Activity_MealTime>Meal Time</TSS_Bio_Activity_MealTime>
+  <TSS_Bio_Activity_Alert>Alert</TSS_Bio_Activity_Alert>
+  <TSS_Bio_Activity_Greeting>Greeting</TSS_Bio_Activity_Greeting>
+  <TSS_Bio_Activity_Idle>Idle</TSS_Bio_Activity_Idle>
+  
+  <!-- CommandListWindow -->
+  <TSS_CmdList_UnknownCommand>Unknown event debug command: {0}</TSS_CmdList_UnknownCommand>
+  <TSS_CmdList_ExecuteFailed>Execution failed: {0}</TSS_CmdList_ExecuteFailed>
+  <TSS_CmdList_OpenButton>View Command List</TSS_CmdList_OpenButton>
+  <TSS_CmdList_OpenButton_Desc>Show all available AI commands</TSS_CmdList_OpenButton_Desc>
 </LanguageData>

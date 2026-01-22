@@ -20,6 +20,8 @@ namespace TheSecondSeat.UI
         
         // 记录上一帧的位置，用于检测移动
         private Rect lastWindowRect;
+        // ? 标记是否需要保存位置（拖动结束后保存）
+        private bool needsSave = false;
 
         private string currentFullMessage = "";
         private string currentDisplayedMessage = "";
@@ -48,18 +50,6 @@ namespace TheSecondSeat.UI
 
         public DialogueOverlayPanel()
         {
-            // 优先从 NarratorManager (存档) 获取位置
-            var narratorManager = Current.Game?.GetComponent<NarratorManager>();
-            if (narratorManager != null && narratorManager.DialogueOverlayRect.HasValue)
-            {
-                this.windowRect = narratorManager.DialogueOverlayRect.Value;
-            }
-            // 否则，从全局设置加载
-            else if (TheSecondSeatMod.Settings.dialogueRect.width > 0 && TheSecondSeatMod.Settings.dialogueRect.height > 0)
-            {
-                this.windowRect = TheSecondSeatMod.Settings.dialogueRect;
-            }
-            
             this.doCloseX = false; // 隐藏右上角X
             this.doCloseButton = false;
             this.draggable = true;
@@ -75,7 +65,42 @@ namespace TheSecondSeat.UI
             this.drawShadow = false; // ? v1.6.91: 移除阴影
             this.optionalTitle = null; // ? v1.6.91: 移除标题
             this.doWindowBackground = false; // ? v1.6.91: 禁用默认背景
+        }
+
+        protected override void SetInitialSizeAndPosition()
+        {
+            // 默认位置（居中）
+            float x = (Verse.UI.screenWidth - InitialSize.x) / 2f;
+            float y = (Verse.UI.screenHeight - InitialSize.y) / 2f;
+            Rect targetRect = new Rect(x, y, InitialSize.x, InitialSize.y);
+
+            // 优先从 NarratorManager (存档) 获取位置
+            var narratorManager = Current.Game?.GetComponent<NarratorManager>();
+            if (narratorManager != null && narratorManager.DialogueOverlayRect.HasValue)
+            {
+                targetRect = narratorManager.DialogueOverlayRect.Value;
+            }
+            // 否则，从全局设置加载
+            else if (TheSecondSeatMod.Settings.dialogueRect.width > 10 && TheSecondSeatMod.Settings.dialogueRect.height > 10)
+            {
+                // 如果位置是 0,0 (默认值)，则居中显示，但使用设置的大小
+                if (TheSecondSeatMod.Settings.dialogueRect.x == 0 && TheSecondSeatMod.Settings.dialogueRect.y == 0)
+                {
+                    float cx = (Verse.UI.screenWidth - TheSecondSeatMod.Settings.dialogueRect.width) / 2f;
+                    float cy = (Verse.UI.screenHeight - TheSecondSeatMod.Settings.dialogueRect.height) / 2f;
+                    targetRect = new Rect(cx, cy, TheSecondSeatMod.Settings.dialogueRect.width, TheSecondSeatMod.Settings.dialogueRect.height);
+                }
+                else
+                {
+                    targetRect = TheSecondSeatMod.Settings.dialogueRect;
+                }
+            }
+
+            // 确保在屏幕内
+            targetRect.x = Mathf.Clamp(targetRect.x, 0f, Verse.UI.screenWidth - targetRect.width);
+            targetRect.y = Mathf.Clamp(targetRect.y, 0f, Verse.UI.screenHeight - targetRect.height);
             
+            this.windowRect = targetRect;
             this.lastWindowRect = this.windowRect;
         }
         
@@ -218,6 +243,15 @@ namespace TheSecondSeat.UI
             {
                 lastWindowRect = this.windowRect;
                 SaveWindowPosition(saveToDisk: false); // 仅更新内存中的 NarratorManager
+                needsSave = true; // 标记需要保存到磁盘
+            }
+
+            // ? 拖拽结束后保存到磁盘 (MouseUp)
+            // 🔧 修复: 使用 Event.current.rawType 检查，防止 Event 被拖拽逻辑消耗
+            if (needsSave && (Event.current.type == EventType.MouseUp || Event.current.rawType == EventType.MouseUp))
+            {
+                SaveWindowPosition(saveToDisk: true);
+                needsSave = false;
             }
 
             UpdateStreaming();

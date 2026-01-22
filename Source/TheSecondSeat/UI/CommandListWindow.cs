@@ -10,13 +10,13 @@ namespace TheSecondSeat.UI
 {
     /// <summary>
     /// 显示所有可用AI指令的窗口
-    /// ? 点击命令行自动输入到聊天窗口
+    /// 点击命令行自动输入到聊天窗口
     /// </summary>
     public class CommandListWindow : Window
     {
         private Vector2 scrollPosition = Vector2.zero;
         private string searchFilter = "";
-        private string selectedCategory = "全部";
+        private string selectedCategory = "TSS_CmdCat_All".Translate();
         
         private static readonly Color HeaderColor = new Color(0.15f, 0.60f, 0.70f, 1f);
         private static readonly Color RowColor1 = new Color(0.12f, 0.13f, 0.14f, 0.8f);
@@ -25,7 +25,7 @@ namespace TheSecondSeat.UI
         private static readonly Color ImplementedColor = new Color(0.4f, 0.8f, 0.4f);
         private static readonly Color NotImplementedColor = new Color(0.8f, 0.4f, 0.4f);
 
-        // ? 回调：输入到聊天窗口
+        // 回调：输入到聊天窗口
         public static Action<string>? OnCommandSelected;
 
         public override Vector2 InitialSize => new Vector2(900f, 650f);
@@ -47,7 +47,7 @@ namespace TheSecondSeat.UI
             // 标题
             Text.Font = GameFont.Medium;
             GUI.color = HeaderColor;
-            Widgets.Label(new Rect(0f, curY, inRect.width, 35f), "AI 可用指令列表 (点击命令自动输入)");
+            Widgets.Label(new Rect(0f, curY, inRect.width, 35f), "TSS_CmdList_Title".Translate());
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
             curY += 40f;
@@ -59,7 +59,7 @@ namespace TheSecondSeat.UI
             // 提示
             GUI.color = new Color(0.6f, 0.8f, 0.6f);
             Text.Font = GameFont.Tiny;
-            Widgets.Label(new Rect(0f, curY, inRect.width, 20f), "[提示] 点击任意命令行，将自动输入到聊天窗口。绿色=已实现，红色=未实现");
+            Widgets.Label(new Rect(0f, curY, inRect.width, 20f), "TSS_CmdList_Hint".Translate());
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
             curY += 25f;
@@ -78,7 +78,7 @@ namespace TheSecondSeat.UI
                 ).ToList();
             }
             
-            if (selectedCategory != "全部")
+            if (selectedCategory != "TSS_CmdCat_All".Translate())
             {
                 commands = commands.Where(c => c.Category == selectedCategory).ToList();
             }
@@ -96,12 +96,20 @@ namespace TheSecondSeat.UI
             if (string.IsNullOrEmpty(searchFilter) && GUI.GetNameOfFocusedControl() != "CommandSearch")
             {
                 GUI.color = new Color(0.5f, 0.5f, 0.5f);
-                Widgets.Label(new Rect(searchRect.x + 5f, searchRect.y, searchRect.width, searchRect.height), "搜索命令...");
+                Widgets.Label(new Rect(searchRect.x + 5f, searchRect.y, searchRect.width, searchRect.height), "TSS_CmdList_SearchPlaceholder".Translate());
                 GUI.color = Color.white;
             }
             
             // 分类筛选
-            var categories = new List<string> { "全部", "批量操作", "单位管理", "资源管理", "事件控制", "事件调试", "查询" };
+            var categories = new List<string> {
+                "TSS_CmdCat_All".Translate(),
+                "TSS_CmdCat_Batch".Translate(),
+                "TSS_CmdCat_Unit".Translate(),
+                "TSS_CmdCat_Resource".Translate(),
+                "TSS_CmdCat_EventCtrl".Translate(),
+                "TSS_CmdCat_EventDebug".Translate(),
+                "TSS_CmdCat_Query".Translate()
+            };
             float btnWidth = 70f;
             float startX = rect.x + 260f;
             
@@ -129,193 +137,193 @@ namespace TheSecondSeat.UI
             return new List<CommandInfo>
             {
                 // === 批量操作（已实现）===
-                new CommandInfo("BatchHarvest", "批量收获", "批量操作",
-                    "指定所有成熟作物进行收获", 
-                    "批量收获所有成熟作物",
-                    "All/Mature/Blighted", true),
+                new CommandInfo("BatchHarvest", "TSS_Cmd_BatchHarvest_Label".Translate(), "TSS_CmdCat_Batch".Translate(),
+                    "TSS_Cmd_BatchHarvest_Desc".Translate(),
+                    "TSS_Cmd_BatchHarvest_Ex".Translate(),
+                    "TSS_Cmd_BatchHarvest_Fmt".Translate(), true),
                 
-                new CommandInfo("BatchMine", "批量采矿", "批量操作",
-                    "指定所有可采矿资源进行开采", 
-                    "把野外所有金属矿都标记采矿",
-                    "all/metal/stone/components", true),
+                new CommandInfo("BatchMine", "TSS_Cmd_BatchMine_Label".Translate(), "TSS_CmdCat_Batch".Translate(),
+                    "TSS_Cmd_BatchMine_Desc".Translate(),
+                    "TSS_Cmd_BatchMine_Ex".Translate(),
+                    "TSS_Cmd_BatchMine_Fmt".Translate(), true),
                 
-                new CommandInfo("BatchLogging", "批量伐木", "批量操作",
-                    "指定所有成年树木进行开采", 
-                    "砍掉地图上所有树木",
-                    "无参数（默认90%成熟）", true),
+                new CommandInfo("BatchLogging", "TSS_Cmd_BatchLogging_Label".Translate(), "TSS_CmdCat_Batch".Translate(),
+                    "TSS_Cmd_BatchLogging_Desc".Translate(),
+                    "TSS_Cmd_BatchLogging_Ex".Translate(),
+                    "TSS_Cmd_BatchLogging_Fmt".Translate(), true),
                 
-                new CommandInfo("BatchEquip", "批量装备", "批量操作",
-                    "为所有适合的殖民者装备武器或护甲", 
-                    "让所有殖民者装备最好武器",
-                    "Weapon/Armor", true),
+                new CommandInfo("BatchEquip", "TSS_Cmd_BatchEquip_Label".Translate(), "TSS_CmdCat_Batch".Translate(),
+                    "TSS_Cmd_BatchEquip_Desc".Translate(),
+                    "TSS_Cmd_BatchEquip_Ex".Translate(),
+                    "TSS_Cmd_BatchEquip_Fmt".Translate(), true),
                 
-                new CommandInfo("BatchCapture", "批量俘虏", "批量操作",
-                    "俘虏所有击倒的敌方单位", 
-                    "俘虏所有击倒的敌人",
-                    "无参数（自动俘虏）", true),
+                new CommandInfo("BatchCapture", "TSS_Cmd_BatchCapture_Label".Translate(), "TSS_CmdCat_Batch".Translate(),
+                    "TSS_Cmd_BatchCapture_Desc".Translate(),
+                    "TSS_Cmd_BatchCapture_Ex".Translate(),
+                    "TSS_Cmd_BatchCapture_Fmt".Translate(), true),
                 
-                new CommandInfo("PriorityRepair", "优先修复", "批量操作",
-                    "指定所有受损建筑进行修复", 
-                    "修复所有破损的建筑",
-                    "All/Damaged(<80%)", true),
+                new CommandInfo("PriorityRepair", "TSS_Cmd_PriorityRepair_Label".Translate(), "TSS_CmdCat_Batch".Translate(),
+                    "TSS_Cmd_PriorityRepair_Desc".Translate(),
+                    "TSS_Cmd_PriorityRepair_Ex".Translate(),
+                    "TSS_Cmd_PriorityRepair_Fmt".Translate(), true),
                 
-                new CommandInfo("EmergencyRetreat", "紧急撤退", "批量操作",
-                    "命令所有未受伤的殖民者撤退", 
-                    "所有人撤退，快跑",
-                    "无参数", true),
+                new CommandInfo("EmergencyRetreat", "TSS_Cmd_EmergencyRetreat_Label".Translate(), "TSS_CmdCat_Batch".Translate(),
+                    "TSS_Cmd_EmergencyRetreat_Desc".Translate(),
+                    "TSS_Cmd_EmergencyRetreat_Ex".Translate(),
+                    "TSS_Cmd_EmergencyRetreat_Fmt".Translate(), true),
                 
-                new CommandInfo("DesignatePlantCut", "批量植物", "批量操作",
-                    "指定植物进行开采清理", 
-                    "清理所有枯萎植物",
-                    "All/Blighted/Trees/Wild", true),
+                new CommandInfo("DesignatePlantCut", "TSS_Cmd_DesignatePlantCut_Label".Translate(), "TSS_CmdCat_Batch".Translate(),
+                    "TSS_Cmd_DesignatePlantCut_Desc".Translate(),
+                    "TSS_Cmd_DesignatePlantCut_Ex".Translate(),
+                    "TSS_Cmd_DesignatePlantCut_Fmt".Translate(), true),
                 
                 // === 殖民者管理（已实现）===
-                new CommandInfo("DraftPawn", "征召殖民者", "单位管理",
-                    "将指定殖民者设为征召状态", 
-                    "征召所有人",
-                    "pawnName/drafted(bool)", true),
+                new CommandInfo("DraftPawn", "TSS_Cmd_DraftPawn_Label".Translate(), "TSS_CmdCat_Unit".Translate(),
+                    "TSS_Cmd_DraftPawn_Desc".Translate(),
+                    "TSS_Cmd_DraftPawn_Ex".Translate(),
+                    "TSS_Cmd_DraftPawn_Fmt".Translate(), true),
                 
-                new CommandInfo("MovePawn", "移动殖民者", "单位管理",
-                    "命令战斗中的殖民者移动到指定位置", 
-                    "让张三移动到坐标50,50",
-                    "pawnName + x,z坐标", true),
+                new CommandInfo("MovePawn", "TSS_Cmd_MovePawn_Label".Translate(), "TSS_CmdCat_Unit".Translate(),
+                    "TSS_Cmd_MovePawn_Desc".Translate(),
+                    "TSS_Cmd_MovePawn_Ex".Translate(),
+                    "TSS_Cmd_MovePawn_Fmt".Translate(), true),
                 
-                new CommandInfo("HealPawn", "治疗殖民者", "单位管理",
-                    "优先为指定殖民者安排医疗", 
-                    "治疗张三",
-                    "pawnName(空=全体成员)", true),
+                new CommandInfo("HealPawn", "TSS_Cmd_HealPawn_Label".Translate(), "TSS_CmdCat_Unit".Translate(),
+                    "TSS_Cmd_HealPawn_Desc".Translate(),
+                    "TSS_Cmd_HealPawn_Ex".Translate(),
+                    "TSS_Cmd_HealPawn_Fmt".Translate(), true),
                 
-                new CommandInfo("SetWorkPriority", "设置工作优先级", "单位管理",
-                    "调整殖民者工作优先级", 
-                    "把张三的医疗设为最优先",
-                    "pawnName+workType+priority", true),
+                new CommandInfo("SetWorkPriority", "TSS_Cmd_SetWorkPriority_Label".Translate(), "TSS_CmdCat_Unit".Translate(),
+                    "TSS_Cmd_SetWorkPriority_Desc".Translate(),
+                    "TSS_Cmd_SetWorkPriority_Ex".Translate(),
+                    "TSS_Cmd_SetWorkPriority_Fmt".Translate(), true),
                 
-                new CommandInfo("EquipWeapon", "装备武器", "单位管理",
-                    "让殖民者装备指定武器", 
-                    "让张三装备突击步枪",
-                    "pawnName/weaponDef(可选)", true),
+                new CommandInfo("EquipWeapon", "TSS_Cmd_EquipWeapon_Label".Translate(), "TSS_CmdCat_Unit".Translate(),
+                    "TSS_Cmd_EquipWeapon_Desc".Translate(),
+                    "TSS_Cmd_EquipWeapon_Ex".Translate(),
+                    "TSS_Cmd_EquipWeapon_Fmt".Translate(), true),
                 
                 // === 资源管理（已实现）===
-                new CommandInfo("ForbidItems", "禁止物品", "资源管理",
-                    "禁止地图上的可搬运物品", 
-                    "禁止所有的腐烂物品",
-                    "无参数/可选count", true),
+                new CommandInfo("ForbidItems", "TSS_Cmd_ForbidItems_Label".Translate(), "TSS_CmdCat_Resource".Translate(),
+                    "TSS_Cmd_ForbidItems_Desc".Translate(),
+                    "TSS_Cmd_ForbidItems_Ex".Translate(),
+                    "TSS_Cmd_ForbidItems_Fmt".Translate(), true),
                 
-                new CommandInfo("AllowItems", "允许物品", "资源管理",
-                    "允许所有被禁止的物品", 
-                    "允许所有物品",
-                    "无参数/可选count", true),
+                new CommandInfo("AllowItems", "TSS_Cmd_AllowItems_Label".Translate(), "TSS_CmdCat_Resource".Translate(),
+                    "TSS_Cmd_AllowItems_Desc".Translate(),
+                    "TSS_Cmd_AllowItems_Ex".Translate(),
+                    "TSS_Cmd_AllowItems_Fmt".Translate(), true),
                 
                 // === 事件控制（对弈者模式）===
-                new CommandInfo("TriggerEvent", "触发事件", "事件控制",
-                    "触发指定游戏事件（对弈者模式）", 
-                    "触发一场袭击",
-                    "raid/trader/wanderer/disease/resource/eclipse/toxic", true),
+                new CommandInfo("TriggerEvent", "TSS_Cmd_TriggerEvent_Label".Translate(), "TSS_CmdCat_EventCtrl".Translate(),
+                    "TSS_Cmd_TriggerEvent_Desc".Translate(),
+                    "TSS_Cmd_TriggerEvent_Ex".Translate(),
+                    "TSS_Cmd_TriggerEvent_Fmt".Translate(), true),
                 
-                new CommandInfo("ScheduleEvent", "预约事件", "事件控制",
-                    "在未来某时刻触发事件", 
-                    "10分钟后发动袭击",
-                    "事件类型 + delayMinutes", true),
+                new CommandInfo("ScheduleEvent", "TSS_Cmd_ScheduleEvent_Label".Translate(), "TSS_CmdCat_EventCtrl".Translate(),
+                    "TSS_Cmd_ScheduleEvent_Desc".Translate(),
+                    "TSS_Cmd_ScheduleEvent_Ex".Translate(),
+                    "TSS_Cmd_ScheduleEvent_Fmt".Translate(), true),
                 
-                new CommandInfo("ChangeWeather", "修改天气", "事件控制",
-                    "改变当前地图的天气（对弈者模式）", 
-                    "把天气改成晴天",
-                    "Clear/Rain/Fog/Snow等", false),
+                new CommandInfo("ChangeWeather", "TSS_Cmd_ChangeWeather_Label".Translate(), "TSS_CmdCat_EventCtrl".Translate(),
+                    "TSS_Cmd_ChangeWeather_Desc".Translate(),
+                    "TSS_Cmd_ChangeWeather_Ex".Translate(),
+                    "TSS_Cmd_ChangeWeather_Fmt".Translate(), false),
                 
                 // === 🎭 事件调试（开发者工具）===
-                new CommandInfo("TSS_TestWelcomeGift", "🎁 触发见面礼", "事件调试",
-                    "【测试】触发见面礼事件（+500银 +10好感）",
-                    "触发见面礼事件",
-                    "无参数", true),
+                new CommandInfo("TSS_TestWelcomeGift", "TSS_Cmd_TestWelcomeGift_Label".Translate(), "TSS_CmdCat_EventDebug".Translate(),
+                    "TSS_Cmd_TestWelcomeGift_Desc".Translate(),
+                    "TSS_Cmd_TestWelcomeGift_Ex".Translate(),
+                    "TSS_Cmd_Param_None".Translate(), true),
                 
-                new CommandInfo("TSS_TestDivineWrath", "⚡ 触发神罚", "事件调试",
-                    "【测试】触发神罚事件（雷击 中毒 -20好感）",
-                    "触发神罚事件",
-                    "无参数", true),
+                new CommandInfo("TSS_TestDivineWrath", "TSS_Cmd_TestDivineWrath_Label".Translate(), "TSS_CmdCat_EventDebug".Translate(),
+                    "TSS_Cmd_TestDivineWrath_Desc".Translate(),
+                    "TSS_Cmd_TestDivineWrath_Ex".Translate(),
+                    "TSS_Cmd_Param_None".Translate(), true),
                 
-                new CommandInfo("TSS_TestMechRaid", "🤖 触发敌袭", "事件调试",
-                    "【测试】触发敌袭警报事件（5秒后袭击）",
-                    "触发敌袭警报",
-                    "无参数", true),
+                new CommandInfo("TSS_TestMechRaid", "TSS_Cmd_TestMechRaid_Label".Translate(), "TSS_CmdCat_EventDebug".Translate(),
+                    "TSS_Cmd_TestMechRaid_Desc".Translate(),
+                    "TSS_Cmd_TestMechRaid_Ex".Translate(),
+                    "TSS_Cmd_Param_None".Translate(), true),
                 
-                new CommandInfo("TSS_ListAllEvents", "📋 列出所有事件", "事件调试",
-                    "【测试】列出所有已加载的自定义事件",
-                    "列出所有事件",
-                    "无参数", true),
+                new CommandInfo("TSS_ListAllEvents", "TSS_Cmd_ListAllEvents_Label".Translate(), "TSS_CmdCat_EventDebug".Translate(),
+                    "TSS_Cmd_ListAllEvents_Desc".Translate(),
+                    "TSS_Cmd_ListAllEvents_Ex".Translate(),
+                    "TSS_Cmd_Param_None".Translate(), true),
                 
-                new CommandInfo("TSS_CheckEventSystem", "🔍 检查事件系统", "事件调试",
-                    "【测试】检查事件系统状态和完整性",
-                    "检查事件系统",
-                    "无参数", true),
+                new CommandInfo("TSS_CheckEventSystem", "TSS_Cmd_CheckEventSystem_Label".Translate(), "TSS_CmdCat_EventDebug".Translate(),
+                    "TSS_Cmd_CheckEventSystem_Desc".Translate(),
+                    "TSS_Cmd_CheckEventSystem_Ex".Translate(),
+                    "TSS_Cmd_Param_None".Translate(), true),
                 
-                // === ⭐ 降临调试（v1.6.81）===
-                new CommandInfo("TSS_DescentFriendly", "🌟 友好降临", "事件调试",
-                    "【测试】触发叙事者友好降临（援助模式）",
-                    "触发友好降临",
-                    "无参数", true),
+                // === 降临调试（v1.6.81）===
+                new CommandInfo("TSS_DescentFriendly", "TSS_Cmd_DescentFriendly_Label".Translate(), "TSS_CmdCat_EventDebug".Translate(),
+                    "TSS_Cmd_DescentFriendly_Desc".Translate(),
+                    "TSS_Cmd_DescentFriendly_Ex".Translate(),
+                    "TSS_Cmd_Param_None".Translate(), true),
                 
-                new CommandInfo("TSS_DescentHostile", "💀 敌对降临", "事件调试",
-                    "【测试】触发叙事者敌对降临（袭击模式）",
-                    "触发敌对降临",
-                    "无参数", true),
+                new CommandInfo("TSS_DescentHostile", "TSS_Cmd_DescentHostile_Label".Translate(), "TSS_CmdCat_EventDebug".Translate(),
+                    "TSS_Cmd_DescentHostile_Desc".Translate(),
+                    "TSS_Cmd_DescentHostile_Ex".Translate(),
+                    "TSS_Cmd_Param_None".Translate(), true),
                 
-                new CommandInfo("TSS_DescentReturn", "🔙 叙事者回归", "事件调试",
-                    "【测试】强制叙事者回归虚空",
-                    "强制叙事者回归",
-                    "无参数", true),
+                new CommandInfo("TSS_DescentReturn", "TSS_Cmd_DescentReturn_Label".Translate(), "TSS_CmdCat_EventDebug".Translate(),
+                    "TSS_Cmd_DescentReturn_Desc".Translate(),
+                    "TSS_Cmd_DescentReturn_Ex".Translate(),
+                    "TSS_Cmd_Param_None".Translate(), true),
                 
-                new CommandInfo("TSS_CheckDescentSystem", "⚙️ 检查降临系统", "事件调试",
-                    "【测试】检查降临系统状态和配置",
-                    "检查降临系统",
-                    "无参数", true),
+                new CommandInfo("TSS_CheckDescentSystem", "TSS_Cmd_CheckDescentSystem_Label".Translate(), "TSS_CmdCat_EventDebug".Translate(),
+                    "TSS_Cmd_CheckDescentSystem_Desc".Translate(),
+                    "TSS_Cmd_CheckDescentSystem_Ex".Translate(),
+                    "TSS_Cmd_Param_None".Translate(), true),
                 
-                // === ⭐ v1.6.82: 降临动画类型测试 ===
-                new CommandInfo("TSS_DescentDropPod", "📦 空投仓降临", "事件调试",
-                    "【测试】使用空投仓动画触发降临（默认类型）",
-                    "测试空投仓降临",
-                    "无参数", true),
+                // === v1.6.82: 降临动画类型测试 ===
+                new CommandInfo("TSS_DescentDropPod", "TSS_Cmd_DescentDropPod_Label".Translate(), "TSS_CmdCat_EventDebug".Translate(),
+                    "TSS_Cmd_DescentDropPod_Desc".Translate(),
+                    "TSS_Cmd_DescentDropPod_Ex".Translate(),
+                    "TSS_Cmd_Param_None".Translate(), true),
                 
-                new CommandInfo("TSS_DescentDragonFlyby", "🦅 实体飞掠降临", "事件调试",
-                    "【测试】使用实体飞掠动画触发降临",
-                    "测试实体飞掠降临",
-                    "无参数", true),
+                new CommandInfo("TSS_DescentDragonFlyby", "TSS_Cmd_DescentDragonFlyby_Label".Translate(), "TSS_CmdCat_EventDebug".Translate(),
+                    "TSS_Cmd_DescentDragonFlyby_Desc".Translate(),
+                    "TSS_Cmd_DescentDragonFlyby_Ex".Translate(),
+                    "TSS_Cmd_Param_None".Translate(), true),
                 
-                new CommandInfo("TSS_DescentPortal", "🌀 传送门降临", "事件调试",
-                    "【测试】使用传送门（折跃）动画触发降临",
-                    "测试传送门降临",
-                    "无参数", true),
+                new CommandInfo("TSS_DescentPortal", "TSS_Cmd_DescentPortal_Label".Translate(), "TSS_CmdCat_EventDebug".Translate(),
+                    "TSS_Cmd_DescentPortal_Desc".Translate(),
+                    "TSS_Cmd_DescentPortal_Ex".Translate(),
+                    "TSS_Cmd_Param_None".Translate(), true),
                 
-                new CommandInfo("TSS_DescentLightning", "⚡ 闪电降临", "事件调试",
-                    "【测试】使用闪电动画触发降临",
-                    "测试闪电降临",
-                    "无参数", true),
+                new CommandInfo("TSS_DescentLightning", "TSS_Cmd_DescentLightning_Label".Translate(), "TSS_CmdCat_EventDebug".Translate(),
+                    "TSS_Cmd_DescentLightning_Desc".Translate(),
+                    "TSS_Cmd_DescentLightning_Ex".Translate(),
+                    "TSS_Cmd_Param_None".Translate(), true),
                 
                 // === 查询（通过对话实现）===
-                new CommandInfo("GetColonists", "获取殖民者", "查询",
-                    "获取所有殖民者信息（通过对话）", 
-                    "我们有哪些殖民者",
-                    "直接询问AI即可", true),
+                new CommandInfo("GetColonists", "TSS_Cmd_GetColonists_Label".Translate(), "TSS_CmdCat_Query".Translate(),
+                    "TSS_Cmd_GetColonists_Desc".Translate(),
+                    "TSS_Cmd_GetColonists_Ex".Translate(),
+                    "TSS_Cmd_GetColonists_Fmt".Translate(), true),
                 
-                new CommandInfo("GetResources", "获取资源", "查询",
-                    "获取殖民地资源库存（通过对话）", 
-                    "我们还有多少食物",
-                    "直接询问AI即可", true),
+                new CommandInfo("GetResources", "TSS_Cmd_GetResources_Label".Translate(), "TSS_CmdCat_Query".Translate(),
+                    "TSS_Cmd_GetResources_Desc".Translate(),
+                    "TSS_Cmd_GetResources_Ex".Translate(),
+                    "TSS_Cmd_GetResources_Fmt".Translate(), true),
                 
-                new CommandInfo("GetThreats", "获取威胁", "查询",
-                    "获取当前地图威胁信息（通过对话）", 
-                    "有敌人吗",
-                    "直接询问AI即可", true),
+                new CommandInfo("GetThreats", "TSS_Cmd_GetThreats_Label".Translate(), "TSS_CmdCat_Query".Translate(),
+                    "TSS_Cmd_GetThreats_Desc".Translate(),
+                    "TSS_Cmd_GetThreats_Ex".Translate(),
+                    "TSS_Cmd_GetThreats_Fmt".Translate(), true),
                 
-                new CommandInfo("GetColonyStatus", "殖民地状态", "查询",
-                    "获取殖民地总体状态（通过对话）", 
-                    "殖民地现在怎么样",
-                    "直接询问AI即可", true),
+                new CommandInfo("GetColonyStatus", "TSS_Cmd_GetColonyStatus_Label".Translate(), "TSS_CmdCat_Query".Translate(),
+                    "TSS_Cmd_GetColonyStatus_Desc".Translate(),
+                    "TSS_Cmd_GetColonyStatus_Ex".Translate(),
+                    "TSS_Cmd_GetColonyStatus_Fmt".Translate(), true),
                 
                 // === 暂不支持 ===
-                new CommandInfo("DesignateConstruction", "指定建造", "资源管理",
-                    "【暂不支持】需要添加的建造蓝图", 
-                    "在(10,10)建一堵墙",
-                    "需要坐标+建筑类型+朝向", false),
+                new CommandInfo("DesignateConstruction", "TSS_Cmd_DesignateConstruction_Label".Translate(), "TSS_CmdCat_Resource".Translate(),
+                    "TSS_Cmd_DesignateConstruction_Desc".Translate(),
+                    "TSS_Cmd_DesignateConstruction_Ex".Translate(),
+                    "TSS_Cmd_DesignateConstruction_Fmt".Translate(), false),
             };
         }
 
@@ -341,7 +349,7 @@ namespace TheSecondSeat.UI
                 var rowColor = i % 2 == 0 ? RowColor1 : RowColor2;
                 var rowRect = new Rect(0f, curY, viewRect.width, 70f);
                 
-                // ? 鼠标悬停效果
+                // 鼠标悬停效果
                 if (Mouse.IsOver(rowRect))
                 {
                     rowColor = RowHoverColor;
@@ -349,7 +357,7 @@ namespace TheSecondSeat.UI
                 
                 DrawCommandRow(rowRect, commands[i], rowColor, i);
                 
-                // ? 点击事件：输入到聊天窗口
+                // 点击事件：输入到聊天窗口
                 if (Widgets.ButtonInvisible(rowRect))
                 {
                     OnCommandClicked(commands[i]);
@@ -371,7 +379,14 @@ namespace TheSecondSeat.UI
             GUI.color = HeaderColor;
 
             float[] colWidths = { 130f, 80f, 80f, 200f, 200f, 100f };
-            string[] headers = { "命令ID", "显示名", "分类", "描述", "示例提示词", "参数格式" };
+            string[] headers = {
+                "TSS_CmdList_Header_ID".Translate(),
+                "TSS_CmdList_Header_Name".Translate(),
+                "TSS_CmdList_Header_Cat".Translate(),
+                "TSS_CmdList_Header_Desc".Translate(),
+                "TSS_CmdList_Header_Example".Translate(),
+                "TSS_CmdList_Header_Format".Translate()
+            };
             float x = rect.x + 10f;
             
             for (int i = 0; i < headers.Length; i++)
@@ -437,7 +452,7 @@ namespace TheSecondSeat.UI
         /// </summary>
         private void OnCommandClicked(CommandInfo command)
         {
-            // ⭐ 检查是否为事件调试命令（包括降临调试）
+            // 检查是否为事件调试命令（包括降临调试）
             if (command.CommandName.StartsWith("TSS_Test") ||
                 command.CommandName.StartsWith("TSS_List") ||
                 command.CommandName.StartsWith("TSS_Check") ||
@@ -456,7 +471,7 @@ namespace TheSecondSeat.UI
         }
         
         /// <summary>
-        /// ⭐ 处理事件调试命令
+        /// 处理事件调试命令
         /// </summary>
         private void HandleEventDebugCommand(string commandName)
         {
@@ -485,7 +500,7 @@ namespace TheSecondSeat.UI
                         Testing.EventTester.CheckEventSystem();
                         break;
                     
-                    // === ⭐ v1.6.81: 降临调试 ===
+                    // === v1.6.81: 降临调试 ===
                     case "TSS_DescentFriendly":
                         Testing.EventTester.TriggerDescent(isHostile: false);
                         break;
@@ -502,7 +517,7 @@ namespace TheSecondSeat.UI
                         Testing.EventTester.CheckDescentSystem();
                         break;
                     
-                    // === ⭐ v1.6.82: 降临动画类型测试 ===
+                    // === v1.6.82: 降临动画类型测试 ===
                     case "TSS_DescentDropPod":
                         Testing.EventTester.TriggerDescentWithAnimation("DropPod");
                         break;
@@ -520,7 +535,7 @@ namespace TheSecondSeat.UI
                         break;
                     
                     default:
-                        Messages.Message($"未知的事件调试命令: {commandName}", MessageTypeDefOf.RejectInput);
+                        Messages.Message("TSS_CmdList_UnknownCommand".Translate(commandName), MessageTypeDefOf.RejectInput);
                         break;
                 }
                 
@@ -529,13 +544,13 @@ namespace TheSecondSeat.UI
             }
             catch (System.Exception ex)
             {
-                Log.Error($"[CommandListWindow] 执行事件调试命令失败: {ex.Message}");
-                Messages.Message($"执行失败: {ex.Message}", MessageTypeDefOf.RejectInput);
+                Log.Error($"[CommandListWindow] Event debug command failed: {ex.Message}");
+                Messages.Message("TSS_CmdList_ExecuteFailed".Translate(ex.Message), MessageTypeDefOf.RejectInput);
             }
         }
 
         /// <summary>
-        /// ? 输入文本并自动发送到叙事者窗口
+        /// 输入文本并自动发送到叙事者窗口
         /// </summary>
         private void TryInputAndSendToNarratorWindow(string text)
         {
@@ -546,14 +561,14 @@ namespace TheSecondSeat.UI
             
             if (narratorWindow != null)
             {
-                // ? 直接发送（不需要手动点击发送按钮）
+                // 直接发送（不需要手动点击发送按钮）
                 NarratorWindow.SetInputTextAndSend(text);
                 Log.Message($"[CommandListWindow] 已自动发送命令: {text}");
                 
                 // 显示确认消息
-                Messages.Message($"? 已发送: {text}", MessageTypeDefOf.PositiveEvent);
-                
-                // ? 关闭命令列表窗口（可选）
+                Messages.Message($"已发送: {text}", MessageTypeDefOf.PositiveEvent);
+
+                // 关闭命令列表窗口（可选）
                 this.Close();
             }
             else
@@ -565,7 +580,7 @@ namespace TheSecondSeat.UI
                 Verse.LongEventHandler.ExecuteWhenFinished(() => 
                 {
                     NarratorWindow.SetInputTextAndSend(text);
-                    Messages.Message($"? 已发送: {text}", MessageTypeDefOf.PositiveEvent);
+                    Messages.Message($"已发送: {text}", MessageTypeDefOf.PositiveEvent);
                 });
                 
                 Log.Message($"[CommandListWindow] 已打开对话窗口并发送命令: {text}");
@@ -584,9 +599,9 @@ namespace TheSecondSeat.UI
             public string DisplayName;
             public string Category;
             public string Description;
-            public string ExamplePrompt;  // ? 示例提示词
+            public string ExamplePrompt;  // 示例提示词
             public string TargetFormat;
-            public bool IsImplemented;    // ? 是否已实现
+            public bool IsImplemented;    // 是否已实现
 
             public CommandInfo(string commandName, string displayName, string category,
                 string description, string examplePrompt, string targetFormat, bool isImplemented)
@@ -609,8 +624,8 @@ namespace TheSecondSeat.UI
     {
         public Command_OpenCommandList()
         {
-            defaultLabel = "查看指令列表";
-            defaultDesc = "显示所有可用的AI指令";
+            defaultLabel = "TSS_CmdList_OpenButton".Translate();
+            defaultDesc = "TSS_CmdList_OpenButton_Desc".Translate();
             icon = ContentFinder<Texture2D>.Get("UI/Commands/InfoButton", false);
         }
 

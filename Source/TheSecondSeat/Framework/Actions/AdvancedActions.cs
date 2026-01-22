@@ -762,9 +762,11 @@ namespace TheSecondSeat.Framework.Actions
                     return;
                 }
                 
-                // 异步播放（不阻塞主线程）
-                // 注意：SpeakAsync是异步方法，但我们直接调用它让它在后台运行
-                System.Threading.Tasks.Task.Run(async () =>
+                // 异步播放（在主线程调用，因为 SpeakAsync 可能包含 UnityWebRequest）
+                // 注意：SpeakAsync是异步方法，但我们使用 async void 本地函数来实现"发后即忘"，同时保持在主线程上下文
+                PlayAsync();
+                
+                async void PlayAsync()
                 {
                     try
                     {
@@ -777,7 +779,7 @@ namespace TheSecondSeat.Framework.Actions
                             Log.Warning($"[NarratorSpeakAction] TTS playback failed: {ex.Message}");
                         }
                     }
-                });
+                }
             }
             catch (Exception ex)
             {

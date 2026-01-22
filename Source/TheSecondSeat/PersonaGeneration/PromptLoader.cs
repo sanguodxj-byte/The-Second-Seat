@@ -37,14 +37,16 @@ namespace TheSecondSeat.PersonaGeneration
         /// 4. Mod/Languages/English/Prompts/{file} (Mod Fallback)
         /// </summary>
         /// <param name="promptName">The name of the prompt file (without extension).</param>
+        /// <param name="silent">If true, don't log warning when file is not found. Default is false.</param>
         /// <returns>The content of the prompt file.</returns>
-        public static string Load(string promptName)
+        public static string Load(string promptName, bool silent = false)
         {
             // ⭐ v1.7.0: 检查缓存
             string activeLangFolder = LanguageDatabase.activeLanguage.folderName;
             string cacheKey = $"{activeLangFolder}_{promptName}";
 
-            if (_promptCache.TryGetValue(cacheKey, out string cachedContent))
+            // 开发模式下禁用缓存，方便热重载
+            if (!Prefs.DevMode && _promptCache.TryGetValue(cacheKey, out string cachedContent))
             {
                 return cachedContent;
             }
@@ -58,6 +60,7 @@ namespace TheSecondSeat.PersonaGeneration
             string userLangPath = Path.Combine(configRoot, "TheSecondSeat", PromptsFolderName, activeLangFolder, fileName);
             if (File.Exists(userLangPath))
             {
+                if (Prefs.DevMode) Log.Message($"[The Second Seat] Loading prompt from User Override (Lang): {userLangPath}");
                 return CacheAndReturn(cacheKey, File.ReadAllText(userLangPath));
             }
 
@@ -65,6 +68,7 @@ namespace TheSecondSeat.PersonaGeneration
             string userGlobalPath = Path.Combine(configRoot, "TheSecondSeat", PromptsFolderName, fileName);
             if (File.Exists(userGlobalPath))
             {
+                if (Prefs.DevMode) Log.Message($"[The Second Seat] Loading prompt from User Override (Global): {userGlobalPath}");
                 return CacheAndReturn(cacheKey, File.ReadAllText(userGlobalPath));
             }
 
@@ -79,6 +83,7 @@ namespace TheSecondSeat.PersonaGeneration
                     string activeLangPath = Path.Combine(modPromptsDir, fileName);
                     if (File.Exists(activeLangPath))
                     {
+                        if (Prefs.DevMode) Log.Message($"[The Second Seat] Loading prompt from Mod Default: {activeLangPath}");
                         return CacheAndReturn(cacheKey, File.ReadAllText(activeLangPath));
                     }
                 }
@@ -98,7 +103,11 @@ namespace TheSecondSeat.PersonaGeneration
                 }
             }
 
-            Log.Warning($"[The Second Seat] Prompt file not found: {promptName}.txt");
+            // ⭐ v1.9.4: 支持静默模式，避免对动态标签文件输出警告
+            if (!silent)
+            {
+                Log.Warning($"[The Second Seat] Prompt file not found: {promptName}.txt");
+            }
             string errorContent = $"[Error: Prompt {promptName} not found]";
             
             // 即使失败也缓存错误信息，避免重复尝试读取不存在的文件
@@ -280,7 +289,9 @@ LogDiagnosis.txt            : Instructions for analyzing game logs
                     string destFile = Path.Combine(targetFolder, fileName);
                     
                     // Always overwrite to ensure correct language version
-                    File.Copy(file, destFile, true);
+                    // ⭐ v2.2.1: 强制删除旧文件以避免覆盖失败
+                    if (File.Exists(destFile)) File.Delete(destFile);
+                    File.Copy(file, destFile);
                 }
                 Log.Message($"[The Second Seat] Initialized {files.Length} prompt files to {targetFolder}");
                 Messages.Message("提示词初始化完成", MessageTypeDefOf.PositiveEvent, false);

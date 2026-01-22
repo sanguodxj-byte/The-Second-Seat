@@ -103,14 +103,14 @@ namespace TheSecondSeat.Testing
             options.Add(new FloatMenuOption("列出所有事件", ListAllEvents));
             options.Add(new FloatMenuOption("检查事件系统", CheckEventSystem));
             
-            // ⭐ v1.6.81: 降临调试
+            // v1.6.81: 降临调试
             options.Add(new FloatMenuOption("---降临系统---", () => {}));
             options.Add(new FloatMenuOption("触发友好降临", () => TriggerDescent(false)));
             options.Add(new FloatMenuOption("触发敌对降临", () => TriggerDescent(true)));
             options.Add(new FloatMenuOption("强制叙事者回归", TriggerDescentReturn));
             options.Add(new FloatMenuOption("检查降临系统状态", CheckDescentSystem));
             
-            // ⭐ v1.6.82: 降临动画类型测试
+            // v1.6.82: 降临动画类型测试
             options.Add(new FloatMenuOption("---动画类型测试---", () => {}));
             options.Add(new FloatMenuOption("📦 空投仓降临", () => TriggerDescentWithAnimation("DropPod")));
             options.Add(new FloatMenuOption("🦅 实体飞掠降临", () => TriggerDescentWithAnimation("DragonFlyby")));
@@ -120,10 +120,10 @@ namespace TheSecondSeat.Testing
             Find.WindowStack.Add(new FloatMenu(options));
         }
         
-        #region ⭐ v1.6.81: 降临调试方法
+        #region v1.6.81: 降临调试方法
         
         /// <summary>
-        /// ⭐ 触发叙事者降临
+        /// 触发叙事者降临
         /// </summary>
         public static void TriggerDescent(bool isHostile)
         {
@@ -152,7 +152,7 @@ namespace TheSecondSeat.Testing
         }
         
         /// <summary>
-        /// ⭐ 强制叙事者回归
+        /// 强制叙事者回归
         /// </summary>
         public static void TriggerDescentReturn()
         {
@@ -177,7 +177,7 @@ namespace TheSecondSeat.Testing
         }
         
         /// <summary>
-        /// ⭐ v1.6.82: 使用指定动画类型触发降临
+        /// v1.6.82: 使用指定动画类型触发降临
         /// </summary>
         public static void TriggerDescentWithAnimation(string animationType)
         {
@@ -241,7 +241,7 @@ namespace TheSecondSeat.Testing
         }
         
         /// <summary>
-        /// ⭐ 检查降临系统状态
+        /// 检查降临系统状态
         /// </summary>
         public static void CheckDescentSystem()
         {

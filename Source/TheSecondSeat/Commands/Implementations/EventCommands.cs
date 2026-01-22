@@ -208,6 +208,44 @@ namespace TheSecondSeat.Commands.Implementations
     }
 
     /// <summary>
+    /// Trigger the narrator to return from descent (ascend back to narrative layer)
+    /// </summary>
+    public class AscendCommand : BaseAICommand
+    {
+        public override string ActionName => "Ascend";
+
+        public override string GetDescription()
+        {
+            return "Return from descent to the narrative layer. Use when you decide it's time to leave the physical form. No parameters required.";
+        }
+
+        public override bool Execute(string? target = null, object? parameters = null)
+        {
+            var descentSystem = NarratorDescentSystem.Instance;
+            if (descentSystem == null)
+            {
+                LogError("NarratorDescentSystem not found");
+                return false;
+            }
+
+            if (!descentSystem.IsDescentActive)
+            {
+                LogError("Not currently in descent form");
+                return false;
+            }
+
+            if (descentSystem.TriggerReturn())
+            {
+                LogExecution("Initiated return to narrative layer");
+                return true;
+            }
+
+            LogError("Failed to trigger return (see log for details)");
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Get available incident categories
     /// </summary>
     public class GetIncidentCategoriesCommand : BaseAICommand

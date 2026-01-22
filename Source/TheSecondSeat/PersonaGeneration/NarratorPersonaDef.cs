@@ -278,6 +278,12 @@ namespace TheSecondSeat.PersonaGeneration
         /// 📌 v1.6.62: 用户选择的特质（创建人格时选择的3个特质）
         /// </summary>
         public List<string> selectedTraits = new List<string>();
+
+        /// <summary>
+        /// ⭐ v2.3.0: 语义雷达关注点配置
+        /// 存储 "抽象概念 -> 关键词列表" 的映射
+        /// </summary>
+        public List<TheSecondSeat.Monitoring.SemanticConcept> radarConcepts = new List<TheSecondSeat.Monitoring.SemanticConcept>();
         
         // ============================================
         // ⭐ v1.6.63: 通用降临系统配置 API
@@ -629,6 +635,7 @@ namespace TheSecondSeat.PersonaGeneration
             forbiddenWords ??= new List<string>();
             personalityTags ??= new List<string>();
             selectedTraits ??= new List<string>();
+            radarConcepts ??= new List<TheSecondSeat.Monitoring.SemanticConcept>();
             descentEffects ??= new List<string>();
             requiredHediffs ??= new List<string>();
             abilitiesToGrant ??= new List<string>();

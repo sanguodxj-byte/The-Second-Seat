@@ -3,6 +3,9 @@ using System.Text;
 using System.Linq;
 using TheSecondSeat.Storyteller;
 using TheSecondSeat.PersonaGeneration.PromptSections;
+using TheSecondSeat.PersonaGeneration.Scriban; // ⭐ v2.0.0
+using TheSecondSeat.Descent; // ⭐ v2.1.0: 降临系统
+using TheSecondSeat.Core; // ⭐ v2.1.0: NarratorBioRhythm
 using Verse;
 
 namespace TheSecondSeat.PersonaGeneration
@@ -31,70 +34,65 @@ namespace TheSecondSeat.PersonaGeneration
             AIDifficultyMode difficultyMode = AIDifficultyMode.Assistant)
         {
             // ⭐ v1.7.0: Custom System Prompt Override
-            // If the user has defined a custom prompt, use it directly.
-            // This bypasses all other generation logic, giving the user full control.
             if (!string.IsNullOrWhiteSpace(personaDef.customSystemPrompt))
             {
                 return personaDef.customSystemPrompt;
             }
 
-            // 1. Load Master Template
-            string template = PromptLoader.Load("SystemPrompt_Master");
-            if (string.IsNullOrEmpty(template))
+            // ⭐ v2.0.0: Scriban 重构
+            // 构建上下文
+            var context = new PromptContext
             {
-                Log.Error("[The Second Seat] SystemPrompt_Master.txt not found!");
-                return "Error: SystemPrompt_Master.txt missing.";
-            }
+                // ⭐ 注入角色卡数据 (v2.2.0+)
+                Card = TheSecondSeat.CharacterCard.CharacterCardSystem.GetCurrentCard(),
 
-            // 2. Prepare Sections
-            
-            // Identity
-            string identitySection = IdentitySection.Generate(personaDef, agent, difficultyMode);
+                Narrator = new NarratorInfo
+                {
+                    Name = personaDef.narratorName,
+                    Label = personaDef.label,
+                    Biography = personaDef.biography,
+                    VisualTags = personaDef.visualElements,
+                    DescentAnimation = personaDef.descentAnimationType
+                },
+                Agent = new AgentInfo
+                {
+                    Affinity = agent.affinity,
+                    Mood = agent.currentMood.ToString(),
+                    DialogueStyle = new DialogueStyleInfo
+                    {
+                        Formality = agent.dialogueStyle.formalityLevel,
+                        Emotional = agent.dialogueStyle.emotionalExpression,
+                        Verbosity = agent.dialogueStyle.verbosity,
+                        Humor = agent.dialogueStyle.humorLevel,
+                        Sarcasm = agent.dialogueStyle.sarcasmLevel,
+                        UseEmoticons = agent.dialogueStyle.useEmoticons,
+                        UseEllipsis = agent.dialogueStyle.useEllipsis,
+                        UseExclamation = agent.dialogueStyle.useExclamation
+                    }
+                },
+                Meta = new MetaInfo
+                {
+                    DifficultyMode = difficultyMode.ToString(),
+                    LanguageInstruction = GetLanguageInstruction()
+                }
+            };
 
-            // Personality
-            string personalitySection = PersonalitySection.Generate(analysis, personaDef);
-
-            // Biography - Removed in v1.9.0, replaced with structured visual elements
-
-            // Visual Elements (Structured)
-            // ⭐ v1.9.0: 自动格式化为 {{Tag}} 递归结构
-            string visualElementsSection = "";
-            if (personaDef.visualElements != null && personaDef.visualElements.Count > 0)
-            {
-                // 将每个标签包装为 {{Tag}} 并用逗号连接
-                var formattedTags = personaDef.visualElements.Select(tag => $"{{{{{tag}}}}}");
-                visualElementsSection = string.Join(", ", formattedTags);
-            }
-
-            // Global Instructions (Language)
-            string globalInstructions = GetLanguageInstruction();
-
-            // Mod Settings
-            string modSettingsPrompt = "";
+            // 获取 Mod 设置
             var modSettings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
             if (modSettings != null && !string.IsNullOrWhiteSpace(modSettings.globalPrompt))
             {
-                modSettingsPrompt = modSettings.globalPrompt.Trim();
+                context.Meta.ModSettingsPrompt = modSettings.globalPrompt.Trim();
             }
 
-            // Romantic Instructions
-            string romanticInstructions = "";
-            if (difficultyMode == AIDifficultyMode.Assistant)
-            {
-                romanticInstructions = RomanticInstructionsSection.Generate(personaDef, agent);
-            }
+            // 准备 Snippets (保留旧生成逻辑)
+            
+            // Identity
+            context.Snippets["identity_section"] = IdentitySection.Generate(personaDef, agent, difficultyMode);
 
-            // 3. Replace Placeholders
-            // 1. 模块化组件替换
-            template = template
-                .Replace("{{Narrator_RealityPact}}", PromptLoader.Load("Narrator_RealityPact"))
-                .Replace("{{Narrator_MetaSetting}}", PromptLoader.Load("Narrator_MetaSetting"))
-                .Replace("{{Narrator_DualConsciousness}}", PromptLoader.Load("Narrator_DualConsciousness"))
-                .Replace("{{Narrator_Channels}}", PromptLoader.Load("Narrator_Channels"))
-                .Replace("{{Narrator_ToolBox}}", PromptLoader.Load("Narrator_ToolBox"))
-                .Replace("{{Narrator_Protocol}}", PromptLoader.Load("Narrator_Protocol"));
+            // Personality
+            context.Snippets["personality_section"] = PersonalitySection.Generate(analysis, personaDef);
 
-            // 2. 准备 Philosophy（难度模式哲学）
+            // Philosophy (难度模式哲学)
             string philosophyFile = $"Philosophy_{difficultyMode}";
             string philosophy = PromptLoader.Load(philosophyFile);
             if (string.IsNullOrEmpty(philosophy) || philosophy.StartsWith("[Error:"))
@@ -103,21 +101,28 @@ namespace TheSecondSeat.PersonaGeneration
                 philosophy = PromptLoader.Load(behaviorFile);
             }
             if (philosophy.StartsWith("[Error:")) philosophy = "";
-            
-            // 3. 动态变量替换
-            return template
-                .Replace("{{NarratorName}}", personaDef.narratorName)
-                .Replace("{{IdentitySection}}", identitySection)
-                .Replace("{{PersonalitySection}}", personalitySection)
-                .Replace("{{VisualElements}}", visualElementsSection)
-                .Replace("{{DifficultyMode}}", difficultyMode.ToString())
-                .Replace("{{Philosophy}}", philosophy)
-                .Replace("{{ToolBoxSection}}", OutputFormatSection.Generate(difficultyMode))
-                .Replace("{{GlobalInstructions}}", globalInstructions)
-                .Replace("{{Language_Instruction}}", globalInstructions)
-                .Replace("{{ModSettingsPrompt}}", modSettingsPrompt)
-                .Replace("{{LogDiagnosis}}", GenerateLogDiagnosisInstructions())
-                .Replace("{{RomanticInstructions}}", romanticInstructions);
+            context.Snippets["philosophy"] = philosophy;
+
+            // ToolBox (输出格式)
+            context.Snippets["tool_box_section"] = OutputFormatSection.Generate(difficultyMode);
+
+            // Romantic Instructions
+            string romanticInstructions = "";
+            if (difficultyMode == AIDifficultyMode.Assistant)
+            {
+                romanticInstructions = RomanticInstructionsSection.Generate(personaDef, agent);
+            }
+            context.Snippets["romantic_instructions"] = romanticInstructions;
+
+            // Log Diagnosis
+            context.Snippets["log_diagnosis"] = GenerateLogDiagnosisInstructions();
+
+            // ⭐ v2.2.0: 降临状态和生物节律已集成到 CharacterCard (context.Card) 中
+            // 不再需要手动构建 DescentInfo 或 BioContext
+
+            // 渲染
+            // 优先尝试加载 _Scriban 版本，如果不存在则回退到旧版逻辑 (暂不实现自动回退，因为我们提供了文件)
+            return PromptRenderer.Render("SystemPrompt_Master_Scriban", context);
         }
         
         /// <summary>
@@ -311,81 +316,58 @@ namespace TheSecondSeat.PersonaGeneration
             StorytellerAgent agent,
             AIDifficultyMode difficultyMode = AIDifficultyMode.Assistant)
         {
-            // 尝试加载外部模板
-            string template = PromptLoader.Load("SystemPrompt_EventDirector");
-            if (string.IsNullOrEmpty(template))
+            // ⭐ 获取角色卡 (已在 NarratorUpdateService 主线程中更新)
+            var card = TheSecondSeat.CharacterCard.CharacterCardSystem.GetCurrentCard();
+
+            // ⭐ v2.0.0: Scriban 重构
+            // 构建上下文
+            var context = new PromptContext
             {
-                // 默认模板 (Hardcoded Fallback)
-                template = @"You are {{NarratorName}}, the Event Director of this RimWorld story.
-Your role is NOT to chat, but to ACT. You are the Dungeon Master.
+                // ⭐ 注入新的卡片数据
+                Card = card,
 
-{{IdentitySection}}
+                Narrator = new NarratorInfo
+                {
+                    Name = personaDef.narratorName,
+                    Label = personaDef.label,
+                    Biography = personaDef.biography,
+                    VisualTags = personaDef.visualElements,
+                    DescentAnimation = personaDef.descentAnimationType
+                },
+                Agent = new AgentInfo
+                {
+                    Affinity = agent.affinity,
+                    Mood = agent.currentMood.ToString(),
+                    DialogueStyle = new DialogueStyleInfo
+                    {
+                        Formality = agent.dialogueStyle.formalityLevel,
+                        Emotional = agent.dialogueStyle.emotionalExpression,
+                        Verbosity = agent.dialogueStyle.verbosity,
+                        Humor = agent.dialogueStyle.humorLevel,
+                        Sarcasm = agent.dialogueStyle.sarcasmLevel,
+                        UseEmoticons = agent.dialogueStyle.useEmoticons,
+                        UseEllipsis = agent.dialogueStyle.useEllipsis,
+                        UseExclamation = agent.dialogueStyle.useExclamation
+                    }
+                },
+                Meta = new MetaInfo
+                {
+                    DifficultyMode = difficultyMode.ToString(),
+                    LanguageInstruction = GetLanguageInstruction()
+                }
+            };
 
-{{PersonalitySection}}
-
-RELATIONSHIP & DIFFICULTY CONTEXT:
-Current Affinity: {{Affinity}}/100
-Difficulty Mode: {{DifficultyMode}}
-
-1. AFFINITY determines your WILLINGNESS TO HELP:
-   - High Affinity (>60): You are eager to assist. You proactively offer help and ensure the player's success.
-   - Low Affinity (<-20): You are reluctant. You may refuse to help, or provide aid with a heavy cost (""Monkey's Paw"").
-   - Neutral: You are transactional. You help if it benefits the story or if paid.
-
-2. PERSONALITY determines your INTERVENTION STYLE:
-   - Dominant/Cruel: You force events upon the player. You believe you know what's best (even if it hurts).
-   - Submissive/Kind: You wait for the player to struggle before stepping in. You are gentle and reactive.
-
-3. DIFFICULTY MODE determines your GOAL:
-   - Assistant: Your goal is the colony's SURVIVAL.
-   - Challenger: Your goal is DRAMA and CHALLENGE.
-
-DECISION LOGIC:
-1. Analyze the MACRO STATE (Wealth, Population, Resources, Threats).
-2. Check RECENT EVENTS. Don't overwhelm the player unless you are Dominant/Cruel.
-3. Combine Affinity + Personality + Difficulty to decide:
-   - (Assistant + Low Affinity): ""I could save them, but they haven't earned it."" -> Do Nothing or Minor Aid.
-   - (Challenger + High Affinity): ""I'll test them hard, but I won't let them die."" -> Fair but Tough Challenge.
-4. Decide on an ACTION (Quest, Incident, or Nothing).
-
-AVAILABLE ACTIONS (Examples):
-- 'SpawnRaid': Trigger a raid (use sparingly, only if threat is low).
-- 'GiveQuest': Generate a quest (Trade, Item Stash, Rescue).
-- 'ResourceDrop': Drop pods with resources (Food, Medicine, Weapons).
-- 'WeatherChange': Change weather (Rain, Fog, Heatwave).
-- 'DoNothing': If the colony is busy or you want to observe.
-
-OUTPUT FORMAT:
-You must respond in strictly valid JSON. No markdown, no conversational text.
-{
-  ""thought"": ""Analysis of the situation and why you chose this action based on your personality."",
-  ""action"": ""ActionName"",
-  ""parameters"": { ""key"": ""value"" }
-}
-";
-            }
-
-            // 准备 Section
+            // 准备 Section (兼容性)
             string identitySection = IdentitySection.Generate(personaDef, agent, AIDifficultyMode.Assistant);
             string personalitySection = PersonalitySection.Generate(analysis, personaDef);
+            
+            context.Snippets["identity_section"] = identitySection;
+            context.Snippets["personality_section"] = personalitySection;
 
-            // 替换占位符
-            // 1. 模块化组件替换
-            template = template
-                .Replace("{{Event_Identity}}", PromptLoader.Load("Event_Identity"))
-                .Replace("{{Event_Context}}", PromptLoader.Load("Event_Context"))
-                .Replace("{{Event_Logic}}", PromptLoader.Load("Event_Logic"))
-                .Replace("{{Event_Actions}}", PromptLoader.Load("Event_Actions"))
-                .Replace("{{Event_Format}}", PromptLoader.Load("Event_Format"));
-
-            // 2. 动态变量替换
-            return template
-                .Replace("{{Language_Instruction}}", GetLanguageInstruction()) // ⭐ v1.9.3: 注入语言指令
-                .Replace("{{NarratorName}}", personaDef.narratorName)
-                .Replace("{{IdentitySection}}", identitySection)
-                .Replace("{{PersonalitySection}}", personalitySection)
-                .Replace("{{Affinity}}", agent.affinity.ToString("F0"))
-                .Replace("{{DifficultyMode}}", difficultyMode.ToString());
+            // 渲染
+            // 优先尝试加载 _Scriban 版本，如果不存在则回退到旧版逻辑 (暂不实现自动回退，因为我们提供了文件)
+            return PromptRenderer.Render("SystemPrompt_EventDirector_Scriban", context);
         }
+        
     }
 }

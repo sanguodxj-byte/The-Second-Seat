@@ -4,6 +4,7 @@ using UnityEngine;
 using Verse;
 using TheSecondSeat.PersonaGeneration;
 using TheSecondSeat.Utils;
+using TheSecondSeat.Core; // For PortraitOverlaySystem
 
 namespace TheSecondSeat.Descent
 {
@@ -197,7 +198,28 @@ namespace TheSecondSeat.Descent
                 if (postureTexture != null)
                 {
                     // 通过 FullBodyPortraitPanel 切换立绘
-                    // TODO: 实现立绘面板的姿势切换接口
+                    var panel = PortraitOverlaySystem.GetPanel();
+                    if (panel != null)
+                    {
+                        // 计算持续时间
+                        float duration = type switch
+                        {
+                            PostureType.Ready => POSTURE_READY_DURATION,
+                            PostureType.Charging => POSTURE_CHARGING_DURATION,
+                            PostureType.Casting => POSTURE_CASTING_DURATION,
+                            _ => 1.0f
+                        };
+                        
+                        // 触发面板动画
+                        panel.TriggerPostureAnimation(postureName, null, duration);
+
+                        // ⭐ 同步面部表情
+                        ExpressionType targetExpr = isHostileMode ? ExpressionType.Angry : ExpressionType.Neutral;
+                        if (type == PostureType.Casting) targetExpr = ExpressionType.Happy; // 施法高潮
+                        
+                        panel.TriggerExpression(targetExpr, duration, intensity: 2);
+                    }
+                    
                     Log.Message($"[DescentAnimationController] Switched to posture: {postureName}");
                 }
                 else

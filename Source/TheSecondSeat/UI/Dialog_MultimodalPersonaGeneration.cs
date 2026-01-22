@@ -10,8 +10,8 @@ using TheSecondSeat.PersonaGeneration;
 namespace TheSecondSeat.UI
 {
     /// <summary>
-    /// ?? v1.6.62: 多模态立绘分析人格生成弹窗
-    /// 
+    /// v1.6.62: 多模态立绘分析人格生成弹窗
+    ///
     /// 功能：
     /// - 左侧显示立绘预览
     /// - 右侧输入人格名称、选择特质、用户补充
@@ -357,7 +357,7 @@ namespace TheSecondSeat.UI
         }
 
         /// <summary>
-        /// ?? 开始多模态分析
+        /// 开始多模态分析
         /// </summary>
         private async void StartAnalysis()
         {
@@ -426,7 +426,7 @@ namespace TheSecondSeat.UI
                 }
                 else
                 {
-                    statusMessage = "? 分析失败，请检查API配置或网络连接";
+                    statusMessage = "分析失败，请检查API配置或网络连接";
                     Messages.Message("多模态分析失败，请检查日志", MessageTypeDefOf.RejectInput);
                 }
             }
@@ -478,13 +478,13 @@ namespace TheSecondSeat.UI
                 // 2. 设置分析结果
                 newPersona.SetAnalysis(analysisResult);
                 
-                // 3. ?? 设置个性标签（来自分析结果）
+                // 3. 设置个性标签（来自分析结果）
                 if (analysisResult.PersonalityTags != null && analysisResult.PersonalityTags.Count > 0)
                 {
                     newPersona.personalityTags = analysisResult.PersonalityTags;
                 }
                 
-                // 4. ?? 设置用户选择的特质
+                // 4. 设置用户选择的特质
                 newPersona.selectedTraits = selectedTraits.ToList();
                 
                 // 5. 设置biography（用户输入 + AI分析）
@@ -550,16 +550,16 @@ namespace TheSecondSeat.UI
                 
                 if (analysisResult.PersonalityTags != null && analysisResult.PersonalityTags.Count > 0)
                 {
-                    successMsg += $"?? 个性标签: {string.Join("、", analysisResult.PersonalityTags)}\n\n";
+                    successMsg += $"个性标签: {string.Join("、", analysisResult.PersonalityTags)}\n\n";
                 }
                 
                 if (exportSuccess)
                 {
-                    successMsg += "? 人格已保存到 Defs 文件夹，重启游戏后永久生效。";
+                    successMsg += "人格已保存到 Defs 文件夹，重启游戏后永久生效。";
                 }
                 else
                 {
-                    successMsg += "?? 人格已加载到当前会话，但未能保存到文件。";
+                    successMsg += "人格已加载到当前会话，但未能保存到文件。";
                 }
                 
                 Messages.Message(successMsg, MessageTypeDefOf.PositiveEvent);

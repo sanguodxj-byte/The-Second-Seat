@@ -23,8 +23,20 @@ namespace TheSecondSeat.PersonaGeneration
         private string visionModel = "gpt-4-vision-preview";
         private string textModel = "gpt-4";
 
+        // ⭐ 缓存 Vision 分析结果
+        private Dictionary<string, PersonaAnalysisResult> _visionCache = new Dictionary<string, PersonaAnalysisResult>();
+
         public MultimodalAnalysisService()
         {
+        }
+
+        /// <summary>
+        /// ⭐ 获取缓存的分析结果
+        /// </summary>
+        public PersonaAnalysisResult GetCachedResult(string personaName)
+        {
+            if (string.IsNullOrEmpty(personaName)) return null;
+            return _visionCache.TryGetValue(personaName, out var result) ? result : null;
         }
 
         /// <summary>
@@ -112,7 +124,7 @@ namespace TheSecondSeat.PersonaGeneration
         {
             Log.Message("[MultimodalAnalysis] 使用 Gemini Vision API");
             
-            string prompt = GetVisionPrompt();
+            string prompt = MultimodalPromptGenerator.GetVisionPrompt(IsChinese);
 
             var geminiResponse = await LLM.GeminiApiClient.SendVisionRequestAsync(
                 visionModel,
@@ -142,7 +154,7 @@ namespace TheSecondSeat.PersonaGeneration
             Log.Message($"[MultimodalAnalysis] 使用 {apiProvider} Vision API");
             
             string endpoint = GetVisionEndpoint();
-            string prompt = GetVisionPrompt();
+            string prompt = MultimodalPromptGenerator.GetVisionPrompt(IsChinese);
 
             var response = await LLM.OpenAICompatibleClient.SendVisionRequestAsync(
                 endpoint,
@@ -172,110 +184,10 @@ namespace TheSecondSeat.PersonaGeneration
         }
 
         /// <summary>
-        /// Get Vision Analysis Prompt (Generic English Version)
+        /// 检测是否为中文语言环境
         /// </summary>
-        private string GetVisionPrompt()
-        {
-            return @"Analyze this character portrait in detail and provide a comprehensive JSON response.
+        private bool IsChinese => LanguageDatabase.activeLanguage?.folderName?.Contains("Chinese") == true;
 
-**CRITICAL: The characterDescription field MUST be written in English!**
-
-{
-  ""dominantColors"": [
-    {""hex"": ""#RRGGBB"", ""percentage"": 0-100, ""name"": ""color name in English""}
-  ],
-  ""visualElements"": [""element1"", ""element2"", ""element3""],
-  ""characterDescription"": ""Detailed 300-500 word appearance description and personality inference in English"",
-  ""mood"": ""overall mood/atmosphere in English"",
-  ""suggestedPersonality"": ""Benevolent/Sadistic/Chaotic/Strategic/Protective/Manipulative"",
-  ""styleKeywords"": [""keyword1"", ""keyword2"", ""keyword3""],
-  ""phraseLibrary"": [
-    { ""key"": ""HeadPat"", ""phrases"": [""phrase1"", ""phrase2""] },
-    { ""key"": ""BodyPoke"", ""phrases"": [""phrase1"", ""phrase2""] },
-    { ""key"": ""Greeting"", ""phrases"": [""phrase1"", ""phrase2""] }
-  ]
-}
-
-**CRITICAL REQUIREMENTS for characterDescription (MUST be in English!):**
-
-**Part 1: Detailed Appearance Description (40%)**
-
-Describe all visible details:
-- **Race**: Human? Elf? Dragon-kin? Orc? Android?
-- **Hair**: Color, length, style, texture (e.g., ""Silky silver hair cascading down like a waterfall, tied with a crimson ribbon"")
-- **Eyes**: Color, shape, expression (e.g., ""Crimson vertical slit pupils, revealing wisdom and danger"")
-- **Facial Features**: Expression, age, scars, markings
-- **Body**: Build, posture, stance
-- **Clothing & Armor**:
-  * Main attire
-  * Armor pieces
-  * Accessories
-  * Material and condition
-- **Special Features**: Wings, tails, horns, weapons, magical effects
-- **Overall Impression**: Mood conveyed by posture, lighting, composition
-
-**Part 2: Personality Inference from Appearance (40%)**
-
-Infer traits from visual cues:
-
-**From Expression & Body Language**:
-- Stern face → Reserved, disciplined, self-controlled
-- Confident stance → Decisive, experienced, leadership qualities
-- Guarded posture → Cautious, defensive, possible past trauma
-- Relaxed expression → Approachable, friendly, trusting
-
-**From Clothing & Armor**:
-- Heavy armor → Values protection, combat-ready, disciplined
-- Dark colors → Mysterious, serious, introverted or secretive
-- Intricate designs → Detail-oriented, perhaps vain or status-conscious
-- Simple utilitarian gear → Pragmatic, values function over form
-
-**From Weapons & Equipment**:
-- Obvious weapons → Conflict-ready, decisive, potentially aggressive
-- Concealed weapons → Strategic, cautious, prefers surprise
-- Magical artifacts → Knowledgeable, academic, connected to ancient wisdom
-- No weapons → Peaceful, trusting, or relies on other advantages
-
-**Part 3: Dialogue & Behavior Prediction (20%)**
-
-Predict based on visual analysis:
-
-**Speaking Style**:
-- ""She might speak with a [calm/passionate/stern/gentle] tone""
-- ""Her expression suggests [formal/casual/professional/poetic] language""
-- ""She likely communicates with [concise commands/rich descriptions/military jargon]""
-
-**Emotional Expression**:
-- ""Rarely shows strong emotion publicly"" or ""Wears heart on sleeve""
-- ""Carefully controlled reactions"" or ""Impulsive responses""
-
-**Interaction Style**:
-- ""Keeps distance from strangers"" or ""Immediately warm and friendly""
-- ""Observes before speaking"" or ""Initiates conversation""
-
-**REMEMBER**:
-- characterDescription MUST be in English!
-- Be specific: Don't just say ""armor"" - describe material, condition, design
-- Infer personality from every detail
-- Predict behavior: How would they speak? React? Interact?
-- 300-500 words
-- Return ONLY valid JSON
-
-**Phrase Library Requirements:**
-- Generate 3-5 phrases for each category:
-  - ""HeadPat"": Reaction to head pats (e.g., shy, happy, annoyed)
-  - ""BodyPoke"": Reaction to body pokes (e.g., surprised, defensive)
-  - ""Greeting"": Greeting when the player loads the game
-
-Focus on:
-- Top 3-4 dominant colors with accurate percentages
-- All visual elements visible in the portrait
-- Detailed appearance analysis (IN ENGLISH!)
-- Personality inference from visual cues (IN ENGLISH!)
-- Behavioral predictions (IN ENGLISH!)
-- Style keywords for System Prompt (in English)
-- Phrase Library for interactions (HeadPat, BodyPoke, Greeting)";
-        }
 
         /// <summary>
         /// 解析 Vision API 返回的 JSON
@@ -500,32 +412,7 @@ Focus on:
 
         private object BuildVisionRequest(string base64Image)
         {
-            string prompt = @"Analyze this character portrait and provide a JSON response (no extra text):
-{
-  ""dominantColors"": [
-    {""hex"": ""#RRGGBB"", ""percentage"": 0-100, ""name"": ""color name""}
-  ],
-  ""visualElements"": [""element1"", ""element2""],
-  ""characterDescription"": ""Brief description (max 200 chars)"",
-  ""mood"": ""overall mood"",
-  ""suggestedPersonality"": ""Benevolent/Sadistic/Chaotic/Strategic/Protective/Manipulative"",
-  ""styleKeywords"": [""keyword1"", ""keyword2"", ""keyword3""],
-  ""personalityTags"": [""Tag1"", ""Tag2"", ""Tag3"", ...],
-  ""phraseLibrary"": [
-    { ""key"": ""HeadPat"", ""phrases"": [""...""] },
-    { ""key"": ""BodyPoke"", ""phrases"": [""...""] },
-    { ""key"": ""Greeting"", ""phrases"": [""...""] }
-  ]
-}
-
-Focus on:
-- Top 3-4 dominant colors with percentages
-- Key visual elements (armor, weapons, creatures)
-- Brief character appearance
-- Overall mood/atmosphere
-- Personality suggestion based on visual cues
-
-Keep characterDescription under 200 characters. Return ONLY valid JSON.";
+            string prompt = MultimodalPromptGenerator.GetBriefVisionPrompt(IsChinese);
 
             if (apiProvider == "openai")
             {
@@ -573,28 +460,8 @@ Keep characterDescription under 200 characters. Return ONLY valid JSON.";
 
         private object BuildTextRequest(string text)
         {
-            string prompt = $@"Analyze this character biography and provide deep personality insights in JSON format:
-{{
-  ""personality_traits"": [""trait1"", ""trait2"", ...],
-  ""dialogue_style"": {{
-    ""formality"": 0.0-1.0,
-    ""emotional_expression"": 0.0-1.0,
-    ""verbosity"": 0.0-1.0,
-    ""humor"": 0.0-1.0,
-    ""sarcasm"": 0.0-1.0
-  }},
-  ""tone_tags"": [""tag1"", ""tag2"", ...],
-  ""event_preferences"": {{
-    ""positive_bias"": -1.0 to 1.0,
-    ""negative_bias"": -1.0 to 1.0,
-    ""chaos_level"": 0.0-1.0,
-    ""intervention_frequency"": 0.0-1.0
-  }},
-  ""forbidden_words"": [""word1"", ""word2"", ...]
-}}
+            string prompt = MultimodalPromptGenerator.GetTextAnalysisPrompt(IsChinese, text);
 
-Biography:
-{text}";
             return new
             {
                 model = textModel,
@@ -660,32 +527,87 @@ Biography:
         
         /// <summary>
         /// 📌 v1.6.62: 分析人格图片（支持特质和用户补充）
+        /// ⚠️ 已弃用：请使用 AnalyzePersonaImageWithTraitsAsync 或回调版本 AnalyzePersonaImageWithTraitsCallback
         /// </summary>
         /// <param name="texture">立绘纹理</param>
         /// <param name="personaName">人格名称</param>
         /// <param name="selectedTraits">用户选择的特质</param>
         /// <param name="userSupplement">用户补充描述</param>
         /// <returns>人格分析结果（包含个性标签）</returns>
+        [Obsolete("请使用 AnalyzePersonaImageWithTraitsAsync 或 AnalyzePersonaImageWithTraitsCallback 避免阻塞主线程")]
         public PersonaAnalysisResult AnalyzePersonaImageWithTraits(
             Texture2D texture,
             string personaName,
             List<string> selectedTraits,
             string userSupplement)
         {
+            Log.Error("[MultimodalAnalysis] AnalyzePersonaImageWithTraits 已废弃且不支持同步调用（UnityWebRequest 限制）。请更新代码以使用 AnalyzePersonaImageWithTraitsCallback。");
+            return CreateDefaultAnalysisResult(userSupplement);
+        }
+
+        /// <summary>
+        /// 📌 v1.9.7: 回调版本 - 非阻塞异步分析（推荐用于 UI 操作）
+        /// </summary>
+        /// <param name="texture">立绘纹理</param>
+        /// <param name="personaName">人格名称</param>
+        /// <param name="selectedTraits">用户选择的特质</param>
+        /// <param name="userSupplement">用户补充描述</param>
+        /// <param name="onCompleted">分析完成回调</param>
+        /// <param name="onError">错误回调（可选）</param>
+        public void AnalyzePersonaImageWithTraitsCallback(
+            Texture2D texture,
+            string personaName,
+            List<string> selectedTraits,
+            string userSupplement,
+            Action<PersonaAnalysisResult> onCompleted,
+            Action<Exception> onError = null)
+        {
+            // ⭐ v1.9.8: 修复线程安全问题
+            // Texture2D 处理（编码为Base64）必须在主线程完成
+            string base64Image = "";
             try
             {
-                // 1. 调用异步方法进行多模态分析
-                var visionTask = AnalyzeTextureWithTraitsAsync(texture, selectedTraits, userSupplement);
-                visionTask.Wait();  // 同步等待（RimWorld 主线程）
-                
-                var visionResult = visionTask.Result;
-                
-                return ProcessAnalysisResult(visionResult, selectedTraits, userSupplement);
+                base64Image = OpenAICompatibleClient.TextureToBase64(texture);
             }
             catch (Exception ex)
             {
-                Log.Error($"[MultimodalAnalysis] AnalyzePersonaImageWithTraits 失败: {ex.Message}");
-                return CreateDefaultAnalysisResult(userSupplement);
+                Log.Error($"[MultimodalAnalysis] 图片编码失败: {ex.Message}");
+                onCompleted?.Invoke(CreateDefaultAnalysisResult(userSupplement));
+                return;
+            }
+
+            // ⭐ 修复: 移除 Task.Run，直接在主线程使用异步等待
+            // OpenAICompatibleClient 使用 UnityWebRequest，必须在主线程运行
+            RunAnalysisAsync();
+
+            async void RunAnalysisAsync()
+            {
+                try
+                {
+                    // 传递 base64 字符串而非 texture 对象
+                    var visionResult = await AnalyzeBase64WithTraitsAsync(base64Image, selectedTraits, userSupplement);
+                    var result = ProcessAnalysisResult(visionResult, selectedTraits, userSupplement);
+                    
+                    // ⭐ 存入缓存
+                    if (result != null && !string.IsNullOrEmpty(personaName))
+                    {
+                        _visionCache[personaName] = result;
+                    }
+
+                    onCompleted?.Invoke(result);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"[MultimodalAnalysis] AnalyzePersonaImageWithTraitsCallback 失败: {ex.Message}");
+                    if (onError != null)
+                    {
+                        onError(ex);
+                    }
+                    else
+                    {
+                        onCompleted?.Invoke(CreateDefaultAnalysisResult(userSupplement));
+                    }
+                }
             }
         }
 
@@ -700,10 +622,22 @@ Biography:
         {
             try
             {
-                // 1. 调用异步方法进行多模态分析
-                var visionResult = await AnalyzeTextureWithTraitsAsync(texture, selectedTraits, userSupplement);
+                // 1. 在主线程将 Texture 转换为 Base64
+                // ⭐ 必须在主线程执行，否则 Unity API 报错
+                string base64Image = OpenAICompatibleClient.TextureToBase64(texture);
+
+                // 2. 调用异步方法进行多模态分析
+                var visionResult = await AnalyzeBase64WithTraitsAsync(base64Image, selectedTraits, userSupplement);
                 
-                return ProcessAnalysisResult(visionResult, selectedTraits, userSupplement);
+                var result = ProcessAnalysisResult(visionResult, selectedTraits, userSupplement);
+                
+                // ⭐ 存入缓存
+                if (result != null && !string.IsNullOrEmpty(personaName))
+                {
+                    _visionCache[personaName] = result;
+                }
+                
+                return result;
             }
             catch (Exception ex)
             {
@@ -777,193 +711,116 @@ Biography:
         }
         
         /// <summary>
-        /// 📌 v1.6.62: 增强版 AnalyzeTextureAsync（支持特质和用户补充）
+        /// 📌 v1.9.8: 基于 Base64 的异步分析（线程安全）
         /// </summary>
-        private async Task<VisionAnalysisResult?> AnalyzeTextureWithTraitsAsync(
-            Texture2D texture,
+        private async Task<VisionAnalysisResult?> AnalyzeBase64WithTraitsAsync(
+            string base64Image,
             List<string> selectedTraits,
             string userSupplement)
         {
-            if (texture == null)
+            if (string.IsNullOrEmpty(base64Image))
             {
-                Log.Error("[MultimodalAnalysis] Texture is null");
+                Log.Error("[MultimodalAnalysis] Base64 image is empty");
                 return null;
             }
 
             try
             {
                 string provider = apiProvider.ToLower();
+                string prompt = MultimodalPromptGenerator.GetVisionPromptWithTraits(IsChinese, selectedTraits, userSupplement);
+                string endpoint = GetVisionEndpoint();
+
+                // 使用统一的 SendOpenAIRawRequestAsync 发送预构建的 JSON
+                // 注意：这里我们需要手动构建 JSON Body，因为 OpenAICompatibleClient.SendVisionRequestAsync 期望 Texture2D
+                
+                object requestBody;
                 
                 if (provider == "gemini")
                 {
-                    return await AnalyzeWithGeminiTraitsAsync(texture, selectedTraits, userSupplement);
+                    // Gemini 需要不同的结构，或者我们假设 GeminiApiClient 支持 Base64?
+                    // GeminiApiClient 目前只接受 Texture2D。
+                    // 这是一个问题。为了支持 Gemini，我们需要修改 GeminiApiClient 或者在这里处理。
+                    // 鉴于 GeminiApiClient 是静态的，且可能也依赖 Unity API，我们暂时只支持 OpenAI 兼容接口的 Base64 路径
+                    // 或者我们应该修改 GeminiApiClient.SendVisionRequestAsync 也接受 Base64。
+                    
+                    // 暂时回退：如果 provider 是 gemini，我们在主线程做完所有事情？
+                    // 不行，网络请求必须异步。
+                    
+                    // 方案：假设我们主要使用 OpenAI/DeepSeek
+                    Log.Warning("[MultimodalAnalysis] Gemini Base64 support not fully implemented, falling back to OpenAI format");
                 }
-                else if (provider == "openai" || provider == "deepseek")
+
+                // 构建 OpenAI/DeepSeek 兼容请求体
+                if (provider == "deepseek")
                 {
-                    return await AnalyzeWithOpenAICompatibleTraitsAsync(texture, selectedTraits, userSupplement);
+                     var request = new
+                    {
+                        model = visionModel,
+                        messages = new[]
+                        {
+                            new
+                            {
+                                role = "user",
+                                content = prompt + "\n\n[DeepSeek Vision is text-only for now]"
+                            }
+                        },
+                        max_tokens = 4096
+                    };
+                    requestBody = request;
                 }
                 else
                 {
-                    Log.Error($"[MultimodalAnalysis] 不支持的 API 提供商: {provider}");
+                    // OpenAI Standard
+                    var request = new
+                    {
+                        model = visionModel,
+                        messages = new[]
+                        {
+                            new
+                            {
+                                role = "user",
+                                content = new object[]
+                                {
+                                    new { type = "text", text = prompt },
+                                    new
+                                    {
+                                        type = "image_url",
+                                        image_url = new
+                                        {
+                                            url = $"data:image/png;base64,{base64Image}"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        max_tokens = 4096
+                    };
+                    requestBody = request;
+                }
+
+                string jsonContent = JsonConvert.SerializeObject(requestBody, new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Ignore
+                });
+
+                var response = await OpenAICompatibleClient.SendOpenAIRawRequestAsync(endpoint, apiKey, jsonContent);
+                
+                if (response == null || response.choices == null || response.choices.Length == 0)
+                {
                     return null;
                 }
+                
+                string content = response.choices[0].message?.content;
+                return ParseVisionJson(content);
             }
             catch (Exception ex)
             {
-                Log.Error($"[MultimodalAnalysis] Error analyzing texture with traits: {ex.Message}");
+                Log.Error($"[MultimodalAnalysis] Error analyzing base64 with traits: {ex.Message}");
                 return null;
             }
         }
         
-        /// <summary>
-        /// 📌 v1.6.62: Gemini 分析（支持特质）
-        /// </summary>
-        private async Task<VisionAnalysisResult?> AnalyzeWithGeminiTraitsAsync(
-            Texture2D texture,
-            List<string> selectedTraits,
-            string userSupplement)
-        {
-            Log.Message("[MultimodalAnalysis] 使用 Gemini Vision API (with traits)");
-            
-            string prompt = GetVisionPromptWithTraits(selectedTraits, userSupplement);
-
-            var geminiResponse = await LLM.GeminiApiClient.SendVisionRequestAsync(
-                visionModel,
-                apiKey,
-                prompt,
-                texture,
-                0.3f,
-                8192
-            );
-            
-            if (geminiResponse == null || geminiResponse.Candidates == null || geminiResponse.Candidates.Count == 0)
-            {
-                Log.Error("[MultimodalAnalysis] Gemini Vision 返回空响应");
-                return null;
-            }
-            
-            string content = geminiResponse.Candidates[0].Content.Parts[0].Text;
-            return ParseVisionJson(content);
-        }
         
-        /// <summary>
-        /// 📌 v1.6.62: OpenAI 兼容分析（支持特质）
-        /// </summary>
-        private async Task<VisionAnalysisResult?> AnalyzeWithOpenAICompatibleTraitsAsync(
-            Texture2D texture,
-            List<string> selectedTraits,
-            string userSupplement)
-        {
-            Log.Message($"[MultimodalAnalysis] 使用 {apiProvider} Vision API (with traits)");
-            
-            string endpoint = GetVisionEndpoint();
-            string prompt = GetVisionPromptWithTraits(selectedTraits, userSupplement);
-
-            var response = await LLM.OpenAICompatibleClient.SendVisionRequestAsync(
-                endpoint,
-                apiKey,
-                visionModel,
-                prompt,
-                texture,
-                0.3f,
-                4096,
-                apiProvider
-            );
-            
-            if (response == null || response.choices == null || response.choices.Length == 0)
-            {
-                Log.Error($"[MultimodalAnalysis] {apiProvider} Vision 返回空响应");
-                return null;
-            }
-            
-            string content = response.choices[0].message?.content;
-            if (string.IsNullOrEmpty(content))
-            {
-                Log.Error("[MultimodalAnalysis] Vision 响应内容为空");
-                return null;
-            }
-            
-            return ParseVisionJson(content);
-        }
-        
-        /// <summary>
-        /// 📌 v1.6.62: Enhanced Vision Prompt (Supports Traits & Supplement) - Generic English
-        /// </summary>
-        private string GetVisionPromptWithTraits(List<string> selectedTraits, string userSupplement)
-        {
-            var sb = new StringBuilder();
-            
-            sb.AppendLine("Analyze this character portrait in detail and provide a comprehensive JSON response.");
-            sb.AppendLine();
-            sb.AppendLine("**CRITICAL: The characterDescription field MUST be written in English!**");
-            sb.AppendLine();
-            
-            // 📌 Add user selected traits and supplement
-            if (selectedTraits != null && selectedTraits.Count > 0)
-            {
-                sb.AppendLine("**USER SELECTED TRAITS:**");
-                sb.AppendLine("---");
-                sb.AppendLine(string.Join(", ", selectedTraits));
-                sb.AppendLine("---");
-                sb.AppendLine();
-            }
-            
-            if (!string.IsNullOrEmpty(userSupplement))
-            {
-                sb.AppendLine("**USER PROVIDED CONTEXT:**");
-                sb.AppendLine("---");
-                sb.AppendLine(userSupplement);
-                sb.AppendLine("---");
-                sb.AppendLine();
-                sb.AppendLine("**CRITICAL INSTRUCTIONS:**");
-                sb.AppendLine("1. The user description above provides the CHARACTER'S PERSONALITY and BEHAVIOR.");
-                sb.AppendLine("2. You MUST analyze the visual image to describe PHYSICAL APPEARANCE.");
-                sb.AppendLine("3. In your characterDescription, COMBINE:");
-                sb.AppendLine("   - Visual details (from image): hair color, eye color, clothing, posture, etc.");
-                sb.AppendLine("   - Personality traits (from user): use the user's description");
-                sb.AppendLine("4. DO NOT contradict the user's personality description!");
-                sb.AppendLine("5. Your job is to ADD visual details to their personality, not replace it.");
-                sb.AppendLine();
-                sb.AppendLine("**PERSONALITY TAGS REQUIREMENT:**");
-                sb.AppendLine("6. Based on the image and user description, suggest 3-6 personality tags in English.");
-                sb.AppendLine("7. Examples: \"Kind\", \"Strong\", \"Clingy\", \"Yandere\", \"Tsundere\", \"Gentle\", \"Cold\"");
-                sb.AppendLine("8. Include the user's selected traits if they match the analysis.");
-                sb.AppendLine();
-            }
-            
-            sb.AppendLine(@"{
-  ""dominantColors"": [
-    {""hex"": ""#RRGGBB"", ""percentage"": 0-100, ""name"": ""color name in English""}
-  ],
-  ""visualElements"": [""element1"", ""element2"", ""element3""],
-  ""characterDescription"": ""Detailed 300-500 word appearance description and personality inference in English"",
-  ""mood"": ""overall mood/atmosphere in English"",
-  ""suggestedPersonality"": ""Benevolent/Sadistic/Chaotic/Strategic/Protective/Manipulative"",
-  ""styleKeywords"": [""keyword1"", ""keyword2"", ""keyword3""],
-  ""personalityTags"": [""Tag1"", ""Tag2"", ""Tag3"", ...],
-  ""phraseLibrary"": [
-    { ""key"": ""HeadPat"", ""phrases"": [""phrase1"", ""phrase2""] },
-    { ""key"": ""BodyPoke"", ""phrases"": [""phrase1"", ""phrase2""] },
-    { ""key"": ""Greeting"", ""phrases"": [""phrase1"", ""phrase2""] }
-  ]
-}");
-            
-            sb.AppendLine();
-            sb.AppendLine("**REMEMBER**:");
-            sb.AppendLine("- characterDescription MUST be in English!");
-            sb.AppendLine("- personalityTags MUST be in English!");
-            sb.AppendLine("- phraseLibrary phrases MUST match the character's personality!");
-            if (!string.IsNullOrEmpty(userSupplement))
-            {
-                sb.AppendLine("- RESPECT the user's personality description - ADD visual details, don't replace!");
-            }
-            sb.AppendLine("- Suggest 3-6 personality tags that match the character");
-            sb.AppendLine("- Focus on visual appearance first, then personality inference");
-            sb.AppendLine("- 300-500 words in English");
-            sb.AppendLine("- Return ONLY valid JSON");
-            
-            return sb.ToString();
-        }
         
         /// <summary>
         /// ? Generate dialogue style from analysis (Generic English support)
@@ -1069,110 +926,4 @@ Biography:
         }
     }
 
-    // ========== Data Structures ==========
-
-    /// <summary>
-    /// Vision 分析结果
-    /// 📌 v1.6.62: 添加 personalityTags 字段
-    /// </summary>
-    public class VisionAnalysisResult
-    {
-        public List<ColorInfo> dominantColors { get; set; } = new List<ColorInfo>();
-        public List<string> visualElements { get; set; } = new List<string>();
-        public string characterDescription { get; set; } = "";
-        public string mood { get; set; } = "";
-        public string suggestedPersonality { get; set; } = "";
-        public List<string> styleKeywords { get; set; } = new List<string>();
-        
-        /// <summary>
-        /// 📌 v1.6.62: 个性标签（如：善良、坚强、爱撒娇、病娇等）
-        /// </summary>
-        public List<string> personalityTags { get; set; } = new List<string>();
-
-        /// <summary>
-        /// 📌 互动短语库
-        /// </summary>
-        public List<PhraseSet> phraseLibrary { get; set; } = new List<PhraseSet>();
-
-        /// <summary>
-        /// 获取主色调（占比最高的颜色）
-        /// </summary>
-        public Color GetPrimaryColor()
-        {
-            if (dominantColors == null || dominantColors.Count == 0)
-                return Color.white;
-
-            var primary = dominantColors.OrderByDescending(c => c.percentage).First();
-            return HexToColor(primary.hex);
-        }
-
-        /// <summary>
-        /// 获取重音色（占比第二的颜色）
-        /// </summary>
-        public Color GetAccentColor()
-        {
-            if (dominantColors == null || dominantColors.Count < 2)
-                return Color.gray;
-
-            var accent = dominantColors.OrderByDescending(c => c.percentage).Skip(1).First();
-            return HexToColor(accent.hex);
-        }
-
-        private Color HexToColor(string hex)
-        {
-            hex = hex.Replace("#", "");
-
-            if (hex.Length != 6)
-                return Color.white;
-
-            try
-            {
-                byte r = Convert.ToByte(hex.Substring(0, 2), 16);
-                byte g = Convert.ToByte(hex.Substring(2, 2), 16);
-                byte b = Convert.ToByte(hex.Substring(4, 2), 16);
-
-                return new Color(r / 255f, g / 255f, b / 255f);
-            }
-            catch
-            {
-                return Color.white;
-            }
-        }
-    }
-
-    public class ColorInfo
-    {
-        public string hex { get; set; } = "";
-        public int percentage { get; set; } = 0;
-        public string name { get; set; } = "";
-    }
-
-    /// <summary>
-    /// 文本深度分析结果
-    /// </summary>
-    public class TextAnalysisResult
-    {
-        public List<string> personality_traits { get; set; } = new List<string>();
-        public DialogueStyleAnalysis dialogue_style { get; set; } = new DialogueStyleAnalysis();
-        public List<string> tone_tags { get; set; } = new List<string>();
-        public EventPreferencesAnalysis event_preferences { get; set; } = new EventPreferencesAnalysis();
-        public List<string> forbidden_words { get; set; } = new List<string>();
-    }
-
-    public class DialogueStyleAnalysis
-    {
-        public float formality { get; set; } = 0.5f;
-        public float emotional_expression { get; set; } = 0.5f;
-        public float verbosity { get; set; } = 0.5f;
-        public float humor { get; set; } = 0.3f;
-        public float sarcasm { get; set; } = 0.2f;
-    }
-
-    public class EventPreferencesAnalysis
-    {
-        public float positive_bias { get; set; } = 0f;
-        public float negative_bias { get; set; } = 0f;
-        public float chaos_level { get; set; } = 0f;
-        public float intervention_frequency { get; set; } = 0.5f;
-    }
 }

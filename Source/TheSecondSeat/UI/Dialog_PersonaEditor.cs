@@ -27,6 +27,7 @@ namespace TheSecondSeat.UI
         private string editCustomSystemPrompt;
         
         private string newVisualTag = ""; // ⭐ 新增：新外观标签输入框
+        private string newConceptName = ""; // ⭐ 新增：新雷达概念输入框
         
         private const float WINDOW_WIDTH = 900f;
         private const float WINDOW_HEIGHT = 700f;
@@ -106,6 +107,15 @@ namespace TheSecondSeat.UI
             dynamicHeight += INPUT_HEIGHT; // Prompt label
             dynamicHeight += 310f; // Prompt text area
             
+            // 语义雷达
+            dynamicHeight += 35f + 10f; // Section Header
+            if (persona.radarConcepts != null)
+            {
+                dynamicHeight += persona.radarConcepts.Count * (INPUT_HEIGHT + 5f);
+            }
+            dynamicHeight += INPUT_HEIGHT + 5f; // Add row
+            dynamicHeight += 20f;
+
             // 最终设置 viewRect 的高度
             viewRect.height = dynamicHeight;
 
@@ -195,6 +205,57 @@ namespace TheSecondSeat.UI
             DrawSlider(viewRect.width, ref curY, "TSS_PersonaEditor_Narrative_Dominance".Translate(), ref persona.dominanceLevel);
             
             curY += 20f;
+
+            // ===== 语义雷达 (感知系统) =====
+            DrawSectionHeader(viewRect.width, ref curY, "TSS_PersonaEditor_SemanticRadar".Translate());
+            
+            // 说明
+            string radarHelp = "TSS_PersonaEditor_RadarHelp".Translate();
+            Widgets.Label(new Rect(0f, curY, viewRect.width, 30f), radarHelp);
+            curY += 30f;
+
+            // 列表
+            if (persona.radarConcepts != null)
+            {
+                for (int i = 0; i < persona.radarConcepts.Count; i++)
+                {
+                    var concept = persona.radarConcepts[i];
+                    Rect rowRect = new Rect(0f, curY, viewRect.width, INPUT_HEIGHT);
+                    
+                    // Name
+                    Widgets.Label(new Rect(0f, curY, 150f, INPUT_HEIGHT), concept.Name);
+                    
+                    // Keywords preview
+                    string keywordsStr = string.Join(", ", concept.Keywords.Take(5));
+                    if (concept.Keywords.Count > 5) keywordsStr += "...";
+                    Widgets.Label(new Rect(160f, curY, viewRect.width - 200f, INPUT_HEIGHT), keywordsStr);
+                    
+                    // Delete
+                    if (Widgets.ButtonImage(new Rect(viewRect.width - 30f, curY, 24f, 24f), TexButton.CloseXSmall))
+                    {
+                        persona.radarConcepts.RemoveAt(i);
+                        i--;
+                    }
+                    
+                    curY += INPUT_HEIGHT + 5f;
+                }
+            }
+            
+            // 添加新概念
+            Rect addConceptRect = new Rect(0f, curY, 200f, INPUT_HEIGHT);
+            newConceptName = Widgets.TextField(addConceptRect, newConceptName);
+            
+            Rect expandBtnRect = new Rect(210f, curY, 150f, INPUT_HEIGHT);
+            if (Widgets.ButtonText(expandBtnRect, "TSS_PersonaEditor_RadarExpand".Translate()))
+            {
+                if (!string.IsNullOrEmpty(newConceptName))
+                {
+                    ExpandConceptWithLLM(newConceptName);
+                    newConceptName = "";
+                }
+            }
+            
+            curY += INPUT_HEIGHT + 20f;
 
             // ===== 自定义系统提示词 (高级) =====
             DrawSectionHeader(viewRect.width, ref curY, "TSS_PersonaEditor_CustomPrompt".Translate());
@@ -468,33 +529,30 @@ namespace TheSecondSeat.UI
             // 3. 显示加载提示
             Messages.Message("TSS_GeneratingPhraseLibrary".Translate(), MessageTypeDefOf.NeutralEvent);
             
-            // 4. 异步调用 LLM
-            System.Threading.Tasks.Task.Run(async () =>
+            // 4. 异步调用 LLM (在主线程调用，因为内部可能使用 UnityWebRequest)
+            GenerateAsync();
+            
+            async void GenerateAsync()
             {
                 try
                 {
                     // 使用 SendMessageAsync，gameState 为空
+                    // 注意：这里必须 await，以便在当前上下文（主线程）继续执行
                     string response = await LLM.LLMService.Instance.SendMessageAsync(
-                        "You are a creative writer specializing in RimWorld modding.", 
-                        "", 
+                        "You are a creative writer specializing in RimWorld modding.",
+                        "",
                         prompt
                     );
                     
-                    // 5. 回到主线程处理结果
-                    Verse.LongEventHandler.ExecuteWhenFinished(() =>
-                    {
-                        ProcessPhraseLibraryResponse(response);
-                    });
+                    // 5. 直接处理结果 (已在主线程)
+                    ProcessPhraseLibraryResponse(response);
                 }
                 catch (Exception ex)
                 {
                     Log.Error($"[Dialog_PersonaEditor] 生成短语库失败: {ex}");
-                    Verse.LongEventHandler.ExecuteWhenFinished(() =>
-                    {
-                        Messages.Message("TSS_GenPhraseLibError".Translate(ex.Message), MessageTypeDefOf.RejectInput);
-                    });
+                    Messages.Message("TSS_GenPhraseLibError".Translate(ex.Message), MessageTypeDefOf.RejectInput);
                 }
-            });
+            }
         }
 
         private string BuildPhraseGenerationPrompt()
@@ -609,6 +667,67 @@ namespace TheSecondSeat.UI
                 return text.Substring(start, end - start + "</PhraseLibraryDef>".Length);
             }
             return null;
+        }
+
+        private void ExpandConceptWithLLM(string conceptName)
+        {
+            if (!LLM.LLMService.Instance.IsAvailable)
+            {
+                Messages.Message("TSS_LLMNotReady".Translate(), MessageTypeDefOf.RejectInput);
+                return;
+            }
+
+            Messages.Message("TSS_RadarExpanding".Translate(conceptName), MessageTypeDefOf.NeutralEvent);
+
+            // ⭐ v2.3.1: 提示词语言自适应
+            string langContext = LanguageDatabase.activeLanguage.folderName == "ChineseSimplified"
+                ? "Chinese (Simplified)"
+                : "English";
+
+            string prompt = $"Task: Expand the abstract concept '{conceptName}' into a list of specific keywords ({langContext}) related to RimWorld gameplay events, logs, or thoughts.\n" +
+                            "Output: A comma-separated list of keywords ONLY. No other text.\n" +
+                            "Example Input (English): Cheating -> affair, lovin, romance, kiss, woo\n" +
+                            "Example Input (Chinese): 出轨 -> 出轨, 调情, 求爱, 拒绝, 浪漫, 亲吻\n\n" +
+                            $"Input: {conceptName}\nOutput:";
+
+            ExpandAsync();
+            
+            async void ExpandAsync()
+            {
+                try
+                {
+                    // 在主线程 await，支持 UnityWebRequest
+                    string response = await LLM.LLMService.Instance.SendMessageAsync(
+                        "You are a keyword expansion assistant.",
+                        "",
+                        prompt
+                    );
+
+                    // 直接在主线程处理结果
+                    var keywords = response.Split(new[] { ',', '，', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                                            .Select(k => k.Trim())
+                                            .Where(k => !string.IsNullOrEmpty(k))
+                                            .ToList();
+                    
+                    if (keywords.Count > 0)
+                    {
+                        var newConcept = new TheSecondSeat.Monitoring.SemanticConcept
+                        {
+                            Name = conceptName,
+                            Keywords = keywords
+                        };
+                        
+                        if (persona.radarConcepts == null) persona.radarConcepts = new List<TheSecondSeat.Monitoring.SemanticConcept>();
+                        persona.radarConcepts.Add(newConcept);
+                        
+                        Messages.Message("TSS_RadarExpandSuccess".Translate(conceptName, keywords.Count), MessageTypeDefOf.PositiveEvent);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"[Dialog_PersonaEditor] Expand concept failed: {ex}");
+                }
+            }
         }
 
         private void GenerateDefaultPrompt()

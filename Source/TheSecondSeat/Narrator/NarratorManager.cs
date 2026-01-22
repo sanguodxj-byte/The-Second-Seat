@@ -14,6 +14,16 @@ using Newtonsoft.Json;
 namespace TheSecondSeat.Narrator
 {
     /// <summary>
+    /// ⭐ v1.9.7: 叙事者模式枚举
+    /// </summary>
+    public enum NarratorMode
+    {
+        Assistant,   // 协助者 - 帮助玩家
+        Opponent,    // 对弈者 - 制造挑战
+        Engineer     // 工程师 - 技术专注
+    }
+
+    /// <summary>
     /// Manages the AI narrator's favorability and state
     /// ⭐ v1.6.65: 集成 RimAgent 系统
     /// </summary>
@@ -26,6 +36,9 @@ namespace TheSecondSeat.Narrator
         private RimAgent.RimAgent eventAgent;
         private float lastEventCheckRealTime = 0f;
         private float nextEventCheckInterval = 300f; // 动态间隔
+        
+        // ⭐ v1.9.7: 叙事者模式
+        private NarratorMode currentNarratorMode = NarratorMode.Assistant;
         
         // ? 好感度系统变量
         private float favorability = 0f; // -100 (仇恨) 到 +100 (挚爱/灵魂绑定/契)
@@ -62,6 +75,41 @@ namespace TheSecondSeat.Narrator
 
         public float Favorability => favorability;
         public List<FavorabilityEvent> RecentEvents => recentEvents;
+        
+        /// <summary>
+        /// ⭐ v1.9.7: 静态实例访问器（便于 UI 访问）
+        /// </summary>
+        public static NarratorManager Instance => Current.Game?.GetComponent<NarratorManager>();
+        
+        /// <summary>
+        /// ⭐ v1.9.7: 当前人格（属性别名）
+        /// </summary>
+        public NarratorPersonaDef CurrentPersona => currentPersonaDef;
+        
+        /// <summary>
+        /// ⭐ v1.9.7: 叙事者代理（属性别名）
+        /// </summary>
+        public StorytellerAgent StorytellerAgent => storytellerAgent;
+        
+        /// <summary>
+        /// ⭐ v1.9.7: 当前叙事者模式
+        /// </summary>
+        public NarratorMode CurrentNarratorMode => currentNarratorMode;
+        
+        /// <summary>
+        /// ⭐ v1.9.7: 设置叙事者模式
+        /// </summary>
+        public void SetNarratorMode(NarratorMode mode)
+        {
+            if (currentNarratorMode != mode)
+            {
+                currentNarratorMode = mode;
+                Log.Message($"[NarratorManager] Mode switched to: {mode}");
+                
+                // 重新初始化 Agent 以应用新模式
+                InitializeRimAgent();
+            }
+        }
 
         public NarratorManager(Game game) : base()
         {
@@ -197,7 +245,7 @@ namespace TheSecondSeat.Narrator
                     async () => await narratorAgent.ExecuteAsync(
                         userInput,
                         temperature: 0.7f,
-                        maxTokens: 500
+                        maxTokens: 5000
                     ),
                     maxRetries: 3
                 );
@@ -715,9 +763,22 @@ Respond in JSON: {""dialogue"": ""..."", ""command"": {...}}";
                 // 3. 执行 Agent (无状态模式)
                 // 我们不使用 ConcurrentRequestManager，因为这是后台任务，不应阻塞玩家对话
                 // 但为了线程安全，我们依然需要小心
-                var response = await eventAgent.ExecuteAsync(request, temperature: 0.7f, maxTokens: 300);
+                // ⭐ v1.9.6: 增加 maxTokens 到 5000，避免 JSON 响应被截断
+                var response = await eventAgent.ExecuteAsync(request, temperature: 0.7f, maxTokens: 5000);
 
-                if (response.Success)
+                // ⭐ v1.9.6: 添加失败日志，帮助诊断空回复问题
+                if (!response.Success)
+                {
+                    Log.Warning($"[EventDirector] Agent execution failed: {response.Error ?? "Unknown error (LLM returned empty response)"}");
+                    // 记录最后的请求内容以便调试
+                    if (eventAgent.LastPrompt != null)
+                    {
+                        Log.Message($"[EventDirector] Last prompt length: {eventAgent.LastPrompt.Length} chars");
+                    }
+                    return;
+                }
+
+                // 成功响应 - 解析并执行 Action
                 {
                     // 4. 解析并执行 Action
                     Log.Message($"[EventDirector] Decision: {response.Content}");

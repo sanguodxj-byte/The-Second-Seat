@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Verse;
 using TheSecondSeat.PersonaGeneration;
 using TheSecondSeat.Utils;
+using TheSecondSeat.Core;
 
 namespace TheSecondSeat.UI
 {
@@ -52,9 +54,11 @@ namespace TheSecondSeat.UI
                 alpha = 0.2f; // 幽灵模式
             }
 
-            // 呼吸动画
-            float breathingOffset = panel.AnimationHandler.IsPlayingAnimation ? 0f : ExpressionSystem.GetBreathingOffset(panel.GetPersonaResourceName());
-            Rect animatedRect = new Rect(panel.DrawRect.x, panel.DrawRect.y + breathingOffset, panel.DrawRect.width, panel.DrawRect.height);
+            // ⭐ v1.13.5: 呼吸动画 + 身体微动
+            string personaResName = panel.GetPersonaResourceName();
+            float breathingOffset = panel.AnimationHandler.IsPlayingAnimation ? 0f : ExpressionSystem.GetBreathingOffset(personaResName);
+            float swayOffset = panel.AnimationHandler.IsPlayingAnimation ? 0f : ExpressionSystem.GetSwayOffset(personaResName);
+            Rect animatedRect = new Rect(panel.DrawRect.x + swayOffset, panel.DrawRect.y + breathingOffset, panel.DrawRect.width, panel.DrawRect.height);
 
             // 绘制 (使用 GPU 加速渲染)
             DrawLayeredPortraitGPU(animatedRect, panel.CurrentPersona, alpha);
@@ -63,9 +67,110 @@ namespace TheSecondSeat.UI
             {
                 DrawEffectLayer(animatedRect);
             }
+
+            // ⭐ v1.9.6: 绘制生物节律指示器
+            DrawBioRhythmIndicator(animatedRect);
+        }
+
+        /// <summary>
+        /// ⭐ v1.9.6: 绘制生物节律心情指示器
+        /// </summary>
+        private void DrawBioRhythmIndicator(Rect portraitRect)
+        {
+            var bioSystem = Current.Game?.GetComponent<NarratorBioRhythm>();
+            if (bioSystem == null) return;
+
+            var settings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
+            if (settings != null && !settings.enableBioRhythm) return;
+
+            // 直接获取公开属性
+            float mood = bioSystem.CurrentMood;
+
+            // 颜色映射
+            Color moodColor;
+            if (mood > 80f) { moodColor = new Color(1f, 0.8f, 0.2f); } // 金色
+            else if (mood > 60f) { moodColor = new Color(0.4f, 0.8f, 0.4f); } // 绿色
+            else if (mood > 40f) { moodColor = new Color(0.4f, 0.6f, 0.8f); } // 蓝色
+            else if (mood > 20f) { moodColor = new Color(0.7f, 0.7f, 0.7f); } // 灰色
+            else { moodColor = new Color(0.8f, 0.3f, 0.3f); } // 红色
+
+            // 绘制指示器 (右上角小圆点)
+            float indicatorSize = 12f;
+            // 注意：portraitRect 可能会有偏移（呼吸动画），我们希望指示器相对稳定，或者跟随。
+            // 这里跟随 portraitRect，所以会一起呼吸移动。
+            Rect indicatorRect = new Rect(portraitRect.xMax - indicatorSize - 8f, portraitRect.y + 8f, indicatorSize, indicatorSize);
+            
+            // 外圈光晕
+            GUI.color = new Color(moodColor.r, moodColor.g, moodColor.b, 0.3f);
+            Widgets.DrawBoxSolid(indicatorRect.ExpandedBy(2f), GUI.color);
+            
+            // 核心
+            GUI.color = moodColor;
+            Widgets.DrawBoxSolid(indicatorRect, moodColor);
+            GUI.color = Color.white;
+
+            // Tooltip
+            if (Mouse.IsOver(indicatorRect))
+            {
+                TooltipHandler.TipRegion(indicatorRect, bioSystem.GetCurrentBioContext());
+            }
         }
         
         private void DrawLayeredPortraitGPU(Rect rect, NarratorPersonaDef persona, float alpha)
+        {
+            var state = ExpressionSystem.GetExpressionState(persona.defName);
+            
+            // ⭐ v1.13.3: 透明度混合优化 (Cross-fade)
+            // 如果处于表情过渡期间，同时绘制旧表情和新表情
+            if (state != null && state.TransitionProgress < 1f)
+            {
+                // 1. 绘制旧表情 (Alpha = 1.0)
+                // 注意：这里使用不透明的旧表情作为底图，然后新表情淡入覆盖
+                // 如果使用 Alpha 混合 (1-t) 和 (t)，在透明背景下会导致整体透明度下降
+                // 所以我们保持旧表情完全不透明（受全局 alpha 影响），新表情逐渐不透明
+                
+                // 获取旧表情的图层（需要传入 PreviousExpression）
+                // 变体逻辑：对于旧表情，我们可能不知道之前的变体是哪个。
+                // 简化处理：假设旧表情使用基础变体(0)或随机变体(0)。
+                // 实际上，为了平滑，最好能记录旧表情的变体。但 ExpressionState 没存旧变体。
+                // 妥协：旧表情使用变体0（基础）。如果之前是 happy1，现在变成 sad，可能会看到 happy1 -> happy -> sad 的瞬间变化。
+                // 但由于是淡出，可能不明显。
+                var oldLayers = GetLayersForExpression(persona, state.PreviousExpression, 0);
+                if (oldLayers != null && oldLayers.Count > 0)
+                {
+                    GPULayeredRenderer.DrawDynamicPortrait(rect, oldLayers, alpha);
+                }
+                
+                // 2. 绘制新表情 (Alpha = TransitionProgress)
+                // 新表情淡入覆盖在旧表情之上
+                var newLayers = GetLayersForExpression(persona, state.CurrentExpression, state.Intensity > 0 ? state.Intensity : state.CurrentVariant);
+                if (newLayers != null && newLayers.Count > 0)
+                {
+                    // 使用平滑插值让过渡更自然 (EaseInOut)
+                    float t = state.TransitionProgress;
+                    float smoothT = t * t * (3f - 2f * t);
+                    
+                    GPULayeredRenderer.DrawDynamicPortrait(rect, newLayers, alpha * smoothT);
+                }
+            }
+            else
+            {
+                // 无过渡，直接绘制当前表情
+                int variant = (state != null && state.Intensity > 0) ? state.Intensity : (state?.CurrentVariant ?? 0);
+                var layers = GetLayersForExpression(persona, state?.CurrentExpression ?? ExpressionType.Neutral, variant);
+                
+                if (layers != null && layers.Count > 0)
+                {
+                    GPULayeredRenderer.DrawDynamicPortrait(rect, layers, alpha);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ v1.13.3: 获取特定表情的图层列表
+        /// 提取自 DrawLayeredPortraitGPU，用于支持表情混合
+        /// </summary>
+        private List<Texture2D> GetLayersForExpression(NarratorPersonaDef persona, ExpressionType expression, int variant)
         {
             string personaName = panel.GetPersonaResourceName();
             List<Texture2D> layers = new List<Texture2D>();
@@ -76,14 +181,8 @@ namespace TheSecondSeat.UI
                 Texture2D postureTexture = TSS_AssetLoader.LoadDescentPosture(personaName, panel.AnimationHandler.OverridePosture, null);
                 if (postureTexture != null)
                 {
-                    float aspect = (float)postureTexture.width / postureTexture.height;
-                    float targetHeight = rect.height;
-                    float targetWidth = targetHeight * aspect;
-                    float xOffset = (rect.width - targetWidth) / 2f;
-                    Rect drawRect = new Rect(rect.x + xOffset, rect.y, targetWidth, targetHeight);
-                    
-                    // 单层也走 GPU 渲染以应用统一的 Alpha
-                    GPULayeredRenderer.DrawDynamicPortrait(drawRect, new List<Texture2D> { postureTexture }, alpha);
+                    // 特殊姿态直接返回单层
+                    return new List<Texture2D> { postureTexture };
                 }
                 else if (cachedBodyBase != null)
                 {
@@ -91,63 +190,57 @@ namespace TheSecondSeat.UI
                 }
                 else
                 {
-                    DrawMinimalPlaceholder(rect, persona);
+                    // 无法加载任何身体，返回空（外部会处理占位符）
+                    if (cachedBodyBase == null) UpdateBodyBaseIfNeeded();
+                    if (cachedBodyBase == null) return null;
                 }
-                
-                if (layers.Count == 0) return; // 如果是 postureTexture 路径已经处理了，或者没有 bodyBase
             }
             else
             {
-                if (cachedBodyBase == null)
-                {
-                    DrawMinimalPlaceholder(rect, persona);
-                    return;
-                }
+                if (cachedBodyBase == null) UpdateBodyBaseIfNeeded();
+                if (cachedBodyBase == null) return null;
+                
                 layers.Add(cachedBodyBase);
             }
             
-            // 如果已经处理了特殊姿态（layers为空但已返回），则不再继续
-            if (layers.Count == 0) return;
-
-            // Layer 2: 嘴巴层 - TTS口型优先，静默时使用闭嘴
-            // 设计原则：表情系统不干涉口型动画
+            // Layer 2: 嘴巴层
+            // 如果是 TTS 说话状态，忽略表情参数，直接使用当前口型（因为口型是实时的）
+            // 如果不是说话状态，使用指定表情的静态嘴型
             string mouthLayerName = MouthAnimationSystem.GetMouthLayerName(persona.defName);
             bool isTTSSpeaking = !string.IsNullOrEmpty(mouthLayerName);
-            
-            // ⭐ v1.13.0: 诊断日志
-            if (Prefs.DevMode && Time.frameCount % 120 == 0)
-            {
-                bool ttsSpeaking = TTS.TTSAudioPlayer.IsSpeaking(persona.defName);
-                bool anyoneSpeaking = TTS.TTSAudioPlayer.IsAnyoneSpeaking();
-                Log.Message($"[PortraitDrawer] {persona.defName}: mouthLayerName={mouthLayerName ?? "null"}, isTTSSpeaking={isTTSSpeaking}, ttsSpeaking={ttsSpeaking}, anyoneSpeaking={anyoneSpeaking}");
-            }
-            
             Texture2D mouthTexture = null;
             
             if (isTTSSpeaking)
             {
-                // ⭐ v1.11.3: 处理 "USE_BASE" 特殊标记
-                // 当 Viseme 为 Small（微张）时，使用 base_body 自带的默认嘴型，不添加额外图层
                 if (mouthLayerName != "USE_BASE")
                 {
-                    // 说话中：完全由 TTS 口型系统控制，表情系统不干涉
                     mouthTexture = PortraitLoader.GetLayerTexture(persona, mouthLayerName, suppressWarning: true);
-                    
-                    // ⭐ v1.13.0: 诊断纹理加载
-                    if (Prefs.DevMode && mouthTexture == null && Time.frameCount % 120 == 0)
-                    {
-                        Log.Warning($"[PortraitDrawer] Failed to load mouth texture: {mouthLayerName}");
-                    }
                 }
-                // 如果是 "USE_BASE"，mouthTexture 保持为 null，不加载任何嘴巴层
             }
             
-            // 回退：仅在非说话状态下使用默认闭嘴
-            // ⭐ v1.11.3: 说话状态下如果 mouthLayerName 是 "USE_BASE"，不回退到闭嘴
+            // 回退/静态表情逻辑
             if (mouthTexture == null && !(isTTSSpeaking && mouthLayerName == "USE_BASE"))
             {
-                mouthTexture = PortraitLoader.GetLayerTexture(persona, "Closed_mouth", suppressWarning: true)
-                    ?? PortraitLoader.GetLayerTexture(persona, "Neutral_mouth", suppressWarning: true);
+                // 使用指定表情和变体获取静态嘴型
+                string staticMouth = MouthAnimationSystem.GetStaticMouthLayerName(persona.defName, expression, variant);
+                mouthTexture = PortraitLoader.GetLayerTexture(persona, staticMouth, suppressWarning: true);
+
+                // 回退逻辑：如果变体加载失败，尝试基础
+                if (mouthTexture == null && staticMouth.Any(char.IsDigit))
+                {
+                    string baseMouth = System.Text.RegularExpressions.Regex.Replace(staticMouth, @"\d+", "");
+                    if (baseMouth != staticMouth)
+                    {
+                        mouthTexture = PortraitLoader.GetLayerTexture(persona, baseMouth, suppressWarning: true);
+                    }
+                }
+
+                // 最后回退
+                if (mouthTexture == null)
+                {
+                    mouthTexture = PortraitLoader.GetLayerTexture(persona, "Closed_mouth", suppressWarning: true)
+                        ?? PortraitLoader.GetLayerTexture(persona, "Neutral_mouth", suppressWarning: true);
+                }
             }
             
             if (mouthTexture != null)
@@ -156,28 +249,54 @@ namespace TheSecondSeat.UI
             }
 
             // Layer 3: 眼睛层
+            // 如果当前正在眨眼（闭眼），则忽略表情，显示闭眼
+            // 否则显示指定表情的眼睛
             string eyeLayerName = BlinkAnimationSystem.GetEyeLayerName(persona.defName);
-            if (!string.IsNullOrEmpty(eyeLayerName))
+            bool isBlinking = eyeLayerName == "closed_eyes";
+            
+            if (isBlinking)
             {
-                var eyeTexture = PortraitLoader.GetLayerTexture(persona, eyeLayerName);
-                if (eyeTexture != null)
+                var eyeTexture = PortraitLoader.GetLayerTexture(persona, "closed_eyes", suppressWarning: true);
+                if (eyeTexture != null) layers.Add(eyeTexture);
+            }
+            else
+            {
+                // 获取指定表情的眼睛
+                string exprEyeName = BlinkAnimationSystem.GetEyesLayerNameForExpression(persona.defName, expression, variant);
+                if (!string.IsNullOrEmpty(exprEyeName))
                 {
-                    layers.Add(eyeTexture);
+                    var eyeTexture = PortraitLoader.GetLayerTexture(persona, exprEyeName, suppressWarning: true);
+                    
+                    // 回退逻辑
+                    if (eyeTexture == null && exprEyeName.Any(char.IsDigit))
+                    {
+                        string baseEye = System.Text.RegularExpressions.Regex.Replace(exprEyeName, @"\d+", "");
+                        eyeTexture = PortraitLoader.GetLayerTexture(persona, baseEye, suppressWarning: true);
+                    }
+                    
+                    if (eyeTexture != null) layers.Add(eyeTexture);
+                }
+                else
+                {
+                    // Neutral 或 null，尝试 base_eyes
+                    var baseEye = PortraitLoader.GetLayerTexture(persona, "base_eyes", suppressWarning: true)
+                               ?? PortraitLoader.GetLayerTexture(persona, "neutral_eyes", suppressWarning: true);
+                    if (baseEye != null) layers.Add(baseEye);
                 }
             }
             
-            // Layer 4: 特效层 (腮红等) - 支持变体
-            var expressionState = ExpressionSystem.GetExpressionState(persona.defName);
-            if (expressionState != null && (expressionState.CurrentExpression == ExpressionType.Shy || expressionState.CurrentExpression == ExpressionType.Angry))
+            // Layer 4: 特效层 (腮红等)
+            if (expression == ExpressionType.Shy || expression == ExpressionType.Angry)
             {
-                string flushLayerName = GetFlushLayerName(persona.defName, expressionState);
+                string baseName = expression == ExpressionType.Shy ? "flush_shy" : "flush_angry";
+                string exprName = expression.ToString().ToLower();
+                string flushLayerName = variant > 0 ? $"flush_{exprName}{variant}" : baseName;
+                
                 var flushTexture = PortraitLoader.GetLayerTexture(persona, flushLayerName, suppressWarning: true);
                 
-                // 如果变体不存在，尝试基础腮红
-                if (flushTexture == null)
+                if (flushTexture == null && variant > 0)
                 {
-                    string baseFlush = expressionState.CurrentExpression == ExpressionType.Shy ? "flush_shy" : "flush_angry";
-                    flushTexture = PortraitLoader.GetLayerTexture(persona, baseFlush, suppressWarning: true);
+                    flushTexture = PortraitLoader.GetLayerTexture(persona, baseName, suppressWarning: true);
                 }
                 
                 if (flushTexture != null)
@@ -186,8 +305,7 @@ namespace TheSecondSeat.UI
                 }
             }
             
-            // 统一 GPU 渲染
-            GPULayeredRenderer.DrawDynamicPortrait(rect, layers, alpha);
+            return layers;
         }
         
         private void DrawEffectLayer(Rect rect)
@@ -252,7 +370,7 @@ namespace TheSecondSeat.UI
             Text.Anchor = TextAnchor.MiddleCenter;
             
             string personaName = panel.CurrentPersona?.narratorName ?? "Unknown";
-            string message = $"{personaName}\n\n<color=#888888>立绘资源加载中...</color>";
+            string message = $"{personaName}\n\n<color=#888888>{"TSS_Portrait_Loading".Translate()}</color>";
             
             Widgets.Label(panel.DrawRect.ContractedBy(20f), message);
             

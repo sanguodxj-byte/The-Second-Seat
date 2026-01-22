@@ -84,7 +84,7 @@ namespace TheSecondSeat.UI
             
             // 标题
             Text.Font = GameFont.Medium;
-            listing.Label("? RimAgent 设置");
+            listing.Label("RimAgent 设置");
             Text.Font = GameFont.Small;
             listing.Gap(10f);
             
@@ -100,7 +100,7 @@ namespace TheSecondSeat.UI
             // ========================================
             // Agent 基础配置
             // ========================================
-            scrollListing.Label("?? Agent 基础配置");
+            scrollListing.Label("Agent 基础配置");
             scrollListing.GapLine(12f);
             
             // Agent 名称
@@ -151,14 +151,14 @@ namespace TheSecondSeat.UI
             // ========================================
             // 工具库管理
             // ========================================
-            scrollListing.Label("?? 工具库管理");
+            scrollListing.Label("工具库管理");
             scrollListing.GapLine(12f);
             
             var registeredTools = RimAgentTools.GetRegisteredToolNames();
             
             if (registeredTools.Count == 0)
             {
-                scrollListing.Label("?? 未找到已注册的工具");
+                scrollListing.Label("未找到已注册的工具");
             }
             else
             {
@@ -195,7 +195,7 @@ namespace TheSecondSeat.UI
                     bool oldEnabled = toolsEnabled[toolName];
                     bool newEnabled = oldEnabled;
                     
-                    if (Widgets.ButtonText(toggleRect, oldEnabled ? "? 启用" : "? 禁用"))
+                    if (Widgets.ButtonText(toggleRect, oldEnabled ? "启用" : "禁用"))
                     {
                         newEnabled = !oldEnabled;
                         toolsEnabled[toolName] = newEnabled;
@@ -210,7 +210,7 @@ namespace TheSecondSeat.UI
             // ========================================
             // Agent 统计信息
             // ========================================
-            scrollListing.Label("?? Agent 统计");
+            scrollListing.Label("Agent 统计");
             scrollListing.GapLine(12f);
             
             try
@@ -230,7 +230,7 @@ namespace TheSecondSeat.UI
                     scrollListing.Gap(10f);
                     
                     // 重置 Agent 按钮
-                    if (scrollListing.ButtonText("?? 重置 Agent", "清除对话历史和统计"))
+                    if (scrollListing.ButtonText("重置 Agent", "清除对话历史和统计"))
                     {
                         manager.ResetAgent();
                         Messages.Message("Agent 已重置", MessageTypeDefOf.PositiveEvent);
@@ -238,12 +238,12 @@ namespace TheSecondSeat.UI
                 }
                 else
                 {
-                    scrollListing.Label("?? 未找到 NarratorManager（需要在游戏中使用）");
+                    scrollListing.Label("未找到 NarratorManager（需要在游戏中使用）");
                 }
             }
             catch (Exception ex)
             {
-                scrollListing.Label($"? 获取统计失败: {ex.Message}");
+                scrollListing.Label($"获取统计失败: {ex.Message}");
             }
             
             scrollListing.End();
@@ -255,7 +255,7 @@ namespace TheSecondSeat.UI
             Rect bottomRect = new Rect(inRect.x, inRect.yMax - 50f, inRect.width, 50f);
             
             // 保存按钮
-            if (Widgets.ButtonText(new Rect(bottomRect.x, bottomRect.y, 150f, 35f), "?? 保存设置"))
+            if (Widgets.ButtonText(new Rect(bottomRect.x, bottomRect.y, 150f, 35f), "保存设置"))
             {
                 SaveSettings();
                 Messages.Message("RimAgent 设置已保存", MessageTypeDefOf.PositiveEvent);

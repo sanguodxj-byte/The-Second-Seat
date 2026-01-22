@@ -60,88 +60,38 @@ namespace TheSecondSeat.Settings
                 });
                 y += difficultyHeight + SettingsUIComponents.MediumGap;
                 
-                // === 基础功能设置 ===
-                float basicHeight = 180f;
-                Rect basicRect = new Rect(viewRect.x, y, cardWidth, basicHeight);
-                SettingsUIComponents.DrawSettingsGroup(basicRect, "基础功能", SettingsUIComponents.AccentBlue, (contentRect) =>
+                // === 通用设置 ===
+                // 将基础功能和UI设置合并，并使用双列布局
+                float generalHeight = 160f;
+                Rect generalRect = new Rect(viewRect.x, y, cardWidth, generalHeight);
+                SettingsUIComponents.DrawSettingsGroup(generalRect, "通用设置", SettingsUIComponents.AccentBlue, (contentRect) =>
                 {
                     float cy = contentRect.y;
+                    float colWidth = (contentRect.width - 10f) / 2f;
                     
-                    // 调试模式
-                    Rect debugRect = new Rect(contentRect.x, cy, contentRect.width, 28f);
-                    SettingsUIComponents.DrawToggleSetting(debugRect, "调试模式", 
-                        "启用开发者调试信息输出", ref Settings.debugMode);
-                    cy += 34f;
-                    
-                    // 精简提示词
-                    Rect compactRect = new Rect(contentRect.x, cy, contentRect.width, 28f);
-                    SettingsUIComponents.DrawToggleSetting(compactRect, "精简提示词", 
-                        "使用更短的系统提示词以减少 Token 消耗", ref Settings.useCompactPrompt);
-                    cy += 34f;
-                    
-                    // 好感度系统
-                    Rect affinityRect = new Rect(contentRect.x, cy, contentRect.width, 28f);
-                    SettingsUIComponents.DrawToggleSetting(affinityRect, "好感度系统", 
+                    // 第一列
+                    Rect col1Rect = new Rect(contentRect.x, cy, colWidth, 28f);
+                    SettingsUIComponents.DrawToggleSetting(col1Rect, "好感度系统",
                         "启用角色好感度追踪功能", ref Settings.enableAffinitySystem);
-                    cy += 34f;
+                    col1Rect.y += 34f;
                     
-                    // 主动对话
-                    Rect proactiveRect = new Rect(contentRect.x, cy, contentRect.width, 28f);
-                    SettingsUIComponents.DrawToggleSetting(proactiveRect, "主动对话", 
+                    SettingsUIComponents.DrawToggleSetting(col1Rect, "主动对话",
                         "允许 AI 主动发起对话", ref Settings.enableProactiveDialogue);
-                });
-                y += basicHeight + SettingsUIComponents.MediumGap;
-                
-                // === UI 设置 ===
-                float uiHeight = 140f;
-                Rect uiRect = new Rect(viewRect.x, y, cardWidth, uiHeight);
-                SettingsUIComponents.DrawSettingsGroup(uiRect, "界面设置", SettingsUIComponents.AccentBlue, (contentRect) =>
-                {
-                    float cy = contentRect.y;
+                    col1Rect.y += 34f;
                     
-                    // 立绘模式
-                    Rect portraitRect = new Rect(contentRect.x, cy, contentRect.width, 28f);
-                    SettingsUIComponents.DrawToggleSetting(portraitRect, "立绘模式",
+                    SettingsUIComponents.DrawToggleSetting(col1Rect, "立绘模式",
                         "在对话时显示全身立绘", ref Settings.usePortraitMode);
-                    
-                    cy += 34f;
 
-                    // 渲染树配置
-                    Rect renderTreeBtnRect = new Rect(contentRect.x, cy, 180f, 30f);
-                    if (Widgets.ButtonText(renderTreeBtnRect, "配置渲染树"))
-                    {
-                        Find.WindowStack.Add(new UI.Dialog_RenderTreeEditor());
-                    }
-                    TooltipHandler.TipRegion(renderTreeBtnRect, "打开渲染树编辑器，自定义立绘表情和口型映射。");
+                    // 第二列
+                    Rect col2Rect = new Rect(contentRect.x + colWidth + 10f, cy, colWidth, 28f);
+                    SettingsUIComponents.DrawToggleSetting(col2Rect, "精简提示词",
+                        "使用更短的系统提示词以减少 Token 消耗", ref Settings.useCompactPrompt);
+                    col2Rect.y += 34f;
+                    
+                    SettingsUIComponents.DrawToggleSetting(col2Rect, "调试模式",
+                        "启用开发者调试信息输出", ref Settings.debugMode);
                 });
-                y += uiHeight + SettingsUIComponents.MediumGap;
-                
-                // === 提示词管理 ===
-                float promptHeight = 120f;
-                Rect promptRect = new Rect(viewRect.x, y, cardWidth, promptHeight);
-                SettingsUIComponents.DrawSettingsGroup(promptRect, "提示词管理", SettingsUIComponents.AccentBlue, (contentRect) =>
-                {
-                    float cy = contentRect.y;
-                    
-                    Rect initBtnRect = new Rect(contentRect.x, cy, 180f, 30f);
-                    if (Widgets.ButtonText(initBtnRect, "初始化提示词"))
-                    {
-                        PromptLoader.InitializeUserPrompts();
-                    }
-                    TooltipHandler.TipRegion(initBtnRect, "将 Mod 内置提示词复制到 Config 目录，以便进行自定义修改。");
-                    
-                    Rect manageBtnRect = new Rect(contentRect.x + 190f, cy, 180f, 30f);
-                    if (Widgets.ButtonText(manageBtnRect, "管理提示词"))
-                    {
-                        Find.WindowStack.Add(new UI.PromptManagementWindow());
-                    }
-                    TooltipHandler.TipRegion(manageBtnRect, "打开提示词管理窗口，编辑自定义提示词。");
-                    
-                    cy += 35f;
-                    
-                    Rect descRect = new Rect(contentRect.x, cy, contentRect.width, 40f);
-                    Widgets.Label(descRect, "提示：修改提示词后，需要重启游戏或重新加载存档才能生效。自定义提示词位于 Config/TheSecondSeat/Prompts 目录下。");
-                });
+                y += generalHeight + SettingsUIComponents.MediumGap;
                 // 全局提示词已移至高级选项卡
             });
             

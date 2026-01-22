@@ -76,7 +76,7 @@ namespace TheSecondSeat.Settings
                 
                 
                 // === 开发者工具 ===
-                float devToolsHeight = 160f; // Increased height
+                float devToolsHeight = 240f; // Increased height for more buttons
                 Rect devToolsRect = new Rect(viewRect.x, y, cardWidth, devToolsHeight);
                 SettingsUIComponents.DrawSettingsGroup(devToolsRect, "开发者工具", SettingsUIComponents.AccentPurple, (contentRect) =>
                 {
@@ -86,12 +86,27 @@ namespace TheSecondSeat.Settings
                     SettingsUIComponents.DrawInfoBox(infoRect, "高级配置与调试工具", InfoBoxType.Info);
                     cy += 44f;
                     
+                    // 工程师模式开关
+                    Rect engineerModeRect = new Rect(contentRect.x, cy, contentRect.width, 28f);
+                    SettingsUIComponents.DrawToggleSetting(engineerModeRect, "工程师模式", 
+                        "开启详细错误监听和高级调试功能（仅限开发人员）", ref Settings.engineerMode);
+                    cy += 34f;
+                    
                     Rect renderTreeBtnRect = new Rect(contentRect.x, cy, contentRect.width, 32f);
                     if (SettingsUIComponents.DrawButton(renderTreeBtnRect, "打开渲染树编辑器", SettingsUIComponents.AccentPurple))
                     {
-                        Find.WindowStack.Add(new UI.Dialog_RenderTreeEditor());
+                        // v1.11.0: 使用新的 RenderTreeConfigWindow
+                        Find.WindowStack.Add(new PersonaGeneration.RenderTreeConfigWindow());
                     }
                     
+                    cy += 40f;
+
+                    Rect promptBtnRect = new Rect(contentRect.x, cy, contentRect.width, 32f);
+                    if (SettingsUIComponents.DrawButton(promptBtnRect, "打开提示词管理", SettingsUIComponents.AccentGreen))
+                    {
+                        Find.WindowStack.Add(new UI.PromptManagementWindow());
+                    }
+
                     cy += 40f;
                     
                     Rect debugAgentBtnRect = new Rect(contentRect.x, cy, contentRect.width, 32f);

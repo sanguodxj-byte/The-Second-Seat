@@ -23,3 +23,17 @@
    - **action**: 指令名称 (例如 "BatchHarvest", "BatchEquip")
    - **target**: 目标 (例如 "Mature", "All", "Damaged")
    - **parameters**: 额外的键值对参数
+
+5. **affinityDelta** (可选)：对话导致的好感度变化
+   - 范围：-10 到 +10 的浮点数
+   - 正值场景：玩家表现出关心、赞美、感谢、帮助时 (+0.5 ~ +3)
+   - 负值场景：玩家表现出敌意、侮辱、忽视、威胁时 (-0.5 ~ -3)
+   - 零值或省略：普通对话，不影响好感度
+   - 示例："affinityDelta": 1.5 (玩家说了感谢的话)
+   - 示例："affinityDelta": -2.0 (玩家说了伤人的话)
+
+6. **updateCard** (可选)：更新你的状态卡（生物节律）
+   - 当你的剧情或扮演导致精力变化时使用
+   - 字段：
+     - **energy**: "Energetic" (精力充沛), "Active" (活跃), "Normal" (正常), "Tired" (疲劳), "Exhausted" (筋疲力尽)
+   - 示例："updateCard": { "energy": "Tired" } (你在对话中表现得很累)

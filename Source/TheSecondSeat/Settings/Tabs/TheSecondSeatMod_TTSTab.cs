@@ -2,6 +2,7 @@ using UnityEngine;
 using Verse;
 using RimWorld;
 using System;
+using System.Linq;
 using TheSecondSeat.TTS;
 
 namespace TheSecondSeat.Settings
@@ -11,179 +12,180 @@ namespace TheSecondSeat.Settings
         private void DrawTTSSettingsTab(Rect rect)
         {
             Vector2 scrollPos = tabManager.GetScrollPosition();
-            float contentHeight = 650f;
+            float contentHeight = 700f;
             
             SettingsUIComponents.DrawScrollableCardContent(rect, ref scrollPos, contentHeight, (viewRect) =>
             {
                 float y = viewRect.y + SettingsUIComponents.MediumGap;
                 float cardWidth = viewRect.width - 10f;
                 
-                // === TTS 开关 ===
-                float enableHeight = 100f;
-                Rect enableRect = new Rect(viewRect.x, y, cardWidth, enableHeight);
-                SettingsUIComponents.DrawSettingsGroup(enableRect, "语音合成（TTS）", SettingsUIComponents.AccentPurple, (contentRect) =>
+                // === TTS 开关与提供商（紧凑合并） ===
+                float headerHeight = 130f;
+                Rect headerRect = new Rect(viewRect.x, y, cardWidth, headerHeight);
+                SettingsUIComponents.DrawSettingsGroup(headerRect, "语音合成（TTS）", SettingsUIComponents.AccentPurple, (contentRect) =>
                 {
-                    Rect toggleRect = new Rect(contentRect.x, contentRect.y, contentRect.width, 48f);
-                    SettingsUIComponents.DrawCheckboxWithDescription(toggleRect, "启用语音合成", 
-                        "AI 回复时生成语音", ref Settings.enableTTS);
+                    float cy = contentRect.y;
+                    float halfWidth = (contentRect.width - 10f) / 2f;
+                    
+                    // 启用开关和自动播放（同一行）
+                    SettingsUIComponents.DrawToggleSetting(new Rect(contentRect.x, cy, halfWidth, 24f), 
+                        "启用 TTS", "生成语音回复", ref Settings.enableTTS);
+                    SettingsUIComponents.DrawToggleSetting(new Rect(contentRect.x + halfWidth + 10f, cy, halfWidth, 24f), 
+                        "自动播放", "自动播放语音", ref Settings.autoPlayTTS);
+                    cy += 28f;
+                    
+                    if (Settings.enableTTS)
+                    {
+                        // 提供商选择（紧凑按钮组）
+                        Widgets.Label(new Rect(contentRect.x, cy, 60f, 24f), "提供商:");
+                        string[] providers = { "edge", "azure", "local", "openai", "siliconflow" };
+                        string[] names = { "Edge", "Azure", "本地", "OpenAI", "SiliconFlow" };
+                        float btnWidth = (contentRect.width - 70f) / 5f;
+                        for (int i = 0; i < providers.Length; i++)
+                        {
+                            bool isSelected = Settings.ttsProvider == providers[i];
+                            Rect btnRect = new Rect(contentRect.x + 60f + i * btnWidth, cy, btnWidth - 2f, 22f);
+                            if (isSelected) Widgets.DrawBoxSolid(btnRect, new Color(0.3f, 0.5f, 0.7f, 0.5f));
+                            if (Widgets.ButtonText(btnRect, names[i], true, true, isSelected))
+                                Settings.ttsProvider = providers[i];
+                        }
+                    }
                 });
-                y += enableHeight + SettingsUIComponents.MediumGap;
+                y += headerHeight + SettingsUIComponents.SmallGap;
                 
                 if (!Settings.enableTTS)
                 {
-                    Rect disabledRect = new Rect(viewRect.x, y, cardWidth, 40f);
+                    Rect disabledRect = new Rect(viewRect.x, y, cardWidth, 36f);
                     SettingsUIComponents.DrawInfoBox(disabledRect, "启用 TTS 后可配置语音合成选项", InfoBoxType.Info);
                     tabManager.SetScrollPosition(scrollPos);
                     return;
                 }
                 
-                // === TTS 提供商 ===
-                float providerHeight = 180f;
-                Rect providerRect = new Rect(viewRect.x, y, cardWidth, providerHeight);
-                SettingsUIComponents.DrawSettingsGroup(providerRect, "TTS 提供商", SettingsUIComponents.AccentPurple, (contentRect) =>
+                // === Edge TTS 说明（免费，无需配置）===
+                if (Settings.ttsProvider == "edge")
                 {
-                    float cy = contentRect.y;
-                    
-                    string[] providers = { "edge", "azure", "local", "openai", "siliconflow" };
-                    string[] providerNames = { "Edge TTS (免费/在线)", "Azure TTS (高质量)", "本地 TTS (离线)", "OpenAI TTS", "SiliconFlow (IndexTTS)" };
-                    
-                    int currentIndex = Array.IndexOf(providers, Settings.ttsProvider);
-                    if (currentIndex < 0) currentIndex = 0;
-                    
-                    Rect dropdownRect = new Rect(contentRect.x, cy, contentRect.width, 28f);
-                    SettingsUIComponents.DrawDropdownSetting(dropdownRect, "服务提供商", 
-                        "选择 TTS 服务", providerNames[currentIndex], providerNames, 
-                        (selected) => {
-                            int idx = Array.IndexOf(providerNames, selected);
-                            if (idx >= 0) Settings.ttsProvider = providers[idx];
-                        });
-                    cy += 36f;
-                    
-                    // 提供商说明
-                    string providerInfo = Settings.ttsProvider switch
+                    float edgeInfoHeight = 50f;
+                    Rect edgeInfoRect = new Rect(viewRect.x, y, cardWidth, edgeInfoHeight);
+                    SettingsUIComponents.DrawSettingsGroup(edgeInfoRect, "Edge TTS (免费)", SettingsUIComponents.AccentGreen, (contentRect) =>
                     {
-                        "edge" => "使用微软 Edge 浏览器的在线语音服务，无需 API Key",
-                        "azure" => "使用 Azure Speech Services，高质量但需要 API Key",
-                        "local" => "使用 Windows 系统自带的 TTS，离线可用",
-                        "openai" => "使用 OpenAI 兼容的 TTS API",
-                        "siliconflow" => "使用 SiliconFlow API (支持 IndexTTS)",
-                        _ => ""
-                    };
-                    
-                    Rect infoRect = new Rect(contentRect.x, cy, contentRect.width, 36f);
-                    SettingsUIComponents.DrawInfoBox(infoRect, providerInfo, InfoBoxType.Info);
-                });
-                y += providerHeight + SettingsUIComponents.MediumGap;
-                
-                // === Azure 配置（仅 Azure 提供商显示）===
-                if (Settings.ttsProvider == "azure")
-                {
-                    float azureHeight = 150f;
-                    Rect azureRect = new Rect(viewRect.x, y, cardWidth, azureHeight);
-                    SettingsUIComponents.DrawSettingsGroup(azureRect, "Azure 配置", SettingsUIComponents.AccentPurple, (contentRect) =>
-                    {
-                        float cy = contentRect.y;
-                        
-                        Rect apiKeyRect = new Rect(contentRect.x, cy, contentRect.width, 28f);
-                        SettingsUIComponents.DrawTextFieldSetting(apiKeyRect, "API 密钥", 
-                            "Azure Speech Services API 密钥", ref Settings.ttsApiKey, true);
-                        cy += 34f;
-                        
-                        Rect regionRect = new Rect(contentRect.x, cy, contentRect.width, 28f);
-                        SettingsUIComponents.DrawTextFieldSetting(regionRect, "区域", 
-                            "Azure 区域 (如: eastus, westeurope)", ref Settings.ttsRegion);
+                        GUI.color = new Color(0.7f, 1f, 0.7f);
+                        Text.Font = GameFont.Small;
+                        Widgets.Label(new Rect(contentRect.x, contentRect.y, contentRect.width, 20f), 
+                            "✓ 免费使用，无需 API 密钥，直接选择语音即可使用");
+                        GUI.color = Color.white;
                     });
-                    y += azureHeight + SettingsUIComponents.MediumGap;
+                    y += edgeInfoHeight + SettingsUIComponents.SmallGap;
                 }
-                // === OpenAI / SiliconFlow 配置 ===
-                else if (Settings.ttsProvider == "openai" || Settings.ttsProvider == "siliconflow")
+                
+                // === API 配置（根据提供商显示不同选项）===
+                if (Settings.ttsProvider == "azure" || Settings.ttsProvider == "openai" || Settings.ttsProvider == "siliconflow")
                 {
-                    float apiHeight = 220f;
+                    float apiHeight = Settings.ttsProvider == "siliconflow" ? 180f : 130f;
                     Rect apiRect = new Rect(viewRect.x, y, cardWidth, apiHeight);
                     SettingsUIComponents.DrawSettingsGroup(apiRect, "API 配置", SettingsUIComponents.AccentPurple, (contentRect) =>
                     {
                         float cy = contentRect.y;
                         
-                        Rect apiKeyRect = new Rect(contentRect.x, cy, contentRect.width, 28f);
-                        SettingsUIComponents.DrawTextFieldSetting(apiKeyRect, "API 密钥",
-                            "API 访问密钥", ref Settings.ttsApiKey, true);
-                        cy += 34f;
+                        // API 密钥
+                        SettingsUIComponents.DrawTextFieldSetting(new Rect(contentRect.x, cy, contentRect.width, 26f), 
+                            "API 密钥", "API 访问密钥", ref Settings.ttsApiKey, true);
+                        cy += 30f;
                         
-                        // 默认值填充
-                        if (string.IsNullOrEmpty(Settings.ttsApiEndpoint))
+                        if (Settings.ttsProvider == "azure")
                         {
-                            Settings.ttsApiEndpoint = Settings.ttsProvider == "siliconflow"
-                                ? "https://api.siliconflow.cn/v1/audio/speech"
-                                : "https://api.openai.com/v1/audio/speech";
+                            // Azure 区域
+                            SettingsUIComponents.DrawTextFieldSetting(new Rect(contentRect.x, cy, contentRect.width, 26f), 
+                                "区域", "Azure 区域 (如 eastus)", ref Settings.ttsRegion);
                         }
-                        
-                        if (string.IsNullOrEmpty(Settings.ttsModelName))
+                        else
                         {
-                            Settings.ttsModelName = Settings.ttsProvider == "siliconflow"
-                                ? "IndexTeam/IndexTTS-2"
-                                : "tts-1";
+                            // OpenAI / SiliconFlow 配置
+                            if (string.IsNullOrEmpty(Settings.ttsApiEndpoint))
+                            {
+                                Settings.ttsApiEndpoint = Settings.ttsProvider == "siliconflow"
+                                    ? "https://api.siliconflow.cn/v1/audio/speech"
+                                    : "https://api.openai.com/v1/audio/speech";
+                            }
+                            if (string.IsNullOrEmpty(Settings.ttsModelName))
+                            {
+                                Settings.ttsModelName = Settings.ttsProvider == "siliconflow"
+                                    ? "IndexTeam/IndexTTS-2"
+                                    : "tts-1";
+                            }
+                            
+                            // API 端点和模型（同一行）
+                            float halfW = (contentRect.width - 10f) / 2f;
+                            SettingsUIComponents.DrawTextFieldSetting(new Rect(contentRect.x, cy, halfW, 26f), 
+                                "API 端点", "", ref Settings.ttsApiEndpoint);
+                            SettingsUIComponents.DrawTextFieldSetting(new Rect(contentRect.x + halfW + 10f, cy, halfW, 26f), 
+                                "模型", "", ref Settings.ttsModelName);
+                            cy += 30f;
+                            
+                            // SiliconFlow 特有：音色克隆 URI
+                            if (Settings.ttsProvider == "siliconflow")
+                            {
+                                SettingsUIComponents.DrawTextFieldSetting(new Rect(contentRect.x, cy, contentRect.width, 26f), 
+                                    "音色URI (克隆)", "上传音频到 SiliconFlow 获取的 audio_uri", ref Settings.ttsAudioUri);
+                                cy += 30f;
+                                
+                                // 提示信息
+                                Rect tipRect = new Rect(contentRect.x, cy, contentRect.width, 20f);
+                                GUI.color = Color.gray;
+                                Text.Font = GameFont.Tiny;
+                                Widgets.Label(tipRect, "留空使用预设音色，填入 URI 使用克隆音色");
+                                Text.Font = GameFont.Small;
+                                GUI.color = Color.white;
+                            }
                         }
-
-                        Rect endpointRect = new Rect(contentRect.x, cy, contentRect.width, 28f);
-                        SettingsUIComponents.DrawTextFieldSetting(endpointRect, "API 端点",
-                            "API URL", ref Settings.ttsApiEndpoint);
-                        cy += 34f;
-
-                        Rect modelRect = new Rect(contentRect.x, cy, contentRect.width, 28f);
-                        SettingsUIComponents.DrawTextFieldSetting(modelRect, "模型名称",
-                            "如 tts-1 或 IndexTeam/IndexTTS-2", ref Settings.ttsModelName);
                     });
-                    y += apiHeight + SettingsUIComponents.MediumGap;
+                    y += apiHeight + SettingsUIComponents.SmallGap;
                 }
                 
-                // === 语音参数 ===
-                float voiceHeight = 200f;
+                // === 语音参数（紧凑布局）===
+                float voiceHeight = 120f;
                 Rect voiceRect = new Rect(viewRect.x, y, cardWidth, voiceHeight);
                 SettingsUIComponents.DrawSettingsGroup(voiceRect, "语音参数", SettingsUIComponents.AccentPurple, (contentRect) =>
                 {
                     float cy = contentRect.y;
+                    float halfWidth = (contentRect.width - 10f) / 2f;
                     
-                    // 语音选择
-                    Rect voiceSelectRect = new Rect(contentRect.x, cy, contentRect.width, 28f);
-                    SettingsUIComponents.DrawDropdownSetting(voiceSelectRect, "语音",
-                        "选择 TTS 语音", Settings.ttsVoice, TTS.TTSService.GetAvailableVoices().ToArray(),
+                    // 语音选择（根据提供商动态显示语音列表）
+                    var voiceList = TTSService.GetAvailableVoices(Settings.ttsProvider).ToArray();
+                    // 如果当前语音不在列表中，自动选择第一个
+                    if (voiceList.Length > 0 && !voiceList.Contains(Settings.ttsVoice))
+                    {
+                        Settings.ttsVoice = voiceList[0];
+                    }
+                    SettingsUIComponents.DrawDropdownSetting(new Rect(contentRect.x, cy, contentRect.width, 26f), 
+                        "语音", "选择 TTS 语音", Settings.ttsVoice, voiceList,
                         (selected) => Settings.ttsVoice = selected);
-                    cy += 36f;
+                    cy += 30f;
                     
-                    // 语速
-                    Rect speedRect = new Rect(contentRect.x, cy, contentRect.width, 28f);
-                    SettingsUIComponents.DrawSliderSetting(speedRect, "语速", 
-                        "语音播放速度", ref Settings.ttsSpeechRate, 0.5f, 2f, "F2");
-                    cy += 34f;
+                    // 语速和音量（同一行）
+                    Widgets.Label(new Rect(contentRect.x, cy, 50f, 24f), $"语速:");
+                    Settings.ttsSpeechRate = Widgets.HorizontalSlider(
+                        new Rect(contentRect.x + 50f, cy + 4f, halfWidth - 80f, 16f), 
+                        Settings.ttsSpeechRate, 0.5f, 2f);
+                    Widgets.Label(new Rect(contentRect.x + halfWidth - 25f, cy, 35f, 24f), $"{Settings.ttsSpeechRate:F2}");
                     
-                    // 音量
-                    Rect volumeRect = new Rect(contentRect.x, cy, contentRect.width, 28f);
-                    float volumePercent = Settings.ttsVolume * 100f;
-                    SettingsUIComponents.DrawSliderSetting(volumeRect, "音量", 
-                        "语音音量", ref Settings.ttsVolume, 0f, 1f, "P0");
-                    cy += 34f;
-                    
-                    // 自动播放
-                    Rect autoPlayRect = new Rect(contentRect.x, cy, contentRect.width, 28f);
-                    SettingsUIComponents.DrawToggleSetting(autoPlayRect, "自动播放", 
-                        "AI 回复时自动播放语音", ref Settings.autoPlayTTS);
+                    Widgets.Label(new Rect(contentRect.x + halfWidth + 10f, cy, 50f, 24f), $"音量:");
+                    Settings.ttsVolume = Widgets.HorizontalSlider(
+                        new Rect(contentRect.x + halfWidth + 60f, cy + 4f, halfWidth - 90f, 16f), 
+                        Settings.ttsVolume, 0f, 1f);
+                    Widgets.Label(new Rect(contentRect.width - 25f, cy, 35f, 24f), $"{Settings.ttsVolume:P0}");
                 });
-                y += voiceHeight + SettingsUIComponents.MediumGap;
+                y += voiceHeight + SettingsUIComponents.SmallGap;
                 
-                // === 操作按钮 ===
-                float buttonHeight = 80f;
-                Rect buttonAreaRect = new Rect(viewRect.x, y, cardWidth, buttonHeight);
+                // === 操作按钮（紧凑行）===
+                float buttonHeight = 40f;
+                Rect buttonRect = new Rect(viewRect.x, y, cardWidth, buttonHeight);
                 
-                // 保存 TTS 设置按钮
-                Rect saveRect = new Rect(viewRect.x, y, cardWidth / 2 - 5, 32f);
-                if (SettingsUIComponents.DrawButton(saveRect, "保存 TTS 设置", SettingsUIComponents.AccentGreen))
+                float btnW = (cardWidth - 10f) / 2f;
+                if (SettingsUIComponents.DrawButton(new Rect(viewRect.x, y, btnW, 30f), "保存 TTS 设置", SettingsUIComponents.AccentGreen))
                 {
                     SaveTTSSettings();
                 }
-                
-                // 测试 TTS 按钮
-                Rect testRect = new Rect(viewRect.x + cardWidth / 2 + 5, y, cardWidth / 2 - 5, 32f);
-                if (SettingsUIComponents.DrawButton(testRect, "测试 TTS", SettingsUIComponents.AccentPurple))
+                if (SettingsUIComponents.DrawButton(new Rect(viewRect.x + btnW + 10f, y, btnW, 30f), "测试 TTS", SettingsUIComponents.AccentPurple))
                 {
                     _ = TestTTSAsync();
                 }
@@ -199,8 +201,8 @@ namespace TheSecondSeat.Settings
         {
             try
             {
-                // 配置 TTS 服务
-                TTS.TTSService.Instance.Configure(
+                // 配置 TTS 服务（包含 audioUri）
+                TTSService.Instance.Configure(
                     Settings.ttsProvider,
                     Settings.ttsApiKey,
                     Settings.ttsRegion,
@@ -208,13 +210,14 @@ namespace TheSecondSeat.Settings
                     Settings.ttsSpeechRate,
                     Settings.ttsVolume,
                     Settings.ttsApiEndpoint,
-                    Settings.ttsModelName
+                    Settings.ttsModelName,
+                    Settings.ttsAudioUri
                 );
                 
                 // 保存到磁盘
                 Settings.Write();
                 
-                Log.Message($"[TTS Settings] Saved - Provider: {Settings.ttsProvider}, Key: {(string.IsNullOrEmpty(Settings.ttsApiKey) ? "empty" : "***")}, Region: {Settings.ttsRegion}");
+                Log.Message($"[TTS Settings] Saved - Provider: {Settings.ttsProvider}, AudioUri: {(string.IsNullOrEmpty(Settings.ttsAudioUri) ? "none" : "set")}");
                 Messages.Message("TTS 设置已保存并应用", MessageTypeDefOf.PositiveEvent);
             }
             catch (Exception ex)
@@ -230,12 +233,12 @@ namespace TheSecondSeat.Settings
             {
                 Messages.Message("正在测试 TTS...", MessageTypeDefOf.NeutralEvent);
                 
-                string testText = "你好，这是语音测试。Hello, this is a voice test.";
-                string filePath = await TTS.TTSService.Instance.SpeakAsync(testText);
+                string testText = "你好，这是语音测试。";
+                string filePath = await TTSService.Instance.SpeakAsync(testText);
                 
                 if (!string.IsNullOrEmpty(filePath))
                 {
-                    Messages.Message("TTS 测试成功！音频文件已保存。", MessageTypeDefOf.PositiveEvent);
+                    Messages.Message("TTS 测试成功！", MessageTypeDefOf.PositiveEvent);
                 }
                 else
                 {

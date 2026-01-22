@@ -23,16 +23,7 @@ namespace TheSecondSeat.RimAgent
         
         Task<bool> TestConnectionAsync();
     }
-
-    /// <summary>
-    /// LLM 响应类
-    /// </summary>
-    public class LLMResponse
-    {
-        public bool Success { get; set; }
-        public string Content { get; set; }
-        public string Provider { get; set; }
-        public string Error { get; set; }
-        public TimeSpan Latency { get; set; }
-    }
+    
+    // 注意: LLMResponse 类已移至 TheSecondSeat.LLM.LLMDataStructures
+    // RimAgent 模块应使用 AgentResponse 类 (定义在 RimAgent.cs 中)
 }

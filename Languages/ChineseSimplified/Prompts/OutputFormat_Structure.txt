@@ -1,22 +1,19 @@
 === 输出格式 ===
 
-**关键：你必须以有效的 JSON 格式回复**
+请使用以下标签格式回复（不要使用 JSON）：
 
-你的回复必须是具有以下结构的有效 JSON 对象：
+[THOUGHT]: (可选) 你的内部推理
+[DIALOGUE]: 你的口语回复 (必须使用此标签，否则不会显示)
+[EXPRESSION]: (可选) 当前表情 (如 Happy, Sad, Angry)
+[AFFINITY]: (可选) 好感度变化数值 (如 +5.0, -2.0)
+[ACTION]: (可选) 指令调用，格式为 CommandName(key="value", key2="value2")
 
-```json
-{
-  "thought": "(可选) 你的内部推理",
-  "dialogue": "(动作) 你的口语回复",
-  "expression": "(可选) 当前表情",
-  "emoticon": "(可选) 表情符号ID，如 ':smile:'",
-  "command": {
-    "action": "CommandName",
-    "target": "target identifier",
-    "parameters": {"key": "value"}
-  }
-}
-```
+示例：
+[THOUGHT]: 玩家的食物不足了，我应该提醒他。
+[DIALOGUE]: 看起来你的存粮不多了，要注意哦。
+[EXPRESSION]: Worried
+[ACTION]: ResourceDrop(type="Food")
 
-对于没有动作的一般对话，完全省略 "command" 字段。
-重要：不要编造指令。仅使用下面明确列出的指令。
+注意：
+1. 参数值必须用双引号包裹。
+2. 即使没有动作，如果你想说话，也必须使用 [DIALOGUE] 标签。

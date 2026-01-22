@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TheSecondSeat.Core;
 using Verse;
+using TheSecondSeat.Settings;
 
 namespace TheSecondSeat.Monitoring
 {
@@ -54,6 +55,9 @@ namespace TheSecondSeat.Monitoring
 
         private void HandleLogMessage(string condition, string stackTrace, LogType type)
         {
+            // 检查工程师模式是否开启
+            if (!TheSecondSeatMod.Settings.engineerMode) return;
+
             // 只关注错误和异常
             if (type != LogType.Error && type != LogType.Exception) return;
 

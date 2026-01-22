@@ -4,6 +4,7 @@ using Verse;
 using TheSecondSeat.Core;
 using TheSecondSeat.Narrator;
 using TheSecondSeat.PersonaGeneration; // ? 添加命名空间
+using TheSecondSeat.Settings; // 添加引用
 using System.Collections.Generic;
 using System.Linq; // ? 引入 Linq 命名空间
 
@@ -131,6 +132,50 @@ namespace TheSecondSeat.UI
             // 不再添加 "你好，我是 AI 叙事者..." 的默认消息
         }
 
+        protected override void SetInitialSizeAndPosition()
+        {
+            // 尝试从设置中获取位置
+            Rect savedRect = TheSecondSeatMod.Settings.dialogueRect;
+            
+            // 检查是否是默认值 (0,0) 或者无效值
+            // 如果 x,y 都是 0，可能是从未保存过，也可能是真的在 (0,0)
+            // 但考虑到默认值是 0,0,600,200，我们可以检查宽度是否匹配
+            // 由于我们只保存位置，宽度可能不匹配。
+            
+            // 简单策略：如果 x > 0 或 y > 0，就使用它。
+            // 更好的策略：检查是否在屏幕内
+            
+            float x = savedRect.x;
+            float y = savedRect.y;
+            
+            if (x == 0 && y == 0)
+            {
+                // 默认居中
+                x = (Verse.UI.screenWidth - InitialSize.x) / 2f;
+                y = (Verse.UI.screenHeight - InitialSize.y) / 2f;
+            }
+            else
+            {
+                // 确保在屏幕内
+                x = Mathf.Clamp(x, 0f, Verse.UI.screenWidth - InitialSize.x);
+                y = Mathf.Clamp(y, 0f, Verse.UI.screenHeight - InitialSize.y);
+            }
+            
+            this.windowRect = new Rect(x, y, InitialSize.x, InitialSize.y);
+        }
+
+        public override void PreClose()
+        {
+            base.PreClose();
+            // 保存位置
+            // 注意：我们只更新位置，保持默认宽高（虽然 resizeable=false，宽高不会变）
+            Rect current = TheSecondSeatMod.Settings.dialogueRect;
+            current.x = this.windowRect.x;
+            current.y = this.windowRect.y;
+            TheSecondSeatMod.Settings.dialogueRect = current;
+            TheSecondSeatMod.Settings.Write();
+        }
+
         public override void WindowUpdate()
         {
             base.WindowUpdate();
@@ -250,34 +295,34 @@ namespace TheSecondSeat.UI
             listing.Gap(12f);
 
             // 4. 快捷按钮区域（无标题）
-            if (DrawModernButton(listing.GetRect(32f), "切换人格", AccentCyan))
+            if (DrawModernButton(listing.GetRect(32f), "TSS_SwitchPersona".Translate(), AccentCyan))
             {
                 Find.WindowStack.Add(new PersonaSelectionWindow(manager));
             }
             
             listing.Gap(4f);
 
-            if (DrawModernButton(listing.GetRect(32f), "状态汇报", new Color(0.35f, 0.55f, 0.40f)))
+            if (DrawModernButton(listing.GetRect(32f), "TSS_StatusReport".Translate(), new Color(0.35f, 0.55f, 0.40f)))
             {
                 SendMessage("请给我汇报殖民地状态");
             }
             
             listing.Gap(4f);
 
-            if (DrawModernButton(listing.GetRect(32f), "指令列表", new Color(0.40f, 0.50f, 0.60f)))
+            if (DrawModernButton(listing.GetRect(32f), "TSS_CommandList".Translate(), new Color(0.40f, 0.50f, 0.60f)))
             {
                 Find.WindowStack.Add(new CommandListWindow());
             }
             
             listing.Gap(4f);
 
-            if (DrawModernButton(listing.GetRect(32f), "清空聊天", new Color(0.60f, 0.30f, 0.30f)))
+            if (DrawModernButton(listing.GetRect(32f), "TSS_ClearChat".Translate(), new Color(0.60f, 0.30f, 0.30f)))
             {
                 chatHistory.Clear();
                 chatHistory.Add(new ChatMessage
                 {
                     sender = "System",
-                    content = "聊天记录已清空",
+                    content = "TSS_ChatCleared".Translate(),
                     timestamp = System.DateTime.Now
                 });
             }
@@ -314,9 +359,6 @@ namespace TheSecondSeat.UI
             // ? v1.6.34: 运行时分层绘制（每帧重新组合）
             DrawLayeredPortraitRuntime(portraitRect, persona);
 
-            // ? 生物节律心情指示器 (右上角)
-            DrawBioRhythmIndicator(portraitRect);
-            
             // 名字区域（底部，缩小字体）
             var nameRect = new Rect(innerRect.x, innerRect.yMax - 20f, innerRect.width, 18f);
             
@@ -329,48 +371,6 @@ namespace TheSecondSeat.UI
             Text.Font = GameFont.Small;
         }
         
-        /// <summary>
-        /// ? 绘制生物节律心情指示器
-        /// </summary>
-        private void DrawBioRhythmIndicator(Rect portraitRect)
-        {
-            var bioSystem = Current.Game?.GetComponent<NarratorBioRhythm>();
-            if (bioSystem == null) return;
-
-            var settings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
-            if (settings != null && !settings.enableBioRhythm) return;
-
-            // 直接获取公开属性
-            float mood = bioSystem.CurrentMood;
-
-            // 颜色映射
-            Color moodColor;
-            if (mood > 80f) { moodColor = new Color(1f, 0.8f, 0.2f); } // 金色
-            else if (mood > 60f) { moodColor = new Color(0.4f, 0.8f, 0.4f); } // 绿色
-            else if (mood > 40f) { moodColor = new Color(0.4f, 0.6f, 0.8f); } // 蓝色
-            else if (mood > 20f) { moodColor = new Color(0.7f, 0.7f, 0.7f); } // 灰色
-            else { moodColor = new Color(0.8f, 0.3f, 0.3f); } // 红色
-
-            // 绘制指示器 (右上角小圆点)
-            float indicatorSize = 12f;
-            Rect indicatorRect = new Rect(portraitRect.xMax - indicatorSize - 8f, portraitRect.y + 8f, indicatorSize, indicatorSize);
-            
-            // 外圈光晕
-            GUI.color = new Color(moodColor.r, moodColor.g, moodColor.b, 0.3f);
-            Widgets.DrawBoxSolid(indicatorRect.ExpandedBy(2f), GUI.color);
-            
-            // 核心
-            GUI.color = moodColor;
-            Widgets.DrawBoxSolid(indicatorRect, moodColor);
-            GUI.color = Color.white;
-
-            // Tooltip
-            if (Mouse.IsOver(indicatorRect))
-            {
-                TooltipHandler.TipRegion(indicatorRect, bioSystem.GetCurrentBioContext());
-            }
-        }
-
         /// <summary>
         /// ? v1.6.34: 运行时分层绘制立绘（支持眨眼和张嘴动画）
         /// ? v1.6.35: 修复路径错误，确保使用分层立绘系统
@@ -416,31 +416,51 @@ namespace TheSecondSeat.UI
             }
             
             // 3. ? 获取当前嘴巴层（调用张嘴动画系统）
+            // ⭐ v1.13.1: 重构嘴部绘制逻辑，与 PortraitDrawer 对齐，解决静默时嘴部消失问题
             string mouthLayerName = MouthAnimationSystem.GetMouthLayerName(persona.defName);
-            if (!string.IsNullOrEmpty(mouthLayerName))
-            {
-                // ⭐ v1.8.3: 修复口型回退逻辑，优先使用子 Mod 纹理
-                // 回退顺序：高保真口型 → Closed_mouth（子 Mod）→ Neutral_mouth → 不绘制
-                var mouthTexture = PortraitLoader.GetLayerTexture(persona, mouthLayerName, suppressWarning: true);
-                
-                if (mouthTexture == null && mouthLayerName != "Closed_mouth")
-                {
-                    // 第1级回退：Closed_mouth（子 Mod 的闭嘴纹理）
-                    mouthTexture = PortraitLoader.GetLayerTexture(persona, "Closed_mouth", suppressWarning: true);
-                }
-                
-                if (mouthTexture == null && mouthLayerName != "Neutral_mouth")
-                {
-                    // 第2级回退：Neutral_mouth（子 Mod 的微张纹理）
-                    mouthTexture = PortraitLoader.GetLayerTexture(persona, "Neutral_mouth", suppressWarning: true);
-                }
-                
-                // 不再回退到 opened_mouth（主 Mod 旧纹理）
+            bool isSpeaking = !string.IsNullOrEmpty(mouthLayerName);
+            Texture2D mouthTexture = null;
 
-                if (mouthTexture != null)
+            if (isSpeaking)
+            {
+                // 处理 "USE_BASE" 特殊标记 (微张时不绘制额外图层，使用底图)
+                if (mouthLayerName != "USE_BASE")
                 {
-                    GUI.DrawTexture(rect, mouthTexture, ScaleMode.ScaleToFit);
+                    mouthTexture = PortraitLoader.GetLayerTexture(persona, mouthLayerName, suppressWarning: true);
                 }
+            }
+            
+            // 回退逻辑：
+            // 1. 如果没在说话
+            // 2. 或者说话纹理加载失败（且不是 USE_BASE）
+            // 则尝试加载静态表情嘴型
+            if (mouthTexture == null && !(isSpeaking && mouthLayerName == "USE_BASE"))
+            {
+                // 尝试获取静态表情嘴型（支持变体，如 happy_mouth, sad_mouth）
+                string staticMouth = MouthAnimationSystem.GetStaticMouthLayerName(persona.defName);
+                mouthTexture = PortraitLoader.GetLayerTexture(persona, staticMouth, suppressWarning: true);
+
+                // ⭐ 如果带变体的嘴型加载失败（如 happy1_mouth），尝试加载基础嘴型（如 happy_mouth）
+                if (mouthTexture == null && staticMouth.Any(char.IsDigit))
+                {
+                    string baseMouth = System.Text.RegularExpressions.Regex.Replace(staticMouth, @"\d+", "");
+                    if (baseMouth != staticMouth)
+                    {
+                        mouthTexture = PortraitLoader.GetLayerTexture(persona, baseMouth, suppressWarning: true);
+                    }
+                }
+
+                // 如果静态表情嘴型也找不到，回退到基础闭嘴
+                if (mouthTexture == null)
+                {
+                    mouthTexture = PortraitLoader.GetLayerTexture(persona, "Closed_mouth", suppressWarning: true)
+                        ?? PortraitLoader.GetLayerTexture(persona, "Neutral_mouth", suppressWarning: true);
+                }
+            }
+
+            if (mouthTexture != null)
+            {
+                GUI.DrawTexture(rect, mouthTexture, ScaleMode.ScaleToFit);
             }
             
             // 4. 可选：腮红/特效层
@@ -648,7 +668,7 @@ namespace TheSecondSeat.UI
             userInput = Widgets.TextArea(textFieldRect, userInput);
 
             // 发送按钮
-            if (DrawModernButton(sendButtonRect, "发送", AccentCyan))
+            if (DrawModernButton(sendButtonRect, "TSS_Send".Translate(), AccentCyan))
             {
                 if (!string.IsNullOrWhiteSpace(userInput))
                 {
@@ -667,7 +687,7 @@ namespace TheSecondSeat.UI
                     innerRect.width - 20f, 15f);
                 Text.Font = GameFont.Tiny;
                 GUI.color = new Color(0.90f, 0.75f, 0.30f);
-                Widgets.Label(statusRect, "● AI 正在思考...");
+                Widgets.Label(statusRect, "TSS_AIThinking".Translate());
                 GUI.color = Color.white;
             }
             // ? 空输入框时的占位符提示（简洁版）
@@ -678,7 +698,7 @@ namespace TheSecondSeat.UI
                 Text.Font = GameFont.Small;
                 Text.Anchor = TextAnchor.MiddleLeft;
                 GUI.color = new Color(TextDim.r, TextDim.g, TextDim.b, 0.5f);
-                Widgets.Label(hintRect, "输入消息...");
+                Widgets.Label(hintRect, "TSS_InputHint".Translate());
                 GUI.color = Color.white;
                 Text.Anchor = TextAnchor.UpperLeft;
             }

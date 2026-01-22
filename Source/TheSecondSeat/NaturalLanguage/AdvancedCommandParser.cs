@@ -189,7 +189,12 @@ namespace TheSecondSeat.NaturalLanguage
         {
             try
             {
-                var json = JObject.Parse(llmJsonResponse);
+                // ⭐ 关键优化步骤 1: 提取 JSON 字符串
+                string cleanJson = ExtractJsonString(llmJsonResponse);
+                if (string.IsNullOrEmpty(cleanJson)) return null;
+
+                // ⭐ 关键优化步骤 2: 尝试解析
+                var json = JObject.Parse(cleanJson);
                 var commandToken = json["command"];
 
                 if (commandToken == null || commandToken.Type == JTokenType.Null)
@@ -231,9 +236,32 @@ namespace TheSecondSeat.NaturalLanguage
             }
             catch (Exception ex)
             {
-                Log.Error($"[NLParser] 解析LLM响应失败: {ex.Message}");
+                // 记录警告而不是错误，因为对于弱模型，解析失败是常态，我们会回退到自然语言处理
+                Log.Warning($"[NLParser] JSON 解析失败，尝试回退到 NLP 模式。原因: {ex.Message}");
                 return null;
             }
+        }
+
+        /// <summary>
+        /// ⭐ 新增工具方法：从混合文本中提取 JSON
+        /// </summary>
+        private static string ExtractJsonString(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return "";
+
+            // 1. 寻找第一个 '{' 和最后一个 '}'
+            int startIndex = text.IndexOf('{');
+            int endIndex = text.LastIndexOf('}');
+
+            if (startIndex != -1 && endIndex != -1 && endIndex > startIndex)
+            {
+                // 截取中间部分
+                string jsonCandidate = text.Substring(startIndex, endIndex - startIndex + 1);
+                return jsonCandidate;
+            }
+            
+            // 如果找不到大括号，可能模型完全忘了 JSON 格式
+            return "";
         }
     }
 

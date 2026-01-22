@@ -85,6 +85,7 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
         /// <summary>
         /// 生成个性化增强指令
         /// ⭐ v1.9.3: 支持动态标签加载 (Relationship_{Tag}.txt) 并自动去重
+        /// ⭐ v1.9.4: 静默跳过不存在的标签文件，避免日志污染
         /// </summary>
         private static void GeneratePersonalityAmplification(StringBuilder sb, List<string> tags)
         {
@@ -99,10 +100,29 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             {
                 string fileName = $"Relationship_{tag}";
                 
-                // 尝试加载 Relationship_{Tag}.txt
-                string content = PromptLoader.Load(fileName);
+                // ⭐ v1.9.4: 先检查别名回退，避免尝试加载不存在的文件
+                string fallbackFile = GetFallbackFile(tag);
                 
-                if (!string.IsNullOrWhiteSpace(content) && !content.StartsWith("Error:"))
+                // 如果有别名回退，优先使用别名
+                if (fallbackFile != null)
+                {
+                    if (loadedFiles.Add(fallbackFile))
+                    {
+                        string fallbackContent = PromptLoader.Load(fallbackFile);
+                        if (!string.IsNullOrWhiteSpace(fallbackContent) && !fallbackContent.StartsWith("[Error:"))
+                        {
+                            sb.AppendLine(fallbackContent);
+                            sb.AppendLine();
+                        }
+                    }
+                    continue;
+                }
+                
+                // 尝试加载 Relationship_{Tag}.txt（静默模式，不输出警告）
+                string content = PromptLoader.Load(fileName, silent: true);
+                
+                // ⭐ v1.9.4: 检查 [Error: 前缀（PromptLoader 返回的错误格式）
+                if (!string.IsNullOrWhiteSpace(content) && !content.StartsWith("[Error:"))
                 {
                     // 如果文件存在且未加载过，则添加内容
                     if (loadedFiles.Add(fileName))
@@ -110,38 +130,40 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
                         sb.AppendLine(content);
                         sb.AppendLine();
                     }
-                    continue; // 已成功加载对应文件，跳过别名检查
                 }
-                
-                // 2. 别名回退 (Hardcoded Fallback)
-                // 只有当标签没有对应的文件时，才检查是否是已知别名
-                string fallbackFile = null;
-                
-                if (tag == "Obsessive" || tag == "Possessive" || tag == "病娇") 
-                    fallbackFile = "Relationship_Yandere";
-                else if (tag == "Hot-Cold" || tag == "傲娇") 
-                    fallbackFile = "Relationship_Tsundere";
-                else if (tag == "Cool" || tag == "冷娇" || tag == "三无") 
-                    fallbackFile = "Relationship_Kuudere";
-                else if (tag == "Pampering" || tag == "Motherly" || tag == "溺爱" || tag == "宠溺") 
-                    fallbackFile = "Relationship_Doting";
-                else if (tag == "Nurturing" || tag == "温柔") 
-                    fallbackFile = "Relationship_Gentle";
-                
-                if (fallbackFile != null)
-                {
-                    // 尝试加载回退文件（如果尚未加载）
-                    if (loadedFiles.Add(fallbackFile))
-                    {
-                        string fallbackContent = PromptLoader.Load(fallbackFile);
-                        if (!string.IsNullOrWhiteSpace(fallbackContent) && !fallbackContent.StartsWith("Error:"))
-                        {
-                            sb.AppendLine(fallbackContent);
-                            sb.AppendLine();
-                        }
-                    }
-                }
+                // 如果文件不存在且没有别名回退，静默跳过（不输出警告）
             }
+        }
+        
+        /// <summary>
+        /// 获取标签的别名回退文件名
+        /// ⭐ v1.9.4: 提取为独立方法，支持更多别名
+        /// </summary>
+        private static string GetFallbackFile(string tag)
+        {
+            // 病娇系列
+            if (tag == "Obsessive" || tag == "Possessive" || tag == "病娇" || tag == "Yandere") 
+                return "Relationship_Yandere";
+            
+            // 傲娇系列
+            if (tag == "Hot-Cold" || tag == "傲娇" || tag == "Tsundere") 
+                return "Relationship_Tsundere";
+            
+            // 冷娇/三无系列
+            if (tag == "Cool" || tag == "冷娇" || tag == "三无" || tag == "Kuudere") 
+                return "Relationship_Kuudere";
+            
+            // 溺爱系列
+            if (tag == "Pampering" || tag == "Motherly" || tag == "溺爱" || tag == "宠溺" || tag == "Doting") 
+                return "Relationship_Doting";
+            
+            // 温柔系列
+            if (tag == "Nurturing" || tag == "温柔" || tag == "Gentle") 
+                return "Relationship_Gentle";
+            
+            // 神秘/沉静等通用标签 - 不需要特殊处理，返回 null 让系统尝试加载对应文件
+            // 如果文件不存在，会静默跳过
+            return null;
         }
 
         /// <summary>

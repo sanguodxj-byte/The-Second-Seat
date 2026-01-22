@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using Verse;
 using RimWorld;
@@ -23,16 +24,18 @@ namespace TheSecondSeat.UI
         private const float ResizeHandleSize = 20f;
         
         // 触摸互动
-        private float hoverStartTime = 0f;
-        private bool isHovering = false;
-        private bool isTouchModeActive = false;
         private Vector2 lastMousePosition = Vector2.zero;
-        private float lastTouchTime = 0f;
+        private float currentRubDuration = 0f; // 当前头部悬浮时长
+        private float bodyHoverTime = 0f;      // 当前身体悬浮时长
+        private float lastHeadPatTime = 0f;
+        private float lastPokeTime = 0f;
+        private float lastTouchMoveTime = 0f;
         private int touchCount = 0;
         
-        // 区域交互
-        private float headRubProgress = 0f;
-        private float lastHeadPatTime = 0f;
+        // ⭐ 摸头表情状态追踪（避免每帧重复触发）
+        private int lastHeadPatPhaseIndex = -1;      // 上一次摸头阶段索引
+        private ExpressionType lastHeadRubExpression = ExpressionType.Neutral;  // 上一次摸头表情
+        private int lastHeadRubIntensity = 0;        // 上一次摸头表情强度
         
         // 边框闪烁
         private float borderFlashStartTime = 0f;
@@ -55,47 +58,42 @@ namespace TheSecondSeat.UI
         {
             HandlePanelInteraction();
             
+            // 如果正在拖动或调整大小，跳过交互处理
+            if (isDragging || isResizing)
+            {
+                return;
+            }
+            
             bool mouseOver = panel.DrawRect.Contains(Event.current.mousePosition);
-            bool shiftHeld = Event.current.shift;
 
-            if (panel.AnimationHandler.IsPlayingAnimation || !shiftHeld || !mouseOver)
+            // 如果鼠标移出面板，或者未按住 Shift，重置交互状态
+            if (panel.AnimationHandler.IsPlayingAnimation || !mouseOver || !Event.current.shift)
             {
                 ResetInteractionState();
                 return;
             }
-
-            // 处理区域交互
-            bool interactionHandled = HandleZoneInteraction();
             
-            // 处理触摸互动（如果区域交互未处理）
-            if (!interactionHandled)
-            {
-                HandleHoverAndTouch();
-            }
+            // ⭐ 所有交互改为悬浮触发 (Shift + Hover)
+            HandleHoverInteraction();
             
             // 绘制交互提示
             DrawInteractionUI();
-            
-            // 拦截输入
-            if (Event.current.type == EventType.MouseDown)
-            {
-                Event.current.Use();
-            }
         }
 
         private void ResetInteractionState()
         {
-            if (isTouchModeActive || isHovering)
+            if (currentRubDuration > 0f || bodyHoverTime > 0f)
             {
-                DeactivateTouchMode();
+                panel.RestoreDefaultExpression();
             }
-            isHovering = false;
 
-            if (headRubProgress > 0f)
-            {
-                headRubProgress -= TSSFrameworkConfig.Interaction.HeadRubDecayRate * Time.deltaTime;
-                if (headRubProgress < 0f) headRubProgress = 0f;
-            }
+            currentRubDuration = 0f;
+            bodyHoverTime = 0f;
+            touchCount = 0;
+            
+            lastHeadPatPhaseIndex = -1;
+            lastHeadRubExpression = ExpressionType.Neutral;
+            lastHeadRubIntensity = 0;
         }
         
         private void HandlePanelInteraction()
@@ -103,24 +101,55 @@ namespace TheSecondSeat.UI
             Vector2 mousePos = Event.current.mousePosition;
             Rect resizeHandleRect = new Rect(panel.DrawRect.xMax - ResizeHandleSize, panel.DrawRect.yMax - ResizeHandleSize, ResizeHandleSize, ResizeHandleSize);
             bool mouseOverResize = resizeHandleRect.Contains(mousePos);
-
-            if (Event.current.type == EventType.MouseDown && Event.current.button == 0)
+            bool mouseOverPanel = panel.DrawRect.Contains(mousePos);
+            
+            // ⭐ 移动面板需要：Alt + 左键，或者鼠标中键
+            // 调整大小需要：拖动右下角手柄（任意按键方式）
+            bool isAltLeftClick = Event.current.button == 0 && Event.current.alt;
+            bool isMiddleClick = Event.current.button == 2;
+            bool isDragKey = isAltLeftClick || isMiddleClick;
+            
+            // ⭐ v2.6.5: 关键修复 - 当 Alt 键按下且鼠标在面板区域内时，
+            // 需要在所有鼠标事件类型上消耗事件，防止原版框选功能获取事件
+            if (Event.current.alt && mouseOverPanel)
             {
-                if (mouseOverResize)
+                // 对于所有鼠标相关事件，如果在面板区域内且按住 Alt，都需要处理
+                if (Event.current.type == EventType.MouseDown ||
+                    Event.current.type == EventType.MouseDrag ||
+                    Event.current.type == EventType.MouseUp)
+                {
+                    // 即使不是左键，也要阻止事件传播到原版系统
+                    // 但只有左键才真正执行拖动逻辑
+                }
+            }
+
+            if (Event.current.type == EventType.MouseDown)
+            {
+                // 调整大小：右下角手柄 + 左键
+                if (mouseOverResize && Event.current.button == 0)
                 {
                     isResizing = true;
                     isDragging = false;
                     dragStartPos = mousePos;
                     dragStartRect = panel.DrawRect;
                     Event.current.Use();
+                    return; // 立即返回，确保事件被完全消耗
                 }
-                else if (panel.DrawRect.Contains(mousePos))
+                // 拖动移动：Alt+左键 或 中键
+                else if (isDragKey && mouseOverPanel)
                 {
                     isDragging = true;
                     isResizing = false;
                     dragStartPos = mousePos;
                     dragStartRect = panel.DrawRect;
                     Event.current.Use();
+                    return; // 立即返回，确保事件被完全消耗
+                }
+                // ⭐ v2.6.5: 即使不开始拖动，Alt+鼠标在面板上也要消耗事件
+                else if (Event.current.alt && mouseOverPanel && Event.current.button == 0)
+                {
+                    Event.current.Use();
+                    return;
                 }
             }
             else if (Event.current.type == EventType.MouseDrag)
@@ -132,6 +161,7 @@ namespace TheSecondSeat.UI
                     float newHeight = Mathf.Max(100f, dragStartRect.height + delta.y);
                     panel.UpdateDrawRect(panel.DrawRect.x, panel.DrawRect.y, newWidth, newHeight);
                     Event.current.Use();
+                    return;
                 }
                 else if (isDragging)
                 {
@@ -140,101 +170,96 @@ namespace TheSecondSeat.UI
                     float newY = dragStartRect.y + delta.y;
                     panel.UpdateDrawRect(newX, newY, panel.DrawRect.width, panel.DrawRect.height);
                     Event.current.Use();
+                    return;
+                }
+                // ⭐ v2.6.5: Alt+拖动在面板上也要消耗事件（即使没有开始拖动状态）
+                else if (Event.current.alt && mouseOverPanel)
+                {
+                    Event.current.Use();
+                    return;
                 }
             }
             else if (Event.current.type == EventType.MouseUp)
             {
+                bool wasDragging = isDragging;
+                bool wasResizing = isResizing;
                 isDragging = false;
                 isResizing = false;
+                
+                // ⭐ v2.6.5: 如果之前在拖动/调整大小，或者 Alt+鼠标在面板上，消耗事件
+                if (wasDragging || wasResizing || (Event.current.alt && mouseOverPanel))
+                {
+                    Event.current.Use();
+                    return;
+                }
+            }
+            
+            // ⭐ 绘制移动提示（当按住 Alt 且鼠标悬停时）
+            if (Event.current.alt && mouseOverPanel && !isResizing)
+            {
+                // 绘制移动模式指示边框
+                GUI.color = new Color(0.3f, 0.7f, 1f, 0.5f);
+                Widgets.DrawBox(panel.DrawRect, 2);
+                GUI.color = Color.white;
             }
         }
 
-        private bool HandleZoneInteraction()
+        private void HandleHoverInteraction()
         {
             Vector2 mousePos = Event.current.mousePosition;
             var zone = GetInteractionZone(mousePos);
+            float moveDist = Vector2.Distance(mousePos, lastMousePosition);
+            lastMousePosition = mousePos;
             
+            // ⭐ v2.3.0: 记录玩家交互活动，唤醒打瞌睡的叙事者
+            if (zone != InteractionPhrases.InteractionZone.None)
+            {
+                NarratorIdleSystem.RecordActivity("玩家交互");
+            }
+            
+            // 头部交互：悬浮持续触发（摸头）
             if (zone == InteractionPhrases.InteractionZone.Head)
             {
-                bool isMouseDragging = (Event.current.type == EventType.MouseDrag) || (Event.current.type == EventType.MouseMove && Event.current.button == 0);
+                currentRubDuration += Time.deltaTime;
+                bodyHoverTime = 0f;
                 
-                if (isMouseDragging)
-                {
-                    float moveDistance = Vector2.Distance(mousePos, lastMousePosition);
-                    headRubProgress += moveDistance * 0.5f;
-                    
-                    UpdateExpressionByHeadRub(headRubProgress);
-                    
-                    if (headRubProgress >= TSSFrameworkConfig.Interaction.HeadRubThreshold)
-                    {
-                        float currentTime = Time.realtimeSinceStartup;
-                        if (currentTime - lastHeadPatTime >= TSSFrameworkConfig.Interaction.HeadPatCooldown)
-                        {
-                            DoHeadPatInteraction();
-                            headRubProgress = 0f;
-                            lastHeadPatTime = currentTime;
-                            Event.current.Use();
-                            return true;
-                        }
-                    }
-                    lastMousePosition = mousePos;
-                }
-                else if (Event.current.type == EventType.MouseDown)
-                {
-                    lastMousePosition = mousePos;
-                }
+                // 持续更新摸头视觉效果（表情和手部）
+                // 实际的好感度/对话触发有冷却时间
+                DoHeadPatInteraction();
             }
-            else
+            // 身体交互：悬浮停顿触发（戳/注视）
+            else if (zone == InteractionPhrases.InteractionZone.Body)
             {
-                if (headRubProgress > 0f)
-                {
-                    headRubProgress -= TSSFrameworkConfig.Interaction.HeadRubDecayRate * Time.deltaTime;
-                    if (headRubProgress < 0f) headRubProgress = 0f;
-                }
-            }
-            
-            if (zone == InteractionPhrases.InteractionZone.Body)
-            {
-                if (Event.current.type == EventType.MouseDown && Event.current.button == 0)
-                {
-                    DoPokeInteraction();
-                    Event.current.Use();
-                    return true;
-                }
-            }
-            
-            return false;
-        }
-
-        private void HandleHoverAndTouch()
-        {
-            if (!isHovering)
-            {
-                isHovering = true;
-                hoverStartTime = Time.realtimeSinceStartup;
-            }
-            else
-            {
-                float hoverDuration = Time.realtimeSinceStartup - hoverStartTime;
-                if (!isTouchModeActive && hoverDuration >= TSSFrameworkConfig.Interaction.HoverActivationTime)
-                {
-                    ActivateTouchMode();
-                }
-            }
-            
-            if (isTouchModeActive)
-            {
-                Vector2 currentMousePos = Event.current.mousePosition;
-                if (Vector2.Distance(currentMousePos, lastMousePosition) > 5f)
+                currentRubDuration = 0f;
+                bodyHoverTime += Time.deltaTime;
+                
+                // 悬浮超过 0.5秒 触发身体互动
+                if (bodyHoverTime > 0.5f)
                 {
                     float currentTime = Time.realtimeSinceStartup;
-                    if (currentTime - lastTouchTime > TSSFrameworkConfig.Interaction.TouchCooldown)
+                    if (currentTime - lastPokeTime >= 5f) // 5秒冷却
                     {
-                        OnTouchMove(currentMousePos);
-                        lastTouchTime = currentTime;
+                        DoPokeInteraction();
+                        lastPokeTime = currentTime;
+                        // 触发后不重置 bodyHoverTime，防止连续触发，依靠冷却控制
                     }
                 }
-                lastMousePosition = currentMousePos;
+            }
+            // 通用区域：移动触发抚摸
+            else
+            {
+                currentRubDuration = 0f;
+                bodyHoverTime = 0f;
+                
+                if (moveDist > 2f) // 有明显的移动
+                {
+                    float currentTime = Time.realtimeSinceStartup;
+                    if (currentTime - lastTouchMoveTime > 0.2f) // 限制频率
+                    {
+                        OnTouchMove(mousePos);
+                        lastTouchMoveTime = currentTime;
+                    }
+                }
             }
         }
         
@@ -248,12 +273,26 @@ namespace TheSecondSeat.UI
 
         private void DoHeadPatInteraction()
         {
+            // 视觉效果由 DrawHeadPatOverlay 处理（基于 currentRubDuration）
+            
+            // 逻辑触发（对话、好感度）受冷却限制
+            float currentTime = Time.realtimeSinceStartup;
+            if (currentTime - lastHeadPatTime < TSSFrameworkConfig.Interaction.HeadPatCooldown)
+            {
+                return;
+            }
+            lastHeadPatTime = currentTime;
+            
+            // ⭐ v2.3.0: 记录玩家交互活动，唤醒打瞌睡的叙事者
+            NarratorIdleSystem.RecordActivity("摸头互动");
+
             float affinity = panel.StorytellerAgent?.GetAffinity() ?? 0f;
             float bonus = TSSFrameworkConfig.Interaction.HeadPatAffinityBonus;
             
+            // 表情触发（作为单次事件的补充，主要的表情控制在 DrawHeadPatOverlay）
             ExpressionType exprType = SelectExpressionByAffinity(affinity, ExpressionType.Shy, ExpressionType.Happy);
             int intensity = (affinity >= TSSFrameworkConfig.Interaction.HighAffinityThreshold) ? 2 : 0;
-            panel.TriggerExpression(exprType, duration: 3f, intensity: intensity);
+            panel.TriggerExpression(exprType, duration: 2f, intensity: intensity);
             
             string phrase = PhraseManager.Instance.TriggerHeadPat(panel.GetPersonaResourceName());
             if (string.IsNullOrEmpty(phrase))
@@ -261,8 +300,8 @@ namespace TheSecondSeat.UI
                 phrase = InteractionPhrases.GetHeadPatPhrase(affinity);
             }
             
-            panel.AddFloatingText(phrase, GetTextColorByAffinity(affinity));
             panel.ShowInteractionText(phrase);
+            NarratorWindow.AddAIMessage(phrase);
             
             if (affinity >= TSSFrameworkConfig.Interaction.HighAffinityThreshold)
             {
@@ -275,23 +314,12 @@ namespace TheSecondSeat.UI
                 panel.ModifyAffinity(-1f, "不受欢迎的触碰");
             }
         }
-        
-        private void UpdateExpressionByHeadRub(float progress)
-        {
-            if (panel.CurrentPersona == null) return;
-            
-            int targetIntensity = 1 + Mathf.FloorToInt(progress / 200f);
-            targetIntensity = Mathf.Clamp(targetIntensity, 1, 3);
-            
-            var state = ExpressionSystem.GetExpressionState(panel.GetPersonaResourceName());
-            if (state.Intensity != targetIntensity)
-            {
-                ExpressionSystem.SetExpression(panel.GetPersonaResourceName(), ExpressionType.Happy, ExpressionTrigger.Manual, 30, targetIntensity);
-            }
-        }
 
         private void DoPokeInteraction()
         {
+            // ⭐ v2.3.0: 记录玩家交互活动，唤醒打瞌睡的叙事者
+            NarratorIdleSystem.RecordActivity("戳戳互动");
+            
             float affinity = panel.StorytellerAgent?.GetAffinity() ?? 0f;
             float bonus = TSSFrameworkConfig.Interaction.PokeAffinityBonus;
             
@@ -303,8 +331,9 @@ namespace TheSecondSeat.UI
                 phrase = InteractionPhrases.GetPokePhrase(affinity);
             }
             
-            panel.AddFloatingText(phrase, GetTextColorByAffinity(affinity));
+            // ⭐ 使用短语库：显示在对话框和聊天记录中
             panel.ShowInteractionText(phrase);
+            NarratorWindow.AddAIMessage(phrase);
             
             if (affinity >= TSSFrameworkConfig.Interaction.HighAffinityThreshold)
                 panel.ModifyAffinity(bonus, "身体戳戳互动");
@@ -312,63 +341,31 @@ namespace TheSecondSeat.UI
                 panel.ModifyAffinity(-0.5f, "烦人的触碰");
         }
         
-        private void ActivateTouchMode()
-        {
-            isTouchModeActive = true;
-            touchCount = 0;
-            lastMousePosition = Event.current.mousePosition;
-            
-            panel.TriggerExpression(ExpressionType.Confused, duration: 2f);
-            StartBorderFlash(1);
-            panel.AddFloatingText("(?ω?)?", new Color(0.8f, 0.9f, 1f));
-        }
-
-        private void DeactivateTouchMode()
-        {
-            if (!isTouchModeActive) return;
-            
-            isTouchModeActive = false;
-            touchCount = 0;
-            panel.RestoreDefaultExpression();
-        }
-
         private void OnTouchMove(Vector2 mousePos)
         {
             touchCount++;
-            float moveSpeed = Vector2.Distance(mousePos, lastMousePosition) / Time.deltaTime;
             
-            if (moveSpeed > 500f)
-            {
-                panel.TriggerExpression(ExpressionType.Shy, duration: 1.5f);
-                panel.AddFloatingText("(/ω＼)", new Color(1f, 0.6f, 0.6f));
-            }
-            else if (touchCount % 3 == 0)
+            if (touchCount % 10 == 0) // 每移动一定距离触发一次反馈
             {
                 var expression = touchExpressions[UnityEngine.Random.Range(0, touchExpressions.Length)];
-                panel.TriggerExpression(expression, duration: 2f);
-                
-                string[] emojis = { "(?▽｀)", "(๑˃ᴗ˂)✧", "(≧▽≦)", "ヾ(◍°∇°◍)ﾉ", "(๑˃̵ᴗ˂̵)" };
-                panel.AddFloatingText(emojis[UnityEngine.Random.Range(0, emojis.Length)], new Color(1f, 0.8f, 0.9f));
+                panel.TriggerExpression(expression, duration: 1f);
             }
             
-            if (touchCount >= 10)
+            if (touchCount >= 50) // 连续抚摸触发连击
             {
                 OnTouchCombo();
                 touchCount = 0;
             }
         }
-        
+
         private void OnTouchCombo()
         {
             bool isHappy = UnityEngine.Random.value > 0.3f;
-            panel.TriggerExpression(isHappy ? ExpressionType.Happy : ExpressionType.Smug, duration: 3f);
-            
-            panel.AddFloatingText(isHappy ? "(*^▽^*)" : "(￣︶￣)↗", new Color(1f, 0.7f, 0.3f));
-            StartBorderFlash(3);
+            panel.TriggerExpression(isHappy ? ExpressionType.Happy : ExpressionType.Smug, duration: 2f);
+            StartBorderFlash(2);
             
             float bonus = TSSFrameworkConfig.Interaction.TouchComboAffinityBonus;
             panel.ModifyAffinity(bonus, "全身立绘触摸互动");
-            Messages.Message($"好感度 +{bonus}（全身立绘互动）", MessageTypeDefOf.PositiveEvent);
         }
 
         #endregion
@@ -378,66 +375,86 @@ namespace TheSecondSeat.UI
         private void DrawInteractionUI()
         {
             Rect inRect = panel.DrawRect;
-            if (isHovering && !isTouchModeActive)
+            if (currentRubDuration > 0f)
             {
-                float progress = (Time.realtimeSinceStartup - hoverStartTime) / TSSFrameworkConfig.Interaction.HoverActivationTime;
-                DrawHoverProgress(inRect, progress);
-            }
-            if (headRubProgress > 0f)
-            {
-                DrawHeadRubProgress(inRect, headRubProgress / TSSFrameworkConfig.Interaction.HeadRubThreshold);
-            }
-            if (isTouchModeActive)
-            {
-                DrawTouchModeIndicator(inRect);
+                DrawHeadPatOverlay(inRect);
             }
             DrawBorderFlash(inRect);
         }
 
-        private void DrawProgressBar(Rect barRect, float progress, Color startColor, Color endColor)
+        /// <summary>
+        /// 绘制摸头手部覆盖层
+        /// ⭐ v1.14.1: 表情完全由 XML 配置的 HeadPatPhase.expression 控制
+        /// 只在阶段变化时更新表情，避免每帧重复触发
+        /// </summary>
+        private void DrawHeadPatOverlay(Rect inRect)
         {
-            progress = Mathf.Clamp01(progress);
-            Widgets.DrawBoxSolid(barRect, new Color(0.2f, 0.2f, 0.2f, 0.6f));
-            Widgets.DrawBoxSolid(new Rect(barRect.x, barRect.y, barRect.width * progress, barRect.height), Color.Lerp(startColor, endColor, progress));
-        }
+            // 通过 PersonaDefName 获取 RenderTreeDef
+            var def = RenderTreeDefManager.GetRenderTree(panel.CurrentPersona?.defName);
+            if (def == null || def.headPat == null || !def.headPat.enabled) return;
 
-        private void DrawHoverProgress(Rect inRect, float progress) => 
-            DrawProgressBar(new Rect(inRect.x, inRect.yMax + 2f, inRect.width, 8f), progress, new Color(0.3f, 0.8f, 1f), new Color(1f, 0.8f, 0.3f));
-
-        private void DrawHeadRubProgress(Rect inRect, float progress)
-        {
-            var barRect = new Rect(inRect.x, inRect.y - 12f, inRect.width, 8f);
-            DrawProgressBar(barRect, progress, new Color(1f, 0.6f, 0.6f), new Color(1f, 0.3f, 0.3f));
-            
-            if (progress > 0.5f)
+            var phase = def.GetHeadPatPhase(currentRubDuration);
+            if (phase == null)
             {
-                Text.Font = GameFont.Tiny;
-                Text.Anchor = TextAnchor.MiddleCenter;
-                GUI.color = new Color(1f, 1f, 1f, 0.8f);
-                Widgets.Label(barRect, "继续摸摸...");
-                Text.Anchor = TextAnchor.UpperLeft;
-                GUI.color = Color.white;
+                // 阶段为空时重置追踪状态
+                lastHeadPatPhaseIndex = -1;
+                return;
+            }
+            
+            // 获取当前阶段索引
+            int currentPhaseIndex = def.GetHeadPatPhaseIndex(currentRubDuration);
+            
+            // 绘制手部纹理（这部分每帧都需要执行）
+            if (!string.IsNullOrEmpty(phase.textureName))
+            {
+                Texture2D handTex = ContentFinder<Texture2D>.Get(phase.textureName, false);
+                if (handTex != null)
+                {
+                    Vector2 mousePos = Event.current.mousePosition;
+                    float handSize = inRect.width * 0.4f;
+                    Rect handRect = new Rect(mousePos.x - handSize / 2f, mousePos.y - handSize / 2f, handSize, handSize);
+                    GUI.DrawTexture(handRect, handTex);
+                }
+            }
+            
+            // ⭐ v1.14.2: 只有当阶段变化时才更新表情
+            // 表情类型和变体编号完全由 XML 配置的 HeadPatPhase 决定
+            // 用户可在渲染树编辑器中自行配置 expression 和 variant
+            if (currentPhaseIndex != lastHeadPatPhaseIndex)
+            {
+                lastHeadPatPhaseIndex = currentPhaseIndex;
+                
+                if (!string.IsNullOrEmpty(phase.expression))
+                {
+                    if (Enum.TryParse(phase.expression, true, out ExpressionType expr))
+                    {
+                        // ⭐ 根据配置的 variant 决定是否使用变体版本
+                        if (phase.variant > 0)
+                        {
+                            // 使用用户配置的固定变体编号
+                            ExpressionSystem.SetExpressionWithFixedVariant(
+                                panel.GetPersonaResourceName(),
+                                expr,
+                                ExpressionTrigger.Manual,
+                                durationTicks: 300,  // 5秒，足够覆盖大多数阶段持续时间
+                                fixedVariant: phase.variant
+                            );
+                        }
+                        else
+                        {
+                            // variant <= 0 时使用基础表情（无变体）
+                            ExpressionSystem.SetExpression(
+                                panel.GetPersonaResourceName(),
+                                expr,
+                                ExpressionTrigger.Manual,
+                                durationTicks: 300
+                            );
+                        }
+                    }
+                }
             }
         }
 
-        private void DrawTouchModeIndicator(Rect inRect)
-        {
-            float alpha = 0.5f + 0.5f * Mathf.Sin(Time.realtimeSinceStartup * 3f);
-            GUI.color = new Color(1f, 0.8f, 0.3f, alpha);
-            Widgets.DrawBox(inRect, 3);
-            GUI.color = Color.white;
-            
-            if (touchCount > 0)
-            {
-                var countRect = new Rect(inRect.xMax - 40f, inRect.yMax - 40f, 35f, 25f);
-                Text.Font = GameFont.Small;
-                Text.Anchor = TextAnchor.MiddleCenter;
-                GUI.color = new Color(1f, 1f, 1f, 0.9f);
-                Widgets.Label(countRect, $"×{touchCount}");
-                Text.Anchor = TextAnchor.UpperLeft;
-                GUI.color = Color.white;
-            }
-        }
 
         private void DrawBorderFlash(Rect inRect)
         {
@@ -478,31 +495,70 @@ namespace TheSecondSeat.UI
 
         #region Helpers
         
+        /// <summary>
+        /// 检测鼠标位置对应的交互区域
+        /// 优先使用 RenderTreeDef 中配置的区域坐标（由多模态分析引擎提供）
+        /// 如果没有配置则使用默认的硬编码逻辑
+        /// </summary>
         private InteractionPhrases.InteractionZone GetInteractionZone(Vector2 mousePos)
         {
             Rect rect = panel.DrawRect;
             if (!rect.Contains(mousePos)) return InteractionPhrases.InteractionZone.None;
             
-            float relativeY = (mousePos.y - rect.y) / rect.height;
-            if (relativeY < 0.25f) return InteractionPhrases.InteractionZone.Head;
+            // 计算归一化坐标 (左上角为原点, 0.0-1.0)
+            float normalizedX = (mousePos.x - rect.x) / rect.width;
+            float normalizedY = (mousePos.y - rect.y) / rect.height;
             
-            // A simplified check for body hit. A more precise check would involve texture alpha.
-            float relativeX = (mousePos.x - rect.x) / rect.width;
-            if (relativeX > 0.1f && relativeX < 0.9f && relativeY > 0.1f && relativeY < 0.9f)
+            // 尝试获取配置的交互区域
+            var def = RenderTreeDefManager.GetRenderTree(panel.CurrentPersona?.defName);
+            if (def?.interactionZones != null && def.interactionZones.HasCustomConfig)
             {
-                 return InteractionPhrases.InteractionZone.Body;
+                // 优先检查头部区域（头部优先级高于身体）
+                if (def.interactionZones.head != null && 
+                    def.interactionZones.head.Contains(normalizedX, normalizedY))
+                {
+                    return InteractionPhrases.InteractionZone.Head;
+                }
+                
+                // 检查身体区域
+                if (def.interactionZones.body != null && 
+                    def.interactionZones.body.Contains(normalizedX, normalizedY))
+                {
+                    return InteractionPhrases.InteractionZone.Body;
+                }
+                
+                // 已配置但不在任何区域内
+                return InteractionPhrases.InteractionZone.None;
+            }
+            
+            // ⭐ 回退到默认硬编码逻辑（无配置时使用）
+            // 头部：上部 25%
+            if (normalizedY < 0.25f) 
+            {
+                return InteractionPhrases.InteractionZone.Head;
+            }
+            
+            // 身体：中心区域 (X: 10%-90%, Y: 10%-90%)
+            if (normalizedX > 0.1f && normalizedX < 0.9f && normalizedY > 0.1f && normalizedY < 0.9f)
+            {
+                return InteractionPhrases.InteractionZone.Body;
             }
             
             return InteractionPhrases.InteractionZone.None;
         }
         
+        /// <summary>
+        /// 根据好感度选择表情
+        /// ⭐ 修复：移除随机性，使用确定性的表情选择
+        /// </summary>
         private ExpressionType SelectExpressionByAffinity(float affinity, ExpressionType highPositive, ExpressionType lowPositive)
         {
+            // ⭐ 使用确定性选择：好感度高时返回 highPositive，中等返回 lowPositive
             if (affinity >= TSSFrameworkConfig.Interaction.HighAffinityThreshold)
-                return UnityEngine.Random.value > 0.5f ? highPositive : ExpressionType.Happy;
+                return highPositive;  // 高好感度：使用主要正面表情
             if (affinity >= TSSFrameworkConfig.Interaction.LowAffinityThreshold)
-                return UnityEngine.Random.value > 0.5f ? ExpressionType.Confused : ExpressionType.Neutral;
-            return ExpressionType.Angry;
+                return lowPositive;   // 中等好感度：使用次要表情
+            return ExpressionType.Angry;  // 低好感度：生气
         }
         
         private Color GetTextColorByAffinity(float affinity)

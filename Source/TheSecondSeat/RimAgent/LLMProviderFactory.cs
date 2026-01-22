@@ -82,18 +82,40 @@ namespace TheSecondSeat.RimAgent
         }
     }
 
-    // ===== 提供商实现（修复版：返回 response.Content） =====
+    // ===== 📌 v1.9.7: Provider 抽象基类 - 消除代码重复 =====
 
-    public class OpenAIProvider : ILLMProvider
+    /// <summary>
+    /// LLM Provider 抽象基类，封装通用逻辑
+    /// </summary>
+    public abstract class BaseLLMProvider : ILLMProvider
     {
-        public string ProviderName => "OpenAI";
+        /// <summary>
+        /// 提供程序显示名称
+        /// </summary>
+        public abstract string ProviderName { get; }
+        
+        /// <summary>
+        /// 配置中使用的提供程序标识符（小写）
+        /// </summary>
+        protected abstract string ProviderIdentifier { get; }
+        
+        /// <summary>
+        /// 是否需要 API Key（本地模型不需要）
+        /// </summary>
+        protected virtual bool RequiresApiKey => true;
 
         public bool IsAvailable
         {
             get
             {
                 var settings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
-                return settings?.llmProvider == "openai" && !string.IsNullOrEmpty(settings?.apiKey);
+                if (settings?.llmProvider != ProviderIdentifier)
+                    return false;
+                    
+                if (RequiresApiKey && string.IsNullOrEmpty(settings?.apiKey))
+                    return false;
+                    
+                return true;
             }
         }
 
@@ -101,13 +123,13 @@ namespace TheSecondSeat.RimAgent
         {
             try
             {
-                // ? 修复：传递完整的 gameState
-                var response = await LLM.LLMService.Instance.SendStateAndGetActionAsync(systemPrompt, gameState ?? "", userMessage);
-                return response.dialogue ?? string.Empty;
+                // ⭐ v1.9.6: 使用 LLMService.SendMessageAsync 而不是 SendStateAndGetActionAsync
+                // 这样可以正确处理 ReAct 格式响应（rawContent 优先于 dialogue）
+                return await LLM.LLMService.Instance.SendMessageAsync(systemPrompt, gameState ?? "", userMessage, temperature, maxTokens);
             }
             catch (Exception ex)
             {
-                Log.Error($"[OpenAIProvider] Error: {ex.Message}");
+                Log.Error($"[{ProviderName}Provider] Error: {ex.Message}");
                 throw;
             }
         }
@@ -118,105 +140,40 @@ namespace TheSecondSeat.RimAgent
         }
     }
 
-    public class DeepSeekProvider : ILLMProvider
+    /// <summary>
+    /// OpenAI 提供程序实现
+    /// </summary>
+    public class OpenAIProvider : BaseLLMProvider
     {
-        public string ProviderName => "DeepSeek";
-
-        public bool IsAvailable
-        {
-            get
-            {
-                var settings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
-                return settings?.llmProvider == "deepseek" && !string.IsNullOrEmpty(settings?.apiKey);
-            }
-        }
-
-        public async Task<string> SendMessageAsync(string systemPrompt, string gameState, string userMessage, float temperature = 0.7f, int maxTokens = 500)
-        {
-            try
-            {
-                // ? 修复：传递完整的 gameState
-                var response = await LLM.LLMService.Instance.SendStateAndGetActionAsync(systemPrompt, gameState ?? "", userMessage);
-                return response.dialogue ?? string.Empty;
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[DeepSeekProvider] Error: {ex.Message}");
-                throw;
-            }
-        }
-
-        public async Task<bool> TestConnectionAsync()
-        {
-            return await LLM.LLMService.Instance.TestConnectionAsync();
-        }
+        public override string ProviderName => "OpenAI";
+        protected override string ProviderIdentifier => "openai";
     }
 
-    public class GeminiProvider : ILLMProvider
+    /// <summary>
+    /// DeepSeek 提供程序实现
+    /// </summary>
+    public class DeepSeekProvider : BaseLLMProvider
     {
-        public string ProviderName => "Gemini";
-
-        public bool IsAvailable
-        {
-            get
-            {
-                var settings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
-                return settings?.llmProvider == "gemini" && !string.IsNullOrEmpty(settings?.apiKey);
-            }
-        }
-
-        public async Task<string> SendMessageAsync(string systemPrompt, string gameState, string userMessage, float temperature = 0.7f, int maxTokens = 500)
-        {
-            try
-            {
-                // ? 修复：传递完整的 gameState
-                var response = await LLM.LLMService.Instance.SendStateAndGetActionAsync(systemPrompt, gameState ?? "", userMessage);
-                return response.dialogue ?? string.Empty;
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[GeminiProvider] Error: {ex.Message}");
-                throw;
-            }
-        }
-
-        public async Task<bool> TestConnectionAsync()
-        {
-            return await LLM.LLMService.Instance.TestConnectionAsync();
-        }
+        public override string ProviderName => "DeepSeek";
+        protected override string ProviderIdentifier => "deepseek";
     }
 
-    public class LocalProvider : ILLMProvider
+    /// <summary>
+    /// Gemini 提供程序实现
+    /// </summary>
+    public class GeminiProvider : BaseLLMProvider
     {
-        public string ProviderName => "Local";
+        public override string ProviderName => "Gemini";
+        protected override string ProviderIdentifier => "gemini";
+    }
 
-        public bool IsAvailable
-        {
-            get
-            {
-                var settings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
-                return settings?.llmProvider == "local";
-            }
-        }
-
-        public async Task<string> SendMessageAsync(string systemPrompt, string gameState, string userMessage, float temperature = 0.7f, int maxTokens = 500)
-        {
-            try
-            {
-                // ? 修复：传递完整的 gameState
-                var response = await LLM.LLMService.Instance.SendStateAndGetActionAsync(systemPrompt, gameState ?? "", userMessage);
-                return response.dialogue ?? string.Empty;
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[LocalProvider] Error: {ex.Message}");
-                throw;
-            }
-        }
-
-        public async Task<bool> TestConnectionAsync()
-        {
-            return await LLM.LLMService.Instance.TestConnectionAsync();
-        }
+    /// <summary>
+    /// 本地模型提供程序实现
+    /// </summary>
+    public class LocalProvider : BaseLLMProvider
+    {
+        public override string ProviderName => "Local";
+        protected override string ProviderIdentifier => "local";
+        protected override bool RequiresApiKey => false;
     }
 }

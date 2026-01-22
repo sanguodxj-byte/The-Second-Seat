@@ -36,7 +36,7 @@ namespace TheSecondSeat.Descent
         private bool isDescending = false;
         private bool lastDescentWasHostile = false;
         private int lastDescentTick = 0;
-        private const int DESCENT_COOLDOWN_TICKS = 60; // DEBUG: 1秒冷却 (正式版: 36000)
+        private const int DESCENT_COOLDOWN_TICKS = 36000; // ⭐ v2.4.0: 正式版冷却时间（10分钟）
         
         private IntVec3 targetDescentLocation;
         
@@ -48,6 +48,7 @@ namespace TheSecondSeat.Descent
         private const int RETURN_CHECK_INTERVAL = 60;
         
         private IDescentAnimationProvider currentAnimationProvider = null;
+        private DescentAnimationController animationController = new DescentAnimationController(); // ⭐ v2.0.0
         private bool wasInCombat = false;
 
         // 延迟生成
@@ -259,6 +260,9 @@ namespace TheSecondSeat.Descent
                 currentAnimationProvider.Update(Time.deltaTime);
             }
             
+            // ⭐ v2.0.0: 更新姿势动画控制器
+            animationController.Update(Time.deltaTime);
+            
             // 检查延迟生成
             if (pendingSpawn && Find.TickManager.TicksGame >= spawnDelayEndTick)
             {
@@ -380,6 +384,33 @@ namespace TheSecondSeat.Descent
         {
             isDescending = true;
             
+            // ⭐ v2.0.0: 确保立绘打开并播放姿势动画
+            if (!PortraitOverlaySystem.IsEnabled())
+            {
+                portraitWasOpen = false;
+                PortraitOverlaySystem.Toggle(true);
+            }
+            else
+            {
+                portraitWasOpen = true;
+            }
+            
+            // ⭐ v2.4.0: 播放降临开始音效
+            PlayDescentStartSound(persona);
+            
+            // 开始姿势切换序列
+            animationController.StartPostureSequence(isHostile, () =>
+            {
+                // 姿势动画完成后关闭立绘
+                if (PortraitOverlaySystem.IsEnabled())
+                {
+                    PortraitOverlaySystem.Toggle(false);
+                }
+                
+                // ⭐ v2.4.0: 播放降临着陆音效
+                PlayDescentLandingSound(persona);
+            });
+            
             string animType = persona.descentAnimationType ?? "DropPod";
             currentAnimationProvider = DescentAnimationRegistry.GetProvider(animType) ?? new DefaultDropPodAnimationProvider();
             
@@ -392,6 +423,69 @@ namespace TheSecondSeat.Descent
             );
             
             Log.Message($"[NarratorDescentSystem] 开始降临序列: {persona.narratorName}");
+        }
+        
+        /// <summary>
+        /// ⭐ v2.4.0: 播放降临开始音效
+        /// </summary>
+        private void PlayDescentStartSound(NarratorPersonaDef persona)
+        {
+            try
+            {
+                // 优先使用人格定义的降临音效
+                string soundDefName = persona.descentSound;
+                if (string.IsNullOrEmpty(soundDefName))
+                {
+                    // 回退到默认音效
+                    soundDefName = "PowerOn"; // RimWorld 内置音效
+                }
+                
+                SoundDef soundDef = DefDatabase<SoundDef>.GetNamedSilentFail(soundDefName);
+                if (soundDef != null)
+                {
+                    SoundStarter.PlayOneShotOnCamera(soundDef);
+                    
+                    if (Prefs.DevMode)
+                    {
+                        Log.Message($"[NarratorDescentSystem] 播放降临开始音效: {soundDefName}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[NarratorDescentSystem] 播放降临开始音效失败: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ v2.4.0: 播放降临着陆音效
+        /// </summary>
+        private void PlayDescentLandingSound(NarratorPersonaDef persona)
+        {
+            try
+            {
+                // 使用着陆音效（如果有定义）
+                string soundDefName = "DropPod_Open"; // RimWorld 内置音效
+                
+                SoundDef soundDef = DefDatabase<SoundDef>.GetNamedSilentFail(soundDefName);
+                if (soundDef != null && Find.CurrentMap != null)
+                {
+                    SoundStarter.PlayOneShot(soundDef, new TargetInfo(targetDescentLocation, Find.CurrentMap));
+                    
+                    // 同时播放视觉特效
+                    FleckMaker.ThrowSmoke(targetDescentLocation.ToVector3Shifted(), Find.CurrentMap, 3f);
+                    FleckMaker.ThrowDustPuff(targetDescentLocation, Find.CurrentMap, 2f);
+                    
+                    if (Prefs.DevMode)
+                    {
+                        Log.Message($"[NarratorDescentSystem] 播放降临着陆音效: {soundDefName}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[NarratorDescentSystem] 播放降临着陆音效失败: {ex.Message}");
+            }
         }
         
         private void ExecutePendingSpawn()
@@ -410,11 +504,12 @@ namespace TheSecondSeat.Descent
                 {
                     SendDescentLetter(persona, lastDescentWasHostile);
                     
-                    if (PortraitOverlaySystem.IsEnabled())
-                    {
-                        portraitWasOpen = true;
-                        PortraitOverlaySystem.Toggle(false);
-                    }
+                    // ⭐ v2.0.0: 不在这里关闭立绘，由姿势动画回调控制
+                    // if (PortraitOverlaySystem.IsEnabled())
+                    // {
+                    //     portraitWasOpen = true;
+                    //     PortraitOverlaySystem.Toggle(false);
+                    // }
                 }
             }
             

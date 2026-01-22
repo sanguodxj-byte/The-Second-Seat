@@ -432,10 +432,13 @@ namespace TheSecondSeat.UI
                     settings.ttsRegion,
                     settings.ttsVoice,
                     settings.ttsSpeechRate,
-                    settings.ttsVolume
+                    settings.ttsVolume,
+                    settings.ttsApiEndpoint,
+                    settings.ttsModelName,
+                    settings.ttsAudioUri
                 );
                 settings.Write();
-                Log.Message($"[TTS Settings] Saved - Provider: {settings.ttsProvider}, Key: {(string.IsNullOrEmpty(settings.ttsApiKey) ? "empty" : "***")}, Region: {settings.ttsRegion}");
+                Log.Message($"[TTS Settings] Saved - Provider: {settings.ttsProvider}, AudioUri: {(string.IsNullOrEmpty(settings.ttsAudioUri) ? "none" : "set")}");
                 Messages.Message("TTS 设置已保存并应用", MessageTypeDefOf.PositiveEvent);
             }
             catch (Exception ex)
@@ -460,7 +463,10 @@ namespace TheSecondSeat.UI
                     settings.ttsRegion,
                     settings.ttsVoice,
                     settings.ttsSpeechRate,
-                    settings.ttsVolume
+                    settings.ttsVolume,
+                    settings.ttsApiEndpoint,
+                    settings.ttsModelName,
+                    settings.ttsAudioUri
                 );
                 
                 string testText = "你好，这是语音测试。Hello, this is a voice test.";

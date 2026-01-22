@@ -47,7 +47,12 @@ namespace TheSecondSeat.Core
                         return persona?.defName;
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    // 静默处理异常，避免打断正常流程
+                    // 在调试时可取消注释以查看详情
+                    // Log.Warning($"[NarratorController] CurrentPersonaDefName access error: {ex.Message}");
+                }
                 return null;
             }
         }

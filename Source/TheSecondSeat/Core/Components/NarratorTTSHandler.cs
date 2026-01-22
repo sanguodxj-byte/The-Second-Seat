@@ -43,6 +43,9 @@ namespace TheSecondSeat.Core.Components
                     // ⭐ TTS 未启用，使用估算时长开始流式显示
                     Log.Message($"[NarratorController] TTS disabled. Streaming with estimated duration: {estimatedDuration:F2}s");
                     NarratorWindow.AddAIMessage(text, emoticonId); // 立即显示
+                    
+                    // 🔧 修复: 必须先设置流式消息内容
+                    DialogueOverlayPanel.SetStreamingMessage(text);
                     DialogueOverlayPanel.StartStreaming(estimatedDuration);
                     return;
                 }
@@ -51,6 +54,9 @@ namespace TheSecondSeat.Core.Components
                 {
                     // 没有语音内容，使用最短时长显示
                     NarratorWindow.AddAIMessage(text, emoticonId); // 立即显示
+                    
+                    // 🔧 修复: 必须先设置流式消息内容
+                    DialogueOverlayPanel.SetStreamingMessage(text);
                     DialogueOverlayPanel.StartStreaming(1f);
                     return;
                 }
@@ -69,49 +75,35 @@ namespace TheSecondSeat.Core.Components
                 // 显示加载提示（使用 Log 而非 Message 避免打扰玩家）
                 Log.Message("[NarratorTTSHandler] 正在生成语音...");
                 
-                // ⭐ 在后台线程生成 TTS 音频
-                // 注意：此时不调用 StartStreaming！等待 TTSAudioPlayer 在音频播放时触发
-                Task.Run(async () =>
+                // ⭐ 在主线程异步生成 TTS 音频 (UnityWebRequest 必须在主线程)
+                // ✅ v2.7.2: TTSService.SpeakAsync 内部已经调用 AutoPlayAudioFile，不需要再次调用 PlayAndDelete
+                GenerateAudioAsync();
+
+                async void GenerateAudioAsync()
                 {
                     try
                     {
+                        // ✅ v2.7.2: 先设置消息内容，等待 TTSAudioPlayer 在音频播放时触发 StartStreaming
+                        NarratorWindow.AddAIMessage(text, emoticonId);
+                        DialogueOverlayPanel.SetStreamingMessage(text);
+                        
+                        // SpeakAsync 内部会自动调用 AutoPlayAudioFile -> PlayAndDelete
+                        // PlayAndDelete 内部会触发 StartStreaming(clip.length)
+                        // 注意：SpeakAsync 内部如果使用了 UnityWebRequest，必须在主线程调用 await
                         string? audioPath = await TTSService.Instance.SpeakAsync(cleanText, personaDefName);
                         
                         if (!string.IsNullOrEmpty(audioPath))
                         {
                             Log.Message($"[NarratorController] TTS 音频生成完成: {audioPath} (Persona: {personaDefName})");
-                            
-                            // ⭐ 在主线程播放音频
-                            // TTSAudioPlayer.PlayAndDelete 内部会在音频开始播放时调用 StartStreaming(clip.length)
-                            LongEventHandler.ExecuteWhenFinished(() =>
-                            {
-                                try
-                                {
-                                    // ⭐ 播放音频 - TTSAudioPlayer 会自动触发 StartStreaming(clip.length)
-                                    NarratorWindow.AddAIMessage(text, emoticonId); // 播放时显示
-                                    TTSAudioPlayer.Instance.PlayAndDelete(audioPath, personaDefName);
-                                }
-                                catch (Exception playEx)
-                                {
-                                    Log.Error($"[NarratorController] TTS playback failed: {playEx.Message}");
-                                    // ⭐ 出错时使用估算时长回退
-                                    float fallbackDuration = Math.Max(2f, cleanText.Length / 5f);
-                                    Log.Warning($"[NarratorController] TTS playback failed. Falling back to estimated duration: {fallbackDuration:F2}s");
-                                    NarratorWindow.AddAIMessage(text, emoticonId); // 回退时显示
-                                    DialogueOverlayPanel.StartStreaming(fallbackDuration);
-                                }
-                            });
+                            // ✅ v2.7.2: 不再重复调用 PlayAndDelete，TTSService.SpeakAsync 内部已处理
                         }
                         else
                         {
                             // ⭐ TTS 生成失败，使用估算时长回退
-                            LongEventHandler.ExecuteWhenFinished(() =>
-                            {
-                                Log.Warning("[NarratorController] TTS audio generation returned null. Falling back to estimated duration.");
-                                float fallbackDuration = Math.Max(2f, cleanText.Length / 5f);
-                                NarratorWindow.AddAIMessage(text, emoticonId); // 回退时显示
-                                DialogueOverlayPanel.StartStreaming(fallbackDuration);
-                            });
+                            // ✅ v2.7.2: 消息已在前面添加，只需启动流式显示
+                            Log.Warning("[NarratorController] TTS audio generation returned null. Falling back to estimated duration.");
+                            float fallbackDuration = Math.Max(2f, cleanText.Length / 5f);
+                            DialogueOverlayPanel.StartStreaming(fallbackDuration);
                         }
                     }
                     catch (Exception ex)
@@ -119,21 +111,21 @@ namespace TheSecondSeat.Core.Components
                         Log.Error($"[NarratorController] TTS processing task failed: {ex.Message}");
                         
                         // ⭐ TTS 异常，使用估算时长回退
-                        LongEventHandler.ExecuteWhenFinished(() =>
-                        {
-                            float fallbackDuration = Math.Max(2f, cleanText.Length / 5f);
-                            Log.Warning($"[NarratorController] TTS task failed. Falling back to estimated duration: {fallbackDuration:F2}s");
-                            NarratorWindow.AddAIMessage(text, emoticonId); // 回退时显示
-                            DialogueOverlayPanel.StartStreaming(fallbackDuration);
-                        });
+                        // ✅ v2.7.2: 消息可能已在前面添加，只需启动流式显示
+                        float fallbackDuration = Math.Max(2f, cleanText.Length / 5f);
+                        Log.Warning($"[NarratorController] TTS task failed. Falling back to estimated duration: {fallbackDuration:F2}s");
+                        DialogueOverlayPanel.StartStreaming(fallbackDuration);
                     }
-                });
+                }
             }
             catch (Exception ex)
             {
                 Log.Warning($"[NarratorController] AutoPlayTTS 异常: {ex.Message}");
                 // ⭐ 最外层异常使用最小时长回退
                 NarratorWindow.AddAIMessage(text, emoticonId); // 异常时显示
+                
+                // 🔧 修复: 必须先设置流式消息内容
+                DialogueOverlayPanel.SetStreamingMessage(text);
                 DialogueOverlayPanel.StartStreaming(2f);
             }
         }

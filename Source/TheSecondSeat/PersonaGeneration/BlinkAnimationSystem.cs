@@ -13,6 +13,9 @@ namespace TheSecondSeat.PersonaGeneration
     {
         private static Dictionary<string, BlinkState> blinkStates = new Dictionary<string, BlinkState>();
         
+        // ⭐ v2.3.0: 打瞌睡模式状态
+        private static Dictionary<string, bool> drowsyModes = new Dictionary<string, bool>();
+        
         // 眨眼参数
         private const float MIN_BLINK_INTERVAL = 3.0f;  // 最小眨眼间隔（秒）
         private const float MAX_BLINK_INTERVAL = 6.0f;  // 最大眨眼间隔（秒）
@@ -53,11 +56,18 @@ namespace TheSecondSeat.PersonaGeneration
         /// <summary>
         /// 获取眼睛层名称（根据眨眼状态返回）
         /// ? v1.6.33: 睁眼=表情对应eyes，闭眼=closed_eyes
+        /// ⭐ v2.3.0: 支持打瞌睡模式（持续闭眼）
         /// </summary>
         /// <param name="personaDefName">人格 DefName</param>
         /// <returns>眼睛层名称（表情_eyes 或 closed_eyes）</returns>
         public static string GetEyeLayerName(string personaDefName)
         {
+            // ⭐ v2.3.0: 打瞌睡模式优先 - 持续返回 closed_eyes
+            if (drowsyModes.TryGetValue(personaDefName, out bool isDrowsy) && isDrowsy)
+            {
+                return "closed_eyes";
+            }
+            
             var state = GetOrCreateState(personaDefName);
             
             // 获取当前表情
@@ -149,6 +159,37 @@ namespace TheSecondSeat.PersonaGeneration
         }
         
         /// <summary>
+        /// ✅ v1.9.9: 获取指定表情的眼睛层名称（公开方法，供混合使用）
+        /// </summary>
+        public static string GetEyesLayerNameForExpression(string personaDefName, ExpressionType expression, int variant)
+        {
+            // ✅ 空值防护
+            if (string.IsNullOrEmpty(personaDefName))
+            {
+                return GetBaseEyesName(expression);
+            }
+            
+            // Neutral 表情不使用变体
+            if (expression == ExpressionType.Neutral)
+            {
+                return null; // Neutral 表情使用 Base 图层
+            }
+            
+            // 获取基础眼睛名称
+            string baseName = GetBaseEyesName(expression);
+            
+            // 如果没有变体（0），返回基础名称
+            if (variant <= 0)
+            {
+                return baseName;
+            }
+            
+            // 构建变体名称：如 happy1_eyes, sad2_eyes
+            string expressionName = expression.ToString().ToLower();
+            return $"{expressionName}{variant}_eyes";
+        }
+
+        /// <summary>
         /// ✅ 获取基础眼睛层名称（不带变体编号）
         /// </summary>
         private static string GetBaseEyesName(ExpressionType expression)
@@ -208,6 +249,36 @@ namespace TheSecondSeat.PersonaGeneration
         public static void ClearAllStates()
         {
             blinkStates.Clear();
+            drowsyModes.Clear();
+        }
+        
+        /// <summary>
+        /// ⭐ v2.3.0: 设置打瞌睡模式
+        /// 打瞌睡模式下，眼睛会持续保持闭合状态
+        /// </summary>
+        /// <param name="personaDefName">人格 DefName</param>
+        /// <param name="drowsy">是否进入打瞌睡模式</param>
+        public static void SetDrowsyMode(string personaDefName, bool drowsy)
+        {
+            if (string.IsNullOrEmpty(personaDefName)) return;
+            
+            drowsyModes[personaDefName] = drowsy;
+            
+            // 如果退出打瞌睡模式，重置眨眼状态
+            if (!drowsy && blinkStates.TryGetValue(personaDefName, out var state))
+            {
+                state.isBlinking = false;
+                state.blinkProgress = 0f;
+                state.lastBlinkTime = Time.realtimeSinceStartup;
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ v2.3.0: 检查是否处于打瞌睡模式
+        /// </summary>
+        public static bool IsDrowsy(string personaDefName)
+        {
+            return drowsyModes.TryGetValue(personaDefName, out bool isDrowsy) && isDrowsy;
         }
     }
 }

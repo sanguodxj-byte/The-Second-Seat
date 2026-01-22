@@ -22,11 +22,14 @@ namespace TheSecondSeat
         {
             base.Tick();
 
-            // 如果施法者死亡或目标死亡/消失，则移除此 hediff
-            // 注意：不再检查 pawn.Downed 或 HeldTarget.Downed，因为灾厄摔掷需要持有倒地目标
-            if (pawn == null || pawn.Dead || HeldTarget == null || HeldTarget.Dead || !HeldTarget.Spawned)
+            // 如果施法者死亡/倒地或目标死亡/销毁，则移除此 hediff
+            // 注意1：检查 pawn.Downed，因为施法者倒地无法维持持有
+            // 注意2：不检查 HeldTarget.Downed，因为允许持有倒地目标
+            // 注意3：不检查 HeldTarget.Spawned，因为被持有的目标可能处于 DeSpawned 状态
+            if (pawn == null || pawn.Dead || pawn.Downed || HeldTarget == null || HeldTarget.Dead || HeldTarget.Destroyed)
             {
-                Log.Message($"[CalamityHolding Hediff] Removing self because of invalid state. Pawn null? {pawn == null}, Pawn dead? {pawn?.Dead}, HeldTarget null? {HeldTarget == null}, HeldTarget dead? {HeldTarget?.Dead}");
+                // 仅在调试模式或特定情况下记录，避免刷屏
+                // Log.Message($"[CalamityHolding Hediff] Removing self because of invalid state...");
                 pawn.health.RemoveHediff(this);
             }
         }

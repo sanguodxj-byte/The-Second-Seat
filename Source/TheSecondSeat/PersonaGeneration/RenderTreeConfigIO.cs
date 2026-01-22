@@ -77,6 +77,41 @@ namespace TheSecondSeat.PersonaGeneration
                                             new XElement("textureName", m.textureName)
                                         )
                                     )
+                                ),
+                                // Body Mappings
+                                new XElement("bodyMappings",
+                                    (def.bodyMappings ?? new System.Collections.Generic.List<BodyMapping>()).ConvertAll(m =>
+                                        new XElement("li",
+                                            new XElement("posture", m.posture),
+                                            !string.IsNullOrEmpty(m.apparelTag) ? new XElement("apparelTag", m.apparelTag) : null,
+                                            new XElement("textureName", m.textureName)
+                                        )
+                                    )
+                                ),
+                                // Accessories
+                                new XElement("accessories",
+                                    (def.accessories ?? new System.Collections.Generic.List<AccessoryMapping>()).ConvertAll(a =>
+                                        new XElement("li",
+                                            new XElement("name", a.name),
+                                            new XElement("textureName", a.textureName),
+                                            new XElement("condition", a.condition),
+                                            new XElement("zOffset", a.zOffset)
+                                        )
+                                    )
+                                ),
+                                // Head Pat Config
+                                new XElement("headPat",
+                                    new XElement("enabled", def.headPat?.enabled ?? false),
+                                    new XElement("phases",
+                                        (def.headPat?.phases ?? new System.Collections.Generic.List<HeadPatPhase>()).ConvertAll(p =>
+                                            new XElement("li",
+                                                new XElement("durationThreshold", p.durationThreshold),
+                                                new XElement("textureName", p.textureName),
+                                                new XElement("expression", p.expression),
+                                                new XElement("sound", p.sound)
+                                            )
+                                        )
+                                    )
                                 )
                             )
                         )
@@ -155,6 +190,40 @@ namespace TheSecondSeat.PersonaGeneration
                             azureId = int.TryParse(li.Element("azureId")?.Value, out int id) ? id : 0,
                             textureName = li.Element("textureName")?.Value
                         }).ToList() ?? new List<AzureVisemeMapping>()
+                    };
+                }
+
+                // Load Body Mappings
+                def.bodyMappings = root.Element("bodyMappings")?.Elements("li").Select(li => new BodyMapping
+                {
+                    posture = li.Element("posture")?.Value ?? "Standing",
+                    apparelTag = li.Element("apparelTag")?.Value ?? "",
+                    textureName = li.Element("textureName")?.Value ?? ""
+                }).ToList() ?? new List<BodyMapping>();
+
+                // Load Accessories
+                def.accessories = root.Element("accessories")?.Elements("li").Select(li => new AccessoryMapping
+                {
+                    name = li.Element("name")?.Value ?? "Accessory",
+                    textureName = li.Element("textureName")?.Value ?? "",
+                    condition = li.Element("condition")?.Value ?? "Always",
+                    zOffset = float.TryParse(li.Element("zOffset")?.Value, out float z) ? z : 0f
+                }).ToList() ?? new List<AccessoryMapping>();
+
+                // Load Head Pat Config
+                XElement headPatEl = root.Element("headPat");
+                if (headPatEl != null)
+                {
+                    def.headPat = new HeadPatConfig
+                    {
+                        enabled = bool.TryParse(headPatEl.Element("enabled")?.Value, out bool en) ? en : false,
+                        phases = headPatEl.Element("phases")?.Elements("li").Select(li => new HeadPatPhase
+                        {
+                            durationThreshold = float.TryParse(li.Element("durationThreshold")?.Value, out float d) ? d : 0f,
+                            textureName = li.Element("textureName")?.Value ?? "",
+                            expression = li.Element("expression")?.Value ?? "",
+                            sound = li.Element("sound")?.Value ?? ""
+                        }).ToList() ?? new List<HeadPatPhase>()
                     };
                 }
 

@@ -18,31 +18,51 @@ namespace TheSecondSeat.RimAgent.Tools
         
         public async Task<ToolResult> ExecuteAsync(Dictionary<string, object> parameters)
         {
-            await Task.CompletedTask; // 保持异步签名
             Log.Message(string.Format("[AnalyzeTool] ExecuteAsync called with parameters: {0}", string.Join(", ", parameters.Keys)));
-            try
+            
+            var tcs = new TaskCompletionSource<ToolResult>();
+
+            // ⭐ 修复线程安全：切换到主线程捕获快照
+            Verse.LongEventHandler.ExecuteWhenFinished(() =>
             {
-                var snapshot = GameStateSnapshotUtility.CaptureSnapshotSafe();
-                
-                var analysis = new Dictionary<string, object>
+                try
                 {
-                    ["colonist_count"] = snapshot.colonists?.Count ?? 0,
-                    ["wealth"] = snapshot.colony?.wealth ?? 0,
-                    ["food_level"] = snapshot.resources?.food ?? 0,
-                    ["mood_average"] = snapshot.colonists?.Average(c => c.mood) ?? 50,
-                    ["raid_active"] = snapshot.threats?.raidActive ?? false,
-                    ["raid_strength"] = snapshot.threats?.raidStrength ?? 0
-                };
-                
-                return new ToolResult
+                    var snapshot = GameStateSnapshotUtility.CaptureSnapshotSafe();
+                    
+                    var analysis = new Dictionary<string, object>
+                    {
+                        ["colonist_count"] = snapshot.colonists?.Count ?? 0,
+                        ["wealth"] = snapshot.colony?.wealth ?? 0,
+                        ["food_level"] = snapshot.resources?.food ?? 0,
+                        ["mood_average"] = snapshot.colonists != null && snapshot.colonists.Any()
+                            ? snapshot.colonists.Average(c => c.mood)
+                            : 50,
+                        ["raid_active"] = snapshot.threats?.raidActive ?? false,
+                        ["raid_strength"] = snapshot.threats?.raidStrength ?? 0
+                    };
+                    
+                    tcs.SetResult(new ToolResult
+                    {
+                        Success = true,
+                        Data = analysis
+                    });
+                }
+                catch (Exception ex)
                 {
-                    Success = true,
-                    Data = analysis
-                };
+                    tcs.SetResult(new ToolResult { Success = false, Error = ex.Message });
+                }
+            });
+
+            // 等待主线程执行完成（带超时保护）
+            var completedTask = await Task.WhenAny(tcs.Task, Task.Delay(5000));
+            
+            if (completedTask == tcs.Task)
+            {
+                return await tcs.Task;
             }
-            catch (Exception ex)
+            else
             {
-                return new ToolResult { Success = false, Error = ex.Message };
+                return new ToolResult { Success = false, Error = "Analyze timeout" };
             }
         }
     }

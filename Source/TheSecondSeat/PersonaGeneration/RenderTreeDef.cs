@@ -156,6 +156,128 @@ namespace TheSecondSeat.PersonaGeneration
     }
 
     /// <summary>
+    /// 身体姿态映射 (用于替换 base_body)
+    /// </summary>
+    public class BodyMapping
+    {
+        /// <summary>姿态名称 (如 Standing, Sitting, Laying)</summary>
+        public string posture = "Standing";
+        
+        /// <summary>可选：服装标签过滤 (如果设置，仅当穿着此类服装时生效)</summary>
+        public string apparelTag = "";
+        
+        /// <summary>替换的身体纹理名称</summary>
+        public string textureName = "";
+    }
+
+    /// <summary>
+    /// 配件/特效映射 (覆盖在最上层)
+    /// </summary>
+    public class AccessoryMapping
+    {
+        /// <summary>配件名称 (用于标识)</summary>
+        public string name = "Accessory";
+        
+        /// <summary>纹理名称</summary>
+        public string textureName = "";
+        
+        /// <summary>生效条件 (Always, Talking, Blinking)</summary>
+        public string condition = "Always";
+        
+        /// <summary>Z轴偏移 (用于层级微调，默认在最上层)</summary>
+        public float zOffset = 0f;
+    }
+
+    /// <summary>
+    /// 摸头动画阶段
+    /// </summary>
+    public class HeadPatPhase
+    {
+        /// <summary>持续时间阈值 (秒)</summary>
+        public float durationThreshold = 0f;
+        
+        /// <summary>手部覆盖纹理名称</summary>
+        public string textureName = "";
+        
+        /// <summary>触发的表情</summary>
+        public string expression = "";
+        
+        /// <summary>
+        /// 表情变体编号 (1-5)
+        /// 0 或负数表示使用基础表情（无变体）
+        /// 可在渲染树编辑器中配置
+        /// </summary>
+        public int variant = 0;
+        
+        /// <summary>播放的音效 (可选)</summary>
+        public string sound = "";
+    }
+
+    /// <summary>
+    /// 摸头动画配置
+    /// </summary>
+    public class HeadPatConfig
+    {
+        /// <summary>是否启用递进动画</summary>
+        public bool enabled = false;
+        
+        /// <summary>阶段列表 (按时间排序)</summary>
+        public List<HeadPatPhase> phases = new List<HeadPatPhase>();
+    }
+
+    /// <summary>
+    /// 交互区域矩形 (归一化坐标，左上角为原点)
+    /// 坐标系：X轴从左向右 (0→1)，Y轴从上向下 (0→1)
+    /// </summary>
+    public class ZoneRect
+    {
+        /// <summary>左边界 (0.0 - 1.0)</summary>
+        public float xMin = 0f;
+        
+        /// <summary>上边界 (0.0 - 1.0)</summary>
+        public float yMin = 0f;
+        
+        /// <summary>右边界 (0.0 - 1.0)</summary>
+        public float xMax = 1f;
+        
+        /// <summary>下边界 (0.0 - 1.0)</summary>
+        public float yMax = 1f;
+        
+        /// <summary>
+        /// 检查归一化坐标点是否在此区域内
+        /// </summary>
+        public bool Contains(float x, float y)
+        {
+            return x >= xMin && x <= xMax && y >= yMin && y <= yMax;
+        }
+    }
+
+    /// <summary>
+    /// 交互区域配置
+    /// 用于定义立绘上的可交互区域（头部、身体等）
+    /// 坐标使用归一化值 (0.0 - 1.0)，原点在左上角
+    /// </summary>
+    public class InteractionZones
+    {
+        /// <summary>
+        /// 头部区域
+        /// 默认为 null，表示使用硬编码回退逻辑
+        /// </summary>
+        public ZoneRect head = null;
+        
+        /// <summary>
+        /// 身体区域
+        /// 默认为 null，表示使用硬编码回退逻辑
+        /// </summary>
+        public ZoneRect body = null;
+        
+        /// <summary>
+        /// 是否有自定义配置
+        /// </summary>
+        public bool HasCustomConfig => head != null || body != null;
+    }
+
+    /// <summary>
     /// 说话动画配置
     /// </summary>
     public class SpeakingConfig
@@ -276,6 +398,38 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>说话/嘴型动画配置</summary>
         public SpeakingConfig speaking = new SpeakingConfig();
+
+        // ─────────────────────────────────────────────
+        // 身体与姿态配置 (Body & Posture)
+        // ─────────────────────────────────────────────
+        
+        /// <summary>身体映射列表 (替换 base_body)</summary>
+        public List<BodyMapping> bodyMappings = new List<BodyMapping>();
+
+        // ─────────────────────────────────────────────
+        // 配件与特效配置 (Accessories & Effects)
+        // ─────────────────────────────────────────────
+        
+        /// <summary>配件映射列表 (覆盖最上层)</summary>
+        public List<AccessoryMapping> accessories = new List<AccessoryMapping>();
+
+        // ─────────────────────────────────────────────
+        // 摸头动画配置 (Head Pat)
+        // ─────────────────────────────────────────────
+        
+        /// <summary>摸头动画配置</summary>
+        public HeadPatConfig headPat = new HeadPatConfig();
+
+        // ─────────────────────────────────────────────
+        // 交互区域配置 (Interaction Zones)
+        // ─────────────────────────────────────────────
+        
+        /// <summary>
+        /// 交互区域配置 (头部、身体等)
+        /// 使用归一化坐标 (0.0-1.0)，原点在左上角
+        /// 由多模态分析引擎提供坐标数据
+        /// </summary>
+        public InteractionZones interactionZones = null;
         
         // ─────────────────────────────────────────────
         // 缓存 (运行时)
@@ -307,6 +461,9 @@ namespace TheSecondSeat.PersonaGeneration
             // 确保 speaking 不为 null
             speaking ??= new SpeakingConfig();
             
+            // 确保 headPat 不为 null
+            headPat ??= new HeadPatConfig();
+
             if (Prefs.DevMode)
             {
                 Log.Message($"[RenderTreeDef] Loaded {defName}: " +
@@ -488,6 +645,80 @@ namespace TheSecondSeat.PersonaGeneration
             
             // 重新构建缓存
             this.ResolveReferences();
+        }
+
+        /// <summary>
+        /// 获取匹配的身体纹理
+        /// </summary>
+        public string GetBodyTexture(string posture, string apparelTag = null)
+        {
+            if (bodyMappings == null || bodyMappings.Count == 0) return null;
+
+            // 优先匹配 posture 和 apparelTag 都符合的
+            var match = bodyMappings.FirstOrDefault(m =>
+                m.posture == posture &&
+                (string.IsNullOrEmpty(m.apparelTag) || m.apparelTag == apparelTag));
+            
+            return match?.textureName;
+        }
+
+        /// <summary>
+        /// 获取所有应显示的配件
+        /// </summary>
+        public List<string> GetActiveAccessories(string currentCondition)
+        {
+            if (accessories == null) return new List<string>();
+            
+            return accessories
+                .Where(a => a.condition == "Always" || a.condition == currentCondition)
+                .Select(a => a.textureName)
+                .ToList();
+        }
+
+        /// <summary>
+        /// 根据摸头持续时间获取当前阶段
+        /// </summary>
+        public HeadPatPhase GetHeadPatPhase(float duration)
+        {
+            if (headPat == null || !headPat.enabled || headPat.phases == null || headPat.phases.Count == 0)
+                return null;
+            
+            // 查找持续时间超过阈值的最后一个阶段
+            return headPat.phases
+                .Where(p => duration >= p.durationThreshold)
+                .OrderByDescending(p => p.durationThreshold)
+                .FirstOrDefault();
+        }
+        
+        /// <summary>
+        /// ⭐ v1.14.0: 根据摸头持续时间获取当前阶段索引
+        /// 用于确定性地追踪阶段变化，避免重复触发表情
+        /// </summary>
+        /// <param name="duration">摸头持续时间（秒）</param>
+        /// <returns>阶段索引（-1 表示无阶段，0, 1, 2... 表示阶段编号）</returns>
+        public int GetHeadPatPhaseIndex(float duration)
+        {
+            if (headPat == null || !headPat.enabled || headPat.phases == null || headPat.phases.Count == 0)
+                return -1;
+            
+            // 按阈值升序排列阶段
+            var sortedPhases = headPat.phases.OrderBy(p => p.durationThreshold).ToList();
+            
+            // 查找当前所处的阶段索引
+            int currentIndex = -1;
+            for (int i = 0; i < sortedPhases.Count; i++)
+            {
+                if (duration >= sortedPhases[i].durationThreshold)
+                {
+                    currentIndex = i;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            
+            return currentIndex;
         }
     }
     

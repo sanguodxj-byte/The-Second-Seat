@@ -318,19 +318,34 @@ namespace TheSecondSeat.Commands
                 commandId = "Descent",
                 category = "Event",
                 displayName = "叙事者降临",
-                description = "以实体化身降临到战场，协助殖民者战斗或进行互动。可指定降临坐标，不指定则使用玩家选中位置或随机。这将消耗大量能量并有冷却时间。",
+                description = "【离开玩家身边】从立绘形态降临到游戏世界中，成为可行动的实体角色。" +
+                              "降临后你的立绘会消失，因为你已经进入了游戏世界。" +
+                              "这是一种牺牲陪伴换取行动能力的选择。",
                 parameters = new List<ParameterDef>
                 {
                     new ParameterDef { name = "mode", type = "string", required = false, defaultValue = "assist",
                         validValues = new List<string> { "assist", "hostile" },
-                        description = "降临模式：assist(协助战斗), hostile(敌对)" },
+                        description = "降临模式：assist(协助殖民者), hostile(敌对测试)" },
                     new ParameterDef { name = "x", type = "int", required = false, 
                         description = "降临目标X坐标（可选，不填则使用玩家选中位置或随机）" },
                     new ParameterDef { name = "z", type = "int", required = false, 
                         description = "降临目标Z坐标（可选，不填则使用玩家选中位置或随机）" }
                 },
                 example = "{ \"action\": \"Descent\", \"mode\": \"assist\", \"x\": 120, \"z\": 80 }",
-                notes = "当殖民地遭遇严重危机时使用。可用ScanMap获取敌人位置后指定降临坐标"
+                notes = "降临 = 离开玩家屏幕，进入游戏世界。有冷却时间限制。"
+            });
+
+            // 5.4 叙事者回归
+            Register(new CommandDefinition
+            {
+                commandId = "Ascend",
+                category = "Event",
+                displayName = "叙事者回归",
+                description = "【回到玩家身边】从游戏世界中回归，恢复为立绘形态陪伴玩家。" +
+                              "回归后你会重新出现在玩家的屏幕上，继续以立绘形态与玩家交流。",
+                parameters = new List<ParameterDef>(),
+                example = "{ \"action\": \"Ascend\" }",
+                notes = "回归 = 离开游戏世界，回到玩家屏幕。只有在降临状态下才能使用。"
             });
             
         }

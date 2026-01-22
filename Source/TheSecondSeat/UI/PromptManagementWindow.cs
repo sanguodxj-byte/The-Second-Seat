@@ -168,6 +168,90 @@ namespace TheSecondSeat.UI
             }
         }
 
+        private void ResetToDefault()
+        {
+            if (string.IsNullOrEmpty(selectedPromptFile)) return;
+
+            string configPromptsPath = Path.Combine(GenFilePaths.ConfigFolderPath, "TheSecondSeat", "Prompts");
+            string activeLangFolder = LanguageDatabase.activeLanguage.folderName;
+            string userLangPath = Path.Combine(configPromptsPath, activeLangFolder, selectedPromptFile + ".txt");
+            string userGlobalPath = Path.Combine(configPromptsPath, selectedPromptFile + ".txt");
+
+            bool deleted = false;
+            if (File.Exists(userLangPath))
+            {
+                File.Delete(userLangPath);
+                deleted = true;
+            }
+            if (File.Exists(userGlobalPath))
+            {
+                File.Delete(userGlobalPath);
+                deleted = true;
+            }
+
+            if (deleted)
+            {
+                PromptLoader.ClearCache();
+                LoadFileInternal(selectedPromptFile); // Reload from mod default
+                Messages.Message("已重置为默认值", MessageTypeDefOf.PositiveEvent, false);
+            }
+            else
+            {
+                Messages.Message("当前已是默认值，无需重置", MessageTypeDefOf.NeutralEvent, false);
+            }
+        }
+
+        private void InsertVariable(string text)
+        {
+            TextEditor editor = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
+            
+            // 简单的插入逻辑：如果编辑器有焦点且内容匹配，则插入光标处；否则追加到末尾
+            // 注意：GUI.TextArea 每一帧都会更新 editor，所以这种方式在 OnGUI 中通常有效
+            if (editor != null)
+            {
+                editor.text = editor.text.Insert(editor.cursorIndex, text);
+                editor.cursorIndex += text.Length;
+                editor.selectIndex = editor.cursorIndex;
+                currentFileContent = editor.text;
+                isModified = true;
+            }
+            else
+            {
+                currentFileContent += text;
+                isModified = true;
+            }
+        }
+
+        private void DoInsertVariableMenu()
+        {
+            List<FloatMenuOption> options = new List<FloatMenuOption>();
+
+            void Add(string label, string variable)
+            {
+                options.Add(new FloatMenuOption($"{label} ({variable})", () => InsertVariable(variable)));
+            }
+
+            Add("叙事者名称", "{{ narrator.name }}");
+            Add("叙事者传记", "{{ narrator.biography }}");
+            Add("视觉标签", "{{ narrator.visual_tags }}");
+            Add("好感度", "{{ agent.affinity }}");
+            Add("当前心情", "{{ agent.mood }}");
+            Add("难度模式", "{{ meta.difficulty_mode }}");
+            Add("语言指令", "{{ meta.language_instruction }}");
+            
+            // 对话风格
+            Add("风格-正式度", "{{ agent.dialogue_style.formality }}");
+            Add("风格-情感度", "{{ agent.dialogue_style.emotional }}");
+            Add("风格-冗长度", "{{ agent.dialogue_style.verbosity }}");
+            Add("风格-幽默度", "{{ agent.dialogue_style.humor }}");
+            Add("风格-讽刺度", "{{ agent.dialogue_style.sarcasm }}");
+            
+            // 包含文件
+            Add("包含文件...", "{{ include '...' }}");
+
+            Find.WindowStack.Add(new FloatMenu(options));
+        }
+
         public override void DoWindowContents(Rect inRect)
         {
             Text.Font = GameFont.Medium;
@@ -273,6 +357,36 @@ namespace TheSecondSeat.UI
                 SaveCurrentFile();
             }
             GUI.color = Color.white;
+
+            // Insert Variable Button
+            if (Widgets.ButtonText(new Rect(inRect.width - btnWidth * 3 - 20f, btnY, btnWidth, btnHeight), "插入变量..."))
+            {
+                DoInsertVariableMenu();
+            }
+
+            // Reset Button (Red if modified file exists)
+            string configPromptsPath = Path.Combine(GenFilePaths.ConfigFolderPath, "TheSecondSeat", "Prompts");
+            string activeLangFolder = LanguageDatabase.activeLanguage.folderName;
+            bool hasUserFile = !string.IsNullOrEmpty(selectedPromptFile) &&
+                (File.Exists(Path.Combine(configPromptsPath, activeLangFolder, selectedPromptFile + ".txt")) ||
+                 File.Exists(Path.Combine(configPromptsPath, selectedPromptFile + ".txt")));
+
+            if (hasUserFile) GUI.color = new Color(1f, 0.6f, 0.6f);
+            if (Widgets.ButtonText(new Rect(inRect.width - btnWidth * 4 - 30f, btnY, btnWidth, btnHeight), "重置默认"))
+            {
+                if (hasUserFile)
+                {
+                    Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation(
+                        "确定要重置此文件吗？\n您的自定义修改将被永久删除，并恢复为 Mod 默认值。",
+                        ResetToDefault,
+                        true));
+                }
+                else
+                {
+                    Messages.Message("当前已是默认值", MessageTypeDefOf.NeutralEvent, false);
+                }
+            }
+            GUI.color = Color.white;
             
             if (Widgets.ButtonText(new Rect(inRect.x, btnY, btnWidth, btnHeight), "打开文件夹"))
             {
@@ -282,6 +396,18 @@ namespace TheSecondSeat.UI
             if (Widgets.ButtonText(new Rect(inRect.x + btnWidth + 10f, btnY, btnWidth, btnHeight), "刷新列表"))
             {
                 RefreshFileList();
+            }
+            
+            // 初始化提示词按钮
+            if (Widgets.ButtonText(new Rect(inRect.x + btnWidth * 2 + 20f, btnY, btnWidth, btnHeight), "初始化提示词"))
+            {
+                Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation(
+                    "确定要初始化提示词吗？\n这将把 Mod 默认的提示词文件复制到配置文件夹，覆盖现有的同名文件。",
+                    () => {
+                        PromptLoader.InitializeUserPrompts();
+                        RefreshFileList();
+                    },
+                    true));
             }
         }
         

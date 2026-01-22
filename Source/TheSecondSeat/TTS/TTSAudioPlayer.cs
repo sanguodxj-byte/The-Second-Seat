@@ -41,6 +41,7 @@ namespace TheSecondSeat.TTS
 
         private AudioSource? currentAudioSource;
         private Coroutine? currentPlaybackCoroutine; // ✅ v1.6.65: 追踪当前协程
+        private string currentPlayingFilePath = string.Empty; // ✅ v2.7.2: 追踪当前播放的文件路径
         private const float BUFFER_TIME = 0.5f; // 播放结束后的缓冲时间
         private const int MAX_DELETE_RETRIES = 3; // 最大删除重试次数
         private const float DELETE_RETRY_DELAY = 0.2f; // 删除重试延迟
@@ -212,27 +213,53 @@ namespace TheSecondSeat.TTS
                 return;
             }
 
-            // ✅ v1.6.65: 打断机制 - 停止当前播放
-            if (currentPlaybackCoroutine != null)
+        // ✅ v1.6.65: 打断机制 - 停止当前播放
+        // ✅ v2.7.2: 修复打断时资源泄漏问题
+        if (currentPlaybackCoroutine != null)
+        {
+            StopCoroutine(currentPlaybackCoroutine);
+            currentPlaybackCoroutine = null;
+            
+            // 立即停止当前音频并清理资源
+            if (currentAudioSource != null)
             {
-                StopCoroutine(currentPlaybackCoroutine);
-                currentPlaybackCoroutine = null;
-                
-                // 立即停止当前音频
-                if (currentAudioSource != null && currentAudioSource.isPlaying)
+                if (currentAudioSource.isPlaying)
                 {
                     currentAudioSource.Stop();
                 }
                 
-                // 清除旧的播放状态
-                if (!string.IsNullOrEmpty(currentSpeakingPersona))
+                // 销毁 AudioClip 释放文件句柄
+                if (currentAudioSource.clip != null)
                 {
-                    SetSpeakingState(currentSpeakingPersona, false);
+                    var clipToDestroy = currentAudioSource.clip;
+                    currentAudioSource.clip = null;
+                    Destroy(clipToDestroy);
                 }
                 
-                // 停止嘴部动画
-                PersonaGeneration.MouthAnimationSystem.StopAnimation();
+                // 销毁临时 GameObject
+                if (currentAudioSource.gameObject != null && currentAudioSource.gameObject != this.gameObject)
+                {
+                    Destroy(currentAudioSource.gameObject);
+                }
+                currentAudioSource = null;
             }
+            
+            // 删除被打断的音频文件
+            if (!string.IsNullOrEmpty(currentPlayingFilePath) && File.Exists(currentPlayingFilePath))
+            {
+                StartCoroutine(DeleteFileWithRetry(currentPlayingFilePath));
+                currentPlayingFilePath = string.Empty;
+            }
+            
+            // 清除旧的播放状态
+            if (!string.IsNullOrEmpty(currentSpeakingPersona))
+            {
+                SetSpeakingState(currentSpeakingPersona, false);
+            }
+            
+            // 停止嘴部动画
+            PersonaGeneration.MouthAnimationSystem.StopAnimation();
+        }
 
             // 启动新的播放协程
             currentPlaybackCoroutine = StartCoroutine(LoadPlayDeleteCoroutine(filePath, personaDefName, onComplete));
@@ -264,9 +291,22 @@ namespace TheSecondSeat.TTS
         {
             AudioClip? clip = null;
             GameObject? tempGO = null;
+            
+            // ✅ v2.7.2: 记录当前播放的文件路径（用于打断时删除）
+            currentPlayingFilePath = filePath;
 
             // === 1. 使用 UnityWebRequest 加载音频 ===
+            // ⭐ v2.2.2: 修复路径包含特殊字符（如空格）导致加载失败的问题
             string fileUri = "file://" + filePath.Replace("\\", "/");
+            try
+            {
+                fileUri = new System.Uri(filePath).AbsoluteUri;
+            }
+            catch
+            {
+                // 回退到简单拼接
+                fileUri = "file://" + filePath.Replace("\\", "/");
+            }
             
             using (UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip(fileUri, AudioType.WAV))
             {
@@ -305,6 +345,8 @@ namespace TheSecondSeat.TTS
             currentAudioSource.clip = clip;
             currentAudioSource.volume = 1.0f;
             currentAudioSource.playOnAwake = false;
+            // ⭐ v2.2.2: 允许在游戏暂停时播放
+            currentAudioSource.ignoreListenerPause = true;
             
             // === 3. 设置播放状态（开始说话） ===
             if (!string.IsNullOrEmpty(personaDefName))
@@ -314,13 +356,15 @@ namespace TheSecondSeat.TTS
 
             // === 4. 播放音频 ===
             currentAudioSource.Play();
+            if (Prefs.DevMode) Log.Message($"[TTSAudioPlayer] Started playback. Duration: {clip.length:F2}s");
 
             // ⭐ 触发流式文本显示（与音频同步）
             UI.DialogueOverlayPanel.StartStreaming(clip.length);
 
             // === 5. 等待播放完成（添加缓冲时间） ===
+            // 注意：使用 WaitForSecondsRealtime 确保暂停时也能计时
             float totalWaitTime = clip.length + BUFFER_TIME;
-            yield return new WaitForSeconds(totalWaitTime);
+            yield return new WaitForSecondsRealtime(totalWaitTime);
 
             // === 6. 清除播放状态（停止说话） ===
             if (!string.IsNullOrEmpty(personaDefName))
@@ -354,6 +398,8 @@ namespace TheSecondSeat.TTS
             
             // ✅ v1.6.65: 清除协程引用
             currentPlaybackCoroutine = null;
+            // ✅ v2.7.2: 清除文件路径引用
+            currentPlayingFilePath = string.Empty;
         }
 
         /// <summary>

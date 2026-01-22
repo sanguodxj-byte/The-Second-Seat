@@ -2,6 +2,7 @@
 using Verse;
 using RimWorld;
 using TheSecondSeat.Core;
+using TheSecondSeat.Settings; // 添加引用
 
 namespace TheSecondSeat.UI
 {
@@ -42,10 +43,31 @@ namespace TheSecondSeat.UI
 
         protected override void SetInitialSizeAndPosition()
         {
-            // 居中显示
-            float x = (Verse.UI.screenWidth - WindowWidth) / 2f;
-            float y = (Verse.UI.screenHeight - WindowHeight) / 2f;
-            this.windowRect = new Rect(x, y, WindowWidth, WindowHeight);
+            Vector2 savedPos = TheSecondSeatMod.Settings.QuickDialoguePos;
+            
+            // 如果有保存的位置（x >= 0），则使用它
+            if (savedPos.x >= 0 && savedPos.y >= 0)
+            {
+                // 确保位置在屏幕范围内
+                float x = Mathf.Clamp(savedPos.x, 0f, Verse.UI.screenWidth - WindowWidth);
+                float y = Mathf.Clamp(savedPos.y, 0f, Verse.UI.screenHeight - WindowHeight);
+                this.windowRect = new Rect(x, y, WindowWidth, WindowHeight);
+            }
+            else
+            {
+                // 否则居中显示
+                float x = (Verse.UI.screenWidth - WindowWidth) / 2f;
+                float y = (Verse.UI.screenHeight - WindowHeight) / 2f;
+                this.windowRect = new Rect(x, y, WindowWidth, WindowHeight);
+            }
+        }
+
+        public override void PreClose()
+        {
+            base.PreClose();
+            // 保存位置
+            TheSecondSeatMod.Settings.QuickDialoguePos = this.windowRect.position;
+            TheSecondSeatMod.Settings.Write();
         }
 
         public override void PreOpen()
@@ -60,39 +82,37 @@ namespace TheSecondSeat.UI
         {
             float curY = Padding;
             
-            // ? 输入框区域（单倍高度，紧凑显示）
+            // 输入框区域（单行输入）
             float inputWidth = inRect.width - SendButtonWidth - Padding * 2 - 5f;
-            float inputAreaHeight = InputHeight * 1.5f;  // ? 1.5倍高度，足够显示1-2行
+            float inputAreaHeight = InputHeight + 4f;  // 单行高度 + 一点边距
             
-            // 输入框（使用 TextArea 支持多行）
-            GUI.SetNextControlName("QuickDialogueInput");
+            // 输入框（使用 TextField 单行输入，Enter 键不会换行）
             var inputRect = new Rect(Padding, curY, inputWidth, inputAreaHeight);
 
-            // 处理键盘事件：Enter发送，Shift+Enter换行
-            if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Return)
+            // 处理键盘事件：Enter发送
+            // 🔧 修复: 移到 SetNextControlName 之前
+            // 同时增加 Input.GetKeyDown 检查作为备用 (根据用户反馈)
+            bool isEnterPressed = (Event.current.type == EventType.KeyDown && (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter));
+
+            if (GUI.GetNameOfFocusedControl() == "QuickDialogueInput" && isEnterPressed)
             {
-                if (GUI.GetNameOfFocusedControl() == "QuickDialogueInput")
+                if (!string.IsNullOrWhiteSpace(userInput))
                 {
-                    if (Event.current.shift)
-                    {
-                        // Shift+Enter: 允许默认换行
-                    }
-                    else
-                    {
-                        // Enter: 发送消息
-                        if (!string.IsNullOrWhiteSpace(userInput))
-                        {
-                            pendingSend = true;
-                            pendingMessage = userInput;
-                        }
-                        Event.current.Use(); // 消耗事件，避免换行
-                    }
+                    Event.current.Use(); // 消耗事件，防止换行
+                    pendingSend = true;
+                    pendingMessage = userInput;
                 }
             }
 
-            userInput = Widgets.TextArea(inputRect, userInput);
+            // 使用 TextField 代替 TextArea（单行输入，Enter 不会换行）
+            GUI.SetNextControlName("QuickDialogueInput"); // 🔧 确保紧贴控件调用
+            string text = Widgets.TextField(inputRect, userInput);
+            if (text != userInput)
+            {
+                userInput = text;
+            }
             
-            // ? 自动聚焦输入框 (仅在刚打开且没有焦点时聚焦，或者发送后重新聚焦)
+            // 自动聚焦输入框 (仅在刚打开且没有焦点时聚焦)
             if (GUI.GetNameOfFocusedControl() != "QuickDialogueInput" && string.IsNullOrEmpty(GUI.GetNameOfFocusedControl()))
             {
                 GUI.FocusControl("QuickDialogueInput");

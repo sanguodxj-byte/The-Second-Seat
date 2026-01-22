@@ -199,7 +199,7 @@ namespace TheSecondSeat.PersonaGeneration
                 
                 if (shouldLog)
                 {
-                    Log.Message($"[MouthAnim-DEBUG] defName={defName}, isPlayingTTS={isPlayingTTS}, anyoneSpeaking={anyoneSpeaking}, currentSpeaker={currentSpeaker}");
+                    // Log.Message($"[MouthAnim-DEBUG] defName={defName}, isPlayingTTS={isPlayingTTS}, anyoneSpeaking={anyoneSpeaking}, currentSpeaker={currentSpeaker}");
                 }
             }
             catch (System.Exception ex)
@@ -228,7 +228,7 @@ namespace TheSecondSeat.PersonaGeneration
             // ⭐ v1.13.0: 记录最终返回的嘴型
             if (shouldLog)
             {
-                Log.Message($"[MouthAnim-DEBUG] → returning: {result ?? "null"} (openness={state.currentOpenness:F2})");
+                // Log.Message($"[MouthAnim-DEBUG] → returning: {result ?? "null"} (openness={state.currentOpenness:F2})");
             }
             
             return result;
@@ -298,8 +298,8 @@ namespace TheSecondSeat.PersonaGeneration
             }
             else
             {
-                // 回退到硬编码（向后兼容）
-                layerName = VisemeHelper.VisemeToTextureName(state.currentViseme);
+                // 回退到默认配置
+                layerName = RenderTreeDefManager.GetDefault().GetVisemeTextureName(state.currentViseme);
             }
             
             if (layerName != state.lockedMouthLayer)
@@ -420,9 +420,10 @@ namespace TheSecondSeat.PersonaGeneration
             }
             else
             {
-                // 回退到硬编码（向后兼容）
-                viseme = VisemeHelper.OpennessToViseme(state.currentOpenness);
-                layerName = VisemeHelper.VisemeToTextureName(viseme);
+                // 回退到默认配置
+                var defaultDef = RenderTreeDefManager.GetDefault();
+                viseme = defaultDef.GetVisemeFromOpenness(state.currentOpenness);
+                layerName = defaultDef.GetVisemeTextureName(viseme);
             }
             
             // 最小保持时间机制
@@ -551,16 +552,26 @@ namespace TheSecondSeat.PersonaGeneration
             var expressionState = ExpressionSystem.GetExpressionState(defName);
             if (expressionState == null) return "Closed_mouth";
             
-            var expression = expressionState.CurrentExpression;
-            
-            // Neutral 表情使用闭嘴
-            if (expression == ExpressionType.Neutral)
-            {
-                return "Closed_mouth";
-            }
-            
             // 获取变体编号
             int variant = expressionState.Intensity > 0 ? expressionState.Intensity : expressionState.CurrentVariant;
+            
+            return GetStaticMouthLayerName(defName, expressionState.CurrentExpression, variant);
+        }
+
+        /// <summary>
+        /// ⭐ v1.9.9: 获取指定表情的静态嘴型（重载）
+        /// </summary>
+        public static string GetStaticMouthLayerName(string defName, ExpressionType expression, int variant)
+        {
+            if (string.IsNullOrEmpty(defName)) return "Closed_mouth";
+            
+            // ⭐ v1.14.0: 移除 Neutral 强制闭嘴的限制，允许返回 neutral_mouth
+            // 这样 PortraitDrawer 可以尝试加载 neutral_mouth，如果不存在则会自动回退到 Closed_mouth
+            // if (expression == ExpressionType.Neutral)
+            // {
+            //     return "Closed_mouth";
+            // }
+            
             string exprName = expression.ToString().ToLower();
             
             if (variant <= 0)

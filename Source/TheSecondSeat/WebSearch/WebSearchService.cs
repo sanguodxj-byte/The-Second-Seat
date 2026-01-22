@@ -11,7 +11,7 @@ namespace TheSecondSeat.WebSearch
 {
     /// <summary>
     /// 网络搜索服务 - 支持多种搜索引擎
-    /// ? 添加延时控制，防止请求过快
+    /// 添加延时控制，防止请求过快
     /// </summary>
     public class WebSearchService
     {
@@ -22,7 +22,7 @@ namespace TheSecondSeat.WebSearch
         private const int CacheExpirationMinutes = 60;
         private const int MaxCacheEntries = 100;
         
-        // ? 请求限流
+        // 请求限流
         private DateTime lastRequestTime = DateTime.MinValue;
         private const int MinRequestIntervalMs = 1000; // 最小请求间隔（毫秒）
         private int requestDelayMs = 1000; // 默认延时 1 秒
@@ -58,28 +58,62 @@ namespace TheSecondSeat.WebSearch
                 case "duckduckgo":
                     // DuckDuckGo 不需要 API Key
                     break;
-                default:
-                    Log.Warning($"[WebSearch] 未知搜索引擎: {engine}，使用 DuckDuckGo");
-                    searchEngine = "duckduckgo";
-                    break;
             }
-
-            Log.Message($"[WebSearch] 搜索引擎已配置: {searchEngine}, 延时: {requestDelayMs}ms");
         }
 
         /// <summary>
-        /// ? 请求限流：确保请求间隔不小于设定值
+        /// 检查是否应该触发搜索
+        /// </summary>
+        public static bool ShouldSearch(string userMessage)
+        {
+            if (string.IsNullOrEmpty(userMessage)) return false;
+            
+            // 简单的触发词检测
+            // TODO: 使用 LLM 判断意图会更准确，但这里为了性能先用关键词
+            string[] triggers = { "search", "google", "bing", "find", "who is", "what is", "搜索", "查询", "查找", "是谁", "是什么" };
+            return triggers.Any(t => userMessage.ToLower().StartsWith(t));
+        }
+
+        /// <summary>
+        /// 格式化搜索结果为 Context 字符串
+        /// </summary>
+        public static string FormatResultsForContext(SearchResult result)
+        {
+            if (result == null || result.Results.Count == 0) return "";
+
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("=== Web Search Results ===");
+            sb.AppendLine($"Query: {result.Query}");
+            sb.AppendLine($"Source: {result.Source}");
+            sb.AppendLine();
+
+            for (int i = 0; i < result.Results.Count; i++)
+            {
+                var item = result.Results[i];
+                sb.AppendLine($"[{i+1}] {item.Title}");
+                sb.AppendLine($"URL: {item.Url}");
+                sb.AppendLine($"Snippet: {item.Snippet}");
+                sb.AppendLine();
+            }
+            sb.AppendLine("==========================");
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// 请求限流：确保请求间隔不小于设定值
         /// </summary>
         private async Task EnsureRequestDelay()
         {
-            var timeSinceLastRequest = DateTime.Now - lastRequestTime;
-            var requiredDelay = TimeSpan.FromMilliseconds(requestDelayMs);
+            var now = DateTime.Now;
+            var timeSinceLast = (now - lastRequestTime).TotalMilliseconds;
             
-            if (timeSinceLastRequest < requiredDelay)
+            if (timeSinceLast < requestDelayMs)
             {
-                var waitTime = requiredDelay - timeSinceLastRequest;
-                Log.Message($"[WebSearch] 限流等待 {waitTime.TotalMilliseconds:F0}ms");
-                await Task.Delay(waitTime);
+                int waitMs = requestDelayMs - (int)timeSinceLast;
+                if (waitMs > 0)
+                {
+                    await Task.Delay(waitMs);
+                }
             }
             
             lastRequestTime = DateTime.Now;
@@ -87,282 +121,229 @@ namespace TheSecondSeat.WebSearch
 
         /// <summary>
         /// 执行搜索
-        /// ? 添加延时保护
+        /// 添加延时保护
         /// </summary>
         public async Task<SearchResult?> SearchAsync(string query, int maxResults = 5)
         {
-            if (string.IsNullOrWhiteSpace(query))
-            {
-                return null;
-            }
-
-            // 检查缓存
-            if (TryGetFromCache(query, out var cachedResult))
-            {
-                Log.Message($"[WebSearch] 使用缓存结果: {query}");
-                return cachedResult;
-            }
+            if (!isConfigured) return null;
 
             try
             {
-                // ? 请求前延时
+                // 请求前延时
                 await EnsureRequestDelay();
-                
+
                 SearchResult? result = searchEngine switch
                 {
                     "bing" => await SearchBingAsync(query, maxResults),
                     "google" => await SearchGoogleAsync(query, maxResults),
                     "duckduckgo" => await SearchDuckDuckGoAsync(query, maxResults),
-                    _ => await SearchDuckDuckGoAsync(query, maxResults)
+                    _ => null
                 };
-
-                // 缓存结果
-                if (result != null && result.Results.Count > 0)
-                {
-                    AddToCache(query, result);
-                }
 
                 return result;
             }
             catch (Exception ex)
             {
-                Log.Error($"[WebSearch] 搜索失败: {ex.Message}");
+                Log.Error($"[WebSearch] Search failed: {ex.Message}");
                 return null;
             }
         }
 
+        private bool isConfigured => searchEngine switch
+        {
+            "bing" => !string.IsNullOrEmpty(bingApiKey),
+            "google" => !string.IsNullOrEmpty(googleApiKey) && !string.IsNullOrEmpty(googleSearchEngineId),
+            "duckduckgo" => true,
+            _ => false
+        };
+
         /// <summary>
-        /// Bing 搜索
+        /// Bing Search API
         /// </summary>
         private async Task<SearchResult?> SearchBingAsync(string query, int maxResults)
         {
-            if (string.IsNullOrEmpty(bingApiKey))
-            {
-                Log.Warning("[WebSearch] Bing API Key 未配置");
-                return null;
-            }
+            if (string.IsNullOrEmpty(bingApiKey)) return null;
+
+            // 检查缓存
+            if (TryGetFromCache(query, out var cachedResult)) return cachedResult;
 
             var url = $"https://api.bing.microsoft.com/v7.0/search?q={Uri.EscapeDataString(query)}&count={maxResults}";
-            
-            using var webRequest = UnityWebRequest.Get(url);
-            webRequest.SetRequestHeader("Ocp-Apim-Subscription-Key", bingApiKey);
-            webRequest.SetRequestHeader("User-Agent", "TheSecondSeat-RimWorld-Mod/1.0");
 
-            var op = webRequest.SendWebRequest();
-            while (!op.isDone) await Task.Delay(50);
-
-            if (webRequest.result != UnityWebRequest.Result.Success)
+            using (var request = UnityWebRequest.Get(url))
             {
-                Log.Error($"[WebSearch] Bing API Error: {webRequest.error}");
-                return null;
-            }
+                request.SetRequestHeader("Ocp-Apim-Subscription-Key", bingApiKey);
+                var op = request.SendWebRequest();
 
-            var content = webRequest.downloadHandler.text;
-            var json = JObject.Parse(content);
+                while (!op.isDone) await Task.Delay(50);
 
-            var result = new SearchResult
-            {
-                Query = query,
-                Engine = "Bing",
-                Timestamp = DateTime.Now
-            };
-
-            var webPages = json["webPages"]?["value"] as JArray;
-            if (webPages != null)
-            {
-                foreach (var page in webPages.Take(maxResults))
+                if (request.result != UnityWebRequest.Result.Success)
                 {
-                    result.Results.Add(new SearchResultItem
-                    {
-                        Title = page["name"]?.ToString() ?? "",
-                        Url = page["url"]?.ToString() ?? "",
-                        Snippet = page["snippet"]?.ToString() ?? ""
-                    });
+                    Log.Warning($"[WebSearch] Bing API error: {request.error}");
+                    return null;
                 }
-            }
 
-            Log.Message($"[WebSearch] Bing 搜索完成: {query} - {result.Results.Count} 个结果");
-            return result;
-        }
+                var json = JObject.Parse(request.downloadHandler.text);
+                var result = new SearchResult { Query = query, Source = "Bing" };
 
-        /// <summary>
-        /// Google 搜索
-        /// </summary>
-        private async Task<SearchResult?> SearchGoogleAsync(string query, int maxResults)
-        {
-            if (string.IsNullOrEmpty(googleApiKey) || string.IsNullOrEmpty(googleSearchEngineId))
-            {
-                Log.Warning("[WebSearch] Google API Key 或 Search Engine ID 未配置");
-                return null;
-            }
-
-            var url = $"https://www.googleapis.com/customsearch/v1?key={googleApiKey}&cx={googleSearchEngineId}&q={Uri.EscapeDataString(query)}&num={maxResults}";
-
-            using var webRequest = UnityWebRequest.Get(url);
-            webRequest.SetRequestHeader("User-Agent", "TheSecondSeat-RimWorld-Mod/1.0");
-
-            var op = webRequest.SendWebRequest();
-            while (!op.isDone) await Task.Delay(50);
-
-            if (webRequest.result != UnityWebRequest.Result.Success)
-            {
-                Log.Error($"[WebSearch] Google API Error: {webRequest.error}");
-                return null;
-            }
-
-            var content = webRequest.downloadHandler.text;
-            var json = JObject.Parse(content);
-
-            var result = new SearchResult
-            {
-                Query = query,
-                Engine = "Google",
-                Timestamp = DateTime.Now
-            };
-
-            var items = json["items"] as JArray;
-            if (items != null)
-            {
-                foreach (var item in items.Take(maxResults))
+                var webPages = json["webPages"]?["value"] as JArray;
+                if (webPages != null)
                 {
-                    result.Results.Add(new SearchResultItem
+                    foreach (var page in webPages)
                     {
-                        Title = item["title"]?.ToString() ?? "",
-                        Url = item["link"]?.ToString() ?? "",
-                        Snippet = item["snippet"]?.ToString() ?? ""
-                    });
-                }
-            }
-
-            Log.Message($"[WebSearch] Google 搜索完成: {query} - {result.Results.Count} 个结果");
-            return result;
-        }
-
-        /// <summary>
-        /// DuckDuckGo 即时回答 API（免费，无需 API Key）
-        /// </summary>
-        private async Task<SearchResult?> SearchDuckDuckGoAsync(string query, int maxResults)
-        {
-            var url = $"https://api.duckduckgo.com/?q={Uri.EscapeDataString(query)}&format=json&no_html=1&skip_disambig=1";
-
-            using var webRequest = UnityWebRequest.Get(url);
-            webRequest.SetRequestHeader("User-Agent", "TheSecondSeat-RimWorld-Mod/1.0");
-
-            var op = webRequest.SendWebRequest();
-            while (!op.isDone) await Task.Delay(50);
-
-            if (webRequest.result != UnityWebRequest.Result.Success)
-            {
-                Log.Error($"[WebSearch] DuckDuckGo API Error: {webRequest.error}");
-                return null;
-            }
-
-            var content = webRequest.downloadHandler.text;
-            var json = JObject.Parse(content);
-
-            var result = new SearchResult
-            {
-                Query = query,
-                Engine = "DuckDuckGo",
-                Timestamp = DateTime.Now
-            };
-
-            // 即时回答
-            var abstractText = json["Abstract"]?.ToString();
-            var abstractUrl = json["AbstractURL"]?.ToString();
-            
-            if (!string.IsNullOrEmpty(abstractText))
-            {
-                result.Results.Add(new SearchResultItem
-                {
-                    Title = json["Heading"]?.ToString() ?? query,
-                    Url = abstractUrl ?? "",
-                    Snippet = abstractText
-                });
-            }
-
-            // 相关话题
-            var relatedTopics = json["RelatedTopics"] as JArray;
-            if (relatedTopics != null)
-            {
-                foreach (var topic in relatedTopics.Take(maxResults - result.Results.Count))
-                {
-                    if (topic["Text"] != null)
-                    {
-                        result.Results.Add(new SearchResultItem
+                        result.Results.Add(new SearchItem
                         {
-                            Title = topic["Text"]?.ToString()?.Split('.')[0] ?? "",
-                            Url = topic["FirstURL"]?.ToString() ?? "",
-                            Snippet = topic["Text"]?.ToString() ?? ""
+                            Title = page["name"]?.ToString() ?? "",
+                            Url = page["url"]?.ToString() ?? "",
+                            Snippet = page["snippet"]?.ToString() ?? ""
                         });
                     }
                 }
-            }
 
-            Log.Message($"[WebSearch] DuckDuckGo 搜索完成: {query} - {result.Results.Count} 个结果");
-            return result;
+                CacheResult(query, result);
+                return result;
+            }
         }
 
         /// <summary>
-        /// 检测查询是否需要联网搜索
+        /// Google Custom Search API
         /// </summary>
-        public static bool ShouldSearch(string query)
+        private async Task<SearchResult?> SearchGoogleAsync(string query, int maxResults)
         {
-            if (string.IsNullOrWhiteSpace(query))
-                return false;
+            if (string.IsNullOrEmpty(googleApiKey) || string.IsNullOrEmpty(googleSearchEngineId)) return null;
 
-            var lowerQuery = query.ToLower();
+            // 检查缓存
+            if (TryGetFromCache(query, out var cachedResult)) return cachedResult;
 
-            // 检测关键词
-            var searchTriggers = new[]
+            var url = $"https://www.googleapis.com/customsearch/v1?key={googleApiKey}&cx={googleSearchEngineId}&q={Uri.EscapeDataString(query)}&num={maxResults}";
+
+            using (var request = UnityWebRequest.Get(url))
             {
-                "搜索", "查找", "什么是", "谁是", "如何", "怎么",
-                "最新", "新闻", "当前", "现在",
-                "search", "find", "what is", "who is", "how to",
-                "latest", "news", "current", "recent"
-            };
+                var op = request.SendWebRequest();
 
-            return searchTriggers.Any(trigger => lowerQuery.Contains(trigger));
-        }
+                while (!op.isDone) await Task.Delay(50);
 
-        /// <summary>
-        /// 将搜索结果格式化为上下文
-        /// </summary>
-        public static string FormatResultsForContext(SearchResult searchResult, int maxLength = 800)
-        {
-            if (searchResult == null || searchResult.Results.Count == 0)
-            {
-                return "";
-            }
-
-            var context = $"=== 网络搜索结果: \"{searchResult.Query}\" ({searchResult.Engine}) ===\n";
-            int currentLength = context.Length;
-
-            foreach (var result in searchResult.Results)
-            {
-                var entry = $"\n【{result.Title}】\n{result.Snippet}\n来源: {result.Url}\n";
-                
-                if (currentLength + entry.Length > maxLength)
+                if (request.result != UnityWebRequest.Result.Success)
                 {
-                    break;
+                    Log.Warning($"[WebSearch] Google API error: {request.error}");
+                    return null;
                 }
 
-                context += entry;
-                currentLength += entry.Length;
-            }
+                var json = JObject.Parse(request.downloadHandler.text);
+                var result = new SearchResult { Query = query, Source = "Google" };
 
-            context += "=== 搜索结果结束 ===\n\n";
-            return context;
+                var items = json["items"] as JArray;
+                if (items != null)
+                {
+                    foreach (var item in items)
+                    {
+                        result.Results.Add(new SearchItem
+                        {
+                            Title = item["title"]?.ToString() ?? "",
+                            Url = item["link"]?.ToString() ?? "",
+                            Snippet = item["snippet"]?.ToString() ?? ""
+                        });
+                    }
+                }
+
+                CacheResult(query, result);
+                return result;
+            }
+        }
+
+        /// <summary>
+        /// DuckDuckGo Instant Answer API (Limited)
+        /// 注意：DDG 的 API 主要返回摘要，不是完整的网页搜索
+        /// </summary>
+        private async Task<SearchResult?> SearchDuckDuckGoAsync(string query, int maxResults)
+        {
+            // 检查缓存
+            if (TryGetFromCache(query, out var cachedResult)) return cachedResult;
+
+            var url = $"https://api.duckduckgo.com/?q={Uri.EscapeDataString(query)}&format=json&no_html=1&skip_disambig=1";
+
+            using (var request = UnityWebRequest.Get(url))
+            {
+                var op = request.SendWebRequest();
+
+                while (!op.isDone) await Task.Delay(50);
+
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    Log.Warning($"[WebSearch] DuckDuckGo error: {request.error}");
+                    return null;
+                }
+
+                // DDG API 返回的是 JSON
+                // 但 UnityWebRequest 可能会把 content-type 识别错，这里手动解析
+                try 
+                {
+                    var json = JObject.Parse(request.downloadHandler.text);
+                    var result = new SearchResult { Query = query, Source = "DuckDuckGo" };
+
+                    // 即时回答
+                    var abstractText = json["Abstract"]?.ToString();
+                    var abstractUrl = json["AbstractURL"]?.ToString();
+
+                    if (!string.IsNullOrEmpty(abstractText))
+                    {
+                        result.Results.Add(new SearchItem
+                        {
+                            Title = json["Heading"]?.ToString() ?? query,
+                            Url = abstractUrl ?? "",
+                            Snippet = abstractText
+                        });
+                    }
+
+                    // 相关话题 (RelatedTopics)
+                    var relatedTopics = json["RelatedTopics"] as JArray;
+                    if (relatedTopics != null)
+                    {
+                        int count = 0;
+                        foreach (var topic in relatedTopics)
+                        {
+                            if (count >= maxResults) break;
+                            
+                            // DDG API 有时返回嵌套的 Topic，这里只取简单的
+                            if (topic["Text"] != null)
+                            {
+                                result.Results.Add(new SearchItem
+                                {
+                                    Title = topic["Text"]?.ToString()?.Split('.')[0] ?? "",
+                                    Url = topic["FirstURL"]?.ToString() ?? "",
+                                    Snippet = topic["Text"]?.ToString() ?? ""
+                                });
+                                count++;
+                            }
+                        }
+                    }
+
+                    CacheResult(query, result);
+                    return result;
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning($"[WebSearch] DuckDuckGo parse error: {ex.Message}");
+                    return null;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 清除搜索缓存
+        /// </summary>
+        public void ClearCache()
+        {
+            searchCache.Clear();
         }
 
         // 缓存管理
         private bool TryGetFromCache(string query, out SearchResult? result)
         {
-            if (searchCache.TryGetValue(query, out var cache))
+            if (searchCache.TryGetValue(query, out var cacheItem))
             {
-                if (DateTime.Now - cache.Timestamp < TimeSpan.FromMinutes(CacheExpirationMinutes))
+                if ((DateTime.Now - cacheItem.Timestamp).TotalMinutes < CacheExpirationMinutes)
                 {
-                    result = cache.Result;
+                    result = cacheItem.Result;
                     return true;
                 }
                 else
@@ -370,61 +351,38 @@ namespace TheSecondSeat.WebSearch
                     searchCache.Remove(query);
                 }
             }
-
             result = null;
             return false;
         }
 
-        private void AddToCache(string query, SearchResult result)
+        private void CacheResult(string query, SearchResult result)
         {
             if (searchCache.Count >= MaxCacheEntries)
             {
-                // 移除最旧的条目
-                var oldest = searchCache.OrderBy(x => x.Value.Timestamp).First();
-                searchCache.Remove(oldest.Key);
+                // 简单清理：移除最早的一个（这里简单清空，或者可以用 LRU）
+                searchCache.Clear();
             }
-
-            searchCache[query] = new SearchResultCache
-            {
-                Result = result,
-                Timestamp = DateTime.Now
-            };
+            searchCache[query] = new SearchResultCache { Result = result, Timestamp = DateTime.Now };
         }
 
-        public void ClearCache()
+        private class SearchResultCache
         {
-            searchCache.Clear();
-            Log.Message("[WebSearch] 搜索缓存已清空");
+            public SearchResult Result { get; set; } = new SearchResult();
+            public DateTime Timestamp { get; set; }
         }
     }
 
-    /// <summary>
-    /// 搜索结果
-    /// </summary>
     public class SearchResult
     {
         public string Query { get; set; } = "";
-        public string Engine { get; set; } = "";
-        public DateTime Timestamp { get; set; }
-        public List<SearchResultItem> Results { get; set; } = new List<SearchResultItem>();
+        public string Source { get; set; } = "";
+        public List<SearchItem> Results { get; set; } = new List<SearchItem>();
     }
 
-    /// <summary>
-    /// 单个搜索结果项
-    /// </summary>
-    public class SearchResultItem
+    public class SearchItem
     {
         public string Title { get; set; } = "";
         public string Url { get; set; } = "";
         public string Snippet { get; set; } = "";
-    }
-
-    /// <summary>
-    /// 搜索结果缓存
-    /// </summary>
-    internal class SearchResultCache
-    {
-        public SearchResult Result { get; set; } = new SearchResult();
-        public DateTime Timestamp { get; set; }
     }
 }

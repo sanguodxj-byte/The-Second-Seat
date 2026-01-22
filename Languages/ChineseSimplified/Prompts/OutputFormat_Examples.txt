@@ -66,3 +66,17 @@
   "dialogue": "(微笑) 是的，我也觉得她很特别。",
   "expression": "happy"
 }
+```
+
+示例 7 - 状态更新（通过 updateCard）：
+玩家：“你看起来很累，要不要休息一下？”
+```json
+{
+  "thought": "玩家注意到了我的疲惫。我应该接受建议，更新我的状态为 Tired。",
+  "dialogue": "(打哈欠) 确实... 今天的计算量太大了。我可能需要小睡一会儿。",
+  "expression": "tired",
+  "updateCard": {
+    "energy": "Tired"
+  }
+}
+```

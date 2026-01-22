@@ -36,7 +36,25 @@ namespace TheSecondSeat.LLM
         // 表情符号ID（可选）
         public string emoticon { get; set; } = "";
         
+        // ⭐ v1.6.95: 对话好感度变化值（范围 -10 ~ +10）
+        // AI 可以根据对话内容自动调整好感度
+        // 正值：玩家表现出关心、赞美、帮助时
+        // 负值：玩家表现出敌意、侮辱、忽视时
+        public float affinityDelta { get; set; } = 0f;
+        
+        // ⭐ v2.2.0: 允许 AI 自主更新角色卡状态 (BioRhythm)
+        public CardUpdateData? updateCard { get; set; }
+
         public LLMCommand? command { get; set; }
+    }
+
+    [Serializable]
+    public class CardUpdateData
+    {
+        // === BioState ===
+        public string? energy { get; set; } // "Energetic", "Tired", "Exhausted"
+        public string? hunger { get; set; } // "Full", "Hungry"
+        public bool? isSleepy { get; set; }
     }
 
     /// <summary>
@@ -93,11 +111,20 @@ namespace TheSecondSeat.LLM
     public class OpenAIResponse
     {
         public Choice[] choices { get; set; } = Array.Empty<Choice>();
+        public Usage? usage { get; set; }
     }
 
     [Serializable]
     public class Choice
     {
         public Message? message { get; set; }
+    }
+
+    [Serializable]
+    public class Usage
+    {
+        public int prompt_tokens { get; set; }
+        public int completion_tokens { get; set; }
+        public int total_tokens { get; set; }
     }
 }

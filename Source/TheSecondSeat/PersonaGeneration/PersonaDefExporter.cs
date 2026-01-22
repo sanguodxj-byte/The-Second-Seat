@@ -461,6 +461,29 @@ namespace TheSecondSeat.PersonaGeneration
             sb.AppendLine($"    <narratorChaosLevel>{persona.narratorChaosLevel:F2}</narratorChaosLevel>");
             sb.AppendLine($"    <dominanceLevel>{persona.dominanceLevel:F2}</dominanceLevel>");
             sb.AppendLine();
+
+            // ⭐ v2.3.0: 语义雷达配置
+            if (persona.radarConcepts != null && persona.radarConcepts.Count > 0)
+            {
+                sb.AppendLine("    <radarConcepts>");
+                foreach (var concept in persona.radarConcepts)
+                {
+                    sb.AppendLine("      <li>");
+                    sb.AppendLine($"        <Name>{EscapeXml(concept.Name)}</Name>");
+                    if (concept.Keywords != null && concept.Keywords.Count > 0)
+                    {
+                        sb.AppendLine("        <Keywords>");
+                        foreach (var keyword in concept.Keywords)
+                        {
+                            sb.AppendLine($"          <li>{EscapeXml(keyword)}</li>");
+                        }
+                        sb.AppendLine("        </Keywords>");
+                    }
+                    sb.AppendLine("      </li>");
+                }
+                sb.AppendLine("    </radarConcepts>");
+                sb.AppendLine();
+            }
             
             // ? 语气标签
             if (persona.toneTags != null && persona.toneTags.Count > 0)

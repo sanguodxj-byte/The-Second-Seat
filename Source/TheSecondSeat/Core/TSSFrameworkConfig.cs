@@ -275,10 +275,10 @@ namespace TheSecondSeat.Core
             public static float LowAffinityThreshold { get; set; } = -20f;
             
             /// <summary>头部摸摸好感度奖励</summary>
-            public static float HeadPatAffinityBonus { get; set; } = 3f;
+            public static float HeadPatAffinityBonus { get; set; } = 0.5f;
             
             /// <summary>身体戳戳好感度奖励</summary>
-            public static float PokeAffinityBonus { get; set; } = 1f;
+            public static float PokeAffinityBonus { get; set; } = 0.3f;
             
             /// <summary>连续触摸好感度奖励</summary>
             public static float TouchComboAffinityBonus { get; set; } = 5f;
