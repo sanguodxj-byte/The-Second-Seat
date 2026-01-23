@@ -6,7 +6,7 @@
   
   <!-- 灾厄摔掷 Calamity Throw - 强化版 Tactical Throws -->
   <AbilityDef>
-    <defName>Sideria_CalamityThrow</defName>
+    <defName>TSS_CalamityThrow</defName>
     <label>calamity throw</label>
     <description>Sideria seizes the target with overwhelming force, bypassing all resistance. The grabbed target can then be thrown at enemies or slammed into the ground with devastating power, dealing double the normal damage.</description>
     <iconPath>UI/Abilities/CalamityThrow</iconPath>
@@ -32,7 +32,7 @@
         <damageMultiplier>2.0</damageMultiplier>
         <bypassGrappleCheck>true</bypassGrappleCheck>
         <holdJobDefName>Sideria_CalamityHold</holdJobDefName>
-        <damageMultiplierHediffDefName>Sideria_CalamityThrowBonus</damageMultiplierHediffDefName>
+        <damageMultiplierHediffDefName>TSS_CalamityThrowBonus</damageMultiplierHediffDefName>
       </li>
     </comps>
   </AbilityDef>

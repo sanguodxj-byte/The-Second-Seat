@@ -10,7 +10,7 @@
           <debugLabel>Body</debugLabel>
           <tagDef>Body</tagDef>
           <nodeClass>PawnRenderNode_AnimalPart</nodeClass>
-          <workerClass>TheSecondSeat.PawnRenderNodeWorker_SideriaBody</workerClass>
+          <workerClass>TheSecondSeat.PawnRenderNodeWorker_BodyTilt</workerClass>
           <useRottenColor>true</useRottenColor>
           <children>
             <li>

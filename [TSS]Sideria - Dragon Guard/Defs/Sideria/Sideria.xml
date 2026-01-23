@@ -32,7 +32,23 @@
     </recipes>
     <comps>
       <!-- 自动使用技能（援助模式） -->
-      <li Class="TheSecondSeat.CompProperties_SideriaAutoAbility" />
+      <li Class="TheSecondSeat.CompProperties_AutoAbility">
+        <abilityDefs>
+          <li>Sideria_CrimsonBloom</li>
+          <li>TSS_CalamityThrow</li>
+          <li>Sideria_DragonGate</li>
+        </abilityDefs>
+        <checkInterval>180</checkInterval>
+        <searchRadius>25</searchRadius>
+        <maxSummonCount>2</maxSummonCount>
+        <summonLimitDefName>Sideria_SpiritDragon</summonLimitDefName>
+      </li>
+      <li Class="TheSecondSeat.CompProperties_NarratorEntity">
+        <disableSlaughter>true</disableSlaughter>
+        <disableRelease>true</disableRelease>
+        <hideTrainingTab>true</hideTrainingTab>
+        <forceShowDraftGizmo>true</forceShowDraftGizmo>
+      </li>
       
       <!-- 降临体通过 Pawn_SpawnSetup_Patch 注入原版 drafter 组件，不再需要自定义 CompDraftableAnimal -->
       <li Class="CompProperties_HoldingPlatformTarget" MayRequire="Ludeon.RimWorld.Anomaly">

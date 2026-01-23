@@ -251,6 +251,12 @@
     <comps>
       <li Class="CompProperties_Forbiddable"/>
       <li Class="TheSecondSeat.CompProperties_DraftableDragon"/>
+      <li Class="TheSecondSeat.CompProperties_NarratorEntity">
+        <disableSlaughter>true</disableSlaughter>
+        <disableRelease>true</disableRelease>
+        <hideTrainingTab>true</hideTrainingTab>
+        <forceShowDraftGizmo>true</forceShowDraftGizmo>
+      </li>
     </comps>
   </ThingDef>
 

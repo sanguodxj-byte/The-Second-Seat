@@ -33,7 +33,7 @@
 
   <!-- 狂怒层数 Buff (隐藏) -->
   <HediffDef>
-    <defName>Sideria_BloodThorn_RageStack</defName>
+    <defName>TSS_BloodThorn_RageStack</defName>
     <label>crimson rage stack</label>
     <description>Accumulated rage increasing attack speed.</description>
     <hediffClass>HediffWithComps</hediffClass>
@@ -146,7 +146,7 @@
 
   <!-- 煌耀龙隐藏点 -->
   <ThingDef>
-    <defName>Sideria_DragonHidingSpot</defName>
+    <defName>TSS_DragonHidingSpot</defName>
     <label>sacred light</label>
     <thingClass>TheSecondSeat.DragonHidingSpot</thingClass>
     <category>Mote</category>

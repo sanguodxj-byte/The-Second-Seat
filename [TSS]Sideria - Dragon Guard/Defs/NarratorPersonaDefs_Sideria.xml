@@ -141,7 +141,7 @@
     
     <!-- ⭐ 直接赋予的技能 -->
     <abilitiesToGrant>
-      <li>Sideria_CalamityThrow</li>
+      <li>TSS_CalamityThrow</li>
       <li>Sideria_CrimsonBloom</li>
       <li>Sideria_DragonGate_BloodThorn</li>
       <li>Sideria_DragonGate_Radiant</li>

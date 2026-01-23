@@ -23,7 +23,7 @@
 
   <!-- 灾厄投掷 - 投掷被持有的目标 -->
   <JobDef>
-    <defName>Sideria_CalamityThrow</defName>
+    <defName>TSS_CalamityThrow</defName>
     <driverClass>TheSecondSeat.JobDriver_CalamityThrow</driverClass>
     <reportString>throwing target</reportString>
     <playerInterruptible>true</playerInterruptible>
@@ -40,7 +40,7 @@
 
   <!-- 灾厄抱摔 - 将目标摔向地面 -->
   <JobDef>
-    <defName>Sideria_CalamitySlam</defName>
+    <defName>TSS_CalamitySlam</defName>
     <driverClass>TheSecondSeat.JobDriver_CalamitySlam</driverClass>
     <reportString>slamming target into the ground</reportString>
     <playerInterruptible>true</playerInterruptible>
@@ -98,8 +98,8 @@
     <makesAlert>false</makesAlert>
     <comps>
       <li Class="TheSecondSeat.HediffCompProperties_CalamityHoldActions">
-        <throwJobDefName>Sideria_CalamityThrow</throwJobDefName>
-        <slamJobDefName>Sideria_CalamitySlam</slamJobDefName>
+        <throwJobDefName>TSS_CalamityThrow</throwJobDefName>
+        <slamJobDefName>TSS_CalamitySlam</slamJobDefName>
       </li>
     </comps>
     <stages>
@@ -111,7 +111,7 @@
 
   <!-- 灾厄投掷伤害加成（用于传递伤害倍率） -->
   <HediffDef>
-    <defName>Sideria_CalamityThrowBonus</defName>
+    <defName>TSS_CalamityThrowBonus</defName>
     <label>calamity throw power</label>
     <description>Enhanced throwing power from Sideria's calamity throw ability.</description>
     <hediffClass>Hediff</hediffClass>
@@ -131,7 +131,7 @@
   <!-- 飞行器定义 -->
   <!-- ============================================== -->
   <ThingDef>
-    <defName>Sideria_PawnFlyer_Calamity</defName>
+    <defName>TSS_PawnFlyer_Calamity</defName>
     <label>Calamity Thrown Object</label>
     <thingClass>TheSecondSeat.PawnFlyer_CalamityThrow</thingClass>
     <category>Mote</category>
