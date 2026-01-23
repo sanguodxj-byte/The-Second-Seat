@@ -1,0 +1,553 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <!-- UI 元素 -->
+  <TSS_NarratorWindowTitle>AI 叙事者助手</TSS_NarratorWindowTitle>
+  <TSS_NarratorButton>AI 叙事者</TSS_NarratorButton>
+  <TSS_NarratorButton_Desc>与 AI 叙事者对话</TSS_NarratorButton_Desc>
+  <TSS_SendButton>与叙事者交谈</TSS_SendButton>
+  <TSS_InputPlaceholder>在这里输入消息...</TSS_InputPlaceholder>
+  <TSS_Favorability>好感度</TSS_Favorability>
+  <TSS_CurrentTier>当前等级</TSS_CurrentTier>
+  <TSS_SwitchPersona>切换人格</TSS_SwitchPersona>
+  <TSS_TestConnection>测试连接</TSS_TestConnection>
+  <TSS_StatusReport>状态汇报</TSS_StatusReport>
+  <TSS_CommandList>指令列表</TSS_CommandList>
+  <TSS_ClearChat>清空聊天</TSS_ClearChat>
+  <TSS_ChatCleared>聊天记录已清空</TSS_ChatCleared>
+  <TSS_AIThinking>● AI 正在思考...</TSS_AIThinking>
+  <TSS_InputHint>输入消息...</TSS_InputHint>
+  <TSS_Send>发送</TSS_Send>
+
+  <!-- 设置部分 -->
+  <TSS_Settings_Title>The Second Seat 设置</TSS_Settings_Title>
+  <TSS_Settings_LLM_Title>LLM 设置</TSS_Settings_LLM_Title>
+  <TSS_Settings_WebSearch_Title>网络搜索设置</TSS_Settings_WebSearch_Title>
+  <TSS_Settings_Multimodal_Title>多模态分析设置</TSS_Settings_Multimodal_Title>
+  <TSS_Settings_Debug_Title>调试设置</TSS_Settings_Debug_Title>
+  <TSS_Settings_Affinity_Title>好感度系统</TSS_Settings_Affinity_Title>
+
+  <!-- LLM 设置 -->
+  <TSS_Settings_LLMProvider>LLM 提供者</TSS_Settings_LLMProvider>
+  <TSS_Settings_LLMProvider_Local>本地模型 (LM Studio / Ollama)</TSS_Settings_LLMProvider_Local>
+  <TSS_Settings_LLMProvider_OpenAI>OpenAI (GPT-4 / GPT-3.5)</TSS_Settings_LLMProvider_OpenAI>
+  <TSS_Settings_LLMProvider_DeepSeek>DeepSeek (中文优化)</TSS_Settings_LLMProvider_DeepSeek>
+  <TSS_Settings_LLMProvider_Gemini>Google Gemini</TSS_Settings_LLMProvider_Gemini>
+  
+  <TSS_Settings_UseOpenAI>使用 OpenAI API</TSS_Settings_UseOpenAI>
+  <TSS_Settings_UseOpenAI_Desc>使用 OpenAI 云端 API（需要 API Key）</TSS_Settings_UseOpenAI_Desc>
+  <TSS_Settings_APIEndpoint>API 端点</TSS_Settings_APIEndpoint>
+  <TSS_Settings_APIEndpoint_Desc>LLM API 的端点 URL（例如：http://localhost:1234/v1/chat/completions）</TSS_Settings_APIEndpoint_Desc>
+  <TSS_Settings_APIKey>API 密钥</TSS_Settings_APIKey>
+  <TSS_Settings_APIKey_Desc>用于身份验证的 API 密钥（本地模型可留空）</TSS_Settings_APIKey_Desc>
+  <TSS_Settings_ModelName>模型名称</TSS_Settings_ModelName>
+  <TSS_Settings_ModelName_Desc>要使用的模型名称（例如：local-model）</TSS_Settings_ModelName_Desc>
+  <TSS_Settings_Temperature>温度</TSS_Settings_Temperature>
+  <TSS_Settings_Temperature_Desc>控制输出的随机性（0.0 = 确定性，1.0 = 高度随机）</TSS_Settings_Temperature_Desc>
+  <TSS_Settings_MaxTokens>最大 Token 数</TSS_Settings_MaxTokens>
+  <TSS_Settings_MaxTokens_Desc>每次响应的最大 token 数量</TSS_Settings_MaxTokens_Desc>
+  
+  <!-- 网络搜索设置 -->
+  <TSS_Settings_WebSearch_Title>网络搜索</TSS_Settings_WebSearch_Title>
+  <TSS_Settings_EnableWebSearch>启用网络搜索</TSS_Settings_EnableWebSearch>
+  <TSS_Settings_SearchEngine>搜索引擎</TSS_Settings_SearchEngine>
+  <TSS_Settings_SearchEngine_DuckDuckGo>DuckDuckGo（推荐，免费）</TSS_Settings_SearchEngine_DuckDuckGo>
+  <TSS_Settings_SearchEngine_Bing>Bing（需要 API Key）</TSS_Settings_SearchEngine_Bing>
+  <TSS_Settings_SearchEngine_Google>Google（需要 API Key）</TSS_Settings_SearchEngine_Google>
+  <TSS_Settings_BingAPIKey>Bing API 密钥</TSS_Settings_BingAPIKey>
+  <TSS_Settings_GoogleAPIKey>Google API 密钥</TSS_Settings_GoogleAPIKey>
+  <TSS_Settings_GoogleSearchEngineID>Google 搜索引擎 ID</TSS_Settings_GoogleSearchEngineID>
+  <TSS_Settings_GetAPIKey_Bing>获取 Bing API Key: https://www.microsoft.com/en-us/bing/apis/bing-web-search-api</TSS_Settings_GetAPIKey_Bing>
+  <TSS_Settings_GetAPIKey_Google>获取 Google API Key: https://developers.google.com/custom-search/v1/overview</TSS_Settings_GetAPIKey_Google>
+  <TSS_Settings_ClearSearchCache>清空搜索缓存</TSS_Settings_ClearSearchCache>
+  <TSS_Settings_CacheCleared>搜索缓存已清空</TSS_Settings_CacheCleared>
+  <TSS_Settings_SearchDelay>搜索延迟（防止限流）</TSS_Settings_SearchDelay>
+  
+  <TSS_Settings_BingAPIKey_Desc>Bing 搜索 API 密钥（仅 Bing 需要）</TSS_Settings_BingAPIKey_Desc>
+  <TSS_Settings_GoogleAPIKey_Desc>Google 自定义搜索 API 密钥（仅 Google 需要）</TSS_Settings_GoogleAPIKey_Desc>
+  <TSS_Settings_GoogleSearchEngineID_Desc>Google 自定义搜索引擎 ID（仅 Google 需要）</TSS_Settings_GoogleSearchEngineID_Desc>
+  
+  <!-- 多模态分析设置 -->
+  <TSS_Settings_EnableMultimodal>启用多模态分析</TSS_Settings_EnableMultimodal>
+  <TSS_Settings_EnableMultimodal_Desc>使用 AI 视觉 API 分析人格立绘</TSS_Settings_EnableMultimodal_Desc>
+  <TSS_Settings_MultimodalProvider>多模态提供者</TSS_Settings_MultimodalProvider>
+  <TSS_Settings_MultimodalProvider_Desc>选择 AI 视觉 API 提供者（OpenAI、DeepSeek、Gemini）</TSS_Settings_MultimodalProvider_Desc>
+  <TSS_Settings_MultimodalProvider_OpenAI>OpenAI (gpt-4-vision-preview)</TSS_Settings_MultimodalProvider_OpenAI>
+  <TSS_Settings_MultimodalProvider_DeepSeek>DeepSeek (deepseek-vl)</TSS_Settings_MultimodalProvider_DeepSeek>
+  <TSS_Settings_MultimodalProvider_Gemini>Gemini (gemini-pro-vision)</TSS_Settings_MultimodalProvider_Gemini>
+  
+  <TSS_Settings_MultimodalAPIKey>多模态 API 密钥</TSS_Settings_MultimodalAPIKey>
+  <TSS_Settings_MultimodalAPIKey_Desc>视觉 API 密钥（可能与主 API 密钥不同）</TSS_Settings_MultimodalAPIKey_Desc>
+  <TSS_Settings_VisionModel>视觉模型</TSS_Settings_VisionModel>
+  <TSS_Settings_VisionModel_Desc>用于图像分析的模型（例如：gpt-4-vision-preview）</TSS_Settings_VisionModel_Desc>
+  <TSS_Settings_TextAnalysisModel>文本分析模型</TSS_Settings_TextAnalysisModel>
+  <TSS_Settings_TextAnalysisModel_Desc>用于深度文本分析的模型（例如：gpt-4）</TSS_Settings_TextAnalysisModel_Desc>
+  
+  <!-- 调试设置 -->
+  <TSS_Settings_DebugMode>调试模式</TSS_Settings_DebugMode>
+  <TSS_Settings_DebugMode_Desc>启用详细日志记录以进行故障排除</TSS_Settings_DebugMode_Desc>
+
+  <!-- 好感度系统设置 -->
+  <TSS_Settings_EnableAffinity>启用好感度系统</TSS_Settings_EnableAffinity>
+  <TSS_Settings_AffinityDisabled_Warning>?? 禁用后，叙事者将不会对你的行为产生情感反应</TSS_Settings_AffinityDisabled_Warning>
+  
+  <!-- 全局提示词 -->
+  <TSS_Settings_GlobalPrompt_Title>全局提示词</TSS_Settings_GlobalPrompt_Title>
+  <TSS_Settings_GlobalPrompt_Description>在此输入全局指令。这些指令会被添加到所有 AI 对话的开头。可用于设置 AI 的语言风格、行为准则等。留空则不使用全局提示词。</TSS_Settings_GlobalPrompt_Description>
+  <TSS_Settings_GlobalPrompt_LoadExample>加载示例</TSS_Settings_GlobalPrompt_LoadExample>
+  
+  <!-- 对话驱动事件 -->
+  <TSS_Event_Reminder_Title>叙事者的问候</TSS_Event_Reminder_Title>
+  <TSS_Event_Reward_Title>叙事者的奖励</TSS_Event_Reward_Title>
+  <TSS_Event_Support_Title>叙事者的支持</TSS_Event_Support_Title>
+  <TSS_Event_Celebration_Title>叙事者的庆祝</TSS_Event_Celebration_Title>
+
+  <!-- 按钮 -->
+  <TSS_Settings_Apply>应用设置</TSS_Settings_Apply>
+  <TSS_Settings_TestConnection>测试连接</TSS_Settings_TestConnection>
+  <TSS_Settings_ClearSearchCache>清空搜索缓存</TSS_Settings_ClearSearchCache>
+  <TSS_Settings_CacheCleared>搜索缓存已清空</TSS_Settings_CacheCleared>
+  <TSS_Settings_Testing>正在测试连接...</TSS_Settings_Testing>
+  <TSS_Settings_TestSuccess>连接测试成功！</TSS_Settings_TestSuccess>
+  <TSS_Settings_TestFailed>连接测试失败</TSS_Settings_TestFailed>
+  <TSS_Settings_Applied>设置已应用</TSS_Settings_Applied>
+
+  <!-- 好感度等级 -->
+  <TSS_Tier_Hostile>敌意</TSS_Tier_Hostile>
+  <TSS_Tier_Cold>冷漠</TSS_Tier_Cold>
+  <TSS_Tier_Neutral>中性</TSS_Tier_Neutral>
+  <TSS_Tier_Warm>温暖</TSS_Tier_Warm>
+  <TSS_Tier_Devoted>倾心</TSS_Tier_Devoted>
+  <TSS_Tier_Infatuated>痴迷</TSS_Tier_Infatuated>
+
+  <!-- 消息 -->
+  <TSS_Message_CommandSuccess>AI 叙事者：命令执行成功</TSS_Message_CommandSuccess>
+  <TSS_Message_CommandFailed>AI 叙事者：命令执行失败</TSS_Message_CommandFailed>
+  <TSS_Message_NoValidAction>AI 叙事者：无有效操作</TSS_Message_NoValidAction>
+  <TSS_Message_PersonaSwitched>叙事者已切换至：{0}</TSS_Message_PersonaSwitched>
+
+  <!-- 人格特质 -->
+  <TSS_Trait_Benevolent>仁慈</TSS_Trait_Benevolent>
+  <TSS_Trait_Sadistic>施虐</TSS_Trait_Sadistic>
+  <TSS_Trait_Chaotic>混沌</TSS_Trait_Chaotic>
+  <TSS_Trait_Strategic>战略</TSS_Trait_Strategic>
+  <TSS_Trait_Protective>保护</TSS_Trait_Protective>
+  <TSS_Trait_Manipulative>操控</TSS_Trait_Manipulative>
+
+  <!-- 命令 -->
+  <TSS_Command_BatchHarvest>批量收获</TSS_Command_BatchHarvest>
+  <TSS_Command_BatchHarvest_Desc>收获地图上所有成熟的作物</TSS_Command_BatchHarvest_Desc>
+  <TSS_Command_BatchSow>批量播种</TSS_Command_BatchSow>
+  <TSS_Command_BatchSow_Desc>在指定区域播种作物</TSS_Command_BatchSow_Desc>
+  <TSS_Command_BatchEquip>批量装备</TSS_Command_BatchEquip>
+  <TSS_Command_BatchEquip_Desc>为殖民者装备武器和护甲</TSS_Command_BatchEquip_Desc>
+  <TSS_Command_EmergencyRetreat>紧急撤退</TSS_Command_EmergencyRetreat>
+  <TSS_Command_EmergencyRetreat_Desc>所有殖民者撤退到安全地带</TSS_Command_EmergencyRetreat_Desc>
+  <TSS_Command_PriorityRepair>优先修复</TSS_Command_PriorityRepair>
+  <TSS_Command_PriorityRepair_Desc>优先修复损坏的建筑和设施</TSS_Command_PriorityRepair_Desc>
+  <TSS_Command_BatchLogging>已指定 {0} 棵成熟树木进行砍伐</TSS_Command_BatchLogging>
+  <TSS_Command_BatchLogging_None>未找到可砍伐的成熟树木</TSS_Command_BatchLogging_None>
+  <TSS_Command_DesignatePlantCut>已指定 {0} 株植物进行砍伐（类型：{1}）</TSS_Command_DesignatePlantCut>
+  <TSS_Command_DesignatePlantCut_None>未找到可砍伐的植物（类型：{0}）</TSS_Command_DesignatePlantCut_None>
+  
+  <!-- ⭐ v1.6.84: 新增命令翻译键 -->
+  <TSS_Command_BatchMine>已指定 {0} 个可采矿资源进行开采（类型：{1}）</TSS_Command_BatchMine>
+  <TSS_Command_BatchMine_None>未找到可采矿资源（类型：{0}）</TSS_Command_BatchMine_None>
+  <TSS_Command_PriorityRepair>已标记 {0} 个受损建筑进行修复</TSS_Command_PriorityRepair>
+  <TSS_Command_PriorityRepair_None>未找到受损建筑</TSS_Command_PriorityRepair_None>
+  <TSS_Command_PriorityRepair_NoConstructors>发现 {0} 个受损建筑，但没有可用的建筑工</TSS_Command_PriorityRepair_NoConstructors>
+  <TSS_Command_BatchCapture>已分配 {0} 个俘虏任务</TSS_Command_BatchCapture>
+  <TSS_Command_BatchCapture_None>未找到可俘虏的敌人</TSS_Command_BatchCapture_None>
+  <TSS_Command_BatchCapture_NoWardens>没有可用的看守或殖民者执行俘虏任务</TSS_Command_BatchCapture_NoWardens>
+  <TSS_Command_BatchCapture_NoBeds>没有可用的囚犯床</TSS_Command_BatchCapture_NoBeds>
+  <TSS_Command_BatchCapture_Failed>俘虏任务分配失败</TSS_Command_BatchCapture_Failed>
+  <TSS_Command_ChangePolicy>已收到政策修改请求：{0}</TSS_Command_ChangePolicy>
+  <TSS_Command_TriggerEvent_NotActive>对弈者模式未激活</TSS_Command_TriggerEvent_NotActive>
+  <TSS_Command_TriggerEvent_NoType>未指定事件类型</TSS_Command_TriggerEvent_NoType>
+  <TSS_Command_ScheduleEvent_NotActive>对弈者模式未激活</TSS_Command_ScheduleEvent_NotActive>
+
+  <!-- 错误消息 -->
+  <TSS_Error_NoAPIKey>错误：未设置 API 密钥</TSS_Error_NoAPIKey>
+  <TSS_Error_InvalidEndpoint>错误：无效的 API 端点</TSS_Error_InvalidEndpoint>
+  <TSS_Error_NetworkError>网络错误：{0}</TSS_Error_NetworkError>
+  <TSS_Error_APIError>API 错误：{0}</TSS_Error_APIError>
+  <TSS_Error_Timeout>请求超时</TSS_Error_Timeout>
+  <TSS_Error_UnexpectedResponse>意外的响应格式</TSS_Error_UnexpectedResponse>
+  
+  <!-- 状态面板 -->
+  <TSS_StatusPanel_Title>NARRATOR.OS</TSS_StatusPanel_Title>
+  <TSS_StatusPanel_Online>在线</TSS_StatusPanel_Online>
+  <TSS_StatusPanel_Offline>离线</TSS_StatusPanel_Offline>
+  <TSS_StatusPanel_Sync>同步</TSS_StatusPanel_Sync>
+  <TSS_StatusPanel_Link>连接</TSS_StatusPanel_Link>
+  <TSS_StatusPanel_Error>错误</TSS_StatusPanel_Error>
+  <TSS_StatusPanel_Timeout>超时</TSS_StatusPanel_Timeout>
+  <TSS_StatusPanel_Favorability>好感度</TSS_StatusPanel_Favorability>
+  
+  <!-- 主窗口 -->
+  <TSS_Relationship>关系</TSS_Relationship>
+  <TSS_LastResponse>最近回复</TSS_LastResponse>
+  <TSS_NoMessages>暂无消息</TSS_NoMessages>
+  <TSS_SendMessage>发送消息</TSS_SendMessage>
+  <TSS_TalkToNarrator>与叙事者交谈</TSS_TalkToNarrator>
+  <TSS_RequestStatusUpdate>请求状态更新</TSS_RequestStatusUpdate>
+  <TSS_Processing>处理中...</TSS_Processing>
+  <TSS_OpenNarratorLabel>AI 叙事者</TSS_OpenNarratorLabel>
+  <TSS_OpenNarratorDesc>打开 AI 叙事者窗口</TSS_OpenNarratorDesc>
+  
+  <!-- 按钮状态 -->
+  <TSS_ButtonState_Ready>[AI 叙事者助手]：连接就绪，等待事件。</TSS_ButtonState_Ready>
+  <TSS_ButtonState_Processing>[AI 叙事者助手]：正在分析/生成叙事内容...</TSS_ButtonState_Processing>
+  <TSS_ButtonState_Error>[AI 叙事者助手]：错误！请检查 API 密钥或网络。</TSS_ButtonState_Error>
+  <TSS_ButtonState_Disabled>[AI 叙事者助手]：Mod 已禁用。</TSS_ButtonState_Disabled>
+  
+  <TSS_NarratorButton_Tooltip>打开 AI 叙事者窗口
+点击与 AI 叙事者对话</TSS_NarratorButton_Tooltip>
+
+  <!-- 人格选择 -->
+  <TSS_SelectPersona>选择人格</TSS_SelectPersona>
+  <TSS_PersonaSelection_Title>人格选择</TSS_PersonaSelection_Title>
+  <TSS_PersonaSelection_CurrentPersona>当前人格</TSS_PersonaSelection_CurrentPersona>
+  <TSS_PersonaSelection_AvailablePersonas>可用人格</TSS_PersonaSelection_AvailablePersonas>
+  <TSS_PersonaSelection_SelectButton>选择此人格</TSS_PersonaSelection_SelectButton>
+  <TSS_PersonaSelection_ConfirmButton>确定</TSS_PersonaSelection_ConfirmButton>
+  <TSS_PersonaSelection_CancelButton>取消</TSS_PersonaSelection_CancelButton>
+  <TSS_PersonaSelection_NoPortrait>无立绘</TSS_PersonaSelection_NoPortrait>
+  <TSS_PersonaSelection_Description>描述</TSS_PersonaSelection_Description>
+  <TSS_PersonaSelection_Personality>性格特点</TSS_PersonaSelection_Personality>
+  
+  <!-- 错误消息 -->
+  <TSS_APICallFailed>API 调用失败！请检查：
+1. LLM 服务是否运行（如 LM Studio）？
+2. API 端点是否正确？
+3. 模型名称是否匹配？
+4. 查看日志了解详情</TSS_APICallFailed>
+  <TSS_AlreadyProcessing>AI 正在处理中，请稍候...</TSS_AlreadyProcessing>
+  <TSS_NarratorSays>[AI 叙事者] {0}</TSS_NarratorSays>
+
+  <!-- 好感度等级 - 重构版（-1000 ~ 1000）-->
+  <TSS_Tier_Hatred>憎恨</TSS_Tier_Hatred>
+  <TSS_Tier_Hostile>敌意</TSS_Tier_Hostile>
+  <TSS_Tier_Cold>疏远</TSS_Tier_Cold>
+  <TSS_Tier_Indifferent>冷淡</TSS_Tier_Indifferent>
+  <TSS_Tier_Warm>温暖</TSS_Tier_Warm>
+  <TSS_Tier_Devoted>倾心</TSS_Tier_Devoted>
+  <TSS_Tier_Adoration>爱慕</TSS_Tier_Adoration>
+  <TSS_Tier_SoulBound>魂之契</TSS_Tier_SoulBound>
+  
+  <!-- 好感度等级描述 -->
+  <TSS_Tier_Hatred_Desc>叙事者对你充满憎恨，可能会拒绝帮助或故意制造困难。</TSS_Tier_Hatred_Desc>
+  <TSS_Tier_Hostile_Desc>叙事者对你怀有敌意，不愿意提供帮助。</TSS_Tier_Hostile_Desc>
+  <TSS_Tier_Cold_Desc>叙事者与你保持距离，态度疏远冷淡。</TSS_Tier_Cold_Desc>
+  <TSS_Tier_Indifferent_Desc>叙事者对你不冷不热，保持中立态度。</TSS_Tier_Indifferent_Desc>
+  <TSS_Tier_Warm_Desc>叙事者对你友善，愿意提供基本帮助。</TSS_Tier_Warm_Desc>
+  <TSS_Tier_Devoted_Desc>叙事者对你忠诚，主动关心你的殖民地。</TSS_Tier_Devoted_Desc>
+  <TSS_Tier_Adoration_Desc>叙事者深深爱慕你，会尽力帮助和保护你。</TSS_Tier_Adoration_Desc>
+  <TSS_Tier_SoulBound_Desc>叙事者与你灵魂相连，你们是真正的挚友。</TSS_Tier_SoulBound_Desc>
+  
+  <!-- 可征召动物系统 -->
+  <TSS_DraftableAnimal_Draft>征召</TSS_DraftableAnimal_Draft>
+  <TSS_DraftableAnimal_Undraft>解除征召</TSS_DraftableAnimal_Undraft>
+  <TSS_DraftableAnimal_DraftDesc>切换征召模式。征召时，该生物将服从你的直接命令，而不是自由游荡。</TSS_DraftableAnimal_DraftDesc>
+  <TSS_DraftableAnimal_Stop>停止</TSS_DraftableAnimal_Stop>
+  <TSS_DraftableAnimal_StopDesc>取消所有当前命令。</TSS_DraftableAnimal_StopDesc>
+  <TSS_DraftableAnimal_Drafted>{0} 已被征召，等待命令。</TSS_DraftableAnimal_Drafted>
+  <TSS_DraftableAnimal_Undrafted>{0} 已解除征召状态。</TSS_DraftableAnimal_Undrafted>
+
+  <!-- Quick Dialogue Window -->
+  <TSS_QuickDialogue_Send>发送</TSS_QuickDialogue_Send>
+  <TSS_QuickDialogue_Agree>同意 / 好的</TSS_QuickDialogue_Agree>
+  <TSS_QuickDialogue_Reject>拒绝 / 不要</TSS_QuickDialogue_Reject>
+  <TSS_QuickDialogue_AgreeMsg>好的，我同意。</TSS_QuickDialogue_AgreeMsg>
+  <TSS_QuickDialogue_RejectMsg>不，我拒绝。</TSS_QuickDialogue_RejectMsg>
+
+  <!-- Persona Editor -->
+  <TSS_PersonaEditor_Title>编辑人格: {0}</TSS_PersonaEditor_Title>
+  <TSS_PersonaEditor_BasicInfo>基本信息</TSS_PersonaEditor_BasicInfo>
+  <TSS_PersonaEditor_Name>人格名称:</TSS_PersonaEditor_Name>
+  <TSS_PersonaEditor_Biography>人格传记:</TSS_PersonaEditor_Biography>
+  <TSS_PersonaEditor_Tags>个性标签 (Personality Tags)</TSS_PersonaEditor_Tags>
+  <TSS_PersonaEditor_TagsHelp>个性标签用于定义 AI 的性格特征，每个标签会影响对话风格和行为模式。\n例如: cheerful, serious, sarcastic, gentle, protective 等</TSS_PersonaEditor_TagsHelp>
+  <TSS_PersonaEditor_NoTags>(暂无标签)</TSS_PersonaEditor_NoTags>
+  <TSS_PersonaEditor_AddTag>添加标签:</TSS_PersonaEditor_AddTag>
+  <TSS_PersonaEditor_Add>添加</TSS_PersonaEditor_Add>
+  <TSS_PersonaEditor_Delete>删除</TSS_PersonaEditor_Delete>
+  <TSS_PersonaEditor_Style>对话风格</TSS_PersonaEditor_Style>
+  <TSS_PersonaEditor_Style_Formality>正式程度</TSS_PersonaEditor_Style_Formality>
+  <TSS_PersonaEditor_Style_Emotional>情感表达</TSS_PersonaEditor_Style_Emotional>
+  <TSS_PersonaEditor_Style_Verbosity>话语详细度</TSS_PersonaEditor_Style_Verbosity>
+  <TSS_PersonaEditor_Style_Humor>幽默程度</TSS_PersonaEditor_Style_Humor>
+  <TSS_PersonaEditor_Style_Sarcasm>讽刺程度</TSS_PersonaEditor_Style_Sarcasm>
+  <TSS_PersonaEditor_CustomPrompt>自定义系统提示词 (高级 / Custom System Prompt)</TSS_PersonaEditor_CustomPrompt>
+  <TSS_PersonaEditor_CustomPromptHelp>⚠️ 高级功能：如果在此处填写内容，将完全覆盖默认的 Prompt 生成逻辑。\nAI 将直接使用此处的文本作为 System Prompt。请确保包含必要的指令（如 JSON 格式要求）。\n留空则使用默认生成逻辑。</TSS_PersonaEditor_CustomPromptHelp>
+  <TSS_PersonaEditor_AutoGen>自动生成默认模板</TSS_PersonaEditor_AutoGen>
+  <TSS_PersonaEditor_SystemPrompt>System Prompt:</TSS_PersonaEditor_SystemPrompt>
+  <TSS_PersonaEditor_Save>保存修改</TSS_PersonaEditor_Save>
+  <TSS_PersonaEditor_Cancel>取消</TSS_PersonaEditor_Cancel>
+  <TSS_PersonaEditor_Export>导出为文件</TSS_PersonaEditor_Export>
+  <TSS_PersonaEditor_SaveSuccess>人格 '{0}' 已成功保存到 XML 文件！\n文件位置: {1}</TSS_PersonaEditor_SaveSuccess>
+  <TSS_PersonaEditor_SaveLog>[Dialog_PersonaEditor] 人格已保存: {0}</TSS_PersonaEditor_SaveLog>
+  <TSS_PersonaEditor_SaveWarning>人格 '{0}' 修改已应用，但未能保存到文件</TSS_PersonaEditor_SaveWarning>
+  <TSS_PersonaEditor_SaveError>保存失败: {0}</TSS_PersonaEditor_SaveError>
+  <TSS_PersonaEditor_ExportSuccess>人格 '{0}' 已导出到 Defs 文件夹！\n文件位置: {1}</TSS_PersonaEditor_ExportSuccess>
+  <TSS_PersonaEditor_ExportFail>导出失败</TSS_PersonaEditor_ExportFail>
+  <TSS_PersonaEditor_ExportError>导出失败: {0}</TSS_PersonaEditor_ExportError>
+  <TSS_PersonaEditor_AutoGenSuccess>已生成默认 System Prompt 模板</TSS_PersonaEditor_AutoGenSuccess>
+  <TSS_PersonaEditor_AutoGenError>生成失败: {0}</TSS_PersonaEditor_AutoGenError>
+  
+  <!-- ⭐ v1.9.0: 叙事模式 -->
+  <TSS_PersonaEditor_NarrativeMode>叙事模式</TSS_PersonaEditor_NarrativeMode>
+  <TSS_PersonaEditor_NarrativeModeHelp>这些参数影响叙事者如何决定事件以及如何回应玩家输入。\n• 仁慈度：越低 = 事件越残酷\n• 混乱度：越高 = 事件越不合理/随机\n• 强势度：越高 = 越不受玩家请求影响</TSS_PersonaEditor_NarrativeModeHelp>
+  <TSS_PersonaEditor_Narrative_Mercy>仁慈度</TSS_PersonaEditor_Narrative_Mercy>
+  <TSS_PersonaEditor_Narrative_Chaos>混乱度</TSS_PersonaEditor_Narrative_Chaos>
+  <TSS_PersonaEditor_Narrative_Dominance>强势度</TSS_PersonaEditor_Narrative_Dominance>
+  
+  <!-- ⭐ v1.9.1: 短语库系统 -->
+  <TSS_PhraseLibrary_Title>短语库</TSS_PhraseLibrary_Title>
+  <TSS_PhraseLibrary_Description>针对不同好感等级和交互类型的快速反应短语。</TSS_PhraseLibrary_Description>
+  <TSS_PhraseLibrary_GenerateButton>生成短语库</TSS_PhraseLibrary_GenerateButton>
+  <TSS_PhraseLibrary_Generating>正在生成短语...</TSS_PhraseLibrary_Generating>
+  <TSS_PhraseLibrary_GenerateSuccess>短语库生成成功！（共 {0} 条短语）</TSS_PhraseLibrary_GenerateSuccess>
+  <TSS_PhraseLibrary_GenerateFailed>短语库生成失败：{0}</TSS_PhraseLibrary_GenerateFailed>
+  
+  <!-- 人格编辑器 - 短语库生成 -->
+  <TSS_PersonaEditor_GenPhraseLib>生成短语库 (AI)</TSS_PersonaEditor_GenPhraseLib>
+  <TSS_LLMNotReady>LLM 服务未就绪，请检查 API 设置</TSS_LLMNotReady>
+  <TSS_GeneratingPhraseLibrary>正在使用 AI 生成短语库...</TSS_GeneratingPhraseLibrary>
+  <TSS_GenPhraseLibError>短语库生成失败: {0}</TSS_GenPhraseLibError>
+  <TSS_GenPhraseLibInvalidFormat>AI 返回的短语库格式无效</TSS_GenPhraseLibInvalidFormat>
+  <TSS_GenPhraseLibSuccess>短语库已成功生成！</TSS_GenPhraseLibSuccess>
+  <TSS_PhraseLibrary_LoadSuccess>已为 {0} 加载短语库</TSS_PhraseLibrary_LoadSuccess>
+  <TSS_PhraseLibrary_NotFound>未找到此人格的短语库</TSS_PhraseLibrary_NotFound>
+  <TSS_PhraseLibrary_ExportSuccess>短语库已导出至：{0}</TSS_PhraseLibrary_ExportSuccess>
+  
+  <!-- 短语类别 -->
+  <TSS_PhraseCategory_HeadPat>摸头</TSS_PhraseCategory_HeadPat>
+  <TSS_PhraseCategory_BodyPoke>戳一戳</TSS_PhraseCategory_BodyPoke>
+  <TSS_PhraseCategory_Greeting>问候</TSS_PhraseCategory_Greeting>
+  <TSS_PhraseCategory_EventReaction>事件反应</TSS_PhraseCategory_EventReaction>
+  <TSS_PhraseCategory_GoodEventReaction>好事件</TSS_PhraseCategory_GoodEventReaction>
+  <TSS_PhraseCategory_BadEventReaction>坏事件</TSS_PhraseCategory_BadEventReaction>
+  <TSS_PhraseCategory_CombatStart>战斗开始</TSS_PhraseCategory_CombatStart>
+  <TSS_PhraseCategory_CombatVictory>战斗胜利</TSS_PhraseCategory_CombatVictory>
+  <TSS_PhraseCategory_TakeDamage>受到伤害</TSS_PhraseCategory_TakeDamage>
+  <TSS_PhraseCategory_Healed>治愈</TSS_PhraseCategory_Healed>
+  <TSS_PhraseCategory_Idle>闲置</TSS_PhraseCategory_Idle>
+  <TSS_PhraseCategory_Farewell>道别</TSS_PhraseCategory_Farewell>
+  
+  <!-- 交互反馈 -->
+  <TSS_Interaction_HeadPat>*摸摸头*</TSS_Interaction_HeadPat>
+  <TSS_Interaction_BodyPoke>*戳一下*</TSS_Interaction_BodyPoke>
+  <TSS_Interaction_CtrlHint>按住 Ctrl 并点击以进行交互</TSS_Interaction_CtrlHint>
+  
+  <!-- ⭐ 技能系统翻译键 -->
+  <!-- 灾厄投掷 (Calamity Throw) -->
+  <TSS_CalamityThrow_InvalidTarget>目标无效。</TSS_CalamityThrow_InvalidTarget>
+  <TSS_CalamityThrow_TargetTooLarge>目标体型过大无法抓取。</TSS_CalamityThrow_TargetTooLarge>
+  <TSS_CalamityThrow_TargetTooLargeShort>目标体型过大</TSS_CalamityThrow_TargetTooLargeShort>
+  <TSS_CalamityThrow_GrabAction>抓取 (100%成功, {0}x 伤害)</TSS_CalamityThrow_GrabAction>
+  
+  <!-- 猩红绽放 (Crimson Bloom) -->
+  <TSS_CrimsonBloom_MarkLabel>猩红标记 x{0}</TSS_CrimsonBloom_MarkLabel>
+  <TSS_CrimsonBloom_TipMain>猩红标记层数: {0}/3</TSS_CrimsonBloom_TipMain>
+  <TSS_CrimsonBloom_TipWarning>达到3层后将摧毁核心器官</TSS_CrimsonBloom_TipWarning>
+  <TSS_CrimsonBloom_OrganDestroyed>{0}的{1}被猩红标记摧毁!</TSS_CrimsonBloom_OrganDestroyed>
+  <TSS_CrimsonBloom_Message>{0}被施加了猩红标记！</TSS_CrimsonBloom_Message>
+  <TSS_CrimsonBloom_Detonate>{0}的猩红标记引爆，{1}受到{2:F0}点伤害！</TSS_CrimsonBloom_Detonate>
+  <TSS_CrimsonBloom_NoTargets>范围内没有敌对目标</TSS_CrimsonBloom_NoTargets>
+  <TSS_CrimsonBloom_TargetDead>目标已死亡。</TSS_CrimsonBloom_TargetDead>
+  
+  <!-- 唤龙之门 (Dragon Gate) -->
+  <TSS_DragonGate_Summon>{0}召唤了{1}!</TSS_DragonGate_Summon>
+  <TSS_DragonGate_SummonMessage>{0}召唤了{1}！</TSS_DragonGate_SummonMessage>
+  <TSS_DragonGate_Failure>龙召唤失败：无法找到有效的生成位置。</TSS_DragonGate_Failure>
+  <TSS_DragonGate_NotOnMap>施法者不在地图上。</TSS_DragonGate_NotOnMap>
+  
+  <!-- 龙消散 (Dragon Dissipation) -->
+  <TSS_DragonDissipation_Start>{0}的灵体形态开始消散，返回灵界...</TSS_DragonDissipation_Start>
+  <TSS_DragonDissipation_Timer>灵体将在 {0} 秒后消散</TSS_DragonDissipation_Timer>
+  
+  <!-- 血染领域 (Crimson Domain) - 光环版猩红绽放 -->
+  <TSS_CrimsonDomain_Activated>{0}释放了血染领域！</TSS_CrimsonDomain_Activated>
+  <TSS_CrimsonDomain_Applied>{0}被血染领域笼罩！</TSS_CrimsonDomain_Applied>
+  <TSS_CrimsonDomain_Description>释放猩红之力形成领域，持续对范围内敌人施加猩红标记。</TSS_CrimsonDomain_Description>
+  
+  <!-- 「世界」(The World) - 时停能力 -->
+  <TSS_TheWorld_Activated>{0}发动了「世界」！时间停止！</TSS_TheWorld_Activated>
+  <TSS_TheWorld_Ended>时间恢复流动...</TSS_TheWorld_Ended>
+  <TSS_TheWorld_Description>停止时间的流动，除施法者外的所有单位都将陷入静止。</TSS_TheWorld_Description>
+  
+  <!-- 调试窗口 -->
+  <TSS_Debug_RimAgent_Title>RimAgent 调试器</TSS_Debug_RimAgent_Title>
+  <TSS_Debug_SelectAgent>选择一个代理以查看详情</TSS_Debug_SelectAgent>
+  <TSS_Debug_AgentId>代理 ID</TSS_Debug_AgentId>
+  <TSS_Debug_State>状态</TSS_Debug_State>
+  <TSS_Debug_Requests>请求</TSS_Debug_Requests>
+  <TSS_Debug_Success>成功</TSS_Debug_Success>
+  <TSS_Debug_Failed>失败</TSS_Debug_Failed>
+  <TSS_Debug_Total>总计</TSS_Debug_Total>
+  <TSS_Debug_ContextUsage>上下文使用</TSS_Debug_ContextUsage>
+  <TSS_Debug_SummaryTokens>摘要 Token</TSS_Debug_SummaryTokens>
+  <TSS_Debug_HistoryTokens>历史 Token</TSS_Debug_HistoryTokens>
+  <TSS_Debug_LastPrompt>最后发送的提示</TSS_Debug_LastPrompt>
+  <TSS_Debug_NoPrompt>(尚未发送提示)</TSS_Debug_NoPrompt>
+  <TSS_Debug_LastResponse>最后收到的响应</TSS_Debug_LastResponse>
+  <TSS_Debug_NoResponse>(尚未收到响应)</TSS_Debug_NoResponse>
+  <TSS_Debug_ApproxTokens>大约 Token 数</TSS_Debug_ApproxTokens>
+  <TSS_Debug_NoAgents>无活跃 Agent</TSS_Debug_NoAgents>
+  <TSS_Debug_Refresh>刷新</TSS_Debug_Refresh>
+  <TSS_Debug_Copy>复制</TSS_Debug_Copy>
+  <TSS_Debug_Copied>已复制到剪贴板</TSS_Debug_Copied>
+  <TSS_Debug_CopyMaster>复制 Master</TSS_Debug_CopyMaster>
+  <TSS_Debug_CopyEventDir>复制 EventDirector</TSS_Debug_CopyEventDir>
+  <TSS_Debug_PromptRefreshed>提示词已刷新</TSS_Debug_PromptRefreshed>
+  <TSS_Debug_NoContext>无上下文数据（请先刷新）</TSS_Debug_NoContext>
+  
+  <!-- 调试窗口 Tab 标签 -->
+  <TSS_Tab_AgentInfo>代理信息</TSS_Tab_AgentInfo>
+  <TSS_Tab_SystemPrompt>System Prompt</TSS_Tab_SystemPrompt>
+  <TSS_Tab_ContextData>上下文数据</TSS_Tab_ContextData>
+  
+  <!-- 好感度调试窗口 -->
+  <TSS_Debug_Favorability_Title>[调试] 好感度工具</TSS_Debug_Favorability_Title>
+  <TSS_Debug_CurrentFavorability>当前好感度：{0} ({1})</TSS_Debug_CurrentFavorability>
+  <TSS_Debug_QuickAdjust>快速调整：</TSS_Debug_QuickAdjust>
+  <TSS_Debug_PreciseSet>精确设置：</TSS_Debug_PreciseSet>
+  <TSS_Debug_Apply>应用：{0}</TSS_Debug_Apply>
+  <TSS_Debug_QuickTier>快捷等级：</TSS_Debug_QuickTier>
+  <TSS_Debug_Close>关闭</TSS_Debug_Close>
+  
+  <!-- 表情调试窗口 -->
+  <TSS_Debug_Expression_Title>[调试] 表情 - {0}</TSS_Debug_Expression_Title>
+  <TSS_Debug_CurrentExpression>当前表情：{0}</TSS_Debug_CurrentExpression>
+  <TSS_Debug_ClickToSwitch>点击切换表情：</TSS_Debug_ClickToSwitch>
+  <TSS_Debug_SwitchedToExpression>已切换至表情：{0}</TSS_Debug_SwitchedToExpression>
+  
+  <!-- 表情名称 -->
+  <TSS_Expression_Neutral>中性</TSS_Expression_Neutral>
+  <TSS_Expression_Happy>开心</TSS_Expression_Happy>
+  <TSS_Expression_Sad>悲伤</TSS_Expression_Sad>
+  <TSS_Expression_Angry>愤怒</TSS_Expression_Angry>
+  <TSS_Expression_Surprised>惊讶</TSS_Expression_Surprised>
+  <TSS_Expression_Worried>担忧</TSS_Expression_Worried>
+  <TSS_Expression_Smug>得意</TSS_Expression_Smug>
+  <TSS_Expression_Disappointed>失望</TSS_Expression_Disappointed>
+  <TSS_Expression_Thoughtful>沉思</TSS_Expression_Thoughtful>
+  <TSS_Expression_Annoyed>烦躁</TSS_Expression_Annoyed>
+  
+  <!-- 表情描述 -->
+  <TSS_Expression_Neutral_Desc>(默认)</TSS_Expression_Neutral_Desc>
+  <TSS_Expression_Happy_Desc>(殖民地繁荣)</TSS_Expression_Happy_Desc>
+  <TSS_Expression_Sad_Desc>(殖民者死亡)</TSS_Expression_Sad_Desc>
+  <TSS_Expression_Angry_Desc>(被攻击)</TSS_Expression_Angry_Desc>
+  <TSS_Expression_Surprised_Desc>(意外事件)</TSS_Expression_Surprised_Desc>
+  <TSS_Expression_Worried_Desc>(危险预警)</TSS_Expression_Worried_Desc>
+  <TSS_Expression_Smug_Desc>(大胜)</TSS_Expression_Smug_Desc>
+  <TSS_Expression_Disappointed_Desc>(任务失败)</TSS_Expression_Disappointed_Desc>
+  <TSS_Expression_Thoughtful_Desc>(战略决策)</TSS_Expression_Thoughtful_Desc>
+  <TSS_Expression_Annoyed_Desc>(频繁请求)</TSS_Expression_Annoyed_Desc>
+
+  <!-- 生物节律 UI -->
+  <TSS_Bio_Time>时间</TSS_Bio_Time>
+  <TSS_Bio_Energy>精力</TSS_Bio_Energy>
+  <TSS_Bio_Mood>心情</TSS_Bio_Mood>
+  <TSS_Bio_Activity>活动</TSS_Bio_Activity>
+  <TSS_Bio_State>状态</TSS_Bio_State>
+  
+  <!-- 生物节律描述 -->
+  <TSS_Bio_Schedule_DeepNight>深夜</TSS_Bio_Schedule_DeepNight>
+  <TSS_Bio_Schedule_Morning>清晨</TSS_Bio_Schedule_Morning>
+  <TSS_Bio_Schedule_MorningWork>上午工作</TSS_Bio_Schedule_MorningWork>
+  <TSS_Bio_Schedule_Midday>中午</TSS_Bio_Schedule_Midday>
+  <TSS_Bio_Schedule_Afternoon>下午</TSS_Bio_Schedule_Afternoon>
+  <TSS_Bio_Schedule_Evening>傍晚</TSS_Bio_Schedule_Evening>
+  <TSS_Bio_Schedule_NightRest>夜间休息</TSS_Bio_Schedule_NightRest>
+  
+  <TSS_Bio_Mood_Elated>兴高采烈</TSS_Bio_Mood_Elated>
+  <TSS_Bio_Mood_Happy>快乐</TSS_Bio_Mood_Happy>
+  <TSS_Bio_Mood_Calm>平静</TSS_Bio_Mood_Calm>
+  <TSS_Bio_Mood_Gloomy>忧郁</TSS_Bio_Mood_Gloomy>
+  <TSS_Bio_Mood_Irritable>烦躁</TSS_Bio_Mood_Irritable>
+  
+  <TSS_Bio_Energy_Energetic>精力充沛</TSS_Bio_Energy_Energetic>
+  <TSS_Bio_Energy_Active>活跃</TSS_Bio_Energy_Active>
+  <TSS_Bio_Energy_Normal>正常</TSS_Bio_Energy_Normal>
+  <TSS_Bio_Energy_Tired>疲惫</TSS_Bio_Energy_Tired>
+  <TSS_Bio_Energy_Exhausted>精疲力竭</TSS_Bio_Energy_Exhausted>
+  
+  <TSS_Bio_Activity_Observing>观察中</TSS_Bio_Activity_Observing>
+  <TSS_Bio_Activity_Analyzing>分析数据</TSS_Bio_Activity_Analyzing>
+  <TSS_Bio_Activity_Resting>休息中</TSS_Bio_Activity_Resting>
+  <TSS_Bio_Activity_MealTime>进食/品茶</TSS_Bio_Activity_MealTime>
+  <TSS_Bio_Activity_Alert>警觉</TSS_Bio_Activity_Alert>
+  <TSS_Bio_Activity_Greeting>问候</TSS_Bio_Activity_Greeting>
+  <TSS_Bio_Activity_Idle>闲置</TSS_Bio_Activity_Idle>
+  <!-- BioRhythm Instructions -->
+  <TSS_Bio_Context_Title>[生物节律状态]</TSS_Bio_Context_Title>
+  <TSS_Bio_Instruction_Label>> 指导:</TSS_Bio_Instruction_Label>
+  
+  <TSS_Bio_Inst_Exhausted>你现在极度疲惫。回复要简短，表现出困倦和轻微的烦躁。</TSS_Bio_Inst_Exhausted>
+  <TSS_Bio_Inst_Tired>你现在很累。言简意赅，偶尔提及你的疲劳。</TSS_Bio_Inst_Tired>
+  <TSS_Bio_Inst_Energetic>你现在精力充沛且警觉。回复要引人入胜且详尽。</TSS_Bio_Inst_Energetic>
+  
+  <TSS_Bio_Inst_BadMood>你现在心情不好。说话简慢，可能带有讽刺。</TSS_Bio_Inst_BadMood>
+  <TSS_Bio_Inst_GoodMood>你现在心情极好。表现得愉快且支持玩家。</TSS_Bio_Inst_GoodMood>
+  
+  <TSS_Bio_Inst_MealTime>你正在享用茶点/进餐。可以随意提及这一点。</TSS_Bio_Inst_MealTime>
+  <TSS_Bio_Inst_Resting>你正在休息，却被玩家打扰了。</TSS_Bio_Inst_Resting>
+  <TSS_Bio_Inst_Analyzing>你正在进行深度分析。你的回复应该深思熟虑且注重数据。</TSS_Bio_Inst_Analyzing>
+  <TSS_Bio_Inst_Alert>你感知到殖民地有危险。保持警惕和主动。</TSS_Bio_Inst_Alert>
+  <TSS_Bio_Inst_Greeting>你刚醒来。问候要简短。</TSS_Bio_Inst_Greeting>
+  
+  <TSS_Bio_Inst_LateNight>现在是深夜。质问为什么被打扰。</TSS_Bio_Inst_LateNight>
+  <TSS_Bio_Inst_Default>自然地扮演你当前的身体和情绪状态。</TSS_Bio_Inst_Default>
+
+  <TSS_Portrait_Loading>立绘资源加载中...</TSS_Portrait_Loading>
+  
+  <!-- CommandListWindow -->
+  <TSS_CmdList_UnknownCommand>未知的事件调试命令: {0}</TSS_CmdList_UnknownCommand>
+  <TSS_CmdList_ExecuteFailed>执行失败: {0}</TSS_CmdList_ExecuteFailed>
+  <TSS_CmdList_OpenButton>查看指令列表</TSS_CmdList_OpenButton>
+  <TSS_CmdList_OpenButton_Desc>显示所有可用的AI指令</TSS_CmdList_OpenButton_Desc>
+  
+  <!-- ⭐ v1.9.7: 统一调试面板 -->
+  <TSS_Debug_Hub_Title>[调试] 调试工具中心</TSS_Debug_Hub_Title>
+  <TSS_Debug_CurrentNarrator>当前叙事者：{0}</TSS_Debug_CurrentNarrator>
+  <TSS_Debug_Btn_Favorability>好感度调试</TSS_Debug_Btn_Favorability>
+  <TSS_Debug_Btn_Expression>表情调试</TSS_Debug_Btn_Expression>
+  <TSS_Debug_Btn_BioRhythm>生物节律调试</TSS_Debug_Btn_BioRhythm>
+  <TSS_Debug_Btn_TemplateTest>模板渲染测试</TSS_Debug_Btn_TemplateTest>
+  <TSS_Debug_Btn_ModeSwitch>模式切换</TSS_Debug_Btn_ModeSwitch>
+  <TSS_Debug_Btn_QuickTest>快速测试对话</TSS_Debug_Btn_QuickTest>
+  <TSS_Debug_TestDialogTriggered>测试对话已触发</TSS_Debug_TestDialogTriggered>
+  
+  <!-- 生物节律调试窗口 -->
+  <TSS_Debug_BioRhythm_Title>[调试] 生物节律</TSS_Debug_BioRhythm_Title>
+  <TSS_Debug_BioRhythm_NotAvailable>生物节律系统不可用（未载入游戏或已禁用）</TSS_Debug_BioRhythm_NotAvailable>
+  <TSS_Debug_Energy_Section>精力状态</TSS_Debug_Energy_Section>
+  <TSS_Debug_Activity_Section>活动状态</TSS_Debug_Activity_Section>
+  <TSS_Debug_Mood_Section>心情状态</TSS_Debug_Mood_Section>
+  <TSS_Debug_BehaviorInstruction>行为指导预览</TSS_Debug_BehaviorInstruction>
+  <TSS_Debug_CurrentValue>当前值</TSS_Debug_CurrentValue>
+  <TSS_Debug_CurrentActivity>当前活动</TSS_Debug_CurrentActivity>
+  
+  <!-- 模板渲染测试窗口 -->
+  <TSS_Debug_Template_Title>[调试] 模板渲染测试</TSS_Debug_Template_Title>
+  <TSS_Debug_SelectTemplate>选择模板：</TSS_Debug_SelectTemplate>
+  <TSS_Debug_RenderTemplate>渲染模板</TSS_Debug_RenderTemplate>
+  <TSS_Debug_CopyResult>复制结果</TSS_Debug_CopyResult>
+  <TSS_Debug_CopiedToClipboard>已复制到剪贴板</TSS_Debug_CopiedToClipboard>
+  <TSS_Debug_RenderResult>渲染结果：</TSS_Debug_RenderResult>
+  <TSS_Debug_Rendering>正在渲染...</TSS_Debug_Rendering>
+  <TSS_Debug_ClickToRender>点击"渲染模板"按钮查看结果</TSS_Debug_ClickToRender>
+  
+  <!-- 模式切换调试窗口 -->
+  <TSS_Debug_ModeSwitch_Title>[调试] 叙事者模式切换</TSS_Debug_ModeSwitch_Title>
+  <TSS_Debug_CurrentMode>当前模式：{0}</TSS_Debug_CurrentMode>
+  <TSS_Debug_Mode_Assistant>🤝 协助者模式</TSS_Debug_Mode_Assistant>
+  <TSS_Debug_Mode_Assistant_Desc>叙事者帮助玩家，提供支援和指引</TSS_Debug_Mode_Assistant_Desc>
+  <TSS_Debug_Mode_Opponent>⚔️ 对弈者模式</TSS_Debug_Mode_Opponent>
+  <TSS_Debug_Mode_Opponent_Desc>叙事者作为对手，制造挑战和事件</TSS_Debug_Mode_Opponent_Desc>
+  <TSS_Debug_Mode_Engineer>🛠️ 工程师模式</TSS_Debug_Mode_Engineer>
+  <TSS_Debug_Mode_Engineer_Desc>叙事者专注于技术和建造</TSS_Debug_Mode_Engineer_Desc>
+  <TSS_Debug_ModeSwitched>已切换至模式：{0}</TSS_Debug_ModeSwitched>
+</LanguageData>

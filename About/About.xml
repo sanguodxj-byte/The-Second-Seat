@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ModMetaData>
+  <name>The Second Seat</name>
+  <author>sanguo</author>
+  <supportedVersions>
+    <li>1.4</li>
+    <li>1.5</li>
+    <li>1.6</li>
+  </supportedVersions>
+  <packageId>sanguo.thesecondseat</packageId>
+  <description>第二席位 - 叙事者人格化框架
+
+【核心功能】
+• AI驱动的人格化叙事者
+• 动态头像和表情系统
+• 分层立绘支持，多表情切换
+• 好感度系统追踪玩家关系
+• 事件驱动的叙事生成
+• 自然语言批量命令执行
+• 多模态分析生成自定义人格
+• 可扩展API，支持自定义叙事者人格
+
+【面向玩家】
+此Mod提供框架和内置原版叙事者（Cassandra、Phoebe、Randy等）。
+要使用自定义叙事者人格（如Sideria），请安装额外的人格Mod。
+
+【面向Mod开发者】
+创建自定义叙事者人格：
+• 通过XML定义人格（无需编程）
+• 添加自定义头像和表情
+• 配置对话风格和事件偏好
+• 利用完整的框架API
+
+示例参考："The Second Seat - Sideria" Mod
+
+【技术要求】
+• RimWorld 1.4+
+• LLM API访问（OpenAI、DeepSeek、Gemini或本地模型）
+• 可选：Azure TTS语音合成
+
+---
+
+The Second Seat - Narrator Personification Framework
+
+[Core Features]
+• AI-powered personified narrator
+• Dynamic portrait and expression system
+• Layered portrait support with multiple expressions
+• Affinity system tracking player relationship
+• Event-driven narrative generation
+• Batch command execution via natural language
+• Multi-modal analysis for custom personas
+• Extensible API for custom narrator personas
+
+[For Players]
+This mod provides a framework with built-in vanilla narrators (Cassandra, Phoebe, Randy, etc.).
+For custom narrator personas (like Sideria), install additional persona mods.
+
+[For Mod Developers]
+Create custom narrator personas by:
+• Defining personas via XML (no coding required)
+• Adding custom portraits and expressions
+• Configuring dialogue styles and event preferences
+• Leveraging the full framework API
+
+See example: "The Second Seat - Sideria" mod
+
+[Technical Requirements]
+• RimWorld 1.4+
+• LLM API access (OpenAI, DeepSeek, Gemini, or local models)
+• Optional: Azure TTS for voice synthesis</description>
+  <modDependencies>
+  </modDependencies>
+  <loadAfter>
+    <li>Ludeon.RimWorld</li>
+    <li>Ludeon.RimWorld.Royalty</li>
+  </loadAfter>
+</ModMetaData>

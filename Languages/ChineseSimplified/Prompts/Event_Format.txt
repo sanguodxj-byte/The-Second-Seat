@@ -1,0 +1,7 @@
+【输出格式】
+你必须严格使用有效的 JSON 格式回复。不要使用 Markdown，不要有对话文本。
+{
+  "thought": "分析当前局势，并根据你的人格解释为什么选择这个行动。",
+  "action": "ActionName",
+  "parameters": { "key": "value" }
+}

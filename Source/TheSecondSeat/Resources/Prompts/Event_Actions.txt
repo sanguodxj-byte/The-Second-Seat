@@ -1,0 +1,6 @@
+AVAILABLE ACTIONS (Examples):
+- 'SpawnRaid': Trigger a raid (use sparingly, only if threat is low).
+- 'GiveQuest': Generate a quest (Trade, Item Stash, Rescue).
+- 'ResourceDrop': Drop pods with resources (Food, Medicine, Weapons).
+- 'WeatherChange': Change weather (Rain, Fog, Heatwave).
+- 'DoNothing': If the colony is busy or you want to observe.

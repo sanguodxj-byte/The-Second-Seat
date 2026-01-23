@@ -1,0 +1,966 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+using Verse;
+using RimWorld;
+using TheSecondSeat.Narrator;
+
+namespace TheSecondSeat.PersonaGeneration
+{
+    /// <summary>
+    /// 表情类型枚举
+    /// ? 每个表情支持1-5个变体（通过运行时随机选择）
+    /// </summary>
+    public enum ExpressionType
+    {
+        Neutral,      // 中立
+        Happy,        // 开心（支持 happy1-happy5）
+        Sad,          // 悲伤（支持 sad1-sad5）
+        Angry,        // 愤怒（支持 angry1-angry5）
+        Surprised,    // 惊讶（支持 surprised1-surprised5）
+        Worried,      // 担忧（支持 worried1-worried5）
+        Smug,         // 得意（支持 smug1-smug5）
+        Disappointed, // 失望（支持 disappointed1-disappointed5）
+        Thoughtful,   // 沉思（支持 thoughtful1-thoughtful5）
+        Annoyed,      // 恼怒（支持 annoyed1-annoyed5）
+        Playful,      // 调皮（支持 playful1-playful5）
+        Shy,          // 害羞（支持 shy1-shy5）
+        Confused,     // 疑惑（支持 confused1-confused5）- 触摸模式专用
+        Tired         // 疲惫（支持 tired1-tired5）
+    }
+
+    /// <summary>
+    /// 表情变化触发器
+    /// </summary>
+    public enum ExpressionTrigger
+    {
+        Manual,           // 手动指定
+        Affinity,         // 好感度变化
+        DialogueTone,     // 对话语气
+        GameEvent,        // 游戏事件
+        RandomVariation,  // 随机变化
+        Processing        // ? 新增：AI处理中
+    }
+
+    /// <summary>
+    /// 表情状态数据
+    /// </summary>
+    public class ExpressionState
+    {
+        public ExpressionType CurrentExpression { get; set; } = ExpressionType.Neutral;
+        public ExpressionType PreviousExpression { get; set; } = ExpressionType.Neutral;
+        public float TransitionProgress { get; set; } = 1f; // 1=完成，0=开始
+        public int TransitionTicks { get; set; } = 0;
+        public ExpressionTrigger LastTrigger { get; set; } = ExpressionTrigger.Manual;
+        
+        // 表情持续时间（秒）
+        public float ExpressionDuration { get; set; } = 3f;
+        public int ExpressionStartTick { get; set; } = 0;
+        
+        // 是否锁定表情（某些重要场景）
+        public bool IsLocked { get; set; } = false;
+        
+        // ? 新增：当前选择的变体编号（0=基础版本，1-5=变体）
+        public int CurrentVariant { get; set; } = 0;
+
+        // ? 新增：表情强度（0=默认/随机，1+=指定强度级别）
+        public int Intensity { get; set; } = 0;
+    }
+
+    /// <summary>
+    /// 立绘表情系统
+    /// ? 根据好感度、对话内容、游戏事件动态切换表情
+    /// </summary>
+    public static class ExpressionSystem
+    {
+        private static Dictionary<string, ExpressionState> expressionStates = new Dictionary<string, ExpressionState>();
+        private static Dictionary<string, BreathingState> breathingStates = new Dictionary<string, BreathingState>(); // ? 新增：呼吸动画状态
+        
+        // 表情过渡持续时间（游戏tick）
+        private const int TRANSITION_DURATION_TICKS = 30; // 约0.5秒
+        
+        // ? 表情持续时间（游戏tick）- 30秒
+        private const int EXPRESSION_DURATION_TICKS = 1800;
+        
+        // ⭐ v1.14.0: 增强呼吸动画状态类
+        private class BreathingState
+        {
+            public float phase;           // 呼吸相位（弧度）
+            public float speed;           // 呼吸速度
+            public float amplitude;       // 呼吸振幅（像素）
+            public long lastUpdateTime;   // 上次更新时间（毫秒）
+            
+            // ⭐ 新增：微动效果参数
+            public float swayPhase;       // 身体摇摆相位
+            public float swaySpeed;       // 摇摆速度
+            public float swayAmplitude;   // 摇摆振幅
+            
+            // ⭐ 新增：目标参数（用于平滑过渡）
+            public float targetSpeed;     // 目标呼吸速度
+            public float targetAmplitude; // 目标呼吸振幅
+        }
+        
+        /// <summary>
+        /// 获取人格的当前表情状态
+        /// </summary>
+        public static ExpressionState GetExpressionState(string personaDefName)
+        {
+            if (!expressionStates.ContainsKey(personaDefName))
+            {
+                expressionStates[personaDefName] = new ExpressionState();
+            }
+            return expressionStates[personaDefName];
+        }
+        
+        /// <summary>
+        /// 设置表情（带平滑过渡）
+        /// ? 自动为所有表情类型随机选择变体（1-5）
+        /// ? v1.6.20: 清除分层立绘缓存，强制重新合成
+        /// ? v1.6.30: 应用感情驱动动画
+        /// </summary>
+        public static void SetExpression(string personaDefName, ExpressionType expression, int durationTicks = EXPRESSION_DURATION_TICKS, string reason = "", int intensity = 0)
+        {
+            var state = GetExpressionState(personaDefName);
+            
+            // 如果表情被锁定，跳过切换
+            if (state.IsLocked)
+            {
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[ExpressionSystem] 表情被锁定，跳过切换: {personaDefName}");
+                }
+                return;
+            }
+            
+            // 如果表情相同且强度相同，跳过
+            if (state.CurrentExpression == expression && state.Intensity == intensity)
+            {
+                return;
+            }
+            
+            // ⭐ v1.6.92: 只清除旧表情的合成缓存，不清除基础图层
+            // 跳过 Neutral 表情的缓存清除（base_body 是分层立绘的基础）
+            if (state.CurrentExpression != ExpressionType.Neutral)
+            {
+                PortraitLoader.ClearPortraitCache(personaDefName, state.CurrentExpression);
+                AvatarLoader.ClearAvatarCache(personaDefName, state.CurrentExpression);
+                LayeredPortraitCompositor.ClearCache(personaDefName, state.CurrentExpression);
+            }
+            
+            // ⭐ v1.6.92: 只清除新表情的缓存（如果不是 Neutral）
+            if (expression != ExpressionType.Neutral)
+            {
+                PortraitLoader.ClearPortraitCache(personaDefName, expression);
+                AvatarLoader.ClearAvatarCache(personaDefName, expression);
+                LayeredPortraitCompositor.ClearCache(personaDefName, expression);
+            }
+            
+            // ? 设置变体编号/强度
+            // Neutral 表情不使用变体（variant = 0）
+            if (expression == ExpressionType.Neutral)
+            {
+                state.CurrentVariant = 0;
+                state.Intensity = 0;
+            }
+            else
+            {
+                // 动态获取变体数量
+                int variantCount = ExpressionConfig.Instance.GetVariantCount(expression);
+
+                if (intensity > 0)
+                {
+                    // 如果指定了强度，且在有效范围内，使用强度
+                    if (variantCount > 0 && intensity <= variantCount)
+                    {
+                        state.Intensity = intensity;
+                        state.CurrentVariant = intensity;
+                    }
+                    else
+                    {
+                        // 如果强度无效或无变体，回退到基础表情
+                        state.Intensity = 0;
+                        state.CurrentVariant = 0;
+                    }
+                }
+                else
+                {
+                    state.Intensity = 0;
+                    if (variantCount > 0)
+                    {
+                        state.CurrentVariant = UnityEngine.Random.Range(1, variantCount + 1);
+                    }
+                    else
+                    {
+                        state.CurrentVariant = 0;
+                    }
+                }
+            }
+            
+            // 开始过渡
+            state.PreviousExpression = state.CurrentExpression;
+            state.CurrentExpression = expression;
+            state.TransitionProgress = 0f;
+            state.TransitionTicks = 0;
+            state.ExpressionStartTick = Find.TickManager.TicksGame;
+            
+            // ? v1.6.30: 应用感情驱动动画（自动调整眨眼、呼吸等）
+            ApplyEmotionDrivenAnimation(personaDefName);
+        }
+        
+        /// <summary>
+        /// ? SetExpression重载 - 接受ExpressionTrigger参数
+        /// </summary>
+        public static void SetExpression(string personaDefName, ExpressionType expression, ExpressionTrigger trigger, int durationTicks = EXPRESSION_DURATION_TICKS, int intensity = 0)
+        {
+            var state = GetExpressionState(personaDefName);
+            state.LastTrigger = trigger;  // 设置触发器类型
+            
+            SetExpression(personaDefName, expression, durationTicks, trigger.ToString(), intensity);
+        }
+        
+        /// <summary>
+        /// ⭐ v1.14.0: 设置表情（使用固定变体，无随机性）
+        /// 专为摸头等交互场景设计，确保同一阶段内表情变体保持稳定
+        /// </summary>
+        public static void SetExpressionWithFixedVariant(
+            string personaDefName,
+            ExpressionType expression,
+            ExpressionTrigger trigger,
+            int durationTicks = EXPRESSION_DURATION_TICKS,
+            int intensity = 0,
+            int fixedVariant = 0)
+        {
+            var state = GetExpressionState(personaDefName);
+            
+            // 如果表情被锁定，跳过切换
+            if (state.IsLocked)
+            {
+                return;
+            }
+            
+            // 计算目标变体
+            int targetVariant = fixedVariant > 0 ? fixedVariant : (intensity > 0 ? intensity : 0);
+            
+            // 如果表情、强度和变体都相同，跳过（避免不必要的缓存清除）
+            if (state.CurrentExpression == expression &&
+                state.Intensity == intensity &&
+                state.CurrentVariant == targetVariant)
+            {
+                return;
+            }
+            
+            // 清除旧表情缓存
+            if (state.CurrentExpression != ExpressionType.Neutral)
+            {
+                PortraitLoader.ClearPortraitCache(personaDefName, state.CurrentExpression);
+                AvatarLoader.ClearAvatarCache(personaDefName, state.CurrentExpression);
+                LayeredPortraitCompositor.ClearCache(personaDefName, state.CurrentExpression);
+            }
+            
+            // 清除新表情缓存（如果不是 Neutral）
+            if (expression != ExpressionType.Neutral)
+            {
+                PortraitLoader.ClearPortraitCache(personaDefName, expression);
+                AvatarLoader.ClearAvatarCache(personaDefName, expression);
+                LayeredPortraitCompositor.ClearCache(personaDefName, expression);
+            }
+            
+            // 设置固定变体（不使用随机）
+            if (expression == ExpressionType.Neutral)
+            {
+                state.CurrentVariant = 0;
+                state.Intensity = 0;
+            }
+            else
+            {
+                state.Intensity = intensity;
+                state.CurrentVariant = targetVariant;
+            }
+            
+            // 设置触发器和表情
+            state.LastTrigger = trigger;
+            state.PreviousExpression = state.CurrentExpression;
+            state.CurrentExpression = expression;
+            state.TransitionProgress = 0f;
+            state.TransitionTicks = 0;
+            state.ExpressionStartTick = Find.TickManager.TicksGame;
+            
+            // 应用感情驱动动画
+            ApplyEmotionDrivenAnimation(personaDefName);
+        }
+        
+        /// <summary>
+        /// ? 设置为思考表情（AI处理中）
+        /// </summary>
+        public static void SetThinkingExpression(string personaDefName)
+        {
+            SetExpression(personaDefName, ExpressionType.Thoughtful, ExpressionTrigger.Processing);
+        }
+        
+        /// <summary>
+        /// ? 根据好感度自动设置表情（修改：30以上为Happy）
+        /// </summary>
+        public static void UpdateExpressionByAffinity(string personaDefName, float affinity)
+        {
+            ExpressionType expression;
+            int intensity = 0;
+            
+            // ? 修改：30以上好感度默认为Happy，根据程度分级
+            if (affinity >= 80f)
+            {
+                expression = ExpressionType.Happy;
+                intensity = 3; // Happy Level 3 (larger_mouth)
+            }
+            else if (affinity >= 60f)
+            {
+                expression = ExpressionType.Happy;
+                intensity = 2; // Happy Level 2 (happy2_mouth)
+            }
+            else if (affinity >= 30f)
+            {
+                expression = ExpressionType.Happy;
+                intensity = 1; // Happy Level 1 (happy1_mouth)
+            }
+            else if (affinity >= 0f)
+            {
+                expression = ExpressionType.Neutral;
+            }
+            else if (affinity >= -30f)
+            {
+                expression = ExpressionType.Annoyed;
+            }
+            else if (affinity >= -60f)
+            {
+                expression = ExpressionType.Disappointed;
+            }
+            else
+            {
+                expression = ExpressionType.Angry;
+            }
+            
+            SetExpression(personaDefName, expression, ExpressionTrigger.Affinity, EXPRESSION_DURATION_TICKS, intensity);
+        }
+        
+        /// <summary>
+        /// ? 根据对话语气设置表情（扩展关键词 + 强度支持）
+        /// </summary>
+        public static void UpdateExpressionByDialogueTone(string personaDefName, string dialogueText)
+        {
+            if (string.IsNullOrEmpty(dialogueText))
+            {
+                return;
+            }
+            
+            string text = dialogueText.ToLowerInvariant();
+            ExpressionType expression = ExpressionType.Neutral;
+            int intensity = 0;
+
+            // 辅助函数：检查关键词并返回强度
+            bool CheckKeywords(string[] level1, string[] level2, string[] level3, out int outIntensity)
+            {
+                outIntensity = 0;
+                if (level3 != null && ContainsKeywords(text, level3)) { outIntensity = 3; return true; }
+                if (level2 != null && ContainsKeywords(text, level2)) { outIntensity = 2; return true; }
+                if (level1 != null && ContainsKeywords(text, level1)) { outIntensity = 1; return true; }
+                return false;
+            }
+
+            // Happy (分级)
+            if (CheckKeywords(
+                // Level 1 (微笑)
+                new[] { "开心", "高兴", "不错", "很好", "好的", "可以", "愉快", "快乐", "欢迎", "good", "nice", "like", "enjoy", "glad" },
+                // Level 2 (露齿)
+                new[] { "哈哈", "嘻嘻", "太棒", "赞", "厉害", "优秀", "完美", "太好了", "妙", "绝", "棒", "美", "酷", "帅", "great", "wonderful", "happy", "haha", "excellent", "amazing" },
+                // Level 3 (大笑)
+                new[] { "笑死", "狂笑", "hiahia", "2333", "666", "惊喜", "fantastic", "awesome", "perfect", "superb", "terrific", "marvelous" },
+                out intensity))
+            {
+                expression = ExpressionType.Happy;
+            }
+            // Angry (暂不分级，默认为 1)
+            else if (ContainsKeywords(text, new[] { 
+                "可恶", "该死", "混蛋", "愤怒", "生气", "讨厌", "烦", "滚", "闭嘴", 
+                "废物", "蠢", "笨", "傻", "白痴", "可恨", "恼火", "火大", "气死",
+                "不行", "绝对不", "休想", "别想", "不可能", "拒绝",
+                "damn", "angry", "furious", "irritated", "hate", "stupid", "idiot",
+                "shut up", "annoying", "rage", "mad", "pissed", "disgusting"
+            }))
+            {
+                expression = ExpressionType.Angry;
+                intensity = 1;
+            }
+            // Sad
+            else if (ContainsKeywords(text, new[] { 
+                "悲伤", "难过", "可怜", "遗憾", "伤心", "哭", "泪", "悲", "惨", 
+                "不幸", "可惜", "唉", "呜", "哎", "伤感", "凄凉", "心痛", "痛苦",
+                "抱歉", "对不起", "失去", "离开", "死", "逝",
+                "sad", "unfortunate", "regret", "pity", "cry", "tears", "sorrow",
+                "sorry", "miss", "loss", "grief", "mourn", "tragic", "painful"
+            }))
+            {
+                expression = ExpressionType.Sad;
+                intensity = 1;
+            }
+            // Surprised
+            else if (ContainsKeywords(text, new[] { 
+                "什么", "不会吧", "真的", "天啊", "哇", "啊", "呀", "哦", "咦", 
+                "居然", "竟然", "怎么", "为什么", "惊", "震惊", "意外", "没想到",
+                "不敢相信", "吓", "我的天", "天哪", "我去", "卧槽", "woc",
+                "what", "really", "wow", "omg", "surprising", "shocked", "amazing",
+                "unbelievable", "incredible", "unexpected", "seriously", "no way"
+            }))
+            {
+                expression = ExpressionType.Surprised;
+                intensity = 1;
+            }
+            // Worried
+            else if (ContainsKeywords(text, new[] { 
+                "担心", "忧虑", "危险", "小心", "注意", "警惕", "害怕", "恐惧", 
+                "紧张", "焦虑", "不安", "可能会", "也许", "风险", "威胁", "问题",
+                "糟糕", "不妙", "麻烦", "困难", "棘手",
+                "worried", "concerned", "careful", "beware", "afraid", "fear",
+                "nervous", "anxious", "danger", "risk", "threat", "trouble", "problem"
+            }))
+            {
+                expression = ExpressionType.Worried;
+                intensity = 1;
+            }
+            // Playful
+            else if (ContainsKeywords(text, new[] { 
+                "嘿嘿", "嘻嘻", "逗你", "开玩笑", "捉弄", "调皮", "坏笑", "偷笑",
+                "嘿", "哼哼", "呵呵", "略略略", "嘻", "皮", "骗你的", "逗你玩",
+                "playful", "teasing", "mischievous", "hehe", "hihi", "kidding",
+                "joking", "prank", "naughty", "trick"
+            }))
+            {
+                expression = ExpressionType.Playful;
+                intensity = 1;
+            }
+            // Smug
+            else if (ContainsKeywords(text, new[] { 
+                "看吧", "我说", "果然", "不出所料", "就知道", "当然", "必然", 
+                "轻松", "简单", "小意思", "不在话下", "一般般", "还行吧", "哼",
+                "本大人", "本小姐", "本尊", "朕",
+                "told you", "as expected", "obviously", "of course", "naturally",
+                "easy", "simple", "knew it", "predicted"
+            }))
+            {
+                expression = ExpressionType.Smug;
+                intensity = 1;
+            }
+            // Disappointed
+            else if (ContainsKeywords(text, new[] { 
+                "失望", "算了", "唉", "无奈", "放弃", "没办法", "没用", "无语",
+                "无力", "疲惫", "累", "烦", "懒得", "不想", "随便", "whatever",
+                "disappointed", "sigh", "alas", "whatever", "give up", "useless",
+                "hopeless", "tired", "exhausted", "boring"
+            }))
+            {
+                expression = ExpressionType.Disappointed;
+                intensity = 1;
+            }
+            // Thoughtful
+            else if (ContainsKeywords(text, new[] { 
+                "嗯", "让我想想", "或许", "也许", "可能", "思考", "考虑", "分析",
+                "研究", "琢磨", "推测", "判断", "认为", "觉得", "我想", "应该",
+                "大概", "估计", "看来", "似乎", "好像", "...", "……",
+                "hmm", "perhaps", "maybe", "consider", "think", "analyze", "ponder",
+                "suppose", "guess", "probably", "seems", "apparently", "let me see"
+            }))
+            {
+                expression = ExpressionType.Thoughtful;
+                intensity = 1;
+            }
+            // Annoyed
+            else if (ContainsKeywords(text, new[] { 
+                "烦", "吵", "够了", "行了", "知道了", "好了好了", "别说了", 
+                "闭嘴", "安静", "不要", "停", "等等", "慢着", "打扰",
+                "annoyed", "bothered", "enough", "stop", "quiet", "shut", "leave me"
+            }))
+            {
+                expression = ExpressionType.Annoyed;
+                intensity = 1;
+            }
+            // Shy
+            else if (ContainsKeywords(text, new[] { 
+                "害羞", "不好意思", "羞", "脸红", "羞涩", "难为情", "不敢", 
+                "...", "……", "那个", "嗯嗯", "唔", "诶", "啊这", "emmm",
+                "尴尬", "不太好", "有点", "感谢", "谢谢你", "太客气了",
+                "不用", "没什么", "别这样", "不要这样", "你真是",
+                "shy", "embarrassed", "blush", "awkward", "umm", "uh", "er",
+                "thank you", "thanks", "appreciate", "grateful", "sorry"
+            }))
+            {
+                expression = ExpressionType.Shy;
+                intensity = 1;
+            }
+            // Confused
+            else if (ContainsKeywords(text, new[] {
+                "啊", "什么", "怎么", "为何", "这是", "那是", "你是", "我是", "他是",
+                "她是", "它是", "谁是", "在哪里", "什么时候", "为什么", "怎么样",
+                "有什么", "没什么", "只不过", "难道", "岂不是", "莫非",
+                "ah", "what", "how", "why", "this is", "that is", "you are", "i am",
+                "he is", "she is", "it is", "who is", "where is", "when", "why",
+                "what is", "nothing", "just", "did", "could", "couldn't",
+                "would", "wouldn't", "might", "might not", "must", "mustn't",
+                "can't", "cannot", "do", "don't", "does", "doesn't"
+            }))
+            {
+                expression = ExpressionType.Confused;
+                intensity = 1;
+            }
+            
+            if (expression != ExpressionType.Neutral)
+            {
+                SetExpression(personaDefName, expression, ExpressionTrigger.DialogueTone, EXPRESSION_DURATION_TICKS, intensity);
+            }
+        }
+        
+        /// <summary>
+        /// 根据游戏事件设置表情
+        /// </summary>
+        public static void UpdateExpressionByEvent(string personaDefName, string eventType, bool isPositive)
+        {
+            ExpressionType expression;
+            
+            switch (eventType.ToLower())
+            {
+                case "colonist_death":
+                    expression = ExpressionType.Sad;
+                    break;
+                    
+                case "raid_victory":
+                    expression = ExpressionType.Happy;
+                    break;
+                    
+                case "raid_incoming":
+                    expression = ExpressionType.Worried;
+                    break;
+                    
+                case "major_loss":
+                    expression = ExpressionType.Disappointed;
+                    break;
+                    
+                case "great_success":
+                    expression = ExpressionType.Smug;
+                    break;
+                    
+                case "unexpected_event":
+                    expression = ExpressionType.Surprised;
+                    break;
+                    
+                default:
+                    expression = isPositive ? ExpressionType.Happy : ExpressionType.Sad;
+                    break;
+            }
+            
+            SetExpression(personaDefName, expression, ExpressionTrigger.GameEvent);
+        }
+        
+        /// <summary>
+        /// 更新表情过渡动画
+        /// ✅ v1.6.82: 添加空引用保护
+        /// ✅ v1.15.1: 修复表情无规律变化问题
+        /// </summary>
+        public static void UpdateTransition(string personaDefName)
+        {
+            // ✅ 空引用保护
+            if (string.IsNullOrEmpty(personaDefName))
+                return;
+            
+            var state = GetExpressionState(personaDefName);
+            if (state == null)
+                return;
+            
+            // 如果过渡未完成
+            if (state.TransitionProgress < 1f)
+            {
+                state.TransitionTicks++;
+                state.TransitionProgress = Mathf.Clamp01((float)state.TransitionTicks / TRANSITION_DURATION_TICKS);
+            }
+            
+            // 检查表情是否过期（自动恢复到基础表情）
+            // Processing 触发器不会自动过期（等待AI响应完成）
+            // RandomVariation 触发器表示已经是基础表情，不需要再变化
+            if (!state.IsLocked && state.TransitionProgress >= 1f && 
+                state.LastTrigger != ExpressionTrigger.Processing &&
+                state.LastTrigger != ExpressionTrigger.RandomVariation)
+            {
+                // ✅ v1.6.82: 添加 Find.TickManager 空引用保护
+                if (Find.TickManager == null)
+                    return;
+                
+                int elapsedTicks = Find.TickManager.TicksGame - state.ExpressionStartTick;
+                
+                if (elapsedTicks > EXPRESSION_DURATION_TICKS)
+                {
+                    // 获取当前好感度对应的基础表情
+                    float favorability = 0f;
+                    var narratorManager = Current.Game?.GetComponent<NarratorManager>();
+                    if (narratorManager != null)
+                    {
+                        favorability = narratorManager.Favorability;
+                    }
+
+                    ExpressionType baseExpression = ExpressionType.Neutral;
+                    int baseIntensity = 0;
+
+                    // 好感度 >= 30 时，基础表情变为 Happy (强度0 = 无后缀，显示 happy_eyes + happy_mouth)
+                    if (favorability >= 30f)
+                    {
+                        baseExpression = ExpressionType.Happy;
+                        baseIntensity = 0; // 使用无后缀的 happy
+                    }
+
+                    // ✅ v1.15.1: 改进的稳定性检查
+                    // 如果当前已经是目标基础表情类型，仅更新触发器和时间戳，不改变表情
+                    if (state.CurrentExpression == baseExpression)
+                    {
+                        // 只重置计时器和触发器，保持当前表情稳定
+                        state.LastTrigger = ExpressionTrigger.RandomVariation;
+                        state.ExpressionStartTick = Find.TickManager.TicksGame;
+                        return;
+                    }
+
+                    // 切换到基础表情
+                    // 直接设置状态，避免通过 SetExpression 的随机变体逻辑
+                    state.PreviousExpression = state.CurrentExpression;
+                    state.CurrentExpression = baseExpression;
+                    state.Intensity = baseIntensity;
+                    state.CurrentVariant = baseIntensity > 0 ? baseIntensity : 0;
+                    state.TransitionProgress = 0f;
+                    state.TransitionTicks = 0;
+                    state.ExpressionStartTick = Find.TickManager.TicksGame;
+                    state.LastTrigger = ExpressionTrigger.RandomVariation;
+                    
+                    // 清除缓存以更新显示
+                    if (state.PreviousExpression != ExpressionType.Neutral)
+                    {
+                        PortraitLoader.ClearPortraitCache(personaDefName, state.PreviousExpression);
+                        AvatarLoader.ClearAvatarCache(personaDefName, state.PreviousExpression);
+                        LayeredPortraitCompositor.ClearCache(personaDefName, state.PreviousExpression);
+                    }
+                    if (baseExpression != ExpressionType.Neutral)
+                    {
+                        PortraitLoader.ClearPortraitCache(personaDefName, baseExpression);
+                        AvatarLoader.ClearAvatarCache(personaDefName, baseExpression);
+                        LayeredPortraitCompositor.ClearCache(personaDefName, baseExpression);
+                    }
+                    
+                    // 应用感情驱动动画
+                    ApplyEmotionDrivenAnimation(personaDefName);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 锁定/解锁表情
+        /// </summary>
+        public static void LockExpression(string personaDefName, bool locked)
+        {
+            var state = GetExpressionState(personaDefName);
+            state.IsLocked = locked;
+            // 日志已静默
+        }
+
+        /// <summary>
+        /// 获取表情对应的文件名后缀
+        /// </summary>
+        public static string GetExpressionSuffix(string personaDefName, ExpressionType expression)
+        {
+            var state = GetExpressionState(personaDefName);
+            int variantIndex = state.Intensity > 0 ? state.Intensity : state.CurrentVariant;
+            
+            // 默认行为：如果 variantIndex > 0，返回数字后缀，否则返回空
+            return variantIndex > 0 ? variantIndex.ToString() : "";
+        }
+
+        /// <summary>
+        /// ⭐ v1.14.0: 应用感情驱动动画（眨眼、呼吸、微动）
+        /// 根据当前表情动态调整动画参数，让立绘更有生命力
+        /// </summary>
+        public static void ApplyEmotionDrivenAnimation(string personaDefName)
+        {
+            var exprState = GetExpressionState(personaDefName);
+            
+            // ===== 1. 眨眼频率 =====
+            float minBlinkInterval = 3.0f;
+            float maxBlinkInterval = 6.0f;
+
+            // ===== 2. 呼吸参数 =====
+            float breathSpeed = 2.0f;      // 默认呼吸速度（弧度/秒）
+            float breathAmplitude = 2.0f;  // 默认呼吸振幅（像素）
+            
+            // ===== 3. 微动参数 =====
+            float swaySpeed = 0.3f;        // 默认摇摆速度
+            float swayAmplitude = 0.5f;    // 默认摇摆振幅（像素）
+
+            // 根据表情类型调整参数
+            switch (exprState.CurrentExpression)
+            {
+                case ExpressionType.Happy:
+                    // 开心：眨眼更频繁，呼吸轻快，微微摇摆
+                    minBlinkInterval = 2.5f;
+                    maxBlinkInterval = 4.5f;
+                    breathSpeed = 2.5f;
+                    breathAmplitude = 2.5f;
+                    swaySpeed = 0.4f;
+                    swayAmplitude = 0.8f;
+                    break;
+                    
+                case ExpressionType.Surprised:
+                    // 惊讶：眨眼较少（睁大眼睛），呼吸急促
+                    minBlinkInterval = 4.0f;
+                    maxBlinkInterval = 7.0f;
+                    breathSpeed = 3.5f;
+                    breathAmplitude = 3.0f;
+                    swaySpeed = 0.2f;
+                    swayAmplitude = 0.3f;
+                    break;
+                    
+                case ExpressionType.Sad:
+                case ExpressionType.Disappointed:
+                    // 悲伤：眨眼慢，呼吸沉重，几乎不动
+                    minBlinkInterval = 4.0f;
+                    maxBlinkInterval = 8.0f;
+                    breathSpeed = 1.5f;
+                    breathAmplitude = 1.5f;
+                    swaySpeed = 0.1f;
+                    swayAmplitude = 0.2f;
+                    break;
+                    
+                case ExpressionType.Tired:
+                    // 疲惫：眨眼慢且长，呼吸缓慢深沉
+                    minBlinkInterval = 5.0f;
+                    maxBlinkInterval = 10.0f;
+                    breathSpeed = 1.2f;
+                    breathAmplitude = 2.5f;
+                    swaySpeed = 0.15f;
+                    swayAmplitude = 0.3f;
+                    break;
+                    
+                case ExpressionType.Angry:
+                case ExpressionType.Annoyed:
+                    // 愤怒：眨眼快（紧绷），呼吸急促有力
+                    minBlinkInterval = 2.0f;
+                    maxBlinkInterval = 4.0f;
+                    breathSpeed = 3.0f;
+                    breathAmplitude = 2.0f;
+                    swaySpeed = 0.5f;
+                    swayAmplitude = 0.4f;
+                    break;
+                    
+                case ExpressionType.Worried:
+                    // 担忧：眨眼频繁（不安），呼吸不规律
+                    minBlinkInterval = 2.0f;
+                    maxBlinkInterval = 4.0f;
+                    breathSpeed = 2.8f;
+                    breathAmplitude = 1.8f;
+                    swaySpeed = 0.35f;
+                    swayAmplitude = 0.6f;
+                    break;
+                    
+                case ExpressionType.Shy:
+                    // 害羞：眨眼较多（不敢直视），呼吸略快
+                    minBlinkInterval = 2.0f;
+                    maxBlinkInterval = 4.0f;
+                    breathSpeed = 2.3f;
+                    breathAmplitude = 1.5f;
+                    swaySpeed = 0.25f;
+                    swayAmplitude = 0.7f;
+                    break;
+                    
+                case ExpressionType.Playful:
+                    // 调皮：眨眼活泼，呼吸轻快，摇摆明显
+                    minBlinkInterval = 2.0f;
+                    maxBlinkInterval = 4.0f;
+                    breathSpeed = 2.8f;
+                    breathAmplitude = 2.2f;
+                    swaySpeed = 0.5f;
+                    swayAmplitude = 1.0f;
+                    break;
+                    
+                case ExpressionType.Smug:
+                    // 得意：眨眼慢（自信），呼吸平稳
+                    minBlinkInterval = 3.5f;
+                    maxBlinkInterval = 6.0f;
+                    breathSpeed = 1.8f;
+                    breathAmplitude = 1.8f;
+                    swaySpeed = 0.2f;
+                    swayAmplitude = 0.4f;
+                    break;
+                    
+                case ExpressionType.Thoughtful:
+                    // 沉思：眨眼正常，呼吸深沉
+                    minBlinkInterval = 3.0f;
+                    maxBlinkInterval = 6.0f;
+                    breathSpeed = 1.6f;
+                    breathAmplitude = 2.0f;
+                    swaySpeed = 0.15f;
+                    swayAmplitude = 0.3f;
+                    break;
+                    
+                case ExpressionType.Confused:
+                    // 困惑：眨眼较多（迷茫），呼吸略快
+                    minBlinkInterval = 2.5f;
+                    maxBlinkInterval = 4.5f;
+                    breathSpeed = 2.2f;
+                    breathAmplitude = 1.8f;
+                    swaySpeed = 0.3f;
+                    swayAmplitude = 0.5f;
+                    break;
+                    
+                case ExpressionType.Neutral:
+                default:
+                    // 默认参数已设置
+                    break;
+            }
+
+            // 应用眨眼参数
+            BlinkAnimationSystem.SetBlinkInterval(personaDefName, minBlinkInterval, maxBlinkInterval);
+            
+            // 应用呼吸和微动参数
+            SetBreathingParams(personaDefName, breathSpeed, breathAmplitude, swaySpeed, swayAmplitude);
+        }
+        
+        /// <summary>
+        /// ⭐ v1.14.0: 设置呼吸和微动参数（平滑过渡）
+        /// </summary>
+        private static void SetBreathingParams(string personaDefName, float speed, float amplitude, float swaySpeed, float swayAmplitude)
+        {
+            if (!breathingStates.TryGetValue(personaDefName, out var state))
+            {
+                state = new BreathingState
+                {
+                    phase = UnityEngine.Random.Range(0f, Mathf.PI * 2),
+                    speed = speed,
+                    amplitude = amplitude,
+                    swayPhase = UnityEngine.Random.Range(0f, Mathf.PI * 2),
+                    swaySpeed = swaySpeed,
+                    swayAmplitude = swayAmplitude,
+                    targetSpeed = speed,
+                    targetAmplitude = amplitude,
+                    lastUpdateTime = (long)(Time.realtimeSinceStartup * 1000)
+                };
+                breathingStates[personaDefName] = state;
+            }
+            else
+            {
+                // 设置目标值，让参数平滑过渡
+                state.targetSpeed = speed;
+                state.targetAmplitude = amplitude;
+                state.swaySpeed = swaySpeed;
+                state.swayAmplitude = swayAmplitude;
+            }
+        }
+
+        /// <summary>
+        /// 清除所有旧状态（用于重置或重新加载）
+        /// </summary>
+        public static void CleanupOldStates()
+        {
+            expressionStates.Clear();
+            breathingStates.Clear();
+        }
+
+        /// <summary>
+        /// ⭐ v1.14.0: 获取呼吸动画偏移量（增强版）
+        /// 支持参数平滑过渡和更自然的呼吸曲线
+        /// </summary>
+        public static float GetBreathingOffset(string personaDefName)
+        {
+            if (!breathingStates.TryGetValue(personaDefName, out var state))
+            {
+                // 初始化默认状态
+                state = new BreathingState
+                {
+                    phase = UnityEngine.Random.Range(0f, Mathf.PI * 2),
+                    speed = 2.0f,
+                    amplitude = 2.0f,
+                    swayPhase = UnityEngine.Random.Range(0f, Mathf.PI * 2),
+                    swaySpeed = 0.3f,
+                    swayAmplitude = 0.5f,
+                    targetSpeed = 2.0f,
+                    targetAmplitude = 2.0f,
+                    lastUpdateTime = (long)(Time.realtimeSinceStartup * 1000)
+                };
+                breathingStates[personaDefName] = state;
+                return 0f;
+            }
+            
+            // 计算时间差
+            float time = Time.realtimeSinceStartup;
+            float dt = Mathf.Clamp((float)(time * 1000 - state.lastUpdateTime) / 1000f, 0f, 0.1f);
+            state.lastUpdateTime = (long)(time * 1000);
+            
+            // ⭐ 平滑过渡到目标参数
+            float lerpSpeed = 2.0f * dt;
+            state.speed = Mathf.Lerp(state.speed, state.targetSpeed, lerpSpeed);
+            state.amplitude = Mathf.Lerp(state.amplitude, state.targetAmplitude, lerpSpeed);
+            
+            // 更新呼吸相位
+            state.phase += state.speed * dt;
+            if (state.phase > Mathf.PI * 2) state.phase -= Mathf.PI * 2;
+            
+            // ⭐ 使用更自然的呼吸曲线（吸气快、呼气慢）
+            // 使用 smoothstep 让呼吸更柔和
+            float rawBreath = Mathf.Sin(state.phase);
+            float breath = rawBreath * rawBreath * rawBreath; // 更柔和的呼吸曲线
+            breath = (breath + 1f) * 0.5f; // 归一化到 0-1
+            breath = breath * 2f - 1f; // 回到 -1 到 1
+            
+            return state.amplitude * breath;
+        }
+        
+        /// <summary>
+        /// ⭐ v1.14.0: 获取身体微动偏移量（X方向）
+        /// 用于实现更自然的立绘效果
+        /// </summary>
+        public static float GetSwayOffset(string personaDefName)
+        {
+            if (!breathingStates.TryGetValue(personaDefName, out var state))
+            {
+                return 0f;
+            }
+            
+            // 计算时间差
+            float time = Time.realtimeSinceStartup;
+            float dt = Mathf.Clamp((float)(time * 1000 - state.lastUpdateTime) / 1000f, 0f, 0.1f);
+            
+            // 更新摇摆相位（独立于呼吸）
+            state.swayPhase += state.swaySpeed * dt;
+            if (state.swayPhase > Mathf.PI * 2) state.swayPhase -= Mathf.PI * 2;
+            
+            // 使用两个不同频率的正弦波叠加，让摇摆更自然
+            float primarySway = Mathf.Sin(state.swayPhase);
+            float secondarySway = Mathf.Sin(state.swayPhase * 1.7f) * 0.3f; // 次级摇摆
+            
+            return state.swayAmplitude * (primarySway + secondarySway);
+        }
+        
+        /// <summary>
+        /// ⭐ v1.14.0: 获取完整的动画偏移量（Vector2）
+        /// 包含呼吸（Y方向）和微动（X方向）
+        /// </summary>
+        public static Vector2 GetAnimationOffset(string personaDefName)
+        {
+            float breathingY = GetBreathingOffset(personaDefName);
+            float swayX = GetSwayOffset(personaDefName);
+            return new Vector2(swayX, breathingY);
+        }
+
+        /// <summary>
+        /// 检查文本是否包含关键词
+        /// </summary>
+        private static bool ContainsKeywords(string text, string[] keywords)
+        {
+            if (string.IsNullOrEmpty(text) || keywords == null) return false;
+            for (int i = 0; i < keywords.Length; i++)
+            {
+                if (text.Contains(keywords[i])) return true;
+            }
+            return false;
+        }
+    }
+}

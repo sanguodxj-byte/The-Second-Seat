@@ -1,0 +1,184 @@
+using System;
+using System.Threading.Tasks;
+using TheSecondSeat.RimAgent;
+using TheSecondSeat.RimAgent.Tools;
+using Verse;
+
+namespace TheSecondSeat.Testing
+{
+    /// <summary>
+    /// RimAgent 工具系统单元测试
+    /// 游戏内开发者模式：按 F12 → 运行测试
+    /// </summary>
+    public static class RimAgentToolsTest
+    {
+        /// <summary>
+        /// 测试 SearchTool
+        /// </summary>
+        public static async Task TestSearchTool()
+        {
+            Log.Message("===== SearchTool 测试开始 =====");
+            
+            try
+            {
+                var searchTool = new SearchTool();
+                
+                // 测试 1: 搜索殖民者
+                var result1 = await searchTool.ExecuteAsync(new System.Collections.Generic.Dictionary<string, object>
+                {
+                    { "query", "殖民者数量" },
+                    { "category", "colonists" }
+                });
+                
+                Log.Message($"测试 1 - 搜索殖民者: {(result1.Success ? "成功" : "失败")}");
+                if (result1.Success)
+                {
+                    Log.Message($"  结果: {result1.Result}");
+                }
+                else
+                {
+                    Log.Error($"  错误: {result1.Error}");
+                }
+                
+                // 测试 2: 搜索资源
+                var result2 = await searchTool.ExecuteAsync(new System.Collections.Generic.Dictionary<string, object>
+                {
+                    { "query", "食物" },
+                    { "category", "items" }
+                });
+                
+                Log.Message($"测试 2 - 搜索资源: {(result2.Success ? "成功" : "失败")}");
+                if (result2.Success)
+                {
+                    Log.Message($"  结果: {result2.Result}");
+                }
+                
+                Log.Message("===== SearchTool 测试完成 =====");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"SearchTool 测试异常: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// 测试 CommandTool
+        /// </summary>
+        public static async Task TestCommandTool()
+        {
+            Log.Message("===== CommandTool 测试开始 =====");
+            
+            try
+            {
+                var commandTool = new CommandTool();
+                
+                // 测试 1: 采矿命令
+                var result1 = await commandTool.ExecuteAsync(new System.Collections.Generic.Dictionary<string, object>
+                {
+                    { "action", "mine" },
+                    { "target", "mountain ore" }
+                });
+                
+                Log.Message($"测试 1 - 采矿命令: {(result1.Success ? "成功" : "失败")}");
+                if (result1.Success)
+                {
+                    Log.Message($"  结果: {result1.Result}");
+                }
+                else
+                {
+                    Log.Error($"  错误: {result1.Error}");
+                }
+                
+                // 测试 2: 建造命令
+                var result2 = await commandTool.ExecuteAsync(new System.Collections.Generic.Dictionary<string, object>
+                {
+                    { "action", "build" },
+                    { "building", "turret" }
+                });
+                
+                Log.Message($"测试 2 - 建造命令: {(result2.Success ? "成功" : "失败")}");
+                if (result2.Success)
+                {
+                    Log.Message($"  结果: {result2.Result}");
+                }
+                
+                Log.Message("===== CommandTool 测试完成 =====");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"CommandTool 测试异常: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// 测试 AnalyzeTool
+        /// </summary>
+        public static async Task TestAnalyzeTool()
+        {
+            Log.Message("===== AnalyzeTool 测试开始 =====");
+            
+            try
+            {
+                var analyzeTool = new AnalyzeTool();
+                
+                // 测试 1: 分析殖民地状态
+                var result1 = await analyzeTool.ExecuteAsync(new System.Collections.Generic.Dictionary<string, object>
+                {
+                    { "type", "colony_status" }
+                });
+                
+                Log.Message($"测试 1 - 分析殖民地状态: {(result1.Success ? "成功" : "失败")}");
+                if (result1.Success)
+                {
+                    Log.Message($"  结果: {result1.Result}");
+                }
+                else
+                {
+                    Log.Error($"  错误: {result1.Error}");
+                }
+                
+                // 测试 2: 分析资源短缺
+                var result2 = await analyzeTool.ExecuteAsync(new System.Collections.Generic.Dictionary<string, object>
+                {
+                    { "type", "resource_shortage" }
+                });
+                
+                Log.Message($"测试 2 - 分析资源短缺: {(result2.Success ? "成功" : "失败")}");
+                if (result2.Success)
+                {
+                    Log.Message($"  结果: {result2.Result}");
+                }
+                
+                Log.Message("===== AnalyzeTool 测试完成 =====");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"AnalyzeTool 测试异常: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// 运行所有测试
+        /// </summary>
+        public static async Task RunAllTests()
+        {
+            Log.Message("========================================");
+            Log.Message("  RimAgent 工具系统测试 v1.6.65");
+            Log.Message("========================================");
+            Log.Message("");
+            
+            await TestSearchTool();
+            Log.Message("");
+            
+            await TestCommandTool();
+            Log.Message("");
+            
+            await TestAnalyzeTool();
+            Log.Message("");
+            
+            Log.Message("========================================");
+            Log.Message("  所有测试完成");
+            Log.Message("========================================");
+        }
+    }
+}

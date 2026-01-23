@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <!-- Command List Window UI -->
+  <TSS_CmdList_Title>AI 可用指令列表 (点击命令自动输入)</TSS_CmdList_Title>
+  <TSS_CmdList_Hint>[提示] 点击任意命令行，将自动输入到聊天窗口。绿色=已实现，红色=未实现</TSS_CmdList_Hint>
+  <TSS_CmdList_SearchPlaceholder>搜索命令...</TSS_CmdList_SearchPlaceholder>
+  
+  <TSS_CmdList_Header_ID>命令ID</TSS_CmdList_Header_ID>
+  <TSS_CmdList_Header_Name>显示名</TSS_CmdList_Header_Name>
+  <TSS_CmdList_Header_Cat>分类</TSS_CmdList_Header_Cat>
+  <TSS_CmdList_Header_Desc>描述</TSS_CmdList_Header_Desc>
+  <TSS_CmdList_Header_Example>示例提示词</TSS_CmdList_Header_Example>
+  <TSS_CmdList_Header_Format>参数格式</TSS_CmdList_Header_Format>
+  
+  <TSS_CmdCat_All>全部</TSS_CmdCat_All>
+  <TSS_CmdCat_Batch>批量操作</TSS_CmdCat_Batch>
+  <TSS_CmdCat_Unit>单位管理</TSS_CmdCat_Unit>
+  <TSS_CmdCat_Resource>资源管理</TSS_CmdCat_Resource>
+  <TSS_CmdCat_EventCtrl>事件控制</TSS_CmdCat_EventCtrl>
+  <TSS_CmdCat_EventDebug>事件调试</TSS_CmdCat_EventDebug>
+  <TSS_CmdCat_Query>查询</TSS_CmdCat_Query>
+
+  <!-- Commands -->
+  <!-- BatchHarvest -->
+  <TSS_Cmd_BatchHarvest_Label>批量收获</TSS_Cmd_BatchHarvest_Label>
+  <TSS_Cmd_BatchHarvest_Desc>指定所有成熟作物进行收获</TSS_Cmd_BatchHarvest_Desc>
+  <TSS_Cmd_BatchHarvest_Ex>批量收获所有成熟作物</TSS_Cmd_BatchHarvest_Ex>
+  <TSS_Cmd_BatchHarvest_Fmt>All/Mature/Blighted</TSS_Cmd_BatchHarvest_Fmt>
+
+  <!-- BatchMine -->
+  <TSS_Cmd_BatchMine_Label>批量采矿</TSS_Cmd_BatchMine_Label>
+  <TSS_Cmd_BatchMine_Desc>指定所有可采矿资源进行开采</TSS_Cmd_BatchMine_Desc>
+  <TSS_Cmd_BatchMine_Ex>把野外所有金属矿都标记采矿</TSS_Cmd_BatchMine_Ex>
+  <TSS_Cmd_BatchMine_Fmt>all/metal/stone/components</TSS_Cmd_BatchMine_Fmt>
+
+  <!-- BatchLogging -->
+  <TSS_Cmd_BatchLogging_Label>批量伐木</TSS_Cmd_BatchLogging_Label>
+  <TSS_Cmd_BatchLogging_Desc>指定所有成年树木进行开采</TSS_Cmd_BatchLogging_Desc>
+  <TSS_Cmd_BatchLogging_Ex>砍掉地图上所有树木</TSS_Cmd_BatchLogging_Ex>
+  <TSS_Cmd_BatchLogging_Fmt>无参数（默认90%成熟）</TSS_Cmd_BatchLogging_Fmt>
+
+  <!-- BatchEquip -->
+  <TSS_Cmd_BatchEquip_Label>批量装备</TSS_Cmd_BatchEquip_Label>
+  <TSS_Cmd_BatchEquip_Desc>为所有适合的殖民者装备武器或护甲</TSS_Cmd_BatchEquip_Desc>
+  <TSS_Cmd_BatchEquip_Ex>让所有殖民者装备最好武器</TSS_Cmd_BatchEquip_Ex>
+  <TSS_Cmd_BatchEquip_Fmt>Weapon/Armor</TSS_Cmd_BatchEquip_Fmt>
+
+  <!-- BatchCapture -->
+  <TSS_Cmd_BatchCapture_Label>批量俘虏</TSS_Cmd_BatchCapture_Label>
+  <TSS_Cmd_BatchCapture_Desc>俘虏所有击倒的敌方单位</TSS_Cmd_BatchCapture_Desc>
+  <TSS_Cmd_BatchCapture_Ex>俘虏所有击倒的敌人</TSS_Cmd_BatchCapture_Ex>
+  <TSS_Cmd_BatchCapture_Fmt>无参数（自动俘虏）</TSS_Cmd_BatchCapture_Fmt>
+
+  <!-- PriorityRepair -->
+  <TSS_Cmd_PriorityRepair_Label>优先修复</TSS_Cmd_PriorityRepair_Label>
+  <TSS_Cmd_PriorityRepair_Desc>指定所有受损建筑进行修复</TSS_Cmd_PriorityRepair_Desc>
+  <TSS_Cmd_PriorityRepair_Ex>修复所有破损的建筑</TSS_Cmd_PriorityRepair_Ex>
+  <TSS_Cmd_PriorityRepair_Fmt>All/Damaged(&lt;80%)</TSS_Cmd_PriorityRepair_Fmt>
+
+  <!-- EmergencyRetreat -->
+  <TSS_Cmd_EmergencyRetreat_Label>紧急撤退</TSS_Cmd_EmergencyRetreat_Label>
+  <TSS_Cmd_EmergencyRetreat_Desc>命令所有未受伤的殖民者撤退</TSS_Cmd_EmergencyRetreat_Desc>
+  <TSS_Cmd_EmergencyRetreat_Ex>所有人撤退，快跑</TSS_Cmd_EmergencyRetreat_Ex>
+  <TSS_Cmd_EmergencyRetreat_Fmt>无参数</TSS_Cmd_EmergencyRetreat_Fmt>
+
+  <!-- DesignatePlantCut -->
+  <TSS_Cmd_DesignatePlantCut_Label>批量植物</TSS_Cmd_DesignatePlantCut_Label>
+  <TSS_Cmd_DesignatePlantCut_Desc>指定植物进行开采清理</TSS_Cmd_DesignatePlantCut_Desc>
+  <TSS_Cmd_DesignatePlantCut_Ex>清理所有枯萎植物</TSS_Cmd_DesignatePlantCut_Ex>
+  <TSS_Cmd_DesignatePlantCut_Fmt>All/Blighted/Trees/Wild</TSS_Cmd_DesignatePlantCut_Fmt>
+
+  <!-- DraftPawn -->
+  <TSS_Cmd_DraftPawn_Label>征召殖民者</TSS_Cmd_DraftPawn_Label>
+  <TSS_Cmd_DraftPawn_Desc>将指定殖民者设为征召状态</TSS_Cmd_DraftPawn_Desc>
+  <TSS_Cmd_DraftPawn_Ex>征召所有人</TSS_Cmd_DraftPawn_Ex>
+  <TSS_Cmd_DraftPawn_Fmt>pawnName/drafted(bool)</TSS_Cmd_DraftPawn_Fmt>
+
+  <!-- MovePawn -->
+  <TSS_Cmd_MovePawn_Label>移动殖民者</TSS_Cmd_MovePawn_Label>
+  <TSS_Cmd_MovePawn_Desc>命令战斗中的殖民者移动到指定位置</TSS_Cmd_MovePawn_Desc>
+  <TSS_Cmd_MovePawn_Ex>让张三移动到坐标50,50</TSS_Cmd_MovePawn_Ex>
+  <TSS_Cmd_MovePawn_Fmt>pawnName + x,z坐标</TSS_Cmd_MovePawn_Fmt>
+
+  <!-- HealPawn -->
+  <TSS_Cmd_HealPawn_Label>治疗殖民者</TSS_Cmd_HealPawn_Label>
+  <TSS_Cmd_HealPawn_Desc>优先为指定殖民者安排医疗</TSS_Cmd_HealPawn_Desc>
+  <TSS_Cmd_HealPawn_Ex>治疗张三</TSS_Cmd_HealPawn_Ex>
+  <TSS_Cmd_HealPawn_Fmt>pawnName(空=全体成员)</TSS_Cmd_HealPawn_Fmt>
+
+  <!-- SetWorkPriority -->
+  <TSS_Cmd_SetWorkPriority_Label>设置工作优先级</TSS_Cmd_SetWorkPriority_Label>
+  <TSS_Cmd_SetWorkPriority_Desc>调整殖民者工作优先级</TSS_Cmd_SetWorkPriority_Desc>
+  <TSS_Cmd_SetWorkPriority_Ex>把张三的医疗设为最优先</TSS_Cmd_SetWorkPriority_Ex>
+  <TSS_Cmd_SetWorkPriority_Fmt>pawnName+workType+priority</TSS_Cmd_SetWorkPriority_Fmt>
+
+  <!-- EquipWeapon -->
+  <TSS_Cmd_EquipWeapon_Label>装备武器</TSS_Cmd_EquipWeapon_Label>
+  <TSS_Cmd_EquipWeapon_Desc>让殖民者装备指定武器</TSS_Cmd_EquipWeapon_Desc>
+  <TSS_Cmd_EquipWeapon_Ex>让张三装备突击步枪</TSS_Cmd_EquipWeapon_Ex>
+  <TSS_Cmd_EquipWeapon_Fmt>pawnName/weaponDef(可选)</TSS_Cmd_EquipWeapon_Fmt>
+
+  <!-- ForbidItems -->
+  <TSS_Cmd_ForbidItems_Label>禁止物品</TSS_Cmd_ForbidItems_Label>
+  <TSS_Cmd_ForbidItems_Desc>禁止地图上的可搬运物品</TSS_Cmd_ForbidItems_Desc>
+  <TSS_Cmd_ForbidItems_Ex>禁止所有的腐烂物品</TSS_Cmd_ForbidItems_Ex>
+  <TSS_Cmd_ForbidItems_Fmt>无参数/可选count</TSS_Cmd_ForbidItems_Fmt>
+
+  <!-- AllowItems -->
+  <TSS_Cmd_AllowItems_Label>允许物品</TSS_Cmd_AllowItems_Label>
+  <TSS_Cmd_AllowItems_Desc>允许所有被禁止的物品</TSS_Cmd_AllowItems_Desc>
+  <TSS_Cmd_AllowItems_Ex>允许所有物品</TSS_Cmd_AllowItems_Ex>
+  <TSS_Cmd_AllowItems_Fmt>无参数/可选count</TSS_Cmd_AllowItems_Fmt>
+
+  <!-- TriggerEvent -->
+  <TSS_Cmd_TriggerEvent_Label>触发事件</TSS_Cmd_TriggerEvent_Label>
+  <TSS_Cmd_TriggerEvent_Desc>触发指定游戏事件（对弈者模式）</TSS_Cmd_TriggerEvent_Desc>
+  <TSS_Cmd_TriggerEvent_Ex>触发一场袭击</TSS_Cmd_TriggerEvent_Ex>
+  <TSS_Cmd_TriggerEvent_Fmt>raid/trader/wanderer/disease/resource/eclipse/toxic</TSS_Cmd_TriggerEvent_Fmt>
+
+  <!-- ScheduleEvent -->
+  <TSS_Cmd_ScheduleEvent_Label>预约事件</TSS_Cmd_ScheduleEvent_Label>
+  <TSS_Cmd_ScheduleEvent_Desc>在未来某时刻触发事件</TSS_Cmd_ScheduleEvent_Desc>
+  <TSS_Cmd_ScheduleEvent_Ex>10分钟后发动袭击</TSS_Cmd_ScheduleEvent_Ex>
+  <TSS_Cmd_ScheduleEvent_Fmt>事件类型 + delayMinutes</TSS_Cmd_ScheduleEvent_Fmt>
+
+  <!-- ChangeWeather -->
+  <TSS_Cmd_ChangeWeather_Label>修改天气</TSS_Cmd_ChangeWeather_Label>
+  <TSS_Cmd_ChangeWeather_Desc>改变当前地图的天气（对弈者模式）</TSS_Cmd_ChangeWeather_Desc>
+  <TSS_Cmd_ChangeWeather_Ex>把天气改成晴天</TSS_Cmd_ChangeWeather_Ex>
+  <TSS_Cmd_ChangeWeather_Fmt>Clear/Rain/Fog/Snow等</TSS_Cmd_ChangeWeather_Fmt>
+
+  <!-- Debug Commands -->
+  <TSS_Cmd_TestWelcomeGift_Label>🎁 触发见面礼</TSS_Cmd_TestWelcomeGift_Label>
+  <TSS_Cmd_TestWelcomeGift_Desc>【测试】触发见面礼事件（+500银 +10好感）</TSS_Cmd_TestWelcomeGift_Desc>
+  <TSS_Cmd_TestWelcomeGift_Ex>触发见面礼事件</TSS_Cmd_TestWelcomeGift_Ex>
+
+  <TSS_Cmd_TestDivineWrath_Label>⚡ 触发神罚</TSS_Cmd_TestDivineWrath_Label>
+  <TSS_Cmd_TestDivineWrath_Desc>【测试】触发神罚事件（雷击 中毒 -20好感）</TSS_Cmd_TestDivineWrath_Desc>
+  <TSS_Cmd_TestDivineWrath_Ex>触发神罚事件</TSS_Cmd_TestDivineWrath_Ex>
+
+  <TSS_Cmd_TestMechRaid_Label>🤖 触发敌袭</TSS_Cmd_TestMechRaid_Label>
+  <TSS_Cmd_TestMechRaid_Desc>【测试】触发敌袭警报事件（5秒后袭击）</TSS_Cmd_TestMechRaid_Desc>
+  <TSS_Cmd_TestMechRaid_Ex>触发敌袭警报</TSS_Cmd_TestMechRaid_Ex>
+
+  <TSS_Cmd_ListAllEvents_Label>📋 列出所有事件</TSS_Cmd_ListAllEvents_Label>
+  <TSS_Cmd_ListAllEvents_Desc>【测试】列出所有已加载的自定义事件</TSS_Cmd_ListAllEvents_Desc>
+  <TSS_Cmd_ListAllEvents_Ex>列出所有事件</TSS_Cmd_ListAllEvents_Ex>
+
+  <TSS_Cmd_CheckEventSystem_Label>🔍 检查事件系统</TSS_Cmd_CheckEventSystem_Label>
+  <TSS_Cmd_CheckEventSystem_Desc>【测试】检查事件系统状态和完整性</TSS_Cmd_CheckEventSystem_Desc>
+  <TSS_Cmd_CheckEventSystem_Ex>检查事件系统</TSS_Cmd_CheckEventSystem_Ex>
+
+  <TSS_Cmd_DescentFriendly_Label>🌟 友好降临</TSS_Cmd_DescentFriendly_Label>
+  <TSS_Cmd_DescentFriendly_Desc>【测试】触发叙事者友好降临（援助模式）</TSS_Cmd_DescentFriendly_Desc>
+  <TSS_Cmd_DescentFriendly_Ex>触发友好降临</TSS_Cmd_DescentFriendly_Ex>
+
+  <TSS_Cmd_DescentHostile_Label>💀 敌对降临</TSS_Cmd_DescentHostile_Label>
+  <TSS_Cmd_DescentHostile_Desc>【测试】触发叙事者敌对降临（袭击模式）</TSS_Cmd_DescentHostile_Desc>
+  <TSS_Cmd_DescentHostile_Ex>触发敌对降临</TSS_Cmd_DescentHostile_Ex>
+
+  <TSS_Cmd_DescentReturn_Label>🔙 叙事者回归</TSS_Cmd_DescentReturn_Label>
+  <TSS_Cmd_DescentReturn_Desc>【测试】强制叙事者回归虚空</TSS_Cmd_DescentReturn_Desc>
+  <TSS_Cmd_DescentReturn_Ex>强制叙事者回归</TSS_Cmd_DescentReturn_Ex>
+
+  <TSS_Cmd_CheckDescentSystem_Label>⚙️ 检查降临系统</TSS_Cmd_CheckDescentSystem_Label>
+  <TSS_Cmd_CheckDescentSystem_Desc>【测试】检查降临系统状态和配置</TSS_Cmd_CheckDescentSystem_Desc>
+  <TSS_Cmd_CheckDescentSystem_Ex>检查降临系统</TSS_Cmd_CheckDescentSystem_Ex>
+
+  <TSS_Cmd_DescentDropPod_Label>📦 空投仓降临</TSS_Cmd_DescentDropPod_Label>
+  <TSS_Cmd_DescentDropPod_Desc>【测试】使用空投仓动画触发降临（默认类型）</TSS_Cmd_DescentDropPod_Desc>
+  <TSS_Cmd_DescentDropPod_Ex>测试空投仓降临</TSS_Cmd_DescentDropPod_Ex>
+
+  <TSS_Cmd_DescentDragonFlyby_Label>🦅 实体飞掠降临</TSS_Cmd_DescentDragonFlyby_Label>
+  <TSS_Cmd_DescentDragonFlyby_Desc>【测试】使用实体飞掠动画触发降临</TSS_Cmd_DescentDragonFlyby_Desc>
+  <TSS_Cmd_DescentDragonFlyby_Ex>测试实体飞掠降临</TSS_Cmd_DescentDragonFlyby_Ex>
+
+  <TSS_Cmd_DescentPortal_Label>🌀 传送门降临</TSS_Cmd_DescentPortal_Label>
+  <TSS_Cmd_DescentPortal_Desc>【测试】使用传送门（折跃）动画触发降临</TSS_Cmd_DescentPortal_Desc>
+  <TSS_Cmd_DescentPortal_Ex>测试传送门降临</TSS_Cmd_DescentPortal_Ex>
+
+  <TSS_Cmd_DescentLightning_Label>⚡ 闪电降临</TSS_Cmd_DescentLightning_Label>
+  <TSS_Cmd_DescentLightning_Desc>【测试】使用闪电动画触发降临</TSS_Cmd_DescentLightning_Desc>
+  <TSS_Cmd_DescentLightning_Ex>测试闪电降临</TSS_Cmd_DescentLightning_Ex>
+
+  <TSS_Cmd_GetColonists_Label>获取殖民者</TSS_Cmd_GetColonists_Label>
+  <TSS_Cmd_GetColonists_Desc>获取所有殖民者信息（通过对话）</TSS_Cmd_GetColonists_Desc>
+  <TSS_Cmd_GetColonists_Ex>我们有哪些殖民者</TSS_Cmd_GetColonists_Ex>
+  <TSS_Cmd_GetColonists_Fmt>直接询问AI即可</TSS_Cmd_GetColonists_Fmt>
+
+  <TSS_Cmd_GetResources_Label>获取资源</TSS_Cmd_GetResources_Label>
+  <TSS_Cmd_GetResources_Desc>获取殖民地资源库存（通过对话）</TSS_Cmd_GetResources_Desc>
+  <TSS_Cmd_GetResources_Ex>我们还有多少食物</TSS_Cmd_GetResources_Ex>
+  <TSS_Cmd_GetResources_Fmt>直接询问AI即可</TSS_Cmd_GetResources_Fmt>
+
+  <TSS_Cmd_GetThreats_Label>获取威胁</TSS_Cmd_GetThreats_Label>
+  <TSS_Cmd_GetThreats_Desc>获取当前地图威胁信息（通过对话）</TSS_Cmd_GetThreats_Desc>
+  <TSS_Cmd_GetThreats_Ex>有敌人吗</TSS_Cmd_GetThreats_Ex>
+  <TSS_Cmd_GetThreats_Fmt>直接询问AI即可</TSS_Cmd_GetThreats_Fmt>
+
+  <TSS_Cmd_GetColonyStatus_Label>殖民地状态</TSS_Cmd_GetColonyStatus_Label>
+  <TSS_Cmd_GetColonyStatus_Desc>获取殖民地总体状态（通过对话）</TSS_Cmd_GetColonyStatus_Desc>
+  <TSS_Cmd_GetColonyStatus_Ex>殖民地现在怎么样</TSS_Cmd_GetColonyStatus_Ex>
+  <TSS_Cmd_GetColonyStatus_Fmt>直接询问AI即可</TSS_Cmd_GetColonyStatus_Fmt>
+
+  <TSS_Cmd_DesignateConstruction_Label>指定建造</TSS_Cmd_DesignateConstruction_Label>
+  <TSS_Cmd_DesignateConstruction_Desc>【暂不支持】需要添加的建造蓝图</TSS_Cmd_DesignateConstruction_Desc>
+  <TSS_Cmd_DesignateConstruction_Ex>在(10,10)建一堵墙</TSS_Cmd_DesignateConstruction_Ex>
+  <TSS_Cmd_DesignateConstruction_Fmt>需要坐标+建筑类型+朝向</TSS_Cmd_DesignateConstruction_Fmt>
+
+  <TSS_Cmd_Param_None>无参数</TSS_Cmd_Param_None>
+</LanguageData>

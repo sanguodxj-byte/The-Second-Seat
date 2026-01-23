@@ -1,0 +1,488 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <!-- UI Elements -->
+  <TSS_NarratorWindowTitle>AI Narrator Assistant</TSS_NarratorWindowTitle>
+  <TSS_NarratorButton>AI Narrator</TSS_NarratorButton>
+  <TSS_NarratorButton_Desc>Talk to the AI Narrator</TSS_NarratorButton_Desc>
+  <TSS_SendButton>Talk to Narrator</TSS_SendButton>
+  <TSS_InputPlaceholder>Type your message here...</TSS_InputPlaceholder>
+  <TSS_Favorability>Favorability</TSS_Favorability>
+  <TSS_CurrentTier>Current Tier</TSS_CurrentTier>
+  <TSS_SwitchPersona>Switch Persona</TSS_SwitchPersona>
+  <TSS_TestConnection>Test Connection</TSS_TestConnection>
+  <TSS_StatusReport>Status Report</TSS_StatusReport>
+  <TSS_CommandList>Command List</TSS_CommandList>
+  <TSS_ClearChat>Clear Chat</TSS_ClearChat>
+  <TSS_ChatCleared>Chat history cleared</TSS_ChatCleared>
+  <TSS_AIThinking>● AI is thinking...</TSS_AIThinking>
+  <TSS_InputHint>Enter message...</TSS_InputHint>
+  <TSS_Send>Send</TSS_Send>
+
+  <!-- Settings Sections -->
+  <TSS_Settings_Title>The Second Seat Settings</TSS_Settings_Title>
+  <TSS_Settings_LLM_Title>?? LLM Settings</TSS_Settings_LLM_Title>
+  <TSS_Settings_WebSearch_Title>?? Web Search Settings</TSS_Settings_WebSearch_Title>
+  <TSS_Settings_Multimodal_Title>?? Multimodal Analysis Settings</TSS_Settings_Multimodal_Title>
+  <TSS_Settings_Debug_Title>?? Debug Settings</TSS_Settings_Debug_Title>
+  <TSS_Settings_Affinity_Title>Affinity System</TSS_Settings_Affinity_Title>
+
+  <!-- LLM Settings -->
+  <TSS_Settings_LLMProvider>LLM Provider</TSS_Settings_LLMProvider>
+  <TSS_Settings_LLMProvider_Local>Local Model (LM Studio / Ollama)</TSS_Settings_LLMProvider_Local>
+  <TSS_Settings_LLMProvider_OpenAI>OpenAI (GPT-4 / GPT-3.5)</TSS_Settings_LLMProvider_OpenAI>
+  <TSS_Settings_LLMProvider_DeepSeek>DeepSeek (Chinese Optimized)</TSS_Settings_LLMProvider_DeepSeek>
+  <TSS_Settings_LLMProvider_Gemini>Google Gemini</TSS_Settings_LLMProvider_Gemini>
+  
+  <TSS_Settings_UseOpenAI>Use OpenAI API</TSS_Settings_UseOpenAI>
+  <TSS_Settings_UseOpenAI_Desc>Use OpenAI cloud API (requires API Key)</TSS_Settings_UseOpenAI_Desc>
+  <TSS_Settings_APIEndpoint>API Endpoint</TSS_Settings_APIEndpoint>
+  <TSS_Settings_APIEndpoint_Desc>The endpoint URL for the LLM API (e.g., http://localhost:1234/v1/chat/completions)</TSS_Settings_APIEndpoint_Desc>
+  <TSS_Settings_APIKey>API Key</TSS_Settings_APIKey>
+  <TSS_Settings_APIKey_Desc>API key for authentication (can be empty for local models)</TSS_Settings_APIKey_Desc>
+  <TSS_Settings_ModelName>Model Name</TSS_Settings_ModelName>
+  <TSS_Settings_ModelName_Desc>The name of the model to use (e.g., local-model)</TSS_Settings_ModelName_Desc>
+  <TSS_Settings_Temperature>Temperature</TSS_Settings_Temperature>
+  <TSS_Settings_Temperature_Desc>Controls randomness of output (0.0 = deterministic, 1.0 = highly random)</TSS_Settings_Temperature_Desc>
+  <TSS_Settings_MaxTokens>Max Tokens</TSS_Settings_MaxTokens>
+  <TSS_Settings_MaxTokens_Desc>Maximum number of tokens per response</TSS_Settings_MaxTokens_Desc>
+  
+  <!-- Web Search Settings -->
+  <TSS_Settings_WebSearch_Title>Web Search</TSS_Settings_WebSearch_Title>
+  <TSS_Settings_EnableWebSearch>Enable Web Search</TSS_Settings_EnableWebSearch>
+  <TSS_Settings_SearchEngine>Search Engine</TSS_Settings_SearchEngine>
+  <TSS_Settings_SearchEngine_DuckDuckGo>DuckDuckGo (Recommended, Free)</TSS_Settings_SearchEngine_DuckDuckGo>
+  <TSS_Settings_SearchEngine_Bing>Bing (Requires API Key)</TSS_Settings_SearchEngine_Bing>
+  <TSS_Settings_SearchEngine_Google>Google (Requires API Key)</TSS_Settings_SearchEngine_Google>
+  <TSS_Settings_BingAPIKey>Bing API Key</TSS_Settings_BingAPIKey>
+  <TSS_Settings_GoogleAPIKey>Google API Key</TSS_Settings_GoogleAPIKey>
+  <TSS_Settings_GoogleSearchEngineID>Google Search Engine ID</TSS_Settings_GoogleSearchEngineID>
+  <TSS_Settings_GetAPIKey_Bing>Get Bing API Key: https://www.microsoft.com/en-us/bing/apis/bing-web-search-api</TSS_Settings_GetAPIKey_Bing>
+  <TSS_Settings_GetAPIKey_Google>Get Google API Key: https://developers.google.com/custom-search/v1/overview</TSS_Settings_GetAPIKey_Google>
+  <TSS_Settings_ClearSearchCache>Clear Search Cache</TSS_Settings_ClearSearchCache>
+  <TSS_Settings_CacheCleared>Search cache cleared</TSS_Settings_CacheCleared>
+  <TSS_Settings_SearchDelay>Search Delay (Rate Limiting)</TSS_Settings_SearchDelay>
+  
+  <TSS_Settings_BingAPIKey_Desc>Bing Search API key (only needed for Bing)</TSS_Settings_BingAPIKey_Desc>
+  <TSS_Settings_GoogleAPIKey_Desc>Google Custom Search API key (only needed for Google)</TSS_Settings_GoogleAPIKey_Desc>
+  <TSS_Settings_GoogleSearchEngineID_Desc>Google Custom Search Engine ID (only needed for Google)</TSS_Settings_GoogleSearchEngineID_Desc>
+  
+  <!-- Multimodal Analysis Settings -->
+  <TSS_Settings_EnableMultimodal>Enable Multimodal Analysis</TSS_Settings_EnableMultimodal>
+  <TSS_Settings_EnableMultimodal_Desc>Use AI Vision API to analyze persona portraits</TSS_Settings_EnableMultimodal_Desc>
+  <TSS_Settings_MultimodalProvider>Multimodal Provider</TSS_Settings_MultimodalProvider>
+  <TSS_Settings_MultimodalProvider_Desc>Choose AI Vision API provider (OpenAI, DeepSeek, Gemini)</TSS_Settings_MultimodalProvider_Desc>
+  <TSS_Settings_MultimodalProvider_OpenAI>OpenAI (gpt-4-vision-preview)</TSS_Settings_MultimodalProvider_OpenAI>
+  <TSS_Settings_MultimodalProvider_DeepSeek>DeepSeek (deepseek-vl)</TSS_Settings_MultimodalProvider_DeepSeek>
+  <TSS_Settings_MultimodalProvider_Gemini>Gemini (gemini-pro-vision)</TSS_Settings_MultimodalProvider_Gemini>
+  
+  <TSS_Settings_MultimodalAPIKey>Multimodal API Key</TSS_Settings_MultimodalAPIKey>
+  <TSS_Settings_MultimodalAPIKey_Desc>Vision API key (may differ from main API key)</TSS_Settings_MultimodalAPIKey_Desc>
+  <TSS_Settings_VisionModel>Vision Model</TSS_Settings_VisionModel>
+  <TSS_Settings_VisionModel_Desc>Model to use for image analysis (e.g., gpt-4-vision-preview)</TSS_Settings_VisionModel_Desc>
+  <TSS_Settings_TextAnalysisModel>Text Analysis Model</TSS_Settings_TextAnalysisModel>
+  <TSS_Settings_TextAnalysisModel_Desc>Model to use for deep text analysis (e.g., gpt-4)</TSS_Settings_TextAnalysisModel_Desc>
+  
+  <!-- Debug Settings -->
+  <TSS_Settings_DebugMode>Debug Mode</TSS_Settings_DebugMode>
+  <TSS_Settings_DebugMode_Desc>Enable verbose logging for troubleshooting</TSS_Settings_DebugMode_Desc>
+
+  <!-- Affinity System Settings -->
+  <TSS_Settings_EnableAffinity>Enable Affinity System</TSS_Settings_EnableAffinity>
+  <TSS_Settings_AffinityDisabled_Warning>⚠️ When disabled, the narrator will not have emotional reactions to your actions</TSS_Settings_AffinityDisabled_Warning>
+  
+  <!-- ✅ Global Prompt -->
+  <TSS_Settings_GlobalPrompt_Title>Global Prompt</TSS_Settings_GlobalPrompt_Title>
+  <TSS_Settings_GlobalPrompt_Description>Enter global instructions here. These will be added to the beginning of all AI conversations.\nYou can use this to set AI's language style, behavior guidelines, etc. Leave empty to disable global prompt.</TSS_Settings_GlobalPrompt_Description>
+  <TSS_Settings_GlobalPrompt_LoadExample>Load Example</TSS_Settings_GlobalPrompt_LoadExample>
+  
+  <!-- ✅ Dialogue-Driven Events -->
+  <TSS_Event_Reminder_Title>Narrator's Greeting</TSS_Event_Reminder_Title>
+  <TSS_Event_Reward_Title>Narrator's Reward</TSS_Event_Reward_Title>
+  <TSS_Event_Support_Title>Narrator's Support</TSS_Event_Support_Title>
+  <TSS_Event_Celebration_Title>Narrator's Celebration</TSS_Event_Celebration_Title>
+
+  <!-- Buttons -->
+  <TSS_Settings_Apply>Apply Settings</TSS_Settings_Apply>
+  <TSS_Settings_TestConnection>Test Connection</TSS_Settings_TestConnection>
+  <TSS_Settings_ClearSearchCache>Clear Search Cache</TSS_Settings_ClearSearchCache>
+  <TSS_Settings_CacheCleared>Search cache cleared</TSS_Settings_CacheCleared>
+  <TSS_Settings_Testing>Testing connection...</TSS_Settings_Testing>
+  <TSS_Settings_TestSuccess>Connection test successful!</TSS_Settings_TestSuccess>
+  <TSS_Settings_TestFailed>Connection test failed</TSS_Settings_TestFailed>
+  <TSS_Settings_Applied>Settings applied</TSS_Settings_Applied>
+
+  <!-- Favorability Tiers -->
+  <TSS_Tier_Hostile>Hostile</TSS_Tier_Hostile>
+  <TSS_Tier_Cold>Cold</TSS_Tier_Cold>
+  <TSS_Tier_Neutral>Neutral</TSS_Tier_Neutral>
+  <TSS_Tier_Warm>Warm</TSS_Tier_Warm>
+  <TSS_Tier_Devoted>Devoted</TSS_Tier_Devoted>
+  <TSS_Tier_Infatuated>Infatuated</TSS_Tier_Infatuated>
+
+  <!-- Messages -->
+  <TSS_Message_CommandSuccess>AI Narrator: Command executed successfully</TSS_Message_CommandSuccess>
+  <TSS_Message_CommandFailed>AI Narrator: Command execution failed</TSS_Message_CommandFailed>
+  <TSS_Message_NoValidAction>AI Narrator: No valid action</TSS_Message_NoValidAction>
+  <TSS_Message_PersonaSwitched>Narrator switched to: {0}</TSS_Message_PersonaSwitched>
+
+  <!-- Personality Traits -->
+  <TSS_Trait_Benevolent>Benevolent</TSS_Trait_Benevolent>
+  <TSS_Trait_Sadistic>Sadistic</TSS_Trait_Sadistic>
+  <TSS_Trait_Chaotic>Chaotic</TSS_Trait_Chaotic>
+  <TSS_Trait_Strategic>Strategic</TSS_Trait_Strategic>
+  <TSS_Trait_Protective>Protective</TSS_Trait_Protective>
+  <TSS_Trait_Manipulative>Manipulative</TSS_Trait_Manipulative>
+
+  <!-- Commands -->
+  <TSS_Command_BatchHarvest>Batch Harvest</TSS_Command_BatchHarvest>
+  <TSS_Command_BatchHarvest_Desc>Harvest all mature crops on the map</TSS_Command_BatchHarvest_Desc>
+  <TSS_Command_BatchSow>Batch Sow</TSS_Command_BatchSow>
+  <TSS_Command_BatchSow_Desc>Sow crops in designated areas</TSS_Command_BatchSow_Desc>
+  <TSS_Command_BatchEquip>Batch Equip</TSS_Command_BatchEquip>
+  <TSS_Command_BatchEquip_Desc>Equip colonists with weapons and armor</TSS_Command_BatchEquip_Desc>
+  <TSS_Command_EmergencyRetreat>Emergency Retreat</TSS_Command_EmergencyRetreat>
+  <TSS_Command_EmergencyRetreat_Desc>Retreat all colonists to safety</TSS_Command_EmergencyRetreat_Desc>
+  <TSS_Command_PriorityRepair>Priority Repair</TSS_Command_PriorityRepair>
+  <TSS_Command_PriorityRepair_Desc>Prioritize repairs for damaged buildings and facilities</TSS_Command_PriorityRepair_Desc>
+  <TSS_Command_BatchLogging>Designated {0} mature trees for logging</TSS_Command_BatchLogging>
+  <TSS_Command_BatchLogging_None>No mature trees found for logging</TSS_Command_BatchLogging_None>
+  <TSS_Command_DesignatePlantCut>Designated {0} plants for cutting (type: {1})</TSS_Command_DesignatePlantCut>
+  <TSS_Command_DesignatePlantCut_None>No plants found for cutting (type: {0})</TSS_Command_DesignatePlantCut_None>
+  
+  <!-- ⭐ v1.6.84: New command translation keys -->
+  <TSS_Command_BatchMine>Designated {0} mineable resources for mining (type: {1})</TSS_Command_BatchMine>
+  <TSS_Command_BatchMine_None>No mineable resources found (type: {0})</TSS_Command_BatchMine_None>
+  <TSS_Command_PriorityRepair>Marked {0} damaged buildings for repair</TSS_Command_PriorityRepair>
+  <TSS_Command_PriorityRepair_None>No damaged buildings found</TSS_Command_PriorityRepair_None>
+  <TSS_Command_PriorityRepair_NoConstructors>Found {0} damaged buildings but no constructors available</TSS_Command_PriorityRepair_NoConstructors>
+  <TSS_Command_BatchCapture>Assigned {0} capture jobs</TSS_Command_BatchCapture>
+  <TSS_Command_BatchCapture_None>No downed enemies found to capture</TSS_Command_BatchCapture_None>
+  <TSS_Command_BatchCapture_NoWardens>No wardens or colonists available for capture</TSS_Command_BatchCapture_NoWardens>
+  <TSS_Command_BatchCapture_NoBeds>No prison beds available</TSS_Command_BatchCapture_NoBeds>
+  <TSS_Command_BatchCapture_Failed>Failed to assign capture jobs</TSS_Command_BatchCapture_Failed>
+  <TSS_Command_ChangePolicy>Received policy change request: {0}</TSS_Command_ChangePolicy>
+  <TSS_Command_TriggerEvent_NotActive>Opponent mode is not active</TSS_Command_TriggerEvent_NotActive>
+  <TSS_Command_TriggerEvent_NoType>No event type specified</TSS_Command_TriggerEvent_NoType>
+  <TSS_Command_ScheduleEvent_NotActive>Opponent mode is not active</TSS_Command_ScheduleEvent_NotActive>
+
+  <!-- Error Messages -->
+  <TSS_Error_NoAPIKey>Error: API key not set</TSS_Error_NoAPIKey>
+  <TSS_Error_InvalidEndpoint>Error: Invalid API endpoint</TSS_Error_InvalidEndpoint>
+  <TSS_Error_NetworkError>Network error: {0}</TSS_Error_NetworkError>
+  <TSS_Error_APIError>API error: {0}</TSS_Error_APIError>
+  <TSS_Error_Timeout>Request timed out</TSS_Error_Timeout>
+  <TSS_Error_UnexpectedResponse>Unexpected response format</TSS_Error_UnexpectedResponse>
+  
+  <!-- Status Panel -->
+  <TSS_StatusPanel_Title>NARRATOR.OS</TSS_StatusPanel_Title>
+  <TSS_StatusPanel_Online>ONLINE</TSS_StatusPanel_Online>
+  <TSS_StatusPanel_Offline>OFFLINE</TSS_StatusPanel_Offline>
+  <TSS_StatusPanel_Sync>SYNC</TSS_StatusPanel_Sync>
+  <TSS_StatusPanel_Link>LINK</TSS_StatusPanel_Link>
+  <TSS_StatusPanel_Error>ERROR</TSS_StatusPanel_Error>
+  <TSS_StatusPanel_Timeout>TIMEOUT</TSS_StatusPanel_Timeout>
+  <TSS_StatusPanel_Favorability>FAVORABILITY</TSS_StatusPanel_Favorability>
+  
+  <!-- Main Window -->
+  <TSS_Relationship>Relationship</TSS_Relationship>
+  <TSS_LastResponse>Last Response</TSS_LastResponse>
+  <TSS_NoMessages>No messages yet</TSS_NoMessages>
+  <TSS_SendMessage>Send Message</TSS_SendMessage>
+  <TSS_TalkToNarrator>Talk to Narrator</TSS_TalkToNarrator>
+  <TSS_RequestStatusUpdate>Request Status Update</TSS_RequestStatusUpdate>
+  <TSS_Processing>Processing...</TSS_Processing>
+  <TSS_OpenNarratorLabel>AI Narrator</TSS_OpenNarratorLabel>
+  <TSS_OpenNarratorDesc>Open AI Narrator window</TSS_OpenNarratorDesc>
+  
+  <!-- Button States -->
+  <TSS_ButtonState_Ready>[AI Narrator Assistant]: Connection ready, waiting for events.</TSS_ButtonState_Ready>
+  <TSS_ButtonState_Processing>[AI Narrator Assistant]: Analyzing/Generating narrative content...</TSS_ButtonState_Processing>
+  <TSS_ButtonState_Error>[AI Narrator Assistant]: Error! Please check API key or network.</TSS_ButtonState_Error>
+  <TSS_ButtonState_Disabled>[AI Narrator Assistant]: Mod is disabled.</TSS_ButtonState_Disabled>
+  
+  <TSS_NarratorButton_Tooltip>Open AI Narrator Window
+Click to talk with the AI Narrator</TSS_NarratorButton_Tooltip>
+
+  <!-- Persona Selection -->
+  <TSS_SelectPersona>Select Persona</TSS_SelectPersona>
+  <TSS_PersonaSelection_Title>Persona Selection</TSS_PersonaSelection_Title>
+  <TSS_PersonaSelection_CurrentPersona>Current Persona</TSS_PersonaSelection_CurrentPersona>
+  <TSS_PersonaSelection_AvailablePersonas>Available Personas</TSS_PersonaSelection_AvailablePersonas>
+  <TSS_PersonaSelection_SelectButton>Select This Persona</TSS_PersonaSelection_SelectButton>
+  <TSS_PersonaSelection_ConfirmButton>Confirm</TSS_PersonaSelection_ConfirmButton>
+  <TSS_PersonaSelection_CancelButton>Cancel</TSS_PersonaSelection_CancelButton>
+  <TSS_PersonaSelection_NoPortrait>No Portrait</TSS_PersonaSelection_NoPortrait>
+  <TSS_PersonaSelection_Description>Description</TSS_PersonaSelection_Description>
+  <TSS_PersonaSelection_Personality>Personality Traits</TSS_PersonaSelection_Personality>
+  
+  <!-- Error Messages -->
+  <TSS_APICallFailed>API call failed! Please check:
+1. Is LLM service running (e.g. LM Studio)?
+2. Is API endpoint correct?
+3. Does model name match?
+4. Check logs for details</TSS_APICallFailed>
+  <TSS_AlreadyProcessing>AI is processing, please wait...</TSS_AlreadyProcessing>
+  <TSS_NarratorSays>[AI Narrator] {0}</TSS_NarratorSays>
+
+  <!-- Affinity Tiers - Refactored (-1000 ~ 1000) -->
+  <TSS_Tier_Hatred>Hatred</TSS_Tier_Hatred>
+  <TSS_Tier_Hostile>Hostile</TSS_Tier_Hostile>
+  <TSS_Tier_Cold>Cold</TSS_Tier_Cold>
+  <TSS_Tier_Indifferent>Indifferent</TSS_Tier_Indifferent>
+  <TSS_Tier_Warm>Warm</TSS_Tier_Warm>
+  <TSS_Tier_Devoted>Devoted</TSS_Tier_Devoted>
+  <TSS_Tier_Adoration>Adoration</TSS_Tier_Adoration>
+  <TSS_Tier_SoulBound>Soul Bound</TSS_Tier_SoulBound>
+  
+  <!-- Affinity Tier Descriptions -->
+  <TSS_Tier_Hatred_Desc>The narrator harbors deep hatred toward you, and may refuse help or create obstacles.</TSS_Tier_Hatred_Desc>
+  <TSS_Tier_Hostile_Desc>The narrator is hostile toward you, unwilling to provide assistance.</TSS_Tier_Hostile_Desc>
+  <TSS_Tier_Cold_Desc>The narrator keeps their distance, cold and aloof.</TSS_Tier_Cold_Desc>
+  <TSS_Tier_Indifferent_Desc>The narrator maintains neutrality, neither warm nor cold toward you.</TSS_Tier_Indifferent_Desc>
+  <TSS_Tier_Warm_Desc>The narrator is friendly and willing to offer basic help.</TSS_Tier_Warm_Desc>
+  <TSS_Tier_Devoted_Desc>The narrator is loyal to you, actively caring about your colony.</TSS_Tier_Devoted_Desc>
+  <TSS_Tier_Adoration_Desc>The narrator deeply adores you, striving to help and protect you.</TSS_Tier_Adoration_Desc>
+  <TSS_Tier_SoulBound_Desc>The narrator is soul-bound to you, a true and eternal companion.</TSS_Tier_SoulBound_Desc>
+  
+  <!-- Draftable Animal System -->
+  <TSS_DraftableAnimal_Draft>Draft</TSS_DraftableAnimal_Draft>
+  <TSS_DraftableAnimal_Undraft>Undraft</TSS_DraftableAnimal_Undraft>
+  <TSS_DraftableAnimal_DraftDesc>Toggle draft mode. When drafted, this creature will follow your direct commands instead of wandering freely.</TSS_DraftableAnimal_DraftDesc>
+  <TSS_DraftableAnimal_Stop>Stop</TSS_DraftableAnimal_Stop>
+  <TSS_DraftableAnimal_StopDesc>Cancel all current orders.</TSS_DraftableAnimal_StopDesc>
+  <TSS_DraftableAnimal_Drafted>{0} is now drafted and awaiting orders.</TSS_DraftableAnimal_Drafted>
+  <TSS_DraftableAnimal_Undrafted>{0} has been released from draft.</TSS_DraftableAnimal_Undrafted>
+
+  <!-- Quick Dialogue Window -->
+  <TSS_QuickDialogue_Send>Send</TSS_QuickDialogue_Send>
+  <TSS_QuickDialogue_Agree>Agree / OK</TSS_QuickDialogue_Agree>
+  <TSS_QuickDialogue_Reject>Reject / No</TSS_QuickDialogue_Reject>
+  <TSS_QuickDialogue_AgreeMsg>Okay, I agree.</TSS_QuickDialogue_AgreeMsg>
+  <TSS_QuickDialogue_RejectMsg>No, I refuse.</TSS_QuickDialogue_RejectMsg>
+
+  <!-- Persona Editor -->
+  <TSS_PersonaEditor_SemanticRadar>Semantic Radar (Perception)</TSS_PersonaEditor_SemanticRadar>
+  <TSS_PersonaEditor_RadarHelp>Configure game concepts for AI active monitoring. The system scans colonist memories and triggers events upon keyword matches.</TSS_PersonaEditor_RadarHelp>
+  <TSS_PersonaEditor_RadarExpand>Expand (LLM)</TSS_PersonaEditor_RadarExpand>
+  <TSS_LLMNotReady>LLM service is not available. Please check connection.</TSS_LLMNotReady>
+  <TSS_RadarExpanding>Calling LLM to expand concept: {0}...</TSS_RadarExpanding>
+  <TSS_RadarExpandSuccess>Successfully expanded concept: {0}, added {1} keywords.</TSS_RadarExpandSuccess>
+  <TSS_PersonaEditor_Title>Edit Persona: {0}</TSS_PersonaEditor_Title>
+  <TSS_PersonaEditor_BasicInfo>Basic Info</TSS_PersonaEditor_BasicInfo>
+  <TSS_PersonaEditor_Name>Persona Name:</TSS_PersonaEditor_Name>
+  <TSS_PersonaEditor_Biography>Biography:</TSS_PersonaEditor_Biography>
+  <TSS_PersonaEditor_Tags>Personality Tags</TSS_PersonaEditor_Tags>
+  <TSS_PersonaEditor_TagsHelp>Tags define the AI's character traits, affecting dialogue style and behavior patterns.\nExamples: cheerful, serious, sarcastic, gentle, protective, etc.</TSS_PersonaEditor_TagsHelp>
+  <TSS_PersonaEditor_NoTags>(No tags)</TSS_PersonaEditor_NoTags>
+  <TSS_PersonaEditor_AddTag>Add Tag:</TSS_PersonaEditor_AddTag>
+  <TSS_PersonaEditor_Add>Add</TSS_PersonaEditor_Add>
+  <TSS_PersonaEditor_Delete>Delete</TSS_PersonaEditor_Delete>
+  <TSS_PersonaEditor_Style>Dialogue Style</TSS_PersonaEditor_Style>
+  <TSS_PersonaEditor_Style_Formality>Formality</TSS_PersonaEditor_Style_Formality>
+  <TSS_PersonaEditor_Style_Emotional>Emotional Expression</TSS_PersonaEditor_Style_Emotional>
+  <TSS_PersonaEditor_Style_Verbosity>Verbosity</TSS_PersonaEditor_Style_Verbosity>
+  <TSS_PersonaEditor_Style_Humor>Humor Level</TSS_PersonaEditor_Style_Humor>
+  <TSS_PersonaEditor_Style_Sarcasm>Sarcasm Level</TSS_PersonaEditor_Style_Sarcasm>
+  <TSS_PersonaEditor_CustomPrompt>Custom System Prompt (Advanced)</TSS_PersonaEditor_CustomPrompt>
+  <TSS_PersonaEditor_CustomPromptHelp>⚠️ Advanced Feature: Content here will completely override the default prompt generation logic.\nThe AI will use this text directly as the System Prompt. Ensure necessary instructions (e.g., JSON format) are included.\nLeave empty to use default generation.</TSS_PersonaEditor_CustomPromptHelp>
+  <TSS_PersonaEditor_AutoGen>Auto-Generate Default Template</TSS_PersonaEditor_AutoGen>
+  <TSS_PersonaEditor_SystemPrompt>System Prompt:</TSS_PersonaEditor_SystemPrompt>
+  <TSS_PersonaEditor_Save>Save Changes</TSS_PersonaEditor_Save>
+  <TSS_PersonaEditor_Cancel>Cancel</TSS_PersonaEditor_Cancel>
+  <TSS_PersonaEditor_Export>Export to File</TSS_PersonaEditor_Export>
+  <TSS_PersonaEditor_SaveSuccess>Persona '{0}' successfully saved to XML file!\nFile location: {1}</TSS_PersonaEditor_SaveSuccess>
+  <TSS_PersonaEditor_SaveLog>[Dialog_PersonaEditor] Persona saved: {0}</TSS_PersonaEditor_SaveLog>
+  <TSS_PersonaEditor_SaveWarning>Persona '{0}' changes applied but failed to save to file</TSS_PersonaEditor_SaveWarning>
+  <TSS_PersonaEditor_SaveError>Save failed: {0}</TSS_PersonaEditor_SaveError>
+  <TSS_PersonaEditor_ExportSuccess>Persona '{0}' exported to Defs folder!\nFile location: {1}</TSS_PersonaEditor_ExportSuccess>
+  <TSS_PersonaEditor_ExportFail>Export failed</TSS_PersonaEditor_ExportFail>
+  <TSS_PersonaEditor_ExportError>Export failed: {0}</TSS_PersonaEditor_ExportError>
+  <TSS_PersonaEditor_AutoGenSuccess>Default System Prompt template generated</TSS_PersonaEditor_AutoGenSuccess>
+  <TSS_PersonaEditor_AutoGenError>Generation failed: {0}</TSS_PersonaEditor_AutoGenError>
+  
+  <!-- ⭐ v1.9.0: Narrative Mode -->
+  <TSS_PersonaEditor_NarrativeMode>Narrative Mode</TSS_PersonaEditor_NarrativeMode>
+  <TSS_PersonaEditor_NarrativeModeHelp>These parameters affect how the narrator decides on events and responds to player input.\n• Mercy: Lower = more brutal events\n• Chaos: Higher = more unreasonable/random events\n• Dominance: Higher = less influenced by player requests</TSS_PersonaEditor_NarrativeModeHelp>
+  <TSS_PersonaEditor_Narrative_Mercy>Mercy Level</TSS_PersonaEditor_Narrative_Mercy>
+  <TSS_PersonaEditor_Narrative_Chaos>Chaos Level</TSS_PersonaEditor_Narrative_Chaos>
+  <TSS_PersonaEditor_Narrative_Dominance>Dominance Level</TSS_PersonaEditor_Narrative_Dominance>
+  
+  <!-- ⭐ v1.9.1: Phrase Library System -->
+  <TSS_PhraseLibrary_Title>Phrase Library</TSS_PhraseLibrary_Title>
+  <TSS_PhraseLibrary_Description>Quick reaction phrases for different affinity levels and interaction types.</TSS_PhraseLibrary_Description>
+  <TSS_PhraseLibrary_GenerateButton>Generate Phrase Library</TSS_PhraseLibrary_GenerateButton>
+  <TSS_PhraseLibrary_Generating>Generating phrases...</TSS_PhraseLibrary_Generating>
+  <TSS_PhraseLibrary_GenerateSuccess>Phrase library generated successfully! ({0} phrases)</TSS_PhraseLibrary_GenerateSuccess>
+  <TSS_PhraseLibrary_GenerateFailed>Failed to generate phrase library: {0}</TSS_PhraseLibrary_GenerateFailed>
+  <TSS_PhraseLibrary_LoadSuccess>Phrase library loaded for {0}</TSS_PhraseLibrary_LoadSuccess>
+  <TSS_PhraseLibrary_NotFound>No phrase library found for this persona</TSS_PhraseLibrary_NotFound>
+  <TSS_PhraseLibrary_ExportSuccess>Phrase library exported to: {0}</TSS_PhraseLibrary_ExportSuccess>
+  
+  <!-- Phrase Categories -->
+  <TSS_PhraseCategory_HeadPat>Head Pat</TSS_PhraseCategory_HeadPat>
+  <TSS_PhraseCategory_BodyPoke>Body Poke</TSS_PhraseCategory_BodyPoke>
+  <TSS_PhraseCategory_Greeting>Greeting</TSS_PhraseCategory_Greeting>
+  <TSS_PhraseCategory_EventReaction>Event Reaction</TSS_PhraseCategory_EventReaction>
+  <TSS_PhraseCategory_GoodEventReaction>Good Event</TSS_PhraseCategory_GoodEventReaction>
+  <TSS_PhraseCategory_BadEventReaction>Bad Event</TSS_PhraseCategory_BadEventReaction>
+  <TSS_PhraseCategory_CombatStart>Combat Start</TSS_PhraseCategory_CombatStart>
+  <TSS_PhraseCategory_CombatVictory>Combat Victory</TSS_PhraseCategory_CombatVictory>
+  <TSS_PhraseCategory_TakeDamage>Take Damage</TSS_PhraseCategory_TakeDamage>
+  <TSS_PhraseCategory_Healed>Healed</TSS_PhraseCategory_Healed>
+  <TSS_PhraseCategory_Idle>Idle</TSS_PhraseCategory_Idle>
+  <TSS_PhraseCategory_Farewell>Farewell</TSS_PhraseCategory_Farewell>
+  
+  <!-- Interaction Feedback -->
+  <TSS_Interaction_HeadPat>*pats head*</TSS_Interaction_HeadPat>
+  <TSS_Interaction_BodyPoke>*pokes*</TSS_Interaction_BodyPoke>
+  <TSS_Interaction_CtrlHint>Hold Ctrl and click to interact</TSS_Interaction_CtrlHint>
+  
+  <!-- ⭐ Ability System Translation Keys -->
+  <!-- Calamity Throw -->
+  <TSS_CalamityThrow_InvalidTarget>Target is invalid.</TSS_CalamityThrow_InvalidTarget>
+  <TSS_CalamityThrow_TargetTooLarge>Target is too large to grab.</TSS_CalamityThrow_TargetTooLarge>
+  <TSS_CalamityThrow_TargetTooLargeShort>Target too large</TSS_CalamityThrow_TargetTooLargeShort>
+  <TSS_CalamityThrow_GrabAction>Grab (100% success, {0}x damage)</TSS_CalamityThrow_GrabAction>
+  
+  <!-- Crimson Bloom -->
+  <TSS_CrimsonBloom_MarkLabel>Crimson Mark x{0}</TSS_CrimsonBloom_MarkLabel>
+  <TSS_CrimsonBloom_TipMain>Crimson Mark Stacks: {0}/3</TSS_CrimsonBloom_TipMain>
+  <TSS_CrimsonBloom_TipWarning>At 3 stacks, a vital organ will be destroyed</TSS_CrimsonBloom_TipWarning>
+  <TSS_CrimsonBloom_OrganDestroyed>{0}'s {1} was destroyed by Crimson Mark!</TSS_CrimsonBloom_OrganDestroyed>
+  <TSS_CrimsonBloom_Message>{0} has been marked by Crimson!</TSS_CrimsonBloom_Message>
+  <TSS_CrimsonBloom_Detonate>{0}'s Crimson Mark detonates, {1} takes {2:F0} damage!</TSS_CrimsonBloom_Detonate>
+  <TSS_CrimsonBloom_NoTargets>No hostile targets in range</TSS_CrimsonBloom_NoTargets>
+  <TSS_CrimsonBloom_TargetDead>Target is already dead.</TSS_CrimsonBloom_TargetDead>
+  
+  <!-- Dragon Gate -->
+  <TSS_DragonGate_Summon>{0} summoned {1}!</TSS_DragonGate_Summon>
+  <TSS_DragonGate_SummonMessage>{0} has summoned {1}!</TSS_DragonGate_SummonMessage>
+  <TSS_DragonGate_NotOnMap>Caster is not on a map.</TSS_DragonGate_NotOnMap>
+  <TSS_DragonGate_Failure>Dragon summoning failed: Unable to find valid spawn position.</TSS_DragonGate_Failure>
+  
+  <!-- Dragon Dissipation -->
+  <TSS_DragonDissipation_Start>{0}'s spirit form begins to fade, returning to the spirit realm...</TSS_DragonDissipation_Start>
+  <TSS_DragonDissipation_Timer>Spirit will dissipate in {0} seconds</TSS_DragonDissipation_Timer>
+  
+  <!-- Crimson Domain - Aura version of Crimson Bloom -->
+  <TSS_CrimsonDomain_Activated>{0} unleashes Crimson Domain!</TSS_CrimsonDomain_Activated>
+  <TSS_CrimsonDomain_Applied>{0} is engulfed by Crimson Domain!</TSS_CrimsonDomain_Applied>
+  <TSS_CrimsonDomain_Description>Unleashes crimson power to form a domain, continuously applying Crimson Marks to enemies within range.</TSS_CrimsonDomain_Description>
+  
+  <!-- The World - Time Stop ability -->
+  <TSS_TheWorld_Activated>{0} activates "The World"! Time has stopped!</TSS_TheWorld_Activated>
+  <TSS_TheWorld_Ended>Time resumes its flow...</TSS_TheWorld_Ended>
+  <TSS_TheWorld_Description>Stops the flow of time. All units except the caster are frozen in place.</TSS_TheWorld_Description>
+  
+  <!-- Debug Windows -->
+  <TSS_Debug_RimAgent_Title>RimAgent Debugger</TSS_Debug_RimAgent_Title>
+  <TSS_Debug_SelectAgent>Select an agent to view details</TSS_Debug_SelectAgent>
+  <TSS_Debug_AgentId>Agent ID</TSS_Debug_AgentId>
+  <TSS_Debug_State>State</TSS_Debug_State>
+  <TSS_Debug_Requests>Requests</TSS_Debug_Requests>
+  <TSS_Debug_Success>success</TSS_Debug_Success>
+  <TSS_Debug_Failed>failed</TSS_Debug_Failed>
+  <TSS_Debug_Total>total</TSS_Debug_Total>
+  <TSS_Debug_ContextUsage>Context Usage</TSS_Debug_ContextUsage>
+  <TSS_Debug_SummaryTokens>summary tokens</TSS_Debug_SummaryTokens>
+  <TSS_Debug_HistoryTokens>history tokens</TSS_Debug_HistoryTokens>
+  <TSS_Debug_LastPrompt>Last Prompt Sent</TSS_Debug_LastPrompt>
+  <TSS_Debug_NoPrompt>(No prompt sent yet)</TSS_Debug_NoPrompt>
+  <TSS_Debug_LastResponse>Last Response Received</TSS_Debug_LastResponse>
+  <TSS_Debug_NoResponse>(No response received yet)</TSS_Debug_NoResponse>
+  <TSS_Debug_ApproxTokens>Approx. Response Tokens</TSS_Debug_ApproxTokens>
+  <TSS_Debug_NoAgents>No active agents</TSS_Debug_NoAgents>
+  <TSS_Debug_Refresh>Refresh</TSS_Debug_Refresh>
+  <TSS_Debug_Copy>Copy</TSS_Debug_Copy>
+  <TSS_Debug_Copied>Copied to clipboard</TSS_Debug_Copied>
+  <TSS_Debug_CopyMaster>Copy Master</TSS_Debug_CopyMaster>
+  <TSS_Debug_CopyEventDir>Copy EventDirector</TSS_Debug_CopyEventDir>
+  <TSS_Debug_PromptRefreshed>Prompts refreshed</TSS_Debug_PromptRefreshed>
+  <TSS_Debug_NoContext>No context data (refresh first)</TSS_Debug_NoContext>
+  
+  <!-- Debug Window Tabs -->
+  <TSS_Tab_AgentInfo>Agent Info</TSS_Tab_AgentInfo>
+  <TSS_Tab_SystemPrompt>System Prompt</TSS_Tab_SystemPrompt>
+  <TSS_Tab_ContextData>Context Data</TSS_Tab_ContextData>
+  
+  <!-- Favorability Debug Window -->
+  <TSS_Debug_Favorability_Title>[Debug] Favorability Tool</TSS_Debug_Favorability_Title>
+  <TSS_Debug_CurrentFavorability>Current Favorability: {0} ({1})</TSS_Debug_CurrentFavorability>
+  <TSS_Debug_QuickAdjust>Quick Adjust:</TSS_Debug_QuickAdjust>
+  <TSS_Debug_PreciseSet>Precise Set:</TSS_Debug_PreciseSet>
+  <TSS_Debug_Apply>Apply: {0}</TSS_Debug_Apply>
+  <TSS_Debug_QuickTier>Quick Tier:</TSS_Debug_QuickTier>
+  <TSS_Debug_Close>Close</TSS_Debug_Close>
+  
+  <!-- Expression Debug Window -->
+  <TSS_Debug_Expression_Title>[Debug] Expression - {0}</TSS_Debug_Expression_Title>
+  <TSS_Debug_CurrentExpression>Current Expression: {0}</TSS_Debug_CurrentExpression>
+  <TSS_Debug_ClickToSwitch>Click to switch expression:</TSS_Debug_ClickToSwitch>
+  <TSS_Debug_SwitchedToExpression>Switched to expression: {0}</TSS_Debug_SwitchedToExpression>
+  
+  <!-- Expression Names -->
+  <TSS_Expression_Neutral>Neutral</TSS_Expression_Neutral>
+  <TSS_Expression_Happy>Happy</TSS_Expression_Happy>
+  <TSS_Expression_Sad>Sad</TSS_Expression_Sad>
+  <TSS_Expression_Angry>Angry</TSS_Expression_Angry>
+  <TSS_Expression_Surprised>Surprised</TSS_Expression_Surprised>
+  <TSS_Expression_Worried>Worried</TSS_Expression_Worried>
+  <TSS_Expression_Smug>Smug</TSS_Expression_Smug>
+  <TSS_Expression_Disappointed>Disappointed</TSS_Expression_Disappointed>
+  <TSS_Expression_Thoughtful>Thoughtful</TSS_Expression_Thoughtful>
+  <TSS_Expression_Annoyed>Annoyed</TSS_Expression_Annoyed>
+  
+  <!-- Expression Descriptions -->
+  <TSS_Expression_Neutral_Desc>(Default)</TSS_Expression_Neutral_Desc>
+  <TSS_Expression_Happy_Desc>(Colony thriving)</TSS_Expression_Happy_Desc>
+  <TSS_Expression_Sad_Desc>(Colonist death)</TSS_Expression_Sad_Desc>
+  <TSS_Expression_Angry_Desc>(Under attack)</TSS_Expression_Angry_Desc>
+  <TSS_Expression_Surprised_Desc>(Unexpected event)</TSS_Expression_Surprised_Desc>
+  <TSS_Expression_Worried_Desc>(Danger warning)</TSS_Expression_Worried_Desc>
+  <TSS_Expression_Smug_Desc>(Major victory)</TSS_Expression_Smug_Desc>
+  <TSS_Expression_Disappointed_Desc>(Mission failed)</TSS_Expression_Disappointed_Desc>
+  <TSS_Expression_Thoughtful_Desc>(Strategic decision)</TSS_Expression_Thoughtful_Desc>
+  <TSS_Expression_Annoyed_Desc>(Frequent requests)</TSS_Expression_Annoyed_Desc>
+
+  <!-- BioRhythm UI -->
+  <TSS_Bio_Time>Time</TSS_Bio_Time>
+  <TSS_Bio_Energy>Energy</TSS_Bio_Energy>
+  <TSS_Bio_Mood>Mood</TSS_Bio_Mood>
+  <TSS_Bio_Activity>Activity</TSS_Bio_Activity>
+  <TSS_Bio_State>State</TSS_Bio_State>
+  
+  <!-- BioRhythm Descriptions -->
+  <TSS_Bio_Schedule_DeepNight>Deep Night</TSS_Bio_Schedule_DeepNight>
+  <TSS_Bio_Schedule_Morning>Morning</TSS_Bio_Schedule_Morning>
+  <TSS_Bio_Schedule_MorningWork>Morning Work</TSS_Bio_Schedule_MorningWork>
+  <TSS_Bio_Schedule_Midday>Midday</TSS_Bio_Schedule_Midday>
+  <TSS_Bio_Schedule_Afternoon>Afternoon</TSS_Bio_Schedule_Afternoon>
+  <TSS_Bio_Schedule_Evening>Evening</TSS_Bio_Schedule_Evening>
+  <TSS_Bio_Schedule_NightRest>Night Rest</TSS_Bio_Schedule_NightRest>
+  
+  <TSS_Bio_Mood_Elated>Elated</TSS_Bio_Mood_Elated>
+  <TSS_Bio_Mood_Happy>Happy</TSS_Bio_Mood_Happy>
+  <TSS_Bio_Mood_Calm>Calm</TSS_Bio_Mood_Calm>
+  <TSS_Bio_Mood_Gloomy>Gloomy</TSS_Bio_Mood_Gloomy>
+  <TSS_Bio_Mood_Irritable>Irritable</TSS_Bio_Mood_Irritable>
+  
+  <TSS_Bio_Energy_Energetic>Energetic</TSS_Bio_Energy_Energetic>
+  <TSS_Bio_Energy_Active>Active</TSS_Bio_Energy_Active>
+  <TSS_Bio_Energy_Normal>Normal</TSS_Bio_Energy_Normal>
+  <TSS_Bio_Energy_Tired>Tired</TSS_Bio_Energy_Tired>
+  <TSS_Bio_Energy_Exhausted>Exhausted</TSS_Bio_Energy_Exhausted>
+  
+  <TSS_Bio_Activity_Observing>Observing</TSS_Bio_Activity_Observing>
+  <TSS_Bio_Activity_Analyzing>Analyzing</TSS_Bio_Activity_Analyzing>
+  <TSS_Bio_Activity_Resting>Resting</TSS_Bio_Activity_Resting>
+  <TSS_Bio_Activity_MealTime>Meal Time</TSS_Bio_Activity_MealTime>
+  <TSS_Bio_Activity_Alert>Alert</TSS_Bio_Activity_Alert>
+  <TSS_Bio_Activity_Greeting>Greeting</TSS_Bio_Activity_Greeting>
+  <TSS_Bio_Activity_Idle>Idle</TSS_Bio_Activity_Idle>
+  
+  <!-- CommandListWindow -->
+  <TSS_CmdList_UnknownCommand>Unknown event debug command: {0}</TSS_CmdList_UnknownCommand>
+  <TSS_CmdList_ExecuteFailed>Execution failed: {0}</TSS_CmdList_ExecuteFailed>
+  <TSS_CmdList_OpenButton>View Command List</TSS_CmdList_OpenButton>
+  <TSS_CmdList_OpenButton_Desc>Show all available AI commands</TSS_CmdList_OpenButton_Desc>
+</LanguageData>

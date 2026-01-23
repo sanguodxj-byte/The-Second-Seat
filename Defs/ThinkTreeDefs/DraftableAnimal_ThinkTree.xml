@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!--
+    =====================================================
+    ⭐ 通用可征召动物 ThinkTree 定义
+    ⭐ 已禁用：征召逻辑通过 Harmony Patch 实现
+    =====================================================
+  -->
+
+  <!--
+    注意：ThinkNode_ConditionalDraftableAnimal 和 JobGiver_DraftableAnimalWait
+    类不存在，征召行为通过 CompDraftableAnimal + ChoicesAtFor_Postfix 实现。
+    此文件保留为空以避免加载错误。
+  -->
+
+</Defs>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <TheSecondSeat.Performance.NarratorScriptDef>
+    <defName>TSS_Intro_Script</defName>
+    <actions>
+      <!-- 开场等待 -->
+      <li Class="TheSecondSeat.Performance.ScriptAction_Wait">
+        <seconds>2.0</seconds>
+      </li>
+      
+      <!-- 第一句台词 + 表情 -->
+      <li Class="TheSecondSeat.Performance.ScriptAction_Dialogue">
+        <text>Ah, another awakening... or perhaps, a new beginning?</text>
+        <expressionStr>Thoughtful</expressionStr>
+        <duration>4.0</duration>
+      </li>
+      
+      <!-- 表情切换 -->
+      <li Class="TheSecondSeat.Performance.ScriptAction_Expression">
+        <expression>Happy</expression>
+        <duration>2.0</duration>
+      </li>
+      
+      <!-- 第二句台词 -->
+      <li Class="TheSecondSeat.Performance.ScriptAction_Dialogue">
+        <text>Welcome to this world. I shall be watching over you.</text>
+        <expressionStr>Happy</expressionStr>
+        <duration>3.0</duration>
+      </li>
+      
+      <!-- 触发一个小事件（可选） -->
+      <!--
+      <li Class="TheSecondSeat.Performance.ScriptAction_Event">
+        <incidentDef>ResourcePodCrash</incidentDef>
+        <delay>1.0</delay>
+      </li>
+      -->
+    </actions>
+  </TheSecondSeat.Performance.NarratorScriptDef>
+</Defs>

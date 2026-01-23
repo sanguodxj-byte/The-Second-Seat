@@ -1,0 +1,74 @@
+{
+  "format": 1,
+  "restore": {
+    "d:\\rim mod\\The Second Seat\\Source\\TheSecondSeat\\TheSecondSeat.csproj": {}
+  },
+  "projects": {
+    "d:\\rim mod\\The Second Seat\\Source\\TheSecondSeat\\TheSecondSeat.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "d:\\rim mod\\The Second Seat\\Source\\TheSecondSeat\\TheSecondSeat.csproj",
+        "projectName": "TheSecondSeat",
+        "projectPath": "d:\\rim mod\\The Second Seat\\Source\\TheSecondSeat\\TheSecondSeat.csproj",
+        "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
+        "outputPath": "d:\\rim mod\\The Second Seat\\Source\\TheSecondSeat\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Administrator\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net472"
+        ],
+        "sources": {
+          "C:\\Program Files\\dotnet\\library-packs": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net472": {
+            "targetAlias": "net472",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net472": {
+          "targetAlias": "net472",
+          "dependencies": {
+            "ILRepack": {
+              "target": "Package",
+              "version": "[2.0.18, )",
+              "generatePathProperty": true
+            },
+            "Lib.Harmony": {
+              "target": "Package",
+              "version": "[2.3.3, )"
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.1, )"
+            },
+            "Scriban": {
+              "target": "Package",
+              "version": "[6.5.2, )"
+            },
+            "System.Net.Http": {
+              "target": "Package",
+              "version": "[4.3.4, )"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.319\\RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

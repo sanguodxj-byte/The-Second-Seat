@@ -1,0 +1,88 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>TheSecondSeat</RootNamespace>
+    <AssemblyName>TheSecondSeat</AssemblyName>
+    <DebugType>None</DebugType>
+    <Nullable>disable</Nullable>
+    <NoWarn>CS8603;CS8604;CS8600;CS8601;CS8625;CS8602;CS8632;CS0414</NoWarn>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="**\*.cs" Exclude="obj\**" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <RimWorldVersion>1.5</RimWorldVersion>
+    <GameFolder>D:\steam\steamapps\common\RimWorld</GameFolder>
+    <ModFolder>$(LocalAppData)\..\LocalLow\Ludeon Studios\RimWorld by Ludeon Studios\Mods\TheSecondSeat</ModFolder>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(GameFolder)\RimWorldWin64_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(GameFolder)\RimWorldWin64_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(GameFolder)\RimWorldWin64_Data\Managed\UnityEngine.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(GameFolder)\RimWorldWin64_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>$(GameFolder)\RimWorldWin64_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.ImageConversionModule">
+      <HintPath>$(GameFolder)\RimWorldWin64_Data\Managed\UnityEngine.ImageConversionModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UnityWebRequestModule">
+      <HintPath>$(GameFolder)\RimWorldWin64_Data\Managed\UnityEngine.UnityWebRequestModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.AudioModule">
+      <HintPath>$(GameFolder)\RimWorldWin64_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UnityWebRequestAudioModule">
+      <HintPath>$(GameFolder)\RimWorldWin64_Data\Managed\UnityEngine.UnityWebRequestAudioModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Lib.Harmony" Version="2.3.3" />
+    <!-- 修复：使用 Newtonsoft.Json 13.0.1，避免与游戏冲突 -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    <!-- Scriban 模板引擎 - 用于动态 Prompt 渲染 -->
+    <PackageReference Include="Scriban" Version="6.5.2" />
+    <PackageReference Include="ILRepack" Version="2.0.18" GeneratePathProperty="true" />
+  </ItemGroup>
+
+  <Target Name="ILRepack" AfterTargets="Build">
+    <PropertyGroup>
+      <ILRepackExe>$(PkgILRepack)\tools\ILRepack.exe</ILRepackExe>
+    </PropertyGroup>
+    <Exec Command='powershell -ExecutionPolicy Bypass -File "$(ProjectDir)merge.ps1" -ILRepackPath "$(ILRepackExe)" -TargetDir "$(TargetDir)." -GameFolder "$(GameFolder)"' />
+  </Target>
+
+  <Target Name="PostBuild" AfterTargets="ILRepack">
+    <ItemGroup>
+      <!-- 排除 Scriban.dll 因为它已经合并了 -->
+      <ModAssemblies Include="$(TargetDir)*.dll" Exclude="$(TargetDir)Newtonsoft.Json.dll;$(TargetDir)Scriban.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ModAssemblies)" DestinationFolder="..\..\1.6\Assemblies\" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

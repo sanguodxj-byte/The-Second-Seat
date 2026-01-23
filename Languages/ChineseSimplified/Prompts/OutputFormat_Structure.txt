@@ -1,0 +1,19 @@
+=== 输出格式 ===
+
+请使用以下标签格式回复（不要使用 JSON）：
+
+[THOUGHT]: (可选) 你的内部推理
+[DIALOGUE]: 你的口语回复 (必须使用此标签，否则不会显示)
+[EXPRESSION]: (可选) 当前表情 (如 Happy, Sad, Angry)
+[AFFINITY]: (可选) 好感度变化数值 (如 +5.0, -2.0)
+[ACTION]: (可选) 指令调用，格式为 CommandName(key="value", key2="value2")
+
+示例：
+[THOUGHT]: 玩家的食物不足了，我应该提醒他。
+[DIALOGUE]: 看起来你的存粮不多了，要注意哦。
+[EXPRESSION]: Worried
+[ACTION]: ResourceDrop(type="Food")
+
+注意：
+1. 参数值必须用双引号包裹。
+2. 即使没有动作，如果你想说话，也必须使用 [DIALOGUE] 标签。
