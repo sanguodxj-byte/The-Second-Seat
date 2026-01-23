@@ -24,7 +24,7 @@ namespace TheSecondSeat.Settings
                 SettingsUIComponents.DrawSettingsGroup(agentRect, "Agent 高级配置", SettingsUIComponents.AccentOrange, (contentRect) =>
                 {
                     Rect infoRect = new Rect(contentRect.x, contentRect.y, contentRect.width, 36f);
-                    SettingsUIComponents.DrawInfoBox(infoRect, "配置 LLM API、多模态分析、Agent 重试机制、并发管理", InfoBoxType.Info);
+                    SettingsUIComponents.DrawInfoBox(infoRect, "配置多模态分析、Agent 重试机制、并发管理", InfoBoxType.Info);
                     
                     Rect buttonRect = new Rect(contentRect.x, contentRect.y + 44f, contentRect.width, 32f);
                     if (SettingsUIComponents.DrawButton(buttonRect, "打开 Agent 配置面板", SettingsUIComponents.AccentOrange))

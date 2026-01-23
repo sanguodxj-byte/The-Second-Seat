@@ -356,6 +356,7 @@ namespace TheSecondSeat.Settings
 
         /// <summary>
         /// 绘制下拉选择设置项
+        /// v2.8.8: 修复 ScrollView 内按钮点击无效问题
         /// </summary>
         public static float DrawDropdownSetting(Rect rect, string label, string tooltip, string currentValue, string[] options, Action<string> onSelect)
         {
@@ -379,11 +380,25 @@ namespace TheSecondSeat.Settings
                 TooltipHandler.TipRegion(labelRect, tooltip);
             }
             
-            // 下拉按钮
+            // 下拉按钮 - 使用手动绘制和点击检测
             Rect buttonRect = new Rect(labelRect.xMax + 10f, rowRect.y + 2f, buttonWidth, rowHeight - 4f);
             
-            if (Widgets.ButtonText(buttonRect, currentValue))
+            // 绘制按钮背景
+            bool isHovered = Mouse.IsOver(buttonRect);
+            Widgets.DrawBoxSolid(buttonRect, isHovered ? new Color(0.25f, 0.25f, 0.25f, 0.9f) : new Color(0.15f, 0.15f, 0.15f, 0.9f));
+            GUI.color = new Color(0.4f, 0.4f, 0.4f, 0.8f);
+            Widgets.DrawBox(buttonRect, 1);
+            GUI.color = Color.white;
+            
+            // 绘制文字
+            Text.Anchor = TextAnchor.MiddleCenter;
+            Widgets.Label(buttonRect, currentValue + " ▼");
+            Text.Anchor = TextAnchor.UpperLeft;
+            
+            // 点击检测 - 使用 Event 系统确保在 ScrollView 中工作
+            if (Event.current.type == EventType.MouseDown && Event.current.button == 0 && Mouse.IsOver(buttonRect))
             {
+                Event.current.Use();
                 var menuOptions = new List<FloatMenuOption>();
                 foreach (var option in options)
                 {
@@ -499,11 +514,13 @@ namespace TheSecondSeat.Settings
 
         /// <summary>
         /// 绘制按钮（现代风格）
+        /// v2.8.8: 修复 ScrollView 内按钮点击无效问题
         /// </summary>
         public static bool DrawButton(Rect rect, string label, Color? color = null, bool enabled = true)
         {
             Color buttonColor = color ?? AccentBlue;
             bool isHovered = Mouse.IsOver(rect) && enabled;
+            bool clicked = false;
             
             // 禁用状态
             if (!enabled)
@@ -524,7 +541,14 @@ namespace TheSecondSeat.Settings
             GUI.color = Color.white;
             Text.Anchor = TextAnchor.UpperLeft;
             
-            return enabled && Widgets.ButtonInvisible(rect);
+            // 点击检测 - 使用 Event 系统确保在 ScrollView 中工作
+            if (enabled && Event.current.type == EventType.MouseDown && Event.current.button == 0 && Mouse.IsOver(rect))
+            {
+                Event.current.Use();
+                clicked = true;
+            }
+            
+            return clicked;
         }
 
         /// <summary>

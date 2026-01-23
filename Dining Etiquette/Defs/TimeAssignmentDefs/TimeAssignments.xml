@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<Defs>
-  <TimeAssignmentDef>
-    <defName>DiningEtiquette_MealTime</defName>
-    <label>Meal Time</label>
-    <color>(255, 140, 0)</color> <!-- Orange color for meal time -->
-    <allowRest>false</allowRest>
-  </TimeAssignmentDef>
-</Defs>
