@@ -34,7 +34,7 @@ namespace TheSecondSeat
             if (!verb.IsMeleeAttack || Pawn.Map == null) return;
 
             // 应用或刷新狂怒层数
-            HediffDef rageStackDef = DefDatabase<HediffDef>.GetNamed("Sideria_BloodThorn_RageStack", false);
+            HediffDef rageStackDef = DefDatabase<HediffDef>.GetNamed("TSS_BloodThorn_RageStack", false);
             if (rageStackDef == null) return;
 
             Hediff rageHediff = Pawn.health.hediffSet.GetFirstHediffOfDef(rageStackDef);
@@ -123,7 +123,7 @@ namespace TheSecondSeat
             FleckMaker.Static(pos, map, FleckDefOf.PsycastSkipFlashEntry, 3f);
             
             // 生成隐藏点
-            ThingDef hidingSpotDef = DefDatabase<ThingDef>.GetNamed("Sideria_DragonHidingSpot", false);
+            ThingDef hidingSpotDef = DefDatabase<ThingDef>.GetNamed("TSS_DragonHidingSpot", false);
             if (hidingSpotDef != null)
             {
                 DragonHidingSpot hidingSpot = (DragonHidingSpot)GenSpawn.Spawn(hidingSpotDef, pos, map);

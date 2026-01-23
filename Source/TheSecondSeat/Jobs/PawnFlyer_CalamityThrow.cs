@@ -29,23 +29,59 @@ namespace TheSecondSeat
         public void InitializeFlightParams(Vector3 startPosition, IntVec3 destination, float distance)
         {
             this.startVec = startPosition;
-            if (destCellField != null) destCellField.SetValue(this, destination);
-            if (flightDistanceField != null) flightDistanceField.SetValue(this, distance);
+            
+            try
+            {
+                if (destCellField != null)
+                {
+                    destCellField.SetValue(this, destination);
+                }
+                else
+                {
+                    Log.Warning("[TSS] PawnFlyer_CalamityThrow: destinationCell field not found via reflection.");
+                }
+
+                if (flightDistanceField != null)
+                {
+                    flightDistanceField.SetValue(this, distance);
+                }
+                else
+                {
+                    Log.Warning("[TSS] PawnFlyer_CalamityThrow: flightDistance field not found via reflection.");
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Log.Error($"[TSS] PawnFlyer_CalamityThrow reflection error: {ex}");
+            }
             
             // 确保 flightDistance 被正确设置，PawnFlyer.Tick 需要它
             // 同时设置 ticksFlightTime 以防止 DrawAt 中的除零错误或 NRE
             // 注意：PawnFlyerProperties 可能不包含 FlightSpeed，使用硬编码默认值或反射获取
             float speed = 12f; // 默认速度
-            if (this.def?.pawnFlyer != null)
+            
+            try
             {
-                // 尝试通过反射获取 flightSpeed，如果无法获取则使用默认值
-                // 1.5 中通常是 flightSpeed 字段
-                var speedField = typeof(PawnFlyerProperties).GetField("flightSpeed", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                if (speedField != null)
+                if (this.def?.pawnFlyer != null)
                 {
-                    speed = (float)speedField.GetValue(this.def.pawnFlyer);
+                    // 尝试通过反射获取 flightSpeed，如果无法获取则使用默认值
+                    // 1.5 中通常是 flightSpeed 字段
+                    var speedField = typeof(PawnFlyerProperties).GetField("flightSpeed", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                    if (speedField != null)
+                    {
+                        object val = speedField.GetValue(this.def.pawnFlyer);
+                        if (val is float f)
+                        {
+                            speed = f;
+                        }
+                    }
                 }
             }
+            catch (System.Exception ex)
+            {
+                Log.Warning($"[TSS] Failed to get flightSpeed via reflection: {ex.Message}");
+            }
+
             this.ticksFlightTime = Mathf.Max(1, Mathf.RoundToInt(distance / speed));
         }
 
@@ -85,7 +121,7 @@ namespace TheSecondSeat
             float damageAmount = 40f; // 基础伤害
             if (this.launcher is Pawn caster) // 使用存储的 launcher
             {
-                Hediff bonusHediff = caster.health.hediffSet.GetFirstHediffOfDef(DefDatabase<HediffDef>.GetNamed("Sideria_CalamityThrowBonus", false));
+                Hediff bonusHediff = caster.health.hediffSet.GetFirstHediffOfDef(DefDatabase<HediffDef>.GetNamed("TSS_CalamityThrowBonus", false));
                 if (bonusHediff != null)
                 {
                     damageAmount *= bonusHediff.Severity;

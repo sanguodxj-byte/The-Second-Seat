@@ -58,6 +58,11 @@
       <HintPath>$(GameFolder)\RimWorldWin64_Data\Managed\UnityEngine.UnityWebRequestAudioModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <!-- NAudio - 用于 MP3 转 WAV（SiliconFlow TTS 返回 MP3 格式） -->
+    <Reference Include="NAudio">
+      <HintPath>$(GameFolder)\RimWorldWin64_Data\Managed\NAudio.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>

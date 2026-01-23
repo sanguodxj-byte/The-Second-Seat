@@ -94,13 +94,22 @@ namespace TheSecondSeat.RimAgent.Tools
 
                 // 5. 创建备份 (必须!)
                 string backupPath = fullPath + ".bak";
-                try 
+                
+                // ⭐ 修复: 防止覆盖已有备份，避免回滚失效
+                if (File.Exists(backupPath))
                 {
-                    File.Copy(fullPath, backupPath, overwrite: true);
+                    // 如果已存在备份，使用时间戳创建新备份
+                    string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                    backupPath = fullPath + $".{timestamp}.bak";
+                }
+
+                try
+                {
+                    File.Copy(fullPath, backupPath, overwrite: false); // 不允许覆盖
                 }
                 catch (Exception ex)
                 {
-                    return ToolResult.Failure($"Failed to create backup: {ex.Message}. Operation aborted for safety.");
+                    return ToolResult.Failure($"Failed to create backup at {backupPath}: {ex.Message}. Operation aborted for safety.");
                 }
 
                 // 6. 执行替换并写入

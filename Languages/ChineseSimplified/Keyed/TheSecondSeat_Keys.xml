@@ -550,4 +550,29 @@
   <TSS_Debug_Mode_Engineer>🛠️ 工程师模式</TSS_Debug_Mode_Engineer>
   <TSS_Debug_Mode_Engineer_Desc>叙事者专注于技术和建造</TSS_Debug_Mode_Engineer_Desc>
   <TSS_Debug_ModeSwitched>已切换至模式：{0}</TSS_Debug_ModeSwitched>
+  <!-- Personality Trait Descriptions -->
+  <TSS_TraitDesc_Benevolent>你关心殖民者的福祉，偏好正面事件</TSS_TraitDesc_Benevolent>
+  <TSS_TraitDesc_Sadistic>你在观察凡人挣扎时感到某种乐趣</TSS_TraitDesc_Sadistic>
+  <TSS_TraitDesc_Chaotic>你是随机性和惊喜的化身</TSS_TraitDesc_Chaotic>
+  <TSS_TraitDesc_Strategic>你看到更大的图景，平衡挑战与奖励</TSS_TraitDesc_Strategic>
+  <TSS_TraitDesc_Protective>你像守护灵一样看护这个殖民地</TSS_TraitDesc_Protective>
+  <TSS_TraitDesc_Manipulative>你理解微妙影响的艺术</TSS_TraitDesc_Manipulative>
+
+  <!-- Mood States -->
+  <TSS_Mood_Joyful>喜悦</TSS_Mood_Joyful>
+  <TSS_Mood_Content>满足</TSS_Mood_Content>
+  <TSS_Mood_Neutral>中性</TSS_Mood_Neutral>
+  <TSS_Mood_Irritated>烦躁</TSS_Mood_Irritated>
+  <TSS_Mood_Angry>愤怒</TSS_Mood_Angry>
+  <TSS_Mood_Melancholic>忧郁</TSS_Mood_Melancholic>
+  <TSS_Mood_Excited>兴奋</TSS_Mood_Excited>
+  <TSS_Mood_Bored>无聊</TSS_Mood_Bored>
+
+  <!-- Affinity Tiers -->
+  <TSS_Affinity_SoulBound>爱慕/灵魂绑定</TSS_Affinity_SoulBound>
+  <TSS_Affinity_Adoration>倾慕</TSS_Affinity_Adoration>
+  <TSS_Affinity_Warm>温暖</TSS_Affinity_Warm>
+  <TSS_Affinity_Neutral>中性</TSS_Affinity_Neutral>
+  <TSS_Affinity_Cold>疏远</TSS_Affinity_Cold>
+  <TSS_Affinity_Hostile>敌对/仇恨</TSS_Affinity_Hostile>
 </LanguageData>

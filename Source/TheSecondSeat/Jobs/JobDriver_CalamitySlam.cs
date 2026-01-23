@@ -42,7 +42,7 @@ namespace TheSecondSeat
                     // 计算伤害
                     float damageAmount = 80f; // 基础伤害
                     // 从伤害倍率 Hediff 获取倍率
-                    Hediff bonusHediff = caster.health.hediffSet.GetFirstHediffOfDef(DefDatabase<HediffDef>.GetNamed("Sideria_CalamityThrowBonus", false));
+                    Hediff bonusHediff = caster.health.hediffSet.GetFirstHediffOfDef(DefDatabase<HediffDef>.GetNamed("TSS_CalamityThrowBonus", false));
                     if (bonusHediff != null)
                     {
                         damageAmount *= bonusHediff.Severity;

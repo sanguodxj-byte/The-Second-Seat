@@ -9,6 +9,7 @@ namespace TheSecondSeat.Monitoring
 {
     /// <summary>
     /// Simplified game state snapshot for LLM consumption
+    /// v2.0.0: 增强空间感知能力
     /// </summary>
     [Serializable]
     public class GameStateSnapshot
@@ -18,6 +19,27 @@ namespace TheSecondSeat.Monitoring
         public ResourceInfo resources { get; set; } = new ResourceInfo();
         public ThreatInfo threats { get; set; } = new ThreatInfo();
         public WeatherInfo weather { get; set; } = new WeatherInfo();
+        
+        // v2.0.0: 空间感知扩展
+        /// <summary>
+        /// 殖民地中心位置
+        /// </summary>
+        public SpatialInfo colonyCenter { get; set; } = new SpatialInfo();
+        
+        /// <summary>
+        /// 重要建筑列表（含位置信息）
+        /// </summary>
+        public List<BuildingInfo> buildings { get; set; } = new List<BuildingInfo>();
+        
+        /// <summary>
+        /// 威胁实体列表（含位置信息）
+        /// </summary>
+        public List<ThreatEntityInfo> threatEntities { get; set; } = new List<ThreatEntityInfo>();
+        
+        /// <summary>
+        /// 空间布局摘要（用于AI快速理解）
+        /// </summary>
+        public string? spatialSummary { get; set; }
     }
 
     [Serializable]
@@ -36,6 +58,22 @@ namespace TheSecondSeat.Monitoring
         public string currentJob { get; set; } = "";
         public int health { get; set; }
         public List<string> majorInjuries { get; set; } = new List<string>();
+        
+        // v2.0.0: 空间位置信息
+        /// <summary>
+        /// 殖民者当前位置信息
+        /// </summary>
+        public SpatialInfo location { get; set; } = new SpatialInfo();
+        
+        /// <summary>
+        /// 是否在工作中
+        /// </summary>
+        public bool isWorking { get; set; }
+        
+        /// <summary>
+        /// 当前房间类型（如果有）
+        /// </summary>
+        public string? currentRoom { get; set; }
     }
 
     [Serializable]
@@ -101,6 +139,7 @@ namespace TheSecondSeat.Monitoring
         /// ? v1.6.42: 非线程安全的快照捕获（仅限主线程调用）
         /// 原 CaptureSnapshot() 重命名，明确表示线程不安全
         /// ? v1.6.46: 修复线程安全问题 - 避免访问 map.mapPawns
+        /// ? v2.0.0: 增强空间感知能力
         /// </summary>
         public static GameStateSnapshot CaptureSnapshotUnsafe()
         {
@@ -116,6 +155,19 @@ namespace TheSecondSeat.Monitoring
             snapshot.colony.biome = map.Biome?.label ?? "Unknown";
             snapshot.colony.daysPassed = GenDate.DaysPassed;
             snapshot.colony.wealth = (int)map.wealthWatcher.WealthTotal;
+
+            // v2.0.0: 计算殖民地中心
+            var colonyCenter = DirectionCalculator.CalculateColonyCenterFromHomeArea(map);
+            snapshot.colonyCenter = new SpatialInfo
+            {
+                x = colonyCenter.x,
+                z = colonyCenter.z,
+                direction = "Center",
+                distanceFromCenter = 0,
+                distanceLevel = "VeryClose",
+                zone = "Home",
+                isInHomeArea = true
+            };
 
             // ? 修复：避免使用 map.mapPawns，改为安全的遍历方式
             // 使用 map.listerThings.ThingsInGroup(ThingRequestGroup.Pawn) 代替
@@ -136,7 +188,11 @@ namespace TheSecondSeat.Monitoring
                             ? (int)(pawn.needs.mood.CurLevelPercentage * 100) 
                             : 50,
                         currentJob = pawn.CurJob?.def?.reportString ?? "Idle",
-                        health = (int)(pawn.health.summaryHealth.SummaryHealthPercent * 100)
+                        health = (int)(pawn.health.summaryHealth.SummaryHealthPercent * 100),
+                        // v2.0.0: 添加空间位置信息
+                        location = DirectionCalculator.GetSpatialInfo(pawn.Position, colonyCenter, map),
+                        isWorking = pawn.CurJob != null && !pawn.CurJob.def.casualInterruptible,
+                        currentRoom = GetRoomName(pawn, map)
                     };
 
                     // Major injuries
@@ -162,12 +218,288 @@ namespace TheSecondSeat.Monitoring
 
             // Threats
             snapshot.threats = CaptureThreats(map);
+            
+            // v2.0.0: 捕获威胁实体位置信息
+            snapshot.threatEntities = CaptureThreatEntities(map, colonyCenter);
 
             // Weather
             snapshot.weather.current = map.weatherManager.curWeather?.label ?? "Clear";
             snapshot.weather.temperature = map.mapTemperature.OutdoorTemp;
+            
+            // v2.0.0: 捕获重要建筑
+            snapshot.buildings = CaptureBuildings(map, colonyCenter);
+            
+            // v2.0.0: 生成空间摘要
+            snapshot.spatialSummary = GenerateSpatialSummary(snapshot);
 
             return snapshot;
+        }
+        
+        /// <summary>
+        /// 获取Pawn所在房间名称
+        /// </summary>
+        private static string? GetRoomName(Pawn pawn, Map map)
+        {
+            try
+            {
+                var room = pawn.Position.GetRoom(map);
+                if (room == null || room.PsychologicallyOutdoors)
+                    return "Outdoors";
+                
+                // 尝试获取房间角色
+                var role = room.Role;
+                if (role != null)
+                    return role.label;
+                
+                return "Room";
+            }
+            catch
+            {
+                return null;
+            }
+        }
+        
+        /// <summary>
+        /// v2.0.0: 捕获重要建筑信息
+        /// </summary>
+        private static List<BuildingInfo> CaptureBuildings(Map map, IntVec3 colonyCenter)
+        {
+            var buildings = new List<BuildingInfo>();
+            
+            try
+            {
+                var importantBuildings = map.listerBuildings.allBuildingsColonist
+                    .Where(b => IsImportantBuilding(b))
+                    .Take(20); // 限制数量节省token
+                
+                foreach (var building in importantBuildings)
+                {
+                    buildings.Add(new BuildingInfo
+                    {
+                        name = building.Label,
+                        defName = building.def.defName,
+                        type = GetBuildingType(building),
+                        location = DirectionCalculator.GetSpatialInfo(building.Position, colonyCenter, map),
+                        size = building.def.size.x * building.def.size.z,
+                        isOperational = IsBuildingOperational(building),
+                        currentWorker = GetBuildingWorker(building)
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[GameStateSnapshotUtility] Error capturing buildings: {ex.Message}");
+            }
+            
+            return buildings;
+        }
+        
+        /// <summary>
+        /// 判断是否为重要建筑
+        /// </summary>
+        private static bool IsImportantBuilding(Building building)
+        {
+            if (building?.def == null) return false;
+            
+            // 生产设施
+            if (building is Building_WorkTable) return true;
+            
+            // 电力设施
+            if (building.def.HasComp(typeof(CompPowerPlant))) return true;
+            if (building.def.HasComp(typeof(CompPowerBattery))) return true;
+            
+            // 防御设施
+            if (building.def.building?.IsTurret == true) return true;
+            
+            // 存储设施
+            if (building.def.HasComp(typeof(CompForbiddable)) && building.def.thingClass.Name.Contains("Storage")) return true;
+            
+            // 医疗设施
+            if (building.def.defName.Contains("Medical") || building.def.defName.Contains("Hospital")) return true;
+            
+            // 研究设施
+            if (building.def.defName.Contains("Research")) return true;
+            
+            // 娱乐设施（需要至少占用2格）
+            if (building.def.size.x * building.def.size.z >= 2) return true;
+            
+            return false;
+        }
+        
+        /// <summary>
+        /// 获取建筑类型
+        /// </summary>
+        private static string GetBuildingType(Building building)
+        {
+            if (building?.def == null) return "Unknown";
+            
+            if (building is Building_WorkTable) return "Production";
+            if (building.def.HasComp(typeof(CompPowerPlant))) return "Power";
+            if (building.def.HasComp(typeof(CompPowerBattery))) return "Power";
+            if (building.def.building?.IsTurret == true) return "Defense";
+            if (building.def.defName.Contains("Medical") || building.def.defName.Contains("Hospital")) return "Medical";
+            if (building.def.defName.Contains("Research")) return "Research";
+            if (building.def.defName.Contains("Joy") || building.def.defName.Contains("Recreation")) return "Recreation";
+            if (building.def.defName.Contains("Storage")) return "Storage";
+            
+            return "Other";
+        }
+        
+        /// <summary>
+        /// 检查建筑是否正在运行
+        /// </summary>
+        private static bool IsBuildingOperational(Building building)
+        {
+            try
+            {
+                // 检查电力
+                var powerComp = building.TryGetComp<CompPowerTrader>();
+                if (powerComp != null && !powerComp.PowerOn)
+                    return false;
+                
+                // 检查故障
+                var breakdownComp = building.TryGetComp<CompBreakdownable>();
+                if (breakdownComp != null && breakdownComp.BrokenDown)
+                    return false;
+                
+                return true;
+            }
+            catch
+            {
+                return true;
+            }
+        }
+        
+        /// <summary>
+        /// 获取建筑当前工作者
+        /// </summary>
+        private static string? GetBuildingWorker(Building building)
+        {
+            try
+            {
+                if (building is Building_WorkTable workTable)
+                {
+                    // 查找正在使用此工作台的Pawn
+                    var map = building.Map;
+                    if (map != null)
+                    {
+                        var pawnsAtBuilding = map.mapPawns.FreeColonistsSpawned
+                            .Where(p => p.CurJob?.targetA.Thing == building)
+                            .FirstOrDefault();
+                        
+                        return pawnsAtBuilding?.Name?.ToStringShort;
+                    }
+                }
+            }
+            catch
+            {
+                // 忽略错误
+            }
+            
+            return null;
+        }
+        
+        /// <summary>
+        /// v2.0.0: 捕获威胁实体信息
+        /// </summary>
+        private static List<ThreatEntityInfo> CaptureThreatEntities(Map map, IntVec3 colonyCenter)
+        {
+            var threats = new List<ThreatEntityInfo>();
+            
+            try
+            {
+                var allPawns = map.listerThings.ThingsInGroup(ThingRequestGroup.Pawn);
+                var hostilePawns = allPawns
+                    .OfType<Pawn>()
+                    .Where(p => p.Spawned && !p.Dead && p.HostileTo(Faction.OfPlayer))
+                    .Take(20); // 限制数量
+                
+                foreach (var pawn in hostilePawns)
+                {
+                    threats.Add(new ThreatEntityInfo
+                    {
+                        name = pawn.Name?.ToStringShort ?? pawn.def.label,
+                        threatType = GetThreatType(pawn),
+                        faction = pawn.Faction?.Name,
+                        location = DirectionCalculator.GetSpatialInfo(pawn.Position, colonyCenter, map),
+                        threatLevel = CalculateThreatLevel(pawn),
+                        isInCombat = pawn.CurJob?.def == JobDefOf.AttackMelee || pawn.CurJob?.def == JobDefOf.AttackStatic,
+                        weapon = pawn.equipment?.Primary?.def?.label
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[GameStateSnapshotUtility] Error capturing threat entities: {ex.Message}");
+            }
+            
+            return threats;
+        }
+        
+        /// <summary>
+        /// 获取威胁类型
+        /// </summary>
+        private static string GetThreatType(Pawn pawn)
+        {
+            if (pawn.RaceProps.IsMechanoid) return "Mechanoid";
+            if (pawn.RaceProps.Insect) return "Insect";
+            if (pawn.RaceProps.Animal) return "Animal";
+            if (pawn.Faction?.def.defName.Contains("Pirate") == true) return "Pirate";
+            if (pawn.Faction?.def.defName.Contains("Tribe") == true) return "Tribal";
+            return "Raider";
+        }
+        
+        /// <summary>
+        /// 计算威胁等级
+        /// </summary>
+        private static int CalculateThreatLevel(Pawn pawn)
+        {
+            float combatPower = pawn.kindDef?.combatPower ?? 50f;
+            
+            if (combatPower < 30) return 1;
+            if (combatPower < 60) return 2;
+            if (combatPower < 100) return 3;
+            if (combatPower < 200) return 4;
+            return 5;
+        }
+        
+        /// <summary>
+        /// v2.0.0: 生成空间摘要（用于AI快速理解）
+        /// </summary>
+        private static string GenerateSpatialSummary(GameStateSnapshot snapshot)
+        {
+            var sb = new System.Text.StringBuilder();
+            
+            sb.AppendLine($"Colony Center: ({snapshot.colonyCenter.x}, {snapshot.colonyCenter.z})");
+            
+            // 按方向分组殖民者
+            var colonistsByDirection = snapshot.colonists
+                .GroupBy(c => c.location.direction)
+                .Where(g => g.Any())
+                .ToDictionary(g => g.Key, g => g.ToList());
+            
+            if (colonistsByDirection.Any())
+            {
+                sb.AppendLine("Colonist Distribution:");
+                foreach (var kvp in colonistsByDirection)
+                {
+                    var names = string.Join(", ", kvp.Value.Select(c => c.name));
+                    sb.AppendLine($"  {kvp.Key}: {names}");
+                }
+            }
+            
+            // 威胁方向
+            if (snapshot.threatEntities.Any())
+            {
+                var threatDirections = snapshot.threatEntities
+                    .GroupBy(t => t.location.direction)
+                    .Select(g => $"{g.Key}({g.Count()})")
+                    .ToList();
+                
+                sb.AppendLine($"Threats from: {string.Join(", ", threatDirections)}");
+            }
+            
+            return sb.ToString();
         }
 
         /// <summary>

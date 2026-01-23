@@ -137,6 +137,8 @@
     </apparelTags>
     <apparelMoney>0</apparelMoney>
     <backstoryCryptosleepCommonality>0</backstoryCryptosleepCommonality>
+    <initialResistanceRange>13~20</initialResistanceRange>
+    <initialWillRange>13~20</initialWillRange>
   </PawnKindDef>
 
 </Defs>

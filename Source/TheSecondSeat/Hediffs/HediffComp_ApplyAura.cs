@@ -93,7 +93,7 @@ namespace TheSecondSeat.Hediffs
     ///   <li Class="TheSecondSeat.Hediffs.HediffCompProperties_ApplyAura">
     ///     <radius>9.9</radius>
     ///     <checkInterval>60</checkInterval>
-    ///     <hediffToApply>Sideria_CrimsonBloomMark</hediffToApply>
+    ///     <hediffToApply>TSS_CrimsonBloomMark</hediffToApply>
     ///     <affectEnemies>true</affectEnemies>
     ///     <stackMode>CustomMethod</stackMode>
     ///     <stackMethodName>AddStack</stackMethodName>

@@ -296,12 +296,12 @@ namespace TheSecondSeat.Storyteller
         /// </summary>
         private string GetAffinityTierName(float affinity)
         {
-            if (affinity >= 85f) return "爱慕/灵魂绑定";
-            if (affinity >= 60f) return "倾慕";
-            if (affinity >= 30f) return "温暖";
-            if (affinity >= -10f) return "中性";
-            if (affinity >= -50f) return "疏远";
-            return "敌对/仇恨";
+            if (affinity >= 85f) return "TSS_Affinity_SoulBound".Translate();
+            if (affinity >= 60f) return "TSS_Affinity_Adoration".Translate();
+            if (affinity >= 30f) return "TSS_Affinity_Warm".Translate();
+            if (affinity >= -10f) return "TSS_Affinity_Neutral".Translate();
+            if (affinity >= -50f) return "TSS_Affinity_Cold".Translate();
+            return "TSS_Affinity_Hostile".Translate();
         }
         
         /// <summary>
@@ -494,16 +494,7 @@ namespace TheSecondSeat.Storyteller
         /// </summary>
         private string GetTraitName(PersonalityTrait trait)
         {
-            return trait switch
-            {
-                PersonalityTrait.Benevolent => "仁慈",
-                PersonalityTrait.Sadistic => "施虐",
-                PersonalityTrait.Chaotic => "混乱",
-                PersonalityTrait.Strategic => "战略",
-                PersonalityTrait.Protective => "保护",
-                PersonalityTrait.Manipulative => "操控",
-                _ => "未知"
-            };
+            return $"TSS_Trait_{trait}".Translate();
         }
 
         /// <summary>
@@ -511,16 +502,7 @@ namespace TheSecondSeat.Storyteller
         /// </summary>
         private string GetTraitDescription(PersonalityTrait trait)
         {
-            return trait switch
-            {
-                PersonalityTrait.Benevolent => "你关心殖民者的福祉，偏好正面事件",
-                PersonalityTrait.Sadistic => "你在观察凡人挣扎时感到某种乐趣",
-                PersonalityTrait.Chaotic => "你是随机性和惊喜的化身",
-                PersonalityTrait.Strategic => "你看到更大的图景，平衡挑战与奖励",
-                PersonalityTrait.Protective => "你像守护灵一样看护这个殖民地",
-                PersonalityTrait.Manipulative => "你理解微妙影响的艺术",
-                _ => "你以独特的视角观察殖民地的故事"
-            };
+            return $"TSS_TraitDesc_{trait}".Translate();
         }
 
         /// <summary>
@@ -528,18 +510,7 @@ namespace TheSecondSeat.Storyteller
         /// </summary>
         private string GetMoodName(MoodState mood)
         {
-            return mood switch
-            {
-                MoodState.Joyful => "喜悦",
-                MoodState.Content => "满足",
-                MoodState.Neutral => "中性",
-                MoodState.Irritated => "烦躁",
-                MoodState.Angry => "愤怒",
-                MoodState.Melancholic => "忧郁",
-                MoodState.Excited => "兴奋",
-                MoodState.Bored => "无聊",
-                _ => "未知"
-            };
+            return $"TSS_Mood_{mood}".Translate();
         }
 
         /// <summary>

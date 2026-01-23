@@ -123,6 +123,7 @@ namespace TheSecondSeat.TTS
                     return null;
                 }
                 
+                // ✅ v2.8.2: 统一使用 WAV 格式
                 string fileName = $"tts_{DateTime.Now:yyyyMMdd_HHmmss}.wav";
                 string filePath = Path.Combine(audioOutputDir, fileName);
                 byte[]? audioData = null;
@@ -179,6 +180,14 @@ namespace TheSecondSeat.TTS
 
         private Task<byte[]?> GenerateLocalTTSAsync(string text)
         {
+            // ⭐ v1.7.0: 检查操作系统是否为 Windows
+            if (UnityEngine.Application.platform != UnityEngine.RuntimePlatform.WindowsEditor &&
+                UnityEngine.Application.platform != UnityEngine.RuntimePlatform.WindowsPlayer)
+            {
+                if (Prefs.DevMode) Log.Warning("[TTSService] Local TTS is only supported on Windows.");
+                return Task.FromResult<byte[]?>(null);
+            }
+
             return Task.Run(() =>
             {
                 object? synthesizer = null;
@@ -269,6 +278,7 @@ namespace TheSecondSeat.TTS
 
         /// <summary>
         /// 生成 SiliconFlow (IndexTTS) 语音
+        /// ✅ v2.8.1: 增强诊断和格式验证
         /// </summary>
         private async Task<byte[]?> GenerateSiliconFlowTTSAsync(string text)
         {
@@ -279,16 +289,16 @@ namespace TheSecondSeat.TTS
                 if (!string.IsNullOrEmpty(siliconFlow_AudioUri))
                 {
                     // 使用音色克隆模式
-                    // 修复 400 Invalid voice: OpenAI 兼容接口通常要求将克隆 ID (speech:cv_...) 放入 voice 字段
+                    // ✅ v2.8.7: 请求 OGG 格式（RimWorld 原生支持 OGG Vorbis）
+                    // 如果 API 不支持 OGG，会回退到 MP3 转 WAV
                     requestBody = new
                     {
                         model = siliconFlow_Model,
                         input = text,
                         voice = siliconFlow_AudioUri, // 使用 URI 作为 voice ID
-                        response_format = "wav",
+                        response_format = "opus", // 尝试 opus (OGG Opus)
                         stream = false, // 显式关闭流式
-                        speed = speechRate,
-                        sample_rate = 24000
+                        speed = speechRate
                     };
                     
                     if (Prefs.DevMode)
@@ -299,18 +309,23 @@ namespace TheSecondSeat.TTS
                 else
                 {
                     // 标准模式
+                    // ✅ v2.8.7: 请求 OGG 格式（RimWorld 原生支持 OGG Vorbis）
                     requestBody = new
                     {
                         model = siliconFlow_Model,
                         input = text,
                         voice = voiceName,
-                        response_format = "wav",
-                        speed = speechRate,
-                        sample_rate = 24000
+                        response_format = "opus", // 尝试 opus (OGG Opus)
+                        speed = speechRate
                     };
                 }
 
                 string jsonBody = JsonConvert.SerializeObject(requestBody);
+                
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[TTSService] SiliconFlow request: {jsonBody}");
+                }
 
                 using var webRequest = new UnityWebRequest(siliconFlow_ApiUrl, "POST");
                 webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonBody));
@@ -335,7 +350,51 @@ namespace TheSecondSeat.TTS
                     return null;
                 }
 
-                return webRequest.downloadHandler.data;
+                byte[] responseData = webRequest.downloadHandler.data;
+                
+                // ✅ v2.8.1: 诊断返回的音频数据
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[TTSService] SiliconFlow response size: {responseData?.Length ?? 0} bytes");
+                    
+                    if (responseData != null && responseData.Length >= 12)
+                    {
+                        // 检查 WAV 文件头 (RIFF....WAVE)
+                        string riffHeader = Encoding.ASCII.GetString(responseData, 0, 4);
+                        string waveHeader = Encoding.ASCII.GetString(responseData, 8, 4);
+                        Log.Message($"[TTSService] SiliconFlow audio header: '{riffHeader}'...'{waveHeader}'");
+                        
+                        if (riffHeader != "RIFF" || waveHeader != "WAVE")
+                        {
+                            // 可能是 MP3 或其他格式
+                            // 检查 MP3 头 (ID3 或 0xFF 0xFB)
+                            if (responseData.Length >= 3)
+                            {
+                                string id3Header = Encoding.ASCII.GetString(responseData, 0, 3);
+                                bool isMP3Sync = responseData[0] == 0xFF && (responseData[1] & 0xE0) == 0xE0;
+                                
+                                if (id3Header == "ID3" || isMP3Sync)
+                                {
+                                    Log.Warning($"[TTSService] SiliconFlow returned MP3 instead of WAV! Header: {id3Header}");
+                                }
+                                else
+                                {
+                                    // 打印前16字节用于调试
+                                    string hexHeader = BitConverter.ToString(responseData, 0, Math.Min(16, responseData.Length));
+                                    Log.Warning($"[TTSService] SiliconFlow unknown format, hex: {hexHeader}");
+                                }
+                            }
+                        }
+                    }
+                    else if (responseData != null && responseData.Length < 100)
+                    {
+                        // 数据太小，可能是错误响应
+                        string textContent = Encoding.UTF8.GetString(responseData);
+                        Log.Warning($"[TTSService] SiliconFlow response too small, content: {textContent}");
+                    }
+                }
+
+                return responseData;
             }
             catch (Exception ex)
             {
@@ -393,29 +452,88 @@ namespace TheSecondSeat.TTS
 
         /// <summary>
         /// ⭐ v2.7.1: 修改为使用 PlayAndDelete，播放后自动删除原始文件
+        /// ⭐ v2.8.0: 修复 autoPlayTTS=false 时文件不删除的问题
+        /// ⭐ v2.8.1: 增强诊断日志
         /// </summary>
         private void AutoPlayAudioFile(string filePath, string personaDefName = "")
         {
             try
             {
-                var modSettings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
-                if (modSettings == null || !modSettings.autoPlayTTS) return;
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[TTSService] AutoPlayAudioFile called: persona={personaDefName}, file={filePath}");
+                }
+                
                 if (!File.Exists(filePath))
                 {
-                    if (Prefs.DevMode) Log.Warning($"[TTSService] Audio file not found: {filePath}");
+                    Log.Warning($"[TTSService] Audio file not found: {filePath}");
+                    return;
+                }
+                
+                // ✅ v2.8.1: 记录文件大小
+                if (Prefs.DevMode)
+                {
+                    var fileInfo = new FileInfo(filePath);
+                    Log.Message($"[TTSService] Audio file exists, size={fileInfo.Length} bytes");
+                }
+                
+                var modSettings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
+                
+                // ✅ v2.8.1: 详细记录设置状态
+                if (Prefs.DevMode)
+                {
+                    if (modSettings == null)
+                    {
+                        Log.Warning("[TTSService] modSettings is NULL!");
+                    }
+                    else
+                    {
+                        Log.Message($"[TTSService] Settings: autoPlayTTS={modSettings.autoPlayTTS}");
+                    }
+                }
+                
+                // ⭐ v2.8.0: 如果 autoPlayTTS 未启用，删除文件后返回
+                if (modSettings == null || !modSettings.autoPlayTTS)
+                {
+                    if (Prefs.DevMode)
+                    {
+                        Log.Message($"[TTSService] autoPlayTTS is disabled, deleting generated audio file: {filePath}");
+                    }
+                    try
+                    {
+                        File.Delete(filePath);
+                    }
+                    catch (Exception deleteEx)
+                    {
+                        if (Prefs.DevMode) Log.Warning($"[TTSService] Failed to delete audio file: {deleteEx.Message}");
+                    }
                     return;
                 }
 
                 IsSpeaking = true;
                 
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[TTSService] Calling TTSAudioPlayer.Instance.PlayAndDelete for: {filePath}");
+                }
+                
                 // ⭐ v2.7.1: 直接使用 PlayAndDelete，播放后自动删除文件
                 TTSAudioPlayer.Instance.PlayAndDelete(filePath, personaDefName, () => {
                     IsSpeaking = false;
+                    if (Prefs.DevMode)
+                    {
+                        Log.Message("[TTSService] PlayAndDelete callback invoked - playback completed");
+                    }
                 });
+                
+                if (Prefs.DevMode)
+                {
+                    Log.Message("[TTSService] PlayAndDelete call returned (async playback started)");
+                }
             }
             catch (Exception ex)
             {
-                if (Prefs.DevMode) Log.Warning($"[TTSService] Failed to auto-play audio: {ex.Message}");
+                Log.Error($"[TTSService] AutoPlayAudioFile EXCEPTION: {ex.Message}\n{ex.StackTrace}");
                 IsSpeaking = false;
             }
         }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using Verse;
+using Verse.AI;
 using RimWorld;
 
 namespace TheSecondSeat.Monitoring
@@ -72,7 +73,7 @@ namespace TheSecondSeat.Monitoring
         /// <summary>
         /// 捕获袭击事件
         /// </summary>
-        [HarmonyPatch(typeof(IncidentWorker_RaidEnemy), nameof(IncidentWorker_RaidEnemy.TryExecuteWorker))]
+        [HarmonyPatch(typeof(IncidentWorker_RaidEnemy), "TryExecuteWorker")]
         [HarmonyPostfix]
         public static void RaidEnemy_Postfix(bool __result, IncidentParms parms)
         {
@@ -165,7 +166,8 @@ namespace TheSecondSeat.Monitoring
                 var aggregator = GetAggregator();
                 if (aggregator == null) return;
                 
-                Pawn pawn = __instance.pawn;
+                // 使用 Traverse 获取 pawn 字段 (防止访问级别问题)
+                Pawn pawn = Traverse.Create(__instance).Field("pawn").GetValue<Pawn>();
                 if (pawn?.Faction?.IsPlayer != true) return;
                 
                 string pawnName = pawn.Name?.ToStringShort ?? pawn.LabelShort;
@@ -317,7 +319,7 @@ namespace TheSecondSeat.Monitoring
         /// <summary>
         /// 捕获商队到达事件
         /// </summary>
-        [HarmonyPatch(typeof(IncidentWorker_TraderCaravanArrival), nameof(IncidentWorker_TraderCaravanArrival.TryExecuteWorker))]
+        [HarmonyPatch(typeof(IncidentWorker_TraderCaravanArrival), "TryExecuteWorker")]
         [HarmonyPostfix]
         public static void TraderArrival_Postfix(bool __result, IncidentParms parms)
         {

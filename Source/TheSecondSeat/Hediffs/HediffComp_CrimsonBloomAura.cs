@@ -12,7 +12,7 @@ namespace TheSecondSeat.Hediffs
     {
         public float radius = 9.9f;
         public int checkInterval = 60; // Check every 60 ticks (1 second)
-        public HediffDef markHediff; // Sideria_CrimsonBloomMark
+        public HediffDef markHediff; // TSS_CrimsonBloomMark
         public bool affectEnemies = true;
         public bool affectAllies = false;
         public EffecterDef activeEffect;

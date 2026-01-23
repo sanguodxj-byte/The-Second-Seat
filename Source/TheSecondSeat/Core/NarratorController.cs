@@ -71,6 +71,9 @@ namespace TheSecondSeat.Core
         {
             base.FinalizeInit();
             
+            // 清除旧的聊天记录（防止跨存档污染）
+            TheSecondSeat.UI.NarratorWindow.ClearChatHistory();
+
             // Lazy initialization of components that depend on Game state or other components
             if (narratorManager == null)
             {

@@ -139,7 +139,7 @@ namespace TheSecondSeat.Core.Components
             }
 
             // 2. 在主线程异步处理 (UnityWebRequest 必须在主线程)
-            StartUpdateAsync();
+            StartUpdateAsync(userMessage, gameStateJson, selectionContext, isGreeting, shadowPawn);
         }
 
         private async void StartUpdateAsync(string userMessage, string gameStateJson, string selectionContext, bool isGreeting, Pawn shadowPawn)

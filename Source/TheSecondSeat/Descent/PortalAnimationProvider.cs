@@ -144,7 +144,6 @@ namespace TheSecondSeat.Descent
                 Vector3 drawPos = location.ToVector3Shifted();
                 
                 // 使用原版折跃特效
-                // FleckDef: PsychicConditionCauserPulse 或类似效果
                 FleckMaker.ThrowLightningGlow(drawPos, map, 4f);
                 
                 // 产生环形粒子（模拟传送门边缘）
@@ -159,13 +158,27 @@ namespace TheSecondSeat.Descent
                     IntVec3 particleCell = particlePos.ToIntVec3();
                     if (particleCell.InBounds(map))
                     {
-                        // 使用 psycast 效果模拟传送门
-                        FleckMaker.ThrowMetaIcon(particleCell, map, FleckDefOf.PsycastAreaEffect);
+                        // 使用 psycast 效果模拟传送门 (DLC 检查)
+                        if (ModLister.RoyaltyInstalled)
+                        {
+                            FleckMaker.ThrowMetaIcon(particleCell, map, FleckDefOf.PsycastAreaEffect);
+                        }
+                        else
+                        {
+                            FleckMaker.ThrowLightningGlow(particlePos, map, 0.5f);
+                        }
                     }
                 }
                 
                 // 中心点爆发效果
-                FleckMaker.Static(drawPos, map, FleckDefOf.PsycastSkipFlashEntry, 3f);
+                if (ModLister.RoyaltyInstalled)
+                {
+                    FleckMaker.Static(drawPos, map, FleckDefOf.PsycastSkipFlashEntry, 3f);
+                }
+                else
+                {
+                    FleckMaker.Static(drawPos, map, FleckDefOf.ExplosionFlash, 3f);
+                }
             }
             catch (Exception ex)
             {
@@ -227,8 +240,16 @@ namespace TheSecondSeat.Descent
                 
                 if (string.IsNullOrEmpty(soundDefName))
                 {
-                    // 使用原版折跃音效
-                    soundDefName = phase == "entry" ? "Psycast_Skip_Entry" : "Psycast_Skip_Exit";
+                    // 使用原版折跃音效 (DLC 检查)
+                    if (ModLister.RoyaltyInstalled)
+                    {
+                        soundDefName = phase == "entry" ? "Psycast_Skip_Entry" : "Psycast_Skip_Exit";
+                    }
+                    else
+                    {
+                        // 回退音效
+                        soundDefName = phase == "entry" ? "DropPod_Fall" : "DropPod_Open";
+                    }
                 }
                 
                 SoundDef soundDef = DefDatabase<SoundDef>.GetNamedSilentFail(soundDefName);
@@ -264,7 +285,14 @@ namespace TheSecondSeat.Descent
                 
                 try
                 {
-                    FleckMaker.Static(drawPos, currentMap, FleckDefOf.PsycastSkipFlashEntry, 4f);
+                    if (ModLister.RoyaltyInstalled)
+                    {
+                        FleckMaker.Static(drawPos, currentMap, FleckDefOf.PsycastSkipFlashEntry, 4f);
+                    }
+                    else
+                    {
+                        FleckMaker.Static(drawPos, currentMap, FleckDefOf.ExplosionFlash, 4f);
+                    }
                 }
                 catch
                 {

@@ -45,7 +45,7 @@ namespace TheSecondSeat.Monitoring
         private int lastFoodCount = 0;
         
         // ========== 事件队列 ==========
-        private Queue<GameEvent> pendingEvents = new Queue<GameEvent>();
+        private Queue<ObserverGameEvent> pendingEvents = new Queue<ObserverGameEvent>();
         private const int MAX_EVENT_QUEUE = 20;
         
         public GameStateObserver(Game game) : base() { }
@@ -245,7 +245,7 @@ namespace TheSecondSeat.Monitoring
                 pendingEvents.Dequeue(); // 移除最旧的事件
             }
             
-            pendingEvents.Enqueue(new GameEvent
+            pendingEvents.Enqueue(new ObserverGameEvent
             {
                 Type = type,
                 Description = description,
@@ -256,7 +256,7 @@ namespace TheSecondSeat.Monitoring
         /// <summary>
         /// ⭐ 获取待处理事件（消费后清空）
         /// </summary>
-        public List<GameEvent> ConsumeEvents()
+        public List<ObserverGameEvent> ConsumeEvents()
         {
             var events = pendingEvents.ToList();
             pendingEvents.Clear();
@@ -344,9 +344,9 @@ namespace TheSecondSeat.Monitoring
     }
     
     /// <summary>
-    /// 游戏事件
+    /// 游戏事件 (Observer专用)
     /// </summary>
-    public struct GameEvent
+    public struct ObserverGameEvent
     {
         public GameEventType Type;
         public string Description;

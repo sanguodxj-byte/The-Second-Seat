@@ -252,11 +252,26 @@ namespace TheSecondSeat.RimAgent.UI
                 Messages.Message("TSS_Debug_Copied".Translate(), MessageTypeDefOf.NeutralEvent);
             }
             
-            // Token counts
+            // ⭐ v2.0.0: 热重载模板缓存按钮
+            if (Widgets.ButtonText(new Rect(x + 400, rect.y + y, 140, 25), "🔄 Reload Templates"))
+            {
+                PromptRenderer.ClearTemplateCache();
+                RefreshPromptCache();
+                Messages.Message("模板编译缓存已清除，所有模板将重新编译", MessageTypeDefOf.TaskCompletion);
+            }
+            
+            // Token counts & Cache stats
             int masterTokens = EstimateTokens(cachedMasterPrompt);
             int eventTokens = EstimateTokens(cachedEventDirectorPrompt);
-            Widgets.Label(new Rect(x + 400, rect.y + y, 300, 25), 
-                $"Master: ~{masterTokens} tokens | EventDir: ~{eventTokens} tokens");
+            Widgets.Label(new Rect(x + 550, rect.y + y, 250, 25), 
+                $"Master: ~{masterTokens} | EventDir: ~{eventTokens}");
+            
+            y += 28f;
+            
+            // ⭐ v2.0.0: 显示缓存统计
+            string cacheStats = PromptRenderer.GetCacheStats();
+            Widgets.Label(new Rect(rect.x + x, rect.y + y, width, 20), 
+                $"<color=#88ff88>📊 Cache: {cacheStats}</color>");
             
             y += 35f;
             

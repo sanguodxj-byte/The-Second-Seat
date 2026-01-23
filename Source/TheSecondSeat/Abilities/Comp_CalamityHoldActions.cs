@@ -12,8 +12,8 @@ namespace TheSecondSeat
     /// </summary>
     public class CompProperties_CalamityHoldActions : CompProperties
     {
-        public string throwJobDefName = "Sideria_CalamityThrow";
-        public string slamJobDefName = "Sideria_CalamitySlam";
+        public string throwJobDefName = "TSS_CalamityThrow";
+        public string slamJobDefName = "TSS_CalamitySlam";
         
         public CompProperties_CalamityHoldActions()
         {

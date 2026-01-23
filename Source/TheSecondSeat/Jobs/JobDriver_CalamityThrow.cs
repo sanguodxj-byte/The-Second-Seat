@@ -49,7 +49,7 @@ namespace TheSecondSeat
                     Pawn victim = calamityHolding.HeldTarget;
 
                     // 参考 GodHandMod 实现：手动创建 PawnFlyer，支持直接从持有状态投掷（无需先生成 Pawn，避免闪烁）
-                    ThingDef flyerDef = DefDatabase<ThingDef>.GetNamed("Sideria_PawnFlyer_Calamity");
+                    ThingDef flyerDef = DefDatabase<ThingDef>.GetNamed("TSS_PawnFlyer_Calamity");
                     PawnFlyer_CalamityThrow flyer = (PawnFlyer_CalamityThrow)ThingMaker.MakeThing(flyerDef);
                     
                     if (flyer != null)

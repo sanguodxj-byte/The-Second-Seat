@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "+zWhAnP7HNc=",
+  "dgSpecHash": "29eJgL692fM=",
   "success": true,
-  "projectFilePath": "d:\\rim mod\\The Second Seat\\Source\\TheSecondSeat\\TheSecondSeat.csproj",
+  "projectFilePath": "D:\\rim mod\\The Second Seat\\Source\\TheSecondSeat\\TheSecondSeat.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Administrator\\.nuget\\packages\\ilrepack\\2.0.18\\ilrepack.2.0.18.nupkg.sha512",
     "C:\\Users\\Administrator\\.nuget\\packages\\lib.harmony\\2.3.3\\lib.harmony.2.3.3.nupkg.sha512",
