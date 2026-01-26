@@ -45,10 +45,35 @@ namespace TheSecondSeat.PersonaGeneration.Scriban
         // 遗留兼容层：用于存放目前通过复杂 C# 逻辑生成的文本块
         // 在完全重构前，这些块仍由 C# 生成并传入
         public Dictionary<string, string> Snippets { get; set; } = new Dictionary<string, string>();
+
+        // ⭐ v2.3.0: 视觉与文本分析专用数据
+        public AnalysisInfo Analysis { get; set; }
+
+        // ⭐ v2.5.0: 服装系统变量
+        /// <summary>
+        /// 可用服装列表（格式化字符串，用于提示词显示）
+        /// 在模板中使用 {{ available_outfits }}
+        /// </summary>
+        public string AvailableOutfits { get; set; }
+
+        /// <summary>
+        /// 当前服装标签
+        /// 在模板中使用 {{ current_outfit }}
+        /// </summary>
+        public string CurrentOutfit { get; set; }
+    }
+
+    public class AnalysisInfo
+    {
+        public List<string> SelectedTraits { get; set; }
+        public string UserSupplement { get; set; }
+        public string BiographyText { get; set; }
     }
 
     public class NarratorInfo
     {
+        /// <summary>Persona 的 DefName (用于查找专属 Prompt 文件夹)</summary>
+        public string DefName { get; set; }
         public string Name { get; set; }
         public string Label { get; set; }
         public string Biography { get; set; }

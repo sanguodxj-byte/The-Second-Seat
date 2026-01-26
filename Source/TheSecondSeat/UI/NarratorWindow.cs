@@ -132,49 +132,9 @@ namespace TheSecondSeat.UI
             // 不再添加 "你好，我是 AI 叙事者..." 的默认消息
         }
 
-        protected override void SetInitialSizeAndPosition()
-        {
-            // 尝试从设置中获取位置
-            Rect savedRect = TheSecondSeatMod.Settings.dialogueRect;
-            
-            // 检查是否是默认值 (0,0) 或者无效值
-            // 如果 x,y 都是 0，可能是从未保存过，也可能是真的在 (0,0)
-            // 但考虑到默认值是 0,0,600,200，我们可以检查宽度是否匹配
-            // 由于我们只保存位置，宽度可能不匹配。
-            
-            // 简单策略：如果 x > 0 或 y > 0，就使用它。
-            // 更好的策略：检查是否在屏幕内
-            
-            float x = savedRect.x;
-            float y = savedRect.y;
-            
-            if (x == 0 && y == 0)
-            {
-                // 默认居中
-                x = (Verse.UI.screenWidth - InitialSize.x) / 2f;
-                y = (Verse.UI.screenHeight - InitialSize.y) / 2f;
-            }
-            else
-            {
-                // 确保在屏幕内
-                x = Mathf.Clamp(x, 0f, Verse.UI.screenWidth - InitialSize.x);
-                y = Mathf.Clamp(y, 0f, Verse.UI.screenHeight - InitialSize.y);
-            }
-            
-            this.windowRect = new Rect(x, y, InitialSize.x, InitialSize.y);
-        }
-
-        public override void PreClose()
-        {
-            base.PreClose();
-            // 保存位置
-            // 注意：我们只更新位置，保持默认宽高（虽然 resizeable=false，宽高不会变）
-            Rect current = TheSecondSeatMod.Settings.dialogueRect;
-            current.x = this.windowRect.x;
-            current.y = this.windowRect.y;
-            TheSecondSeatMod.Settings.dialogueRect = current;
-            TheSecondSeatMod.Settings.Write();
-        }
+        // ? 移除自定义位置保存逻辑，始终默认居中显示
+        // protected override void SetInitialSizeAndPosition() { ... }
+        // public override void PreClose() { ... }
 
         public override void WindowUpdate()
         {

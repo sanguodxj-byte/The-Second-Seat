@@ -10,6 +10,19 @@ using TheSecondSeat.Storyteller;
 namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
+    /// ⭐ v2.9.0: 添加 StaticConstructorOnStartup 以确保纹理在主线程加载
+    /// </summary>
+    [StaticConstructorOnStartup]
+    public static class PortraitLoaderStaticInit
+    {
+        static PortraitLoaderStaticInit()
+        {
+            // 预初始化占位符纹理（主线程）
+            PortraitLoader.InitializeFallbackPlaceholder();
+        }
+    }
+    
+    /// <summary>
     /// 立绘来源枚举
     /// </summary>
     public enum PortraitSource
@@ -548,6 +561,18 @@ namespace TheSecondSeat.PersonaGeneration
             
             texture.Apply();
             return texture;
+        }
+        
+        /// <summary>
+        /// ⭐ v2.9.0: 预初始化占位符纹理（由 StaticConstructorOnStartup 调用）
+        /// 确保在主线程创建纹理，避免 Unity 警告
+        /// </summary>
+        public static void InitializeFallbackPlaceholder()
+        {
+            if (_fallbackPlaceholder == null)
+            {
+                _fallbackPlaceholder = GeneratePlaceholder(new Color(0.3f, 0.3f, 0.4f)); // 深灰蓝色
+            }
         }
         
         /// <summary>

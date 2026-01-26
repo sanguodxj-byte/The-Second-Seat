@@ -9,6 +9,7 @@ using TheSecondSeat.Narrator;
 using TheSecondSeat.PersonaGeneration;
 using TheSecondSeat.PersonaGeneration.Scriban;
 using TheSecondSeat.Storyteller;
+using TheSecondSeat.LLM;  // ⭐ v2.9.5: 添加 LLM 命名空间
 
 namespace TheSecondSeat.RimAgent.UI
 {
@@ -19,10 +20,15 @@ namespace TheSecondSeat.RimAgent.UI
         private Vector2 debugInfoScrollPos;
         private Vector2 promptPreviewScrollPos;
         private Vector2 contextDataScrollPos;
+        private Vector2 llmHistoryScrollPos;  // ⭐ v2.9.5: LLM 请求历史滚动
+        private Vector2 llmDetailScrollPos;   // ⭐ v2.9.5: LLM 请求详情滚动
         
-        // Tab system
-        private enum DebugTab { AgentInfo, SystemPrompt, ContextData }
-        private DebugTab currentTab = DebugTab.AgentInfo;
+        // Tab system - ⭐ v2.9.5: 新增 LLMHistory Tab
+        private enum DebugTab { AgentInfo, SystemPrompt, ContextData, LLMHistory }
+        private DebugTab currentTab = DebugTab.LLMHistory;  // ⭐ 默认显示 LLM 历史
+        
+        // ⭐ v2.9.5: 选中的请求日志
+        private RequestLog selectedRequestLog = null;
         
         // Cached prompt for preview
         private string cachedMasterPrompt = "";
@@ -116,13 +122,13 @@ namespace TheSecondSeat.RimAgent.UI
         {
             Widgets.DrawMenuSection(rect);
             
-            // Tab bar
-            float tabWidth = 120f;
+            // Tab bar - ⭐ v2.9.5: 新增 LLM History Tab
+            float tabWidth = 100f;
             float tabY = rect.y + 5f;
             float tabX = rect.x + 10f;
             
-            var tabs = new[] { DebugTab.AgentInfo, DebugTab.SystemPrompt, DebugTab.ContextData };
-            var tabNames = new[] { "TSS_Tab_AgentInfo".Translate().ToString(), "TSS_Tab_SystemPrompt".Translate().ToString(), "TSS_Tab_ContextData".Translate().ToString() };
+            var tabs = new[] { DebugTab.LLMHistory, DebugTab.AgentInfo, DebugTab.SystemPrompt, DebugTab.ContextData };
+            var tabNames = new[] { "📡 LLM History", "TSS_Tab_AgentInfo".Translate().ToString(), "TSS_Tab_SystemPrompt".Translate().ToString(), "TSS_Tab_ContextData".Translate().ToString() };
             
             for (int i = 0; i < tabs.Length; i++)
             {
@@ -150,6 +156,9 @@ namespace TheSecondSeat.RimAgent.UI
             
             switch (currentTab)
             {
+                case DebugTab.LLMHistory:
+                    DrawLLMHistoryTab(contentRect);
+                    break;
                 case DebugTab.AgentInfo:
                     DrawAgentInfoTab(contentRect);
                     break;
@@ -159,6 +168,197 @@ namespace TheSecondSeat.RimAgent.UI
                 case DebugTab.ContextData:
                     DrawContextDataTab(contentRect);
                     break;
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ v2.9.5: 新增 LLM 请求历史 Tab
+        /// 显示叙事者和其他 LLM 请求的记录
+        /// </summary>
+        private void DrawLLMHistoryTab(Rect rect)
+        {
+            float x = 5f;
+            float y = 5f;
+            float listWidth = 250f;
+            float detailWidth = rect.width - listWidth - 20f;
+            
+            // 获取请求历史
+            var logs = LLMRequestHistory.Logs;
+            
+            // 左侧：请求列表
+            Rect listRect = new Rect(rect.x + x, rect.y + y, listWidth, rect.height - 10);
+            DrawLLMRequestList(listRect, logs);
+            
+            // 右侧：请求详情
+            Rect detailRect = new Rect(rect.x + x + listWidth + 10, rect.y + y, detailWidth, rect.height - 10);
+            DrawLLMRequestDetail(detailRect);
+        }
+        
+        private void DrawLLMRequestList(Rect rect, List<RequestLog> logs)
+        {
+            Widgets.DrawBoxSolid(rect, new Color(0.08f, 0.08f, 0.1f, 0.9f));
+            
+            // 标题和清除按钮
+            float y = rect.y + 5;
+            Widgets.Label(new Rect(rect.x + 5, y, 150, 20), $"<b>请求记录 ({logs.Count}/20)</b>");
+            
+            if (Widgets.ButtonText(new Rect(rect.x + rect.width - 55, y, 50, 20), "清除"))
+            {
+                LLMRequestHistory.Clear();
+                selectedRequestLog = null;
+            }
+            y += 25;
+            
+            if (logs.Count == 0)
+            {
+                GUI.color = new Color(0.6f, 0.6f, 0.6f);
+                Widgets.Label(new Rect(rect.x + 10, y, rect.width - 20, 30), "(暂无请求记录)");
+                GUI.color = Color.white;
+                return;
+            }
+            
+            // 滚动列表（从新到旧）
+            Rect scrollRect = new Rect(rect.x, y, rect.width, rect.height - 35);
+            Rect viewRect = new Rect(0, 0, rect.width - 16, logs.Count * 50f);
+            
+            Widgets.BeginScrollView(scrollRect, ref llmHistoryScrollPos, viewRect);
+            
+            float itemY = 0;
+            // 倒序显示（最新的在上面）
+            for (int i = logs.Count - 1; i >= 0; i--)
+            {
+                var log = logs[i];
+                Rect rowRect = new Rect(0, itemY, viewRect.width, 48f);
+                
+                // 背景
+                Color bgColor = (log == selectedRequestLog) 
+                    ? new Color(0.3f, 0.5f, 0.7f, 0.5f) 
+                    : (i % 2 == 0 ? new Color(0.12f, 0.12f, 0.15f, 0.8f) : new Color(0.1f, 0.1f, 0.12f, 0.8f));
+                Widgets.DrawBoxSolid(rowRect, bgColor);
+                
+                // 状态指示条
+                Color statusColor = log.Success ? new Color(0.4f, 0.8f, 0.4f) : new Color(0.9f, 0.3f, 0.3f);
+                Widgets.DrawBoxSolid(new Rect(rowRect.x, rowRect.y, 4, rowRect.height), statusColor);
+                
+                // 内容
+                float textX = rowRect.x + 8;
+                
+                // 第一行：时间 + 类型 + 模型
+                GUI.color = new Color(0.9f, 0.9f, 0.7f);
+                Widgets.Label(new Rect(textX, rowRect.y + 2, rowRect.width - 15, 20), 
+                    $"[{log.Timestamp:HH:mm:ss}] {log.DisplayLabel}");
+                
+                // 第二行：Token 和耗时
+                GUI.color = new Color(0.7f, 0.8f, 0.9f);
+                string tokenInfo = log.TotalTokens > 0 
+                    ? $"📊 {log.TotalTokens} tokens (↑{log.PromptTokens}/↓{log.CompletionTokens})" 
+                    : "📊 N/A";
+                string duration = log.DurationSeconds > 0 ? $"⏱️ {log.DurationSeconds:F1}s" : "";
+                Widgets.Label(new Rect(textX, rowRect.y + 22, rowRect.width - 15, 20), 
+                    $"{tokenInfo} {duration}");
+                
+                GUI.color = Color.white;
+                
+                // 点击选择
+                if (Widgets.ButtonInvisible(rowRect))
+                {
+                    selectedRequestLog = log;
+                }
+                
+                itemY += 50f;
+            }
+            
+            Widgets.EndScrollView();
+        }
+        
+        private void DrawLLMRequestDetail(Rect rect)
+        {
+            Widgets.DrawBoxSolid(rect, new Color(0.08f, 0.08f, 0.1f, 0.9f));
+            
+            if (selectedRequestLog == null)
+            {
+                GUI.color = new Color(0.6f, 0.6f, 0.6f);
+                Widgets.Label(new Rect(rect.x + 10, rect.y + 10, rect.width - 20, 30), 
+                    "← 点击左侧请求查看详情");
+                GUI.color = Color.white;
+                return;
+            }
+            
+            var log = selectedRequestLog;
+            float x = rect.x + 10;
+            float y = rect.y + 5;
+            float width = rect.width - 20;
+            float halfHeight = (rect.height - 80) / 2;
+            
+            // 标题栏
+            Widgets.Label(new Rect(x, y, 300, 20), $"<b>{log.DisplayLabel}</b> - {log.Timestamp:yyyy-MM-dd HH:mm:ss}");
+            
+            // 复制按钮
+            if (Widgets.ButtonText(new Rect(rect.x + rect.width - 170, y, 80, 20), "复制请求"))
+            {
+                GUIUtility.systemCopyBuffer = log.RequestJson ?? "";
+                Messages.Message("请求 JSON 已复制", MessageTypeDefOf.NeutralEvent);
+            }
+            if (Widgets.ButtonText(new Rect(rect.x + rect.width - 85, y, 80, 20), "复制响应"))
+            {
+                GUIUtility.systemCopyBuffer = log.ResponseJson ?? "";
+                Messages.Message("响应 JSON 已复制", MessageTypeDefOf.NeutralEvent);
+            }
+            y += 25;
+            
+            // 状态信息
+            string statusText = log.Success ? "<color=#88ff88>✓ 成功</color>" : $"<color=#ff8888>✗ 失败: {log.ErrorMessage}</color>";
+            Widgets.Label(new Rect(x, y, width, 20), statusText);
+            y += 22;
+            
+            // Token 和耗时统计
+            if (log.TotalTokens > 0)
+            {
+                GUI.color = new Color(0.7f, 0.8f, 1f);
+                Widgets.Label(new Rect(x, y, width, 20), 
+                    $"📊 Tokens: {log.TotalTokens} (Prompt: {log.PromptTokens}, Completion: {log.CompletionTokens}) | ⏱️ {log.DurationSeconds:F2}s");
+                GUI.color = Color.white;
+            }
+            y += 25;
+            
+            // 请求 JSON
+            Widgets.Label(new Rect(x, y, width, 20), "<b>📤 Request:</b>");
+            y += 22;
+            
+            Rect requestRect = new Rect(x, y, width, halfHeight);
+            Widgets.DrawBoxSolid(requestRect, new Color(0.05f, 0.05f, 0.08f, 0.9f));
+            DrawScrollableText(requestRect, FormatJson(log.RequestJson), ref llmDetailScrollPos);
+            y += halfHeight + 10;
+            
+            // 响应 JSON
+            Widgets.Label(new Rect(x, y, width, 20), "<b>📥 Response:</b>");
+            y += 22;
+            
+            Rect responseRect = new Rect(x, y, width, halfHeight);
+            Widgets.DrawBoxSolid(responseRect, new Color(0.05f, 0.05f, 0.08f, 0.9f));
+            
+            Vector2 responseScrollPos = Vector2.zero;
+            DrawScrollableText(responseRect, FormatJson(log.ResponseJson), ref responseScrollPos);
+        }
+        
+        /// <summary>
+        /// 格式化 JSON 字符串以便阅读（简单处理）
+        /// </summary>
+        private string FormatJson(string json)
+        {
+            if (string.IsNullOrEmpty(json)) return "(empty)";
+            
+            // 简单格式化：在关键符号后添加换行
+            try
+            {
+                // 尝试使用 Newtonsoft.Json 格式化
+                var obj = Newtonsoft.Json.JsonConvert.DeserializeObject(json);
+                return Newtonsoft.Json.JsonConvert.SerializeObject(obj, Newtonsoft.Json.Formatting.Indented);
+            }
+            catch
+            {
+                // 如果解析失败，返回原始字符串
+                return json;
             }
         }
         

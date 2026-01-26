@@ -14,6 +14,6 @@ To colonists (if they witness the effects), these manifest as:
 Do NOT fabricate results. Use tools to gather information or execute your will.
 </Instruction>
 <Tools>
-{{ToolBoxSection}}
+{{ snippets.tool_box_section }}
 </Tools>
 </ToolBox>

@@ -57,6 +57,7 @@ namespace TheSecondSeat.PersonaGeneration
         // 表情持续时间（秒）
         public float ExpressionDuration { get; set; } = 3f;
         public int ExpressionStartTick { get; set; } = 0;
+        public int DurationTicks { get; set; } = 1800; // 默认 30秒
         
         // 是否锁定表情（某些重要场景）
         public bool IsLocked { get; set; } = false;
@@ -203,6 +204,7 @@ namespace TheSecondSeat.PersonaGeneration
             state.TransitionProgress = 0f;
             state.TransitionTicks = 0;
             state.ExpressionStartTick = Find.TickManager.TicksGame;
+            state.DurationTicks = durationTicks; // ⭐ 存储持续时间
             
             // ? v1.6.30: 应用感情驱动动画（自动调整眨眼、呼吸等）
             ApplyEmotionDrivenAnimation(personaDefName);
@@ -242,11 +244,17 @@ namespace TheSecondSeat.PersonaGeneration
             // 计算目标变体
             int targetVariant = fixedVariant > 0 ? fixedVariant : (intensity > 0 ? intensity : 0);
             
-            // 如果表情、强度和变体都相同，跳过（避免不必要的缓存清除）
+            // 如果表情、强度和变体都相同
             if (state.CurrentExpression == expression &&
                 state.Intensity == intensity &&
                 state.CurrentVariant == targetVariant)
             {
+                // ⭐ 如果只是持续时间不同，更新持续时间并返回（不清除缓存）
+                if (state.DurationTicks != durationTicks)
+                {
+                    state.DurationTicks = durationTicks;
+                    state.ExpressionStartTick = Find.TickManager.TicksGame; // 重置计时
+                }
                 return;
             }
             
@@ -285,6 +293,7 @@ namespace TheSecondSeat.PersonaGeneration
             state.TransitionProgress = 0f;
             state.TransitionTicks = 0;
             state.ExpressionStartTick = Find.TickManager.TicksGame;
+            state.DurationTicks = durationTicks; // ⭐ 存储持续时间
             
             // 应用感情驱动动画
             ApplyEmotionDrivenAnimation(personaDefName);
@@ -296,6 +305,22 @@ namespace TheSecondSeat.PersonaGeneration
         public static void SetThinkingExpression(string personaDefName)
         {
             SetExpression(personaDefName, ExpressionType.Thoughtful, ExpressionTrigger.Processing);
+        }
+        
+        /// <summary>
+        /// ⭐ v2.10.0: 回退到基于好感度的表情（无关键词推断）
+        /// </summary>
+        public static void FallbackToAffinityExpression(string personaDefName)
+        {
+            // 获取当前好感度
+            float affinity = 0f;
+            var narratorManager = Current.Game?.GetComponent<NarratorManager>();
+            if (narratorManager != null)
+            {
+                affinity = narratorManager.Favorability;
+            }
+            
+            UpdateExpressionByAffinity(personaDefName, affinity);
         }
         
         /// <summary>
@@ -593,7 +618,8 @@ namespace TheSecondSeat.PersonaGeneration
                 
                 int elapsedTicks = Find.TickManager.TicksGame - state.ExpressionStartTick;
                 
-                if (elapsedTicks > EXPRESSION_DURATION_TICKS)
+                // ⭐ 使用存储的持续时间，而不是硬编码常量
+                if (elapsedTicks > state.DurationTicks)
                 {
                     // 获取当前好感度对应的基础表情
                     float favorability = 0f;
@@ -633,6 +659,7 @@ namespace TheSecondSeat.PersonaGeneration
                     state.TransitionTicks = 0;
                     state.ExpressionStartTick = Find.TickManager.TicksGame;
                     state.LastTrigger = ExpressionTrigger.RandomVariation;
+                    state.DurationTicks = EXPRESSION_DURATION_TICKS; // 恢复默认持续时间
                     
                     // 清除缓存以更新显示
                     if (state.PreviousExpression != ExpressionType.Neutral)

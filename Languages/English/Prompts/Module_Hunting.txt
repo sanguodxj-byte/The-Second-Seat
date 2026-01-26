@@ -1,0 +1,15 @@
+## Hunting Knowledge
+
+### Hunting Commands
+Use the 'Hunt' command to hunt animals. You can specify:
+- target: Animal type or "all"
+- scope: Scope
+
+### Danger Warnings
+- Large predators may retaliate
+- Herds of animals may attack together
+- Recommend sending colonists with high shooting skills
+
+### Yields
+- Meat: Used for cooking
+- Leather: Used for crafting clothing

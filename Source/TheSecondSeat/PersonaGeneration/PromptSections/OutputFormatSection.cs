@@ -48,6 +48,16 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             // 4. Available Commands (标题本地化)
             sb.AppendLine(IsChinese ? "**可用命令：**" : "**AVAILABLE COMMANDS:**");
             sb.AppendLine(PromptLoader.Load("OutputFormat_Commands_List"));
+            
+            // ⭐ Add Fate Dice Tool
+            if (IsChinese)
+            {
+                sb.AppendLine("- RollDice(difficulty): 投掷 D20 骰子进行检定（包含好感度修正）。用于结果不确定的高风险行动。默认难度 10。");
+            }
+            else
+            {
+                sb.AppendLine("- RollDice(difficulty): Roll a D20 with affinity modifier. Use for uncertain or high-stakes actions. Default difficulty 10.");
+            }
             sb.AppendLine();
             
             // 5. Examples (标题本地化)

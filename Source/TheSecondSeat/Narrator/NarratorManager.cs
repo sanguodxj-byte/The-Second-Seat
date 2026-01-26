@@ -196,6 +196,7 @@ namespace TheSecondSeat.Narrator
                 var logReaderTool = new RimAgent.Tools.LogReaderTool();
                 var logAnalysisTool = new RimAgent.Tools.LogAnalysisTool();
                 var filePatcherTool = new RimAgent.Tools.FilePatcherTool();
+                var rollDiceTool = new RimAgent.Tools.RollDiceTool();
                 
                 // 注册到全局库 (如果已存在会自动跳过或覆盖)
                 RimAgent.RimAgentTools.RegisterTool(searchTool.Name, searchTool);
@@ -206,6 +207,7 @@ namespace TheSecondSeat.Narrator
                 RimAgent.RimAgentTools.RegisterTool(logReaderTool.Name, logReaderTool);
                 RimAgent.RimAgentTools.RegisterTool(logAnalysisTool.Name, logAnalysisTool);
                 RimAgent.RimAgentTools.RegisterTool(filePatcherTool.Name, filePatcherTool);
+                RimAgent.RimAgentTools.RegisterTool(rollDiceTool.Name, rollDiceTool);
                 
                 // 注册工具到 Narrator Agent
                 narratorAgent.RegisterTool(searchTool.Name);
@@ -216,6 +218,7 @@ namespace TheSecondSeat.Narrator
                 narratorAgent.RegisterTool(logReaderTool.Name);
                 narratorAgent.RegisterTool(logAnalysisTool.Name);
                 narratorAgent.RegisterTool(filePatcherTool.Name);
+                narratorAgent.RegisterTool(rollDiceTool.Name);
 
                 // 注册工具到 Event Director Agent
                 // EventDirector 主要需要 CommandTool 来执行 Incident/Quest

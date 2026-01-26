@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 using Verse;
 using RimWorld;
+using TheSecondSeat.TTS;
 
 namespace TheSecondSeat.PersonaGeneration
 {
@@ -15,10 +16,12 @@ namespace TheSecondSeat.PersonaGeneration
     {
         private NarratorPersonaDef currentPersona;
         private RenderTreeDef currentDef;
+        private LipSyncMappingDef currentLipSyncDef;
+        private List<OutfitDef> currentOutfits; // ⭐ v2.7.0: 服装配置
         private Vector2 scrollPosition;
         private float lastScrollViewHeight = 1000f; // 动态计算滚动高度
         
-        private enum ConfigTab { Expressions, Speaking, Body, Accessories, HeadPat }
+        private enum ConfigTab { Expressions, Speaking, Body, Accessories, HeadPat, LipSync, Outfits }
         private ConfigTab currentTab = ConfigTab.Expressions;
         
         // 预览相关
@@ -52,24 +55,51 @@ namespace TheSecondSeat.PersonaGeneration
             
             // 默认选中第一个 Narrator
             currentPersona = DefDatabase<NarratorPersonaDef>.AllDefsListForReading.FirstOrDefault();
+            ReloadDefs();
+        }
+        
+        private void ReloadDefs()
+        {
             if (currentPersona != null)
             {
                 currentDef = RenderTreeDefManager.GetRenderTree(currentPersona.defName);
+                
+                string lipSyncPath = RenderTreeConfigIO.GetDefaultLipSyncSavePath(currentPersona.defName);
+                currentLipSyncDef = RenderTreeConfigIO.LoadLipSyncMappingFromXml(lipSyncPath);
+                if (currentLipSyncDef == null)
+                {
+                    currentLipSyncDef = new LipSyncMappingDef
+                    {
+                        defName = currentPersona.defName,
+                        mappings = new List<LipSyncMappingDef.GroupMapping>()
+                    };
+                }
+
+                // ⭐ v2.7.0: 加载服装配置
+                string outfitPath = OutfitConfigIO.GetDefaultSavePath(currentPersona.defName);
+                if (System.IO.File.Exists(outfitPath))
+                {
+                    currentOutfits = OutfitConfigIO.LoadOutfitsFromXml(outfitPath);
+                }
+                else
+                {
+                    // 如果没有自定义配置，加载默认的 Defs
+                    currentOutfits = new List<OutfitDef>(OutfitDefManager.GetOutfitsForPersona(currentPersona.defName));
+                }
             }
         }
-        
+
         public override void DoWindowContents(Rect inRect)
         {
             Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(0, 0, 300, 30), "表情映射管理器");
+            Widgets.Label(new Rect(0, 0, 300, 30), "TSS_RenderTree_WindowTitle".Translate());
             Text.Font = GameFont.Small;
             
             // 顶部工具栏
             float topY = 0f;
-            float topHeight = 40f;
             
             // 选择 Persona
-            if (Widgets.ButtonText(new Rect(320, topY, 200, 30), currentPersona?.narratorName ?? "选择叙事者"))
+            if (Widgets.ButtonText(new Rect(320, topY, 200, 30), currentPersona?.narratorName ?? "TSS_RenderTree_SelectNarrator".Translate()))
             {
                 List<FloatMenuOption> options = new List<FloatMenuOption>();
                 foreach (var def in DefDatabase<NarratorPersonaDef>.AllDefsListForReading)
@@ -77,7 +107,7 @@ namespace TheSecondSeat.PersonaGeneration
                     options.Add(new FloatMenuOption(def.narratorName, () =>
                     {
                         currentPersona = def;
-                        currentDef = RenderTreeDefManager.GetRenderTree(def.defName);
+                        ReloadDefs();
                         MarkDirty();
                     }));
                 }
@@ -85,9 +115,25 @@ namespace TheSecondSeat.PersonaGeneration
             }
             
             // 保存按钮
-            if (Widgets.ButtonText(new Rect(530, topY, 80, 30), "保存"))
+            if (Widgets.ButtonText(new Rect(530, topY, 80, 30), "TSS_RenderTree_Save".Translate()))
             {
-                if (currentDef != null)
+                if (currentTab == ConfigTab.Outfits)
+                {
+                    if (currentOutfits != null && currentPersona != null)
+                    {
+                        string path = OutfitConfigIO.GetDefaultSavePath(currentPersona.defName);
+                        OutfitConfigIO.SaveOutfitsToXml(currentPersona.defName, currentOutfits, path);
+                    }
+                }
+                else if (currentTab == ConfigTab.LipSync)
+                {
+                    if (currentLipSyncDef != null)
+                    {
+                        string path = RenderTreeConfigIO.GetDefaultLipSyncSavePath(currentLipSyncDef.defName);
+                        RenderTreeConfigIO.SaveLipSyncMappingToXml(currentLipSyncDef, path);
+                    }
+                }
+                else if (currentDef != null)
                 {
                     string path = RenderTreeConfigIO.GetDefaultSavePath(currentDef.defName);
                     RenderTreeConfigIO.SaveToXml(currentDef, path);
@@ -95,15 +141,48 @@ namespace TheSecondSeat.PersonaGeneration
             }
             
             // 读取按钮
-            if (Widgets.ButtonText(new Rect(615, topY, 80, 30), "读取"))
+            if (Widgets.ButtonText(new Rect(615, topY, 80, 30), "TSS_RenderTree_Load".Translate()))
             {
-                if (currentDef != null)
+                if (currentTab == ConfigTab.Outfits)
+                {
+                    if (currentPersona != null)
+                    {
+                        string path = OutfitConfigIO.GetDefaultSavePath(currentPersona.defName);
+                        var loadedOutfits = OutfitConfigIO.LoadOutfitsFromXml(path);
+                        if (loadedOutfits != null && loadedOutfits.Count > 0)
+                        {
+                            currentOutfits = loadedOutfits;
+                            Messages.Message("TSS_RenderTree_LoadSuccess".Translate(path), MessageTypeDefOf.PositiveEvent, false);
+                        }
+                        else
+                        {
+                            Messages.Message("TSS_RenderTree_LoadFailed".Translate(path), MessageTypeDefOf.NeutralEvent, false);
+                        }
+                    }
+                }
+                else if (currentTab == ConfigTab.LipSync)
+                {
+                    if (currentPersona != null)
+                    {
+                        string path = RenderTreeConfigIO.GetDefaultLipSyncSavePath(currentPersona.defName);
+                        var loadedDef = RenderTreeConfigIO.LoadLipSyncMappingFromXml(path);
+                        if (loadedDef != null)
+                        {
+                            currentLipSyncDef = loadedDef;
+                            Messages.Message("TSS_RenderTree_LipSync_LoadSuccess".Translate(), MessageTypeDefOf.PositiveEvent, false);
+                        }
+                        else
+                        {
+                            Messages.Message("TSS_RenderTree_LipSync_LoadFailed".Translate(), MessageTypeDefOf.NeutralEvent, false);
+                        }
+                    }
+                }
+                else if (currentDef != null)
                 {
                     string path = RenderTreeConfigIO.GetDefaultSavePath(currentDef.defName);
                     var loadedDef = RenderTreeConfigIO.LoadFromXml(path);
                     if (loadedDef != null)
                     {
-                        // 将加载的数据合并到当前 Def
                         currentDef.expressions = loadedDef.expressions;
                         currentDef.speaking = loadedDef.speaking;
                         currentDef.bodyMappings = loadedDef.bodyMappings;
@@ -111,11 +190,11 @@ namespace TheSecondSeat.PersonaGeneration
                         currentDef.headPat = loadedDef.headPat;
                         InvalidateExpressionCache();
                         MarkDirty(true);
-                        Messages.Message($"已从 {path} 读取配置", MessageTypeDefOf.PositiveEvent, false);
+                        Messages.Message("TSS_RenderTree_LoadSuccess".Translate(path), MessageTypeDefOf.PositiveEvent, false);
                     }
                     else
                     {
-                        Messages.Message($"未找到配置文件: {path}", MessageTypeDefOf.NeutralEvent, false);
+                        Messages.Message("TSS_RenderTree_LoadFailed".Translate(path), MessageTypeDefOf.NeutralEvent, false);
                     }
                 }
             }
@@ -123,14 +202,21 @@ namespace TheSecondSeat.PersonaGeneration
             // 显示配置文件路径提示
             if (currentDef != null)
             {
-                string configPath = RenderTreeConfigIO.GetDefaultSavePath(currentDef.defName);
-                TooltipHandler.TipRegion(new Rect(530, topY, 165, 30), $"配置文件路径:\n{configPath}");
+                string configPath = "";
+                if (currentTab == ConfigTab.Outfits)
+                    configPath = OutfitConfigIO.GetDefaultSavePath(currentPersona?.defName ?? "");
+                else if (currentTab == ConfigTab.LipSync)
+                    configPath = RenderTreeConfigIO.GetDefaultLipSyncSavePath(currentPersona?.defName ?? "");
+                else
+                    configPath = RenderTreeConfigIO.GetDefaultSavePath(currentDef.defName);
+                    
+                TooltipHandler.TipRegion(new Rect(530, topY, 165, 30), "TSS_RenderTree_ConfigPath".Translate() + "\n" + configPath);
             }
             
             // 如果没有 Def，显示提示
             if (currentDef == null)
             {
-                Widgets.Label(new Rect(0, 40, inRect.width, 30), "未找到有效的 RenderTreeDef");
+                Widgets.Label(new Rect(0, 40, inRect.width, 30), "TSS_RenderTree_NoDefFound".Translate());
                 return;
             }
             
@@ -162,22 +248,30 @@ namespace TheSecondSeat.PersonaGeneration
 
         private void DrawTabs(Rect rect)
         {
-            float tabWidth = rect.width / 5f;
+            float tabWidth = rect.width / 7f; // ⭐ v2.7.0: 增加到7个Tab
             
-            if (Widgets.ButtonText(new Rect(rect.x, rect.y, tabWidth, rect.height), "表情 (Expressions)"))
+            // ⭐ v2.6.6: 使用翻译键替代双语硬编码
+            if (Widgets.ButtonText(new Rect(rect.x, rect.y, tabWidth, rect.height), "TSS_RenderTree_Tab_Expressions".Translate()))
                 currentTab = ConfigTab.Expressions;
                 
-            if (Widgets.ButtonText(new Rect(rect.x + tabWidth, rect.y, tabWidth, rect.height), "说话 (Speaking)"))
+            if (Widgets.ButtonText(new Rect(rect.x + tabWidth, rect.y, tabWidth, rect.height), "TSS_RenderTree_Tab_Speaking".Translate()))
                 currentTab = ConfigTab.Speaking;
                 
-            if (Widgets.ButtonText(new Rect(rect.x + tabWidth * 2, rect.y, tabWidth, rect.height), "服装与姿态 (Body)"))
+            if (Widgets.ButtonText(new Rect(rect.x + tabWidth * 2, rect.y, tabWidth, rect.height), "TSS_RenderTree_Tab_Body".Translate()))
                 currentTab = ConfigTab.Body;
                 
-            if (Widgets.ButtonText(new Rect(rect.x + tabWidth * 3, rect.y, tabWidth, rect.height), "配件与特效 (Acc)"))
+            if (Widgets.ButtonText(new Rect(rect.x + tabWidth * 3, rect.y, tabWidth, rect.height), "TSS_RenderTree_Tab_Accessories".Translate()))
                 currentTab = ConfigTab.Accessories;
 
-            if (Widgets.ButtonText(new Rect(rect.x + tabWidth * 4, rect.y, tabWidth, rect.height), "摸头动画 (HeadPat)"))
+            if (Widgets.ButtonText(new Rect(rect.x + tabWidth * 4, rect.y, tabWidth, rect.height), "TSS_RenderTree_Tab_HeadPat".Translate()))
                 currentTab = ConfigTab.HeadPat;
+
+            if (Widgets.ButtonText(new Rect(rect.x + tabWidth * 5, rect.y, tabWidth, rect.height), "TSS_RenderTree_Tab_LipSync".Translate()))
+                currentTab = ConfigTab.LipSync;
+            
+            // ⭐ v2.7.0: 添加服装Tab
+            if (Widgets.ButtonText(new Rect(rect.x + tabWidth * 6, rect.y, tabWidth, rect.height), "TSS_RenderTree_Tab_Outfits".Translate()))
+                currentTab = ConfigTab.Outfits;
                 
             // 高亮当前标签
             float highlightX = rect.x + (int)currentTab * tabWidth;
@@ -447,101 +541,70 @@ namespace TheSecondSeat.PersonaGeneration
         
         private void DrawConfigArea(Rect rect)
         {
-            // 使用上一帧计算的高度
-            Rect viewRect = new Rect(0, 0, rect.width - 16, lastScrollViewHeight);
+            // 使用上一帧计算的高度 (增加缓冲以防止闪烁)
+            Rect viewRect = new Rect(0, 0, rect.width - 16, Mathf.Max(lastScrollViewHeight, rect.height));
             Widgets.BeginScrollView(rect, ref scrollPosition, viewRect);
             
             Listing_Standard list = new Listing_Standard();
             list.Begin(viewRect);
             
-            switch (currentTab)
+            try
             {
-                case ConfigTab.Expressions:
-                    DrawExpressionsConfig(list);
-                    break;
-                case ConfigTab.Speaking:
-                    DrawSpeakingConfig(list);
-                    break;
-                case ConfigTab.Body:
-                    DrawBodyConfig(list);
-                    break;
-                case ConfigTab.Accessories:
-                    DrawAccessoriesConfig(list);
-                    break;
-                case ConfigTab.HeadPat:
-                    DrawHeadPatConfig(list);
-                    break;
+                switch (currentTab)
+                {
+                    case ConfigTab.Expressions:
+                        DrawExpressionsConfig(list);
+                        break;
+                    case ConfigTab.Speaking:
+                        DrawSpeakingConfig(list);
+                        break;
+                    case ConfigTab.Body:
+                        DrawBodyConfig(list);
+                        break;
+                    case ConfigTab.Accessories:
+                        DrawAccessoriesConfig(list);
+                        break;
+                    case ConfigTab.HeadPat:
+                        DrawHeadPatConfig(list);
+                        break;
+                    case ConfigTab.LipSync:
+                        DrawLipSyncConfig(list);
+                        break;
+                    case ConfigTab.Outfits:
+                        DrawOutfitsConfig(list);
+                        break;
+                }
             }
-            
-            // 更新高度以便下一帧使用
-            if (Event.current.type == EventType.Repaint)
+            finally
             {
-                lastScrollViewHeight = list.CurHeight + 50f;
+                // 确保在 End 之前获取高度
+                float newHeight = list.CurHeight + 100f; // 增加额外缓冲
+                
+                list.End();
+                Widgets.EndScrollView();
+                
+                // 更新高度以便下一帧使用
+                if (Event.current.type == EventType.Repaint)
+                {
+                    // 平滑高度变化，防止剧烈跳动
+                    if (Mathf.Abs(newHeight - lastScrollViewHeight) > 1f)
+                    {
+                        lastScrollViewHeight = newHeight;
+                    }
+                }
             }
-            
-            list.End();
-            Widgets.EndScrollView();
         }
 
         private void DrawExpressionsConfig(Listing_Standard list)
         {
-            list.Label("<b>表情映射 (Expression Mappings) - 动态配置</b>");
+            list.Label($"<b>{"TSS_RenderTree_ExpressionMappings".Translate()}</b>");
             list.Gap(4);
             
-            // ⭐ v2.6.0: 从配置中动态获取表情列表
-            var expressionNames = GetConfiguredExpressionNames();
-            
-            const int buttonsPerRow = 7;
-            const float buttonHeight = 22f;
-            const float buttonSpacing = 2f;
-            float availableWidth = list.ColumnWidth;
-            float buttonWidth = (availableWidth - buttonSpacing * (buttonsPerRow - 1)) / buttonsPerRow;
-            
-            // 绘制表情类型快速选择按钮
-            list.Label("<color=#888888>已配置的表情 (点击预览):</color>");
-            list.Gap(2);
-            
-            int rowCount = Mathf.CeilToInt((float)expressionNames.Count / buttonsPerRow);
-            for (int row = 0; row < rowCount; row++)
-            {
-                Rect rowRect = list.GetRect(buttonHeight);
-                for (int col = 0; col < buttonsPerRow; col++)
-                {
-                    int index = row * buttonsPerRow + col;
-                    if (index >= expressionNames.Count) break;
-                    
-                    string exprName = expressionNames[index];
-                    float x = rowRect.x + col * (buttonWidth + buttonSpacing);
-                    Rect btnRect = new Rect(x, rowRect.y, buttonWidth, buttonHeight);
-                    
-                    // 高亮当前预览的表情
-                    if (previewExpressionName == exprName)
-                    {
-                        Widgets.DrawHighlight(btnRect);
-                    }
-                    
-                    // 使用缩写显示
-                    string shortName = exprName;
-                    if (shortName.Length > 7) shortName = shortName.Substring(0, 6) + "..";
-                    
-                    if (Widgets.ButtonText(btnRect, shortName, true, true, true))
-                    {
-                        previewExpressionName = exprName;
-                        previewVariant = 0;
-                        MarkDirty();
-                    }
-                    
-                    // 鼠标悬停提示完整名称
-                    TooltipHandler.TipRegion(btnRect, exprName);
-                }
-                list.Gap(buttonSpacing);
-            }
-            
-            list.GapLine();
-            list.Gap(4);
+            // ⭐ v2.6.6: 移除多余的表情预览按钮区域（左侧预览区已有）
+            // 直接显示添加新表情和配置表格
             
             // ⭐ v2.6.0: 添加新表情输入框（含纹理配置）
-            list.Label("<color=#888888>添加新表情类型:</color>");
+            list.Label($"<color=#888888>{"TSS_RenderTree_AddNewExpression".Translate()}:</color>");
             
             // 第一行：表情名称
             Rect addRow1 = list.GetRect(24);
@@ -1036,6 +1099,187 @@ namespace TheSecondSeat.PersonaGeneration
                     
                     list.Gap(4);
                 }
+            }
+        }
+
+        private void DrawLipSyncConfig(Listing_Standard list)
+        {
+            list.Label($"<b>{"TSS_RenderTree_LipSync_ConfigTitle".Translate()}</b>");
+            list.Gap();
+
+            if (currentLipSyncDef == null)
+            {
+                list.Label("TSS_RenderTree_LipSync_NoDefLoaded".Translate());
+                return;
+            }
+
+            // Global Settings
+            list.Label("TSS_RenderTree_LipSync_GlobalSettings".Translate());
+            
+            // Attack/Release
+            if (list.ButtonText("TSS_RenderTree_LipSync_AttackViseme".Translate(currentLipSyncDef.attackViseme)))
+            {
+                List<FloatMenuOption> options = new List<FloatMenuOption>();
+                foreach (VisemeCode code in Enum.GetValues(typeof(VisemeCode)))
+                {
+                    options.Add(new FloatMenuOption(code.ToString(), () => currentLipSyncDef.attackViseme = code));
+                }
+                Find.WindowStack.Add(new FloatMenu(options));
+            }
+            
+            if (list.ButtonText("TSS_RenderTree_LipSync_ReleaseViseme".Translate(currentLipSyncDef.releaseViseme)))
+            {
+                List<FloatMenuOption> options = new List<FloatMenuOption>();
+                foreach (VisemeCode code in Enum.GetValues(typeof(VisemeCode)))
+                {
+                    options.Add(new FloatMenuOption(code.ToString(), () => currentLipSyncDef.releaseViseme = code));
+                }
+                Find.WindowStack.Add(new FloatMenu(options));
+            }
+
+            string sustainStr = currentLipSyncDef.sustainFrames.ToString();
+            list.TextFieldNumericLabeled("TSS_RenderTree_LipSync_SustainFrames".Translate(), ref currentLipSyncDef.sustainFrames, ref sustainStr, 0, 60);
+
+            // Default Viseme
+            if (list.ButtonText("TSS_RenderTree_LipSync_DefaultViseme".Translate(currentLipSyncDef.defaultViseme)))
+            {
+                List<FloatMenuOption> options = new List<FloatMenuOption>();
+                foreach (VisemeCode code in Enum.GetValues(typeof(VisemeCode)))
+                {
+                    options.Add(new FloatMenuOption(code.ToString(), () =>
+                    {
+                        currentLipSyncDef.defaultViseme = code;
+                    }));
+                }
+                Find.WindowStack.Add(new FloatMenu(options));
+            }
+
+            list.GapLine();
+
+            // Mappings List
+            list.Label("TSS_RenderTree_LipSync_MappingsList".Translate());
+            
+            if (list.ButtonText("TSS_RenderTree_LipSync_AddNewMapping".Translate()))
+            {
+                currentLipSyncDef.mappings.Add(new LipSyncMappingDef.GroupMapping());
+            }
+            
+            list.Gap();
+
+            for (int i = 0; i < currentLipSyncDef.mappings.Count; i++)
+            {
+                var mapping = currentLipSyncDef.mappings[i];
+                Rect rect = list.GetRect(30f);
+                
+                // Group Dropdown
+                if (Widgets.ButtonText(new Rect(rect.x, rect.y, 150, 24), mapping.group.ToString()))
+                {
+                    List<FloatMenuOption> options = new List<FloatMenuOption>();
+                    foreach (PhonemeGroup pg in Enum.GetValues(typeof(PhonemeGroup)))
+                    {
+                        options.Add(new FloatMenuOption(pg.ToString(), () =>
+                        {
+                            mapping.group = pg;
+                        }));
+                    }
+                    Find.WindowStack.Add(new FloatMenu(options));
+                }
+
+                // Arrow
+                Widgets.Label(new Rect(rect.x + 160, rect.y, 30, 24), "->");
+
+                // Viseme Dropdown
+                if (Widgets.ButtonText(new Rect(rect.x + 190, rect.y, 150, 24), mapping.viseme.ToString()))
+                {
+                    List<FloatMenuOption> options = new List<FloatMenuOption>();
+                    foreach (VisemeCode code in Enum.GetValues(typeof(VisemeCode)))
+                    {
+                        options.Add(new FloatMenuOption(code.ToString(), () =>
+                        {
+                            mapping.viseme = code;
+                        }));
+                    }
+                    Find.WindowStack.Add(new FloatMenu(options));
+                }
+
+                // Remove Button
+                if (Widgets.ButtonText(new Rect(rect.x + 350, rect.y, 30, 24), "X"))
+                {
+                    currentLipSyncDef.mappings.RemoveAt(i);
+                    i--;
+                }
+
+                list.Gap(4f);
+            }
+        }
+        private void DrawOutfitsConfig(Listing_Standard list)
+        {
+            list.Label($"<b>{"TSS_RenderTree_Tab_Outfits".Translate()}</b>");
+            list.Gap();
+            
+            if (currentPersona == null)
+            {
+                list.Label("请先选择叙事者");
+                return;
+            }
+
+            if (list.ButtonText("添加新服装"))
+            {
+                if (currentOutfits == null) currentOutfits = new List<OutfitDef>();
+                var newOutfit = new OutfitDef
+                {
+                    defName = $"{currentPersona.defName}_Outfit_{DateTime.Now.Ticks}",
+                    label = "New Outfit",
+                    outfitTag = "Casual",
+                    personaDefName = currentPersona.defName,
+                    priority = 0
+                };
+                currentOutfits.Add(newOutfit);
+            }
+            list.Gap();
+
+            if (currentOutfits == null || currentOutfits.Count == 0)
+            {
+                list.Label("无可用服装定义 (No OutfitDefs found for this persona)");
+                return;
+            }
+
+            // Headers
+            Rect header = list.GetRect(24);
+            float wTag = 100;
+            float wLabel = 150;
+            float wPriority = 60;
+            float wBody = 200;
+            float wDesc = 200;
+            float x = header.x;
+            
+            Widgets.Label(new Rect(x, header.y, wTag, 24), "Tag"); x += wTag + 5;
+            Widgets.Label(new Rect(x, header.y, wLabel, 24), "Label"); x += wLabel + 5;
+            Widgets.Label(new Rect(x, header.y, wPriority, 24), "Priority"); x += wPriority + 5;
+            Widgets.Label(new Rect(x, header.y, wBody, 24), "Body Texture"); x += wBody + 5;
+            Widgets.Label(new Rect(x, header.y, wDesc, 24), "Description"); x += wDesc + 5;
+
+            for (int i = 0; i < currentOutfits.Count; i++)
+            {
+                var outfit = currentOutfits[i];
+                Rect r = list.GetRect(24);
+                x = r.x;
+
+                outfit.outfitTag = Widgets.TextField(new Rect(x, r.y, wTag, 24), outfit.outfitTag); x += wTag + 5;
+                outfit.label = Widgets.TextField(new Rect(x, r.y, wLabel, 24), outfit.label); x += wLabel + 5;
+                
+                string priStr = outfit.priority.ToString();
+                Widgets.TextFieldNumeric(new Rect(x, r.y, wPriority, 24), ref outfit.priority, ref priStr); x += wPriority + 5;
+                
+                outfit.bodyTexture = Widgets.TextField(new Rect(x, r.y, wBody, 24), outfit.bodyTexture); x += wBody + 5;
+                outfit.outfitDescription = Widgets.TextField(new Rect(x, r.y, wDesc, 24), outfit.outfitDescription); x += wDesc + 5;
+
+                if (Widgets.ButtonText(new Rect(x, r.y, 30, 24), "X"))
+                {
+                    currentOutfits.RemoveAt(i);
+                    i--;
+                }
+                list.Gap(4);
             }
         }
 

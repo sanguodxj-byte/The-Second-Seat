@@ -1,0 +1,162 @@
+Analyze this character portrait in detail and provide a comprehensive JSON response.
+
+**CRITICAL: The characterDescription field MUST be written in English!**
+
+{{- if snippets.has_context == "true" -}}
+{{- if snippets.selected_traits != "" -}}
+**USER SELECTED TRAITS:**
+---
+{{ snippets.selected_traits }}
+---
+
+{{ end -}}
+{{- if snippets.user_supplement != "" -}}
+**USER PROVIDED CONTEXT:**
+---
+{{ snippets.user_supplement }}
+---
+
+**CRITICAL INSTRUCTIONS:**
+1. The user description above provides the CHARACTER'S PERSONALITY and BEHAVIOR.
+2. You MUST analyze the visual image to describe PHYSICAL APPEARANCE.
+3. In your characterDescription, COMBINE:
+   - Visual details (from image): hair color, eye color, clothing, posture, etc.
+   - Personality traits (from user): use the user's description
+4. DO NOT contradict the user's personality description!
+5. Your job is to ADD visual details to their personality, not replace it.
+
+**PERSONALITY TAGS REQUIREMENT:**
+6. Based on the image and user description, suggest 3-6 personality tags in English.
+7. Examples: "Kind", "Strong", "Clingy", "Yandere", "Tsundere", "Gentle", "Cold"
+8. Include the user's selected traits if they match the analysis.
+
+{{ end -}}
+{{- end -}}
+{
+  "dominantColors": [
+    {"hex": "#RRGGBB", "percentage": 0-100, "name": "color name in English"}
+  ],
+  "visualElements": ["element1", "element2", "element3"],
+  "characterDescription": "Detailed 300-500 word appearance description and personality inference in English",
+  "mood": "overall mood/atmosphere in English",
+  "suggestedPersonality": "Benevolent/Sadistic/Chaotic/Strategic/Protective/Manipulative",
+  "styleKeywords": ["keyword1", "keyword2", "keyword3"],
+{{- if snippets.has_context == "true" -}}
+  "personalityTags": ["Tag1", "Tag2", "Tag3", ...],
+{{- end -}}
+  "phraseLibrary": [
+    { "key": "HeadPat", "phrases": ["phrase1", "phrase2"] },
+    { "key": "BodyPoke", "phrases": ["phrase1", "phrase2"] },
+    { "key": "Greeting", "phrases": ["phrase1", "phrase2"] }
+  ],
+  "interactionZones": {
+    "head": { "xMin": 0.0, "yMin": 0.0, "xMax": 1.0, "yMax": 0.3 },
+    "body": { "xMin": 0.0, "yMin": 0.3, "xMax": 1.0, "yMax": 1.0 }
+  }
+}
+
+**CRITICAL REQUIREMENTS for characterDescription (MUST be in English!):**
+
+**Part 1: Detailed Appearance Description (40%)**
+
+Describe all visible details:
+- **Race**: Human? Elf? Dragon-kin? Orc? Android?
+- **Hair**: Color, length, style, texture (e.g., "Silky silver hair cascading down like a waterfall, tied with a crimson ribbon")
+- **Eyes**: Color, shape, expression (e.g., "Crimson vertical slit pupils, revealing wisdom and danger")
+- **Facial Features**: Expression, age, scars, markings
+- **Body**: Build, posture, stance
+- **Clothing & Armor**:
+  * Main attire
+  * Armor pieces
+  * Accessories
+  * Material and condition
+- **Special Features**: Wings, tails, horns, weapons, magical effects
+- **Overall Impression**: Mood conveyed by posture, lighting, composition
+
+**Part 2: Personality Inference from Appearance (40%)**
+
+Infer traits from visual cues:
+
+**From Expression & Body Language**:
+- Stern face → Reserved, disciplined, self-controlled
+- Confident stance → Decisive, experienced, leadership qualities
+- Guarded posture → Cautious, defensive, possible past trauma
+- Relaxed expression → Approachable, friendly, trusting
+
+**From Clothing & Armor**:
+- Heavy armor → Values protection, combat-ready, disciplined
+- Dark colors → Mysterious, serious, introverted or secretive
+- Intricate designs → Detail-oriented, perhaps vain or status-conscious
+- Simple utilitarian gear → Pragmatic, values function over form
+
+**From Weapons & Equipment**:
+- Obvious weapons → Conflict-ready, decisive, potentially aggressive
+- Concealed weapons → Strategic, cautious, prefers surprise
+- Magical artifacts → Knowledgeable, academic, connected to ancient wisdom
+- No weapons → Peaceful, trusting, or relies on other advantages
+
+**Part 3: Dialogue & Behavior Prediction (20%)**
+
+Predict based on visual analysis:
+
+**Speaking Style**:
+- "She might speak with a [calm/passionate/stern/gentle] tone"
+- "Her expression suggests [formal/casual/professional/poetic] language"
+- "She likely communicates with [concise commands/rich descriptions/military jargon]"
+
+**Emotional Expression**:
+- "Rarely shows strong emotion publicly" or "Wears heart on sleeve"
+- "Carefully controlled reactions" or "Impulsive responses"
+
+**Interaction Style**:
+- "Keeps distance from strangers" or "Immediately warm and friendly"
+- "Observes before speaking" or "Initiates conversation"
+
+**REMEMBER**:
+- characterDescription MUST be in English!
+{{- if snippets.has_context == "true" -}}
+- personalityTags MUST be in English!
+{{- end -}}
+- Be specific: Don't just say "armor" - describe material, condition, design
+- Infer personality from every detail
+- Predict behavior: How would they speak? React? Interact?
+- 300-500 words
+- Return ONLY valid JSON
+{{- if snippets.has_context == "true" -}}
+- Suggest 3-6 personality tags that match the character
+- RESPECT the user's personality description - ADD visual details, don't replace!
+{{- end -}}
+
+**Phrase Library Requirements:**
+- Generate 3-5 phrases for each category:
+  - "HeadPat": Reaction to head pats (e.g., shy, happy, annoyed)
+  - "BodyPoke": Reaction to body pokes (e.g., surprised, defensive)
+  - "Greeting": Greeting when the player loads the game
+  - phrases MUST match the character's personality!
+
+**Interaction Zones Requirements (CRITICAL):**
+- Identify the HEAD REGION and BODY REGION in the portrait image
+- Use NORMALIZED COORDINATES (0.0 to 1.0):
+  * Origin (0,0) is at the TOP-LEFT corner of the image
+  * X-axis: 0.0 = left edge, 1.0 = right edge
+  * Y-axis: 0.0 = top edge, 1.0 = bottom edge
+- For each zone, provide a bounding rectangle:
+  * xMin: left boundary (0.0-1.0)
+  * yMin: top boundary (0.0-1.0)
+  * xMax: right boundary (0.0-1.0)
+  * yMax: bottom boundary (0.0-1.0)
+- HEAD zone: should cover the character's face/head area
+- BODY zone: should cover the character's torso/body area (excluding head)
+- Example for a typical portrait:
+  * head: { "xMin": 0.25, "yMin": 0.0, "xMax": 0.75, "yMax": 0.20 }
+  * body: { "xMin": 0.15, "yMin": 0.25, "xMax": 0.85, "yMax": 0.95 }
+
+Focus on:
+- Top 3-4 dominant colors with accurate percentages
+- All visual elements visible in the portrait
+- Detailed appearance analysis (IN ENGLISH!)
+- Personality inference from visual cues (IN ENGLISH!)
+- Behavioral predictions (IN ENGLISH!)
+- Style keywords for System Prompt (in English)
+- Phrase Library for interactions (HeadPat, BodyPoke, Greeting)
+- Interaction Zones with accurate normalized coordinates

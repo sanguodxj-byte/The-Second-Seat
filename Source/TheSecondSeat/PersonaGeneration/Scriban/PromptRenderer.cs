@@ -75,16 +75,21 @@ namespace TheSecondSeat.PersonaGeneration.Scriban
         {
             try
             {
+                // 获取 Persona 名称 (如果可用)
+                string personaName = context?.Narrator?.DefName;
+
                 // 1. 加载模板内容（已被 PromptLoader 缓存）
-                string templateContent = PromptLoader.Load(templateName);
+                string templateContent = PromptLoader.Load(templateName, personaName);
                 if (string.IsNullOrEmpty(templateContent) || templateContent.StartsWith("[Error:"))
                 {
-                    Log.Error($"[The Second Seat] Failed to load template: {templateName}");
+                    Log.Error($"[The Second Seat] Failed to load template: {templateName} (Persona: {personaName ?? "Global"})");
                     return $"Error: Template {templateName} missing.";
                 }
 
                 // 2. ⭐ v2.0.0: 检查编译缓存
-                Template template = GetOrCompileTemplate(templateName, templateContent);
+                // 注意：由于同一模板名称可能有不同的 Persona 内容，缓存键需要包含 Persona 名称
+                string cacheKey = string.IsNullOrEmpty(personaName) ? templateName : $"{templateName}_{personaName}";
+                Template template = GetOrCompileTemplate(cacheKey, templateContent);
                 if (template == null)
                 {
                     return $"Error: Template {templateName} has syntax errors.";
@@ -166,6 +171,11 @@ namespace TheSecondSeat.PersonaGeneration.Scriban
             // 导入 PromptContext 数据
             scriptObject.Import(context);
             
+            // ⭐ v2.7.0: 手动映射 snake_case 变量（兼容现有模板）
+            // 使用索引器赋值以避免 "key already added" 异常
+            scriptObject["available_outfits"] = context.AvailableOutfits;
+            scriptObject["current_outfit"] = context.CurrentOutfit;
+
             // ⭐ 注入自定义 Scriban 函数（允许模板直接访问游戏数据）
             RegisterCustomFunctions(scriptObject);
             

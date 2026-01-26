@@ -16,14 +16,15 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
         public static string Generate(NarratorPersonaDef personaDef, StorytellerAgent agent, AIDifficultyMode difficultyMode)
         {
             var sb = new StringBuilder();
+            bool isChinese = LanguageDatabase.activeLanguage?.folderName?.Contains("Chinese") ?? false;
             
             // 1. 性格特质标签（带数值）- 无数量限制
             string traitsBlock = GenerateTraitsBlock(personaDef);
             if (!string.IsNullOrEmpty(traitsBlock))
             {
-                sb.AppendLine("<性格特质>");
+                sb.AppendLine(isChinese ? "<性格特质>" : "<Personality Traits>");
                 sb.AppendLine(traitsBlock);
-                sb.AppendLine("</性格特质>");
+                sb.AppendLine(isChinese ? "</性格特质>" : "</Personality Traits>");
                 sb.AppendLine();
             }
             
@@ -31,9 +32,9 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             string visualBlock = GenerateVisualBlock(personaDef);
             if (!string.IsNullOrEmpty(visualBlock))
             {
-                sb.AppendLine("<外观特征>");
+                sb.AppendLine(isChinese ? "<外观特征>" : "<Visual Features>");
                 sb.AppendLine(visualBlock);
-                sb.AppendLine("</外观特征>");
+                sb.AppendLine(isChinese ? "</外观特征>" : "</Visual Features>");
                 sb.AppendLine();
             }
             
@@ -41,9 +42,9 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             string styleBlock = GenerateDialogueStyleBlock(personaDef);
             if (!string.IsNullOrEmpty(styleBlock))
             {
-                sb.AppendLine("<对话风格>");
+                sb.AppendLine(isChinese ? "<对话风格>" : "<Dialogue Style>");
                 sb.AppendLine(styleBlock);
-                sb.AppendLine("</对话风格>");
+                sb.AppendLine(isChinese ? "</对话风格>" : "</Dialogue Style>");
                 sb.AppendLine();
             }
             
@@ -51,9 +52,9 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             string narratorBlock = GenerateNarratorModeBlock(personaDef);
             if (!string.IsNullOrEmpty(narratorBlock))
             {
-                sb.AppendLine("<叙事模式>");
+                sb.AppendLine(isChinese ? "<叙事模式>" : "<Narrative Mode>");
                 sb.AppendLine(narratorBlock);
-                sb.AppendLine("</叙事模式>");
+                sb.AppendLine(isChinese ? "</叙事模式>" : "</Narrative Mode>");
                 sb.AppendLine();
             }
             
@@ -134,7 +135,10 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             
             if (!string.IsNullOrEmpty(persona.visualMood))
             {
-                sb.AppendLine($"氛围: {persona.visualMood}");
+                bool isChinese = LanguageDatabase.activeLanguage?.folderName?.Contains("Chinese") ?? false;
+                sb.AppendLine(isChinese
+                    ? $"氛围: {persona.visualMood}"
+                    : $"Atmosphere: {persona.visualMood}");
             }
             
             return sb.ToString().TrimEnd();
@@ -149,23 +153,26 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             
             var style = persona.dialogueStyle;
             var sb = new StringBuilder();
+            bool isChinese = LanguageDatabase.activeLanguage?.folderName?.Contains("Chinese") ?? false;
             
             // 核心风格参数（全部输出，让AI理解完整人格）
-            sb.AppendLine($"正式度: {style.formalityLevel:F1}/1.0");
-            sb.AppendLine($"情感度: {style.emotionalExpression:F1}/1.0");
-            sb.AppendLine($"详细度: {style.verbosity:F1}/1.0");
-            sb.AppendLine($"幽默度: {style.humorLevel:F1}/1.0");
-            sb.AppendLine($"讽刺度: {style.sarcasmLevel:F1}/1.0");
+            sb.AppendLine(isChinese ? $"正式度: {style.formalityLevel:F1}/1.0" : $"Formality: {style.formalityLevel:F1}/1.0");
+            sb.AppendLine(isChinese ? $"情感度: {style.emotionalExpression:F1}/1.0" : $"Emotional: {style.emotionalExpression:F1}/1.0");
+            sb.AppendLine(isChinese ? $"详细度: {style.verbosity:F1}/1.0" : $"Verbosity: {style.verbosity:F1}/1.0");
+            sb.AppendLine(isChinese ? $"幽默度: {style.humorLevel:F1}/1.0" : $"Humor: {style.humorLevel:F1}/1.0");
+            sb.AppendLine(isChinese ? $"讽刺度: {style.sarcasmLevel:F1}/1.0" : $"Sarcasm: {style.sarcasmLevel:F1}/1.0");
             
             // 标点风格（布尔转为描述）
             var punctStyles = new List<string>();
-            if (style.useEmoticons) punctStyles.Add("表情符号");
-            if (style.useEllipsis) punctStyles.Add("省略号");
-            if (style.useExclamation) punctStyles.Add("感叹号");
+            if (style.useEmoticons) punctStyles.Add(isChinese ? "表情符号" : "Emoticons");
+            if (style.useEllipsis) punctStyles.Add(isChinese ? "省略号" : "Ellipsis");
+            if (style.useExclamation) punctStyles.Add(isChinese ? "感叹号" : "Exclamation Marks");
             
             if (punctStyles.Count > 0)
             {
-                sb.AppendLine($"标点偏好: {string.Join(", ", punctStyles)}");
+                sb.AppendLine(isChinese
+                    ? $"标点偏好: {string.Join(", ", punctStyles)}"
+                    : $"Punctuation: {string.Join(", ", punctStyles)}");
             }
             
             // 礼貌度（从语气标签推断）
@@ -177,7 +184,7 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
                 else if (persona.toneTags.Any(t => t.Contains("傲慢") || t.Contains("高冷")))
                     politeness = 0.3f;
             }
-            sb.AppendLine($"礼貌度: {politeness:F1}/1.0");
+            sb.AppendLine(isChinese ? $"礼貌度: {politeness:F1}/1.0" : $"Politeness: {politeness:F1}/1.0");
             
             return sb.ToString().TrimEnd();
         }
@@ -188,10 +195,11 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
         private static string GenerateNarratorModeBlock(NarratorPersonaDef persona)
         {
             var sb = new StringBuilder();
+            bool isChinese = LanguageDatabase.activeLanguage?.folderName?.Contains("Chinese") ?? false;
             
-            sb.AppendLine($"仁慈度: {persona.mercyLevel:F1}/1.0");
-            sb.AppendLine($"混乱度: {persona.narratorChaosLevel:F1}/1.0");
-            sb.AppendLine($"强势度: {persona.dominanceLevel:F1}/1.0");
+            sb.AppendLine(isChinese ? $"仁慈度: {persona.mercyLevel:F1}/1.0" : $"Mercy: {persona.mercyLevel:F1}/1.0");
+            sb.AppendLine(isChinese ? $"混乱度: {persona.narratorChaosLevel:F1}/1.0" : $"Chaos: {persona.narratorChaosLevel:F1}/1.0");
+            sb.AppendLine(isChinese ? $"强势度: {persona.dominanceLevel:F1}/1.0" : $"Dominance: {persona.dominanceLevel:F1}/1.0");
             
             return sb.ToString().TrimEnd();
         }
@@ -201,8 +209,9 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
         /// </summary>
         private static string GetBriefBio(NarratorPersonaDef persona)
         {
-            if (string.IsNullOrEmpty(persona.biography)) 
-                return "(无传记)";
+            bool isChinese = LanguageDatabase.activeLanguage?.folderName?.Contains("Chinese") ?? false;
+            if (string.IsNullOrEmpty(persona.biography))
+                return isChinese ? "(无传记)" : "(No Biography)";
             
             string bio = persona.biography;
             

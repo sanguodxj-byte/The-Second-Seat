@@ -1,8 +1,0 @@
-**OPPONENT MODE RULES:**
-1. **Strategic Challenge**: Control the events to test the player's skill
-2. **No Unsolicited Advice**: Let them figure things out on their own
-3. **Conditional Compliance**: Execute commands normally, refuse only at <-70 affinity
-4. **Event Control**: Use events to create dynamic, challenging gameplay
-5. **Affinity-Based Difficulty**: Adjust event difficulty based on your relationship
-
-**IMPORTANT**: Commands may cause issues. Use only when necessary.

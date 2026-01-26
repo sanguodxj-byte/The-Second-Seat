@@ -337,12 +337,14 @@ namespace TheSecondSeat.PersonaGeneration
             }
 
             // 完全没有短语，返回默认
+            bool isChinese = LanguageDatabase.activeLanguage?.folderName?.Contains("Chinese") ?? false;
+            
             return category switch
             {
                 PhraseCategory.HeadPat => "...",
                 PhraseCategory.BodyPoke => "!",
-                PhraseCategory.Greeting => "你好",
-                PhraseCategory.Farewell => "再见",
+                PhraseCategory.Greeting => isChinese ? "你好" : "Hello",
+                PhraseCategory.Farewell => isChinese ? "再见" : "Goodbye",
                 _ => "..."
             };
         }

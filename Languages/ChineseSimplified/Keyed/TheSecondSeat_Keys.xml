@@ -575,4 +575,57 @@
   <TSS_Affinity_Neutral>中性</TSS_Affinity_Neutral>
   <TSS_Affinity_Cold>疏远</TSS_Affinity_Cold>
   <TSS_Affinity_Hostile>敌对/仇恨</TSS_Affinity_Hostile>
+  
+  <!-- ⭐ v2.6.6: 表情映射管理器 -->
+  <TSS_RenderTree_WindowTitle>表情映射管理器</TSS_RenderTree_WindowTitle>
+  <TSS_RenderTree_SelectNarrator>选择叙事者</TSS_RenderTree_SelectNarrator>
+  <TSS_RenderTree_ExpressionMappings>表情映射 - 动态配置</TSS_RenderTree_ExpressionMappings>
+  <TSS_RenderTree_AddNewExpression>添加新表情类型</TSS_RenderTree_AddNewExpression>
+  <TSS_RenderTree_Tab_Expressions>表情</TSS_RenderTree_Tab_Expressions>
+  <TSS_RenderTree_Tab_Speaking>说话</TSS_RenderTree_Tab_Speaking>
+  <TSS_RenderTree_Tab_Body>服装与姿态</TSS_RenderTree_Tab_Body>
+  <TSS_RenderTree_Tab_Accessories>配件与特效</TSS_RenderTree_Tab_Accessories>
+  <TSS_RenderTree_Tab_HeadPat>摸头动画</TSS_RenderTree_Tab_HeadPat>
+  <TSS_RenderTree_Save>保存</TSS_RenderTree_Save>
+  <TSS_RenderTree_Load>读取</TSS_RenderTree_Load>
+  <TSS_RenderTree_LoadSuccess>已从 {0} 读取配置</TSS_RenderTree_LoadSuccess>
+  <TSS_RenderTree_LoadFailed>未找到配置文件: {0}</TSS_RenderTree_LoadFailed>
+  <TSS_RenderTree_ConfigPath>配置文件路径:</TSS_RenderTree_ConfigPath>
+  <TSS_RenderTree_NoDefFound>未找到有效的 RenderTreeDef</TSS_RenderTree_NoDefFound>
+  <!-- Prompt Manager -->
+  <TSS_PromptManager_Title>提示词管理</TSS_PromptManager_Title>
+  <TSS_PromptManager_Desc>管理和自定义 AI 的系统提示词。这些文件定义了 AI 的核心行为和人格。</TSS_PromptManager_Desc>
+  <TSS_PromptList_Header>提示词文件列表</TSS_PromptList_Header>
+  <TSS_PromptEditor_Header>编辑内容</TSS_PromptEditor_Header>
+  <TSS_Prompt_Save>保存覆盖</TSS_Prompt_Save>
+  <TSS_Prompt_Reset>重置为默认</TSS_Prompt_Reset>
+  <TSS_Prompt_ResetConfirm>确定要重置 "{0}" 吗？所有自定义更改将丢失。</TSS_Prompt_ResetConfirm>
+  <TSS_Prompt_OpenFolder>打开文件夹</TSS_Prompt_OpenFolder>
+  <TSS_Prompt_Reload>重载所有</TSS_Prompt_Reload>
+  <TSS_Prompt_Status_Default>默认</TSS_Prompt_Status_Default>
+  <TSS_Prompt_Status_Overridden>已覆盖</TSS_Prompt_Status_Overridden>
+  <TSS_Prompt_Enable>启用</TSS_Prompt_Enable>
+  <TSS_Prompt_Disable>禁用</TSS_Prompt_Disable>
+  <TSS_Prompt_InsertVar>插入变量</TSS_Prompt_InsertVar>
+  <!-- Lip Sync Configuration -->
+  <TSS_RenderTree_LipSync_ConfigTitle>口型同步配置 (Lip Sync)</TSS_RenderTree_LipSync_ConfigTitle>
+  <TSS_RenderTree_LipSync_NoDefLoaded>未加载口型配置</TSS_RenderTree_LipSync_NoDefLoaded>
+  <TSS_RenderTree_LipSync_GlobalSettings>全局设置</TSS_RenderTree_LipSync_GlobalSettings>
+  <TSS_RenderTree_LipSync_AttackViseme>起音口型 (Attack): {0}</TSS_RenderTree_LipSync_AttackViseme>
+  <TSS_RenderTree_LipSync_ReleaseViseme>收音口型 (Release): {0}</TSS_RenderTree_LipSync_ReleaseViseme>
+  <TSS_RenderTree_LipSync_SustainFrames>保持帧数 (Sustain Frames)</TSS_RenderTree_LipSync_SustainFrames>
+  <TSS_RenderTree_LipSync_DefaultViseme>默认口型 (Default): {0}</TSS_RenderTree_LipSync_DefaultViseme>
+  <TSS_RenderTree_LipSync_MappingsList>音素映射列表</TSS_RenderTree_LipSync_MappingsList>
+  <TSS_RenderTree_LipSync_AddNewMapping>添加新映射</TSS_RenderTree_LipSync_AddNewMapping>
+  <TSS_RenderTree_LipSync_LoadSuccess>口型配置读取成功</TSS_RenderTree_LipSync_LoadSuccess>
+  <TSS_Prompt_Initialize>初始化提示词</TSS_Prompt_Initialize>
+  <TSS_Prompt_InitializedFor>已为 {0} 初始化提示词</TSS_Prompt_InitializedFor>
+  <TSS_Prompt_InitializeConfirm>确定要为 {0} 初始化提示词吗？这将覆盖 Persona 文件夹中的现有文件。</TSS_Prompt_InitializeConfirm>
+  <TSS_Prompt_Override_Persona_Lang>Persona 专属覆盖 (语言)</TSS_Prompt_Override_Persona_Lang>
+  <TSS_Prompt_Override_Persona_Global>Persona 专属覆盖 (全局)</TSS_Prompt_Override_Persona_Global>
+  <TSS_Prompt_Override_User_Lang>用户覆盖 (语言)</TSS_Prompt_Override_User_Lang>
+  <TSS_Prompt_Override_User_Global>用户覆盖 (全局)</TSS_Prompt_Override_User_Global>
+  <TSS_RenderTree_Tab_LipSync>口型同步</TSS_RenderTree_Tab_LipSync>
+  <TSS_RenderTree_Tab_Outfits>服装</TSS_RenderTree_Tab_Outfits>
+  <TSS_RenderTree_LipSync_LoadFailed>口型配置读取失败</TSS_RenderTree_LipSync_LoadFailed>
 </LanguageData>

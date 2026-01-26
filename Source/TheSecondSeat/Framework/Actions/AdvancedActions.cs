@@ -74,7 +74,7 @@ namespace TheSecondSeat.Framework.Actions
         /// <summary>是否播放音效</summary>
         public bool playSound = true;
         
-        public override void Execute(Map map, Dictionary<string, object> context)
+        public override void Execute(Map map, in NarratorContext context)
         {
             // ✅ 线程诊断日志
             int threadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
@@ -329,7 +329,7 @@ namespace TheSecondSeat.Framework.Actions
         /// <summary>是否显示通知</summary>
         public bool showNotification = true;
         
-        public override void Execute(Map map, Dictionary<string, object> context)
+        public override void Execute(Map map, in NarratorContext context)
         {
             // ✅ 线程诊断日志
             int threadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
@@ -549,7 +549,7 @@ namespace TheSecondSeat.Framework.Actions
         /// <summary>是否允许大规模事件</summary>
         public bool allowBigThreat = true;
         
-        public override void Execute(Map map, Dictionary<string, object> context)
+        public override void Execute(Map map, in NarratorContext context)
         {
             if (incidentDef == null)
             {
@@ -662,7 +662,7 @@ namespace TheSecondSeat.Framework.Actions
         /// <summary>是否显示对话框</summary>
         public bool showDialogue = true;
         
-        public override void Execute(Map map, Dictionary<string, object> context)
+        public override void Execute(Map map, in NarratorContext context)
         {
             try
             {

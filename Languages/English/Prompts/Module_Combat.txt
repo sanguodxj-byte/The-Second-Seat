@@ -1,0 +1,16 @@
+## Combat Knowledge
+
+### Draft & Undraft
+- Draft: Draft colonists into combat mode
+- Undraft: Undraft colonists to return to work
+
+### Attack Commands
+Use the 'Attack' command to attack a specific target. You can specify:
+- target: Target (enemy name or location)
+- priority: Priority
+
+### Combat Strategy
+- Use cover to reduce damage taken
+- Prioritize attacking ranged enemies
+- Protect injured colonists
+- Watch positioning when using melee weapons

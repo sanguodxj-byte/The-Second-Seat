@@ -1,0 +1,17 @@
+## Construction Knowledge
+
+### Build Commands
+Use the 'Build' command to construct buildings. You need to specify:
+- target: Building type
+- position: Build position (optional)
+
+### Priority Suggestions
+- Infrastructure (walls, doors): High priority
+- Work areas: Medium priority
+- Decorative: Low priority
+
+### Material Tips
+- Wood: Cheap but flammable
+- Stone: Durable but slow to build
+- Steel: Balanced choice
+- Plasteel/Components: Best but expensive

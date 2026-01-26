@@ -76,7 +76,7 @@ namespace TheSecondSeat.Settings
                 
                 
                 // === 开发者工具 ===
-                float devToolsHeight = 240f; // Increased height for more buttons
+                float devToolsHeight = 220f;
                 Rect devToolsRect = new Rect(viewRect.x, y, cardWidth, devToolsHeight);
                 SettingsUIComponents.DrawSettingsGroup(devToolsRect, "开发者工具", SettingsUIComponents.AccentPurple, (contentRect) =>
                 {
@@ -85,12 +85,6 @@ namespace TheSecondSeat.Settings
                     Rect infoRect = new Rect(contentRect.x, cy, contentRect.width, 36f);
                     SettingsUIComponents.DrawInfoBox(infoRect, "高级配置与调试工具", InfoBoxType.Info);
                     cy += 44f;
-                    
-                    // 工程师模式开关
-                    Rect engineerModeRect = new Rect(contentRect.x, cy, contentRect.width, 28f);
-                    SettingsUIComponents.DrawToggleSetting(engineerModeRect, "工程师模式", 
-                        "开启详细错误监听和高级调试功能（仅限开发人员）", ref Settings.engineerMode);
-                    cy += 34f;
                     
                     Rect renderTreeBtnRect = new Rect(contentRect.x, cy, contentRect.width, 32f);
                     if (SettingsUIComponents.DrawButton(renderTreeBtnRect, "打开渲染树编辑器", SettingsUIComponents.AccentPurple))
@@ -102,7 +96,7 @@ namespace TheSecondSeat.Settings
                     cy += 40f;
 
                     Rect promptBtnRect = new Rect(contentRect.x, cy, contentRect.width, 32f);
-                    if (SettingsUIComponents.DrawButton(promptBtnRect, "打开提示词管理", SettingsUIComponents.AccentGreen))
+                    if (SettingsUIComponents.DrawButton(promptBtnRect, "TSS_PromptManager_Title".Translate(), SettingsUIComponents.AccentGreen))
                     {
                         Find.WindowStack.Add(new UI.PromptManagementWindow());
                     }

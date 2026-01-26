@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!--
+    =====================================================
+    ⭐ 服装系统提示词模块
+    v2.5.0 - LLM驱动的服装更换
+    =====================================================
+    
+    此模块让叙事者能够自主决定何时更换服装，
+    而不是通过硬编码的时间条件自动触发。
+    
+    LLM 可以根据：
+    - 当前时间
+    - 对话氛围
+    - 好感度
+    - 自身角色设定
+    自主决定切换服装的时机。
+  -->
+
+  <TheSecondSeat.SmartPrompt.PromptModuleDef>
+    <defName>TSS_PromptModule_Outfit</defName>
+    <label>服装系统</label>
+    <description>允许叙事者自主更换服装</description>
+    
+    <!-- 模块类型：核心功能 -->
+    <moduleType>Core</moduleType>
+    
+    <!-- 优先级：较高，确保服装信息在提示词中靠前 -->
+    <priority>80</priority>
+    
+    <!-- 始终激活 -->
+    <alwaysActive>true</alwaysActive>
+    
+    <!-- 提示词文件路径（使用 contentPath） -->
+    <contentPath>Module_Outfit</contentPath>
+    
+    <!-- 触发意图（服装相关） -->
+    <triggerIntents>
+      <li>outfit</li>
+      <li>clothes</li>
+      <li>pajamas</li>
+      <li>dress</li>
+      <li>服装</li>
+      <li>换装</li>
+      <li>睡衣</li>
+      <li>衣服</li>
+    </triggerIntents>
+    
+    <!-- 扩展关键词 -->
+    <expandedKeywords>
+      <li>outfit</li>
+      <li>clothes</li>
+      <li>pajamas</li>
+      <li>dress</li>
+      <li>casual</li>
+      <li>formal</li>
+      <li>change</li>
+      <li>wear</li>
+      <li>服装</li>
+      <li>换装</li>
+      <li>睡衣</li>
+      <li>衣服</li>
+      <li>便装</li>
+      <li>正装</li>
+      <li>换衣服</li>
+      <li>穿</li>
+    </expandedKeywords>
+  </TheSecondSeat.SmartPrompt.PromptModuleDef>
+
+</Defs>

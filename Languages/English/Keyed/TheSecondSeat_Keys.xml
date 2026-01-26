@@ -484,5 +484,16 @@ Click to talk with the AI Narrator</TSS_NarratorButton_Tooltip>
   <TSS_CmdList_UnknownCommand>Unknown event debug command: {0}</TSS_CmdList_UnknownCommand>
   <TSS_CmdList_ExecuteFailed>Execution failed: {0}</TSS_CmdList_ExecuteFailed>
   <TSS_CmdList_OpenButton>View Command List</TSS_CmdList_OpenButton>
+  <!-- Prompt Manager -->
+  <TSS_Prompt_Initialize>Initialize Prompts</TSS_Prompt_Initialize>
+  <TSS_Prompt_InitializedFor>Prompts initialized for {0}</TSS_Prompt_InitializedFor>
+  <TSS_Prompt_InitializeConfirm>Initialize prompts for {0}? This will overwrite existing files in the persona folder.</TSS_Prompt_InitializeConfirm>
+  <TSS_Prompt_Override_Persona_Lang>Persona Override (Language)</TSS_Prompt_Override_Persona_Lang>
+  <TSS_Prompt_Override_Persona_Global>Persona Override (Global)</TSS_Prompt_Override_Persona_Global>
+  <TSS_Prompt_Override_User_Lang>User Override (Language)</TSS_Prompt_Override_User_Lang>
+  <TSS_Prompt_Override_User_Global>User Override (Global)</TSS_Prompt_Override_User_Global>
   <TSS_CmdList_OpenButton_Desc>Show all available AI commands</TSS_CmdList_OpenButton_Desc>
 </LanguageData>
+
+  <TSS_RenderTree_Tab_LipSync>Lip Sync</TSS_RenderTree_Tab_LipSync>
+  <TSS_RenderTree_Tab_Outfits>Outfits</TSS_RenderTree_Tab_Outfits>

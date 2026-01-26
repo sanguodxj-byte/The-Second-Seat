@@ -129,20 +129,71 @@ namespace TheSecondSeat.Commands.Implementations
 
             // Parse parameters
             bool isHostile = false; // Default to assist/friendly
+            bool playerControlled = true; // ⭐ v2.9.8: 默认由玩家控制
             IntVec3? targetLocation = null;
             
             if (parameters is Dictionary<string, object> paramsDict)
             {
-                // Support "mode=attack" or "hostile=true"
-                if (paramsDict.TryGetValue("mode", out var modeObj) &&
-                    modeObj.ToString().ToLower() == "attack")
+                // ⭐ v2.9.8: 修复 mode 参数解析，支持更多变体
+                // 支持: mode=attack/hostile/敌对 → isHostile = true
+                // 支持: mode=assist/friendly/援助/协助 → isHostile = false, playerControlled = true
+                // 支持: mode=auto/autonomous/自主 → isHostile = false, playerControlled = false
+                if (paramsDict.TryGetValue("mode", out var modeObj))
                 {
-                    isHostile = true;
+                    string modeStr = modeObj?.ToString()?.ToLower() ?? "";
+                    
+                    // 明确的敌对模式
+                    if (modeStr == "attack" || modeStr == "hostile" || 
+                        modeStr == "敌对" || modeStr == "攻击")
+                    {
+                        isHostile = true;
+                        playerControlled = false; // 敌对模式不受玩家控制
+                        Log.Message($"[DescentCommand] Mode parsed as hostile: '{modeStr}'");
+                    }
+                    // 自主援助模式（不受玩家控制）
+                    else if (modeStr == "auto" || modeStr == "autonomous" || 
+                             modeStr == "自主" || modeStr == "自动")
+                    {
+                        isHostile = false;
+                        playerControlled = false;
+                        Log.Message($"[DescentCommand] Mode parsed as autonomous assist: '{modeStr}'");
+                    }
+                    // 受控援助模式
+                    else if (modeStr == "assist" || modeStr == "friendly" || 
+                             modeStr == "援助" || modeStr == "协助" || modeStr == "友好" ||
+                             modeStr == "control" || modeStr == "受控")
+                    {
+                        isHostile = false;
+                        playerControlled = true;
+                        Log.Message($"[DescentCommand] Mode parsed as controlled assist: '{modeStr}'");
+                    }
+                    else
+                    {
+                        // 未知模式，默认为受控援助（更安全）
+                        Log.Warning($"[DescentCommand] Unknown mode '{modeStr}', defaulting to controlled assist");
+                        isHostile = false;
+                        playerControlled = true;
+                    }
                 }
-                else if (paramsDict.TryGetValue("hostile", out var hostileObj) &&
-                         bool.TryParse(hostileObj.ToString(), out bool parsedHostile))
+                // 回退：支持 hostile=true/false 参数
+                else if (paramsDict.TryGetValue("hostile", out var hostileObj))
                 {
-                    isHostile = parsedHostile;
+                    if (bool.TryParse(hostileObj?.ToString(), out bool parsedHostile))
+                    {
+                        isHostile = parsedHostile;
+                        Log.Message($"[DescentCommand] Hostile parsed from 'hostile' param: {isHostile}");
+                    }
+                }
+                
+                // ⭐ v2.9.8: 支持显式的 playerControlled 参数
+                if (paramsDict.TryGetValue("playerControlled", out var pcObj) ||
+                    paramsDict.TryGetValue("controlled", out pcObj))
+                {
+                    if (bool.TryParse(pcObj?.ToString(), out bool parsedPC))
+                    {
+                        playerControlled = parsedPC;
+                        Log.Message($"[DescentCommand] PlayerControlled: {playerControlled}");
+                    }
                 }
 
                 // Parse coordinates if provided by LLM
@@ -194,11 +245,12 @@ namespace TheSecondSeat.Commands.Implementations
                 Log.Message("[DescentCommand] No location specified, will use random position");
             }
 
-            // Trigger the descent with optional location
-            if (descentSystem.TriggerDescent(isHostile, targetLocation))
+            // ⭐ v2.9.8: Trigger the descent with optional location and playerControlled
+            if (descentSystem.TriggerDescent(isHostile, targetLocation, playerControlled))
             {
                 string locStr = targetLocation.HasValue ? $" at ({targetLocation.Value.x}, {targetLocation.Value.z})" : " at random location";
-                LogExecution($"Triggered descent sequence (Hostile: {isHostile}){locStr}");
+                string modeStr = isHostile ? "Hostile" : (playerControlled ? "Controlled" : "Autonomous");
+                LogExecution($"Triggered descent sequence (Mode: {modeStr}){locStr}");
                 return true;
             }
 

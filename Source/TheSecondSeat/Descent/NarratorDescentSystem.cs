@@ -18,6 +18,17 @@ namespace TheSecondSeat.Descent
     {
         // ==================== 单例模式 ====================
         
+        // ⭐ v2.9.8: 降临模式枚举
+        public enum DescentMode
+        {
+            /// <summary>敌对模式 - 加入敌对派系，攻击殖民地</summary>
+            Hostile,
+            /// <summary>受控援助 - 加入玩家派系，可征召控制</summary>
+            ControlledAssist,
+            /// <summary>自主援助 - 加入盟友派系，自主行动保护殖民地</summary>
+            AutonomousAssist
+        }
+        
         private static NarratorDescentSystem instance;
         public static NarratorDescentSystem Instance
         {
@@ -35,6 +46,7 @@ namespace TheSecondSeat.Descent
         
         private bool isDescending = false;
         private bool lastDescentWasHostile = false;
+        private bool lastDescentPlayerControlled = true; // ⭐ v2.9.8: 是否由玩家控制
         private int lastDescentTick = 0;
         private const int DESCENT_COOLDOWN_TICKS = 36000; // ⭐ v2.4.0: 正式版冷却时间（10分钟）
         
@@ -120,8 +132,12 @@ namespace TheSecondSeat.Descent
 
         /// <summary>
         /// 触发降临
+        /// ⭐ v2.9.8: 添加 playerControlled 参数，区分受控/自主援助
         /// </summary>
-        public bool TriggerDescent(bool isHostile, IntVec3? targetLoc = null)
+        /// <param name="isHostile">是否为敌对模式</param>
+        /// <param name="targetLoc">目标位置（可选）</param>
+        /// <param name="playerControlled">援助模式时是否受玩家控制（默认 true）</param>
+        public bool TriggerDescent(bool isHostile, IntVec3? targetLoc = null, bool playerControlled = true)
         {
             var manager = Current.Game?.GetComponent<NarratorManager>();
             var persona = manager?.GetCurrentPersona();
@@ -158,10 +174,12 @@ namespace TheSecondSeat.Descent
             
             targetDescentLocation = targetLoc.Value;
             lastDescentWasHostile = isHostile;
+            lastDescentPlayerControlled = playerControlled; // ⭐ v2.9.8
             lastDescentTick = Find.TickManager.TicksGame;
             descentStartTick = Find.TickManager.TicksGame;
             portraitWasOpen = PortraitOverlaySystem.IsEnabled();
             
+            Log.Message($"[NarratorDescentSystem] TriggerDescent: isHostile={isHostile}, playerControlled={playerControlled}");
             StartDescentSequence(persona, isHostile);
             return true;
         }
@@ -250,18 +268,23 @@ namespace TheSecondSeat.Descent
         
         // ==================== GameComponent ====================
         
+        // ⭐ v2.5.0: 使用固定时间步长，避免 Tick 与帧时间混淆
+        private const float TICK_INTERVAL = 1f / 60f;
+        
         public override void GameComponentTick()
         {
             base.GameComponentTick();
             
-            // 更新动画
+            // 更新动画 - 使用固定时间步长，不受游戏速度影响
+            // 注意：视觉动画应该使用 TICK_INTERVAL 而非 Time.deltaTime
+            // Time.deltaTime 是渲染帧时间，在 GameComponentTick 中使用会导致游戏加速时动画过快
             if (currentAnimationProvider?.IsPlaying == true)
             {
-                currentAnimationProvider.Update(Time.deltaTime);
+                currentAnimationProvider.Update(TICK_INTERVAL);
             }
             
-            // ⭐ v2.0.0: 更新姿势动画控制器
-            animationController.Update(Time.deltaTime);
+            // ⭐ v2.5.0: 更新姿势动画控制器（使用固定时间步长）
+            animationController.Update(TICK_INTERVAL);
             
             // 检查延迟生成
             if (pendingSpawn && Find.TickManager.TicksGame >= spawnDelayEndTick)
@@ -497,7 +520,13 @@ namespace TheSecondSeat.Descent
             
             if (persona != null)
             {
-                currentDescentPawn = DescentPawnSpawner.SpawnDescentPawn(persona, lastDescentWasHostile, targetDescentLocation, Find.CurrentMap);
+                // ⭐ v2.9.8: 传递 playerControlled 参数
+                currentDescentPawn = DescentPawnSpawner.SpawnDescentPawn(
+                    persona, 
+                    lastDescentWasHostile, 
+                    targetDescentLocation, 
+                    Find.CurrentMap,
+                    lastDescentPlayerControlled);
                 currentCompanionPawn = null;
                 
                 if (currentDescentPawn != null)

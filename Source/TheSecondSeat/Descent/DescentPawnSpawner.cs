@@ -14,12 +14,20 @@ namespace TheSecondSeat.Descent
     {
         /// <summary>
         /// 生成降临实体
+        /// ⭐ v2.9.8: 添加 playerControlled 参数，区分受控援助和自主援助
         /// </summary>
+        /// <param name="persona">叙事者人格定义</param>
+        /// <param name="isHostile">是否为敌对模式</param>
+        /// <param name="location">降临位置</param>
+        /// <param name="map">目标地图</param>
+        /// <param name="playerControlled">是否由玩家控制（默认 true）。仅在 isHostile=false 时有效。</param>
+        /// <returns>生成的降临实体</returns>
         public static Pawn SpawnDescentPawn(
             NarratorPersonaDef persona, 
             bool isHostile, 
             IntVec3 location, 
-            Map map)
+            Map map,
+            bool playerControlled = true)
         {
             if (persona == null || map == null || location == IntVec3.Invalid)
             {
@@ -35,8 +43,9 @@ namespace TheSecondSeat.Descent
             }
 
             // 1. 确定派系
-            Faction faction = DetermineFaction(isHostile);
-            Log.Message($"[DescentPawnSpawner] Faction: {faction?.Name ?? "null"}, IsHostile: {isHostile}");
+            // ⭐ v2.9.8: 根据 isHostile 和 playerControlled 确定派系
+            Faction faction = DetermineFaction(isHostile, playerControlled);
+            Log.Message($"[DescentPawnSpawner] Faction: {faction?.Name ?? "null"}, IsHostile: {isHostile}, PlayerControlled: {playerControlled}");
 
             // 2. 生成 Pawn
             Pawn pawn;
@@ -93,18 +102,47 @@ namespace TheSecondSeat.Descent
 
         /// <summary>
         /// 确定派系
+        /// ⭐ v2.9.8: 根据 isHostile 和 playerControlled 确定派系
+        /// - 敌对模式：使用敌对派系（AncientsHostile）
+        /// - 受控援助：使用玩家派系（可征召控制）
+        /// - 自主援助：使用友好 NPC 派系（不受玩家控制，但会自动战斗）
         /// </summary>
-        private static Faction DetermineFaction(bool isHostile)
+        private static Faction DetermineFaction(bool isHostile, bool playerControlled)
         {
-            Faction faction = isHostile ? Faction.OfAncientsHostile : Faction.OfPlayer;
-            
-            if (isHostile && faction == null)
+            if (isHostile)
             {
-                faction = Find.FactionManager.FirstFactionOfDef(FactionDefOf.AncientsHostile)
-                         ?? Find.FactionManager.AllFactions.FirstOrDefault(f => f.HostileTo(Faction.OfPlayer));
+                // 敌对模式：使用敌对派系
+                Faction hostileFaction = Faction.OfAncientsHostile
+                    ?? Find.FactionManager.FirstFactionOfDef(FactionDefOf.AncientsHostile)
+                    ?? Find.FactionManager.AllFactions.FirstOrDefault(f => f.HostileTo(Faction.OfPlayer));
+                return hostileFaction;
             }
             
-            return faction;
+            if (playerControlled)
+            {
+                // 受控援助：使用玩家派系（可以征召）
+                return Faction.OfPlayer;
+            }
+            else
+            {
+                // ⭐ 自主援助：使用帝国或其他友好 NPC 派系
+                // 这样叙事者会自主行动保护殖民地，但不受玩家直接控制
+                Faction allyFaction = Find.FactionManager.AllFactions
+                    .FirstOrDefault(f => f != Faction.OfPlayer 
+                                      && !f.HostileTo(Faction.OfPlayer) 
+                                      && !f.IsPlayer
+                                      && f.def.humanlikeFaction);
+                
+                if (allyFaction != null)
+                {
+                    Log.Message($"[DescentPawnSpawner] Using ally faction for autonomous assist: {allyFaction.Name}");
+                    return allyFaction;
+                }
+                
+                // 回退：如果没有友好派系，使用玩家派系
+                Log.Warning("[DescentPawnSpawner] No ally faction found, falling back to player faction");
+                return Faction.OfPlayer;
+            }
         }
 
         /// <summary>

@@ -25,6 +25,7 @@ namespace TheSecondSeat.TTS
         private string voiceName = "zh-CN-XiaoxiaoNeural"; // 默认中文女声
         private float speechRate = 1.0f;
         private float volume = 1.0f;
+        private float pitch = 0.0f; // -50% to +50% (Hz shift logic)
 
         // OpenAI 兼容接口配置
         private string openAI_ApiUrl = "http://127.0.0.1:9880/v1/audio/speech";
@@ -61,6 +62,7 @@ namespace TheSecondSeat.TTS
             string voice = "zh-CN-XiaoxiaoNeural",
             float rate = 1.0f,
             float vol = 1.0f,
+            float pitchVal = 0.0f,
             string apiUrl = "",
             string modelName = "",
             string audioUri = "")
@@ -71,6 +73,7 @@ namespace TheSecondSeat.TTS
             voiceName = voice;
             speechRate = UnityEngine.Mathf.Clamp(rate, 0.5f, 2.0f);
             volume = UnityEngine.Mathf.Clamp(vol, 0.0f, 1.0f);
+            pitch = UnityEngine.Mathf.Clamp(pitchVal, -0.5f, 0.5f);
 
             if (ttsProvider == "openai")
             {
@@ -251,8 +254,12 @@ namespace TheSecondSeat.TTS
                     // 转换音量格式
                     string volumeStr = $"+{(int)(volume * 100 - 100)}%";
                     if (volume >= 1.0f) volumeStr = "+0%";
+
+                    // 转换音高格式 (使用百分比)
+                    int pitchPercent = (int)(pitch * 100);
+                    string pitchStr = pitchPercent >= 0 ? $"+{pitchPercent}%" : $"{pitchPercent}%";
                     
-                    byte[] audioData = await client.SynthesizeAsync(text, voiceName, rateStr, volumeStr);
+                    byte[] audioData = await client.SynthesizeAsync(text, voiceName, rateStr, volumeStr, pitchStr);
                     
                     if (audioData != null && audioData.Length > 0)
                     {
@@ -337,8 +344,7 @@ namespace TheSecondSeat.TTS
                     webRequest.SetRequestHeader("Authorization", $"Bearer {apiKey}");
                 }
 
-                var op = webRequest.SendWebRequest();
-                while (!op.isDone) await Task.Delay(50);
+                await webRequest.SendWebRequest();
 
                 if (webRequest.result != UnityWebRequest.Result.Success)
                 {
@@ -428,8 +434,7 @@ namespace TheSecondSeat.TTS
                     webRequest.SetRequestHeader("Authorization", $"Bearer {apiKey}");
                 }
 
-                var op = webRequest.SendWebRequest();
-                while (!op.isDone) await Task.Delay(50);
+                await webRequest.SendWebRequest();
 
                 if (webRequest.result != UnityWebRequest.Result.Success)
                 {
@@ -563,7 +568,7 @@ namespace TheSecondSeat.TTS
             try
             {
                 string endpoint = $"https://{apiRegion}.tts.speech.microsoft.com/cognitiveservices/v1";
-                string ssml = BuildSSML(text, voiceName, speechRate);
+                string ssml = BuildSSML(text, voiceName, speechRate, pitch);
 
                 using var webRequest = new UnityWebRequest(endpoint, "POST");
                 webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(ssml));
@@ -573,8 +578,7 @@ namespace TheSecondSeat.TTS
                 webRequest.SetRequestHeader("X-Microsoft-OutputFormat", "riff-48khz-16bit-mono-pcm");
                 webRequest.SetRequestHeader("User-Agent", "RimWorld-TheSecondSeat-TTS");
 
-                var op = webRequest.SendWebRequest();
-                while (!op.isDone) await Task.Delay(50);
+                await webRequest.SendWebRequest();
 
                 if (webRequest.result != UnityWebRequest.Result.Success)
                 {
@@ -599,75 +603,77 @@ namespace TheSecondSeat.TTS
         {
             try
             {
+                // 获取配置 (Lite Mapping)
+                LipSyncMappingDef mappingDef = DefDatabase<LipSyncMappingDef>.GetNamedSilentFail("DefaultLipSyncMapping");
+                if (mappingDef == null)
+                {
+                    // Fallback to default if def is missing
+                    if (Prefs.DevMode) Log.Warning("[TTSService] DefaultLipSyncMapping not found, using fallback defaults.");
+                    mappingDef = new LipSyncMappingDef(); // Uses default values defined in class
+                }
+
                 var visemes = new List<PersonaGeneration.VisemeCode>();
+                // 起始静默
                 visemes.Add(PersonaGeneration.VisemeCode.Closed);
 
                 foreach (char c in text)
                 {
-                    if (char.IsWhiteSpace(c) || char.IsPunctuation(c))
+                    // 处理空白和标点：插入停顿
+                    if (char.IsWhiteSpace(c))
+                    {
+                        visemes.Add(PersonaGeneration.VisemeCode.Closed);
+                        continue;
+                    }
+                    
+                    if (char.IsPunctuation(c))
                     {
                         visemes.Add(PersonaGeneration.VisemeCode.Closed);
                         visemes.Add(PersonaGeneration.VisemeCode.Closed);
                         continue;
                     }
 
-                    int hash = Math.Abs(c.GetHashCode());
-                    PersonaGeneration.VisemeCode coreViseme;
-                    
-                    if (c >= 0x2E80)
+                    // 确定核心口型 (Core Viseme)
+                    PersonaGeneration.VisemeCode coreViseme = mappingDef.defaultViseme;
+                    PhonemeGroup group = LipSyncData.GetPhonemeGroup(c);
+
+                    if (group != PhonemeGroup.None)
                     {
-                        int val = hash % 100;
-                        if (val < 30) coreViseme = PersonaGeneration.VisemeCode.Large;
-                        else if (val < 55) coreViseme = PersonaGeneration.VisemeCode.OShape;
-                        else if (val < 80) coreViseme = PersonaGeneration.VisemeCode.Smile;
-                        else coreViseme = PersonaGeneration.VisemeCode.Medium;
+                        coreViseme = mappingDef.GetVisemeFor(group);
                     }
-                    else
+                    // 2. 处理英文/拉丁字符 (Fallback logic kept for compatibility)
+                    else if (c < 0x2E80)
                     {
                         char lower = char.ToLowerInvariant(c);
                         if ("aeiou".IndexOf(lower) >= 0)
                         {
-                            coreViseme = lower switch
-                            {
-                                'a' => PersonaGeneration.VisemeCode.Large,
-                                'e' => PersonaGeneration.VisemeCode.Smile,
-                                'i' => PersonaGeneration.VisemeCode.Smile,
-                                'o' => PersonaGeneration.VisemeCode.OShape,
-                                'u' => PersonaGeneration.VisemeCode.Medium,
-                                _ => PersonaGeneration.VisemeCode.Medium
-                            };
+                            // 简单映射：a/o/u -> Large/Medium/OShape based on mapping logic
+                            if (lower == 'a') coreViseme = mappingDef.GetVisemeFor(PhonemeGroup.Large);
+                            else if (lower == 'o') coreViseme = mappingDef.GetVisemeFor(PhonemeGroup.OShape);
+                            else if (lower == 'e' || lower == 'i') coreViseme = mappingDef.GetVisemeFor(PhonemeGroup.Smile);
+                            else coreViseme = mappingDef.defaultViseme;
                         }
                         else
                         {
-                            coreViseme = (hash % 2 == 0) ? PersonaGeneration.VisemeCode.Small : PersonaGeneration.VisemeCode.Closed;
+                            coreViseme = mappingDef.defaultViseme;
                         }
                     }
 
-                    if (coreViseme == PersonaGeneration.VisemeCode.Large || coreViseme == PersonaGeneration.VisemeCode.OShape)
-                    {
-                        visemes.Add(PersonaGeneration.VisemeCode.Small);
-                    }
-                    else if (coreViseme == PersonaGeneration.VisemeCode.Smile)
-                    {
-                        visemes.Add(PersonaGeneration.VisemeCode.Small);
-                    }
-                    else
-                    {
-                        visemes.Add(PersonaGeneration.VisemeCode.Closed);
-                    }
-
-                    visemes.Add(coreViseme);
-
-                    if (coreViseme == PersonaGeneration.VisemeCode.Large || coreViseme == PersonaGeneration.VisemeCode.OShape || coreViseme == PersonaGeneration.VisemeCode.Smile)
+                    // 构建口型序列：[Attack] -> [Sustain] -> [Release]
+                    
+                    // Attack (起势)
+                    visemes.Add(mappingDef.attackViseme);
+                    
+                    // Sustain (保持)
+                    for (int i = 0; i < mappingDef.sustainFrames; i++)
                     {
                         visemes.Add(coreViseme);
                     }
-                    else
-                    {
-                        visemes.Add(PersonaGeneration.VisemeCode.Small);
-                    }
+                    
+                    // Release (收势)
+                    visemes.Add(mappingDef.releaseViseme);
                 }
                 
+                // 结束静默
                 visemes.Add(PersonaGeneration.VisemeCode.Closed);
                 visemes.Add(PersonaGeneration.VisemeCode.Closed);
 
@@ -682,7 +688,7 @@ namespace TheSecondSeat.TTS
             }
         }
 
-        private string BuildSSML(string text, string voice, float rate)
+        private string BuildSSML(string text, string voice, float rate, float pitchVal)
         {
             string rateStr;
             if (rate >= 1.0f)
@@ -695,6 +701,9 @@ namespace TheSecondSeat.TTS
                 int percent = (int)((rate - 1.0f) * 100);
                 rateStr = $"{percent}%";
             }
+
+            int pitchPercent = (int)(pitchVal * 100);
+            string pitchStr = pitchPercent >= 0 ? $"+{pitchPercent}%" : $"{pitchPercent}%";
             
             string escapedText = System.Security.SecurityElement.Escape(text);
             EmotionStyle emotion = GetCurrentEmotion();
@@ -705,7 +714,7 @@ namespace TheSecondSeat.TTS
                 ssml = $@"<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='https://www.w3.org/2001/mstts' xml:lang='zh-CN'>
     <voice name='{voice}'>
         <mstts:express-as style='{emotion.StyleName}' styledegree='{emotion.StyleDegree:F2}'>
-            <prosody rate='{rateStr}'>
+            <prosody rate='{rateStr}' pitch='{pitchStr}'>
                 {escapedText}
             </prosody>
         </mstts:express-as>
@@ -716,7 +725,7 @@ namespace TheSecondSeat.TTS
             {
                 ssml = $@"<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='https://www.w3.org/2001/mstts' xml:lang='zh-CN'>
     <voice name='{voice}'>
-        <prosody rate='{rateStr}'>
+        <prosody rate='{rateStr}' pitch='{pitchStr}'>
             {escapedText}
         </prosody>
     </voice>
@@ -929,6 +938,34 @@ namespace TheSecondSeat.TTS
                 "ko-KR-SunHiNeural",
                 "ko-KR-InJoonNeural",
             };
+        }
+    
+    }
+
+    public static class UnityWebRequestExtension
+    {
+        public static UnityWebRequestAwaiter GetAwaiter(this UnityWebRequestAsyncOperation asyncOp)
+        {
+            return new UnityWebRequestAwaiter(asyncOp);
+        }
+    }
+
+    public struct UnityWebRequestAwaiter : System.Runtime.CompilerServices.INotifyCompletion
+    {
+        private UnityWebRequestAsyncOperation asyncOp;
+
+        public UnityWebRequestAwaiter(UnityWebRequestAsyncOperation asyncOp)
+        {
+            this.asyncOp = asyncOp;
+        }
+
+        public bool IsCompleted => asyncOp.isDone;
+
+        public void GetResult() { }
+
+        public void OnCompleted(Action continuation)
+        {
+            asyncOp.completed += _ => continuation();
         }
     }
 }

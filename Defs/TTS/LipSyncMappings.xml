@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <TheSecondSeat.TTS.LipSyncMappingDef>
+    <defName>DefaultLipSyncMapping</defName>
+    <label>Default Lite Mapping</label>
+    <sustainFrames>2</sustainFrames>
+    <attackViseme>Closed</attackViseme>
+    <releaseViseme>Closed</releaseViseme>
+    <defaultViseme>Small</defaultViseme>
+    <mappings>
+      <li>
+        <group>Large</group>
+        <viseme>Medium</viseme>
+      </li>
+      <li>
+        <group>OShape</group>
+        <viseme>Medium</viseme>
+      </li>
+      <li>
+        <group>Smile</group>
+        <viseme>Medium</viseme>
+      </li>
+    </mappings>
+  </TheSecondSeat.TTS.LipSyncMappingDef>
+</Defs>

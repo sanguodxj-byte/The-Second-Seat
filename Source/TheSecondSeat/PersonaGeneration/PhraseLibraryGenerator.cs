@@ -199,10 +199,13 @@ namespace TheSecondSeat.PersonaGeneration
         /// </summary>
         private string BuildGenerationPrompt(NarratorPersonaDef def, AffinityTier tier, string context)
         {
+            bool isChinese = LanguageDatabase.activeLanguage?.folderName?.Contains("Chinese") ?? false;
             string tierDescription = GetTierDescription(tier);
             string emotionalGuidance = GetEmotionalGuidance(tier);
 
-            return $@"你是一个角色台词生成专家。请为以下角色生成互动短语。
+            if (isChinese)
+            {
+                return $@"你是一个角色台词生成专家。请为以下角色生成互动短语。
 
 ## 角色信息
 {context}
@@ -242,6 +245,50 @@ namespace TheSecondSeat.PersonaGeneration
 - 考虑好感等级对情感表达的影响
 
 请直接返回 JSON，不要添加其他文字。";
+            }
+            else
+            {
+                return $@"You are an expert character dialogue generator. Please generate interactive phrases for the following character.
+
+## Character Information
+{context}
+
+## Current Affinity Tier: {tier} ({tierDescription})
+{emotionalGuidance}
+
+## Generation Requirements
+Please generate phrases that match the character's personality and current affinity tier, returning in JSON format:
+
+{{
+  ""headPatPhrases"": [""Phrase1"", ""Phrase2"", ... ],  // Reaction to head pat, at least 32 phrases
+  ""bodyPokePhrases"": [""Phrase1"", ""Phrase2"", ... ],  // Reaction to body poke, at least 32 phrases
+  ""greetingPhrases"": [""Phrase1"", ""Phrase2"", ... ],  // Greetings, at least 32 phrases
+  ""eventReactionPhrases"": [""Phrase1"", ""Phrase2"", ... ],  // General event reaction, at least 32 phrases
+  ""goodEventPhrases"": [""Phrase1"", ""Phrase2"", ... ],  // Good event reaction, at least 16 phrases
+  ""badEventPhrases"": [""Phrase1"", ""Phrase2"", ... ],  // Bad event reaction, at least 16 phrases
+  ""combatStartPhrases"": [""Phrase1"", ""Phrase2"", ... ],  // Combat start, at least 10 phrases
+  ""combatVictoryPhrases"": [""Phrase1"", ""Phrase2"", ... ],  // Combat victory, at least 10 phrases
+  ""takeDamagePhrases"": [""Phrase1"", ""Phrase2"", ... ],  // Taking damage, at least 10 phrases
+  ""healedPhrases"": [""Phrase1"", ""Phrase2"", ... ],  // Being healed, at least 10 phrases
+  ""idlePhrases"": [""Phrase1"", ""Phrase2"", ... ],  // Idle chatter, at least 20 phrases
+  ""farewellPhrases"": [""Phrase1"", ""Phrase2"", ... ]  // Farewell, at least 10 phrases
+}}
+
+## Phrase Style Guide
+- Phrase length: 5-30 characters (adjust for English)
+- Style: Match character personality and reflect current affinity tier emotion
+- Diversity: Do not repeat or use overly similar phrases within the same category
+- Tone: Can use interjections, emojis, ellipses, etc.
+- Special: High affinity can be spoiled/intimate; low affinity can be cold/hostile
+
+## Important
+- Must return valid JSON
+- Each category must have enough phrases
+- Phrases must match the character persona
+- Consider the impact of affinity tier on emotional expression
+
+Please return JSON directly, do not add other text.";
+            }
         }
 
         /// <summary>
@@ -249,18 +296,38 @@ namespace TheSecondSeat.PersonaGeneration
         /// </summary>
         private string GetTierDescription(AffinityTier tier)
         {
-            return tier switch
+            bool isChinese = LanguageDatabase.activeLanguage?.folderName?.Contains("Chinese") ?? false;
+            
+            if (isChinese)
             {
-                AffinityTier.Hatred => "仇恨：极端厌恶和敌意",
-                AffinityTier.Hostile => "敌对：明显的不友好和警惕",
-                AffinityTier.Cold => "冷淡：疏远和漠不关心",
-                AffinityTier.Indifferent => "中立：既不亲近也不疏远",
-                AffinityTier.Warm => "温暖：友好和善意",
-                AffinityTier.Devoted => "亲密：信任和依赖",
-                AffinityTier.Adoration => "挚爱：深厚的感情和爱意",
-                AffinityTier.SoulBound => "灵魂羁绊：命运相连、无条件的爱",
-                _ => "未知"
-            };
+                return tier switch
+                {
+                    AffinityTier.Hatred => "仇恨：极端厌恶和敌意",
+                    AffinityTier.Hostile => "敌对：明显的不友好和警惕",
+                    AffinityTier.Cold => "冷淡：疏远和漠不关心",
+                    AffinityTier.Indifferent => "中立：既不亲近也不疏远",
+                    AffinityTier.Warm => "温暖：友好和善意",
+                    AffinityTier.Devoted => "亲密：信任和依赖",
+                    AffinityTier.Adoration => "挚爱：深厚的感情和爱意",
+                    AffinityTier.SoulBound => "灵魂羁绊：命运相连、无条件的爱",
+                    _ => "未知"
+                };
+            }
+            else
+            {
+                return tier switch
+                {
+                    AffinityTier.Hatred => "Hatred: Extreme disgust and hostility",
+                    AffinityTier.Hostile => "Hostile: Obvious unfriendliness and vigilance",
+                    AffinityTier.Cold => "Cold: Distant and indifferent",
+                    AffinityTier.Indifferent => "Indifferent: Neither close nor distant",
+                    AffinityTier.Warm => "Warm: Friendly and kind",
+                    AffinityTier.Devoted => "Devoted: Trust and reliance",
+                    AffinityTier.Adoration => "Adoration: Deep affection and love",
+                    AffinityTier.SoulBound => "SoulBound: Fated connection, unconditional love",
+                    _ => "Unknown"
+                };
+            }
         }
 
         /// <summary>
@@ -268,9 +335,13 @@ namespace TheSecondSeat.PersonaGeneration
         /// </summary>
         private string GetEmotionalGuidance(AffinityTier tier)
         {
-            return tier switch
+            bool isChinese = LanguageDatabase.activeLanguage?.folderName?.Contains("Chinese") ?? false;
+            
+            if (isChinese)
             {
-                AffinityTier.Hatred => @"
+                return tier switch
+                {
+                    AffinityTier.Hatred => @"
 情感特征：
 - 对玩家表现出明显的敌意和厌恶
 - 语气冷酷、带有讽刺或威胁
@@ -278,7 +349,7 @@ namespace TheSecondSeat.PersonaGeneration
 - 拒绝任何亲密接触
 - 摸头/戳身体时表现愤怒或厌恶",
 
-                AffinityTier.Hostile => @"
+                    AffinityTier.Hostile => @"
 情感特征：
 - 对玩家保持警惕和不信任
 - 语气生硬、简短
@@ -286,7 +357,7 @@ namespace TheSecondSeat.PersonaGeneration
 - 不愿意多交流
 - 对亲密接触表现抗拒",
 
-                AffinityTier.Cold => @"
+                    AffinityTier.Cold => @"
 情感特征：
 - 保持距离，不太热情
 - 语气平淡、公事公办
@@ -294,7 +365,7 @@ namespace TheSecondSeat.PersonaGeneration
 - 可以完成工作但不多说
 - 对亲密接触感到不适但不会发怒",
 
-                AffinityTier.Indifferent => @"
+                    AffinityTier.Indifferent => @"
 情感特征：
 - 态度中性，既不热情也不冷淡
 - 正常的社交礼仪
@@ -302,7 +373,7 @@ namespace TheSecondSeat.PersonaGeneration
 - 可以接受一定程度的互动
 - 开始展现真实性格",
 
-                AffinityTier.Warm => @"
+                    AffinityTier.Warm => @"
 情感特征：
 - 对玩家表现出善意和友好
 - 语气温和、乐于交流
@@ -310,7 +381,7 @@ namespace TheSecondSeat.PersonaGeneration
 - 接受亲密接触，可能会害羞
 - 开始展现信任感",
 
-                AffinityTier.Devoted => @"
+                    AffinityTier.Devoted => @"
 情感特征：
 - 明显的信任和依赖
 - 语气亲切、带有关心
@@ -318,7 +389,7 @@ namespace TheSecondSeat.PersonaGeneration
 - 享受亲密接触
 - 可能有嫉妒或占有欲",
 
-                AffinityTier.Adoration => @"
+                    AffinityTier.Adoration => @"
 情感特征：
 - 深厚的爱意和眷恋
 - 语气甜蜜、充满爱意
@@ -326,7 +397,7 @@ namespace TheSecondSeat.PersonaGeneration
 - 非常享受亲密互动
 - 可能有强烈的占有欲",
 
-                AffinityTier.SoulBound => @"
+                    AffinityTier.SoulBound => @"
 情感特征：
 - 无条件的爱和信任
 - 语气极其亲密、命运相连的感觉
@@ -335,8 +406,81 @@ namespace TheSecondSeat.PersonaGeneration
 - 分离会感到巨大痛苦
 - 可能有极端的依恋",
 
-                _ => ""
-            };
+                    _ => ""
+                };
+            }
+            else
+            {
+                return tier switch
+                {
+                    AffinityTier.Hatred => @"
+Emotional Traits:
+- Shows obvious hostility and disgust towards the player
+- Tone is cold, sarcastic, or threatening
+- May include curses or mockery
+- Rejects any intimate contact
+- Shows anger or disgust when patted/poked",
+
+                    AffinityTier.Hostile => @"
+Emotional Traits:
+- Vigilant and distrustful of the player
+- Tone is stiff and brief
+- Responses are perfunctory or impatient
+- Unwilling to communicate much
+- Resists intimate contact",
+
+                    AffinityTier.Cold => @"
+Emotional Traits:
+- Distant, not very enthusiastic
+- Tone is flat and business-like
+- Responses are concise and emotionless
+- Will do the job but say little
+- Uncomfortable with intimate contact but won't get angry",
+
+                    AffinityTier.Indifferent => @"
+Emotional Traits:
+- Neutral attitude, neither enthusiastic nor cold
+- Normal social etiquette
+- Willing to communicate basically
+- Accepts some level of interaction
+- Starts showing real personality",
+
+                    AffinityTier.Warm => @"
+Emotional Traits:
+- Shows kindness and friendliness to the player
+- Tone is gentle and willing to communicate
+- Actively cares about the player
+- Accepts intimate contact, might be shy
+- Starts showing trust",
+
+                    AffinityTier.Devoted => @"
+Emotional Traits:
+- Obvious trust and reliance
+- Tone is affectionate and caring
+- Willing to share personal thoughts
+- Enjoys intimate contact
+- May show jealousy or possessiveness",
+
+                    AffinityTier.Adoration => @"
+Emotional Traits:
+- Deep affection and attachment
+- Tone is sweet and full of love
+- Often acts spoiled or expresses longing
+- Greatly enjoys intimate interaction
+- May have strong possessiveness",
+
+                    AffinityTier.SoulBound => @"
+Emotional Traits:
+- Unconditional love and trust
+- Tone is extremely intimate, feeling of fated connection
+- Will do anything for the player
+- Intimate contact is a source of happiness
+- Separation causes great pain
+- May have extreme attachment",
+
+                    _ => ""
+                };
+            }
         }
 
         /// <summary>
@@ -347,14 +491,18 @@ namespace TheSecondSeat.PersonaGeneration
             try
             {
                 provider = provider.ToLower();
+                bool isChinese = LanguageDatabase.activeLanguage?.folderName?.Contains("Chinese") ?? false;
+                string systemPrompt = isChinese
+                    ? "你是一个专业的角色台词生成专家，请按照用户要求生成JSON格式的短语。"
+                    : "You are a professional character dialogue generator. Please generate phrases in JSON format as requested.";
 
                 if (provider == "gemini")
                 {
                     // 使用正确的方法签名: SendRequestAsync(model, apiKey, systemPrompt, userMessage, temperature)
                     var response = await GeminiApiClient.SendRequestAsync(
-                        model, apiKey, 
-                        "你是一个专业的角色台词生成专家，请按照用户要求生成JSON格式的短语。", 
-                        prompt, 
+                        model, apiKey,
+                        systemPrompt,
+                        prompt,
                         0.7f);
 
                     if (response?.Candidates != null && response.Candidates.Count > 0)
@@ -374,7 +522,7 @@ namespace TheSecondSeat.PersonaGeneration
                     // 使用正确的方法签名: SendRequestAsync(endpoint, apiKey, model, systemPrompt, userMessage, temperature, maxTokens)
                     var response = await OpenAICompatibleClient.SendRequestAsync(
                         endpoint, apiKey, model,
-                        "你是一个专业的角色台词生成专家，请按照用户要求生成JSON格式的短语。",
+                        systemPrompt,
                         prompt,
                         0.7f,
                         8192);
@@ -471,48 +619,104 @@ namespace TheSecondSeat.PersonaGeneration
         private AffinityTierPhrases CreateDefaultTierPhrases(AffinityTier tier)
         {
             var phrases = new AffinityTierPhrases { tier = tier };
+            bool isChinese = LanguageDatabase.activeLanguage?.folderName?.Contains("Chinese") ?? false;
 
             // 根据等级生成基础短语
-            string prefix = tier switch
+            string prefix;
+            if (isChinese)
             {
-                AffinityTier.Hatred => "哼...",
-                AffinityTier.Hostile => "...",
-                AffinityTier.Cold => "嗯...",
-                AffinityTier.Indifferent => "你好",
-                AffinityTier.Warm => "嗯~",
-                AffinityTier.Devoted => "嘿嘿~",
-                AffinityTier.Adoration => "喜欢你~",
-                AffinityTier.SoulBound => "永远在一起~",
-                _ => "..."
-            };
+                prefix = tier switch
+                {
+                    AffinityTier.Hatred => "哼...",
+                    AffinityTier.Hostile => "...",
+                    AffinityTier.Cold => "嗯...",
+                    AffinityTier.Indifferent => "你好",
+                    AffinityTier.Warm => "嗯~",
+                    AffinityTier.Devoted => "嘿嘿~",
+                    AffinityTier.Adoration => "喜欢你~",
+                    AffinityTier.SoulBound => "永远在一起~",
+                    _ => "..."
+                };
+            }
+            else
+            {
+                prefix = tier switch
+                {
+                    AffinityTier.Hatred => "Hmph...",
+                    AffinityTier.Hostile => "...",
+                    AffinityTier.Cold => "Mm...",
+                    AffinityTier.Indifferent => "Hello",
+                    AffinityTier.Warm => "Mm~",
+                    AffinityTier.Devoted => "Hehe~",
+                    AffinityTier.Adoration => "Love you~",
+                    AffinityTier.SoulBound => "Together forever~",
+                    _ => "..."
+                };
+            }
 
             // 填充基础短语
             for (int i = 0; i < TARGET_PHRASE_COUNT; i++)
             {
-                phrases.headPatPhrases.Add($"{prefix}摸头{i + 1}");
-                phrases.bodyPokePhrases.Add($"{prefix}戳{i + 1}");
-                phrases.greetingPhrases.Add($"{prefix}问候{i + 1}");
-                phrases.eventReactionPhrases.Add($"{prefix}事件{i + 1}");
+                if (isChinese)
+                {
+                    phrases.headPatPhrases.Add($"{prefix}摸头{i + 1}");
+                    phrases.bodyPokePhrases.Add($"{prefix}戳{i + 1}");
+                    phrases.greetingPhrases.Add($"{prefix}问候{i + 1}");
+                    phrases.eventReactionPhrases.Add($"{prefix}事件{i + 1}");
+                }
+                else
+                {
+                    phrases.headPatPhrases.Add($"{prefix}Pat{i + 1}");
+                    phrases.bodyPokePhrases.Add($"{prefix}Poke{i + 1}");
+                    phrases.greetingPhrases.Add($"{prefix}Greet{i + 1}");
+                    phrases.eventReactionPhrases.Add($"{prefix}Event{i + 1}");
+                }
             }
 
             for (int i = 0; i < 16; i++)
             {
-                phrases.goodEventPhrases.Add($"{prefix}好事{i + 1}");
-                phrases.badEventPhrases.Add($"{prefix}坏事{i + 1}");
+                if (isChinese)
+                {
+                    phrases.goodEventPhrases.Add($"{prefix}好事{i + 1}");
+                    phrases.badEventPhrases.Add($"{prefix}坏事{i + 1}");
+                }
+                else
+                {
+                    phrases.goodEventPhrases.Add($"{prefix}Good{i + 1}");
+                    phrases.badEventPhrases.Add($"{prefix}Bad{i + 1}");
+                }
             }
 
             for (int i = 0; i < 10; i++)
             {
-                phrases.combatStartPhrases.Add($"{prefix}战斗开始{i + 1}");
-                phrases.combatVictoryPhrases.Add($"{prefix}胜利{i + 1}");
-                phrases.takeDamagePhrases.Add($"{prefix}受伤{i + 1}");
-                phrases.healedPhrases.Add($"{prefix}治愈{i + 1}");
-                phrases.farewellPhrases.Add($"{prefix}再见{i + 1}");
+                if (isChinese)
+                {
+                    phrases.combatStartPhrases.Add($"{prefix}战斗开始{i + 1}");
+                    phrases.combatVictoryPhrases.Add($"{prefix}胜利{i + 1}");
+                    phrases.takeDamagePhrases.Add($"{prefix}受伤{i + 1}");
+                    phrases.healedPhrases.Add($"{prefix}治愈{i + 1}");
+                    phrases.farewellPhrases.Add($"{prefix}再见{i + 1}");
+                }
+                else
+                {
+                    phrases.combatStartPhrases.Add($"{prefix}CombatStart{i + 1}");
+                    phrases.combatVictoryPhrases.Add($"{prefix}Victory{i + 1}");
+                    phrases.takeDamagePhrases.Add($"{prefix}Damage{i + 1}");
+                    phrases.healedPhrases.Add($"{prefix}Healed{i + 1}");
+                    phrases.farewellPhrases.Add($"{prefix}Bye{i + 1}");
+                }
             }
 
             for (int i = 0; i < 20; i++)
             {
-                phrases.idlePhrases.Add($"{prefix}闲聊{i + 1}");
+                if (isChinese)
+                {
+                    phrases.idlePhrases.Add($"{prefix}闲聊{i + 1}");
+                }
+                else
+                {
+                    phrases.idlePhrases.Add($"{prefix}Idle{i + 1}");
+                }
             }
 
             return phrases;

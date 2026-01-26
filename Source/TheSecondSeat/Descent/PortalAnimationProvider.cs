@@ -255,8 +255,15 @@ namespace TheSecondSeat.Descent
                 SoundDef soundDef = DefDatabase<SoundDef>.GetNamedSilentFail(soundDefName);
                 if (soundDef != null)
                 {
-                    SoundStarter.PlayOneShotOnCamera(soundDef, map);
-                    Log.Message($"[PortalAnimationProvider] 播放音效: {soundDefName}");
+                    try
+                    {
+                        SoundStarter.PlayOneShotOnCamera(soundDef, map);
+                        Log.Message($"[PortalAnimationProvider] 播放音效: {soundDefName}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning($"[PortalAnimationProvider] 播放音效失败: {ex.Message}");
+                    }
                 }
             }
             catch (Exception ex)

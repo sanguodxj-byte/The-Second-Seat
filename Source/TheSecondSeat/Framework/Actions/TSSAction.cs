@@ -60,13 +60,13 @@ namespace TheSecondSeat.Framework
         /// </summary>
         /// <param name="map">目标地图</param>
         /// <param name="context">上下文数据（共享数据，如affinity、persona等）</param>
-        public abstract void Execute(Map map, Dictionary<string, object> context);
+        public abstract void Execute(Map map, in NarratorContext context);
         
         /// <summary>
         /// 安全执行包装器（带异常处理）
         /// 外部调用应使用此方法而非直接调用Execute
         /// </summary>
-        public void ExecuteSafe(Map map, Dictionary<string, object> context)
+        public void ExecuteSafe(Map map, in NarratorContext context)
         {
             if (!enabled)
             {
@@ -114,7 +114,7 @@ namespace TheSecondSeat.Framework
         /// <summary>
         /// 评估条件表达式（简单实现，可扩展）
         /// </summary>
-        private bool EvaluateCondition(Dictionary<string, object> context)
+        private bool EvaluateCondition(in NarratorContext context)
         {
             try
             {

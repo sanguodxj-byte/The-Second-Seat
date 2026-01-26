@@ -65,6 +65,7 @@ namespace TheSecondSeat.UI
             this.drawShadow = false; // ? v1.6.91: 移除阴影
             this.optionalTitle = null; // ? v1.6.91: 移除标题
             this.doWindowBackground = false; // ? v1.6.91: 禁用默认背景
+            this.layer = WindowLayer.SubSuper; // ⭐ v2.9.7: 渲染在其他UI窗口之下，被UI遮蔽
         }
 
         protected override void SetInitialSizeAndPosition()

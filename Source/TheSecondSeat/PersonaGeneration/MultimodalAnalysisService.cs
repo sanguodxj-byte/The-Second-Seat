@@ -124,7 +124,7 @@ namespace TheSecondSeat.PersonaGeneration
         {
             Log.Message("[MultimodalAnalysis] 使用 Gemini Vision API");
             
-            string prompt = MultimodalPromptGenerator.GetVisionPrompt(IsChinese);
+            string prompt = MultimodalPromptGenerator.GetVisionPrompt();
 
             var geminiResponse = await LLM.GeminiApiClient.SendVisionRequestAsync(
                 visionModel,
@@ -154,7 +154,7 @@ namespace TheSecondSeat.PersonaGeneration
             Log.Message($"[MultimodalAnalysis] 使用 {apiProvider} Vision API");
             
             string endpoint = GetVisionEndpoint();
-            string prompt = MultimodalPromptGenerator.GetVisionPrompt(IsChinese);
+            string prompt = MultimodalPromptGenerator.GetVisionPrompt();
 
             var response = await LLM.OpenAICompatibleClient.SendVisionRequestAsync(
                 endpoint,
@@ -182,12 +182,6 @@ namespace TheSecondSeat.PersonaGeneration
             
             return ParseVisionJson(content);
         }
-
-        /// <summary>
-        /// 检测是否为中文语言环境
-        /// </summary>
-        private bool IsChinese => LanguageDatabase.activeLanguage?.folderName?.Contains("Chinese") == true;
-
 
         /// <summary>
         /// 解析 Vision API 返回的 JSON
@@ -412,7 +406,7 @@ namespace TheSecondSeat.PersonaGeneration
 
         private object BuildVisionRequest(string base64Image)
         {
-            string prompt = MultimodalPromptGenerator.GetBriefVisionPrompt(IsChinese);
+            string prompt = MultimodalPromptGenerator.GetBriefVisionPrompt();
 
             if (apiProvider == "openai")
             {
@@ -460,7 +454,7 @@ namespace TheSecondSeat.PersonaGeneration
 
         private object BuildTextRequest(string text)
         {
-            string prompt = MultimodalPromptGenerator.GetTextAnalysisPrompt(IsChinese, text);
+            string prompt = MultimodalPromptGenerator.GetTextAnalysisPrompt(text);
 
             return new
             {
@@ -727,7 +721,7 @@ namespace TheSecondSeat.PersonaGeneration
             try
             {
                 string provider = apiProvider.ToLower();
-                string prompt = MultimodalPromptGenerator.GetVisionPromptWithTraits(IsChinese, selectedTraits, userSupplement);
+                string prompt = MultimodalPromptGenerator.GetVisionPromptWithTraits(selectedTraits, userSupplement);
                 string endpoint = GetVisionEndpoint();
 
                 // 使用统一的 SendOpenAIRawRequestAsync 发送预构建的 JSON

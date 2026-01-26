@@ -94,7 +94,7 @@
         </li>
       </lifeStageAges>
       <soundMeleeHitPawn>Pawn_Melee_Punch_HitPawn</soundMeleeHitPawn>
-      <soundMeleeHitBuilding>Pawn_Melee_Punch_HitBuilding</soundMeleeHitBuilding>
+      <!-- ⭐ v2.9.0: 移除不存在的 soundMeleeHitBuilding，使用默认值 -->
       <soundMeleeMiss>Pawn_Melee_Punch_Miss</soundMeleeMiss>
       <specialShadowData>
         <volume>(0.3, 0.8, 0.4)</volume>

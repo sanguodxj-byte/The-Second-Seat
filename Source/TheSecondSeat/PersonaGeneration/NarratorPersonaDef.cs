@@ -551,6 +551,7 @@ namespace TheSecondSeat.PersonaGeneration
                 cachedAnalysis = new PersonaAnalysisResult
                 {
                     VisualTags = visualElements != null ? new List<string>(visualElements) : new List<string>(),
+                    VisualDescription = visualDescription ?? "",
                     ToneTags = toneTags != null ? new List<string>(toneTags) : new List<string>(),
                     PersonalityTags = personalityTags != null ? new List<string>(personalityTags) : new List<string>(),
                     SuggestedPersonality = suggestedTrait,

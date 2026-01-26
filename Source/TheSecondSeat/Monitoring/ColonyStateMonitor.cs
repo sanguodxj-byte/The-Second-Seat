@@ -5,22 +5,21 @@ using Verse;
 using RimWorld;
 using TheSecondSeat.Narrator;
 using TheSecondSeat.Integration;
-// ? v1.6.46: 临时注释掉 GameStateSnapshot 引用（该类可能不存在或在其他命名空间）
-/// using TheSecondSeat.Core;  
+using UnityEngine;
 
 namespace TheSecondSeat.Monitoring
 {
     /// <summary>
-    /// ??????????? - ???????仯????ж?
-    /// ? v1.6.42: ?????????????????????????????
-    /// ? v1.6.46: 临时禁用（GameStateSnapshot 类不存在）
+    /// 殖民地状态监控器 - 负责监控游戏状态变化并触发叙事者反应
+    /// v1.6.42: 初始实现
+    /// v2.0.0: 恢复功能，使用 GameStateSnapshotUtility 替代缺失的 Cache
     /// </summary>
     public class ColonyStateMonitor : GameComponent
     {
         private int ticksSinceLastCheck = 0;
-        private const int CheckInterval = 6000; // ?100???????
+        private const int CheckInterval = 6000; // 约1.5分钟 (游戏内时间)
         
-        // ??μ??????
+        // 状态追踪变量
         private int lastColonistCount = 0;
         private float lastWealth = 0f;
         private int lastFoodAmount = 0;
@@ -41,40 +40,134 @@ namespace TheSecondSeat.Monitoring
             if (ticksSinceLastCheck >= CheckInterval)
             {
                 ticksSinceLastCheck = 0;
-                // ? v1.6.46: 临时禁用（GameStateSnapshot 不可用）
-                // CheckColonyState();
+                CheckColonyState();
             }
         }
 
         /// <summary>
-        /// ? v1.6.42: ?????????????
-        /// ? v1.6.46: 临时禁用
+        /// 检查殖民地状态变化
         /// </summary>
         private void CheckColonyState()
         {
-            /*
-            // ? ???????????????????
-            var snapshot = GameStateCache.GetCachedSnapshot();
-            if (snapshot == null)
-            {
-                Log.Warning("[ColonyStateMonitor] ??????????????????");
-                return;
-            }
+            // 使用 Unsafe 捕获（因为我们在主线程中，这是安全的）
+            var snapshot = GameStateSnapshotUtility.CaptureSnapshotUnsafe();
+            if (snapshot == null) return;
 
             var narrator = Current.Game?.GetComponent<NarratorManager>();
             if (narrator == null) return;
 
-            // ??????????????????
             CheckColonistChanges(narrator, snapshot);
             CheckWealthGrowth(narrator, snapshot);
             CheckResourceStatus(narrator, snapshot);
             CheckCombatStatus(narrator, snapshot);
             CheckColonyMood(narrator, snapshot);
-            CheckConsecutiveDays(narrator);
-            */
         }
 
-        // ? v1.6.46: 临时注释掉所有依赖 GameStateSnapshot 的方法
+        private void CheckColonistChanges(NarratorManager narrator, GameStateSnapshot snapshot)
+        {
+            int currentCount = snapshot.colonists.Count;
+            // 初始化
+            if (lastColonistCount == 0 && currentCount > 0)
+            {
+                lastColonistCount = currentCount;
+                return;
+            }
+
+            if (currentCount > lastColonistCount)
+            {
+                narrator.ModifyFavorability(2f, "新殖民者加入");
+            }
+            else if (currentCount < lastColonistCount)
+            {
+                narrator.ModifyFavorability(-5f, "失去殖民者");
+            }
+            lastColonistCount = currentCount;
+        }
+
+        private void CheckWealthGrowth(NarratorManager narrator, GameStateSnapshot snapshot)
+        {
+            float currentWealth = snapshot.colony.wealth;
+            if (lastWealth <= 0.1f)
+            {
+                lastWealth = currentWealth;
+                return;
+            }
+
+            // 显著增长 (20%)
+            if (currentWealth > lastWealth * 1.2f)
+            {
+                narrator.ModifyFavorability(1f, "殖民地繁荣发展");
+                lastWealth = currentWealth;
+            }
+            else
+            {
+                // 平滑更新基准值，用于长期趋势追踪
+                lastWealth = Mathf.Lerp(lastWealth, currentWealth, 0.05f);
+            }
+        }
+
+        private void CheckResourceStatus(NarratorManager narrator, GameStateSnapshot snapshot)
+        {
+            int currentFood = snapshot.resources.food;
+            
+            // 简单的低食物预警
+            if (currentFood < 50 && lastFoodAmount >= 50 && snapshot.colonists.Count > 0)
+            {
+                narrator.ModifyFavorability(-1f, "食物短缺危机");
+            }
+            
+            lastFoodAmount = currentFood;
+        }
+
+        private void CheckCombatStatus(NarratorManager narrator, GameStateSnapshot snapshot)
+        {
+            bool currentCombat = snapshot.threats.raidActive;
+            
+            if (!currentCombat && lastInCombat)
+            {
+                // 战斗刚刚结束
+                narrator.ModifyFavorability(1f, "成功度过威胁");
+            }
+            
+            lastInCombat = currentCombat;
+        }
+
+        private void CheckColonyMood(NarratorManager narrator, GameStateSnapshot snapshot)
+        {
+            if (snapshot.colonists.Count == 0) return;
+            
+            float avgMood = 0f;
+            foreach(var c in snapshot.colonists) avgMood += c.mood;
+            avgMood /= snapshot.colonists.Count;
+            
+            // Mood is 0-100 in snapshot
+            if (avgMood > 80)
+            {
+                consecutiveGoodDays++;
+                consecutiveBadDays = 0;
+                
+                // 约每24小时 (15次检查)
+                if (consecutiveGoodDays % 15 == 0) 
+                {
+                     narrator.ModifyFavorability(0.5f, "殖民地士气高昂");
+                }
+            }
+            else if (avgMood < 30)
+            {
+                consecutiveBadDays++;
+                consecutiveGoodDays = 0;
+                
+                if (consecutiveBadDays % 5 == 0)
+                {
+                    narrator.ModifyFavorability(-0.5f, "殖民地士气低落");
+                }
+            }
+            else
+            {
+                consecutiveGoodDays = 0;
+                consecutiveBadDays = 0;
+            }
+        }
 
         public override void ExposeData()
         {
@@ -89,7 +182,7 @@ namespace TheSecondSeat.Monitoring
     }
 
     /// <summary>
-    /// ??????????? - ?????????????ж?
+    /// 玩家互动监控器 - 监控玩家与叙事者的交互频率
     /// </summary>
     public class PlayerInteractionMonitor : GameComponent
     {
@@ -102,7 +195,7 @@ namespace TheSecondSeat.Monitoring
         }
 
         /// <summary>
-        /// ??????
+        /// 记录一次对话
         /// </summary>
         public void RecordConversation(bool hasUserMessage)
         {
@@ -111,24 +204,24 @@ namespace TheSecondSeat.Monitoring
             var narrator = Current.Game?.GetComponent<NarratorManager>();
             if (narrator == null) return;
 
-            // ??????????????10?ζ????
+            // 每积极互动10次增加好感
             if (totalConversations % 10 == 0 && hasUserMessage)
             {
-                narrator.ModifyFavorability(1f, "???????????");
+                narrator.ModifyFavorability(1f, "频繁的友好交流");
             }
 
-            // ?????δ????????????
+            // 检查是否很久没有互动
             int ticksSinceLastConversation = Find.TickManager.TicksGame - lastConversationTick;
-            if (ticksSinceLastConversation > 360000) // >6С?
+            if (ticksSinceLastConversation > 360000) // >6小时 (游戏时间约10天)
             {
-                narrator.ModifyFavorability(-1f, "???????????");
+                narrator.ModifyFavorability(-1f, "被长期冷落");
             }
 
             lastConversationTick = Find.TickManager.TicksGame;
         }
 
         /// <summary>
-        /// ??????????
+        /// 记录一次忽略建议
         /// </summary>
         public void RecordIgnoredSuggestion()
         {
@@ -137,10 +230,10 @@ namespace TheSecondSeat.Monitoring
             var narrator = Current.Game?.GetComponent<NarratorManager>();
             if (narrator == null) return;
 
-            // ????????
+            // 连续忽略建议
             if (ignoredSuggestions >= 5)
             {
-                narrator.ModifyFavorability(-3f, "??κ?????????");
+                narrator.ModifyFavorability(-3f, "建议屡次被无视");
                 ignoredSuggestions = 0;
             }
         }

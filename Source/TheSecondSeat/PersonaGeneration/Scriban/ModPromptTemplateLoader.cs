@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using Scriban;
 using Scriban.Parsing;
+using Scriban.Syntax;
 using Scriban.Runtime;
 using Verse;
 
@@ -22,15 +23,43 @@ namespace TheSecondSeat.PersonaGeneration.Scriban
 
         public string Load(TemplateContext context, SourceSpan callerSpan, string templatePath)
         {
+            // 尝试从上下文获取 Narrator 信息
+            string personaName = GetPersonaNameFromContext(context);
+
             // 同步加载
             // templatePath 即 GetPath 返回的名称
-            return PromptLoader.Load(templatePath);
+            return PromptLoader.Load(templatePath, personaName);
         }
 
         public ValueTask<string> LoadAsync(TemplateContext context, SourceSpan callerSpan, string templatePath)
         {
+            // 尝试从上下文获取 Narrator 信息
+            string personaName = GetPersonaNameFromContext(context);
+
             // Scriban 支持异步，但我们的 PromptLoader 是同步的
-            return new ValueTask<string>(PromptLoader.Load(templatePath));
+            return new ValueTask<string>(PromptLoader.Load(templatePath, personaName));
+        }
+
+        private string GetPersonaNameFromContext(TemplateContext context)
+        {
+            try
+            {
+                // 尝试获取 Narrator 对象
+                // 注意：Scriban 的变量访问可能需要根据具体的导入方式调整
+                // PromptRenderer 中我们是 scriptObject.Import(context);
+                // 所以 Narrator 是全局变量
+                var narratorObj = context.GetValue(new ScriptVariableGlobal("Narrator"));
+                
+                if (narratorObj is NarratorInfo narratorInfo)
+                {
+                    return narratorInfo.DefName;
+                }
+            }
+            catch
+            {
+                // 忽略错误，回退到默认加载
+            }
+            return null;
         }
     }
 }

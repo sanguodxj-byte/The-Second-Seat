@@ -8,18 +8,30 @@ namespace TheSecondSeat
 {
     /// <summary>
     /// 灾厄摔掷技能属性 - 强化版 Tactical Throws
-    /// 所有 Def 引用通过 defName 配置，子模组通过 XML 指定
+    /// 所有 Def 引用和数值通过 XML 配置，避免硬编码
     /// </summary>
     public class CompProperties_AbilityEffect_CalamityThrow : CompProperties_AbilityEffect
     {
+        // === 数值配置（通过 XML 可调整）===
+        
+        /// <summary>伤害倍率</summary>
         public float damageMultiplier = 2.0f;
+        
+        /// <summary>跳过原版抓取判定</summary>
         public bool bypassGrappleCheck = true;
         
-        // 通过 defName 配置的 Def 引用
-        public string holdJobDefName;           // 持有 Job 的 defName
-        public string damageMultiplierHediffDefName; // 伤害倍率 Hediff 的 defName
+        /// <summary>最大可抓取体型（0 = 无限制）</summary>
+        public float maxTargetBodySize = 3.5f;
+        
+        // === 通过 defName 配置的 Def 引用 ===
+        
+        /// <summary>持有 Job 的 defName</summary>
+        public string holdJobDefName;
+        
+        /// <summary>伤害倍率 Hediff 的 defName</summary>
+        public string damageMultiplierHediffDefName;
 
-        // 缓存的 Def 引用
+        // === 缓存的 Def 引用 ===
         private JobDef cachedHoldJobDef;
         private HediffDef cachedDamageMultiplierHediffDef;
 
@@ -63,6 +75,7 @@ namespace TheSecondSeat
 
     /// <summary>
     /// 灾厄摔掷效果组件 - 直接抓取目标，无需判定
+    /// 所有数值从 CompProperties 读取，支持 XML 配置
     /// </summary>
     public class CompAbilityEffect_CalamityThrow : CompAbilityEffect
     {
@@ -82,11 +95,11 @@ namespace TheSecondSeat
                 return;
             }
 
-            // 检查目标体型 - Sideria 可以抓取任何体型的生物
-            // 但为了游戏平衡，限制最大体型为 3.5（约等于 Thrumbo）
-            if (targetPawn.BodySize > 3.5f)
+            // 检查目标体型（从 Props 获取限制值）
+            if (Props.maxTargetBodySize > 0 && targetPawn.BodySize > Props.maxTargetBodySize)
             {
-                Messages.Message("TSS_CalamityThrow_TargetTooLarge".Translate(), MessageTypeDefOf.RejectInput, false);
+                Messages.Message("TSS_CalamityThrow_TargetTooLarge".Translate(Props.maxTargetBodySize), 
+                    MessageTypeDefOf.RejectInput, false);
                 return;
             }
 
@@ -129,8 +142,8 @@ namespace TheSecondSeat
             if (targetPawn == null || !targetPawn.Spawned || targetPawn.Dead || targetPawn.Downed)
                 return false;
 
-            // Sideria 可以抓取较大体型的目标
-            if (targetPawn.BodySize > 3.5f)
+            // 使用 Props 中的体型限制
+            if (Props.maxTargetBodySize > 0 && targetPawn.BodySize > Props.maxTargetBodySize)
                 return false;
 
             return true;
@@ -142,8 +155,8 @@ namespace TheSecondSeat
             if (targetPawn == null)
                 return null;
 
-            if (targetPawn.BodySize > 3.5f)
-                return "TSS_CalamityThrow_TargetTooLarge".Translate();
+            if (Props.maxTargetBodySize > 0 && targetPawn.BodySize > Props.maxTargetBodySize)
+                return "TSS_CalamityThrow_TargetTooLarge".Translate(Props.maxTargetBodySize);
 
             return "TSS_CalamityThrow_GrabAction".Translate(Props.damageMultiplier);
         }

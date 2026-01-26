@@ -3,6 +3,7 @@
   <!-- Command List Window UI -->
   <TSS_CmdList_Title>AI 可用指令列表 (点击命令自动输入)</TSS_CmdList_Title>
   <TSS_CmdList_Hint>[提示] 点击任意命令行，将自动输入到聊天窗口。绿色=已实现，红色=未实现</TSS_CmdList_Hint>
+  <TSS_CmdList_Hint_DualMode>[提示] 左键=通过AI解析执行 | Shift+左键=直接执行 | 事件调试命令始终直接执行</TSS_CmdList_Hint_DualMode>
   <TSS_CmdList_SearchPlaceholder>搜索命令...</TSS_CmdList_SearchPlaceholder>
   
   <TSS_CmdList_Header_ID>命令ID</TSS_CmdList_Header_ID>
@@ -98,6 +99,18 @@
   <TSS_Cmd_EquipWeapon_Desc>让殖民者装备指定武器</TSS_Cmd_EquipWeapon_Desc>
   <TSS_Cmd_EquipWeapon_Ex>让张三装备突击步枪</TSS_Cmd_EquipWeapon_Ex>
   <TSS_Cmd_EquipWeapon_Fmt>pawnName/weaponDef(可选)</TSS_Cmd_EquipWeapon_Fmt>
+
+  <!-- GetPawnSkills -->
+  <TSS_Cmd_GetPawnSkills_Label>查询技能</TSS_Cmd_GetPawnSkills_Label>
+  <TSS_Cmd_GetPawnSkills_Desc>获取殖民者的技能等级信息</TSS_Cmd_GetPawnSkills_Desc>
+  <TSS_Cmd_GetPawnSkills_Ex>张三的技能怎么样</TSS_Cmd_GetPawnSkills_Ex>
+  <TSS_Cmd_GetPawnSkills_Fmt>pawnName(可选)</TSS_Cmd_GetPawnSkills_Fmt>
+
+  <!-- AutoAssignWork -->
+  <TSS_Cmd_AutoAssignWork_Label>自动分配工作</TSS_Cmd_AutoAssignWork_Label>
+  <TSS_Cmd_AutoAssignWork_Desc>根据技能自动优化工作分配</TSS_Cmd_AutoAssignWork_Desc>
+  <TSS_Cmd_AutoAssignWork_Ex>自动分配所有人的工作</TSS_Cmd_AutoAssignWork_Ex>
+  <TSS_Cmd_AutoAssignWork_Fmt>无参数（全体优化）</TSS_Cmd_AutoAssignWork_Fmt>
 
   <!-- ForbidItems -->
   <TSS_Cmd_ForbidItems_Label>禁止物品</TSS_Cmd_ForbidItems_Label>
@@ -208,4 +221,10 @@
   <TSS_Cmd_DesignateConstruction_Fmt>需要坐标+建筑类型+朝向</TSS_Cmd_DesignateConstruction_Fmt>
 
   <TSS_Cmd_Param_None>无参数</TSS_Cmd_Param_None>
+
+  <!-- Suggestions -->
+  <TSS_Suggest_Harvest>如果有成熟作物，可以说：'帮我收获所有成熟的作物'</TSS_Suggest_Harvest>
+  <TSS_Suggest_Food>资源不足时可以说：'给我一些食物补给'</TSS_Suggest_Food>
+  <TSS_Suggest_Repair>建筑受损时可以说：'优先修复所有受损的建筑'</TSS_Suggest_Repair>
+  <TSS_Suggest_Defense>遭遇袭击时可以说：'紧急武装所有殖民者'</TSS_Suggest_Defense>
 </LanguageData>

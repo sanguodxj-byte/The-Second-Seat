@@ -10,7 +10,9 @@ namespace TheSecondSeat.UI
 {
     /// <summary>
     /// 显示所有可用AI指令的窗口
-    /// 点击命令行自动输入到聊天窗口
+    /// ⭐ v2.6.9: 双模式执行
+    ///   - 左键点击：通过 AI 解析执行
+    ///   - Shift+左键：直接执行（不经过 AI）
     /// </summary>
     public class CommandListWindow : Window
     {
@@ -56,10 +58,11 @@ namespace TheSecondSeat.UI
             DrawSearchAndFilter(new Rect(0f, curY, inRect.width, 30f));
             curY += 35f;
             
-            // 提示
+            // ⭐ v2.6.9: 双模式提示
             GUI.color = new Color(0.6f, 0.8f, 0.6f);
             Text.Font = GameFont.Tiny;
-            Widgets.Label(new Rect(0f, curY, inRect.width, 20f), "TSS_CmdList_Hint".Translate());
+            string hint = "TSS_CmdList_Hint_DualMode".Translate(); // "左键=AI解析 | Shift+左键=直接执行 | 事件调试命令始终直接执行"
+            Widgets.Label(new Rect(0f, curY, inRect.width, 20f), hint);
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
             curY += 25f;
@@ -449,25 +452,101 @@ namespace TheSecondSeat.UI
 
         /// <summary>
         /// 点击命令时的处理
+        /// ⭐ v2.6.9: 双模式执行
+        ///   - 事件调试命令：始终直接执行
+        ///   - 普通命令：左键=AI解析，Shift+左键=直接执行
         /// </summary>
         private void OnCommandClicked(CommandInfo command)
         {
-            // 检查是否为事件调试命令（包括降临调试）
+            // 检查是否为事件调试命令（包括降临调试）- 始终直接执行
             if (command.CommandName.StartsWith("TSS_Test") ||
                 command.CommandName.StartsWith("TSS_List") ||
                 command.CommandName.StartsWith("TSS_Check") ||
                 command.CommandName.StartsWith("TSS_Descent"))
             {
-                // 直接调用 EventTester 的方法
                 HandleEventDebugCommand(command.CommandName);
                 return;
             }
             
-            // 复制示例提示词到剪贴板（可选）
+            // ⭐ v2.6.9: 检查是否按住 Shift 键（使用 Event.current 兼容 RimWorld）
+            bool shiftHeld = Event.current?.shift ?? false;
+            
+            if (shiftHeld)
+            {
+                // Shift+左键：直接执行（不经过 AI）
+                ExecuteCommandDirectly(command);
+            }
+            else
+            {
+                // 左键：通过 AI 解析执行
+                ExecuteCommandViaAI(command);
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ v2.6.9: 通过 AI 解析执行命令
+        /// </summary>
+        private void ExecuteCommandViaAI(CommandInfo command)
+        {
+            // 复制示例提示词到剪贴板
             GUIUtility.systemCopyBuffer = command.ExamplePrompt;
             
-            // 直接发送到 AI（不需要手动确认）
+            // 发送到 NarratorWindow 让 AI 解析
             TryInputAndSendToNarratorWindow(command.ExamplePrompt);
+        }
+        
+        /// <summary>
+        /// ⭐ v2.6.9: 直接执行命令（不经过 AI 解析）
+        /// </summary>
+        private void ExecuteCommandDirectly(CommandInfo command)
+        {
+            // 检查命令是否已注册到 CommandRegistry
+            var aiCommand = CommandRegistry.GetCommand(command.CommandName);
+            if (aiCommand == null)
+            {
+                Messages.Message($"命令 {command.CommandName} 未注册，使用 AI 模式", MessageTypeDefOf.CautionInput);
+                ExecuteCommandViaAI(command);
+                return;
+            }
+            
+            try
+            {
+                Log.Message($"[CommandListWindow] 直接执行命令: {command.CommandName}");
+                
+                // 使用 BaseAICommand 的安全执行方法
+                if (aiCommand is BaseAICommand baseCommand)
+                {
+                    var result = baseCommand.ExecuteSafe(null, null);
+                    if (result != null && result.Success)
+                    {
+                        Messages.Message($"✓ [直接] {command.DisplayName}: {result.Message}", MessageTypeDefOf.PositiveEvent);
+                        this.Close();
+                    }
+                    else
+                    {
+                        Messages.Message($"✗ [直接] {command.DisplayName}: {result?.Message ?? "执行失败"}", MessageTypeDefOf.RejectInput);
+                    }
+                }
+                else
+                {
+                    // 标准接口调用
+                    bool success = aiCommand.Execute(null, null);
+                    if (success)
+                    {
+                        Messages.Message($"✓ [直接] {command.DisplayName} 执行成功", MessageTypeDefOf.PositiveEvent);
+                        this.Close();
+                    }
+                    else
+                    {
+                        Messages.Message($"✗ [直接] {command.DisplayName} 执行失败", MessageTypeDefOf.RejectInput);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[CommandListWindow] 直接执行命令 {command.CommandName} 失败: {ex.Message}");
+                Messages.Message($"✗ [直接] {command.DisplayName}: {ex.Message}", MessageTypeDefOf.RejectInput);
+            }
         }
         
         /// <summary>
@@ -542,7 +621,7 @@ namespace TheSecondSeat.UI
                 // 关闭指令列表窗口
                 this.Close();
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 Log.Error($"[CommandListWindow] Event debug command failed: {ex.Message}");
                 Messages.Message("TSS_CmdList_ExecuteFailed".Translate(ex.Message), MessageTypeDefOf.RejectInput);
@@ -563,12 +642,12 @@ namespace TheSecondSeat.UI
             {
                 // 直接发送（不需要手动点击发送按钮）
                 NarratorWindow.SetInputTextAndSend(text);
-                Log.Message($"[CommandListWindow] 已自动发送命令: {text}");
+                Log.Message($"[CommandListWindow] 已发送到 AI: {text}");
                 
                 // 显示确认消息
-                Messages.Message($"已发送: {text}", MessageTypeDefOf.PositiveEvent);
+                Messages.Message($"[AI] 已发送: {text}", MessageTypeDefOf.PositiveEvent);
 
-                // 关闭命令列表窗口（可选）
+                // 关闭命令列表窗口
                 this.Close();
             }
             else
@@ -577,13 +656,13 @@ namespace TheSecondSeat.UI
                 Find.WindowStack.Add(new NarratorWindow());
                 
                 // 延迟一帧后发送（确保窗口已初始化）
-                Verse.LongEventHandler.ExecuteWhenFinished(() => 
+                LongEventHandler.ExecuteWhenFinished(() => 
                 {
                     NarratorWindow.SetInputTextAndSend(text);
-                    Messages.Message($"已发送: {text}", MessageTypeDefOf.PositiveEvent);
+                    Messages.Message($"[AI] 已发送: {text}", MessageTypeDefOf.PositiveEvent);
                 });
                 
-                Log.Message($"[CommandListWindow] 已打开对话窗口并发送命令: {text}");
+                Log.Message($"[CommandListWindow] 已打开对话窗口并发送: {text}");
                 
                 // 关闭命令列表窗口
                 this.Close();
@@ -599,9 +678,9 @@ namespace TheSecondSeat.UI
             public string DisplayName;
             public string Category;
             public string Description;
-            public string ExamplePrompt;  // 示例提示词
+            public string ExamplePrompt;
             public string TargetFormat;
-            public bool IsImplemented;    // 是否已实现
+            public bool IsImplemented;
 
             public CommandInfo(string commandName, string displayName, string category,
                 string description, string examplePrompt, string targetFormat, bool isImplemented)

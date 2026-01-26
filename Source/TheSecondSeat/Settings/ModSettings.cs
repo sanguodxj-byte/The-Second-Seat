@@ -42,6 +42,7 @@ namespace TheSecondSeat.Settings
         public string ttsVoice = "zh-CN-XiaoxiaoNeural";
         public float ttsSpeechRate = 1.0f;
         public float ttsVolume = 1.0f;
+        public float? ttsPitch = 0.0f; // ⭐ v3.0.0: 音高控制 (-0.5 to 0.5)
         public bool autoPlayTTS = false;
         // ? 新增：TTS API 高级配置
         public string ttsApiEndpoint = "";
@@ -101,6 +102,10 @@ namespace TheSecondSeat.Settings
         // 快速对话窗口位置
         public float quickDialogueX = -1f;
         public float quickDialogueY = -1f;
+
+        // 提示词管理
+        public System.Collections.Generic.List<string> disabledPrompts = new System.Collections.Generic.List<string>();
+        public System.Collections.Generic.List<string> promptSortOrder = new System.Collections.Generic.List<string>();
         
         /// <summary>
         /// 获取或设置对话框矩形位置
@@ -162,6 +167,7 @@ namespace TheSecondSeat.Settings
             Scribe_Values.Look(ref ttsVoice, "ttsVoice", "zh-CN-XiaoxiaoNeural");
             Scribe_Values.Look(ref ttsSpeechRate, "ttsSpeechRate", 1.0f);
             Scribe_Values.Look(ref ttsVolume, "ttsVolume", 1.0f);
+            Scribe_Values.Look(ref ttsPitch, "ttsPitch", 0.0f); // ⭐ v3.0.0
             Scribe_Values.Look(ref autoPlayTTS, "autoPlayTTS", false);
             Scribe_Values.Look(ref ttsApiEndpoint, "ttsApiEndpoint", "");
             Scribe_Values.Look(ref ttsModelName, "ttsModelName", "");
@@ -220,6 +226,14 @@ namespace TheSecondSeat.Settings
             // 快速对话窗口位置
             Scribe_Values.Look(ref quickDialogueX, "quickDialogueX", -1f);
             Scribe_Values.Look(ref quickDialogueY, "quickDialogueY", -1f);
+
+            // 提示词管理
+            Scribe_Collections.Look(ref disabledPrompts, "disabledPrompts", LookMode.Value);
+            Scribe_Collections.Look(ref promptSortOrder, "promptSortOrder", LookMode.Value);
+            
+            // ⭐ v2.9.6: 确保列表不为 null（Scribe_Collections.Look 可能在加载时将其设为 null）
+            if (disabledPrompts == null) disabledPrompts = new System.Collections.Generic.List<string>();
+            if (promptSortOrder == null) promptSortOrder = new System.Collections.Generic.List<string>();
         }
     }
 
@@ -320,6 +334,7 @@ namespace TheSecondSeat.Settings
                     Settings.ttsVoice,
                     Settings.ttsSpeechRate,
                     Settings.ttsVolume,
+                    Settings.ttsPitch ?? 0f, // ⭐ v3.0.0
                     Settings.ttsApiEndpoint,
                     Settings.ttsModelName,
                     Settings.ttsAudioUri

@@ -45,6 +45,10 @@ namespace TheSecondSeat.LLM
         // ⭐ v2.2.0: 允许 AI 自主更新角色卡状态 (BioRhythm)
         public CardUpdateData? updateCard { get; set; }
 
+        // ⭐ v3.0.0: 结构化意图解析 (Scenario 4)
+        // 用于明确标识 AI 的决策意图 (e.g., "APPROVE", "REJECT", "QUERY")
+        public string? intent { get; set; }
+
         public LLMCommand? command { get; set; }
     }
 
@@ -85,7 +89,7 @@ namespace TheSecondSeat.LLM
     {
         public string action { get; set; } = "";
         public string? target { get; set; }
-        public object? parameters { get; set; }
+        public Dictionary<string, object>? parameters { get; set; }
     }
 
     /// <summary>

@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using Verse;
+using Verse.Sound;
 using RimWorld;
 using TheSecondSeat.Settings;
 using TheSecondSeat.Core;
@@ -84,9 +85,17 @@ namespace TheSecondSeat.UI
         {
             if (currentRubDuration > 0f || bodyHoverTime > 0f)
             {
-                panel.RestoreDefaultExpression();
+                // 如果是从摸头状态退出，让表情维持 30秒 后再自然过期
+                // 而不是立即强制恢复默认
+                var state = ExpressionSystem.GetExpressionState(panel.CurrentPersona?.defName);
+                if (state != null)
+                {
+                    state.DurationTicks = 1800; // 30秒
+                    state.ExpressionStartTick = Find.TickManager.TicksGame; // 重置计时器
+                }
+                // panel.RestoreDefaultExpression(); // 不再立即调用
             }
-
+            
             currentRubDuration = 0f;
             bodyHoverTime = 0f;
             touchCount = 0;
@@ -289,10 +298,18 @@ namespace TheSecondSeat.UI
             float affinity = panel.StorytellerAgent?.GetAffinity() ?? 0f;
             float bonus = TSSFrameworkConfig.Interaction.HeadPatAffinityBonus;
             
-            // 表情触发（作为单次事件的补充，主要的表情控制在 DrawHeadPatOverlay）
-            ExpressionType exprType = SelectExpressionByAffinity(affinity, ExpressionType.Shy, ExpressionType.Happy);
-            int intensity = (affinity >= TSSFrameworkConfig.Interaction.HighAffinityThreshold) ? 2 : 0;
-            panel.TriggerExpression(exprType, duration: 2f, intensity: intensity);
+            // 检查是否启用了 RenderTree 的 HeadPat 系统
+            var def = RenderTreeDefManager.GetRenderTree(panel.CurrentPersona?.defName);
+            bool headPatEnabled = def != null && def.headPat != null && def.headPat.enabled;
+
+            // 只有在未启用 HeadPat 系统时，才在这里手动触发表情
+            // 否则交由 DrawHeadPatOverlay 控制持续表情（防止 duration 冲突导致表情闪烁或提前结束）
+            if (!headPatEnabled)
+            {
+                ExpressionType exprType = SelectExpressionByAffinity(affinity, ExpressionType.Shy, ExpressionType.Happy);
+                int intensity = (affinity >= TSSFrameworkConfig.Interaction.HighAffinityThreshold) ? 2 : 0;
+                panel.TriggerExpression(exprType, duration: 2f, intensity: intensity);
+            }
             
             string phrase = PhraseManager.Instance.TriggerHeadPat(panel.GetPersonaResourceName());
             if (string.IsNullOrEmpty(phrase))
@@ -429,6 +446,7 @@ namespace TheSecondSeat.UI
                     if (Enum.TryParse(phase.expression, true, out ExpressionType expr))
                     {
                         // ⭐ 根据配置的 variant 决定是否使用变体版本
+                        // 使用超长持续时间 (99999)，直到 ResetInteractionState 强制恢复默认
                         if (phase.variant > 0)
                         {
                             // 使用用户配置的固定变体编号
@@ -436,7 +454,7 @@ namespace TheSecondSeat.UI
                                 panel.GetPersonaResourceName(),
                                 expr,
                                 ExpressionTrigger.Manual,
-                                durationTicks: 300,  // 5秒，足够覆盖大多数阶段持续时间
+                                durationTicks: 99999,
                                 fixedVariant: phase.variant
                             );
                         }
@@ -447,8 +465,26 @@ namespace TheSecondSeat.UI
                                 panel.GetPersonaResourceName(),
                                 expr,
                                 ExpressionTrigger.Manual,
-                                durationTicks: 300
+                                durationTicks: 99999
                             );
+                        }
+                    }
+                }
+
+                // 播放音效 (带异常防护)
+                if (!string.IsNullOrEmpty(phase.sound))
+                {
+                    try
+                    {
+                        SoundDef sound = DefDatabase<SoundDef>.GetNamed(phase.sound, false);
+                        sound?.PlayOneShotOnCamera();
+                    }
+                    catch (Exception ex)
+                    {
+                        // 仅在开发模式下记录警告，避免干扰玩家
+                        if (Prefs.DevMode)
+                        {
+                            Log.Warning($"[PortraitInteractionHandler] Failed to play sound '{phase.sound}': {ex.Message}");
                         }
                     }
                 }

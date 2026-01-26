@@ -120,7 +120,22 @@ namespace TheSecondSeat.NaturalLanguage
         {
             foreach (var kvp in ActionKeywords)
             {
-                if (kvp.Value.Any(keyword => query.Contains(keyword)))
+                // ⭐ 增强逻辑：简单的否定词检查
+                // 如果关键词前面紧跟着否定词，则忽略该匹配
+                if (kvp.Value.Any(keyword =>
+                {
+                    int index = query.IndexOf(keyword);
+                    if (index == -1) return false;
+
+                    // 检查前面是否有否定词 (简单启发式)
+                    string prefix = query.Substring(0, index).TrimEnd();
+                    if (prefix.EndsWith("不") || prefix.EndsWith("不要") || prefix.EndsWith("别") ||
+                        prefix.EndsWith("don't") || prefix.EndsWith("do not") || prefix.EndsWith("not"))
+                    {
+                        return false;
+                    }
+                    return true;
+                }))
                 {
                     return kvp.Key;
                 }
@@ -224,11 +239,30 @@ namespace TheSecondSeat.NaturalLanguage
                 // 尝试解析parameters
                 if (command.parameters != null)
                 {
-                    var paramsJson = JsonConvert.SerializeObject(command.parameters);
-                    var advancedParams = JsonConvert.DeserializeObject<AdvancedCommandParams>(paramsJson);
-                    if (advancedParams != null)
+                    // 直接映射字典到 filters
+                    parsed.parameters.filters = command.parameters;
+
+                    // 手动提取已知字段
+                    if (command.parameters.TryGetValue("scope", out var scopeObj) && scopeObj != null)
                     {
-                        parsed.parameters = advancedParams;
+                        parsed.parameters.scope = scopeObj.ToString();
+                    }
+
+                    if (command.parameters.TryGetValue("target", out var targetObj) && targetObj != null)
+                    {
+                        parsed.parameters.target = targetObj.ToString();
+                    }
+
+                    if (command.parameters.TryGetValue("count", out var countObj) || command.parameters.TryGetValue("limit", out countObj))
+                    {
+                         if (countObj is int iVal) parsed.parameters.count = iVal;
+                         else if (int.TryParse(countObj?.ToString(), out int pVal)) parsed.parameters.count = pVal;
+                    }
+
+                    if (command.parameters.TryGetValue("priority", out var priorityObj))
+                    {
+                        if (priorityObj is bool bVal) parsed.parameters.priority = bVal;
+                        else if (bool.TryParse(priorityObj?.ToString(), out bool pbVal)) parsed.parameters.priority = pbVal;
                     }
                 }
 
@@ -281,22 +315,22 @@ namespace TheSecondSeat.NaturalLanguage
             // （需要访问实际的植物数据，这里仅作示意）
             if (gameState.colonists.Count > 0)
             {
-                suggestions.Add("如果有成熟作物，可以说：'帮我收获所有成熟的作物'");
+                suggestions.Add("TSS_Suggest_Harvest".Translate());
             }
 
             // 检查低资源
             if (gameState.resources.food < 100)
             {
-                suggestions.Add("资源不足时可以说：'给我一些食物补给'");
+                suggestions.Add("TSS_Suggest_Food".Translate());
             }
 
             // 检查受损建筑
-            suggestions.Add("建筑受损时可以说：'优先修复所有受损的建筑'");
+            suggestions.Add("TSS_Suggest_Repair".Translate());
 
             // 检查威胁
             if (gameState.threats.raidActive)
             {
-                suggestions.Add("遭遇袭击时可以说：'紧急武装所有殖民者'");
+                suggestions.Add("TSS_Suggest_Defense".Translate());
             }
 
             return suggestions;

@@ -8,8 +8,86 @@ using Verse;
 namespace TheSecondSeat
 {
     /// <summary>
+    /// 猩红绽放技能属性
+    /// 所有 Def 引用和数值通过 XML 配置，避免硬编码
+    /// </summary>
+    public class CompProperties_AbilityCrimsonBloom : CompProperties_AbilityEffect
+    {
+        // === 数值配置 ===
+        
+        /// <summary>触发绽放所需层数</summary>
+        public int stacksToBloom = 3;
+        
+        /// <summary>标记持续时间（秒）</summary>
+        public float markDuration = 30f;
+        
+        /// <summary>后备伤害（无有效部件时使用）</summary>
+        public float fallbackDamage = 200f;
+        
+        /// <summary>初始标记严重度</summary>
+        public float initialSeverity = 1f;
+        
+        // === 通过 defName 配置的 Def 引用 ===
+        
+        /// <summary>猩红标记 HediffDef 的 defName</summary>
+        public string markHediffDefName;
+        
+        /// <summary>优先查找的身体部位 defName 列表（按优先级排序）</summary>
+        public List<string> priorityBodyPartDefNames = new List<string> { "Heart", "Brain", "Neck", "Torso" };
+        
+        /// <summary>优先查找的 BodyPartTag defName 列表（用于异种族兼容）</summary>
+        public List<string> priorityBodyPartTagDefNames = new List<string> { "BloodPumpingSource", "ConsciousnessSource", "BreathingSource" };
+
+        // === 缓存的 Def 引用 ===
+        private HediffDef cachedMarkHediffDef;
+        private List<BodyPartTagDef> cachedBodyPartTagDefs;
+
+        public HediffDef MarkHediffDef
+        {
+            get
+            {
+                if (cachedMarkHediffDef == null && !string.IsNullOrEmpty(markHediffDefName))
+                {
+                    cachedMarkHediffDef = DefDatabase<HediffDef>.GetNamed(markHediffDefName, false);
+                    if (cachedMarkHediffDef == null)
+                    {
+                        Log.Error($"[CrimsonBloom] HediffDef '{markHediffDefName}' not found!");
+                    }
+                }
+                return cachedMarkHediffDef;
+            }
+        }
+
+        public List<BodyPartTagDef> PriorityBodyPartTagDefs
+        {
+            get
+            {
+                if (cachedBodyPartTagDefs == null)
+                {
+                    cachedBodyPartTagDefs = new List<BodyPartTagDef>();
+                    foreach (string tagName in priorityBodyPartTagDefNames)
+                    {
+                        BodyPartTagDef tag = DefDatabase<BodyPartTagDef>.GetNamed(tagName, false);
+                        if (tag != null)
+                        {
+                            cachedBodyPartTagDefs.Add(tag);
+                        }
+                    }
+                }
+                return cachedBodyPartTagDefs;
+            }
+        }
+
+        public CompProperties_AbilityCrimsonBloom()
+        {
+            compClass = typeof(CompAbilityEffect_CrimsonBloom);
+        }
+    }
+
+    /// <summary>
     /// 猩红绽放技能效果组件
-    /// 每次攻击时积累层数，三层后直接摧毁对方核心身体部件
+    /// 每次攻击时积累层数，达到层数后直接摧毁对方核心身体部件
+    /// 使用 BodyPartTagDef 查找身体部位，兼容异种族 Mod
     /// </summary>
     public class CompAbilityEffect_CrimsonBloom : CompAbilityEffect
     {
@@ -59,14 +137,14 @@ namespace TheSecondSeat
                 {
                     // 如果没有 comp，直接增加严重度
                     existingMark.Severity += 1f;
-                    CheckBloom(target, caster, (int)existingMark.Severity);
+                    CheckBloom(target, caster, (int)existingMark.Severity, Props.stacksToBloom, Props.fallbackDamage, Props);
                 }
             }
             else
             {
                 // 添加新标记
                 Hediff newMark = HediffMaker.MakeHediff(markDef, target);
-                newMark.Severity = 1f;
+                newMark.Severity = Props.initialSeverity;
                 target.health.AddHediff(newMark);
 
                 // 视觉效果
@@ -77,13 +155,26 @@ namespace TheSecondSeat
 
         /// <summary>
         /// 检查是否达到绽放条件
+        /// 重载1：使用 CompProperties（从 Ability 调用时使用）
         /// </summary>
-        public static void CheckBloom(Pawn target, Pawn caster, int stacks)
+        public static void CheckBloom(Pawn target, Pawn caster, int stacks, CompProperties_AbilityCrimsonBloom props)
         {
-            if (stacks >= 3)
+            int requiredStacks = props?.stacksToBloom ?? 3;
+            float fallbackDamage = props?.fallbackDamage ?? 200f;
+            
+            CheckBloom(target, caster, stacks, requiredStacks, fallbackDamage, props);
+        }
+
+        /// <summary>
+        /// 检查是否达到绽放条件
+        /// 重载2：直接传递参数（从 HediffComp 调用时使用）
+        /// </summary>
+        public static void CheckBloom(Pawn target, Pawn caster, int stacks, int requiredStacks, float fallbackDamage, CompProperties_AbilityCrimsonBloom props)
+        {
+            if (stacks >= requiredStacks)
             {
-                // 达到三层，摧毁核心部件！
-                ExecuteCrimsonBloom(target, caster);
+                // 达到层数，摧毁核心部件！
+                ExecuteCrimsonBloom(target, caster, fallbackDamage, props);
             }
             else
             {
@@ -96,7 +187,7 @@ namespace TheSecondSeat
         /// <summary>
         /// 执行猩红绽放 - 摧毁核心身体部件
         /// </summary>
-        private static void ExecuteCrimsonBloom(Pawn target, Pawn caster)
+        private static void ExecuteCrimsonBloom(Pawn target, Pawn caster, float fallbackDamage, CompProperties_AbilityCrimsonBloom propsForTags)
         {
             if (target == null || target.Dead || target.health == null)
             {
@@ -109,8 +200,8 @@ namespace TheSecondSeat
             // 猩红绽放特效
             FleckMaker.Static(pos, map, FleckDefOf.PsycastAreaEffect, 3f);
             
-            // 尝试摧毁核心部件
-            BodyPartRecord corePartToDestroy = FindCoreBodyPart(target);
+            // 尝试摧毁核心部件（使用 Tag 查找，兼容异种族）
+            BodyPartRecord corePartToDestroy = FindCoreBodyPart(target, propsForTags);
 
             if (corePartToDestroy != null)
             {
@@ -137,81 +228,93 @@ namespace TheSecondSeat
             }
             else
             {
-                // 没有可摧毁的核心部件，造成大量伤害
-                DamageInfo fallbackDamage = new DamageInfo(
+                // 没有可摧毁的核心部件，造成后备伤害
+                float finalFallbackDamage = fallbackDamage > 0 ? fallbackDamage : 200f;
+                
+                DamageInfo fallbackDamageInfo = new DamageInfo(
                     DamageDefOf.ExecutionCut,
-                    200f,
+                    finalFallbackDamage,
                     armorPenetration: 1f,
                     instigator: caster);
 
-                target.TakeDamage(fallbackDamage);
+                target.TakeDamage(fallbackDamageInfo);
                 
                 MoteMaker.ThrowText(pos, map, "TSS_CrimsonBloom_Detonate".Translate(), Color.magenta);
             }
 
-            // 移除标记 - 使用传入的 caster 获取 CompProperties
-            // 注意：这是静态方法，需要额外获取 markDef
-            // 通过目标已有的标记来查找并移除
-            if (target.health?.hediffSet != null)
+            // 移除标记
+            RemoveCrimsonBloomMark(target);
+        }
+
+        /// <summary>
+        /// 移除猩红绽放标记
+        /// </summary>
+        private static void RemoveCrimsonBloomMark(Pawn target)
+        {
+            if (target.health?.hediffSet == null) return;
+            
+            // 查找所有带有 HediffComp_CrimsonBloom 的 Hediff
+            Hediff mark = target.health.hediffSet.hediffs.FirstOrDefault(h =>
+                h.TryGetComp<HediffComp_CrimsonBloom>() != null);
+            
+            if (mark != null)
             {
-                // 查找所有可能是猩红标记的 Hediff（通过 HediffComp_CrimsonBloom）
-                Hediff mark = target.health.hediffSet.hediffs.FirstOrDefault(h =>
-                    h.TryGetComp<HediffComp_CrimsonBloom>() != null);
-                if (mark != null)
-                {
-                    target.health.RemoveHediff(mark);
-                }
+                target.health.RemoveHediff(mark);
             }
         }
 
         /// <summary>
         /// 找到可摧毁的核心身体部件
-        /// 优先级：心脏 > 大脑 > 颈部 > 躯干
+        /// 优先使用 BodyPartTag 查找（兼容异种族），回退到 defName 查找
         /// </summary>
-        private static BodyPartRecord FindCoreBodyPart(Pawn pawn)
+        private static BodyPartRecord FindCoreBodyPart(Pawn pawn, CompProperties_AbilityCrimsonBloom props)
         {
             if (pawn?.health?.hediffSet == null)
             {
                 return null;
             }
 
-            var body = pawn.RaceProps?.body;
-            if (body == null)
-            {
-                return null;
-            }
+            var notMissingParts = pawn.health.hediffSet.GetNotMissingParts().ToList();
+            if (notMissingParts.Count == 0) return null;
 
-            // 按优先级查找核心部件
-            List<string> coreParts = new List<string>
+            // === 第一优先级：使用 BodyPartTag 查找（兼容异种族）===
+            if (props?.PriorityBodyPartTagDefs != null)
             {
-                "Heart",
-                "Brain", 
-                "Neck",
-                "Torso"
-            };
-
-            foreach (string partDefName in coreParts)
-            {
-                BodyPartRecord part = pawn.health.hediffSet.GetNotMissingParts()
-                    .FirstOrDefault(p => p.def.defName == partDefName);
-
-                if (part != null)
+                foreach (BodyPartTagDef tag in props.PriorityBodyPartTagDefs)
                 {
-                    return part;
+                    BodyPartRecord part = notMissingParts.FirstOrDefault(p => 
+                        p.def.tags != null && p.def.tags.Contains(tag));
+                    
+                    if (part != null)
+                    {
+                        return part;
+                    }
                 }
             }
 
-            // 如果找不到标准部件，尝试找任何致命部件
-            BodyPartRecord vitalPart = pawn.health.hediffSet.GetNotMissingParts()
-                .FirstOrDefault(p => p.def.tags?.Contains(BodyPartTagDefOf.BloodPumpingSource) == true);
-
-            if (vitalPart != null)
+            // === 第二优先级：使用 defName 查找（原版生物）===
+            if (props?.priorityBodyPartDefNames != null)
             {
-                return vitalPart;
+                foreach (string partDefName in props.priorityBodyPartDefNames)
+                {
+                    BodyPartRecord part = notMissingParts.FirstOrDefault(p => 
+                        p.def.defName == partDefName);
+
+                    if (part != null)
+                    {
+                        return part;
+                    }
+                }
             }
 
-            vitalPart = pawn.health.hediffSet.GetNotMissingParts()
-                .FirstOrDefault(p => p.def.tags?.Contains(BodyPartTagDefOf.ConsciousnessSource) == true);
+            // === 第三优先级：使用默认的原版 Tag（最终回退）===
+            BodyPartRecord vitalPart = notMissingParts.FirstOrDefault(p => 
+                p.def.tags?.Contains(BodyPartTagDefOf.BloodPumpingSource) == true);
+
+            if (vitalPart != null) return vitalPart;
+
+            vitalPart = notMissingParts.FirstOrDefault(p => 
+                p.def.tags?.Contains(BodyPartTagDefOf.ConsciousnessSource) == true);
 
             return vitalPart;
         }
@@ -265,43 +368,6 @@ namespace TheSecondSeat
             }
 
             return true;
-        }
-    }
-
-    /// <summary>
-    /// 猩红绽放技能属性
-    /// 所有 Def 引用通过 defName 配置，子模组通过 XML 指定
-    /// </summary>
-    public class CompProperties_AbilityCrimsonBloom : CompProperties_AbilityEffect
-    {
-        public int stacksToBloom = 3;
-        public float markDuration = 30f; // 标记持续时间（秒）
-        
-        // 通过 defName 配置的 Def 引用
-        public string markHediffDefName; // 猩红标记 HediffDef 的 defName
-
-        // 缓存的 Def 引用
-        private HediffDef cachedMarkHediffDef;
-
-        public HediffDef MarkHediffDef
-        {
-            get
-            {
-                if (cachedMarkHediffDef == null && !string.IsNullOrEmpty(markHediffDefName))
-                {
-                    cachedMarkHediffDef = DefDatabase<HediffDef>.GetNamed(markHediffDefName, false);
-                    if (cachedMarkHediffDef == null)
-                    {
-                        Log.Error($"[CrimsonBloom] HediffDef '{markHediffDefName}' not found!");
-                    }
-                }
-                return cachedMarkHediffDef;
-            }
-        }
-
-        public CompProperties_AbilityCrimsonBloom()
-        {
-            compClass = typeof(CompAbilityEffect_CrimsonBloom);
         }
     }
 }

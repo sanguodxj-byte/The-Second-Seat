@@ -308,60 +308,44 @@ namespace TheSecondSeat.Core
         {
             var sb = new System.Text.StringBuilder();
             
-            // 精力指导
-            if (currentEnergy < 20f)
+            // 仅在极端状态下添加强制指导，否则留空让 LLM 自行发挥
+            
+            // 极端精力指导
+            if (currentEnergy < 10f)
             {
                 sb.Append("TSS_Bio_Inst_Exhausted".Translate() + " ");
             }
-            else if (currentEnergy < 40f)
-            {
-                sb.Append("TSS_Bio_Inst_Tired".Translate() + " ");
-            }
-            else if (currentEnergy > 80f)
-            {
-                sb.Append("TSS_Bio_Inst_Energetic".Translate() + " ");
-            }
             
-            // 心情指导
-            if (currentMood < 20f)
+            // 极端心情指导
+            if (currentMood < 10f)
             {
                 sb.Append("TSS_Bio_Inst_BadMood".Translate() + " ");
             }
-            else if (currentMood > 80f)
-            {
-                sb.Append("TSS_Bio_Inst_GoodMood".Translate() + " ");
-            }
             
-            // 活动指导
+            // 特殊活动指导 (仅保留关键活动)
             switch (currentActivity)
             {
                 case NarratorActivity.MealTime:
                     sb.Append("TSS_Bio_Inst_MealTime".Translate() + " ");
                     break;
-                case NarratorActivity.Resting:
-                    sb.Append("TSS_Bio_Inst_Resting".Translate() + " ");
-                    break;
-                case NarratorActivity.Analyzing:
-                    sb.Append("TSS_Bio_Inst_Analyzing".Translate() + " ");
-                    break;
                 case NarratorActivity.Alert:
                     sb.Append("TSS_Bio_Inst_Alert".Translate() + " ");
                     break;
-                case NarratorActivity.Greeting:
-                    sb.Append("TSS_Bio_Inst_Greeting".Translate() + " ");
-                    break;
             }
             
-            // 时间指导
+            // 时间指导 (深夜)
             int hour = DateTime.Now.Hour;
-            if (hour >= 0 && hour < 7)
+            if (hour >= 2 && hour < 5) // 缩小深夜范围，避免误伤熬夜党
             {
                 sb.Append("TSS_Bio_Inst_LateNight".Translate() + " ");
             }
             
+            // 如果没有特殊指令，提示 LLM 参考数据
             if (sb.Length == 0)
             {
-                sb.Append("TSS_Bio_Inst_Default".Translate());
+                // 使用通用指令 (如果没有对应的 Key，就直接用英文或硬编码中文，这里假设有一个默认 Key)
+                // 或者留空，完全依赖 Prompt 中的指示
+                // sb.Append("TSS_Bio_Inst_Default".Translate());
             }
             
             return sb.ToString().Trim();

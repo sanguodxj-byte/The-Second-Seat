@@ -1,16 +1,76 @@
 using RimWorld;
 using UnityEngine;
 using Verse;
-using System.Reflection;
+using System.Linq;
 
 namespace TheSecondSeat
 {
+    /// <summary>
+    /// PawnFlyer 的 ModExtension，用于配置飞行投掷的参数
+    /// 通过 XML 配置，避免硬编码
+    /// </summary>
+    public class CalamityThrowExtension : DefModExtension
+    {
+        // 基础伤害
+        public float baseDamage = 40f;
+        
+        // 爆炸半径
+        public float explosionRadius = 3.5f;
+        
+        // 护甲穿透
+        public float armorPenetration = 999f;
+        
+        // 默认飞行速度（如果 PawnFlyerProperties 没有配置）
+        public float defaultFlightSpeed = 12f;
+        
+        // 伤害类型 defName（可选，默认使用 Blunt）
+        public string damageDefName = "Blunt";
+        
+        // 爆炸音效 defName（可选）
+        public string explosionSoundDefName;
+        
+        // 投掷者伤害加成 Hediff defName
+        public string damageMultiplierHediffDefName = "TSS_CalamityThrowBonus";
+        
+        // 缓存的 DamageDef
+        private DamageDef cachedDamageDef;
+        public DamageDef DamageDef
+        {
+            get
+            {
+                if (cachedDamageDef == null && !string.IsNullOrEmpty(damageDefName))
+                {
+                    cachedDamageDef = DefDatabase<DamageDef>.GetNamed(damageDefName, false);
+                }
+                return cachedDamageDef ?? DamageDefOf.Blunt;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 灾厄投掷的 PawnFlyer 实现
+    /// 继承 PawnFlyer 并使用公开的 API，避免反射
+    /// 通过 DefModExtension 配置参数，避免硬编码
+    /// </summary>
     public class PawnFlyer_CalamityThrow : PawnFlyer
     {
-        private Thing launcher; // 存储发射者
-        // 使用反射访问 PawnFlyer 的私有字段，参考 GodHandMod 实现
-        private static FieldInfo destCellField = typeof(PawnFlyer).GetField("destinationCell", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static FieldInfo flightDistanceField = typeof(PawnFlyer).GetField("flightDistance", BindingFlags.Instance | BindingFlags.NonPublic);
+        // 存储发射者
+        private Thing launcher;
+        
+        // 缓存的配置扩展
+        private CalamityThrowExtension extensionCache;
+        private CalamityThrowExtension Extension
+        {
+            get
+            {
+                if (extensionCache == null && def != null)
+                {
+                    extensionCache = def.GetModExtension<CalamityThrowExtension>();
+                }
+                // 如果没有配置扩展，返回默认值
+                return extensionCache ?? new CalamityThrowExtension();
+            }
+        }
 
         public override void ExposeData()
         {
@@ -24,65 +84,28 @@ namespace TheSecondSeat
         }
 
         /// <summary>
-        /// 手动初始化飞行参数，绕过 PawnFlyer.MakeFlyer 的限制（如 Pawn 必须 Spawned）
+        /// 使用 PawnFlyer.MakeFlyer 的静态工厂方法创建 Flyer
+        /// 这是 RimWorld 官方推荐的方式
         /// </summary>
-        public void InitializeFlightParams(Vector3 startPosition, IntVec3 destination, float distance)
+        public static PawnFlyer_CalamityThrow MakeCalamityFlyer(
+            ThingDef flyerDef,
+            Pawn pawn,
+            IntVec3 destCell,
+            Thing launcher,
+            EffecterDef flightEffecterDef = null,
+            SoundDef landingSound = null,
+            bool flyWithCarriedThing = false)
         {
-            this.startVec = startPosition;
+            // 使用基类的 MakeFlyer 方法
+            PawnFlyer_CalamityThrow flyer = (PawnFlyer_CalamityThrow)PawnFlyer.MakeFlyer(
+                flyerDef, pawn, destCell, flightEffecterDef, landingSound, flyWithCarriedThing);
             
-            try
+            if (flyer != null)
             {
-                if (destCellField != null)
-                {
-                    destCellField.SetValue(this, destination);
-                }
-                else
-                {
-                    Log.Warning("[TSS] PawnFlyer_CalamityThrow: destinationCell field not found via reflection.");
-                }
-
-                if (flightDistanceField != null)
-                {
-                    flightDistanceField.SetValue(this, distance);
-                }
-                else
-                {
-                    Log.Warning("[TSS] PawnFlyer_CalamityThrow: flightDistance field not found via reflection.");
-                }
-            }
-            catch (System.Exception ex)
-            {
-                Log.Error($"[TSS] PawnFlyer_CalamityThrow reflection error: {ex}");
+                flyer.SetLauncher(launcher);
             }
             
-            // 确保 flightDistance 被正确设置，PawnFlyer.Tick 需要它
-            // 同时设置 ticksFlightTime 以防止 DrawAt 中的除零错误或 NRE
-            // 注意：PawnFlyerProperties 可能不包含 FlightSpeed，使用硬编码默认值或反射获取
-            float speed = 12f; // 默认速度
-            
-            try
-            {
-                if (this.def?.pawnFlyer != null)
-                {
-                    // 尝试通过反射获取 flightSpeed，如果无法获取则使用默认值
-                    // 1.5 中通常是 flightSpeed 字段
-                    var speedField = typeof(PawnFlyerProperties).GetField("flightSpeed", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                    if (speedField != null)
-                    {
-                        object val = speedField.GetValue(this.def.pawnFlyer);
-                        if (val is float f)
-                        {
-                            speed = f;
-                        }
-                    }
-                }
-            }
-            catch (System.Exception ex)
-            {
-                Log.Warning($"[TSS] Failed to get flightSpeed via reflection: {ex.Message}");
-            }
-
-            this.ticksFlightTime = Mathf.Max(1, Mathf.RoundToInt(distance / speed));
+            return flyer;
         }
 
         protected override void DrawAt(Vector3 drawLoc, bool flip = false)
@@ -115,35 +138,60 @@ namespace TheSecondSeat
             Pawn flyingPawn = this.FlyingPawn;
             base.RespawnPawn();
 
-            if (flyingPawn == null) return;
+            if (flyingPawn == null || this.Map == null) return;
             
-            // 计算伤害
-            float damageAmount = 40f; // 基础伤害
-            if (this.launcher is Pawn caster) // 使用存储的 launcher
+            // 从 ModExtension 获取配置
+            var ext = Extension;
+            float damageAmount = ext.baseDamage;
+            
+            // 检查伤害加成 Hediff
+            if (this.launcher is Pawn caster && !string.IsNullOrEmpty(ext.damageMultiplierHediffDefName))
             {
-                Hediff bonusHediff = caster.health.hediffSet.GetFirstHediffOfDef(DefDatabase<HediffDef>.GetNamed("TSS_CalamityThrowBonus", false));
-                if (bonusHediff != null)
+                HediffDef bonusDef = DefDatabase<HediffDef>.GetNamed(ext.damageMultiplierHediffDefName, false);
+                if (bonusDef != null)
                 {
-                    damageAmount *= bonusHediff.Severity;
-                    caster.health.RemoveHediff(bonusHediff);
+                    Hediff bonusHediff = caster.health.hediffSet.GetFirstHediffOfDef(bonusDef);
+                    if (bonusHediff != null)
+                    {
+                        damageAmount *= bonusHediff.Severity;
+                        caster.health.RemoveHediff(bonusHediff);
+                    }
                 }
+            }
+
+            // 获取爆炸音效
+            SoundDef explosionSound = null;
+            if (!string.IsNullOrEmpty(ext.explosionSoundDefName))
+            {
+                explosionSound = DefDatabase<SoundDef>.GetNamed(ext.explosionSoundDefName, false);
             }
 
             // 对区域内的敌人造成爆炸伤害
             GenExplosion.DoExplosion(
                 center: this.Position,
                 map: this.Map,
-                radius: 3.5f,
-                damType: DamageDefOf.Blunt,
+                radius: ext.explosionRadius,
+                damType: ext.DamageDef,
                 instigator: launcher,
                 damAmount: (int)damageAmount,
-                armorPenetration: 999f,
-                explosionSound: SoundDefOf.Pawn_Melee_Punch_HitPawn,
+                armorPenetration: ext.armorPenetration,
+                explosionSound: explosionSound ?? SoundDefOf.Pawn_Melee_Punch_HitPawn,
                 applyDamageToExplosionCellsNeighbors: true
             );
 
             // 对被投掷的 Pawn 自己也造成伤害
-            DamageInfo dinfo = new DamageInfo(DamageDefOf.Blunt, damageAmount, 999f, -1, launcher, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null, true, true);
+            DamageInfo dinfo = new DamageInfo(
+                ext.DamageDef, 
+                damageAmount, 
+                ext.armorPenetration, 
+                -1, 
+                launcher, 
+                null, 
+                null, 
+                DamageInfo.SourceCategory.ThingOrUnknown, 
+                null, 
+                true, 
+                true);
             flyingPawn.TakeDamage(dinfo);
         }
     }

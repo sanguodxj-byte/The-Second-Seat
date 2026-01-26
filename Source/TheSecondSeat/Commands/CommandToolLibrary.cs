@@ -324,8 +324,8 @@ namespace TheSecondSeat.Commands
                 parameters = new List<ParameterDef>
                 {
                     new ParameterDef { name = "mode", type = "string", required = false, defaultValue = "assist",
-                        validValues = new List<string> { "assist", "hostile" },
-                        description = "降临模式：assist(协助殖民者), hostile(敌对测试)" },
+                        validValues = new List<string> { "assist", "attack", "friendly", "hostile", "援助", "敌对" },
+                        description = "降临模式：assist/friendly/援助(协助殖民者), attack/hostile/敌对(敌对测试，用于调试)" },
                     new ParameterDef { name = "x", type = "int", required = false, 
                         description = "降临目标X坐标（可选，不填则使用玩家选中位置或随机）" },
                     new ParameterDef { name = "z", type = "int", required = false, 

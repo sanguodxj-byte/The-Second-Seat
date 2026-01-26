@@ -23,7 +23,7 @@ namespace TheSecondSeat.Framework.Actions
         public float delta = 0f;
         public string reason = "Event";
         
-        public override void Execute(Map map, Dictionary<string, object> context)
+        public override void Execute(Map map, in NarratorContext context)
         {
             var agent = Current.Game?.GetComponent<StorytellerAgent>();
             if (agent != null)
@@ -52,7 +52,7 @@ namespace TheSecondSeat.Framework.Actions
         public MessageTypeDef messageType; // ⭐ v1.6.83: 运行时检查 null
         public bool useNarratorWindow = false;
         
-        public override void Execute(Map map, Dictionary<string, object> context)
+        public override void Execute(Map map, in NarratorContext context)
         {
             if (string.IsNullOrEmpty(dialogueText))
             {
@@ -93,7 +93,7 @@ namespace TheSecondSeat.Framework.Actions
         public IntVec3 spawnLocation = IntVec3.Invalid;
         public bool dropNearPlayer = true;
         
-        public override void Execute(Map map, Dictionary<string, object> context)
+        public override void Execute(Map map, in NarratorContext context)
         {
             if (resourceType == null || amount <= 0)
             {
@@ -155,7 +155,7 @@ namespace TheSecondSeat.Framework.Actions
     {
         public string targetEventDefName = "";
         
-        public override void Execute(Map map, Dictionary<string, object> context)
+        public override void Execute(Map map, in NarratorContext context)
         {
             if (string.IsNullOrEmpty(targetEventDefName))
             {
@@ -188,7 +188,7 @@ namespace TheSecondSeat.Framework.Actions
         public SoundDef sound = null;
         public float volume = 1.0f;
         
-        public override void Execute(Map map, Dictionary<string, object> context)
+        public override void Execute(Map map, in NarratorContext context)
         {
             if (sound != null)
             {
@@ -215,7 +215,7 @@ namespace TheSecondSeat.Framework.Actions
     {
         public string newMood = "Cheerful";
         
-        public override void Execute(Map map, Dictionary<string, object> context)
+        public override void Execute(Map map, in NarratorContext context)
         {
             var agent = Current.Game?.GetComponent<StorytellerAgent>();
             if (agent != null)
@@ -245,7 +245,7 @@ namespace TheSecondSeat.Framework.Actions
         public bool isWarning = false;
         public bool isError = false;
         
-        public override void Execute(Map map, Dictionary<string, object> context)
+        public override void Execute(Map map, in NarratorContext context)
         {
             if (string.IsNullOrEmpty(message))
             {

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Xml.Linq;
 using Verse;
 using RimWorld;
+using TheSecondSeat.TTS;
 
 namespace TheSecondSeat.PersonaGeneration
 {
@@ -138,6 +139,15 @@ namespace TheSecondSeat.PersonaGeneration
         }
 
         /// <summary>
+        /// 获取 LipSync 默认保存路径
+        /// </summary>
+        public static string GetDefaultLipSyncSavePath(string defName)
+        {
+            string configDir = GenFilePaths.ConfigFolderPath;
+            return Path.Combine(configDir, $"{defName}_LipSync.xml");
+        }
+
+        /// <summary>
         /// 从 XML 文件加载 RenderTreeDef 的数据
         /// </summary>
         public static RenderTreeDef LoadFromXml(string filePath)
@@ -234,6 +244,92 @@ namespace TheSecondSeat.PersonaGeneration
                 Log.Error($"[RenderTreeConfigIO] 加载失败: {ex.Message}");
                 return null;
             }
+        }
+
+        /// <summary>
+        /// 将 LipSyncMappingDef 保存为 XML 文件
+        /// </summary>
+        public static void SaveLipSyncMappingToXml(LipSyncMappingDef def, string filePath)
+        {
+            try
+            {
+                XDocument doc = new XDocument(
+                    new XDeclaration("1.0", "utf-8", null),
+                    new XElement("Defs",
+                        new XElement(typeof(LipSyncMappingDef).FullName,
+                            new XElement("defName", def.defName),
+                            
+                            // Mappings
+                            new XElement("mappings",
+                                (def.mappings ?? new List<LipSyncMappingDef.GroupMapping>()).ConvertAll(m => 
+                                    new XElement("li",
+                                        new XElement("group", m.group),
+                                        new XElement("viseme", m.viseme)
+                                    )
+                                )
+                            ),
+
+                            // Settings
+                            new XElement("attackViseme", def.attackViseme),
+                            new XElement("releaseViseme", def.releaseViseme),
+                            new XElement("defaultViseme", def.defaultViseme),
+                            new XElement("sustainFrames", def.sustainFrames)
+                        )
+                    )
+                );
+
+                doc.Save(filePath);
+                Messages.Message($"口型配置已保存至: {filePath}", MessageTypeDefOf.PositiveEvent, false);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[RenderTreeConfigIO] 口型配置保存失败: {ex.Message}");
+                Messages.Message($"保存失败: {ex.Message}", MessageTypeDefOf.NegativeEvent, false);
+            }
+        }
+
+        /// <summary>
+        /// 从 XML 文件加载 LipSyncMappingDef
+        /// </summary>
+        public static LipSyncMappingDef LoadLipSyncMappingFromXml(string filePath)
+        {
+            try
+            {
+                if (!File.Exists(filePath)) return null;
+
+                XDocument doc = XDocument.Load(filePath);
+                XElement root = doc.Root?.Element(typeof(LipSyncMappingDef).FullName);
+                if (root == null) return null;
+
+                var def = new LipSyncMappingDef();
+                def.defName = root.Element("defName")?.Value;
+
+                // Load Mappings
+                def.mappings = root.Element("mappings")?.Elements("li").Select(li => new LipSyncMappingDef.GroupMapping
+                {
+                    group = ParseEnum(li.Element("group")?.Value, PhonemeGroup.None),
+                    viseme = ParseEnum(li.Element("viseme")?.Value, VisemeCode.Small)
+                }).ToList() ?? new List<LipSyncMappingDef.GroupMapping>();
+
+                // Load Settings
+                def.attackViseme = ParseEnum(root.Element("attackViseme")?.Value, VisemeCode.Small);
+                def.releaseViseme = ParseEnum(root.Element("releaseViseme")?.Value, VisemeCode.Small);
+                def.defaultViseme = ParseEnum(root.Element("defaultViseme")?.Value, VisemeCode.Small);
+                def.sustainFrames = int.TryParse(root.Element("sustainFrames")?.Value, out int s) ? s : 2;
+
+                return def;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[RenderTreeConfigIO] 口型配置加载失败: {ex.Message}");
+                return null;
+            }
+        }
+
+        private static T ParseEnum<T>(string value, T defaultValue) where T : struct
+        {
+            if (string.IsNullOrEmpty(value)) return defaultValue;
+            return Enum.TryParse(value, true, out T result) ? result : defaultValue;
         }
     }
 }

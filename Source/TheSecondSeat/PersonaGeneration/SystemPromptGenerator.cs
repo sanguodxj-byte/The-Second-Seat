@@ -48,6 +48,7 @@ namespace TheSecondSeat.PersonaGeneration
 
                 Narrator = new NarratorInfo
                 {
+                    DefName = personaDef.defName, // ⭐ v3.0: 传递 Persona DefName
                     Name = personaDef.narratorName,
                     Label = personaDef.label,
                     Biography = personaDef.biography,
@@ -73,7 +74,7 @@ namespace TheSecondSeat.PersonaGeneration
                 Meta = new MetaInfo
                 {
                     DifficultyMode = difficultyMode.ToString(),
-                    LanguageInstruction = GetLanguageInstruction()
+                    LanguageInstruction = GetLanguageInstruction(personaDef.defName)
                 }
             };
 
@@ -94,11 +95,11 @@ namespace TheSecondSeat.PersonaGeneration
 
             // Philosophy (难度模式哲学)
             string philosophyFile = $"Philosophy_{difficultyMode}";
-            string philosophy = PromptLoader.Load(philosophyFile);
+            string philosophy = PromptLoader.Load(philosophyFile, personaDef.defName); // ⭐ v3.0: 支持 Persona 专属
             if (string.IsNullOrEmpty(philosophy) || philosophy.StartsWith("[Error:"))
             {
                 string behaviorFile = $"BehaviorRules_{difficultyMode}";
-                philosophy = PromptLoader.Load(behaviorFile);
+                philosophy = PromptLoader.Load(behaviorFile, personaDef.defName); // ⭐ v3.0: 支持 Persona 专属
             }
             if (philosophy.StartsWith("[Error:")) philosophy = "";
             context.Snippets["philosophy"] = philosophy;
@@ -115,7 +116,7 @@ namespace TheSecondSeat.PersonaGeneration
             context.Snippets["romantic_instructions"] = romanticInstructions;
 
             // Log Diagnosis
-            context.Snippets["log_diagnosis"] = GenerateLogDiagnosisInstructions();
+            context.Snippets["log_diagnosis"] = GenerateLogDiagnosisInstructions(personaDef.defName);
 
             // ⭐ v2.2.0: 降临状态和生物节律已集成到 CharacterCard (context.Card) 中
             // 不再需要手动构建 DescentInfo 或 BioContext
@@ -128,10 +129,10 @@ namespace TheSecondSeat.PersonaGeneration
         /// <summary>
         /// ⭐ v1.6.77: Generates log diagnosis instructions (AI can proactively read logs to analyze errors)
         /// </summary>
-        private static string GenerateLogDiagnosisInstructions()
+        private static string GenerateLogDiagnosisInstructions(string personaName = null)
         {
             var sb = new StringBuilder();
-            sb.AppendLine(PromptLoader.Load("LogDiagnosis"));
+            sb.AppendLine(PromptLoader.Load("LogDiagnosis", personaName));
             sb.AppendLine();
             sb.AppendLine("---");
             return sb.ToString();
@@ -141,11 +142,11 @@ namespace TheSecondSeat.PersonaGeneration
         /// ⭐ 获取语言强制指令
         /// ⭐ v1.6.86: 添加容错处理
         /// </summary>
-        private static string GetLanguageInstruction()
+        private static string GetLanguageInstruction(string personaName = null)
         {
-            try 
+            try
             {
-                string content = PromptLoader.Load("Language_Instruction");
+                string content = PromptLoader.Load("Language_Instruction", personaName);
                 if (!string.IsNullOrEmpty(content)) return content;
             }
             catch (Exception ex)
@@ -154,7 +155,10 @@ namespace TheSecondSeat.PersonaGeneration
             }
             
             // 默认回退（硬编码）
-            return "LANGUAGE REQUIREMENT: Respond in the user's preferred language (likely Chinese Simplified based on mod settings).";
+            bool isChinese = LanguageDatabase.activeLanguage?.folderName?.Contains("Chinese") ?? false;
+            return isChinese
+                ? "语言要求：请使用简体中文回复。"
+                : "LANGUAGE REQUIREMENT: Respond in English.";
         }
         
         // ⭐ v1.6.76: 已迁移到各 Section 类
@@ -202,7 +206,7 @@ namespace TheSecondSeat.PersonaGeneration
             AIDifficultyMode difficultyMode = AIDifficultyMode.Assistant)
         {
             // 1. 加载 Compact 模板
-            string template = PromptLoader.Load("SystemPrompt_Compact");
+            string template = PromptLoader.Load("SystemPrompt_Compact", personaDef.defName);
             if (string.IsNullOrEmpty(template) || template.StartsWith("[Error:"))
             {
                 // 回退到硬编码版本
@@ -227,11 +231,11 @@ namespace TheSecondSeat.PersonaGeneration
             
             // 难度模式哲学
             string philosophyFile = $"Philosophy_{difficultyMode}";
-            string philosophy = PromptLoader.Load(philosophyFile);
+            string philosophy = PromptLoader.Load(philosophyFile, personaDef.defName);
             if (string.IsNullOrEmpty(philosophy) || philosophy.StartsWith("[Error:"))
             {
                 string behaviorFile = $"BehaviorRules_{difficultyMode}";
-                philosophy = PromptLoader.Load(behaviorFile);
+                philosophy = PromptLoader.Load(behaviorFile, personaDef.defName);
             }
             if (philosophy.StartsWith("[Error:")) philosophy = "";
             
@@ -254,12 +258,12 @@ namespace TheSecondSeat.PersonaGeneration
             string styleNotesStr = styleNotes.Count > 0 ? string.Join(", ", styleNotes) : "";
             
             // Compact 指令
-            string compactInstruction = PromptLoader.Load("Compact_Instruction");
+            string compactInstruction = PromptLoader.Load("Compact_Instruction", personaDef.defName);
             if (compactInstruction.StartsWith("[Error:")) compactInstruction = "";
             
             // 3. 替换占位符
             return template
-                .Replace("{{Language_Instruction}}", GetLanguageInstruction())
+                .Replace("{{Language_Instruction}}", GetLanguageInstruction(personaDef.defName))
                 .Replace("{{NarratorName}}", displayName)
                 .Replace("{{Biography}}", biography)
                 .Replace("{{Philosophy}}", philosophy)
@@ -278,19 +282,20 @@ namespace TheSecondSeat.PersonaGeneration
             AIDifficultyMode difficultyMode)
         {
             var sb = new StringBuilder();
+            bool isChinese = LanguageDatabase.activeLanguage?.folderName?.Contains("Chinese") ?? false;
             
-            sb.AppendLine(GetLanguageInstruction());
+            sb.AppendLine(GetLanguageInstruction(personaDef.defName));
             sb.AppendLine();
             
-            string displayName = !string.IsNullOrEmpty(personaDef.label) 
-                ? personaDef.label 
+            string displayName = !string.IsNullOrEmpty(personaDef.label)
+                ? personaDef.label
                 : personaDef.narratorName;
             
-            sb.AppendLine($"You are **{displayName}**.");
+            sb.AppendLine(isChinese ? $"你是 **{displayName}**。" : $"You are **{displayName}**.");
             if (!string.IsNullOrEmpty(personaDef.biography))
             {
-                string shortBio = personaDef.biography.Length > 200 
-                    ? personaDef.biography.Substring(0, 200) + "..." 
+                string shortBio = personaDef.biography.Length > 200
+                    ? personaDef.biography.Substring(0, 200) + "..."
                     : personaDef.biography;
                 sb.AppendLine(shortBio);
             }
@@ -298,10 +303,12 @@ namespace TheSecondSeat.PersonaGeneration
             
             if (difficultyMode != AIDifficultyMode.Engineer)
             {
-                sb.AppendLine($"Affinity: {agent.affinity:F0}/100");
+                sb.AppendLine(isChinese
+                    ? $"好感度: {agent.affinity:F0}/100"
+                    : $"Affinity: {agent.affinity:F0}/100");
             }
             
-            sb.AppendLine("Format: (action) dialogue.");
+            sb.AppendLine(isChinese ? "格式: (动作) 对话。" : "Format: (action) dialogue.");
             
             return sb.ToString();
         }
@@ -328,6 +335,7 @@ namespace TheSecondSeat.PersonaGeneration
 
                 Narrator = new NarratorInfo
                 {
+                    DefName = personaDef.defName, // ⭐ v3.0: 传递 Persona DefName
                     Name = personaDef.narratorName,
                     Label = personaDef.label,
                     Biography = personaDef.biography,
@@ -353,7 +361,7 @@ namespace TheSecondSeat.PersonaGeneration
                 Meta = new MetaInfo
                 {
                     DifficultyMode = difficultyMode.ToString(),
-                    LanguageInstruction = GetLanguageInstruction()
+                    LanguageInstruction = GetLanguageInstruction(personaDef.defName)
                 }
             };
 

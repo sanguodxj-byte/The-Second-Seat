@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+    <!-- 
+        ⭐ v2.9.0: 叙事者行为参数配置
+        所有数值都可以通过修改此 XML 文件来调整，无需重新编译 C#
+        
+        用户可以创建自己的 NarratorBehaviorDef 来覆盖默认值
+    -->
+    
+    <TheSecondSeat.Defs.NarratorBehaviorDef>
+        <defName>DefaultBehavior</defName>
+        <label>默认叙事者行为</label>
+        <description>叙事者自主行为系统的默认参数配置</description>
+        
+        <!-- ==================== 好感度阈值 ==================== -->
+        
+        <!-- 自动执行建议所需的最低好感度 -->
+        <minAffinityForAutoAction>85</minAffinityForAutoAction>
+        
+        <!-- 主动提出建议所需的最低好感度 -->
+        <minAffinityForSuggestions>30</minAffinityForSuggestions>
+        
+        <!-- 批准收获建议所需的好感度 -->
+        <affinityForHarvestApproval>60</affinityForHarvestApproval>
+        
+        <!-- 批准修复建议所需的好感度 -->
+        <affinityForRepairApproval>70</affinityForRepairApproval>
+        
+        <!-- 批准紧急撤退建议所需的好感度 -->
+        <affinityForEmergencyApproval>80</affinityForEmergencyApproval>
+        
+        <!-- 操控型人格自动执行的好感度阈值 -->
+        <manipulativeAutoActionThreshold>75</manipulativeAutoActionThreshold>
+        
+        <!-- ==================== 健康阈值 ==================== -->
+        
+        <!-- 低生命值阈值（触发紧急建议），单位：百分比 -->
+        <lowHealthThreshold>50</lowHealthThreshold>
+        
+        <!-- 食物短缺阈值，单位：数量 -->
+        <lowFoodThreshold>50</lowFoodThreshold>
+        
+        <!-- ==================== 建筑相关 ==================== -->
+        
+        <!-- 建筑受损阈值（低于此比例视为受损），范围 0-1 -->
+        <buildingDamageThreshold>0.7</buildingDamageThreshold>
+        
+        <!-- 触发修复建议的最少受损建筑数量 -->
+        <minDamagedBuildingsForSuggestion>3</minDamagedBuildingsForSuggestion>
+        
+        <!-- ==================== 农业相关 ==================== -->
+        
+        <!-- 触发收获建议的最少成熟作物数量 -->
+        <minMatureCropsForSuggestion>10</minMatureCropsForSuggestion>
+        
+        <!-- ==================== 时间间隔 ==================== -->
+        
+        <!-- 自主行为检查间隔，单位：ticks（60 ticks = 1秒，18000 = 5分钟） -->
+        <checkIntervalTicks>18000</checkIntervalTicks>
+        
+        <!-- 拒绝建议时的好感度惩罚 -->
+        <rejectSuggestionPenalty>-0.5</rejectSuggestionPenalty>
+    </TheSecondSeat.Defs.NarratorBehaviorDef>
+    
+    <!-- 
+        示例：严格模式配置
+        用户可以创建类似的配置来调整行为
+    -->
+    <!--
+    <TheSecondSeat.Defs.NarratorBehaviorDef>
+        <defName>StrictBehavior</defName>
+        <label>严格叙事者行为</label>
+        <description>需要更高好感度才能自动执行</description>
+        
+        <minAffinityForAutoAction>95</minAffinityForAutoAction>
+        <minAffinityForSuggestions>50</minAffinityForSuggestions>
+        <affinityForHarvestApproval>80</affinityForHarvestApproval>
+        <affinityForRepairApproval>85</affinityForRepairApproval>
+        <affinityForEmergencyApproval>90</affinityForEmergencyApproval>
+    </TheSecondSeat.Defs.NarratorBehaviorDef>
+    -->
+    
+</Defs>

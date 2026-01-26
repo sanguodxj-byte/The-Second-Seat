@@ -34,7 +34,9 @@ namespace TheSecondSeat
             if (currentStacks >= 3)
             {
                 // 达到三层，触发绽放
-                CompAbilityEffect_CrimsonBloom.CheckBloom(Pawn, applierPawn, currentStacks);
+                // ⭐ v1.7.0: 修复 CheckBloom 调用，传递手动参数 (HediffComp 没有 AbilityProps，使用默认值)
+                // 如果需要配置，应在 HediffCompProperties 中添加字段
+                CompAbilityEffect_CrimsonBloom.CheckBloom(Pawn, applierPawn, currentStacks, 3, 200f, null);
             }
             else
             {

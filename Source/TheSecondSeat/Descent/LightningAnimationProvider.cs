@@ -351,8 +351,15 @@ namespace TheSecondSeat.Descent
                 SoundDef soundDef = DefDatabase<SoundDef>.GetNamedSilentFail(currentPersona.descentSound);
                 if (soundDef != null && currentMap != null)
                 {
-                    SoundStarter.PlayOneShotOnCamera(soundDef, currentMap);
-                    Log.Message($"[LightningAnimationProvider] 播放音效: {currentPersona.descentSound}");
+                    try
+                    {
+                        SoundStarter.PlayOneShotOnCamera(soundDef, currentMap);
+                        Log.Message($"[LightningAnimationProvider] 播放音效: {currentPersona.descentSound}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning($"[LightningAnimationProvider] 播放音效失败: {ex.Message}");
+                    }
                 }
             }
             catch (Exception ex)

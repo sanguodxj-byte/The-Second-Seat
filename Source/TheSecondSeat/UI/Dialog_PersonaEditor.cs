@@ -657,15 +657,106 @@ namespace TheSecondSeat.UI
             }
         }
 
+        /// <summary>
+        /// 从 LLM 响应中提取 XML 内容
+        /// ⭐ v2.6.1: 修复 markdown 代码块解析问题
+        /// </summary>
         private string ExtractXml(string text)
         {
-            int start = text.IndexOf("<PhraseLibraryDef>");
-            int end = text.IndexOf("</PhraseLibraryDef>");
-            
-            if (start != -1 && end != -1)
+            if (string.IsNullOrEmpty(text))
             {
-                return text.Substring(start, end - start + "</PhraseLibraryDef>".Length);
+                Log.Warning("[Dialog_PersonaEditor] LLM 返回空响应");
+                return null;
             }
+            
+            // 1. 记录原始响应用于调试
+            Log.Message($"[Dialog_PersonaEditor] LLM 原始响应长度: {text.Length} 字符");
+            
+            // 2. 移除 markdown 代码块标记 (```xml ... ``` 或 ``` ... ```)
+            string cleaned = text;
+            if (cleaned.Contains("```"))
+            {
+                // 支持 ```xml、```XML、``` 等多种格式
+                int codeBlockStart = cleaned.IndexOf("```");
+                if (codeBlockStart != -1)
+                {
+                    // 找到 ``` 后的第一个 < 或换行符
+                    int searchStart = codeBlockStart + 3;
+                    
+                    // 跳过语言标识符 (xml, XML, 空格等)
+                    int contentStart = searchStart;
+                    while (contentStart < cleaned.Length && 
+                           cleaned[contentStart] != '<' && 
+                           cleaned[contentStart] != '\n')
+                    {
+                        contentStart++;
+                    }
+                    
+                    // 如果是换行符，跳过它
+                    if (contentStart < cleaned.Length && cleaned[contentStart] == '\n')
+                    {
+                        contentStart++;
+                    }
+                    
+                    // 找结束的 ```
+                    int codeBlockEnd = cleaned.IndexOf("```", contentStart);
+                    if (codeBlockEnd != -1)
+                    {
+                        cleaned = cleaned.Substring(contentStart, codeBlockEnd - contentStart).Trim();
+                        Log.Message($"[Dialog_PersonaEditor] 从 markdown 代码块中提取内容，长度: {cleaned.Length}");
+                    }
+                    else
+                    {
+                        // 没有结束标记，取到末尾
+                        cleaned = cleaned.Substring(contentStart).Trim();
+                        Log.Warning("[Dialog_PersonaEditor] 未找到 markdown 代码块结束标记，取到末尾");
+                    }
+                }
+            }
+            
+            // 3. 尝试多种标签格式
+            string[] possibleTags = new[] 
+            { 
+                "PhraseLibraryDef",
+                "TheSecondSeat.PhraseLibraryDef", 
+                "TheSecondSeat.Narrator.PhraseLibraryDef",
+                "Defs"  // 整个 Defs 包裹
+            };
+            
+            foreach (var tag in possibleTags)
+            {
+                string startTag = $"<{tag}>";
+                string endTag = $"</{tag}>";
+                
+                // 也支持带属性的标签 <PhraseLibraryDef ...>
+                int start = cleaned.IndexOf($"<{tag}");
+                if (start != -1)
+                {
+                    // 找到 > 结束符
+                    int tagEnd = cleaned.IndexOf(">", start);
+                    if (tagEnd != -1)
+                    {
+                        int end = cleaned.IndexOf(endTag, tagEnd);
+                        if (end != -1)
+                        {
+                            string result = cleaned.Substring(start, end - start + endTag.Length);
+                            Log.Message($"[Dialog_PersonaEditor] 成功提取 XML，标签: {tag}，长度: {result.Length}");
+                            return result;
+                        }
+                    }
+                }
+            }
+            
+            // 4. 最后尝试：如果内容看起来像 XML（以 < 开头），直接返回清理后的内容
+            cleaned = cleaned.Trim();
+            if (cleaned.StartsWith("<") && cleaned.EndsWith(">"))
+            {
+                Log.Warning("[Dialog_PersonaEditor] 无法识别具体标签，返回整个 XML 内容");
+                return cleaned;
+            }
+            
+            // 5. 彻底失败
+            Log.Error($"[Dialog_PersonaEditor] 无法从 LLM 响应中提取 XML。响应片段: {text.Substring(0, Math.Min(200, text.Length))}...");
             return null;
         }
 

@@ -62,13 +62,13 @@ namespace TheSecondSeat.Framework
         /// <param name="map">目标地图</param>
         /// <param name="context">上下文数据</param>
         /// <returns>true = 条件满足，false = 条件不满足</returns>
-        public abstract bool IsSatisfied(Map map, Dictionary<string, object> context);
+        public abstract bool IsSatisfied(Map map, in NarratorContext context);
         
         /// <summary>
         /// 安全检查包装器（带异常处理）
         /// 外部调用应使用此方法而非直接调用IsSatisfied
         /// </summary>
-        public bool CheckSafe(Map map, Dictionary<string, object> context)
+        public bool CheckSafe(Map map, in NarratorContext context)
         {
             if (!enabled)
             {
@@ -168,7 +168,7 @@ namespace TheSecondSeat.Framework
         /// <summary>组合模式</summary>
         public TriggerCombineMode combineMode = TriggerCombineMode.All;
         
-        public override bool IsSatisfied(Map map, Dictionary<string, object> context)
+        public override bool IsSatisfied(Map map, in NarratorContext context)
         {
             if (subTriggers == null || subTriggers.Count == 0)
             {
@@ -211,7 +211,7 @@ namespace TheSecondSeat.Framework
         /// <summary>
         /// 自定义组合逻辑（子类可重写）
         /// </summary>
-        protected virtual bool EvaluateCustomLogic(Map map, Dictionary<string, object> context)
+        protected virtual bool EvaluateCustomLogic(Map map, in NarratorContext context)
         {
             Log.Warning($"[CompositeTrigger] Custom logic not implemented for '{triggerId}', defaulting to ALL mode");
             return IsSatisfied(map, context);

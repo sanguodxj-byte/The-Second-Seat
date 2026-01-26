@@ -59,7 +59,7 @@ namespace TheSecondSeat.Framework
         /// <summary>
         /// 上下文数据缓存（共享给所有事件使用）
         /// </summary>
-        private Dictionary<string, object> cachedContext = new Dictionary<string, object>();
+        private NarratorContext cachedContext = NarratorContext.Empty;
         
         // ============================================
         // 单例访问
@@ -248,67 +248,89 @@ namespace TheSecondSeat.Framework
             }
             
             lastContextUpdateTick = Find.TickManager.TicksGame;
-            cachedContext.Clear();
             
             try
             {
                 // 获取当前人格
                 var manager = Current.Game?.GetComponent<TheSecondSeat.Narrator.NarratorManager>();
                 var persona = manager?.GetCurrentPersona();
-                
-                if (persona != null)
-                {
-                    cachedContext["persona"] = persona.defName;
-                    cachedContext["personaDef"] = persona;
-                }
+                string personaName = persona?.defName ?? "";
                 
                 // 获取好感度
+                float affinity = 0f;
+                string mood = "Neutral";
+                string difficultyMode = "Normal";
+
                 var agent = Current.Game?.GetComponent<StorytellerAgent>();
                 if (agent != null)
                 {
-                    cachedContext["affinity"] = agent.GetAffinity();
-                    cachedContext["mood"] = agent.currentMood.ToString();
-                    // ? 修复：difficultyMode是NarratorPersonaDef的字段，不是StorytellerAgent的
-                    var narratorManager = Current.Game?.GetComponent<TheSecondSeat.Narrator.NarratorManager>();
-                    var currentPersonaDef = narratorManager?.GetCurrentPersona();
-                    if (currentPersonaDef != null)
-                    {
-                        cachedContext["difficultyMode"] = currentPersonaDef.difficultyMode.ToString();
-                    }
+                    affinity = agent.GetAffinity();
+                    mood = agent.currentMood.ToString();
+                }
+
+                if (persona != null)
+                {
+                    difficultyMode = persona.difficultyMode.ToString();
                 }
                 
                 // 获取殖民地基本信息
+                int colonistCount = 0;
+                int prisonerCount = 0;
+                int animalCount = 0;
+                float wealthTotal = 0f;
+                float wealthBuildings = 0f;
+                float wealthItems = 0f;
+                int gameYear = 0;
+                Season gameSeason = Season.Undefined;
+
                 Map map = Find.CurrentMap;
                 if (map != null)
                 {
-                    cachedContext["colonistCount"] = map.mapPawns.FreeColonistsCount;
-                    // ? 修复：使用正确的API
-                    cachedContext["prisonerCount"] = map.mapPawns.PrisonersOfColonyCount;
-                    // ? 修复：计算殖民地动物数量
-                    int colonyAnimalCount = 0;
+                    colonistCount = map.mapPawns.FreeColonistsCount;
+                    prisonerCount = map.mapPawns.PrisonersOfColonyCount;
+                    
+                    // 计算殖民地动物数量
                     foreach (var pawn in map.mapPawns.SpawnedPawnsInFaction(Faction.OfPlayer))
                     {
                         if (pawn.RaceProps.Animal)
                         {
-                            colonyAnimalCount++;
+                            animalCount++;
                         }
                     }
-                    cachedContext["animalCount"] = colonyAnimalCount;
                     
                     // 财富统计
-                    cachedContext["wealthTotal"] = map.wealthWatcher?.WealthTotal ?? 0;
-                    cachedContext["wealthBuildings"] = map.wealthWatcher?.WealthBuildings ?? 0;
-                    cachedContext["wealthItems"] = map.wealthWatcher?.WealthItems ?? 0;
+                    wealthTotal = map.wealthWatcher?.WealthTotal ?? 0;
+                    wealthBuildings = map.wealthWatcher?.WealthBuildings ?? 0;
+                    wealthItems = map.wealthWatcher?.WealthItems ?? 0;
+
+                    // 游戏时间
+                    gameYear = GenDate.Year(Find.TickManager.TicksAbs, Find.WorldGrid.LongLatOf(map.Tile).x);
+                    gameSeason = GenDate.Season(Find.TickManager.TicksAbs, Find.WorldGrid.LongLatOf(map.Tile));
                 }
                 
-                // 游戏时间
-                cachedContext["gameTicks"] = Find.TickManager.TicksGame;
-                cachedContext["gameYear"] = GenDate.Year(Find.TickManager.TicksAbs, Find.WorldGrid.LongLatOf(map?.Tile ?? 0).x);
-                cachedContext["gameSeason"] = GenDate.Season(Find.TickManager.TicksAbs, Find.WorldGrid.LongLatOf(map?.Tile ?? 0));
+                int gameTicks = Find.TickManager.TicksGame;
+
+                cachedContext = new NarratorContext(
+                    personaName,
+                    persona,
+                    affinity,
+                    mood,
+                    difficultyMode,
+                    colonistCount,
+                    prisonerCount,
+                    animalCount,
+                    wealthTotal,
+                    wealthBuildings,
+                    wealthItems,
+                    gameTicks,
+                    gameYear,
+                    gameSeason
+                );
             }
             catch (Exception ex)
             {
                 Log.Error($"[NarratorEventManager] Failed to update context: {ex.Message}");
+                cachedContext = NarratorContext.Empty;
             }
         }
         
@@ -422,11 +444,6 @@ namespace TheSecondSeat.Framework
                 if (eventExecutionCounts == null)
                 {
                     eventExecutionCounts = new Dictionary<string, int>();
-                }
-                
-                if (cachedContext == null)
-                {
-                    cachedContext = new Dictionary<string, object>();
                 }
             }
         }

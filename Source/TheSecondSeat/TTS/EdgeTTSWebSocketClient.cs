@@ -123,9 +123,10 @@ namespace TheSecondSeat.TTS
         /// <param name="voice">语音名称，如 "zh-CN-XiaoxiaoNeural"</param>
         /// <param name="rate">语速，如 "+0%", "+50%", "-25%"</param>
         /// <param name="volume">音量，如 "+0%"</param>
+        /// <param name="pitch">音高，如 "+0Hz", "+5Hz", "-2Hz"</param>
         /// <returns>MP3 音频数据</returns>
-        public async Task<byte[]> SynthesizeAsync(string text, string voice = "zh-CN-XiaoxiaoNeural", 
-            string rate = "+0%", string volume = "+0%")
+        public async Task<byte[]> SynthesizeAsync(string text, string voice = "zh-CN-XiaoxiaoNeural",
+            string rate = "+0%", string volume = "+0%", string pitch = "+0Hz")
         {
             if (string.IsNullOrEmpty(text))
             {
@@ -174,7 +175,7 @@ namespace TheSecondSeat.TTS
             return null;
         }
         
-        private async Task<byte[]> TrySynthesizeAsync(string wssUrl, string text, string voice, string rate, string volume)
+        private async Task<byte[]> TrySynthesizeAsync(string wssUrl, string text, string voice, string rate, string volume, string pitch = "+0Hz")
         {
             try
             {
@@ -215,7 +216,7 @@ namespace TheSecondSeat.TTS
                 await SendConfigMessageAsync();
                 
                 // 发送 SSML 消息
-                string ssml = BuildSSML(text, voice, rate, volume);
+                string ssml = BuildSSML(text, voice, rate, volume, pitch);
                 await SendSSMLMessageAsync(ssml);
                 
                 // 接收音频数据
@@ -408,14 +409,14 @@ namespace TheSecondSeat.TTS
         /// <summary>
         /// 构建 SSML (来自 edge-tts 7.2.7)
         /// </summary>
-        private string BuildSSML(string text, string voice, string rate, string volume)
+        private string BuildSSML(string text, string voice, string rate, string volume, string pitch)
         {
             // 转义 XML 特殊字符
             text = System.Security.SecurityElement.Escape(text);
             
             return "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>" +
                    $"<voice name='{voice}'>" +
-                   $"<prosody pitch='+0Hz' rate='{rate}' volume='{volume}'>" +
+                   $"<prosody pitch='{pitch}' rate='{rate}' volume='{volume}'>" +
                    text +
                    "</prosody>" +
                    "</voice>" +

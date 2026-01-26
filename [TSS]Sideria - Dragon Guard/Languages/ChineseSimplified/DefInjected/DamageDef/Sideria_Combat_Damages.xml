@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<LanguageData>
-
-  <Sideria_Bleed_Damage.label>血之绽放撕裂</Sideria_Bleed_Damage.label>
-  <Sideria_Bleed_Damage.deathMessage>{0} 被 {1} 撕碎了。</Sideria_Bleed_Damage.deathMessage>
-
-</LanguageData>

@@ -96,22 +96,13 @@ namespace TheSecondSeat.Commands
         }
 
         /// <summary>
-        /// ? 清洗命令名称，移除干扰字符
+        /// 清洗命令名称 (简化版)
+        /// 仅去除首尾空白，不再过度修剪。更严格的格式控制应由 Prompt 负责。
         /// </summary>
         private static string CleanActionName(string rawAction)
         {
             if (string.IsNullOrEmpty(rawAction)) return "";
-            
-            // 1. 去除首尾空白
-            string cleaned = rawAction.Trim();
-            
-            // 2. 去除常见的引号 (包括中文引号)
-            cleaned = cleaned.Trim('"', '\'', '“', '”', '‘', '’');
-            
-            // 3. 去除可能存在的末尾句号（AI 常见错误）
-            cleaned = cleaned.TrimEnd('.', '。');
-            
-            return cleaned;
+            return rawAction.Trim();
         }
 
         /// <summary>

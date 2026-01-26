@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <!-- ========================================== -->
+  <!-- The Second Seat - 导演专属任务              -->
+  <!-- Director-Exclusive Quests                  -->
+  <!-- ========================================== -->
+
+  <!-- 
+    导演的礼物 - 直接给玩家物品奖励
+    用于高好感度时赠送礼物给殖民地
+  -->
+  <QuestScriptDef>
+    <defName>TSS_DirectorGift</defName>
+    <rootSelectionWeight>0</rootSelectionWeight>
+    <isRootSpecial>true</isRootSpecial>
+    <autoAccept>true</autoAccept>
+    <defaultHidden>true</defaultHidden>
+    <questNameRules>
+      <rulesStrings>
+        <li>questName->来自导演的礼物</li>
+        <li>questName->导演的馈赠</li>
+        <li>questName->神秘的补给</li>
+      </rulesStrings>
+    </questNameRules>
+    <questDescriptionRules>
+      <rulesStrings>
+        <li>questDescription->导演对你们的表现非常满意，决定送一份礼物给殖民地。\n\n一批物资正在通过运输舱空投到你的殖民地。</li>
+      </rulesStrings>
+    </questDescriptionRules>
+    <root Class="QuestNode_Sequence">
+      <nodes>
+        <!-- 获取地图 -->
+        <li Class="QuestNode_GetMap" />
+        
+        <!-- 生成奖励物品 -->
+        <li Class="QuestNode_SubScript">
+          <def>Util_GetDefaultRewardValueFromPoints</def>
+        </li>
+        
+        <!-- 给予奖励 -->
+        <li Class="QuestNode_GiveRewards">
+          <parms>
+            <allowGoodwill>false</allowGoodwill>
+            <allowRoyalFavor>false</allowRoyalFavor>
+          </parms>
+          <inSignal>inSignal</inSignal>
+        </li>
+        
+        <!-- 发送信件 -->
+        <li Class="QuestNode_Letter">
+          <label TKey="TSS_LetterLabelDirectorGift">导演的礼物</label>
+          <text TKey="TSS_LetterTextDirectorGift">导演发来了一批物资作为礼物。查看运输舱！</text>
+          <letterDef>PositiveEvent</letterDef>
+        </li>
+        
+        <!-- 结束任务 -->
+        <li Class="QuestNode_End">
+          <outcome>Success</outcome>
+        </li>
+      </nodes>
+    </root>
+  </QuestScriptDef>
+  
+  <!-- 
+    导演的试炼 - 限时生存挑战
+    用于中等好感度时增加游戏挑战
+  -->
+  <QuestScriptDef>
+    <defName>TSS_DirectorTrial</defName>
+    <rootSelectionWeight>0</rootSelectionWeight>
+    <isRootSpecial>true</isRootSpecial>
+    <autoAccept>false</autoAccept>
+    <expireDaysRange>1~3</expireDaysRange>
+    <questNameRules>
+      <rulesStrings>
+        <li>questName->导演的试炼</li>
+        <li>questName->生存挑战</li>
+        <li>questName->考验之日</li>
+      </rulesStrings>
+    </questNameRules>
+    <questDescriptionRules>
+      <rulesStrings>
+        <li>questDescription->导演决定考验你的殖民地。在接下来的几天内，你需要在不损失殖民者的情况下生存下来。\n\n如果成功，你将获得丰厚的奖励。\n\n接受这个挑战吗？</li>
+      </rulesStrings>
+    </questDescriptionRules>
+    <root Class="QuestNode_Sequence">
+      <nodes>
+        <!-- 获取地图 -->
+        <li Class="QuestNode_GetMap" />
+        
+        <!-- 计算奖励值 -->
+        <li Class="QuestNode_SubScript">
+          <def>Util_GetDefaultRewardValueFromPoints</def>
+        </li>
+        
+        <!-- 设置挑战时间（3-5天） -->
+        <li Class="QuestNode_Set">
+          <name>challengeDays</name>
+          <value>$(randInt(3,5))</value>
+        </li>
+        
+        <!-- 发送信件 -->
+        <li Class="QuestNode_Letter">
+          <label TKey="TSS_LetterLabelDirectorTrial">导演的试炼</label>
+          <text TKey="TSS_LetterTextDirectorTrial">导演发起了一项生存挑战。在接下来的[challengeDays]天内保护好你的殖民者！</text>
+          <letterDef>NeutralEvent</letterDef>
+        </li>
+        
+        <!-- 设置倒计时 -->
+        <li Class="QuestNode_Delay">
+          <delayTicks>$($challengeDays*60000)</delayTicks>
+          <isQuestTimeout>false</isQuestTimeout>
+          <node Class="QuestNode_Sequence">
+            <nodes>
+              <!-- 成功完成 -->
+              <li Class="QuestNode_GiveRewards">
+                <parms>
+                  <allowGoodwill>false</allowGoodwill>
+                  <allowRoyalFavor>false</allowRoyalFavor>
+                </parms>
+              </li>
+              <li Class="QuestNode_Letter">
+                <label TKey="TSS_LetterLabelTrialComplete">试炼完成</label>
+                <text TKey="TSS_LetterTextTrialComplete">你成功通过了导演的试炼！奖励已经发放。</text>
+                <letterDef>PositiveEvent</letterDef>
+              </li>
+              <li Class="QuestNode_End">
+                <outcome>Success</outcome>
+              </li>
+            </nodes>
+          </node>
+        </li>
+      </nodes>
+    </root>
+  </QuestScriptDef>
+  
+  <!-- 
+    导演的愤怒 - 惩罚型袭击
+    用于低好感度时惩罚玩家
+  -->
+  <QuestScriptDef>
+    <defName>TSS_DirectorWrath</defName>
+    <rootSelectionWeight>0</rootSelectionWeight>
+    <isRootSpecial>true</isRootSpecial>
+    <autoAccept>true</autoAccept>
+    <defaultHidden>true</defaultHidden>
+    <questNameRules>
+      <rulesStrings>
+        <li>questName->导演的愤怒</li>
+        <li>questName->惩戒之刃</li>
+        <li>questName->神罚降临</li>
+      </rulesStrings>
+    </questNameRules>
+    <questDescriptionRules>
+      <rulesStrings>
+        <li>questDescription->导演对你的表现非常不满。准备好迎接惩罚吧。</li>
+      </rulesStrings>
+    </questDescriptionRules>
+    <root Class="QuestNode_Sequence">
+      <nodes>
+        <!-- 获取地图 -->
+        <li Class="QuestNode_GetMap" />
+        
+        <!-- 发送警告信件 -->
+        <li Class="QuestNode_Letter">
+          <label TKey="TSS_LetterLabelDirectorWrath">导演的愤怒</label>
+          <text TKey="TSS_LetterTextDirectorWrath">导演对你们的行为感到愤怒。一场灾难即将来临...</text>
+          <letterDef>ThreatBig</letterDef>
+        </li>
+        
+        <!-- 获取敌对派系 -->
+        <li Class="QuestNode_GetFaction">
+          <storeAs>enemyFaction</storeAs>
+          <allowEnemy>true</allowEnemy>
+          <allowNeutral>false</allowNeutral>
+          <allowAlly>false</allowAlly>
+        </li>
+        
+        <!-- 生成袭击 -->
+        <li Class="QuestNode_ViolentQuestsAllowed">
+          <node Class="QuestNode_SubScript">
+            <def>Util_Raid</def>
+            <parms>
+              <faction>$enemyFaction</faction>
+              <raidArrivalMode>EdgeWalkIn</raidArrivalMode>
+            </parms>
+          </node>
+          <elseNode Class="QuestNode_End">
+            <outcome>Fail</outcome>
+          </elseNode>
+        </li>
+        
+        <!-- 延迟结束 -->
+        <li Class="QuestNode_Delay">
+          <delayTicks>30000</delayTicks>
+          <node Class="QuestNode_End">
+            <outcome>Unknown</outcome>
+          </node>
+        </li>
+      </nodes>
+    </root>
+  </QuestScriptDef>
+  
+  <!-- 
+    导演的挑战：精英狩猎
+    击杀特定目标获得奖励
+  -->
+  <QuestScriptDef>
+    <defName>TSS_DirectorBounty</defName>
+    <rootSelectionWeight>0</rootSelectionWeight>
+    <isRootSpecial>true</isRootSpecial>
+    <autoAccept>false</autoAccept>
+    <expireDaysRange>5~10</expireDaysRange>
+    <questNameRules>
+      <rulesStrings>
+        <li>questName->精英狩猎</li>
+        <li>questName->悬赏令</li>
+        <li>questName->导演的挑战</li>
+      </rulesStrings>
+    </questNameRules>
+    <questDescriptionRules>
+      <rulesStrings>
+        <li>questDescription->导演发布了一项悬赏任务。消灭指定目标，证明你们的实力，就能获得丰厚奖励。</li>
+      </rulesStrings>
+    </questDescriptionRules>
+    <root Class="QuestNode_Sequence">
+      <nodes>
+        <!-- 获取地图 -->
+        <li Class="QuestNode_GetMap" />
+        
+        <!-- 计算奖励值 -->
+        <li Class="QuestNode_SubScript">
+          <def>Util_GetDefaultRewardValueFromPoints</def>
+        </li>
+        
+        <!-- 生成强盗营地任务 -->
+        <li Class="QuestNode_SubScript">
+          <def>OpportunitySite_BanditCamp</def>
+        </li>
+      </nodes>
+    </root>
+  </QuestScriptDef>
+  
+  <!-- 
+    导演的祝福 - 临时增益效果
+    给殖民者添加正面Hediff
+  -->
+  <QuestScriptDef>
+    <defName>TSS_DirectorBlessing</defName>
+    <rootSelectionWeight>0</rootSelectionWeight>
+    <isRootSpecial>true</isRootSpecial>
+    <autoAccept>true</autoAccept>
+    <defaultHidden>true</defaultHidden>
+    <questNameRules>
+      <rulesStrings>
+        <li>questName->导演的祝福</li>
+        <li>questName->神恩降临</li>
+        <li>questName->幸运之光</li>
+      </rulesStrings>
+    </questNameRules>
+    <questDescriptionRules>
+      <rulesStrings>
+        <li>questDescription->导演对你们非常满意，决定赐予殖民地一份特殊的祝福。你的殖民者将暂时获得增益效果。</li>
+      </rulesStrings>
+    </questDescriptionRules>
+    <root Class="QuestNode_Sequence">
+      <nodes>
+        <!-- 获取地图 -->
+        <li Class="QuestNode_GetMap" />
+        
+        <!-- 发送信件 -->
+        <li Class="QuestNode_Letter">
+          <label TKey="TSS_LetterLabelDirectorBlessing">导演的祝福</label>
+          <text TKey="TSS_LetterTextDirectorBlessing">导演赐予了你们祝福。你的殖民者将在一段时间内获得增益效果。</text>
+          <letterDef>PositiveEvent</letterDef>
+        </li>
+        
+        <!-- 立即结束 -->
+        <li Class="QuestNode_End">
+          <outcome>Success</outcome>
+        </li>
+      </nodes>
+    </root>
+  </QuestScriptDef>
+  
+  <!-- 
+    导演的交易 - 特殊商人访问
+    召唤一个商队到殖民地
+  -->
+  <QuestScriptDef>
+    <defName>TSS_DirectorTrade</defName>
+    <rootSelectionWeight>0</rootSelectionWeight>
+    <isRootSpecial>true</isRootSpecial>
+    <autoAccept>true</autoAccept>
+    <defaultHidden>false</defaultHidden>
+    <questNameRules>
+      <rulesStrings>
+        <li>questName->导演的交易</li>
+        <li>questName->神秘商人</li>
+        <li>questName->特别商会</li>
+      </rulesStrings>
+    </questNameRules>
+    <questDescriptionRules>
+      <rulesStrings>
+        <li>questDescription->导演安排了一位特殊商人前来拜访你的殖民地。这位商人携带了一些稀有物品，可能对你们有用。</li>
+      </rulesStrings>
+    </questDescriptionRules>
+    <root Class="QuestNode_Sequence">
+      <nodes>
+        <!-- 获取地图 -->
+        <li Class="QuestNode_GetMap" />
+        
+        <!-- 发送信件 -->
+        <li Class="QuestNode_Letter">
+          <label TKey="TSS_LetterLabelDirectorTrade">商人到来</label>
+          <text TKey="TSS_LetterTextDirectorTrade">导演安排的特殊商人即将抵达。准备好进行交易吧。</text>
+          <letterDef>PositiveEvent</letterDef>
+        </li>
+        
+        <!-- 立即结束（商人通过incident触发更合适） -->
+        <li Class="QuestNode_End">
+          <outcome>Success</outcome>
+        </li>
+      </nodes>
+    </root>
+  </QuestScriptDef>
+  
+  <!-- 
+    导演的谜题 - 收集任务
+    在限定时间内收集特定物品
+  -->
+  <QuestScriptDef>
+    <defName>TSS_DirectorPuzzle</defName>
+    <rootSelectionWeight>0</rootSelectionWeight>
+    <isRootSpecial>true</isRootSpecial>
+    <autoAccept>false</autoAccept>
+    <expireDaysRange>10~20</expireDaysRange>
+    <questNameRules>
+      <rulesStrings>
+        <li>questName->导演的谜题</li>
+        <li>questName->收集挑战</li>
+        <li>questName->物资征集</li>
+      </rulesStrings>
+    </questNameRules>
+    <questDescriptionRules>
+      <rulesStrings>
+        <li>questDescription->导演提出了一个收集挑战。在规定时间内收集足够的物资，就能获得丰厚奖励。\n\n这个任务将复用贸易请求系统。</li>
+      </rulesStrings>
+    </questDescriptionRules>
+    <root Class="QuestNode_Sequence">
+      <nodes>
+        <!-- 复用贸易请求任务 -->
+        <li Class="QuestNode_SubScript">
+          <def>TradeRequest</def>
+        </li>
+      </nodes>
+    </root>
+  </QuestScriptDef>
+
+</Defs>

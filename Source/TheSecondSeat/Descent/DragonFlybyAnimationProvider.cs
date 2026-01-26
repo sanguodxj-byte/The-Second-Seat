@@ -193,8 +193,15 @@ namespace TheSecondSeat.Descent
                 SoundDef soundDef = DefDatabase<SoundDef>.GetNamedSilentFail(soundDefName);
                 if (soundDef != null)
                 {
-                    SoundStarter.PlayOneShotOnCamera(soundDef, map);
-                    Log.Message($"[DragonFlybyAnimationProvider] 播放音效: {soundDefName}");
+                    try
+                    {
+                        SoundStarter.PlayOneShotOnCamera(soundDef, map);
+                        Log.Message($"[DragonFlybyAnimationProvider] 播放音效: {soundDefName}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning($"[DragonFlybyAnimationProvider] 播放音效失败: {ex.Message}");
+                    }
                 }
                 else
                 {

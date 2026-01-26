@@ -8,17 +8,41 @@ using TheSecondSeat.Monitoring;
 using TheSecondSeat.NaturalLanguage;
 using TheSecondSeat.Execution;
 using TheSecondSeat.Integration;
+using TheSecondSeat.Defs;
+using TheSecondSeat.Patches;
 
 namespace TheSecondSeat.Autonomous
 {
     /// <summary>
-    /// 叙事者自主行为系统 - AI主动观察并提出建议
+    /// ⭐ v2.9.0: 叙事者自主行为系统 - 事件驱动 + 数据驱动重构
+    /// 
+    /// 重构内容：
+    /// 1. 使用 NarratorBehaviorDef 替代所有硬编码数值
+    /// 2. 使用 BuildingDamageEventPatches 事件驱动替代全图扫描
+    /// 3. 优化性能，消除 O(n) 全图遍历
     /// </summary>
     public class AutonomousBehaviorSystem : GameComponent
     {
         private int ticksSinceLastCheck = 0;
-        private const int CheckInterval = 18000; // 5分钟检查一次
         private List<AutonomousSuggestion> pendingSuggestions = new List<AutonomousSuggestion>();
+        
+        // ⭐ v2.9.0: 缓存 Def 引用
+        private NarratorBehaviorDef behaviorDef;
+        
+        /// <summary>
+        /// 获取行为配置（延迟加载）
+        /// </summary>
+        private NarratorBehaviorDef BehaviorDef
+        {
+            get
+            {
+                if (behaviorDef == null)
+                {
+                    behaviorDef = NarratorBehaviorDef.Default;
+                }
+                return behaviorDef;
+            }
+        }
 
         public AutonomousBehaviorSystem(Game game) : base()
         {
@@ -30,7 +54,8 @@ namespace TheSecondSeat.Autonomous
 
             ticksSinceLastCheck++;
 
-            if (ticksSinceLastCheck >= CheckInterval)
+            // ⭐ v2.9.0: 使用 Def 配置的检查间隔
+            if (ticksSinceLastCheck >= BehaviorDef.checkIntervalTicks)
             {
                 ticksSinceLastCheck = 0;
                 CheckForProactiveSuggestions();
@@ -39,6 +64,7 @@ namespace TheSecondSeat.Autonomous
 
         /// <summary>
         /// 主动检查游戏状态并生成建议
+        /// ⭐ v2.9.0: 使用事件驱动数据，不再全图扫描
         /// </summary>
         private void CheckForProactiveSuggestions()
         {
@@ -48,22 +74,20 @@ namespace TheSecondSeat.Autonomous
             var agent = Current.Game?.GetComponent<Narrator.NarratorManager>()?.GetStorytellerAgent();
             if (agent == null) return;
 
-            // 只有在高好感度时才主动提出建议
-            if (agent.affinity < 30f) return;
+            // ⭐ v2.9.0: 使用 Def 配置的好感度阈值
+            if (agent.affinity < BehaviorDef.minAffinityForSuggestions) return;
 
             var snapshot = GameStateSnapshotUtility.CaptureSnapshotSafe();
-            var suggestions = GenerateSuggestions(snapshot, agent);
+            var suggestions = GenerateSuggestions(snapshot, agent, map);
 
             foreach (var suggestion in suggestions)
             {
                 if (ShouldExecuteAutomatically(suggestion, agent))
                 {
-                    // 自动执行（仅在极高好感度）
                     ExecuteSuggestion(suggestion);
                 }
                 else
                 {
-                    // 提示玩家
                     NotifyPlayer(suggestion);
                 }
             }
@@ -71,56 +95,58 @@ namespace TheSecondSeat.Autonomous
 
         /// <summary>
         /// 生成主动建议
+        /// ⭐ v2.9.0: 使用事件驱动的缓存数据
         /// </summary>
-        private List<AutonomousSuggestion> GenerateSuggestions(GameStateSnapshot snapshot, StorytellerAgent agent)
+        private List<AutonomousSuggestion> GenerateSuggestions(GameStateSnapshot snapshot, StorytellerAgent agent, Map map)
         {
             var suggestions = new List<AutonomousSuggestion>();
+            var def = BehaviorDef;
 
-            // 1. 检查成熟作物
-            if (HasMatureCrops())
+            // 1. 检查成熟作物（这个仍然使用游戏内置的高效索引）
+            if (HasMatureCrops(map, def.minMatureCropsForSuggestion))
             {
                 suggestions.Add(new AutonomousSuggestion
                 {
                     action = "BatchHarvest",
                     reason = "检测到成熟的作物等待收获",
                     priority = SuggestionPriority.Medium,
-                    requiresApproval = agent.affinity < 60f
+                    requiresApproval = agent.affinity < def.affinityForHarvestApproval
                 });
             }
 
-            // 2. 检查受损建筑
-            if (HasDamagedStructures())
+            // 2. ⭐ v2.9.0: 使用事件驱动的受损建筑缓存（O(1) 复杂度）
+            if (BuildingDamageEventPatches.HasDamagedBuildings(map, def.minDamagedBuildingsForSuggestion))
             {
                 suggestions.Add(new AutonomousSuggestion
                 {
                     action = "PriorityRepair",
-                    reason = "发现多个受损建筑需要修复",
+                    reason = $"发现 {BuildingDamageEventPatches.GetDamagedBuildingCount(map)} 个受损建筑需要修复",
                     priority = SuggestionPriority.Medium,
-                    requiresApproval = agent.affinity < 70f
+                    requiresApproval = agent.affinity < def.affinityForRepairApproval
                 });
             }
 
-            // 3. 检查威胁
-            if (snapshot.threats.raidActive && snapshot.colonists.Any(c => c.health < 50))
+            // 3. 检查威胁（使用快照数据）
+            if (snapshot.threats.raidActive && snapshot.colonists.Any(c => c.health < def.lowHealthThreshold))
             {
                 suggestions.Add(new AutonomousSuggestion
                 {
                     action = "EmergencyRetreat",
                     reason = "袭击正在进行，部分殖民者受伤严重",
                     priority = SuggestionPriority.High,
-                    requiresApproval = agent.affinity < 80f
+                    requiresApproval = agent.affinity < def.affinityForEmergencyApproval
                 });
             }
 
-            // 4. 检查资源短缺
-            if (snapshot.resources.food < 50)
+            // 4. 检查资源短缺（使用快照数据）
+            if (snapshot.resources.food < def.lowFoodThreshold)
             {
                 suggestions.Add(new AutonomousSuggestion
                 {
                     action = "Suggestion_Food",
                     reason = "食物储备不足，建议优先种植或交易",
                     priority = SuggestionPriority.High,
-                    requiresApproval = true, // 这是建议，不是命令
+                    requiresApproval = true,
                     isAdviceOnly = true
                 });
             }
@@ -130,12 +156,14 @@ namespace TheSecondSeat.Autonomous
 
         /// <summary>
         /// 判断是否应该自动执行
+        /// ⭐ v2.9.0: 使用 Def 配置的阈值
         /// </summary>
         private bool ShouldExecuteAutomatically(AutonomousSuggestion suggestion, StorytellerAgent agent)
         {
-            // 只有极高好感度且不需要批准的建议才自动执行
+            var def = BehaviorDef;
+            
             if (suggestion.requiresApproval) return false;
-            if (agent.affinity < 85f) return false;
+            if (agent.affinity < def.minAffinityForAutoAction) return false;
             
             // 人格特质影响
             if (agent.primaryTrait == PersonalityTrait.Protective && suggestion.priority == SuggestionPriority.High)
@@ -145,8 +173,8 @@ namespace TheSecondSeat.Autonomous
 
             if (agent.primaryTrait == PersonalityTrait.Manipulative)
             {
-                // 操控型人格更倾向于自主执行
-                return agent.affinity >= 75f;
+                // ⭐ v2.9.0: 使用 Def 配置的阈值
+                return agent.affinity >= def.manipulativeAutoActionThreshold;
             }
 
             return false;
@@ -197,70 +225,107 @@ namespace TheSecondSeat.Autonomous
 
             Messages.Message(message, MessageTypeDefOf.NeutralEvent);
 
-            // 添加到待处理列表
             pendingSuggestions.Add(suggestion);
             suggestion.timestamp = Find.TickManager.TicksGame;
         }
 
         /// <summary>
         /// 检查是否有成熟作物
+        /// 注意：ThingsInGroup 使用游戏内置的优化索引，性能可接受
         /// </summary>
-        private bool HasMatureCrops()
+        private bool HasMatureCrops(Map map, int minCount)
         {
-            var map = Find.CurrentMap;
             if (map == null) return false;
 
-            var maturePlants = map.listerThings.ThingsInGroup(ThingRequestGroup.HarvestablePlant)
-                .OfType<Plant>()
-                .Where(p => p.HarvestableNow && p.Spawned);
-
-            return maturePlants.Count() >= 10; // 至少10株成熟作物
-        }
-
-        /// <summary>
-        /// 检查是否有受损建筑
-        /// </summary>
-        private bool HasDamagedStructures()
-        {
-            var map = Find.CurrentMap;
-            if (map == null) return false;
-
-            var damaged = map.listerThings.AllThings
-                .Where(t => t.def.useHitPoints && 
-                           t.HitPoints < t.MaxHitPoints * 0.7f && 
-                           t.def.building != null);
-
-            return damaged.Count() >= 3; // 至少3个受损建筑
+            // 使用 RimWorld 内置的分组索引（已优化）
+            var maturePlants = map.listerThings.ThingsInGroup(ThingRequestGroup.HarvestablePlant);
+            
+            int count = 0;
+            foreach (var thing in maturePlants)
+            {
+                if (thing is Plant plant && plant.HarvestableNow && plant.Spawned)
+                {
+                    count++;
+                    if (count >= minCount) return true;
+                }
+            }
+            
+            return false;
         }
 
         /// <summary>
         /// 处理玩家对建议的回复
+        /// ⭐ v3.0.0: 支持结构化意图解析 (JSON Intent)
         /// </summary>
         public void ProcessPlayerResponse(string response)
         {
+            // 1. 尝试解析为结构化响应
+            var parsed = LLM.LLMResponseParser.Parse(response);
+            if (parsed != null && !string.IsNullOrEmpty(parsed.intent))
+            {
+                HandleStructuredIntent(parsed.intent);
+                return;
+            }
+
+            // 2. 回退到传统的字符串匹配 (Legacy)
+            HandleLegacyStringResponse(response);
+        }
+
+        /// <summary>
+        /// 处理结构化意图
+        /// </summary>
+        private void HandleStructuredIntent(string intent)
+        {
+            intent = intent.ToUpperInvariant();
+            if (intent == "APPROVE" || intent == "AGREE" || intent == "CONFIRM")
+            {
+                ResolvePendingSuggestion(true);
+            }
+            else if (intent == "REJECT" || intent == "DENY" || intent == "CANCEL")
+            {
+                ResolvePendingSuggestion(false);
+            }
+        }
+
+        /// <summary>
+        /// 解决当前挂起的建议
+        /// </summary>
+        public void ResolvePendingSuggestion(bool accepted)
+        {
+            if (pendingSuggestions.Count == 0) return;
+
+            var latest = pendingSuggestions.Last();
+            
+            if (accepted)
+            {
+                ExecuteSuggestion(latest);
+                pendingSuggestions.Remove(latest);
+            }
+            else
+            {
+                pendingSuggestions.Remove(latest); // Remove first to avoid re-triggering logic if needed
+                
+                // ⭐ v2.9.0: 使用 Def 配置的惩罚值
+                var narrator = Current.Game?.GetComponent<Narrator.NarratorManager>();
+                narrator?.ModifyFavorability(BehaviorDef.rejectSuggestionPenalty, "玩家拒绝了建议");
+            }
+        }
+
+        /// <summary>
+        /// 传统的字符串匹配处理 (Legacy)
+        /// </summary>
+        private void HandleLegacyStringResponse(string response)
+        {
             response = response.ToLower().Trim();
 
-            if (response.Contains("同意") || response.Contains("执行") || response.Contains("好") || 
+            if (response.Contains("同意") || response.Contains("执行") || response.Contains("好") ||
                 response.Contains("agree") || response.Contains("yes") || response.Contains("ok"))
             {
-                // 执行最近的建议
-                if (pendingSuggestions.Count > 0)
-                {
-                    var latest = pendingSuggestions.Last();
-                    ExecuteSuggestion(latest);
-                    pendingSuggestions.Remove(latest);
-                }
+                ResolvePendingSuggestion(true);
             }
             else if (response.Contains("拒绝") || response.Contains("不要") || response.Contains("no"))
             {
-                if (pendingSuggestions.Count > 0)
-                {
-                    pendingSuggestions.RemoveAt(pendingSuggestions.Count - 1);
-                    
-                    // 降低好感度
-                    var narrator = Current.Game?.GetComponent<Narrator.NarratorManager>();
-                    narrator?.ModifyFavorability(-0.5f, "玩家拒绝了建议");
-                }
+                ResolvePendingSuggestion(false);
             }
         }
 
@@ -269,6 +334,12 @@ namespace TheSecondSeat.Autonomous
             base.ExposeData();
             Scribe_Values.Look(ref ticksSinceLastCheck, "ticksSinceLastCheck", 0);
             Scribe_Collections.Look(ref pendingSuggestions, "pendingSuggestions", LookMode.Deep);
+            
+            // 重新加载时清除缓存
+            if (Scribe.mode == LoadSaveMode.PostLoadInit)
+            {
+                behaviorDef = null;
+            }
         }
     }
 

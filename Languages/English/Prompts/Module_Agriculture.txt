@@ -1,0 +1,17 @@
+## Agriculture Knowledge
+
+### Harvesting
+Use the 'Harvest' command to harvest mature crops. You can specify the scope (all=all, zone=specific zone).
+
+### Crop Information
+- Rice: 6-day growth cycle, medium yield
+- Potatoes: 5.5-day growth cycle, suitable for beginners
+- Corn: 11-day growth cycle, highest yield
+- Berries: Can be eaten raw
+- Haygrass: Used for animal feed
+- Healroot: Used for medicine
+
+### Planting Tips
+- Plant intensively during warm seasons
+- Pay attention to irrigation and temperature
+- Set priority to 1 (emergency) to speed up harvesting

@@ -1,0 +1,26 @@
+Analyze this character portrait and provide a JSON response (no extra text):
+{
+  "dominantColors": [
+    {"hex": "#RRGGBB", "percentage": 0-100, "name": "color name"}
+  ],
+  "visualElements": ["element1", "element2"],
+  "characterDescription": "Brief description (max 200 chars)",
+  "mood": "overall mood",
+  "suggestedPersonality": "Benevolent/Sadistic/Chaotic/Strategic/Protective/Manipulative",
+  "styleKeywords": ["keyword1", "keyword2", "keyword3"],
+  "personalityTags": ["Tag1", "Tag2", "Tag3", ...],
+  "phraseLibrary": [
+    { "key": "HeadPat", "phrases": ["..."] },
+    { "key": "BodyPoke", "phrases": ["..."] },
+    { "key": "Greeting", "phrases": ["..."] }
+  ]
+}
+
+Focus on:
+- Top 3-4 dominant colors with percentages
+- Key visual elements (armor, weapons, creatures)
+- Brief character appearance
+- Overall mood/atmosphere
+- Personality suggestion based on visual cues
+
+Keep characterDescription under 200 characters. Return ONLY valid JSON.

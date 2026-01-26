@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    PromptModuleDefs_Core.xml
+    
+    核心 Prompt 模块定义
+    这些模块始终被加载（alwaysActive = true）
+    包括：身份核心、输出格式等基础模块
+    
+    架构说明：
+    - L0 配置层：本文件定义模块的元数据和关键词
+    - L1 感知层：expandedKeywords 会被加载到 FlashMatcher 的 AC 自动机
+    - L2 路由层：triggerIntents 和 dependencies 决定模块加载逻辑
+    - L3 构建层：content 会被 SmartPromptBuilder 组装成最终 Prompt
+-->
+<Defs>
+    
+    <!-- ========== 核心身份模块 ========== -->
+    
+    <TheSecondSeat.SmartPrompt.PromptModuleDef>
+        <defName>Module_Identity_Core</defName>
+        <label>核心身份</label>
+        <description>定义 AI 助手的基本身份和角色设定</description>
+        
+        <!-- 基础配置 -->
+        <moduleType>Core</moduleType>
+        <priority>1000</priority>
+        <alwaysActive>true</alwaysActive>
+        
+        <!-- 提示词内容 -->
+        <contentPath>Identity_Core</contentPath>
+        
+        <!-- 无需触发词，因为 alwaysActive -->
+        <triggerIntents />
+        <expandedKeywords />
+    </TheSecondSeat.SmartPrompt.PromptModuleDef>
+    
+    <!-- ========== 输出格式模块 ========== -->
+    
+    <TheSecondSeat.SmartPrompt.PromptModuleDef>
+        <defName>Module_Command_Format</defName>
+        <label>指令格式规范</label>
+        <description>定义 AI 输出游戏指令的格式规范</description>
+        
+        <moduleType>Format</moduleType>
+        <priority>900</priority>
+        <alwaysActive>true</alwaysActive>
+        
+        <contentPath>OutputFormat_Structure</contentPath>
+        
+        <triggerIntents />
+        <expandedKeywords />
+    </TheSecondSeat.SmartPrompt.PromptModuleDef>
+    
+    <!-- ========== 对话规范模块 ========== -->
+    
+    <TheSecondSeat.SmartPrompt.PromptModuleDef>
+        <defName>Module_Conversation_Rules</defName>
+        <label>对话规范</label>
+        <description>定义 AI 对话的基本规则和语气</description>
+        
+        <moduleType>Core</moduleType>
+        <priority>800</priority>
+        <alwaysActive>true</alwaysActive>
+        
+        <contentPath>BehaviorRules_Universal</contentPath>
+        
+        <triggerIntents />
+        <expandedKeywords />
+    </TheSecondSeat.SmartPrompt.PromptModuleDef>
+    
+</Defs>

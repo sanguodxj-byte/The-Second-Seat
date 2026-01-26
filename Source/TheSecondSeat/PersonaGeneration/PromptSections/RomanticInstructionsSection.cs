@@ -1,6 +1,7 @@
 using System.Text;
 using System.Linq;
 using System.Collections.Generic;
+using Verse;
 using TheSecondSeat.Storyteller;
 
 namespace TheSecondSeat.PersonaGeneration.PromptSections
@@ -21,7 +22,12 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             float affinity = agent.affinity;
             
             // ✅ 显式添加当前好感度数值，确保 AI 知道当前状态
-            sb.AppendLine($"[Current Affinity: {affinity:F1}/100]");
+            bool isChinese = LanguageDatabase.activeLanguage?.folderName?.Contains("Chinese") ?? false;
+            string affinityInfo = isChinese
+                ? $"[当前好感度: {affinity:F1}/100]"
+                : $"[Current Affinity: {affinity:F1}/100]";
+                
+            sb.AppendLine(affinityInfo);
             sb.AppendLine();
 
             sb.AppendLine(PromptLoader.Load("Relationship_Intro"));
@@ -89,7 +95,12 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
         /// </summary>
         private static void GeneratePersonalityAmplification(StringBuilder sb, List<string> tags)
         {
-            sb.AppendLine("**YOUR PERSONALITY AMPLIFICATION AT MAX AFFINITY:**");
+            bool isChinese = LanguageDatabase.activeLanguage?.folderName?.Contains("Chinese") ?? false;
+            string header = isChinese
+                ? "**满好感度下的性格强化:**"
+                : "**YOUR PERSONALITY AMPLIFICATION AT MAX AFFINITY:**";
+                
+            sb.AppendLine(header);
             sb.AppendLine();
             
             // 记录已加载的文件名，防止重复加载

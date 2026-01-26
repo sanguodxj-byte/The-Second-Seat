@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    PromptModuleDefs_Skills.xml
+    
+    技能 Prompt 模块定义
+    这些模块根据用户输入动态加载
+    通过 expandedKeywords 实现意图识别
+    
+    示例模块：农业、战斗、建造、狩猎等
+-->
+<Defs>
+    
+    <!-- ========== 农业模块 ========== -->
+    
+    <TheSecondSeat.SmartPrompt.PromptModuleDef>
+        <defName>Module_Agriculture</defName>
+        <label>农业技能</label>
+        <description>农业相关的知识和指令</description>
+        
+        <moduleType>Skill</moduleType>
+        <priority>500</priority>
+        <alwaysActive>false</alwaysActive>
+        
+        <!-- 触发意图 -->
+        <triggerIntents>
+            <li>Harvest</li>
+            <li>Farm</li>
+            <li>Plant</li>
+        </triggerIntents>
+        
+        <!-- 依赖模块 -->
+        <dependencies>
+            <li>Module_Command_Format</li>
+        </dependencies>
+        
+        <!-- AI 预生成的扩展关键词（中英文混合） -->
+        <expandedKeywords>
+            <!-- 英文关键词 -->
+            <li>harvest</li>
+            <li>reap</li>
+            <li>crop</li>
+            <li>crops</li>
+            <li>farm</li>
+            <li>farming</li>
+            <li>plant</li>
+            <li>planting</li>
+            <li>grow</li>
+            <li>growing</li>
+            <li>agriculture</li>
+            <li>field</li>
+            <li>fields</li>
+            <li>sow</li>
+            <li>sowing</li>
+            <li>rice</li>
+            <li>corn</li>
+            <li>potato</li>
+            <li>potatoes</li>
+            <li>berries</li>
+            <li>haygrass</li>
+            <li>healroot</li>
+            <li>devilstrand</li>
+            <!-- 中文关键词 -->
+            <li>收割</li>
+            <li>收获</li>
+            <li>割</li>
+            <li>收菜</li>
+            <li>收稻</li>
+            <li>种田</li>
+            <li>种地</li>
+            <li>农业</li>
+            <li>农作物</li>
+            <li>庄稼</li>
+            <li>作物</li>
+            <li>田地</li>
+            <li>农田</li>
+            <li>播种</li>
+            <li>种植</li>
+            <li>水稻</li>
+            <li>玉米</li>
+            <li>土豆</li>
+            <li>马铃薯</li>
+            <li>浆果</li>
+            <li>草药</li>
+            <li>恶魔草</li>
+            <li>干草</li>
+        </expandedKeywords>
+        
+        <contentPath>Module_Agriculture</contentPath>
+        
+    </TheSecondSeat.SmartPrompt.PromptModuleDef>
+    
+    <!-- ========== 战斗模块 ========== -->
+    
+    <TheSecondSeat.SmartPrompt.PromptModuleDef>
+        <defName>Module_Combat</defName>
+        <label>战斗技能</label>
+        <description>战斗相关的知识和指令</description>
+        
+        <moduleType>Skill</moduleType>
+        <priority>600</priority>
+        <alwaysActive>false</alwaysActive>
+        <requiresCombat>false</requiresCombat>
+        
+        <triggerIntents>
+            <li>Combat</li>
+            <li>Attack</li>
+            <li>Defend</li>
+            <li>Draft</li>
+        </triggerIntents>
+        
+        <dependencies>
+            <li>Module_Command_Format</li>
+        </dependencies>
+        
+        <expandedKeywords>
+            <!-- 英文 -->
+            <li>attack</li>
+            <li>fight</li>
+            <li>combat</li>
+            <li>battle</li>
+            <li>war</li>
+            <li>defend</li>
+            <li>defense</li>
+            <li>draft</li>
+            <li>undraft</li>
+            <li>soldier</li>
+            <li>raid</li>
+            <li>raider</li>
+            <li>enemy</li>
+            <li>enemies</li>
+            <li>hostile</li>
+            <li>weapon</li>
+            <li>gun</li>
+            <li>rifle</li>
+            <li>melee</li>
+            <li>shoot</li>
+            <li>kill</li>
+            <li>flee</li>
+            <li>retreat</li>
+            <!-- 中文 -->
+            <li>攻击</li>
+            <li>战斗</li>
+            <li>打</li>
+            <li>打架</li>
+            <li>干</li>
+            <li>杀</li>
+            <li>防守</li>
+            <li>防御</li>
+            <li>征召</li>
+            <li>应征</li>
+            <li>取消征召</li>
+            <li>袭击</li>
+            <li>入侵</li>
+            <li>敌人</li>
+            <li>敌军</li>
+            <li>武器</li>
+            <li>枪</li>
+            <li>步枪</li>
+            <li>近战</li>
+            <li>射击</li>
+            <li>撤退</li>
+            <li>逃跑</li>
+        </expandedKeywords>
+        
+        <contentPath>Module_Combat</contentPath>
+        
+    </TheSecondSeat.SmartPrompt.PromptModuleDef>
+    
+    <!-- ========== 建造模块 ========== -->
+    
+    <TheSecondSeat.SmartPrompt.PromptModuleDef>
+        <defName>Module_Construction</defName>
+        <label>建造技能</label>
+        <description>建造相关的知识和指令</description>
+        
+        <moduleType>Skill</moduleType>
+        <priority>500</priority>
+        <alwaysActive>false</alwaysActive>
+        <requiresPeace>true</requiresPeace>
+        
+        <triggerIntents>
+            <li>Build</li>
+            <li>Construct</li>
+        </triggerIntents>
+        
+        <dependencies>
+            <li>Module_Command_Format</li>
+        </dependencies>
+        
+        <expandedKeywords>
+            <!-- 英文 -->
+            <li>build</li>
+            <li>building</li>
+            <li>construct</li>
+            <li>construction</li>
+            <li>wall</li>
+            <li>door</li>
+            <li>floor</li>
+            <li>roof</li>
+            <li>bed</li>
+            <li>table</li>
+            <li>chair</li>
+            <li>power</li>
+            <li>generator</li>
+            <li>battery</li>
+            <li>turret</li>
+            <li>workbench</li>
+            <!-- 中文 -->
+            <li>建造</li>
+            <li>建设</li>
+            <li>修建</li>
+            <li>盖</li>
+            <li>搭建</li>
+            <li>墙</li>
+            <li>门</li>
+            <li>地板</li>
+            <li>屋顶</li>
+            <li>床</li>
+            <li>桌子</li>
+            <li>椅子</li>
+            <li>电力</li>
+            <li>发电机</li>
+            <li>电池</li>
+            <li>炮塔</li>
+            <li>工作台</li>
+        </expandedKeywords>
+        
+        <contentPath>Module_Construction</contentPath>
+        
+    </TheSecondSeat.SmartPrompt.PromptModuleDef>
+    
+    <!-- ========== 狩猎模块 ========== -->
+    
+    <TheSecondSeat.SmartPrompt.PromptModuleDef>
+        <defName>Module_Hunting</defName>
+        <label>狩猎技能</label>
+        <description>狩猎相关的知识和指令</description>
+        
+        <moduleType>Skill</moduleType>
+        <priority>500</priority>
+        <alwaysActive>false</alwaysActive>
+        
+        <triggerIntents>
+            <li>Hunt</li>
+        </triggerIntents>
+        
+        <dependencies>
+            <li>Module_Command_Format</li>
+        </dependencies>
+        
+        <expandedKeywords>
+            <li>hunt</li>
+            <li>hunting</li>
+            <li>hunter</li>
+            <li>animal</li>
+            <li>animals</li>
+            <li>meat</li>
+            <li>leather</li>
+            <li>deer</li>
+            <li>boar</li>
+            <li>elk</li>
+            <li>predator</li>
+            <li>狩猎</li>
+            <li>打猎</li>
+            <li>猎杀</li>
+            <li>动物</li>
+            <li>野兽</li>
+            <li>肉</li>
+            <li>皮革</li>
+            <li>鹿</li>
+            <li>野猪</li>
+            <li>麋鹿</li>
+        </expandedKeywords>
+        
+        <contentPath>Module_Hunting</contentPath>
+        
+    </TheSecondSeat.SmartPrompt.PromptModuleDef>
+    
+</Defs>

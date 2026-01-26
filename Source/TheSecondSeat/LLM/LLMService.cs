@@ -152,6 +152,7 @@ namespace TheSecondSeat.LLM
         /// 使用 UnityWebRequest 替代 HttpClient
         /// ⭐ v1.7.0: 修复僵尸任务和内存泄漏，支持 CancellationToken
         /// ⭐ v2.7.0: 添加请求日志记录
+        /// ⭐ v2.9.0: 使用 TaskCompletionSource 替代 busy wait 模式
         /// </summary>
         private async Task<LLMResponse?> SendToOpenAICompatibleAsync(string systemPrompt, string gameStateJson, string userMessage, System.Threading.CancellationToken cancellationToken)
         {
@@ -199,13 +200,13 @@ namespace TheSecondSeat.LLM
                 }
             };
 
-            // ✅ 修复：使用严格的 JSON 序列化设置
-            string jsonContent = JsonConvert.SerializeObject(request, new JsonSerializerSettings
+            // 使用 Newtonsoft.Json 序列化请求，确保特殊字符正确转义
+            // ⭐ 移至后台线程，避免阻塞主线程
+            string jsonContent = await Task.Run(() => JsonConvert.SerializeObject(request, new JsonSerializerSettings
             {
-                NullValueHandling = NullValueHandling.Ignore,  // 忽略 null 字段
-                StringEscapeHandling = StringEscapeHandling.Default,  // ⭐ v1.7.1: 不使用 EscapeHtml，避免破坏 Prompt 中的特殊符号
-                Formatting = Formatting.None  // 不格式化（减少大小）
-            });
+                NullValueHandling = NullValueHandling.Ignore,
+                Formatting = Formatting.None
+            }));
 
             log.RequestJson = jsonContent;
 
@@ -223,15 +224,47 @@ namespace TheSecondSeat.LLM
 
             try
             {
-                // 异步发送请求
+                // ⭐ v2.9.0: 使用 TaskCompletionSource 实现真正的异步等待
+                // 替代 busy wait 的 while(!isDone) 循环
+                var tcs = new System.Threading.Tasks.TaskCompletionSource<bool>();
+                
+                // 发送请求
                 var asyncOperation = webRequest.SendWebRequest();
-
-                // ⭐ v1.7.0: 循环等待，检查 CancellationToken 和请求状态
-                while (!asyncOperation.isDone)
+                
+                // 注册完成回调（非阻塞）
+                asyncOperation.completed += (op) => 
                 {
-                    if (cancellationToken.IsCancellationRequested)
+                    try
                     {
-                        webRequest.Abort(); // 中止请求
+                        tcs.TrySetResult(true);
+                    }
+                    catch
+                    {
+                        // 静默处理
+                    }
+                };
+                
+                // 使用 CancellationToken 注册取消
+                using (cancellationToken.Register(() => 
+                {
+                    try
+                    {
+                        webRequest.Abort();
+                        tcs.TrySetCanceled();
+                    }
+                    catch
+                    {
+                        // 静默处理
+                    }
+                }))
+                {
+                    // 等待完成或取消
+                    try
+                    {
+                        await tcs.Task;
+                    }
+                    catch (System.Threading.Tasks.TaskCanceledException)
+                    {
                         Log.Message("[The Second Seat] LLM request cancelled by user/system.");
                         log.Success = false;
                         log.ErrorMessage = "Cancelled";
@@ -239,9 +272,6 @@ namespace TheSecondSeat.LLM
                         LLMRequestHistory.Add(log);
                         return null;
                     }
-                    
-                    // 移除 Current.Game 的不安全访问
-                    await Task.Delay(50, cancellationToken);
                 }
 
                 log.DurationSeconds = (float)(DateTime.Now - log.Timestamp).TotalSeconds;
@@ -253,7 +283,8 @@ namespace TheSecondSeat.LLM
                     log.ResponseJson = responseText;
                     log.Success = true;
 
-                    var openAIResponse = JsonConvert.DeserializeObject<OpenAIResponse>(responseText);
+                    // ⭐ 移至后台线程，避免阻塞主线程
+                    var openAIResponse = await Task.Run(() => JsonConvert.DeserializeObject<OpenAIResponse>(responseText));
 
                     // ⭐ v2.7.0: 记录 Token 使用量
                     if (openAIResponse?.usage != null)
@@ -305,176 +336,12 @@ namespace TheSecondSeat.LLM
         }
 
         /// <summary>
-        /// 解析 LLM 响应（JSON 或 Tag 格式）
-        /// ? 修复：从 markdown 代码块中提取 JSON
-        /// ⭐ v2.3.0: 增强 Tag 格式解析
+        /// 解析 LLM 响应
+        /// ⭐ v2.8.8: 委托给 LLMResponseParser
         /// </summary>
         private LLMResponse? ParseLLMResponse(string messageContent)
         {
-            // 1. 尝试解析 JSON
-            try
-            {
-                string jsonContent = ExtractJsonFromMarkdown(messageContent);
-                if (jsonContent.Trim().StartsWith("{"))
-                {
-                    var llmResponse = JsonConvert.DeserializeObject<LLMResponse>(jsonContent);
-                    if (llmResponse != null)
-                    {
-                        llmResponse.rawContent = jsonContent;
-                        return llmResponse;
-                    }
-                }
-            }
-            catch { /* 忽略 JSON 解析错误 */ }
-
-            // 2. 尝试解析 Tag 格式
-            var tagResponse = ParseTagResponse(messageContent);
-            if (tagResponse != null)
-            {
-                tagResponse.rawContent = messageContent;
-                return tagResponse;
-            }
-
-            // 3. 回退到纯文本
-            return new LLMResponse
-            {
-                thought = "",
-                dialogue = messageContent,
-                command = null,
-                rawContent = messageContent
-            };
-        }
-
-        /// <summary>
-        /// ⭐ v2.3.0: 解析 Tag 格式响应
-        /// 支持 [THOUGHT], [DIALOGUE], [EXPRESSION], [AFFINITY], [ACTION]
-        /// </summary>
-        private LLMResponse? ParseTagResponse(string content)
-        {
-            // 如果不包含任何标签，则不认为是 Tag 格式（或者也可以认为是只有 Dialogue 的 Tag 格式？）
-            // 为了安全，只有当至少包含一个标签时才处理
-            if (!content.Contains("[") && !content.Contains("]")) return null;
-
-            var response = new LLMResponse();
-            bool hasTag = false;
-
-            // 解析 Thought
-            var thoughtMatch = Regex.Match(content, @"\[THOUGHT\]:\s*(.+?)(?=\[|$)", RegexOptions.Singleline | RegexOptions.IgnoreCase);
-            if (thoughtMatch.Success)
-            {
-                response.thought = thoughtMatch.Groups[1].Value.Trim();
-                hasTag = true;
-            }
-
-            // 解析 Dialogue (如果标签存在)
-            var dialogueMatch = Regex.Match(content, @"\[DIALOGUE\]:\s*(.+?)(?=\[|$)", RegexOptions.Singleline | RegexOptions.IgnoreCase);
-            if (dialogueMatch.Success)
-            {
-                response.dialogue = dialogueMatch.Groups[1].Value.Trim();
-                hasTag = true;
-            }
-            else
-            {
-                // 如果没有显式 DIALOGUE 标签，尝试提取剩余文本作为 Dialogue
-                // 排除所有 [TAG]: ... 块
-                string cleanText = Regex.Replace(content, @"\[\w+\]:.*?(?=\[|$)", "", RegexOptions.Singleline).Trim();
-                if (!string.IsNullOrEmpty(cleanText))
-                {
-                    response.dialogue = cleanText;
-                }
-            }
-
-            // 解析 Expression
-            var exprMatch = Regex.Match(content, @"\[EXPRESSION\]:\s*(\w+)", RegexOptions.Singleline | RegexOptions.IgnoreCase);
-            if (exprMatch.Success)
-            {
-                response.expression = exprMatch.Groups[1].Value.Trim();
-                hasTag = true;
-            }
-
-            // 解析 Affinity
-            var affinityMatch = Regex.Match(content, @"\[AFFINITY\]:\s*([+\-]?\d+(?:\.\d+)?)", RegexOptions.Singleline | RegexOptions.IgnoreCase);
-            if (affinityMatch.Success && float.TryParse(affinityMatch.Groups[1].Value, out float delta))
-            {
-                response.affinityDelta = delta;
-                hasTag = true;
-            }
-
-            // 解析 Action (转换为 LLMCommand)
-            var actionMatch = Regex.Match(content, @"\[ACTION\]:\s*(\w+)\((.*?)\)", RegexOptions.Singleline | RegexOptions.IgnoreCase);
-            if (actionMatch.Success)
-            {
-                string actionName = actionMatch.Groups[1].Value.Trim();
-                string paramsString = actionMatch.Groups[2].Value.Trim();
-                
-                var command = new LLMCommand
-                {
-                    action = actionName,
-                    target = "Map", // 默认 target，后续解析
-                    parameters = ParseActionParams(paramsString)
-                };
-
-                // 尝试从 parameters 中提取 target
-                if (command.parameters is Dictionary<string, object> dict)
-                {
-                    if (dict.ContainsKey("target"))
-                    {
-                        command.target = dict["target"]?.ToString();
-                        dict.Remove("target");
-                    }
-                }
-
-                response.command = command;
-                hasTag = true;
-            }
-
-            return hasTag ? response : null;
-        }
-
-        private Dictionary<string, object> ParseActionParams(string paramsString)
-        {
-            var result = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-            if (string.IsNullOrEmpty(paramsString)) return result;
-
-            // 匹配 key="value" 或 key=value
-            var matches = Regex.Matches(paramsString, @"(\w+)\s*=\s*(?:""([^""]*)""|'([^']*)'|(\S+))");
-            foreach (Match match in matches)
-            {
-                string key = match.Groups[1].Value;
-                string value = match.Groups[2].Success ? match.Groups[2].Value :
-                              match.Groups[3].Success ? match.Groups[3].Value :
-                              match.Groups[4].Value;
-                result[key] = value;
-            }
-            return result;
-        }
-
-        /// <summary>
-        /// 从 markdown 代码块中提取 JSON
-        /// </summary>
-        private string ExtractJsonFromMarkdown(string content)
-        {
-            // 如果包含 ```json 代码块，提取其中的内容
-            if (content.Contains("```json"))
-            {
-                int startIndex = content.IndexOf("```json") + 7;
-                int endIndex = content.IndexOf("```", startIndex);
-                if (endIndex > startIndex)
-                {
-                    return content.Substring(startIndex, endIndex - startIndex).Trim();
-                }
-            }
-            else if (content.Contains("```"))
-            {
-                int startIndex = content.IndexOf("```") + 3;
-                int endIndex = content.IndexOf("```", startIndex);
-                if (endIndex > startIndex)
-                {
-                    return content.Substring(startIndex, endIndex - startIndex).Trim();
-                }
-            }
-            
-            return content.Trim();
+            return LLMResponseParser.Parse(messageContent);
         }
 
         /// <summary>
@@ -567,12 +434,10 @@ namespace TheSecondSeat.LLM
                 }
 
                 var asyncOperation = webRequest.SendWebRequest();
+                var tcs = new TaskCompletionSource<bool>();
+                asyncOperation.completed += _ => tcs.TrySetResult(true);
 
-                while (!asyncOperation.isDone)
-                {
-                    // ⭐ v1.6.86: 移除 Current.Game 不安全访问
-                    await Task.Delay(100);
-                }
+                await tcs.Task;
 
                 if (webRequest.result == UnityWebRequest.Result.Success)
                 {

@@ -1,439 +1,379 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using RimWorld;
 using UnityEngine;
 using Verse;
+using RimWorld;
 using TheSecondSeat.PersonaGeneration;
+using TheSecondSeat.Settings;
 
 namespace TheSecondSeat.UI
 {
+    [StaticConstructorOnStartup]
     public class PromptManagementWindow : Window
     {
-        private Vector2 scrollPositionLeft = Vector2.zero;
-        private Vector2 scrollPositionRight = Vector2.zero;
-        private string selectedPromptFile = null;
-        private string currentFileContent = "";
-        private bool isModified = false;
+        private List<string> _promptFiles;
+        private string _selectedPromptId;
+        private string _currentEditBuffer;
+        private Vector2 _scrollPositionLeft;
+        private Vector2 _scrollPositionRight;
+        private bool _isDirty;
         
-        private List<string> promptFiles = new List<string>();
-        
-        // Tab definitions
-        private enum PromptTab { All, Narrator, Event, Behavior, Relationship, Output, Misc }
-        private PromptTab currentTab = PromptTab.All;
-        
-        public override Vector2 InitialSize => new Vector2(900f, 700f);
+        // ⭐ v3.0: 支持 Persona 专属 Prompt
+        private string _personaName;
 
-        public PromptManagementWindow()
+        // UI Constants
+        private const float LeftPanelWidth = 250f;
+        private const float ToolbarHeight = 30f;
+        private const float Margin = 10f;
+
+        public override Vector2 InitialSize => new Vector2(1000f, 700f);
+
+        public PromptManagementWindow(string personaName = null)
         {
-            doCloseX = true;
-            forcePause = true;
-            resizeable = true;
-            draggable = true;
+            this.doCloseX = true;
+            this.forcePause = true;
+            this.absorbInputAroundWindow = true;
+            this.resizeable = true;
+            this.draggable = true;
             
+            this._personaName = personaName;
+
+            // ⭐ v2.9.6: 延迟初始化，避免在窗口构造时就访问可能未初始化的资源
+            _promptFiles = new List<string>();
+            _selectedPromptId = null;
+            _currentEditBuffer = null;
+        }
+        
+        public override void PreOpen()
+        {
+            base.PreOpen();
             RefreshFileList();
         }
-        
+
         private void RefreshFileList()
         {
-            promptFiles.Clear();
+            _promptFiles = PromptLoader.GetAllPromptNames(_personaName).OrderBy(x => x).ToList();
             
-            // Ensure directory exists
-            PromptLoader.EnsureConfigDirectory();
-            
-            string configPromptsPath = Path.Combine(GenFilePaths.ConfigFolderPath, "TheSecondSeat", "Prompts");
-            string activeLangFolder = LanguageDatabase.activeLanguage.folderName;
-            string targetFolder = Path.Combine(configPromptsPath, activeLangFolder);
-            
-            if (Directory.Exists(targetFolder))
+            // Auto-select first if nothing selected
+            if (string.IsNullOrEmpty(_selectedPromptId) && _promptFiles.Count > 0)
             {
-                string[] files = Directory.GetFiles(targetFolder, "*.txt");
-                foreach (string file in files)
-                {
-                    promptFiles.Add(Path.GetFileNameWithoutExtension(file));
-                }
+                SelectPrompt(_promptFiles[0]);
             }
-            
-            // Also check global folder
-            if (Directory.Exists(configPromptsPath))
+            // If selected file no longer exists
+            else if (!string.IsNullOrEmpty(_selectedPromptId) && !_promptFiles.Contains(_selectedPromptId))
             {
-                string[] globalFiles = Directory.GetFiles(configPromptsPath, "*.txt");
-                foreach (string file in globalFiles)
-                {
-                    string name = Path.GetFileNameWithoutExtension(file);
-                    if (!promptFiles.Contains(name) && name != "README")
-                    {
-                        promptFiles.Add(name);
-                    }
-                }
-            }
-            
-            promptFiles.Sort();
-        }
-
-        private List<string> GetFilesForTab(PromptTab tab)
-        {
-            if (tab == PromptTab.All) return promptFiles;
-
-            return promptFiles.Where(f => {
-                switch (tab)
-                {
-                    case PromptTab.Narrator:
-                        return f.StartsWith("Narrator_") || f == "SystemPrompt_Master" || f == "Identity_Core";
-                    case PromptTab.Event:
-                        return f.StartsWith("Event_") || f == "SystemPrompt_EventDirector";
-                    case PromptTab.Behavior:
-                        return f.StartsWith("BehaviorRules_") || f.StartsWith("Philosophy_");
-                    case PromptTab.Relationship:
-                        return f.StartsWith("Relationship_");
-                    case PromptTab.Output:
-                        return f.StartsWith("OutputFormat_");
-                    case PromptTab.Misc:
-                        // Return files that don't match other categories
-                        return !f.StartsWith("Narrator_") && f != "SystemPrompt_Master" && f != "Identity_Core" &&
-                               !f.StartsWith("Event_") && f != "SystemPrompt_EventDirector" &&
-                               !f.StartsWith("BehaviorRules_") && !f.StartsWith("Philosophy_") &&
-                               !f.StartsWith("Relationship_") &&
-                               !f.StartsWith("OutputFormat_");
-                    default:
-                        return true;
-                }
-            }).ToList();
-        }
-        
-        private string GetTabLabel(PromptTab tab)
-        {
-            switch (tab)
-            {
-                case PromptTab.All: return "全部";
-                case PromptTab.Narrator: return "叙事者";
-                case PromptTab.Event: return "导演";
-                case PromptTab.Behavior: return "行为";
-                case PromptTab.Relationship: return "关系";
-                case PromptTab.Output: return "格式";
-                case PromptTab.Misc: return "其他";
-                default: return tab.ToString();
-            }
-        }
-        
-        private void LoadFile(string fileName)
-        {
-            if (isModified)
-            {
-                Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation(
-                    "当前文件已修改，是否放弃更改？", 
-                    () => LoadFileInternal(fileName),
-                    true));
-            }
-            else
-            {
-                LoadFileInternal(fileName);
-            }
-        }
-        
-        private void LoadFileInternal(string fileName)
-        {
-            selectedPromptFile = fileName;
-            currentFileContent = PromptLoader.Load(fileName);
-            isModified = false;
-        }
-        
-        private void SaveCurrentFile()
-        {
-            if (string.IsNullOrEmpty(selectedPromptFile)) return;
-            
-            try
-            {
-                string configPromptsPath = Path.Combine(GenFilePaths.ConfigFolderPath, "TheSecondSeat", "Prompts");
-                string activeLangFolder = LanguageDatabase.activeLanguage.folderName;
-                string targetFolder = Path.Combine(configPromptsPath, activeLangFolder);
-                
-                if (!Directory.Exists(targetFolder))
-                {
-                    Directory.CreateDirectory(targetFolder);
-                }
-                
-                string filePath = Path.Combine(targetFolder, selectedPromptFile + ".txt");
-                File.WriteAllText(filePath, currentFileContent);
-                
-                isModified = false;
-                PromptLoader.ClearCache();
-                Messages.Message("保存成功", MessageTypeDefOf.PositiveEvent, false);
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[The Second Seat] Failed to save prompt file: {ex.Message}");
-                Messages.Message("保存失败: " + ex.Message, MessageTypeDefOf.RejectInput, false);
+                _selectedPromptId = null;
+                _currentEditBuffer = null;
+                _isDirty = false;
             }
         }
 
-        private void ResetToDefault()
+        private void SelectPrompt(string promptId)
         {
-            if (string.IsNullOrEmpty(selectedPromptFile)) return;
-
-            string configPromptsPath = Path.Combine(GenFilePaths.ConfigFolderPath, "TheSecondSeat", "Prompts");
-            string activeLangFolder = LanguageDatabase.activeLanguage.folderName;
-            string userLangPath = Path.Combine(configPromptsPath, activeLangFolder, selectedPromptFile + ".txt");
-            string userGlobalPath = Path.Combine(configPromptsPath, selectedPromptFile + ".txt");
-
-            bool deleted = false;
-            if (File.Exists(userLangPath))
+            if (_isDirty)
             {
-                File.Delete(userLangPath);
-                deleted = true;
-            }
-            if (File.Exists(userGlobalPath))
-            {
-                File.Delete(userGlobalPath);
-                deleted = true;
+                // Simple confirmation could be added here, but for now we just warn visually
+                // or we could auto-save? Let's just discard for now to be safe from accidental overwrites.
             }
 
-            if (deleted)
-            {
-                PromptLoader.ClearCache();
-                LoadFileInternal(selectedPromptFile); // Reload from mod default
-                Messages.Message("已重置为默认值", MessageTypeDefOf.PositiveEvent, false);
-            }
-            else
-            {
-                Messages.Message("当前已是默认值，无需重置", MessageTypeDefOf.NeutralEvent, false);
-            }
-        }
-
-        private void InsertVariable(string text)
-        {
-            TextEditor editor = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
+            _selectedPromptId = promptId;
+            // Load content
+            // Note: PromptLoader.Load returns empty string if disabled, but we want to see content even if disabled to edit it.
+            // We might need a way to bypass the "IsDisabled" check in PromptLoader.Load.
+            // Looking at PromptLoader.Load:
+            // if (IsDisabled(promptName)) return "";
+            // We can temporarily enable it to load, or we need a raw load method.
+            // Since PromptLoader.Load is designed for runtime usage, we should probably read the file directly or use a workaround.
+            // Actually, PromptLoader has no "LoadRaw" method publicly exposed.
+            // However, we can check IsDisabled, temporarily enable, load, then disable back.
             
-            // 简单的插入逻辑：如果编辑器有焦点且内容匹配，则插入光标处；否则追加到末尾
-            // 注意：GUI.TextArea 每一帧都会更新 editor，所以这种方式在 OnGUI 中通常有效
-            if (editor != null)
+            bool wasDisabled = PromptLoader.IsDisabled(promptId);
+            if (wasDisabled)
             {
-                editor.text = editor.text.Insert(editor.cursorIndex, text);
-                editor.cursorIndex += text.Length;
-                editor.selectIndex = editor.cursorIndex;
-                currentFileContent = editor.text;
-                isModified = true;
-            }
-            else
-            {
-                currentFileContent += text;
-                isModified = true;
-            }
-        }
-
-        private void DoInsertVariableMenu()
-        {
-            List<FloatMenuOption> options = new List<FloatMenuOption>();
-
-            void Add(string label, string variable)
-            {
-                options.Add(new FloatMenuOption($"{label} ({variable})", () => InsertVariable(variable)));
+                TheSecondSeatMod.Settings.disabledPrompts.Remove(promptId);
             }
 
-            Add("叙事者名称", "{{ narrator.name }}");
-            Add("叙事者传记", "{{ narrator.biography }}");
-            Add("视觉标签", "{{ narrator.visual_tags }}");
-            Add("好感度", "{{ agent.affinity }}");
-            Add("当前心情", "{{ agent.mood }}");
-            Add("难度模式", "{{ meta.difficulty_mode }}");
-            Add("语言指令", "{{ meta.language_instruction }}");
-            
-            // 对话风格
-            Add("风格-正式度", "{{ agent.dialogue_style.formality }}");
-            Add("风格-情感度", "{{ agent.dialogue_style.emotional }}");
-            Add("风格-冗长度", "{{ agent.dialogue_style.verbosity }}");
-            Add("风格-幽默度", "{{ agent.dialogue_style.humor }}");
-            Add("风格-讽刺度", "{{ agent.dialogue_style.sarcasm }}");
-            
-            // 包含文件
-            Add("包含文件...", "{{ include '...' }}");
+            _currentEditBuffer = PromptLoader.Load(promptId, _personaName, silent: true);
 
-            Find.WindowStack.Add(new FloatMenu(options));
+            if (wasDisabled)
+            {
+                TheSecondSeatMod.Settings.disabledPrompts.Add(promptId);
+            }
+
+            _isDirty = false;
+            _scrollPositionRight = Vector2.zero;
         }
 
         public override void DoWindowContents(Rect inRect)
         {
             Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(inRect.x, inRect.y, inRect.width, 35f), "提示词管理");
-            Text.Font = GameFont.Small;
-            
-            // Draw Tabs
-            List<TabRecord> tabs = new List<TabRecord>();
-            foreach (PromptTab tab in Enum.GetValues(typeof(PromptTab)))
+            string title = "TSS_PromptManager_Title".Translate();
+            if (!string.IsNullOrEmpty(_personaName))
             {
-                tabs.Add(new TabRecord(GetTabLabel(tab), () => currentTab = tab, currentTab == tab));
+                title += $" ({_personaName})";
             }
-            
-            // Tab bar area
-            float tabHeight = 30f;
-            Rect tabRect = new Rect(inRect.x, inRect.y + 40f, inRect.width, tabHeight);
-            TabDrawer.DrawTabs(tabRect, tabs);
+            Widgets.Label(new Rect(inRect.x, inRect.y, inRect.width, 30f), title);
+            Text.Font = GameFont.Small;
 
-            float topMargin = 80f; // Increased for tabs
-            float bottomMargin = 50f;
-            float leftWidth = 250f;
-            float gap = 10f;
-            float rightWidth = inRect.width - leftWidth - gap;
-            float height = inRect.height - topMargin - bottomMargin;
-            
-            // Left Panel: File List (Filtered)
-            Rect leftRect = new Rect(inRect.x, inRect.y + topMargin, leftWidth, height);
+            Rect contentRect = new Rect(inRect.x, inRect.y + 40f, inRect.width, inRect.height - 80f); // Reserve bottom for buttons
+
+            // Split into Left (List) and Right (Editor)
+            Rect leftRect = new Rect(contentRect.x, contentRect.y, LeftPanelWidth, contentRect.height);
+            Rect rightRect = new Rect(contentRect.x + LeftPanelWidth + Margin, contentRect.y, contentRect.width - LeftPanelWidth - Margin, contentRect.height);
+
+            // Draw Backgrounds
             Widgets.DrawMenuSection(leftRect);
-            
-            var filteredFiles = GetFilesForTab(currentTab);
-            
-            Rect viewRectLeft = new Rect(0, 0, leftWidth - 16f, filteredFiles.Count * 30f);
-            Widgets.BeginScrollView(leftRect, ref scrollPositionLeft, viewRectLeft);
-            
-            float y = 0f;
-            foreach (string file in filteredFiles)
+            Widgets.DrawMenuSection(rightRect);
+
+            // --- Left Panel: Prompt List ---
+            DrawLeftPanel(leftRect);
+
+            // --- Right Panel: Editor ---
+            DrawRightPanel(rightRect);
+
+            // --- Bottom Buttons ---
+            DrawBottomButtons(inRect);
+        }
+
+        private void DrawLeftPanel(Rect rect)
+        {
+            Rect viewRect = new Rect(0, 0, rect.width - 16f, _promptFiles.Count * 30f);
+            Widgets.BeginScrollView(rect, ref _scrollPositionLeft, viewRect);
+
+            float curY = 0f;
+            foreach (var promptId in _promptFiles)
             {
-                Rect rowRect = new Rect(0, y, viewRectLeft.width, 30f);
+                Rect rowRect = new Rect(0, curY, viewRect.width, 30f);
                 
                 // Highlight selected
-                if (selectedPromptFile == file)
+                if (promptId == _selectedPromptId)
                 {
                     Widgets.DrawHighlightSelected(rowRect);
                 }
-                
-                if (Widgets.ButtonText(rowRect, file, true, false, true))
+                else if (Mouse.IsOver(rowRect))
                 {
-                    LoadFile(file);
+                    Widgets.DrawHighlight(rowRect);
                 }
-                y += 30f;
+
+                // Checkbox (Enable/Disable)
+                bool isDisabled = TheSecondSeatMod.Settings.disabledPrompts.Contains(promptId);
+                bool isEnabled = !isDisabled;
+                bool newEnabled = isEnabled;
+                
+                Rect checkRect = new Rect(rowRect.x + 5f, rowRect.y + 3f, 24f, 24f);
+                Widgets.Checkbox(checkRect.x, checkRect.y, ref newEnabled);
+
+                if (newEnabled != isEnabled)
+                {
+                    if (newEnabled)
+                        TheSecondSeatMod.Settings.disabledPrompts.Remove(promptId);
+                    else
+                        TheSecondSeatMod.Settings.disabledPrompts.Add(promptId);
+                }
+
+                // Label (Click to select)
+                Rect labelRect = new Rect(rowRect.x + 35f, rowRect.y, rowRect.width - 35f, rowRect.height);
+                
+                // Status Indicator (Color)
+                Color labelColor = Color.white;
+                // We don't easily know if it's an override without checking file existence again, 
+                // but we can infer it if we want to be fancy. For now, just white.
+                // Or maybe grey if disabled.
+                if (isDisabled) labelColor = Color.gray;
+                
+                GUI.color = labelColor;
+                if (Widgets.ButtonInvisible(labelRect))
+                {
+                    SelectPrompt(promptId);
+                }
+                
+                Text.Anchor = TextAnchor.MiddleLeft;
+                Widgets.Label(labelRect, promptId);
+                Text.Anchor = TextAnchor.UpperLeft;
+                GUI.color = Color.white;
+
+                curY += 30f;
             }
+
+            Widgets.EndScrollView();
+        }
+
+        private void DrawRightPanel(Rect rect)
+        {
+            if (string.IsNullOrEmpty(_selectedPromptId))
+            {
+                Text.Anchor = TextAnchor.MiddleCenter;
+                Widgets.Label(rect, "Select a prompt to edit");
+                Text.Anchor = TextAnchor.UpperLeft;
+                return;
+            }
+
+            // Inner padding
+            Rect innerRect = rect.ContractedBy(10f);
+
+            // --- Toolbar ---
+            float toolbarY = innerRect.y;
+            
+            // Filename Title
+            Text.Font = GameFont.Medium;
+            Widgets.Label(new Rect(innerRect.x, toolbarY, 300f, 30f), _selectedPromptId);
+            Text.Font = GameFont.Small;
+
+            // Save Button
+            if (Widgets.ButtonText(new Rect(innerRect.xMax - 220f, toolbarY, 100f, 30f), "TSS_Prompt_Save".Translate()))
+            {
+                SaveCurrentPrompt();
+            }
+
+            // Reset Button
+            if (Widgets.ButtonText(new Rect(innerRect.xMax - 110f, toolbarY, 100f, 30f), "TSS_Prompt_Reset".Translate()))
+            {
+                ResetCurrentPrompt();
+            }
+
+            toolbarY += 35f;
+
+            // Status Line
+            string overrideStatus = GetOverrideStatus();
+            string statusText = overrideStatus;
+            if (_isDirty) statusText += " (" + "TSS_Prompt_Unsaved".Translate() + ")";
+            
+            bool isOverride = overrideStatus != "TSS_Prompt_Status_Default".Translate();
+            GUI.color = isOverride ? new Color(1f, 0.8f, 0.4f) : Color.gray;
+            Widgets.Label(new Rect(innerRect.x, toolbarY, innerRect.width, 20f), statusText);
+            GUI.color = Color.white;
+
+            toolbarY += 25f;
+
+            // --- Text Editor ---
+            Rect editorRect = new Rect(innerRect.x, toolbarY, innerRect.width, innerRect.height - (toolbarY - innerRect.y));
+            
+            string newText = _currentEditBuffer ?? "";
+            // ⭐ v2.9.5: TextAreaScrollable 在 RimWorld 1.6 中不可用
+            // 使用 Widgets.TextArea + 滚动视图替代
+            
+            // 计算文本高度
+            float textHeight = Math.Max(Text.CalcHeight(newText, editorRect.width - 20f), editorRect.height);
+            Rect viewRect = new Rect(0, 0, editorRect.width - 16f, textHeight + 20f);
+            
+            Widgets.BeginScrollView(editorRect, ref _scrollPositionRight, viewRect);
+            
+            Rect textAreaRect = new Rect(0, 0, viewRect.width, textHeight);
+            newText = Widgets.TextArea(textAreaRect, newText);
             
             Widgets.EndScrollView();
-            
-            // Right Panel: Editor
-            Rect rightRect = new Rect(inRect.x + leftWidth + gap, inRect.y + topMargin, rightWidth, height);
-            Widgets.DrawMenuSection(rightRect);
-            
-            if (!string.IsNullOrEmpty(selectedPromptFile))
+
+            if (newText != _currentEditBuffer)
             {
-                Rect innerRect = rightRect.ContractedBy(5f);
-                
-                // Calculate the text height for scrolling
-                float textHeight = Text.CalcHeight(currentFileContent, innerRect.width - 20f);
-                float viewHeight = Mathf.Max(textHeight + 50f, innerRect.height);
-                
-                Rect viewRect = new Rect(0f, 0f, innerRect.width - 16f, viewHeight);
-                Widgets.BeginScrollView(innerRect, ref scrollPositionRight, viewRect);
-                
-                Rect textAreaRect = new Rect(0f, 0f, viewRect.width, viewHeight);
-                string newContent = GUI.TextArea(textAreaRect, currentFileContent);
-                
-                if (newContent != currentFileContent)
+                _currentEditBuffer = newText;
+                _isDirty = true;
+            }
+        }
+
+        private void DrawBottomButtons(Rect inRect)
+        {
+            float buttonWidth = 140f;
+            float buttonHeight = 35f;
+            float y = inRect.height - buttonHeight;
+            float x = inRect.x;
+
+            if (Widgets.ButtonText(new Rect(x, y, buttonWidth, buttonHeight), "TSS_Prompt_OpenFolder".Translate()))
+            {
+                PromptLoader.OpenConfigFolder(_personaName);
+            }
+
+            x += buttonWidth + 10f;
+
+            if (Widgets.ButtonText(new Rect(x, y, buttonWidth, buttonHeight), "TSS_Prompt_Reload".Translate()))
+            {
+                PromptLoader.ClearCache();
+                RefreshFileList();
+                if (!string.IsNullOrEmpty(_selectedPromptId))
                 {
-                    currentFileContent = newContent;
-                    isModified = true;
+                    SelectPrompt(_selectedPromptId);
                 }
-                
-                Widgets.EndScrollView();
             }
-            else
+            
+            x += buttonWidth + 10f;
+
+            // Initialize Button (only if personaName is set, or maybe always useful)
+            // But specific requirement was for Persona.
+            if (!string.IsNullOrEmpty(_personaName))
             {
-                Rect labelRect = rightRect.ContractedBy(10f);
-                Widgets.Label(labelRect, "请从左侧选择一个提示词文件进行编辑。\n\n如果没有文件，请先在设置中点击“初始化提示词”。");
+                if (Widgets.ButtonText(new Rect(x, y, buttonWidth, buttonHeight), "TSS_Prompt_Initialize".Translate()))
+                {
+                     Action initAction = () =>
+                    {
+                        PromptLoader.InitializeUserPrompts(_personaName);
+                        PromptLoader.ClearCache();
+                        RefreshFileList();
+                        Messages.Message("TSS_Prompt_InitializedFor".Translate(_personaName), MessageTypeDefOf.PositiveEvent, false);
+                    };
+
+                    Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("TSS_Prompt_InitializeConfirm".Translate(_personaName), initAction, destructive: true));
+                }
             }
-            
-            // Bottom Buttons
-            float btnWidth = 120f;
-            float btnHeight = 40f;
-            float btnY = inRect.height - btnHeight;
-            
-            if (Widgets.ButtonText(new Rect(inRect.width - btnWidth, btnY, btnWidth, btnHeight), "关闭"))
+
+            // Close button at far right
+            if (Widgets.ButtonText(new Rect(inRect.xMax - buttonWidth, y, buttonWidth, buttonHeight), "CloseButton".Translate()))
             {
                 Close();
             }
-            
-            if (isModified)
-            {
-                GUI.color = Color.green;
-            }
-            if (Widgets.ButtonText(new Rect(inRect.width - btnWidth * 2 - 10f, btnY, btnWidth, btnHeight), "保存"))
-            {
-                SaveCurrentFile();
-            }
-            GUI.color = Color.white;
-
-            // Insert Variable Button
-            if (Widgets.ButtonText(new Rect(inRect.width - btnWidth * 3 - 20f, btnY, btnWidth, btnHeight), "插入变量..."))
-            {
-                DoInsertVariableMenu();
-            }
-
-            // Reset Button (Red if modified file exists)
-            string configPromptsPath = Path.Combine(GenFilePaths.ConfigFolderPath, "TheSecondSeat", "Prompts");
-            string activeLangFolder = LanguageDatabase.activeLanguage.folderName;
-            bool hasUserFile = !string.IsNullOrEmpty(selectedPromptFile) &&
-                (File.Exists(Path.Combine(configPromptsPath, activeLangFolder, selectedPromptFile + ".txt")) ||
-                 File.Exists(Path.Combine(configPromptsPath, selectedPromptFile + ".txt")));
-
-            if (hasUserFile) GUI.color = new Color(1f, 0.6f, 0.6f);
-            if (Widgets.ButtonText(new Rect(inRect.width - btnWidth * 4 - 30f, btnY, btnWidth, btnHeight), "重置默认"))
-            {
-                if (hasUserFile)
-                {
-                    Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation(
-                        "确定要重置此文件吗？\n您的自定义修改将被永久删除，并恢复为 Mod 默认值。",
-                        ResetToDefault,
-                        true));
-                }
-                else
-                {
-                    Messages.Message("当前已是默认值", MessageTypeDefOf.NeutralEvent, false);
-                }
-            }
-            GUI.color = Color.white;
-            
-            if (Widgets.ButtonText(new Rect(inRect.x, btnY, btnWidth, btnHeight), "打开文件夹"))
-            {
-                PromptLoader.OpenConfigFolder();
-            }
-            
-            if (Widgets.ButtonText(new Rect(inRect.x + btnWidth + 10f, btnY, btnWidth, btnHeight), "刷新列表"))
-            {
-                RefreshFileList();
-            }
-            
-            // 初始化提示词按钮
-            if (Widgets.ButtonText(new Rect(inRect.x + btnWidth * 2 + 20f, btnY, btnWidth, btnHeight), "初始化提示词"))
-            {
-                Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation(
-                    "确定要初始化提示词吗？\n这将把 Mod 默认的提示词文件复制到配置文件夹，覆盖现有的同名文件。",
-                    () => {
-                        PromptLoader.InitializeUserPrompts();
-                        RefreshFileList();
-                    },
-                    true));
-            }
         }
-        
-        public override void Close(bool doCloseSound = true)
+
+        private string GetOverrideStatus()
         {
-            if (isModified)
+            if (string.IsNullOrEmpty(_selectedPromptId)) return "";
+            
+            string configRoot = GenFilePaths.ConfigFolderPath;
+            string fileName = _selectedPromptId + ".txt";
+            string activeLangFolder = LanguageDatabase.activeLanguage.folderName;
+            
+            // Check Persona Specific
+            if (!string.IsNullOrEmpty(_personaName))
             {
-                Find.WindowStack.Add(new Dialog_MessageBox(
-                    "当前文件已修改，是否保存？",
-                    "保存",
-                    () => {
-                        SaveCurrentFile();
-                        base.Close(doCloseSound);
-                    },
-                    "不保存",
-                    () => base.Close(doCloseSound),
-                    null,
-                    false,
-                    null,
-                    null
-                ));
+                 // Check Persona Lang
+                string personaLangPath = System.IO.Path.Combine(configRoot, "TheSecondSeat", "Prompts", _personaName, activeLangFolder, fileName);
+                if (System.IO.File.Exists(personaLangPath)) return "TSS_Prompt_Override_Persona_Lang".Translate();
+
+                // Check Persona Global
+                string personaGlobalPath = System.IO.Path.Combine(configRoot, "TheSecondSeat", "Prompts", _personaName, fileName);
+                if (System.IO.File.Exists(personaGlobalPath)) return "TSS_Prompt_Override_Persona_Global".Translate();
             }
-            else
+
+            // Check Lang specific
+            string userLangPath = System.IO.Path.Combine(configRoot, "TheSecondSeat", "Prompts", activeLangFolder, fileName);
+            if (System.IO.File.Exists(userLangPath)) return "TSS_Prompt_Override_User_Lang".Translate();
+
+            // Check Global
+            string userGlobalPath = System.IO.Path.Combine(configRoot, "TheSecondSeat", "Prompts", fileName);
+            if (System.IO.File.Exists(userGlobalPath)) return "TSS_Prompt_Override_User_Global".Translate();
+
+            return "TSS_Prompt_Status_Default".Translate();
+        }
+
+        private void SaveCurrentPrompt()
+        {
+            if (string.IsNullOrEmpty(_selectedPromptId)) return;
+            PromptLoader.SaveUserOverride(_selectedPromptId, _currentEditBuffer, _personaName);
+            _isDirty = false;
+            Messages.Message("Saved " + _selectedPromptId, MessageTypeDefOf.PositiveEvent, false);
+        }
+
+        private void ResetCurrentPrompt()
+        {
+            if (string.IsNullOrEmpty(_selectedPromptId)) return;
+            
+            Action resetAction = () =>
             {
-                base.Close(doCloseSound);
-            }
+                PromptLoader.DeleteUserOverride(_selectedPromptId, _personaName);
+                PromptLoader.ClearCache(); // Ensure we load from default
+                SelectPrompt(_selectedPromptId); // Reload
+                Messages.Message("Reset " + _selectedPromptId, MessageTypeDefOf.PositiveEvent, false);
+            };
+
+            Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("Confirm Reset?", resetAction, destructive: true));
         }
     }
 }

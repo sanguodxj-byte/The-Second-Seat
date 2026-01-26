@@ -262,5 +262,132 @@ namespace TheSecondSeat.PersonaGeneration
                 outfitStates = new Dictionary<string, OutfitState>();
             }
         }
+
+        // =========================================================================
+        // ⭐ v2.5.0: 新增 OutfitDef 系统支持（LLM驱动）
+        // =========================================================================
+
+        /// <summary>当前服装 DefName 缓存（每人格独立）</summary>
+        private static Dictionary<string, string> currentOutfitDefNames = new Dictionary<string, string>();
+
+        /// <summary>
+        /// 设置服装（通过 DefName）
+        /// 由 ChangeOutfitCommand 调用
+        /// </summary>
+        public static void SetOutfitDef(string personaDefName, string outfitDefName)
+        {
+            if (string.IsNullOrEmpty(personaDefName)) return;
+
+            currentOutfitDefNames[personaDefName] = outfitDefName;
+            
+            // 获取 OutfitDef 并应用纹理
+            var outfitDef = DefDatabase<OutfitDef>.GetNamed(outfitDefName, false);
+            if (outfitDef != null)
+            {
+                Log.Message($"[OutfitSystem] ⭐ {personaDefName} 更换到服装: {outfitDef.label} ({outfitDef.outfitTag})");
+                
+                // 如果有主体纹理，通知渲染系统
+                if (!string.IsNullOrEmpty(outfitDef.bodyTexture))
+                {
+                    // 这里可以调用渲染树系统更新纹理
+                    NotifyRenderTreeUpdate(personaDefName, outfitDef);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 清除服装（恢复默认）
+        /// </summary>
+        public static void ClearOutfitDef(string personaDefName)
+        {
+            if (string.IsNullOrEmpty(personaDefName)) return;
+
+            if (currentOutfitDefNames.ContainsKey(personaDefName))
+            {
+                currentOutfitDefNames.Remove(personaDefName);
+            }
+
+            Log.Message($"[OutfitSystem] ⭐ {personaDefName} 恢复默认服装");
+            NotifyRenderTreeUpdate(personaDefName, null);
+        }
+
+        /// <summary>
+        /// 获取当前服装 Def
+        /// </summary>
+        public static OutfitDef GetCurrentOutfitDef(string personaDefName)
+        {
+            if (string.IsNullOrEmpty(personaDefName)) return null;
+
+            if (currentOutfitDefNames.TryGetValue(personaDefName, out var defName))
+            {
+                return DefDatabase<OutfitDef>.GetNamed(defName, false);
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 获取当前服装标签
+        /// </summary>
+        public static string GetCurrentOutfitTag(string personaDefName)
+        {
+            var outfit = GetCurrentOutfitDef(personaDefName);
+            return outfit?.outfitTag ?? "Default";
+        }
+
+        /// <summary>
+        /// 通知渲染树更新纹理
+        /// </summary>
+        private static void NotifyRenderTreeUpdate(string personaDefName, OutfitDef outfitDef)
+        {
+            // 尝试通过反射调用渲染树系统
+            try
+            {
+                var renderTreeType = Type.GetType("TheSecondSeat.PersonaGeneration.RenderTreeDef, The Second Seat");
+                if (renderTreeType != null)
+                {
+                    // 这里预留给渲染树系统的钩子
+                    // 实际的纹理切换逻辑由渲染树编辑器处理
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[OutfitSystem] 通知渲染树更新失败: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 获取当前服装状态信息（用于提示词）
+        /// </summary>
+        public static string GetOutfitStatusForPrompt(string personaDefName)
+        {
+            var outfit = GetCurrentOutfitDef(personaDefName);
+            if (outfit != null)
+            {
+                return $"当前服装: {outfit.label} ({outfit.outfitTag})";
+            }
+            return "当前服装: 默认服装";
+        }
+
+        /// <summary>
+        /// 获取格式化的可用服装列表（用于提示词）
+        /// </summary>
+        public static string GetFormattedOutfitList(string personaDefName)
+        {
+            var outfits = OutfitDefManager.GetOutfitsForPersona(personaDefName);
+
+            if (outfits.Count == 0)
+            {
+                return "（暂无可用服装）";
+            }
+
+            var lines = new List<string>();
+            foreach (var outfit in outfits)
+            {
+                lines.Add($"- {outfit.GetFormattedDescription()}");
+            }
+
+            return string.Join("\n", lines);
+        }
     }
 }

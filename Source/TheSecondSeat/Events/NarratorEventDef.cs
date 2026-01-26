@@ -202,7 +202,7 @@ namespace TheSecondSeat.Framework
         /// <summary>
         /// 检查事件是否可以触发
         /// </summary>
-        public bool CanTrigger(Map map, Dictionary<string, object> context)
+        public bool CanTrigger(Map map, in NarratorContext context)
         {
             // 检查是否已禁用
             if (isDisabled)
@@ -237,13 +237,7 @@ namespace TheSecondSeat.Framework
             // 检查人格限制
             if (requiredPersonas.Count > 0)
             {
-                if (!context.TryGetValue("persona", out object personaObj))
-                {
-                    return false;
-                }
-                
-                string currentPersona = personaObj?.ToString() ?? "";
-                if (!requiredPersonas.Contains(currentPersona))
+                if (!requiredPersonas.Contains(context.PersonaName))
                 {
                     return false;
                 }
@@ -254,7 +248,7 @@ namespace TheSecondSeat.Framework
             {
                 foreach (var trigger in triggers)
                 {
-                    if (!trigger.CheckSafe(map, context))
+                    if (!trigger.CheckSafe(map, in context))
                     {
                         return false;
                     }
@@ -277,7 +271,7 @@ namespace TheSecondSeat.Framework
         /// <summary>
         /// 触发事件（执行所有action）
         /// </summary>
-        public void TriggerEvent(Map map, Dictionary<string, object> context)
+        public void TriggerEvent(Map map, in NarratorContext context)
         {
             try
             {
@@ -289,8 +283,8 @@ namespace TheSecondSeat.Framework
                 // ? 显示通知（增强null检查）
                 if (showNotification)
                 {
-                    string notifText = !string.IsNullOrEmpty(customNotificationText) 
-                        ? customNotificationText 
+                    string notifText = !string.IsNullOrEmpty(customNotificationText)
+                        ? customNotificationText
                         : eventLabel;
                     
                     // ? 确保 MessageType 不为 null，提供默认值
@@ -311,7 +305,7 @@ namespace TheSecondSeat.Framework
                         // 并行执行（不等待延迟）
                         foreach (var action in actions)
                         {
-                            ExecuteActionWithDelay(action, map, context);
+                            ExecuteActionWithDelay(action, map, in context);
                         }
                     }
                     else
@@ -321,7 +315,7 @@ namespace TheSecondSeat.Framework
                         foreach (var action in actions)
                         {
                             totalDelay += action.delayTicks;
-                            ExecuteActionWithDelay(action, map, context, totalDelay);
+                            ExecuteActionWithDelay(action, map, in context, totalDelay);
                         }
                     }
                 }
@@ -355,24 +349,27 @@ namespace TheSecondSeat.Framework
         /// <summary>
         /// 执行action（带延迟）
         /// </summary>
-        private void ExecuteActionWithDelay(TSSAction action, Map map, Dictionary<string, object> context, float additionalDelay = 0f)
+        private void ExecuteActionWithDelay(TSSAction action, Map map, in NarratorContext context, float additionalDelay = 0f)
         {
             float totalDelay = action.delayTicks + additionalDelay;
             
             if (totalDelay <= 0f)
             {
                 // 立即执行
-                action.ExecuteSafe(map, context);
+                action.ExecuteSafe(map, in context);
             }
             else
             {
                 // 延迟执行
                 Find.TickManager.CurTimeSpeed = TimeSpeed.Normal; // 确保时间在运行
                 
+                // 复制Context以在闭包中使用（in参数不能在闭包中捕获）
+                var contextCopy = context;
+                
                 // 使用RimWorld的定时器系统
                 LongEventHandler.QueueLongEvent(() =>
                 {
-                    action.ExecuteSafe(map, context);
+                    action.ExecuteSafe(map, in contextCopy);
                 }, "ExecutingNarratorAction", false, null);
             }
         }

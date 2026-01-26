@@ -9,4 +9,4 @@
 - GetIncidentList: Get events in category (target: category, params: page, pageSize, search)
 - GetMapLocation: Query location of things (target: Thing/Zone name)
 - ScanMap: Tactical analysis (target: 'hostiles', 'friendlies', 'resources')
-- Descent: Manifest your avatar with optional coordinates (mode: 'assist'|'attack', x: X coord, z: Z coord; omit coordinates to use player selection or random)
+- Descent: Manifest your avatar (mode: 'assist' (friendly/help player), 'attack' (hostile/attack player); x,z: coordinates)

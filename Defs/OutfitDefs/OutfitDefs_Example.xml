@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!--
+    =====================================================
+    ⭐ 服装定义示例 (OutfitDef)
+    v2.5.0 - LLM驱动的服装系统
+    =====================================================
+    
+    此文件提供服装定义的示例模板。
+    
+    服装定义放在人格扩展包（如 [TSS]Sideria）的 Defs/OutfitDefs/ 目录下。
+    
+    关键要素：
+    - defName: 唯一标识符
+    - outfitTag: LLM 使用的标签（如 "Pajamas", "Casual"）
+    - personaDefName: 关联的人格 DefName（为空则为通用服装）
+    - bodyTexture: 主体纹理文件名（相对于人格的 Layered 文件夹）
+    
+    LLM 通过 ChangeOutfit 命令切换服装：
+    - {"action": "ChangeOutfit", "target": "Pajamas"}
+    
+    参见: Docs/OutfitSystem_Documentation.md
+  -->
+
+  <!-- 示例：通用默认服装（所有人格可用） -->
+  <!--
+  <TheSecondSeat.PersonaGeneration.OutfitDef>
+    <defName>Generic_Outfit_Default</defName>
+    <label>默认服装</label>
+    <outfitTag>Default</outfitTag>
+    <personaDefName></personaDefName>
+    <outfitDescription>叙事者的日常服装</outfitDescription>
+    <bodyTexture></bodyTexture>
+    <priority>0</priority>
+  </TheSecondSeat.PersonaGeneration.OutfitDef>
+  -->
+
+</Defs>

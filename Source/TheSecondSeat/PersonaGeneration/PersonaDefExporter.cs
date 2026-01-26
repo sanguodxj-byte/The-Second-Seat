@@ -508,22 +508,29 @@ namespace TheSecondSeat.PersonaGeneration
         /// 保存人格定义XML文件
         /// ✅ v1.6.71: 使用 PersonaFolderManager，支持子文件夹隔离
         /// ⭐ v1.9.4: 智能搜索现有文件并覆盖，避免重复文件导致 Def 冲突
+        /// ⭐ v2.6.0: 添加详细诊断日志
         /// </summary>
         public static string SavePersonaDefXml(string defName, string xmlContent)
         {
             try
             {
+                Log.Message($"[PersonaDefExporter] 开始保存人格定义 XML，defName: {defName}");
+                
                 // ⭐ 从 defName 提取人格名称（假设 defName 格式为 "YourPersona" 或 "YourPersona_Variant"）
                 string personaName = defName.Split('_')[0];
+                Log.Message($"[PersonaDefExporter] 提取的人格名称: {personaName}");
                 
                 // ⭐ 使用 PersonaFolderManager 获取 Defs 目录
                 string defsDir = PersonaFolderManager.GetPersonaDefsDirectory(personaName);
                 
                 if (defsDir == null)
                 {
-                    Log.Error("[PersonaDefExporter] 无法找到人格 Defs 目录");
+                    Log.Error($"[PersonaDefExporter] 无法找到人格 Defs 目录！personaName: {personaName}");
+                    Log.Error("[PersonaDefExporter] 请检查：1) Mod 是否正确加载 2) 人格名称是否匹配子 Mod 命名规则");
                     return null;
                 }
+                
+                Log.Message($"[PersonaDefExporter] 目标 Defs 目录: {defsDir}");
                 
                 string fileName = $"{SanitizeFileName(defName)}.xml";
                 string targetPath = Path.Combine(defsDir, fileName);

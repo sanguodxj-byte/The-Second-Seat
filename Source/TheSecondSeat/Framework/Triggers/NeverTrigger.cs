@@ -18,7 +18,7 @@ namespace TheSecondSeat.Framework.Triggers
     /// </summary>
     public class NeverTrigger : TSSTrigger
     {
-        public override bool IsSatisfied(Map map, Dictionary<string, object> context)
+        public override bool IsSatisfied(Map map, in NarratorContext context)
         {
             return false;  // 永远返回false，阻止自动触发
         }

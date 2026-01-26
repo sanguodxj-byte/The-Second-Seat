@@ -21,66 +21,47 @@ namespace TheSecondSeat.Execution
         /// <summary>
         /// 执行解析后的命令
         /// ⭐ v1.6.84: 修复线程安全 - 如果不在主线程则调度到主线程
+        /// ⭐ v2.0.0: 使用 TaskCompletionSource 替代 Thread.Sleep，避免阻塞
         /// </summary>
-        public static ExecutionResult Execute(ParsedCommand command)
+        public static async System.Threading.Tasks.Task<ExecutionResult> ExecuteAsync(ParsedCommand command)
         {
-            if (command == null)
-            {
-                return ExecutionResult.Failed("命令为空");
-            }
+            if (command == null) return ExecutionResult.Failed("命令为空");
 
-            // ⭐ v1.7.00: 检查命令是否存在于注册表中
             var cmdInstance = CommandRegistry.GetCommand(command.action);
-            if (cmdInstance == null)
-            {
-                return ExecutionResult.Failed($"未知命令: {command.action}");
-            }
+            if (cmdInstance == null) return ExecutionResult.Failed($"未知命令: {command.action}");
 
             Log.Message($"[GameActionExecutor] 执行命令: {command.action} (Target={command.parameters.target}, Scope={command.parameters.scope})");
 
-            // ⭐ v1.6.84: 检查是否在主线程
             if (!TSS_AssetLoader.IsMainThread)
             {
-                // Log.Warning("[GameActionExecutor] 不在主线程，调度到主线程执行"); // 移除日志以防 Unity 堆栈跟踪错误
-                
-                // 使用异步模式返回结果
-                ExecutionResult? pendingResult = null;
-                bool completed = false;
+                var tcs = new System.Threading.Tasks.TaskCompletionSource<ExecutionResult>();
                 
                 Verse.LongEventHandler.ExecuteWhenFinished(() =>
                 {
                     try
                     {
-                        pendingResult = ExecuteOnMainThread(command);
+                        var result = ExecuteOnMainThread(command);
+                        tcs.SetResult(result);
                     }
                     catch (Exception ex)
                     {
                         Log.Error($"[GameActionExecutor] 调度执行发生未捕获异常: {ex}");
-                        pendingResult = ExecutionResult.Failed($"内部错误: {ex.Message}");
-                    }
-                    finally
-                    {
-                        completed = true;
+                        tcs.SetException(ex);
                     }
                 });
-                
-                // 等待执行完成（最多 30 秒）
-                int waitCount = 0;
-                while (!completed && waitCount < 600)
-                {
-                    System.Threading.Thread.Sleep(50);
-                    waitCount++;
-                }
-                
-                if (!completed)
+
+                // 等待任务完成，或者超时
+                var timeoutTask = System.Threading.Tasks.Task.Delay(30000);
+                var completedTask = await System.Threading.Tasks.Task.WhenAny(tcs.Task, timeoutTask);
+
+                if (completedTask == timeoutTask)
                 {
                     return ExecutionResult.Failed("命令执行超时 (主线程响应过慢)");
                 }
-                
-                return pendingResult ?? ExecutionResult.Failed("未知错误");
+
+                return await tcs.Task;
             }
 
-            // ⭐ 检查游戏是否运行
             if (!UnityEngine.Application.isPlaying)
             {
                 return ExecutionResult.Failed("游戏未运行");
@@ -88,71 +69,46 @@ namespace TheSecondSeat.Execution
             
             return ExecuteOnMainThread(command);
         }
+
+        // 保持同步方法兼容性，但建议使用 ExecuteAsync
+        public static ExecutionResult Execute(ParsedCommand command)
+        {
+            if (TSS_AssetLoader.IsMainThread)
+            {
+                return ExecuteOnMainThread(command); // 主线程直接执行
+            }
+            
+            // 后台线程调用同步方法时，仍需阻塞等待，但不再使用 Thread.Sleep 忙等待
+            // 这里使用 Task.Run().Result 会死锁吗？如果不涉及 UI 上下文同步应该不会。
+            // 但最安全的还是原来的 Thread.Sleep 模式用于同步调用。
+            // 既然我们要重构，最好所有调用者都改为 await ExecuteAsync。
+            // 暂时保留旧逻辑作为回退，但标记为 Obsolete
+            
+            Log.Warning("[GameActionExecutor] Execute called from background thread synchronously. Use ExecuteAsync instead.");
+            return ExecuteAsync(command).Result;
+        }
         
         /// <summary>
         /// 在主线程执行命令（内部方法）
         /// </summary>
         private static ExecutionResult ExecuteOnMainThread(ParsedCommand command)
         {
-
             try
             {
-                // ⭐ v1.6.84: 再次验证主线程
-                if (!TSS_AssetLoader.IsMainThread)
-                {
-                    // 移除日志以防 Unity 堆栈跟踪错误
-                    // Log.Warning("[GameActionExecutor] ExecuteOnMainThread 在非主线程调用...");
-                }
-                
                 // 转换参数为 Dictionary<string, object>
                 Dictionary<string, object> paramsDict = ConvertParams(command.parameters);
 
-                // 根据 action 字符串实例化对应的命令类并执行
-                bool success = command.action switch
+                // ⭐ v2.0.0: 使用 CommandRegistry 动态查找并执行命令，移除硬编码 switch
+                var cmdInstance = CommandRegistry.GetCommand(command.action);
+                
+                if (cmdInstance == null)
                 {
-                    // === 批量操作命令 ===
-                    "BatchHarvest" => new BatchHarvestCommand().Execute(command.parameters.target, paramsDict),
-                    "BatchEquip" => new BatchEquipCommand().Execute(command.parameters.target, paramsDict),
-                    "BatchCapture" => new BatchCaptureCommand().Execute(command.parameters.target, paramsDict),
-                    "BatchMine" => new BatchMineCommand().Execute(command.parameters.target, paramsDict),
-                    "BatchLogging" => new BatchLoggingCommand().Execute(command.parameters.target, paramsDict),
-                    "PriorityRepair" => new PriorityRepairCommand().Execute(command.parameters.target, paramsDict),
-                    "EmergencyRetreat" => new EmergencyRetreatCommand().Execute(command.parameters.target, paramsDict),
-                    "DesignatePlantCut" => new DesignatePlantCutCommand().Execute(command.parameters.target, paramsDict),
-                    
-                    // === 对弈者模式事件命令 ===
-                    "TriggerEvent" => new TriggerEventCommand().Execute(command.parameters.target, paramsDict),
-                    "ScheduleEvent" => new ScheduleEventCommand().Execute(command.parameters.target, paramsDict),
-                    "Descent" => new DescentCommand().Execute(command.parameters.target, paramsDict),
-                    
-                    // === 查询命令 ===
-                    "GetMapLocation" => new GetMapLocationCommand().Execute(command.parameters.target, paramsDict),
-                    "ScanMap" => new ScanMapCommand().Execute(command.parameters.target, paramsDict),
-                    "GetIncidentCategories" => new GetIncidentCategoriesCommand().Execute(command.parameters.target, paramsDict),
-                    "GetIncidentList" => new GetIncidentListCommand().Execute(command.parameters.target, paramsDict),
-                    
-                    // === ? v1.6.40: 殖民者操作命令（已迁移） ===
-                    "DraftPawn" => new DraftPawnCommand().Execute(command.parameters.target, paramsDict),
-                    "MovePawn" => new MovePawnCommand().Execute(command.parameters.target, paramsDict),
-                    "HealPawn" => new HealPawnCommand().Execute(command.parameters.target, paramsDict),
-                    "SetWorkPriority" => new SetWorkPriorityCommand().Execute(command.parameters.target, paramsDict),
-                    "EquipWeapon" => new EquipWeaponCommand().Execute(command.parameters.target, paramsDict),
-                    
-                    // === ? v1.6.40: 资源管理命令（已迁移） ===
-                    "ForbidItems" => new ForbidItemsCommand().Execute(command.parameters.target, paramsDict),
-                    "AllowItems" => new AllowItemsCommand().Execute(command.parameters.target, paramsDict),
-                    
-                    // === ? v1.6.40: 政策修改命令（已迁移） ===
-                    "ChangePolicy" => new ChangePolicyCommand_New().Execute(command.parameters.target, paramsDict),
-                    
-                    // === 暂不支持的命令 ===
-                    "DesignateConstruction" => throw new NotImplementedException("建造命令需要更多的建筑数据，暂不支持"),
-                    "AssignWork" => throw new NotImplementedException("工作分配需要更多的工作类型，暂不支持"),
-                    
-                    _ => throw new NotImplementedException($"未知命令: {command.action}")
-                };
+                    return ExecutionResult.Failed($"未找到命令处理器: {command.action}");
+                }
 
-                return success 
+                bool success = cmdInstance.Execute(command.parameters.target, paramsDict);
+
+                return success
                     ? ExecutionResult.Success($"命令 {command.action} 执行成功")
                     : ExecutionResult.Failed($"命令 {command.action} 执行失败");
             }

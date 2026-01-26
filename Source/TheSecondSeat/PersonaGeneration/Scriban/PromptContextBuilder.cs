@@ -3,6 +3,7 @@ using TheSecondSeat.Narrator;
 using TheSecondSeat.Storyteller;
 using TheSecondSeat.CharacterCard;
 using Verse;
+using TheSecondSeat.PersonaGeneration;
 
 namespace TheSecondSeat.PersonaGeneration.Scriban
 {
@@ -33,6 +34,7 @@ namespace TheSecondSeat.PersonaGeneration.Scriban
                 Card = card,
                 Narrator = new NarratorInfo
                 {
+                    DefName = personaDef?.defName, // ⭐ v3.0: 传递 Persona DefName
                     Name = personaDef?.narratorName ?? "Unknown",
                     Label = personaDef?.label ?? "Unknown",
                     Biography = personaDef?.biography ?? "",
@@ -61,7 +63,7 @@ namespace TheSecondSeat.PersonaGeneration.Scriban
                 Meta = new MetaInfo
                 {
                     DifficultyMode = "Assistant",
-                    LanguageInstruction = PromptLoader.Load("Language_Instruction") ?? "Respond in user's preferred language."
+                    LanguageInstruction = PromptLoader.Load("Language_Instruction", personaDef?.defName) ?? "Respond in user's preferred language."
                 }
             };
             
@@ -72,6 +74,22 @@ namespace TheSecondSeat.PersonaGeneration.Scriban
                 context.Meta.ModSettingsPrompt = modSettings.globalPrompt.Trim();
             }
             
+            // ⭐ v2.7.0: 填充服装数据
+            try
+            {
+                if (personaDef != null)
+                {
+                    context.AvailableOutfits = OutfitSystem.GetFormattedOutfitList(personaDef.defName);
+                    context.CurrentOutfit = OutfitSystem.GetOutfitStatusForPrompt(personaDef.defName);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[PromptContextBuilder] Failed to get outfit info: {ex.Message}");
+                context.AvailableOutfits = "(Outfit system unavailable)";
+                context.CurrentOutfit = "Current Outfit: Default";
+            }
+
             // 准备 Snippets (生成各个 Section)
             try
             {
@@ -103,12 +121,26 @@ namespace TheSecondSeat.PersonaGeneration.Scriban
             }
             
             // Philosophy
-            string philosophy = PromptLoader.Load("Philosophy_Assistant");
+            string philosophy = PromptLoader.Load("Philosophy_Assistant", personaDef?.defName);
             if (string.IsNullOrEmpty(philosophy) || philosophy.StartsWith("[Error:"))
             {
-                philosophy = PromptLoader.Load("BehaviorRules_Assistant");
+                philosophy = PromptLoader.Load("BehaviorRules_Assistant", personaDef?.defName);
             }
             context.Snippets["philosophy"] = philosophy?.StartsWith("[Error:") == true ? "" : philosophy ?? "";
+            
+            // ⭐ v2.5.0: 填充服装系统变量
+            try
+            {
+                string personaDefName = personaDef?.defName ?? "";
+                context.AvailableOutfits = OutfitDefManager.GetFormattedOutfitList(personaDefName);
+                context.CurrentOutfit = OutfitSystem.GetCurrentOutfitTag(personaDefName);
+            }
+            catch (Exception ex)
+            {
+                context.AvailableOutfits = "（暂无可用服装）";
+                context.CurrentOutfit = "Default";
+                Verse.Log.Warning($"[PromptContextBuilder] 加载服装信息失败: {ex.Message}");
+            }
             
             return context;
         }

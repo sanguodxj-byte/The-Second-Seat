@@ -279,12 +279,10 @@ namespace TheSecondSeat.LLM
 
                 // 异步发送请求
                 var asyncOperation = webRequest.SendWebRequest();
+                var tcs = new TaskCompletionSource<bool>();
+                asyncOperation.completed += _ => tcs.TrySetResult(true);
 
-                while (!asyncOperation.isDone)
-                {
-                    if (Current.Game == null) return null; // 游戏退出
-                    await Task.Delay(100);
-                }
+                await tcs.Task;
 
                 // 检查响应
                 if (webRequest.result == UnityWebRequest.Result.Success)

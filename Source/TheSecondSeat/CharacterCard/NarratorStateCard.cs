@@ -13,6 +13,9 @@ namespace TheSecondSeat.CharacterCard
         public string Label { get; set; }
         public string Role { get; set; } // "Assistant", "Opponent"
 
+        // === 核心人格 (Identity) ===
+        public IdentityState Identity { get; set; } = new IdentityState();
+
         // === 生物几律 (BioRhythm) ===
         public BioState Bio { get; set; } = new BioState();
 
@@ -24,6 +27,23 @@ namespace TheSecondSeat.CharacterCard
 
         // === 降临状态 (Descent State) ===
         public DescentState Descent { get; set; } = new DescentState();
+
+        public class IdentityState
+        {
+            public string Biography { get; set; } = "";
+            public string PersonalityType { get; set; } = "";
+            public string CustomSystemPrompt { get; set; } = "";
+            public List<string> PersonalityTags { get; set; } = new List<string>();
+            public List<string> SelectedTraits { get; set; } = new List<string>();
+            public List<string> ToneTags { get; set; } = new List<string>();
+            public List<string> ForbiddenWords { get; set; } = new List<string>();
+            public List<string> SpecialAbilities { get; set; } = new List<string>();
+            
+            // 叙事风格参数
+            public float MercyLevel { get; set; } = 0.5f;
+            public float ChaosLevel { get; set; } = 0.5f;
+            public float DominanceLevel { get; set; } = 0.5f;
+        }
 
         public class BioState
         {

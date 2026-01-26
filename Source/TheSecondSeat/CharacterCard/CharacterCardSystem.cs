@@ -176,7 +176,8 @@ namespace TheSecondSeat.CharacterCard
                 // C. 多模态分析缓存 (Priority 2)
                 // 如果是变体（换装），则不信任基础缓存中的 VisualTags（避免混入法袍标签）
                 var visionData = MultimodalAnalysisService.Instance.GetCachedResult(persona.portraitPath)
-                              ?? MultimodalAnalysisService.Instance.GetCachedResult(persona.defName);
+                              ?? MultimodalAnalysisService.Instance.GetCachedResult(persona.defName)
+                              ?? persona.GetAnalysis(); // Fallback to XML defined data
 
                 if (visionData != null)
                 {
@@ -206,7 +207,55 @@ namespace TheSecondSeat.CharacterCard
                 }
             }
 
-            // 6. ⭐ 一致性检查 (Consistency Validation)
+            // 6. ⭐ 身份与设定 (Identity Injection)
+            if (persona != null)
+            {
+                // 🛡️ 增强空值保护：防止 Def 中的字段为 null 导致下游逻辑异常
+                card.Identity.Biography = persona.biography ?? string.Empty;
+                card.Identity.CustomSystemPrompt = persona.customSystemPrompt ?? string.Empty;
+                
+                // 优先使用覆盖的人格类型
+                // 逻辑：如果 overridePersonality 有值，则使用它；否则使用 personalityType；如果都为空，默认 "Unknown"
+                string baseType = persona.personalityType ?? string.Empty;
+                string overrideType = persona.overridePersonality ?? string.Empty;
+                
+                card.Identity.PersonalityType = !string.IsNullOrEmpty(overrideType)
+                    ? overrideType
+                    : (string.IsNullOrEmpty(baseType) ? "Unknown" : baseType);
+
+                // 数值类型直接赋值
+                card.Identity.ChaosLevel = persona.narratorChaosLevel;
+                card.Identity.MercyLevel = persona.mercyLevel;
+                card.Identity.DominanceLevel = persona.dominanceLevel;
+                
+                // 列表安全拷贝
+                if (persona.selectedTraits != null)
+                {
+                    card.Identity.SelectedTraits.AddRange(persona.selectedTraits);
+                }
+
+                if (persona.personalityTags != null)
+                {
+                    card.Identity.PersonalityTags.AddRange(persona.personalityTags);
+                }
+
+                if (persona.toneTags != null)
+                {
+                    card.Identity.ToneTags.AddRange(persona.toneTags);
+                }
+
+                if (persona.forbiddenWords != null)
+                {
+                    card.Identity.ForbiddenWords.AddRange(persona.forbiddenWords);
+                }
+
+                if (persona.specialAbilities != null)
+                {
+                    card.Identity.SpecialAbilities.AddRange(persona.specialAbilities);
+                }
+            }
+
+            // 7. ⭐ 一致性检查 (Consistency Validation)
             ValidateConsistency(card, persona?.defName);
 
             _cachedCard = card;

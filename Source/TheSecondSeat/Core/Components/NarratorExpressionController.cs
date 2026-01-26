@@ -32,12 +32,12 @@ namespace TheSecondSeat.Core.Components
         }
 
         /// <summary>
-        /// ? v1.6.82: 应用表情 - 支持单表情和多表情序列
+        /// ⭐ v2.10.0: 应用表情 - 优先使用 LLM 输出的情绪标签
+        /// 优先级: emotionSequence > emotions > emotion > expression > 好感度回退
+        /// 移除关键词匹配，完全依赖 LLM 输出
         /// </summary>
         public void ApplyExpressionFromResponse(LLMResponse response, string narratorDefName, string dialogueText)
         {
-            // 优先级: emotionSequence > emotions > expression > 自动推断
-            
             // 1. 检查详细情绪序列 (emotionSequence)
             if (response.emotionSequence != null && response.emotionSequence.Count > 0)
             {
@@ -52,42 +52,72 @@ namespace TheSecondSeat.Core.Components
                 return;
             }
             
-            // 3. 单表情模式 (expression)
+            // 3. ⭐ v2.10.0: 检查单情绪标签 (emotion: "happy")
+            if (!string.IsNullOrEmpty(response.emotion) && response.emotion.ToLower() != "neutral")
+            {
+                ApplyEmotionLabel(response.emotion, narratorDefName);
+                return;
+            }
+            
+            // 4. 单表情模式 (expression) - 向后兼容
             if (!string.IsNullOrEmpty(response.expression))
             {
-                // ? 修复：如果 expression 包含管道符，视为紧凑序列处理
+                // 如果 expression 包含管道符，视为紧凑序列处理
                 if (response.expression.Contains("|"))
                 {
-                    Log.Warning($"[NarratorController] 检测到 expression 字段包含多个表情 ({response.expression})，自动转为序列处理");
                     ApplyCompactEmotionSequence(response.expression, narratorDefName, dialogueText);
                     return;
                 }
 
-                // 使用 EmotionParser 解析
-                var (expressionType, intensity) = EmotionParser.Parse(response.expression);
-
-                if (expressionType != ExpressionType.Neutral || intensity > 0)
-                {
-                    ExpressionSystem.SetExpression(
-                        narratorDefName,
-                        expressionType,
-                        180,  // 3 秒
-                        "对话触发",
-                        intensity // 传递解析出的强度
-                    );
-                    Log.Message($"[NarratorController] AI 表情切换: {expressionType} (强度: {intensity})");
-                }
-                else
-                {
-                    Log.Warning($"[NarratorController] 解析表情失败或为中性: {response.expression}");
-                    // 回退到自动推断
-                    ExpressionSystem.UpdateExpressionByDialogueTone(narratorDefName, dialogueText);
-                }
+                ApplyEmotionLabel(response.expression, narratorDefName);
                 return;
             }
             
-            // 4. 没有提供表情，自动推断
-            ExpressionSystem.UpdateExpressionByDialogueTone(narratorDefName, dialogueText);
+            // 5. ⭐ v2.10.0: 没有 LLM 情绪输出，回退到好感度基础表情
+            // 不再使用关键词匹配，由 LLM 负责情绪判断
+            ExpressionSystem.FallbackToAffinityExpression(narratorDefName);
+        }
+        
+        /// <summary>
+        /// ⭐ v2.10.0: 应用单个情绪标签
+        /// 支持格式: "happy", "happy3", "h", "[EMOTION]: happy"
+        /// </summary>
+        private void ApplyEmotionLabel(string emotionLabel, string narratorDefName)
+        {
+            // 清理标签（移除可能的 [EMOTION]: 前缀等）
+            string cleanLabel = emotionLabel.Trim();
+            if (cleanLabel.StartsWith("[") && cleanLabel.Contains("]"))
+            {
+                int colonIndex = cleanLabel.IndexOf(':');
+                if (colonIndex > 0)
+                {
+                    cleanLabel = cleanLabel.Substring(colonIndex + 1).Trim();
+                }
+            }
+            
+            // 使用 EmotionParser 解析
+            var (expressionType, intensity) = EmotionParser.Parse(cleanLabel);
+
+            if (expressionType != ExpressionType.Neutral || intensity > 0)
+            {
+                ExpressionSystem.SetExpression(
+                    narratorDefName,
+                    expressionType,
+                    ExpressionTrigger.DialogueTone,
+                    1800,  // 30 秒
+                    intensity
+                );
+                
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[ExpressionController] LLM 情绪标签应用: {expressionType} (强度: {intensity})");
+                }
+            }
+            else
+            {
+                // 解析失败，回退到好感度基础表情
+                ExpressionSystem.FallbackToAffinityExpression(narratorDefName);
+            }
         }
 
         /// <summary>

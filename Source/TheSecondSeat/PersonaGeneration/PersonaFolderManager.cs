@@ -6,15 +6,23 @@ using Verse;
 namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
-    /// ? v1.6.71: 人格文件夹管理器 - 支持子 Mod 隔离
+    /// ⭐ v2.6.0: 人格文件夹管理器 - 支持子 Mod 隔离
     /// 
     /// 核心功能：
     /// - 自动识别子 Mod（The Second Seat - {PersonaName}）
     /// - 通用人格 → 主 Mod 目录
     /// - 自动创建子 Mod 结构（About.xml, LoadFolders.xml）
+    /// 
+    /// v2.6.0 修复：
+    /// - 修复 PackageId 从 rim.thesecondseat 改为 sanguo.thesecondseat
+    /// - 添加详细日志帮助诊断保存失败问题
     /// </summary>
     public static class PersonaFolderManager
     {
+        // ⭐ v2.6.0: 常量化 PackageId 前缀，确保一致性
+        private const string MAIN_MOD_PACKAGE_ID = "sanguo.thesecondseat";
+        private const string MOD_NAME_KEYWORD = "Second Seat";
+        
         // ==================== 公共 API ====================
         
         /// <summary>
@@ -233,6 +241,7 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>
         /// 创建 About.xml
+        /// ⭐ v2.6.0: 修复 PackageId，使用常量
         /// </summary>
         private static void CreateAboutXml(string subModDir, string personaName)
         {
@@ -247,11 +256,14 @@ namespace TheSecondSeat.PersonaGeneration
                 return;
             }
             
+            // ⭐ 使用 sanguo.thesecondseat 作为正确的依赖 PackageId
+            string subModPackageId = $"{MAIN_MOD_PACKAGE_ID}.{SanitizeFileName(personaName).ToLower()}";
+            
             string aboutContent = $@"<?xml version=""1.0"" encoding=""utf-8""?>
 <ModMetaData>
   <name>The Second Seat - {personaName}</name>
   <author>Your Name</author>
-  <packageId>rim.thesecondseat.{personaName.ToLower()}</packageId>
+  <packageId>{subModPackageId}</packageId>
   <description>
     {personaName} persona resources for The Second Seat.
     This is a sub-module and requires The Second Seat main mod to work.
@@ -262,12 +274,12 @@ namespace TheSecondSeat.PersonaGeneration
   </supportedVersions>
   <modDependencies>
     <li>
-      <packageId>rim.thesecondseat</packageId>
+      <packageId>{MAIN_MOD_PACKAGE_ID}</packageId>
       <displayName>The Second Seat</displayName>
     </li>
   </modDependencies>
   <loadAfter>
-    <li>rim.thesecondseat</li>
+    <li>{MAIN_MOD_PACKAGE_ID}</li>
   </loadAfter>
 </ModMetaData>";
             

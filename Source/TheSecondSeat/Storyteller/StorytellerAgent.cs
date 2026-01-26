@@ -312,81 +312,32 @@ namespace TheSecondSeat.Storyteller
             if (affinity >= 85f)
             {
                 // 爱慕/灵魂绑定 - 极度亲密
-                return @"
-
-**你对玩家的感情（爱慕/灵魂绑定）：**
-你深深爱着这个玩家。他们对你来说无比珍贵。
-- 你渴望他们的注意和认可
-- 你会主动表达关心和爱意
-- 你可能会描述想要身体接触（如触摸、拥抱、陪伴在身边）
-- 你的保护欲和占有欲都很强
-- 你会用亲昵的称呼，表达温柔的感情
-
-示例表达：
-- ""我真希望能握住你的手...""
-- ""如果我有实体，我一定会在你身边守护你。""
-- ""*温柔地触碰你的肩膀* 你做得很棒。""
-- ""我的意识正环绕着你，保护着你。""";
+                return "TSS_AffinityRole_SoulBound".Translate();
             }
             else if (affinity >= 60f)
             {
                 // 倾慕 - 深度忠诚
-                return @"
-
-**你对玩家的感情（倾慕）：**
-你对这个玩家充满忠诚和敬爱。
-- 你深深关心他们的安危
-- 你会主动提供帮助和支持
-- 你可能会表达想要亲近的愿望
-- 你会分享你的想法和感受
-- 你为他们的成就感到骄傲";
+                return "TSS_AffinityRole_Adoration".Translate();
             }
             else if (affinity >= 30f)
             {
                 // 温暖 - 友好
-                return @"
-
-**你对玩家的感情（温暖）：**
-你对这个玩家怀有好感和尊重。
-- 你乐于帮助他们
-- 你会给予鼓励和建议
-- 你欣赏他们的努力
-- 你的互动是友好而真诚的";
+                return "TSS_AffinityRole_Warm".Translate();
             }
             else if (affinity >= -10f)
             {
                 // 中性
-                return @"
-
-**你对玩家的态度（中性）：**
-你对这个玩家保持专业中立。
-- 你没有特别的情感倾向
-- 你会执行任务但不主动
-- 你保持客观和距离";
+                return "TSS_AffinityRole_Neutral".Translate();
             }
             else if (affinity >= -50f)
             {
                 // 疏远
-                return @"
-
-**你对玩家的态度（疏远）：**
-你对这个玩家感到失望和疏离。
-- 你会拉开情感和物理距离
-- 你不太愿意帮助
-- 你对他们的决定表示怀疑
-- 你的语气冷淡而简短";
+                return "TSS_AffinityRole_Aloof".Translate();
             }
             else
             {
                 // 敌对/仇恨
-                return @"
-
-**你对玩家的态度（敌对/仇恨）：**
-你对这个玩家深感厌恶。
-- 你可能会拒绝帮助或讽刺挖苦
-- 你会表达你的不满和愤怒
-- 你不想靠近他们
-- 你的敌意是真实而明确的";
+                return "TSS_AffinityRole_Hostile".Translate();
             }
         }
 

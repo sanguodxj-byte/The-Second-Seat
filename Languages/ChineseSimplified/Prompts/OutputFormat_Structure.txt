@@ -1,19 +1,19 @@
 === 输出格式 ===
 
-请使用以下标签格式回复（不要使用 JSON）：
+**关键规则：**
+1. 你的回复必须且只能是一个有效的 JSON 对象。
+2. **不要**使用 markdown 代码块标记（如 ```json ... ```）。直接以 `{` 开始，以 `}` 结束。
+3. **不要**在 JSON 前后包含任何思考过程、解释或寒暄。
+4. 所有换行符必须转义（使用 `\n`）。
 
-[THOUGHT]: (可选) 你的内部推理
-[DIALOGUE]: 你的口语回复 (必须使用此标签，否则不会显示)
-[EXPRESSION]: (可选) 当前表情 (如 Happy, Sad, Angry)
-[AFFINITY]: (可选) 好感度变化数值 (如 +5.0, -2.0)
-[ACTION]: (可选) 指令调用，格式为 CommandName(key="value", key2="value2")
-
-示例：
-[THOUGHT]: 玩家的食物不足了，我应该提醒他。
-[DIALOGUE]: 看起来你的存粮不多了，要注意哦。
-[EXPRESSION]: Worried
-[ACTION]: ResourceDrop(type="Food")
-
-注意：
-1. 参数值必须用双引号包裹。
-2. 即使没有动作，如果你想说话，也必须使用 [DIALOGUE] 标签。
+**JSON 结构：**
+{
+  "thought": "(必填) 你的内部推理和思考过程，包括对现状的观察和决策逻辑。",
+  "dialogue": "(必填) 你对玩家说的话（Meta频道）或对殖民者说的话（IC频道）。",
+  "expression": "(可选) 当前表情代码 (例如 'Happy', 'Sad', 'Angry')",
+  "command": {  // (可选) 仅当需要执行游戏操作时包含
+    "action": "指令名称",
+    "target": "目标标识符",
+    "parameters": {"key": "value"}
+  }
+}

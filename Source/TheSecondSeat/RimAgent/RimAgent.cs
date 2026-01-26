@@ -92,9 +92,9 @@ namespace TheSecondSeat.RimAgent
             @"\[ACTION\]:\s*(\w+)\s*\((.*)?\)",
             RegexOptions.Singleline | RegexOptions.IgnoreCase);
         
-        /// <summary>答案解析正则</summary>
+        /// <summary>答案解析正则 (兼容 DIALOGUE 和 RESPONSE)</summary>
         private static readonly Regex AnswerPattern = new Regex(
-            @"\[ANSWER\]:\s*(.+)$",
+            @"\[(?:ANSWER|DIALOGUE|RESPONSE)\]:\s*(.+)$",
             RegexOptions.Singleline | RegexOptions.IgnoreCase);
         
         /// <summary>参数解析正则 - key=value 或 key="value"</summary>
@@ -172,7 +172,62 @@ namespace TheSecondSeat.RimAgent
         // ========== 核心执行方法（内核能力） ==========
         
         /// <summary>
-        /// 执行 ReAct 循环
+        /// ⭐ v2.9.8: 简单执行（无 ReAct 循环，无对话历史）
+        /// 适用于叙事者等只需要单次 LLM 调用的场景
+        /// </summary>
+        /// <param name="userInput">用户输入</param>
+        /// <param name="temperature">采样温度</param>
+        /// <param name="maxTokens">最大 Token 数</param>
+        public async Task<AgentResponse> SimpleExecuteAsync(
+            string userInput,
+            float temperature = 0.7f,
+            int maxTokens = 500)
+        {
+            await executionLock.WaitAsync();
+            try
+            {
+                State = AgentState.Running;
+                TotalRequests++;
+                
+                // 直接调用 LLM，不走 ReAct 循环，不累积对话历史
+                LastPrompt = $"--- System Prompt ---\n{SystemPrompt}\n\n--- User Input ---\n{userInput}";
+                
+                string llmResponse = await Provider.SendMessageAsync(
+                    SystemPrompt,
+                    "", // gameState 已经嵌入在 userInput 中
+                    userInput,
+                    temperature,
+                    maxTokens
+                );
+                
+                LastResponseContent = llmResponse;
+                
+                if (string.IsNullOrEmpty(llmResponse))
+                {
+                    return HandleError("LLM returned empty response");
+                }
+                
+                State = AgentState.Idle;
+                SuccessfulRequests++;
+                
+                return new AgentResponse
+                {
+                    Success = true,
+                    Content = llmResponse
+                };
+            }
+            catch (Exception ex)
+            {
+                return HandleError(ex.Message);
+            }
+            finally
+            {
+                executionLock.Release();
+            }
+        }
+        
+        /// <summary>
+        /// 执行 ReAct 循环（用于需要工具调用的 Agent）
         /// </summary>
         /// <param name="userInput">用户输入</param>
         /// <param name="temperature">采样温度</param>
@@ -257,6 +312,8 @@ namespace TheSecondSeat.RimAgent
                         if (!string.IsNullOrEmpty(parsed.Thought))
                         {
                             observations.Add($"[Thought]: {parsed.Thought}");
+                            // 强制引导模型进入下一步，防止纯思考循环
+                            observations.Add("(系统提示: 你必须立即提供 [ACTION] 来使用工具，或者提供 [ANSWER] 来回复用户。)");
                         }
                         else
                         {
@@ -270,7 +327,7 @@ namespace TheSecondSeat.RimAgent
                 // 如果循环结束仍无答案，使用最后的观察
                 if (string.IsNullOrEmpty(finalAnswer))
                 {
-                    finalAnswer = observations.LastOrDefault() ?? "Unable to generate response";
+                    finalAnswer = observations.LastOrDefault() ?? "无法生成响应";
                 }
                 
                 // 添加助手消息到历史
@@ -450,11 +507,11 @@ namespace TheSecondSeat.RimAgent
                     var result = await tool.ExecuteAsync(parameters);
                     if (result.Success)
                     {
-                        return result.Data?.ToString() ?? "Tool executed successfully";
+                        return result.Data?.ToString() ?? "工具执行成功";
                     }
                     else
                     {
-                        return $"Error: {result.Error}";
+                        return $"错误: {result.Error}";
                     }
                 }
                 
@@ -465,20 +522,20 @@ namespace TheSecondSeat.RimAgent
                     var result = await globalTool.ExecuteAsync(parameters);
                     if (result.Success)
                     {
-                        return result.Data?.ToString() ?? "Tool executed successfully";
+                        return result.Data?.ToString() ?? "工具执行成功";
                     }
                     else
                     {
-                        return $"Error: {result.Error}";
+                        return $"错误: {result.Error}";
                     }
                 }
                 
-                return $"Error: Tool '{toolName}' not found";
+                return $"错误: 未找到工具 '{toolName}'";
             }
             catch (Exception ex)
             {
                 Log.Error($"[RimAgent] {AgentId}: Tool execution error: {ex.Message}");
-                return $"Error: {ex.Message}";
+                return $"错误: {ex.Message}";
             }
         }
 
@@ -490,10 +547,10 @@ namespace TheSecondSeat.RimAgent
         private string BuildToolsDescription()
         {
             if (tools.Count == 0)
-                return "No tools available.";
+                return "当前无可用工具。";
             
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("## Available Tools:");
+            sb.AppendLine("## 可用工具列表:");
             sb.AppendLine();
             
             foreach (var kvp in tools)
@@ -514,7 +571,7 @@ namespace TheSecondSeat.RimAgent
             // 包含摘要
             if (!string.IsNullOrEmpty(Summary))
             {
-                sb.AppendLine("## Conversation Summary:");
+                sb.AppendLine("## 历史对话摘要（仅供参考）:");
                 sb.AppendLine(Summary);
                 sb.AppendLine();
             }
@@ -530,7 +587,7 @@ namespace TheSecondSeat.RimAgent
                 int estimatedTokens = (msg.Content?.Length ?? 0) / 3;
                 
                 // 加上一些元数据开销
-                estimatedTokens += 10; 
+                estimatedTokens += 10;
 
                 if (currentTokens + estimatedTokens > MaxContextTokens) break;
                 
@@ -540,7 +597,7 @@ namespace TheSecondSeat.RimAgent
 
             if (selectedHistory.Count > 0)
             {
-                sb.AppendLine("## Recent Conversation:");
+                sb.AppendLine("## 最近对话记录:");
                 foreach (var msg in selectedHistory)
                 {
                     sb.AppendLine($"[{msg.Role}]: {msg.Content}");
@@ -575,12 +632,12 @@ namespace TheSecondSeat.RimAgent
             
             // 构建压缩 Prompt
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("Summarize the following conversation lines into a concise paragraph to retain key information.");
+            sb.AppendLine("请将以下对话内容总结为一个简洁的段落，保留关键信息。直接输出总结内容，不要包含任何前缀或解释。");
             if (!string.IsNullOrEmpty(Summary))
             {
-                sb.AppendLine($"Existing summary: {Summary}");
+                sb.AppendLine($"已有总结: {Summary}");
             }
-            sb.AppendLine("\nNew lines to merge:");
+            sb.AppendLine("\n需要合并的新对话:");
             foreach (var msg in messagesToCompress)
             {
                 sb.AppendLine($"[{msg.Role}]: {msg.Content}");
@@ -590,7 +647,7 @@ namespace TheSecondSeat.RimAgent
             {
                 // 调用 LLM 生成摘要 (使用较小的 maxTokens)
                 string newSummary = await Provider.SendMessageAsync(
-                    "You are a summarization assistant.",
+                    "你是一个专业的对话总结助手。请用简体中文简要总结对话内容，保留关键信息。",
                     "",
                     sb.ToString(),
                     0.5f,
@@ -638,7 +695,7 @@ namespace TheSecondSeat.RimAgent
             // 之前的观察
             if (observations.Count > 0)
             {
-                sb.AppendLine("## Previous Steps:");
+                sb.AppendLine("## 已执行步骤:");
                 foreach (var obs in observations)
                 {
                     sb.AppendLine(obs);
@@ -647,7 +704,7 @@ namespace TheSecondSeat.RimAgent
             }
             
             // 用户输入
-            sb.AppendLine($"## User Request:");
+            sb.AppendLine($"## 用户请求:");
             sb.AppendLine(userInput);
             
             return sb.ToString();

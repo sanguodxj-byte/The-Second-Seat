@@ -22,14 +22,9 @@ namespace TheSecondSeat.Framework.Triggers
         public float minAffinity = float.MinValue;
         public float maxAffinity = float.MaxValue;
         
-        public override bool IsSatisfied(Map map, Dictionary<string, object> context)
+        public override bool IsSatisfied(Map map, in NarratorContext context)
         {
-            if (!context.TryGetValue("affinity", out object affinityObj))
-            {
-                return false;
-            }
-            
-            float affinity = Convert.ToSingle(affinityObj);
+            float affinity = context.Affinity;
             return affinity >= minAffinity && affinity <= maxAffinity;
         }
         
@@ -48,19 +43,9 @@ namespace TheSecondSeat.Framework.Triggers
         public int minCount = 0;
         public int maxCount = int.MaxValue;
         
-        public override bool IsSatisfied(Map map, Dictionary<string, object> context)
+        public override bool IsSatisfied(Map map, in NarratorContext context)
         {
-            if (!context.TryGetValue("colonistCount", out object countObj))
-            {
-                if (map != null)
-                {
-                    int count = map.mapPawns.FreeColonistsCount;
-                    return count >= minCount && count <= maxCount;
-                }
-                return false;
-            }
-            
-            int colonistCount = Convert.ToInt32(countObj);
+            int colonistCount = context.ColonistCount;
             return colonistCount >= minCount && colonistCount <= maxCount;
         }
         
@@ -81,21 +66,21 @@ namespace TheSecondSeat.Framework.Triggers
         public bool checkBuildings = false;
         public bool checkItems = false;
         
-        public override bool IsSatisfied(Map map, Dictionary<string, object> context)
+        public override bool IsSatisfied(Map map, in NarratorContext context)
         {
             float wealth = 0f;
             
-            if (checkTotal && context.TryGetValue("wealthTotal", out object wealthTotalObj))
+            if (checkTotal)
             {
-                wealth = Convert.ToSingle(wealthTotalObj);
+                wealth = context.WealthTotal;
             }
-            else if (checkBuildings && context.TryGetValue("wealthBuildings", out object wealthBuildingsObj))
+            else if (checkBuildings)
             {
-                wealth = Convert.ToSingle(wealthBuildingsObj);
+                wealth = context.WealthBuildings;
             }
-            else if (checkItems && context.TryGetValue("wealthItems", out object wealthItemsObj))
+            else if (checkItems)
             {
-                wealth = Convert.ToSingle(wealthItemsObj);
+                wealth = context.WealthItems;
             }
             else if (map != null && map.wealthWatcher != null)
             {
@@ -119,17 +104,17 @@ namespace TheSecondSeat.Framework.Triggers
     {
         public List<Season> allowedSeasons = new List<Season>();
         
-        public override bool IsSatisfied(Map map, Dictionary<string, object> context)
+        public override bool IsSatisfied(Map map, in NarratorContext context)
         {
             if (allowedSeasons == null || allowedSeasons.Count == 0)
             {
                 return true;
             }
             
-            if (context.TryGetValue("gameSeason", out object seasonObj))
+            // 使用Context中的季节
+            if (context.GameSeason != Season.Undefined)
             {
-                Season currentSeason = (Season)seasonObj;
-                return allowedSeasons.Contains(currentSeason);
+                return allowedSeasons.Contains(context.GameSeason);
             }
             
             if (map != null)
@@ -155,8 +140,9 @@ namespace TheSecondSeat.Framework.Triggers
         public int minHour = 0;
         public int maxHour = 24;
         
-        public override bool IsSatisfied(Map map, Dictionary<string, object> context)
+        public override bool IsSatisfied(Map map, in NarratorContext context)
         {
+            if (map == null) return false;
             int currentHour = GenLocalDate.HourOfDay(map);
             return currentHour >= minHour && currentHour < maxHour;
         }
@@ -174,7 +160,7 @@ namespace TheSecondSeat.Framework.Triggers
     {
         public float chance = 0.5f;
         
-        public override bool IsSatisfied(Map map, Dictionary<string, object> context)
+        public override bool IsSatisfied(Map map, in NarratorContext context)
         {
             return Rand.Value <= chance;
         }
@@ -192,19 +178,16 @@ namespace TheSecondSeat.Framework.Triggers
     {
         public List<string> allowedMoods = new List<string>();
         
-        public override bool IsSatisfied(Map map, Dictionary<string, object> context)
+        public override bool IsSatisfied(Map map, in NarratorContext context)
         {
             if (allowedMoods == null || allowedMoods.Count == 0)
             {
                 return true;
             }
             
-            if (!context.TryGetValue("mood", out object moodObj))
-            {
-                return false;
-            }
+            string currentMood = context.Mood;
+            if (string.IsNullOrEmpty(currentMood)) return false;
             
-            string currentMood = moodObj.ToString();
             return allowedMoods.Contains(currentMood);
         }
         

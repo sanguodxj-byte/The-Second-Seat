@@ -74,6 +74,28 @@ namespace TheSecondSeat.Monitoring
         /// 当前房间类型（如果有）
         /// </summary>
         public string? currentRoom { get; set; }
+        
+        // v2.5.0: 技能信息
+        /// <summary>
+        /// 最擅长的技能列表（前3个）
+        /// </summary>
+        public List<SkillInfo> topSkills { get; set; } = new List<SkillInfo>();
+        
+        /// <summary>
+        /// 推荐的工作类型
+        /// </summary>
+        public List<string> recommendedWork { get; set; } = new List<string>();
+    }
+    
+    /// <summary>
+    /// v2.5.0: 技能信息
+    /// </summary>
+    [Serializable]
+    public class SkillInfo
+    {
+        public string name { get; set; } = "";
+        public int level { get; set; }
+        public string passion { get; set; } = ""; // "", "Minor", "Major"
     }
 
     [Serializable]
@@ -518,30 +540,16 @@ namespace TheSecondSeat.Monitoring
 
             try
             {
-                // ? 修复：只计算殖民地区域（Home Area）的资源，而不是整个地图
-                var homeArea = map.areaManager.Home;
+                // ⭐ v2.9.0: 优化为使用 ResourceCounter (O(1) 复杂度)
+                // 仅统计储存区和发射架中的物品，避免全图遍历
+                var counter = map.resourceCounter;
                 
-                if (homeArea == null)
-                {
-                    Log.Warning("[The Second Seat] Home area not found, counting all stockpile zones");
-                    // 如果没有 Home Area，则计算所有储存区域
-                    return CaptureResourcesFromStockpiles(map);
-                }
-
-                // 只计算 Home Area 内的物品
-                var allThings = map.listerThings.AllThings
-                    .Where(t => homeArea[t.Position]) // ? 过滤：只在 Home Area 内
-                    .ToList();
-
-                resources.food = allThings
-                    .Where(t => t.def.IsNutritionGivingIngestible)
-                    .Sum(t => t.stackCount);
-
-                resources.wood = CountResource(allThings, ThingDefOf.WoodLog);
-                resources.steel = CountResource(allThings, ThingDefOf.Steel);
-                resources.medicine = CountResource(allThings, ThingDefOf.MedicineIndustrial);
+                resources.wood = counter.GetCount(ThingDefOf.WoodLog);
+                resources.steel = counter.GetCount(ThingDefOf.Steel);
+                resources.medicine = counter.GetCount(ThingDefOf.MedicineIndustrial);
+                resources.food = (int)counter.TotalHumanEdibleNutrition;
                 
-                Log.Message($"[The Second Seat] Captured colony resources (Home Area): Food={resources.food}, Wood={resources.wood}, Steel={resources.steel}, Medicine={resources.medicine}");
+                // Log.Message($"[The Second Seat] Captured colony resources (Fast): Food={resources.food}, Wood={resources.wood}, Steel={resources.steel}, Medicine={resources.medicine}");
             }
             catch (Exception ex)
             {
