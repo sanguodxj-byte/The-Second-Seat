@@ -277,6 +277,77 @@ namespace TheSecondSeat.PersonaGeneration
         public bool HasCustomConfig => head != null || body != null;
     }
 
+    // =========================================================================
+    // ⭐ v2.5.0: 服装图层配置 (Outfit Layer Config)
+    // =========================================================================
+
+    /// <summary>
+    /// ⭐ v2.5.0: 服装图层定义
+    /// 用于在渲染树中定义服装的图层结构
+    /// </summary>
+    public class OutfitLayerConfig
+    {
+        /// <summary>图层名称（用于标识）</summary>
+        public string name = "";
+
+        /// <summary>纹理文件名（相对于人格的 Layered 文件夹）</summary>
+        public string textureName = "";
+
+        /// <summary>图层排序（越大越在上层，0=最底层）</summary>
+        public int zOrder = 0;
+
+        /// <summary>
+        /// 图层类型
+        /// - Body: 替换 base_body
+        /// - Overlay: 叠加在 body 之上
+        /// - Accessory: 配件（如帽子、饰品）
+        /// </summary>
+        public string layerType = "Overlay";
+
+        /// <summary>是否在说话时隐藏（如围巾可能遮挡嘴巴）</summary>
+        public bool hideWhenSpeaking = false;
+
+        /// <summary>是否保留眼睛纹理（用于睡衣等需要闭眼的情况）</summary>
+        public bool preserveEyes = true;
+
+        /// <summary>可选：专用眼睛纹理（覆盖默认）</summary>
+        public string eyesOverride = "";
+
+        /// <summary>可选：专用嘴巴纹理（覆盖默认）</summary>
+        public string mouthOverride = "";
+    }
+
+    /// <summary>
+    /// ⭐ v2.5.0: 服装配置
+    /// 定义一套完整的服装图层组合
+    /// </summary>
+    public class OutfitConfig
+    {
+        /// <summary>服装标签（如 Pajamas, Casual, Formal）</summary>
+        public string outfitTag = "";
+
+        /// <summary>服装名称（显示用）</summary>
+        public string displayName = "";
+
+        /// <summary>主体纹理（替换 base_body）</summary>
+        public string bodyTexture = "";
+
+        /// <summary>附加图层列表</summary>
+        public List<OutfitLayerConfig> layers = new List<OutfitLayerConfig>();
+
+        /// <summary>是否保留原有表情系统</summary>
+        public bool preserveExpressions = true;
+
+        /// <summary>表情纹理后缀（如 "_pajamas"）</summary>
+        public string expressionSuffix = "";
+
+        /// <summary>特殊眼睛纹理（睡眠时闭眼等）</summary>
+        public string sleepingEyes = "";
+
+        /// <summary>优先级（用于多个服装同时激活时的选择）</summary>
+        public int priority = 0;
+    }
+
     /// <summary>
     /// 说话动画配置
     /// </summary>

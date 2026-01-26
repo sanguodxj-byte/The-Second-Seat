@@ -146,6 +146,23 @@
       <flightDurationMin>0.3</flightDurationMin>
       <heightFactor>1.5</heightFactor>
     </pawnFlyer>
+    <!-- ⭐ v2.5.0: 添加 CalamityThrowExtension 配置 -->
+    <modExtensions>
+      <li Class="TheSecondSeat.CalamityThrowExtension">
+        <!-- 基础伤害 -->
+        <baseDamage>40</baseDamage>
+        <!-- 爆炸半径 -->
+        <explosionRadius>3.5</explosionRadius>
+        <!-- 护甲穿透 -->
+        <armorPenetration>999</armorPenetration>
+        <!-- 飞行速度 -->
+        <defaultFlightSpeed>15</defaultFlightSpeed>
+        <!-- 伤害类型 -->
+        <damageDefName>Blunt</damageDefName>
+        <!-- 伤害倍率 Hediff -->
+        <damageMultiplierHediffDefName>TSS_CalamityThrowBonus</damageMultiplierHediffDefName>
+      </li>
+    </modExtensions>
   </ThingDef>
 
 </Defs>

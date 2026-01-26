@@ -11,8 +11,9 @@
       <ToxicResistance>1</ToxicResistance>
     </statBases>
     <race>
-      <thinkTreeMain>Animal</thinkTreeMain>
-      <thinkTreeConstant>AnimalConstant</thinkTreeConstant>
+      <!-- ⭐ 使用战斗型 ThinkTree，让 Sideria 像龙一样主动追击敌人 -->
+      <thinkTreeMain>Sideria_CombatThinkTree</thinkTreeMain>
+      <thinkTreeConstant>Sideria_CombatThinkTree_Constant</thinkTreeConstant>
       <hasGenders>false</hasGenders> <!-- Sideria is genderless -->
       <bloodDef>Filth_Blood</bloodDef>
       <bloodSmearDef>Filth_BloodSmear</bloodSmearDef>
@@ -31,16 +32,22 @@
       <li MayRequire="Ludeon.RimWorld.Royalty">CureBloodRot</li>
     </recipes>
     <comps>
-      <!-- 自动使用技能（援助模式） -->
+      <!-- ⭐ 自动使用技能（援助模式）- 更积极地使用唤龙和投掷 -->
       <li Class="TheSecondSeat.CompProperties_AutoAbility">
         <abilityDefs>
-          <li>Sideria_CrimsonBloom</li>
+          <!-- 优先级顺序：唤龙（三种类型）> 投掷 > 猩红绽放 -->
+          <li>Sideria_DragonGate_BloodThorn</li>
+          <li>Sideria_DragonGate_Radiant</li>
+          <li>Sideria_DragonGate_Mecha</li>
           <li>TSS_CalamityThrow</li>
-          <li>Sideria_DragonGate</li>
+          <li>Sideria_CrimsonBloom</li>
         </abilityDefs>
-        <checkInterval>180</checkInterval>
-        <searchRadius>25</searchRadius>
-        <maxSummonCount>2</maxSummonCount>
+        <!-- 更频繁地检查（每2秒） -->
+        <checkInterval>120</checkInterval>
+        <!-- 更大的搜索范围 -->
+        <searchRadius>35</searchRadius>
+        <!-- 最多召唤3条龙 -->
+        <maxSummonCount>3</maxSummonCount>
         <summonLimitDefName>Sideria_SpiritDragon</summonLimitDefName>
       </li>
       <li Class="TheSecondSeat.CompProperties_NarratorEntity">

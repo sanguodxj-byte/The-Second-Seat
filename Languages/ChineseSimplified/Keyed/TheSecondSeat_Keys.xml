@@ -550,4 +550,18 @@
   <TSS_Debug_Mode_Engineer>🛠️ 工程师模式</TSS_Debug_Mode_Engineer>
   <TSS_Debug_Mode_Engineer_Desc>叙事者专注于技术和建造</TSS_Debug_Mode_Engineer_Desc>
   <TSS_Debug_ModeSwitched>已切换至模式：{0}</TSS_Debug_ModeSwitched>
+  
+  <!-- Lip Sync 配置 -->
+  <TSS_RenderTree_Tab_LipSync>口型同步</TSS_RenderTree_Tab_LipSync>
+  <TSS_RenderTree_LipSync_ConfigTitle>口型同步配置 (Lite Mapping)</TSS_RenderTree_LipSync_ConfigTitle>
+  <TSS_RenderTree_LipSync_NoDefLoaded>未加载 LipSyncMappingDef。</TSS_RenderTree_LipSync_NoDefLoaded>
+  <TSS_RenderTree_LipSync_GlobalSettings>全局设置:</TSS_RenderTree_LipSync_GlobalSettings>
+  <TSS_RenderTree_LipSync_AttackTime>起音时间 (秒)</TSS_RenderTree_LipSync_AttackTime>
+  <TSS_RenderTree_LipSync_ReleaseTime>释音时间 (秒)</TSS_RenderTree_LipSync_ReleaseTime>
+  <TSS_RenderTree_LipSync_MinSustainFrames>最小保持帧数</TSS_RenderTree_LipSync_MinSustainFrames>
+  <TSS_RenderTree_LipSync_DefaultViseme>默认口型: {0}</TSS_RenderTree_LipSync_DefaultViseme>
+  <TSS_RenderTree_LipSync_MappingsList>音素组映射列表:</TSS_RenderTree_LipSync_MappingsList>
+  <TSS_RenderTree_LipSync_AddNewMapping>添加新映射</TSS_RenderTree_LipSync_AddNewMapping>
+  <TSS_RenderTree_LipSync_LoadSuccess>口型同步配置已加载</TSS_RenderTree_LipSync_LoadSuccess>
+  <TSS_RenderTree_LipSync_LoadFailed>加载口型同步配置失败</TSS_RenderTree_LipSync_LoadFailed>
 </LanguageData>

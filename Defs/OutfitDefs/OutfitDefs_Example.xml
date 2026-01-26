@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!--
+    =====================================================
+    ⭐ The Second Seat - 服装定义示例
+    OutfitDef v2.5.0
+    =====================================================
+    
+    此文件展示如何通过 XML 定义叙事者的可切换服装。
+    支持基于时间、好感度、活动状态等条件自动切换。
+    
+    纹理路径规范：
+    - 主 Mod: UI/Narrators/9x16/{PersonaName}/{bodyTexture}
+    - 子 Mod: {ResourceName}/Narrators/Layered/{bodyTexture}
+    
+    条件类型 (conditionType):
+    - Always: 始终满足（用于默认服装）
+    - TimeOfDay: 根据现实时间（如睡眠时间 22:00-07:00）
+    - GameTimeOfDay: 根据游戏内时间
+    - AffinityRange: 根据好感度范围
+    - Activity: 根据活动状态 (Resting, Working, MealTime 等)
+    - Weather: 根据天气 (Rain, Snow, Clear 等)
+    - Season: 根据季节 (Spring, Summer, Fall, Winter)
+    - Holiday: 特殊节日 (Christmas, Halloween, NewYear 等)
+    - Custom: 自定义 Scriban 表达式
+    
+    优先级说明：
+    - 数值越大优先级越高
+    - 当多个服装同时满足条件时，使用优先级最高的
+    - 建议: 默认服装=0, 睡衣=10, 节日=20, 特殊=50
+    
+  -->
+
+  <!-- ========================================== -->
+  <!-- 通用默认服装（所有人格可用，优先级最低） -->
+  <!-- ========================================== -->
+  
+  <TheSecondSeat.PersonaGeneration.OutfitDef>
+    <defName>TSS_Outfit_Default</defName>
+    <label>默认服装</label>
+    <outfitTag>Default</outfitTag>
+    <!-- personaDefName 为空表示通用服装 -->
+    <personaDefName></personaDefName>
+    <outfitDescription>叙事者的日常服装</outfitDescription>
+    
+    <!-- 不指定 bodyTexture 表示使用人格默认的 base_body -->
+    <bodyTexture></bodyTexture>
+    
+    <!-- 始终满足的条件 -->
+    <conditions>
+      <li>
+        <conditionType>Always</conditionType>
+      </li>
+    </conditions>
+    
+    <!-- 最低优先级 -->
+    <priority>0</priority>
+    
+    <!-- 切换动画 -->
+    <transitionType>Instant</transitionType>
+  </TheSecondSeat.PersonaGeneration.OutfitDef>
+
+  <!-- ========================================== -->
+  <!-- 通用睡衣（睡眠时间自动切换） -->
+  <!-- ========================================== -->
+  
+  <TheSecondSeat.PersonaGeneration.OutfitDef>
+    <defName>TSS_Outfit_Pajamas_Generic</defName>
+    <label>睡衣</label>
+    <outfitTag>Pajamas</outfitTag>
+    <personaDefName></personaDefName>
+    <outfitDescription>舒适的睡衣，在深夜时间（22:00-07:00）自动切换</outfitDescription>
+    
+    <!-- 睡衣主体纹理 -->
+    <bodyTexture>pajamas_body</bodyTexture>
+    
+    <!-- 睡眠时间条件（现实时间 22:00 - 07:00） -->
+    <conditions>
+      <li>
+        <conditionType>TimeOfDay</conditionType>
+        <hourStart>22</hourStart>
+        <hourEnd>7</hourEnd>
+      </li>
+    </conditions>
+    
+    <!-- 中等优先级 -->
+    <priority>10</priority>
+    
+    <!-- 保留表情系统 -->
+    <preserveExpressions>true</preserveExpressions>
+    
+    <!-- 切换动画 -->
+    <transitionType>Fade</transitionType>
+    <transitionDuration>0.5</transitionDuration>
+    
+    <!-- 切换时显示的短语键 -->
+    <transitionPhraseKey>PajamasChange</transitionPhraseKey>
+  </TheSecondSeat.PersonaGeneration.OutfitDef>
+
+  <!-- ========================================== -->
+  <!-- 高好感度私密服装 -->
+  <!-- ========================================== -->
+  
+  <TheSecondSeat.PersonaGeneration.OutfitDef>
+    <defName>TSS_Outfit_Intimate</defName>
+    <label>私密服装</label>
+    <outfitTag>Intimate</outfitTag>
+    <personaDefName></personaDefName>
+    <outfitDescription>高好感度时穿着的私密服装</outfitDescription>
+    
+    <bodyTexture>intimate_body</bodyTexture>
+    
+    <!-- 好感度 >= 60 且为睡眠时间 -->
+    <conditions>
+      <li>
+        <conditionType>AffinityRange</conditionType>
+        <affinityMin>60</affinityMin>
+        <affinityMax>100</affinityMax>
+      </li>
+      <li>
+        <conditionType>TimeOfDay</conditionType>
+        <hourStart>22</hourStart>
+        <hourEnd>7</hourEnd>
+      </li>
+    </conditions>
+    
+    <!-- 高于睡衣优先级 -->
+    <priority>15</priority>
+    
+    <preserveExpressions>true</preserveExpressions>
+    <transitionType>Fade</transitionType>
+    <transitionDuration>0.8</transitionDuration>
+  </TheSecondSeat.PersonaGeneration.OutfitDef>
+
+  <!-- ========================================== -->
+  <!-- 使用 Scriban 表达式的复杂条件示例 -->
+  <!-- ========================================== -->
+  
+  <TheSecondSeat.PersonaGeneration.OutfitDef>
+    <defName>TSS_Outfit_Scriband_Example</defName>
+    <label>Scriban 条件示例</label>
+    <outfitTag>ScribanExample</outfitTag>
+    <personaDefName></personaDefName>
+    <outfitDescription>展示如何使用 Scriban 表达式定义复杂条件</outfitDescription>
+    
+    <bodyTexture>special_body</bodyTexture>
+    
+    <conditions>
+      <li>
+        <conditionType>Custom</conditionType>
+        <!-- 
+          Scriban 可用变量:
+          - hour: 现实时间（小时，0-23）
+          - game_hour: 游戏内时间（小时，0-23）
+          - affinity: 好感度（-100 到 100）
+          - activity: 活动状态（字符串）
+          - weather: 天气（字符串）
+          - season: 季节（字符串）
+          - mood: 心情（0-100）
+          - energy: 精力（0-100）
+          
+          辅助函数:
+          - is_sleeping_time: 是否为睡眠时间
+          - is_work_time: 是否为工作时间
+          - is_meal_time: 是否为进餐时间
+          - is_high_affinity: 好感度是否高于60
+          - is_low_energy: 精力是否低于30
+          - is_resting: 是否在休息
+        -->
+        <scribanExpression>{{ (affinity >= 60 &amp;&amp; energy &lt; 30) || (is_sleeping_time &amp;&amp; mood > 70) }}</scribanExpression>
+      </li>
+    </conditions>
+    
+    <priority>25</priority>
+    <preserveExpressions>true</preserveExpressions>
+  </TheSecondSeat.PersonaGeneration.OutfitDef>
+
+  <!-- ========================================== -->
+  <!-- 带附加图层的服装示例 -->
+  <!-- ========================================== -->
+  
+  <TheSecondSeat.PersonaGeneration.OutfitDef>
+    <defName>TSS_Outfit_WithLayers</defName>
+    <label>带附加图层的服装</label>
+    <outfitTag>LayeredOutfit</outfitTag>
+    <personaDefName></personaDefName>
+    <outfitDescription>展示如何使用附加图层（围巾、饰品等）</outfitDescription>
+    
+    <bodyTexture>winter_body</bodyTexture>
+    
+    <!-- 附加图层 -->
+    <layers>
+      <li>
+        <name>围巾</name>
+        <textureName>scarf_layer</textureName>
+        <zOrder>10</zOrder>
+        <replaceBody>false</replaceBody>
+      </li>
+      <li>
+        <name>帽子</name>
+        <textureName>hat_layer</textureName>
+        <zOrder>20</zOrder>
+        <replaceBody>false</replaceBody>
+      </li>
+    </layers>
+    
+    <conditions>
+      <li>
+        <conditionType>Season</conditionType>
+        <season>Winter</season>
+      </li>
+    </conditions>
+    
+    <priority>15</priority>
+    <preserveExpressions>true</preserveExpressions>
+    
+    <!-- 服装专用表情后缀 -->
+    <expressionSuffix>_winter</expressionSuffix>
+  </TheSecondSeat.PersonaGeneration.OutfitDef>
+
+</Defs>

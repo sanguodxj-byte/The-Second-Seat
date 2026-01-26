@@ -485,4 +485,18 @@ Click to talk with the AI Narrator</TSS_NarratorButton_Tooltip>
   <TSS_CmdList_ExecuteFailed>Execution failed: {0}</TSS_CmdList_ExecuteFailed>
   <TSS_CmdList_OpenButton>View Command List</TSS_CmdList_OpenButton>
   <TSS_CmdList_OpenButton_Desc>Show all available AI commands</TSS_CmdList_OpenButton_Desc>
+  
+  <!-- Lip Sync Config -->
+  <TSS_RenderTree_Tab_LipSync>Lip Sync</TSS_RenderTree_Tab_LipSync>
+  <TSS_RenderTree_LipSync_ConfigTitle>Lip Sync Configuration (Lite Mapping)</TSS_RenderTree_LipSync_ConfigTitle>
+  <TSS_RenderTree_LipSync_NoDefLoaded>No LipSyncMappingDef loaded.</TSS_RenderTree_LipSync_NoDefLoaded>
+  <TSS_RenderTree_LipSync_GlobalSettings>Global Settings:</TSS_RenderTree_LipSync_GlobalSettings>
+  <TSS_RenderTree_LipSync_AttackTime>Attack Time (s)</TSS_RenderTree_LipSync_AttackTime>
+  <TSS_RenderTree_LipSync_ReleaseTime>Release Time (s)</TSS_RenderTree_LipSync_ReleaseTime>
+  <TSS_RenderTree_LipSync_MinSustainFrames>Min Sustain Frames</TSS_RenderTree_LipSync_MinSustainFrames>
+  <TSS_RenderTree_LipSync_DefaultViseme>Default Viseme: {0}</TSS_RenderTree_LipSync_DefaultViseme>
+  <TSS_RenderTree_LipSync_MappingsList>Phoneme Group Mappings:</TSS_RenderTree_LipSync_MappingsList>
+  <TSS_RenderTree_LipSync_AddNewMapping>Add New Mapping</TSS_RenderTree_LipSync_AddNewMapping>
+  <TSS_RenderTree_LipSync_LoadSuccess>LipSync configuration loaded</TSS_RenderTree_LipSync_LoadSuccess>
+  <TSS_RenderTree_LipSync_LoadFailed>Failed to load LipSync configuration</TSS_RenderTree_LipSync_LoadFailed>
 </LanguageData>

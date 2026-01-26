@@ -1,9 +1,59 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
+  <!-- ============================================== -->
+  <!-- Sideria 战斗型 ThinkTree -->
+  <!-- 让 Sideria 像龙一样主动追击敌人 -->
+  <!-- ============================================== -->
+  
+  <!-- 主 ThinkTree - 战斗优先的动物AI -->
+  <ThinkTreeDef>
+    <defName>Sideria_CombatThinkTree</defName>
+    <thinkRoot Class="ThinkNode_Priority">
+      <subNodes>
+        <!-- 最高优先级：征召命令 -->
+        <li Class="ThinkNode_Subtree">
+          <treeDef>SideriaDraftedThinkTree</treeDef>
+        </li>
+        
+        <!-- 高优先级：战斗行为 - 主动攻击敌人 -->
+        <!-- 注意：使用 JobGiver_AIFightEnemies (有s)，不是抽象类 JobGiver_AIFightEnemy -->
+        <li Class="JobGiver_AIFightEnemies">
+          <targetAcquireRadius>40</targetAcquireRadius>
+          <targetKeepRadius>50</targetKeepRadius>
+          <chaseTarget>true</chaseTarget>
+        </li>
+        
+        <!-- 中优先级：跟随主人 -->
+        <li Class="JobGiver_AIFollowMaster" />
+        
+        <!-- 低优先级：徘徊/待机 -->
+        <li Class="JobGiver_WanderAnywhere">
+          <wanderRadius>5</wanderRadius>
+          <ticksBetweenWandersRange>120~480</ticksBetweenWandersRange>
+          <locomotionUrgency>Walk</locomotionUrgency>
+        </li>
+      </subNodes>
+    </thinkRoot>
+  </ThinkTreeDef>
+
+  <!-- 常量 ThinkTree - 用于持续检查战斗 -->
+  <ThinkTreeDef>
+    <defName>Sideria_CombatThinkTree_Constant</defName>
+    <thinkRoot Class="ThinkNode_Priority">
+      <subNodes>
+        <!-- 持续检查是否需要反击 -->
+        <li Class="JobGiver_AIFightEnemies">
+          <targetAcquireRadius>30</targetAcquireRadius>
+          <targetKeepRadius>40</targetKeepRadius>
+          <chaseTarget>true</chaseTarget>
+        </li>
+      </subNodes>
+    </thinkRoot>
+  </ThinkTreeDef>
+
+  <!-- 征召模式 ThinkTree -->
   <ThinkTreeDef>
     <defName>SideriaDraftedThinkTree</defName>
-    <insertTag>Animal_PreWander</insertTag>
-    <insertPriority>100</insertPriority>
     <thinkRoot Class="ThinkNode_Tagger">
       <tagToGive>DraftedOrder</tagToGive>
       <subNodes>

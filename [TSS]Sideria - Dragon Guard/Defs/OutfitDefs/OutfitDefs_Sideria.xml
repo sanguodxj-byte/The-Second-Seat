@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!--
+    =====================================================
+    ⭐ 希德莉亚 (Sideria) - 专属服装定义
+    [TSS]Sideria - Dragon Guard 子 Mod
+    v2.5.0 - LLM驱动版
+    =====================================================
+    
+    设计理念：
+    - 服装定义仅描述服装本身
+    - 服装更换由 LLM 通过 ChangeOutfit 命令控制
+    - LLM 会根据提示词中的规则自主判断切换时机
+    
+    纹理路径：Textures/Sideria/Narrators/Layered/
+    
+    LLM 可用命令：
+    - ChangeOutfit(target: "Pajamas") - 切换到睡衣
+    - ChangeOutfit(target: "Default") - 恢复默认服装
+    
+  -->
+
+  <!-- ========================================== -->
+  <!-- 希德莉亚 - 默认法袍 -->
+  <!-- ========================================== -->
+  
+  <TheSecondSeat.PersonaGeneration.OutfitDef>
+    <defName>Sideria_Outfit_Default</defName>
+    <label>龙卫法袍</label>
+    <outfitTag>Default</outfitTag>
+    <personaDefName>TSS_Sideria</personaDefName>
+    <outfitDescription>希德莉亚的日常法袍，深灰色连帽长袍搭配皮革护甲。正式而威严。</outfitDescription>
+    
+    <!-- 使用默认的 base_body -->
+    <bodyTexture></bodyTexture>
+    
+    <priority>0</priority>
+    <preserveExpressions>true</preserveExpressions>
+    <transitionType>Instant</transitionType>
+  </TheSecondSeat.PersonaGeneration.OutfitDef>
+
+  <!-- ========================================== -->
+  <!-- 希德莉亚 - 睡衣（LLM自主切换） -->
+  <!-- ========================================== -->
+  
+  <TheSecondSeat.PersonaGeneration.OutfitDef>
+    <defName>Sideria_Outfit_Pajamas</defName>
+    <label>龙族睡袍</label>
+    <outfitTag>Pajamas</outfitTag>
+    <personaDefName>TSS_Sideria</personaDefName>
+    <outfitDescription>希德莉亚在深夜休息时穿着的柔软睡袍，露出龙尾更加自在。银白色丝绸质地，点缀着淡红色的龙族纹样。适合在夜晚私密对话时穿着。</outfitDescription>
+    
+    <!-- 睡衣纹理路径：Sideria/Narrators/Layered/pajamas_body.png -->
+    <bodyTexture>pajamas_body</bodyTexture>
+    
+    <priority>10</priority>
+    <preserveExpressions>true</preserveExpressions>
+    
+    <!-- 淡入切换 -->
+    <transitionType>Fade</transitionType>
+    <transitionDuration>0.5</transitionDuration>
+  </TheSecondSeat.PersonaGeneration.OutfitDef>
+
+  <!-- ========================================== -->
+  <!-- 希德莉亚 - 休闲装 -->
+  <!-- ========================================== -->
+  
+  <TheSecondSeat.PersonaGeneration.OutfitDef>
+    <defName>Sideria_Outfit_Casual</defName>
+    <label>龙族便装</label>
+    <outfitTag>Casual</outfitTag>
+    <personaDefName>TSS_Sideria</personaDefName>
+    <outfitDescription>希德莉亚的日常便装，比法袍更轻便舒适。适合在与玩家关系亲近时穿着。</outfitDescription>
+    
+    <bodyTexture>casual_body</bodyTexture>
+    
+    <priority>5</priority>
+    <preserveExpressions>true</preserveExpressions>
+    
+    <transitionType>Fade</transitionType>
+    <transitionDuration>0.3</transitionDuration>
+  </TheSecondSeat.PersonaGeneration.OutfitDef>
+
+  <!-- ========================================== -->
+  <!-- 希德莉亚 - 私密睡袍（高好感度） -->
+  <!-- ========================================== -->
+  
+  <TheSecondSeat.PersonaGeneration.OutfitDef>
+    <defName>Sideria_Outfit_Intimate</defName>
+    <label>龙族私密睡袍</label>
+    <outfitTag>Intimate</outfitTag>
+    <personaDefName>TSS_Sideria</personaDefName>
+    <outfitDescription>当好感度足够高时，希德莉亚愿意穿着的更为私密的睡袍。轻薄的材质隐约勾勒出她的身姿，展现出对你的信任。只有在非常信任玩家时才会考虑穿着。</outfitDescription>
+    
+    <bodyTexture>intimate_body</bodyTexture>
+    
+    <priority>15</priority>
+    <preserveExpressions>true</preserveExpressions>
+    
+    <transitionType>Fade</transitionType>
+    <transitionDuration>0.8</transitionDuration>
+  </TheSecondSeat.PersonaGeneration.OutfitDef>
+
+</Defs>

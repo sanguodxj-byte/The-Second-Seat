@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using RimTalk.API;
@@ -18,6 +19,30 @@ namespace RimTalk.Prompt;
 
 public static class ScribanParser
 {
+	private static Dictionary<string, object> _sessionVariables = new Dictionary<string, object>();
+
+	public static void ResetSessionVariables()
+	{
+		_sessionVariables.Clear();
+	}
+
+	public static void SetSessionVar(string key, object value)
+	{
+		if (!string.IsNullOrEmpty(key))
+		{
+			_sessionVariables[key.ToLowerInvariant()] = value;
+		}
+	}
+
+	public static object GetSessionVar(string key)
+	{
+		if (string.IsNullOrEmpty(key))
+		{
+			return "";
+		}
+		object value;
+		return _sessionVariables.TryGetValue(key.ToLowerInvariant(), out value) ? value : "";
+	}
     public static string Render(string templateText, PromptContext context, bool logErrors = true)
     {
         if (string.IsNullOrWhiteSpace(templateText)) return "";
@@ -35,15 +60,17 @@ public static class ScribanParser
             
             // 1. IMPORT Objects & Context
             scriptObject.Import(context, filter: m => !(m is MethodInfo mi && mi.ReturnType == typeof(void)));
+            scriptObject.Add("ctx", context);
+            scriptObject.Add("pawn", context.CurrentPawn);
+            scriptObject.Add("recipient", context.TalkRequest?.Recipient);
+            scriptObject.Add("pawns", context.AllPawns);
+            scriptObject.Add("map", context.Map);
+            scriptObject.Add("settings", Settings.Get());
             
-            // Use indexer assignment to avoid "Key already added" exceptions if Import brought in conflicting names
-            scriptObject["ctx"] = context;
-            scriptObject["pawn"] = context.CurrentPawn;
-            scriptObject["recipient"] = context.TalkRequest?.Recipient;
-            scriptObject["pawns"] = context.AllPawns;
-            scriptObject["map"] = context.Map;
-            scriptObject["settings"] = Settings.Get();
-            
+            // 2.1 Session variable functions (cross-entry variables)
+			scriptObject.Import("setvar", new Action<string, object>(SetSessionVar));
+			scriptObject.Import("getvar", new Func<string, object>(GetSessionVar));
+
             // 2. IMPORT UTILITIES (Extension Methods support)
             // This allows: {{ pawn | IsTalkEligible }} or {{ GetRole pawn }}
             // We force PascalCase to match the UI list and TemplateContext settings
@@ -94,8 +121,8 @@ public static class ScribanParser
             // 5. GLOBALVARIABLES
             if (context.VariableStore != null)
                 foreach (var kvp in context.VariableStore.GetAllVariables())
-                    // Allow overwriting existing variables (fix conflict with auto-injected pawn/map)
-                    scriptObject[kvp.Key] = kvp.Value;
+                    if (!scriptObject.ContainsKey(kvp.Key))
+                        scriptObject.Add(kvp.Key, kvp.Value);
 
             var templateContext = new TemplateContext { 
                 MemberRenamer = m => m.Name,

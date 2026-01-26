@@ -22,7 +22,8 @@ public class RimTalkSettings : ModSettings
     public const int ReplyInterval = 4;
     public bool ProcessNonRimTalkInteractions = true;
     public bool AllowSimultaneousConversations = false;
-    private string _legacyCustomInstruction = "";
+    public string SimpleModeInstruction = Constant.DefaultInstruction;
+    public string CustomInstruction = "";
     
     // New Prompt System
     public PromptManager PromptSystem = new();
@@ -154,13 +155,9 @@ public class RimTalkSettings : ModSettings
     public override void ExposeData()
     {
         base.ExposeData();
-            
-        if (Scribe.mode == LoadSaveMode.LoadingVars)
-        {
-            string legacyCustomInstruction = "";
-            Scribe_Values.Look(ref legacyCustomInstruction, "customInstruction", "");
-            _legacyCustomInstruction = legacyCustomInstruction;
-        }
+
+        Scribe_Values.Look(ref SimpleModeInstruction, "simpleModeInstruction", Constant.DefaultInstruction);
+        Scribe_Values.Look(ref CustomInstruction, "customInstruction", "");
 
         Scribe_Collections.Look(ref CloudConfigs, "cloudConfigs", LookMode.Deep);
         Scribe_Deep.Look(ref LocalConfig, "localConfig");
@@ -253,19 +250,54 @@ public class RimTalkSettings : ModSettings
         
         // Set the singleton instance
         PromptManager.SetInstance(PromptSystem);
-            
-        // One-time migration from legacy customInstruction into Base Instruction
-        if (Scribe.mode == LoadSaveMode.PostLoadInit && !string.IsNullOrWhiteSpace(_legacyCustomInstruction))
+
+        if (Scribe.mode == LoadSaveMode.PostLoadInit && LanguageDatabase.activeLanguage != null)
         {
-            var preset = PromptSystem.GetActivePreset();
-            var entry = GetOrCreateBaseInstructionEntry(preset);
-            if (entry != null)
+            bool changed = false;
+            if (PromptSystem.Presets == null || PromptSystem.Presets.Count == 0)
             {
-                bool isDefault = string.IsNullOrWhiteSpace(entry.Content) || entry.Content == Constant.DefaultInstruction;
-                if (isDefault)
-                    entry.Content = _legacyCustomInstruction;
+                PromptSystem.InitializeDefaults();
+                changed = true;
             }
-            _legacyCustomInstruction = "";
+
+            foreach (var preset in PromptSystem.Presets)
+            {
+                int beforeCount = preset.Entries.Count;
+                var baseEntry = GetOrCreateBaseInstructionEntry(preset);
+                if (preset.Entries.Count != beforeCount)
+                    changed = true;
+                if (baseEntry != null && string.IsNullOrWhiteSpace(baseEntry.Content))
+                {
+                    baseEntry.Content = Constant.DefaultInstruction;
+                    changed = true;
+                }
+            }
+
+            if (changed)
+                Write();
+        }
+            
+        // Migration Logic for Simple Mode Instruction
+        if (Scribe.mode == LoadSaveMode.PostLoadInit)
+        {
+            // 1. Recover from Preset (Reverse Migration)
+            // If SimpleModeInstruction is default, but we have a custom instruction in the preset, pull it back.
+            if (string.IsNullOrWhiteSpace(SimpleModeInstruction) || SimpleModeInstruction == Constant.DefaultInstruction)
+            {
+                var preset = PromptSystem.GetActivePreset();
+                var entry = GetOrCreateBaseInstructionEntry(preset);
+                if (entry != null && !string.IsNullOrWhiteSpace(entry.Content) && entry.Content != Constant.DefaultInstruction)
+                {
+                    SimpleModeInstruction = entry.Content;
+                }
+            }
+            
+            // 2. Migrate from Legacy CustomInstruction
+            if (!string.IsNullOrWhiteSpace(CustomInstruction))
+            {
+                SimpleModeInstruction = CustomInstruction;
+                CustomInstruction = "";
+            }
         }
 
         // Ensure we have at least one cloud config
