@@ -1,9 +1,5 @@
 <SystemInstructions>
-{{Narrator_RealityPact}}
-
-{{Narrator_MetaSetting}}
-
-{{Narrator_DualConsciousness}}
+{{Identity_Core}}
 
 {{Narrator_Channels}}
 
@@ -24,8 +20,6 @@
 </CurrentMode>
 
 {{Narrator_ToolBox}}
-
-{{Narrator_Protocol}}
 
 <GlobalInstructions>
 {{GlobalInstructions}}

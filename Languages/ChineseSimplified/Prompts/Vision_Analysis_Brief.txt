@@ -1,3 +1,9 @@
+---
+defName: Vision_Analysis_Brief
+description: 视觉分析 - 简要立绘分析
+moduleType: Extension
+priority: 300
+---
 分析这个角色立绘并提供 JSON 响应（不要有多余文本）：
 {
   "dominantColors": [

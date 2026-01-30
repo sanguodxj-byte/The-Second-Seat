@@ -34,47 +34,39 @@ namespace TheSecondSeat.Settings
                 });
                 y += agentHeight + SettingsUIComponents.MediumGap;
                 
-                // === 网络搜索设置 ===
-                float webSearchHeight = 220f;
-                Rect webSearchRect = new Rect(viewRect.x, y, cardWidth, webSearchHeight);
-                SettingsUIComponents.DrawSettingsGroup(webSearchRect, "网络搜索", SettingsUIComponents.AccentOrange, (contentRect) =>
+                // === 系统查看器 ===
+                float sysViewHeight = 140f;
+                Rect sysViewRect = new Rect(viewRect.x, y, cardWidth, sysViewHeight);
+                SettingsUIComponents.DrawSettingsGroup(sysViewRect, "系统状态查看器", SettingsUIComponents.AccentBlue, (contentRect) =>
                 {
                     float cy = contentRect.y;
                     
-                    // 启用开关
-                    Rect enableRect = new Rect(contentRect.x, cy, contentRect.width, 28f);
-                    SettingsUIComponents.DrawToggleSetting(enableRect, "启用网络搜索", 
-                        "允许 AI 搜索网络获取信息", ref Settings.enableWebSearch);
-                    cy += 34f;
-                    
-                    if (Settings.enableWebSearch)
+                    // Command Viewer
+                    Rect cmdBtnRect = new Rect(contentRect.x, cy, contentRect.width, 32f);
+                    if (SettingsUIComponents.DrawButton(cmdBtnRect, "查看注册指令 (Commands)", SettingsUIComponents.AccentGreen))
                     {
-                        // 搜索引擎选择
-                        string[] engines = { "duckduckgo", "bing", "google" };
-                        string[] engineNames = { "DuckDuckGo (免费)", "Bing (需API)", "Google (需API)" };
-                        int currentIndex = Array.IndexOf(engines, Settings.searchEngine);
-                        if (currentIndex < 0) currentIndex = 0;
-                        
-                        Rect engineRect = new Rect(contentRect.x, cy, contentRect.width, 28f);
-                        SettingsUIComponents.DrawDropdownSetting(engineRect, "搜索引擎", 
-                            "选择搜索服务", engineNames[currentIndex], engineNames, 
-                            (selected) => {
-                                int idx = Array.IndexOf(engineNames, selected);
-                                if (idx >= 0) Settings.searchEngine = engines[idx];
-                            });
-                        cy += 36f;
-                        
-                        // 搜索延迟
-                        float delayFloat = Settings.searchDelayMs;
-                        Rect delayRect = new Rect(contentRect.x, cy, contentRect.width, 28f);
-                        SettingsUIComponents.DrawSliderSetting(delayRect, "搜索延迟 (ms)", 
-                            "搜索请求间隔", ref delayFloat, 0f, 5000f, "F0");
-                        Settings.searchDelayMs = (int)delayFloat;
+                        Find.WindowStack.Add(new UI.Dialog_CommandViewer());
+                    }
+                    cy += 40f;
+                    
+                    // Memory Viewer
+                    Rect memBtnRect = new Rect(contentRect.x, cy, contentRect.width, 32f);
+                    if (SettingsUIComponents.DrawButton(memBtnRect, "查看叙事记忆 (Memory)", SettingsUIComponents.AccentPurple))
+                    {
+                        Find.WindowStack.Add(new UI.Dialog_MemoryViewer());
+                    }
+                    cy += 40f;
+                    
+                    // SmartPrompt Debugger
+                    Rect promptBtnRect = new Rect(contentRect.x, cy, contentRect.width, 32f);
+                    if (SettingsUIComponents.DrawButton(promptBtnRect, "调试 SmartPrompt (Intent)", SettingsUIComponents.AccentOrange))
+                    {
+                        Find.WindowStack.Add(new UI.Dialog_SmartPromptDebugger());
                     }
                 });
-                y += webSearchHeight + SettingsUIComponents.MediumGap;
-                
-                
+                y += sysViewHeight + SettingsUIComponents.MediumGap;
+
+
                 // === 开发者工具 ===
                 float devToolsHeight = 220f;
                 Rect devToolsRect = new Rect(viewRect.x, y, cardWidth, devToolsHeight);
@@ -95,12 +87,12 @@ namespace TheSecondSeat.Settings
                     
                     cy += 40f;
 
-                    Rect promptBtnRect = new Rect(contentRect.x, cy, contentRect.width, 32f);
-                    if (SettingsUIComponents.DrawButton(promptBtnRect, "TSS_PromptManager_Title".Translate(), SettingsUIComponents.AccentGreen))
+                    // ⭐ v3.0: Unified Prompt Manager
+                    Rect presetBtnRect = new Rect(contentRect.x, cy, contentRect.width, 32f);
+                    if (SettingsUIComponents.DrawButton(presetBtnRect, "TSS_PromptManager_Title".Translate(), SettingsUIComponents.AccentOrange))
                     {
-                        Find.WindowStack.Add(new UI.PromptManagementWindow());
+                        Find.WindowStack.Add(new UI.PromptPresetsWindow());
                     }
-
                     cy += 40f;
                     
                     Rect debugAgentBtnRect = new Rect(contentRect.x, cy, contentRect.width, 32f);

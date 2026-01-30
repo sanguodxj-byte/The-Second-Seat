@@ -1,3 +1,9 @@
+---
+defName: OutputFormat_Usage_Opponent
+description: 输出格式 - 对手模式指令用法
+moduleType: Format
+priority: 800
+---
 **指令用法（对手模式）：**
 使用指令来挑战玩家或强制执行你的意志。
 

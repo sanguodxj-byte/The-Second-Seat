@@ -1,3 +1,10 @@
+---
+defName: SystemPrompt_DialogueStyle_Scriban
+description: 系统提示词 - 对话风格（Scriban）
+moduleType: Core
+priority: 900
+useScriban: true
+---
 === HOW YOU SPEAK ===
 Your dialogue style naturally reflects who you are:
 

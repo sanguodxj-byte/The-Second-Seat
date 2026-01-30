@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 using Verse;
 
 namespace TheSecondSeat.Storyteller
@@ -65,6 +66,9 @@ namespace TheSecondSeat.Storyteller
         // === 关系历史 ===
         private List<AffinityEvent> affinityHistory = new List<AffinityEvent>();
         private const int MaxAffinityHistory = 50;
+
+        // ⭐ v3.3.0: 自定义关系轴值 (key -> value)
+        private Dictionary<string, float> customRelationships = new Dictionary<string, float>();
 
         // === 特质影响因子 ===
         private Dictionary<PersonalityTrait, TraitModifiers> traitModifiers = new Dictionary<PersonalityTrait, TraitModifiers>
@@ -152,6 +156,126 @@ namespace TheSecondSeat.Storyteller
 
             // ? **关键修复**：好感度变化时立即更新对话风格
             AdjustDialogueStyleByAffinity();
+        }
+
+        /// <summary>
+        /// ⭐ v3.3.0: 修改自定义关系轴
+        /// </summary>
+        public void ModifyRelationship(string axisKey, float delta, string reason)
+        {
+            if (string.IsNullOrEmpty(axisKey)) return;
+            if (axisKey.Equals("Affinity", StringComparison.OrdinalIgnoreCase))
+            {
+                ModifyAffinity(delta, reason);
+                return;
+            }
+
+            // 获取或初始化
+            if (!customRelationships.ContainsKey(axisKey))
+            {
+                // 尝试从 PersonaDef 获取初始值
+                float initial = 50f;
+                var manager = Current.Game?.GetComponent<Narrator.NarratorManager>();
+                var persona = manager?.GetCurrentPersona();
+                if (persona != null)
+                {
+                    var axisDef = persona.relationshipAxes.FirstOrDefault(a => a.key == axisKey);
+                    if (axisDef != null) initial = axisDef.initial;
+                }
+                customRelationships[axisKey] = initial;
+            }
+
+            // 应用修改
+            float current = customRelationships[axisKey];
+            float min = 0f;
+            float max = 100f;
+            
+            // 获取范围限制
+            var managerRef = Current.Game?.GetComponent<Narrator.NarratorManager>();
+            var personaRef = managerRef?.GetCurrentPersona();
+            if (personaRef != null)
+            {
+                var axisDef = personaRef.relationshipAxes.FirstOrDefault(a => a.key == axisKey);
+                if (axisDef != null)
+                {
+                    min = axisDef.min;
+                    max = axisDef.max;
+                }
+            }
+
+            float newValue = Mathf.Clamp(current + delta, min, max);
+            customRelationships[axisKey] = newValue;
+            
+            Log.Message($"[StorytellerAgent] 关系变化 ({axisKey}): {delta:+0.0;-0.0} ({reason}) -> {newValue:F1}");
+        }
+
+        /// <summary>
+        /// ⭐ v3.3.0: 获取关系值
+        /// </summary>
+        public float GetRelationship(string axisKey)
+        {
+            if (string.IsNullOrEmpty(axisKey) || axisKey.Equals("Affinity", StringComparison.OrdinalIgnoreCase))
+            {
+                return affinity;
+            }
+            return customRelationships.TryGetValue(axisKey, out float val) ? val : 0f;
+        }
+        
+        /// <summary>
+        /// ⭐ v3.3.0: 获取所有自定义关系
+        /// </summary>
+        public Dictionary<string, float> GetAllCustomRelationships()
+        {
+            return new Dictionary<string, float>(customRelationships);
+        }
+
+        /// <summary>
+        /// ⭐ v3.3.0: 获取格式化的关系数据 (用于 Prompt)
+        /// </summary>
+        public Dictionary<string, string> GetFormattedRelationships(PersonaGeneration.NarratorPersonaDef persona)
+        {
+            var result = new Dictionary<string, string>();
+            
+            // 1. 基础好感度
+            // 格式: 好感度:当前数值/100(冷淡，魂之绑定)
+            // 负值: 好感度:当前数值/-100(冷淡，仇恨)
+            
+            string affinityMax = affinity >= 0 ? "100" : "-100";
+            string currentTier = GetAffinityTierName(affinity);
+            string limitTier = affinity >= 0 ? GetAffinityTierName(100f) : GetAffinityTierName(-100f);
+            
+            // 如果当前就是极限，可能两个词一样，但没关系，保持格式一致
+            result["Affinity"] = $"{affinity:F0}/{affinityMax} ({currentTier}, {limitTier})";
+            
+            // 2. 自定义关系轴
+            foreach (var kvp in customRelationships)
+            {
+                float val = kvp.Value;
+                float limit = 100f;
+                string label = kvp.Key;
+                string currentDesc = "";
+                // string limitDesc = "";
+                
+                // 尝试从 Persona 获取配置
+                if (persona != null && persona.relationshipAxes != null)
+                {
+                    var axisDef = persona.relationshipAxes.FirstOrDefault(a => a.key == kvp.Key);
+                    if (axisDef != null)
+                    {
+                        limit = val >= 0 ? axisDef.max : axisDef.min;
+                        if (!string.IsNullOrEmpty(axisDef.label)) label = axisDef.label;
+                        
+                        // 对于自定义轴，如果没有 Tier 定义，我们暂时只能用 Label
+                        currentDesc = label;
+                        // limitDesc = "Max";
+                    }
+                }
+                
+                // 如果是简单数值，格式化为: 数值/上限
+                result[kvp.Key] = $"{val:F0}/{limit}";
+            }
+            
+            return result;
         }
 
         /// <summary>
@@ -294,7 +418,7 @@ namespace TheSecondSeat.Storyteller
         /// <summary>
         /// 获取好感度等级名称
         /// </summary>
-        private string GetAffinityTierName(float affinity)
+        public string GetAffinityTierName(float affinity)
         {
             if (affinity >= 85f) return "TSS_Affinity_SoulBound".Translate();
             if (affinity >= 60f) return "TSS_Affinity_Adoration".Translate();
@@ -494,6 +618,12 @@ namespace TheSecondSeat.Storyteller
             if (affinityHistory == null)
             {
                 affinityHistory = new List<AffinityEvent>();
+            }
+
+            Scribe_Collections.Look(ref customRelationships, "customRelationships", LookMode.Value, LookMode.Value);
+            if (customRelationships == null)
+            {
+                customRelationships = new Dictionary<string, float>();
             }
         }
 

@@ -1,17 +1,25 @@
-## Construction Knowledge
+---
+defName: Module_Construction
+description: 建造模块 - 处理建筑规划和建设
+author: The Second Seat
+moduleType: Skill
+intents: [Build, Construct]
+keywords: [建造, 建设, 建筑, 规划, 墙壁, 门, 地板]
+---
+## 建造知识
 
-### Build Commands
-Use the 'Build' command to construct buildings. You need to specify:
-- target: Building type
-- position: Build position (optional)
+### 建造指令
+使用 Build 指令建造建筑物。需要指定：
+- target: 建筑类型
+- position: 建造位置（可选）
 
-### Priority Suggestions
-- Infrastructure (walls, doors): High priority
-- Work areas: Medium priority
-- Decorative: Low priority
+### 优先级建议
+- 基础设施（墙、门）: 优先
+- 工作区域: 次优先
+- 装饰性建筑: 低优先级
 
-### Material Tips
-- Wood: Cheap but flammable
-- Stone: Durable but slow to build
-- Steel: Balanced choice
-- Plasteel/Components: Best but expensive
+### 材料提示
+- 木材：便宜但易燃
+- 石头：耐久但建造慢
+- 钢铁：平衡之选
+- 复合材料：最佳但昂贵

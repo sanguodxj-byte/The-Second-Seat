@@ -4,6 +4,7 @@ using System.Linq;
 using TheSecondSeat.Storyteller;
 using TheSecondSeat.PersonaGeneration.PromptSections;
 using TheSecondSeat.PersonaGeneration.Scriban; // ⭐ v2.0.0
+using TheSecondSeat.PersonaGeneration.Presets; // ⭐ v3.0.0: Presets
 using TheSecondSeat.Descent; // ⭐ v2.1.0: 降临系统
 using TheSecondSeat.Core; // ⭐ v2.1.0: NarratorBioRhythm
 using Verse;
@@ -11,7 +12,7 @@ using Verse;
 namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
-    /// ⭐ v1.6.77: System Prompt 生成器 - 重构版（模块化 + 日志诊断）
+    /// ⭐ v3.0.0: System Prompt 生成器 - Preset 驱动
     /// 
     /// 核心更新：
     /// - v1.6.76: 大文件拆分（1000+ 行 → 7 个 Section 模块）
@@ -24,31 +25,36 @@ namespace TheSecondSeat.PersonaGeneration
     public static class SystemPromptGenerator
     {
         /// <summary>
-        /// ⭐ v1.6.77: 生成完整的 System Prompt（新增日志诊断能力）
-        /// 重构：使用 Master Template 进行生成
+        /// ⭐ v3.0.0: 生成完整的 System Prompt（Preset 驱动）
         /// </summary>
         public static string GenerateSystemPrompt(
             NarratorPersonaDef personaDef,
             PersonaAnalysisResult analysis,
             StorytellerAgent agent,
-            AIDifficultyMode difficultyMode = AIDifficultyMode.Assistant)
+            AIDifficultyMode difficultyMode = AIDifficultyMode.Assistant,
+            string userInput = null)
         {
-            // ⭐ v1.7.0: Custom System Prompt Override
+            // ⭐ Custom System Prompt Override
             if (!string.IsNullOrWhiteSpace(personaDef.customSystemPrompt))
             {
                 return personaDef.customSystemPrompt;
             }
 
-            // ⭐ v2.0.0: Scriban 重构
-            // 构建上下文
+            // 1. 构建 PromptContext (用于 Scriban 渲染)
+            // ⭐ v3.1.0: 确保 Card 永不为 null，防止 Scriban 渲染报错
+            var currentCard = TheSecondSeat.CharacterCard.CharacterCardSystem.GetCurrentCard();
+            if (currentCard == null)
+            {
+                currentCard = new TheSecondSeat.CharacterCard.NarratorStateCard();
+            }
+            
             var context = new PromptContext
             {
-                // ⭐ 注入角色卡数据 (v2.2.0+)
-                Card = TheSecondSeat.CharacterCard.CharacterCardSystem.GetCurrentCard(),
-
+                UserInput = userInput, // ⭐ v3.0: 传递用户输入
+                Card = currentCard,
                 Narrator = new NarratorInfo
                 {
-                    DefName = personaDef.defName, // ⭐ v3.0: 传递 Persona DefName
+                    DefName = personaDef.defName,
                     Name = personaDef.narratorName,
                     Label = personaDef.label,
                     Biography = personaDef.biography,
@@ -59,6 +65,7 @@ namespace TheSecondSeat.PersonaGeneration
                 {
                     Affinity = agent.affinity,
                     Mood = agent.currentMood.ToString(),
+                    Relationships = agent.GetFormattedRelationships(personaDef),
                     DialogueStyle = new DialogueStyleInfo
                     {
                         Formality = agent.dialogueStyle.formalityLevel,
@@ -78,52 +85,80 @@ namespace TheSecondSeat.PersonaGeneration
                 }
             };
 
-            // 获取 Mod 设置
-            var modSettings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
-            if (modSettings != null && !string.IsNullOrWhiteSpace(modSettings.globalPrompt))
+            // 2. 注入旧版 Snippets (为了兼容 Presets 中可能使用的 {{ snippets.identity_section }} 等)
+            // 虽然推荐使用新的 Preset Entries 组合，但保留 Snippets 可以平滑过渡
+            InjectLegacySnippets(context, personaDef, analysis, agent, difficultyMode);
+
+            // 3. 获取 Active Preset 并生成
+            var activePreset = PromptPresetManager.GetActivePreset();
+            if (activePreset != null && activePreset.Entries.Any())
             {
-                context.Meta.ModSettingsPrompt = modSettings.globalPrompt.Trim();
+                var sb = new StringBuilder();
+                
+                // 遍历 Entries
+                foreach (var entry in activePreset.Entries)
+                {
+                    if (!entry.Enabled) continue;
+
+                    // 渲染 Entry 内容 (支持 Scriban)
+                    string renderedContent = PromptRenderer.RenderInline(entry.Content, context);
+                    
+                    if (!string.IsNullOrWhiteSpace(renderedContent))
+                    {
+                        sb.AppendLine(renderedContent);
+                        sb.AppendLine(); // 增加空行分隔
+                    }
+                }
+                
+                return sb.ToString();
             }
 
-            // 准备 Snippets (保留旧生成逻辑)
-            
-            // Identity
+            // 4. Fallback: 如果没有 Active Preset，使用默认的 Master Template
+            return PromptRenderer.Render("SystemPrompt_Master_Scriban", context);
+        }
+
+        /// <summary>
+        /// 注入旧版 Snippets 以兼容旧模板逻辑
+        /// </summary>
+        private static void InjectLegacySnippets(PromptContext context, NarratorPersonaDef personaDef, StorytellerAgent agent, AIDifficultyMode difficultyMode)
+        {
+             // Identity
             context.Snippets["identity_section"] = IdentitySection.Generate(personaDef, agent, difficultyMode);
 
-            // Personality
-            context.Snippets["personality_section"] = PersonalitySection.Generate(analysis, personaDef);
-
-            // Philosophy (难度模式哲学)
+            // Philosophy
             string philosophyFile = $"Philosophy_{difficultyMode}";
-            string philosophy = PromptLoader.Load(philosophyFile, personaDef.defName); // ⭐ v3.0: 支持 Persona 专属
+            string philosophy = PromptLoader.Load(philosophyFile, personaDef.defName);
             if (string.IsNullOrEmpty(philosophy) || philosophy.StartsWith("[Error:"))
             {
                 string behaviorFile = $"BehaviorRules_{difficultyMode}";
-                philosophy = PromptLoader.Load(behaviorFile, personaDef.defName); // ⭐ v3.0: 支持 Persona 专属
+                philosophy = PromptLoader.Load(behaviorFile, personaDef.defName);
             }
             if (philosophy.StartsWith("[Error:")) philosophy = "";
             context.Snippets["philosophy"] = philosophy;
 
-            // ToolBox (输出格式)
+            // ToolBox
             context.Snippets["tool_box_section"] = OutputFormatSection.Generate(difficultyMode);
 
-            // Romantic Instructions
+            // Romantic
             string romanticInstructions = "";
             if (difficultyMode == AIDifficultyMode.Assistant)
             {
                 romanticInstructions = RomanticInstructionsSection.Generate(personaDef, agent);
             }
             context.Snippets["romantic_instructions"] = romanticInstructions;
-
+            
             // Log Diagnosis
             context.Snippets["log_diagnosis"] = GenerateLogDiagnosisInstructions(personaDef.defName);
-
-            // ⭐ v2.2.0: 降临状态和生物节律已集成到 CharacterCard (context.Card) 中
-            // 不再需要手动构建 DescentInfo 或 BioContext
-
-            // 渲染
-            // 优先尝试加载 _Scriban 版本，如果不存在则回退到旧版逻辑 (暂不实现自动回退，因为我们提供了文件)
-            return PromptRenderer.Render("SystemPrompt_Master_Scriban", context);
+        }
+        
+        /// <summary>
+        /// [Overload for compatibility] Inject with Analysis
+        /// </summary>
+        private static void InjectLegacySnippets(PromptContext context, NarratorPersonaDef personaDef, PersonaAnalysisResult analysis, StorytellerAgent agent, AIDifficultyMode difficultyMode)
+        {
+            InjectLegacySnippets(context, personaDef, agent, difficultyMode);
+            // Personality
+            context.Snippets["personality_section"] = PersonalitySection.Generate(analysis, personaDef);
         }
         
         /// <summary>
@@ -324,7 +359,12 @@ namespace TheSecondSeat.PersonaGeneration
             AIDifficultyMode difficultyMode = AIDifficultyMode.Assistant)
         {
             // ⭐ 获取角色卡 (已在 NarratorUpdateService 主线程中更新)
+            // ⭐ v3.1.0: 确保 Card 永不为 null，防止 Scriban 渲染报错
             var card = TheSecondSeat.CharacterCard.CharacterCardSystem.GetCurrentCard();
+            if (card == null)
+            {
+                card = new TheSecondSeat.CharacterCard.NarratorStateCard();
+            }
 
             // ⭐ v2.0.0: Scriban 重构
             // 构建上下文

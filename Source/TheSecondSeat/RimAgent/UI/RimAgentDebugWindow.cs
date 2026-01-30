@@ -22,6 +22,8 @@ namespace TheSecondSeat.RimAgent.UI
         private Vector2 contextDataScrollPos;
         private Vector2 llmHistoryScrollPos;  // ⭐ v2.9.5: LLM 请求历史滚动
         private Vector2 llmDetailScrollPos;   // ⭐ v2.9.5: LLM 请求详情滚动
+        private Vector2 llmResponseScrollPos; // ⭐ v2.9.5: LLM 响应详情滚动
+        private Vector2 eventPromptScrollPos; // ⭐ v2.9.5: EventDirector Prompt 滚动
         
         // Tab system - ⭐ v2.9.5: 新增 LLMHistory Tab
         private enum DebugTab { AgentInfo, SystemPrompt, ContextData, LLMHistory }
@@ -337,8 +339,7 @@ namespace TheSecondSeat.RimAgent.UI
             Rect responseRect = new Rect(x, y, width, halfHeight);
             Widgets.DrawBoxSolid(responseRect, new Color(0.05f, 0.05f, 0.08f, 0.9f));
             
-            Vector2 responseScrollPos = Vector2.zero;
-            DrawScrollableText(responseRect, FormatJson(log.ResponseJson), ref responseScrollPos);
+            DrawScrollableText(responseRect, FormatJson(log.ResponseJson), ref llmResponseScrollPos);
         }
         
         /// <summary>
@@ -492,8 +493,7 @@ namespace TheSecondSeat.RimAgent.UI
             Rect eventTextRect = new Rect(eventRect.x, eventRect.y + 22, colWidth, colHeight - 25);
             Widgets.DrawBoxSolid(eventTextRect, new Color(0.1f, 0.1f, 0.1f, 0.8f));
             
-            Vector2 eventScrollPos = Vector2.zero;
-            DrawScrollableText(eventTextRect, cachedEventDirectorPrompt, ref eventScrollPos);
+            DrawScrollableText(eventTextRect, cachedEventDirectorPrompt, ref eventPromptScrollPos);
         }
         
         private void DrawContextDataTab(Rect rect)

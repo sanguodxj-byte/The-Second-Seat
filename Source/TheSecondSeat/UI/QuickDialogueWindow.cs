@@ -94,11 +94,13 @@ namespace TheSecondSeat.UI
             // 同时增加 Input.GetKeyDown 检查作为备用 (根据用户反馈)
             bool isEnterPressed = (Event.current.type == EventType.KeyDown && (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter));
 
-            if (GUI.GetNameOfFocusedControl() == "QuickDialogueInput" && isEnterPressed)
+            // 🔧 优化：在这个窗口中，Enter 键总是用于发送，不需要检查焦点
+            // 这解决了焦点判断可能不准确导致无法发送的问题，同时也防止了 Enter 键触发 TextField 的默认行为（如全选）
+            if (isEnterPressed)
             {
+                Event.current.Use(); // 总是消耗事件
                 if (!string.IsNullOrWhiteSpace(userInput))
                 {
-                    Event.current.Use(); // 消耗事件，防止换行
                     pendingSend = true;
                     pendingMessage = userInput;
                 }

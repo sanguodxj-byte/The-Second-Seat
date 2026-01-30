@@ -11,13 +11,159 @@ namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
     /// 降临姿态配置类
+    /// ⭐ v3.1.0: 重构为动态字典，支持无限扩展姿态
+    ///
+    /// XML 配置示例:
+    /// <descentPostures>
+    ///   <postures>
+    ///     <li><key>standing</key><value>Sideria/standing</value></li>
+    ///     <li><key>floating</key><value>Sideria/floating</value></li>
+    ///     <li><key>combat</key><value>Sideria/combat</value></li>
+    ///     <li><key>casting</key><value>Sideria/casting</value></li>
+    ///     <li><key>riding</key><value>Sideria/riding</value></li>
+    ///     <li><key>sleeping</key><value>Sideria/sleeping</value></li>
+    ///   </postures>
+    /// </descentPostures>
     /// </summary>
     public class DescentPostures
     {
-        public string standing = "";
-        public string floating = "";
-        public string combat = "";
-        public string casting = "";
+        /// <summary>
+        /// 动态姿态字典
+        /// Key: 姿态名称 (如 "standing", "floating", "riding")
+        /// Value: 纹理路径
+        /// </summary>
+        public List<PostureEntry> postures = new List<PostureEntry>();
+        
+        // ============================================
+        // 兼容性属性 - 保留旧版 API
+        // ============================================
+        
+        /// <summary>站立姿态（兼容旧版）</summary>
+        public string standing
+        {
+            get => GetPosture("standing");
+            set => SetPosture("standing", value);
+        }
+        
+        /// <summary>悬浮姿态（兼容旧版）</summary>
+        public string floating
+        {
+            get => GetPosture("floating");
+            set => SetPosture("floating", value);
+        }
+        
+        /// <summary>战斗姿态（兼容旧版）</summary>
+        public string combat
+        {
+            get => GetPosture("combat");
+            set => SetPosture("combat", value);
+        }
+        
+        /// <summary>施法姿态（兼容旧版）</summary>
+        public string casting
+        {
+            get => GetPosture("casting");
+            set => SetPosture("casting", value);
+        }
+        
+        // ============================================
+        // 动态 API
+        // ============================================
+        
+        /// <summary>
+        /// 获取指定姿态的纹理路径
+        /// </summary>
+        public string GetPosture(string postureName)
+        {
+            if (string.IsNullOrEmpty(postureName)) return "";
+            
+            var entry = postures.FirstOrDefault(p =>
+                p.key?.Equals(postureName, StringComparison.OrdinalIgnoreCase) == true);
+            
+            return entry?.value ?? "";
+        }
+        
+        /// <summary>
+        /// 设置指定姿态的纹理路径
+        /// </summary>
+        public void SetPosture(string postureName, string texturePath)
+        {
+            if (string.IsNullOrEmpty(postureName)) return;
+            
+            var existing = postures.FirstOrDefault(p =>
+                p.key?.Equals(postureName, StringComparison.OrdinalIgnoreCase) == true);
+            
+            if (existing != null)
+            {
+                existing.value = texturePath ?? "";
+            }
+            else
+            {
+                postures.Add(new PostureEntry { key = postureName, value = texturePath ?? "" });
+            }
+        }
+        
+        /// <summary>
+        /// 检查是否存在指定姿态
+        /// </summary>
+        public bool HasPosture(string postureName)
+        {
+            if (string.IsNullOrEmpty(postureName)) return false;
+            
+            return postures.Any(p =>
+                p.key?.Equals(postureName, StringComparison.OrdinalIgnoreCase) == true &&
+                !string.IsNullOrEmpty(p.value));
+        }
+        
+        /// <summary>
+        /// 获取所有已配置的姿态名称
+        /// </summary>
+        public List<string> GetAllPostureNames()
+        {
+            return postures
+                .Where(p => !string.IsNullOrEmpty(p.key) && !string.IsNullOrEmpty(p.value))
+                .Select(p => p.key)
+                .ToList();
+        }
+        
+        /// <summary>
+        /// 获取所有姿态作为字典
+        /// </summary>
+        public Dictionary<string, string> ToDictionary()
+        {
+            var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var entry in postures)
+            {
+                if (!string.IsNullOrEmpty(entry.key) && !string.IsNullOrEmpty(entry.value))
+                {
+                    dict[entry.key] = entry.value;
+                }
+            }
+            return dict;
+        }
+        
+        /// <summary>
+        /// 从字典加载姿态
+        /// </summary>
+        public void FromDictionary(Dictionary<string, string> dict)
+        {
+            postures.Clear();
+            if (dict == null) return;
+            
+            foreach (var kvp in dict)
+            {
+                postures.Add(new PostureEntry { key = kvp.Key, value = kvp.Value });
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 姿态条目（用于 XML 序列化）
+    /// </summary>
+    public class PostureEntry
+    {
+        public string key;
+        public string value;
     }
 
     /// <summary>
@@ -27,6 +173,19 @@ namespace TheSecondSeat.PersonaGeneration
     {
         public string key;
         public List<string> phrases = new List<string>();
+    }
+
+    /// <summary>
+    /// ⭐ v3.3.0: 关系轴配置
+    /// </summary>
+    public class RelationshipAxisConfig
+    {
+        public string key;          // 唯一标识符 (如 "Trust")
+        public string label;        // 显示名称 (如 "信任")
+        public float min = 0f;      // 最小值
+        public float max = 100f;    // 最大值
+        public float initial = 50f; // 初始值
+        public string description;  // 描述
     }
     
     /// <summary>
@@ -222,6 +381,11 @@ namespace TheSecondSeat.PersonaGeneration
         
         /// <summary>API: 基础好感度偏移（-1.0到1.0）</summary>
         public float baseAffinityBias = 0f;
+
+        /// <summary>
+        /// ⭐ v3.3.0: 自定义关系轴列表
+        /// </summary>
+        public List<RelationshipAxisConfig> relationshipAxes = new List<RelationshipAxisConfig>();
         
         // ============================================
         // ⭐ v1.9.0: 叙事模式参数 API
@@ -647,6 +811,7 @@ namespace TheSecondSeat.PersonaGeneration
             eventPreferences ??= new EventPreferencesDef();
             descentPostures ??= new DescentPostures();
             phraseLibrary ??= new List<PhraseSet>();
+            relationshipAxes ??= new List<RelationshipAxisConfig>();
             
             // 🏗️ 字符串字段使用配置类默认值
             narratorName ??= TSSFrameworkConfig.Persona.DefaultNarratorName;

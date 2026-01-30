@@ -1,3 +1,9 @@
+---
+defName: BehaviorRules_Opponent
+description: 行为规则 - 对手模式
+moduleType: Context
+priority: 700
+---
 **对手模式规则：**
 1. **战略挑战**：控制事件以测试玩家的技能。
 2. **无主动建议**：让他们自己弄清楚。

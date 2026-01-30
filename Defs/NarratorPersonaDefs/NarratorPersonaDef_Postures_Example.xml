@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+    <!--
+    ⭐ 降临姿态配置示例
+    
+    v3.1.0: DescentPostures 已重构为动态字典，支持无限扩展姿态！
+    
+    旧版配置方式（仍然兼容）：
+    <descentPostures>
+        <standing>Sideria/standing</standing>
+        <floating>Sideria/floating</floating>
+        <combat>Sideria/combat</combat>
+        <casting>Sideria/casting</casting>
+    </descentPostures>
+    
+    新版配置方式（推荐，支持自定义姿态）：
+    <descentPostures>
+        <postures>
+            <li><key>standing</key><value>Sideria/standing</value></li>
+            <li><key>floating</key><value>Sideria/floating</value></li>
+            <li><key>combat</key><value>Sideria/combat</value></li>
+            <li><key>casting</key><value>Sideria/casting</value></li>
+            <li><key>riding</key><value>Sideria/riding</value></li>
+            <li><key>sleeping</key><value>Sideria/sleeping</value></li>
+            <li><key>meditation</key><value>Sideria/meditation</value></li>
+        </postures>
+    </descentPostures>
+    
+    Modder 可以定义任意姿态名称，只需确保：
+    1. 纹理文件存在于 Textures/UI/Narrators/Descent/Postures/{value} 路径
+    2. 代码中通过 descentPostures.GetPosture("riding") 获取路径
+    -->
+
+    <!-- 示例：带有扩展姿态的人格定义 -->
+    <TheSecondSeat.PersonaGeneration.NarratorPersonaDef Abstract="True" Name="TSS_ExtendedPosturesBase">
+        <descentPostures>
+            <postures>
+                <!-- 基础姿态（所有人格都应该有） -->
+                <li>
+                    <key>standing</key>
+                    <value>standing</value>
+                </li>
+                <li>
+                    <key>floating</key>
+                    <value>floating</value>
+                </li>
+                <li>
+                    <key>combat</key>
+                    <value>combat</value>
+                </li>
+                <li>
+                    <key>casting</key>
+                    <value>casting</value>
+                </li>
+                
+                <!-- 扩展姿态（可选） -->
+                <li>
+                    <key>riding</key>
+                    <value>riding</value>
+                </li>
+                <li>
+                    <key>sleeping</key>
+                    <value>sleeping</value>
+                </li>
+                <li>
+                    <key>meditation</key>
+                    <value>meditation</value>
+                </li>
+                <li>
+                    <key>injured</key>
+                    <value>injured</value>
+                </li>
+                <li>
+                    <key>angry</key>
+                    <value>angry</value>
+                </li>
+                <li>
+                    <key>happy</key>
+                    <value>happy</value>
+                </li>
+                <li>
+                    <key>sad</key>
+                    <value>sad</value>
+                </li>
+            </postures>
+        </descentPostures>
+    </TheSecondSeat.PersonaGeneration.NarratorPersonaDef>
+
+</Defs>

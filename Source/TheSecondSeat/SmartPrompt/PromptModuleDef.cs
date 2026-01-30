@@ -32,6 +32,15 @@ namespace TheSecondSeat.SmartPrompt
         /// </summary>
         public string contentPath;
         
+        // ⭐ v3.2.0: description 字段使用基类 Def.description，可以通过 YAML Front Matter 设置
+        // 例如: "农业核心模块 - 处理收割和种植建议"
+        
+        /// <summary>
+        /// ⭐ v3.2.0: 模块作者（用于 UI 显示）
+        /// 可以通过 YAML Front Matter 的 author 字段设置
+        /// </summary>
+        public string author;
+        
         /// <summary>
         /// 是否启用 Scriban 模板渲染
         /// </summary>
@@ -222,6 +231,36 @@ namespace TheSecondSeat.SmartPrompt
                    $"Keywords={expandedKeywords.Count}, " +
                    $"AlwaysActive={alwaysActive}, " +
                    $"Dependencies=[{string.Join(", ", dependencies)}]";
+        }
+        
+        /// <summary>
+        /// ⭐ v3.2.0: 获取用于 UI 显示的描述文本
+        /// 如果基类 description 为空，尝试从内容中提取标题
+        /// </summary>
+        public string GetDisplayDescription()
+        {
+            // 使用基类 Def.description 字段
+            if (!string.IsNullOrEmpty(base.description))
+            {
+                return base.description;
+            }
+            
+            // 尝试从内容中提取第一个标题行作为描述
+            string content = GetContent();
+            if (!string.IsNullOrEmpty(content))
+            {
+                var lines = content.Split('\n');
+                foreach (var line in lines)
+                {
+                    string trimmed = line.Trim();
+                    if (trimmed.StartsWith("##") && !trimmed.StartsWith("###"))
+                    {
+                        return trimmed.TrimStart('#', ' ');
+                    }
+                }
+            }
+            
+            return null;
         }
     }
     

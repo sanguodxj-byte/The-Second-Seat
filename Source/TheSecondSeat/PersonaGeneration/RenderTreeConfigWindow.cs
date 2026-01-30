@@ -1117,7 +1117,7 @@ namespace TheSecondSeat.PersonaGeneration
             list.Label("TSS_RenderTree_LipSync_GlobalSettings".Translate());
             
             // Attack/Release
-            if (list.ButtonText("TSS_RenderTree_LipSync_AttackViseme".Translate(currentLipSyncDef.attackViseme)))
+            if (list.ButtonText("TSS_RenderTree_LipSync_AttackViseme".Translate(currentLipSyncDef.attackViseme.ToString())))
             {
                 List<FloatMenuOption> options = new List<FloatMenuOption>();
                 foreach (VisemeCode code in Enum.GetValues(typeof(VisemeCode)))
@@ -1127,7 +1127,7 @@ namespace TheSecondSeat.PersonaGeneration
                 Find.WindowStack.Add(new FloatMenu(options));
             }
             
-            if (list.ButtonText("TSS_RenderTree_LipSync_ReleaseViseme".Translate(currentLipSyncDef.releaseViseme)))
+            if (list.ButtonText("TSS_RenderTree_LipSync_ReleaseViseme".Translate(currentLipSyncDef.releaseViseme.ToString())))
             {
                 List<FloatMenuOption> options = new List<FloatMenuOption>();
                 foreach (VisemeCode code in Enum.GetValues(typeof(VisemeCode)))
@@ -1141,7 +1141,7 @@ namespace TheSecondSeat.PersonaGeneration
             list.TextFieldNumericLabeled("TSS_RenderTree_LipSync_SustainFrames".Translate(), ref currentLipSyncDef.sustainFrames, ref sustainStr, 0, 60);
 
             // Default Viseme
-            if (list.ButtonText("TSS_RenderTree_LipSync_DefaultViseme".Translate(currentLipSyncDef.defaultViseme)))
+            if (list.ButtonText("TSS_RenderTree_LipSync_DefaultViseme".Translate(currentLipSyncDef.defaultViseme.ToString())))
             {
                 List<FloatMenuOption> options = new List<FloatMenuOption>();
                 foreach (VisemeCode code in Enum.GetValues(typeof(VisemeCode)))

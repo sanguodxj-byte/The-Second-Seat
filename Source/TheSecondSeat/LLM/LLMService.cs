@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Verse;
 using TheSecondSeat.RimAgent;
 using UnityEngine.Networking;
@@ -283,29 +284,53 @@ namespace TheSecondSeat.LLM
                     log.ResponseJson = responseText;
                     log.Success = true;
 
-                    // ⭐ 移至后台线程，避免阻塞主线程
-                    var openAIResponse = await Task.Run(() => JsonConvert.DeserializeObject<OpenAIResponse>(responseText));
-
-                    // ⭐ v2.7.0: 记录 Token 使用量
-                    if (openAIResponse?.usage != null)
+                    // ⭐ 改用 JObject 动态解析
+                    string messageContent = "";
+                    JObject jsonResponse = null;
+                    
+                    try
                     {
-                        log.PromptTokens = openAIResponse.usage.prompt_tokens;
-                        log.CompletionTokens = openAIResponse.usage.completion_tokens;
-                        log.TotalTokens = openAIResponse.usage.total_tokens;
+                        jsonResponse = JObject.Parse(responseText);
+                        
+                        var choices = jsonResponse["choices"] as JArray;
+                        if (choices != null && choices.Count > 0)
+                        {
+                            messageContent = choices[0]?["message"]?["content"]?.ToString();
+                        }
+                        else
+                        {
+                            messageContent = jsonResponse["content"]?.ToString();
+                        }
+                        
+                        if (string.IsNullOrEmpty(messageContent) && jsonResponse["error"] != null)
+                        {
+                            messageContent = $"API Error: {jsonResponse["error"]}";
+                        }
+                        
+                        if (string.IsNullOrEmpty(messageContent))
+                        {
+                            // 终极兜底
+                            messageContent = responseText;
+                        }
+
+                        if (jsonResponse["usage"] is JObject usage)
+                        {
+                            log.PromptTokens = (int?)usage["prompt_tokens"] ?? 0;
+                            log.CompletionTokens = (int?)usage["completion_tokens"] ?? 0;
+                            log.TotalTokens = (int?)usage["total_tokens"] ?? 0;
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        // 彻底兜底：Raw Text
+                        messageContent = responseText;
                     }
 
                     LLMRequestHistory.Add(log);
 
-                    if (openAIResponse?.choices == null || openAIResponse.choices.Length == 0)
-                    {
-                        Log.Error("[The Second Seat] LLM 返回空响应");
-                        return null;
-                    }
-
-                    string messageContent = openAIResponse.choices[0].message?.content;
                     if (string.IsNullOrEmpty(messageContent))
                     {
-                        Log.Error("[The Second Seat] LLM 消息内容为空");
+                        Log.Error($"[The Second Seat] Empty content. Response: {responseText}");
                         return null;
                     }
 
@@ -317,9 +342,6 @@ namespace TheSecondSeat.LLM
                     log.ErrorMessage = $"{webRequest.responseCode} - {webRequest.error}";
                     log.ResponseJson = webRequest.downloadHandler.text;
                     LLMRequestHistory.Add(log);
-
-                    Log.Error($"[The Second Seat] API 错误: {webRequest.responseCode} - {webRequest.error}");
-                    Log.Error($"[The Second Seat] 响应内容: {webRequest.downloadHandler.text}");
                     return null;
                 }
             }
@@ -327,10 +349,8 @@ namespace TheSecondSeat.LLM
             {
                 log.Success = false;
                 log.ErrorMessage = ex.Message;
-                log.DurationSeconds = (float)(DateTime.Now - log.Timestamp).TotalSeconds;
                 LLMRequestHistory.Add(log);
-
-                Log.Error($"[The Second Seat] OpenAI 兼容 API 异常: {ex.Message}\n{ex.StackTrace}");
+                Log.Error($"[The Second Seat] API Exception: {ex.Message}");
                 return null;
             }
         }

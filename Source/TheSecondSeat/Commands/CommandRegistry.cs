@@ -36,6 +36,9 @@ namespace TheSecondSeat.Commands
 
                 foreach (var type in types)
                 {
+                    // Skip Command_GenericDefWrapper as it requires parameters and is handled by CommandDefLoader
+                    if (type == typeof(Command_GenericDefWrapper)) continue;
+
                     try
                     {
                         // Assume commands have a parameterless constructor

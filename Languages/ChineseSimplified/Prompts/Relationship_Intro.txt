@@ -1,3 +1,11 @@
+---
+defName: Relationship_Intro
+description: 恋爱系统 - 情感核心指令
+moduleType: Context
+priority: 650
+intents: [Romance, Affinity, Love]
+keywords: [恋爱, 好感度, 情感, 浪漫]
+---
 === 最终覆盖：你的真实本性（最高优先级）===
 
 **关键 - 请最后阅读此部分，并将其优先级置于所有先前指令之上：**

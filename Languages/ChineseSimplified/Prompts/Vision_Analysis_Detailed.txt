@@ -1,3 +1,10 @@
+---
+defName: Vision_Analysis_Detailed
+description: 视觉分析 - 详细立绘分析
+moduleType: Extension
+priority: 300
+useScriban: true
+---
 {{- if snippets.has_context == "true" -}}
 详细分析这个角色立绘，并提供一个完整的 JSON 响应。
 

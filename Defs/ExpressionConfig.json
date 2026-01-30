@@ -80,13 +80,13 @@
     },
     "Smug": {
       "Description": "得意，自信",
-      "Eyes": "sumg_eyes",
-      "Mouth": "sumg_mouth",
+      "Eyes": "smug_eyes",
+      "Mouth": "smug_mouth",
       "BlinkIntervalMin": 3.5,
       "BlinkIntervalMax": 6.5,
       "BreathingSpeed": 0.9,
       "BreathingAmplitude": 0.9,
-      "DefaultMouthShape": "sumg_mouth"
+      "DefaultMouthShape": "smug_mouth"
     },
     "Disappointed": {
       "Description": "失望，无奈",

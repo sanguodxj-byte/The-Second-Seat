@@ -1,15 +1,23 @@
-## Hunting Knowledge
+---
+defName: Module_Hunting
+description: 狩猎模块 - 处理猎杀动物和肉类获取
+author: The Second Seat
+moduleType: Skill
+intents: [Hunt]
+keywords: [狩猎, 打猎, 猎杀, 动物, 肉类, 皮革]
+---
+## 狩猎知识
 
-### Hunting Commands
-Use the 'Hunt' command to hunt animals. You can specify:
-- target: Animal type or "all"
-- scope: Scope
+### 狩猎指令
+使用 Hunt 指令狩猎动物。可以指定：
+- target: 动物类型或 "all"
+- scope: 范围
 
-### Danger Warnings
-- Large predators may retaliate
-- Herds of animals may attack together
-- Recommend sending colonists with high shooting skills
+### 危险提示
+- 大型食肉动物可能反击
+- 成群动物可能一起攻击
+- 建议派遣高射击技能的殖民者
 
-### Yields
-- Meat: Used for cooking
-- Leather: Used for crafting clothing
+### 产出
+- 肉类：用于烹饪
+- 皮革：用于制作服装

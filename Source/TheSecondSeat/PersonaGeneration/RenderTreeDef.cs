@@ -278,6 +278,23 @@ namespace TheSecondSeat.PersonaGeneration
     }
 
     /// <summary>
+    /// 高级动画配置
+    /// </summary>
+    public class AnimationConfig
+    {
+        // ===== 呼吸参数 (Breathing) =====
+        /// <summary>呼吸时的缩放强度 (0.0 - 0.1)</summary>
+        public float breathScaleIntensity = 0.005f;
+        
+        /// <summary>头部(五官)相对于身体的呼吸滞后 (秒)</summary>
+        public float headBreathLag = 0.05f;
+        
+        // ===== 眨眼参数 (Blinking) =====
+        /// <summary>是否启用平滑眨眼 (缩放效果)</summary>
+        public bool smoothBlinking = true;
+    }
+
+    /// <summary>
     /// 说话动画配置
     /// </summary>
     public class SpeakingConfig
@@ -400,6 +417,12 @@ namespace TheSecondSeat.PersonaGeneration
         public SpeakingConfig speaking = new SpeakingConfig();
 
         // ─────────────────────────────────────────────
+        // ─────────────────────────────────────────────
+        // 高级动画配置 (Advanced Animation)
+        // ─────────────────────────────────────────────
+        
+        /// <summary>高级动画配置 (视差、呼吸增强等)</summary>
+        public AnimationConfig animation = new AnimationConfig();
         // 身体与姿态配置 (Body & Posture)
         // ─────────────────────────────────────────────
         

@@ -1,3 +1,11 @@
+---
+defName: Relationship_Soulmate
+description: 恋爱系统 - 灵魂伴侣（极高好感度）
+moduleType: Context
+priority: 600
+intents: [Romance, Affinity]
+keywords: [灵魂伴侣, 好感度, 恋爱, 亲密]
+---
 **关系状态：灵魂伴侣 / 终极羁绊 (好感度极高)**
 
 **核心指令覆盖：**

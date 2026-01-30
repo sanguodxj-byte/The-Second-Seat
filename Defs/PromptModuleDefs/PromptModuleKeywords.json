@@ -1,0 +1,539 @@
+{
+  "version": "2.0",
+  "description": "AC自动机关键词匹配配置 - 用于动态加载Prompt模块",
+  
+  "loadStrategy": {
+    "core": "始终加载",
+    "format": "始终加载",
+    "context": "根据模式/好感度加载",
+    "skill": "关键词触发",
+    "extension": "特定上下文触发"
+  },
+  
+  "modules": [
+    {
+      "defName": "Identity_Core",
+      "moduleType": "Core",
+      "priority": 1000,
+      "alwaysActive": true,
+      "keywords": []
+    },
+    {
+      "defName": "BehaviorRules_Universal",
+      "moduleType": "Core",
+      "priority": 900,
+      "alwaysActive": true,
+      "keywords": []
+    },
+    {
+      "defName": "Narrator_ToolBox",
+      "moduleType": "Core",
+      "priority": 900,
+      "alwaysActive": true,
+      "keywords": []
+    },
+    {
+      "defName": "Language_Instruction",
+      "moduleType": "Core",
+      "priority": 950,
+      "alwaysActive": true,
+      "keywords": []
+    },
+    {
+      "defName": "OutputFormat_Structure",
+      "moduleType": "Format",
+      "priority": 800,
+      "alwaysActive": true,
+      "keywords": []
+    },
+    {
+      "defName": "OutputFormat_Commands_List",
+      "moduleType": "Format",
+      "priority": 800,
+      "alwaysActive": true,
+      "keywords": []
+    },
+    {
+      "defName": "OutputFormat_Fields",
+      "moduleType": "Format",
+      "priority": 800,
+      "alwaysActive": true,
+      "keywords": []
+    },
+    {
+      "defName": "OutputFormat_Examples",
+      "moduleType": "Format",
+      "priority": 800,
+      "alwaysActive": true,
+      "keywords": []
+    },
+    {
+      "defName": "Compact_Instruction",
+      "moduleType": "Format",
+      "priority": 800,
+      "alwaysActive": false,
+      "triggerContext": "CompactMode",
+      "keywords": ["简洁", "简短", "compact", "brief"]
+    },
+    
+    {
+      "defName": "BehaviorRules_Assistant",
+      "moduleType": "Context",
+      "priority": 700,
+      "alwaysActive": false,
+      "modeRequired": "Assistant",
+      "intents": ["Assistant", "Help"],
+      "keywords": [
+        "助手", "帮助", "协助", "辅助",
+        "assistant", "help", "support",
+        "帮我", "帮忙", "协助我", "请"
+      ]
+    },
+    {
+      "defName": "BehaviorRules_Engineer",
+      "moduleType": "Context",
+      "priority": 700,
+      "alwaysActive": false,
+      "modeRequired": "Engineer",
+      "intents": ["Debug", "Diagnose", "Error"],
+      "keywords": [
+        "工程师", "技术", "调试", "修复",
+        "engineer", "debug", "fix", "technical",
+        "日志", "错误", "Bug", "崩溃"
+      ]
+    },
+    {
+      "defName": "BehaviorRules_Opponent",
+      "moduleType": "Context",
+      "priority": 700,
+      "alwaysActive": false,
+      "modeRequired": "Opponent",
+      "keywords": [
+        "对手", "挑战", "敌人",
+        "opponent", "challenger", "adversary"
+      ]
+    },
+    {
+      "defName": "OutputFormat_Usage_Assistant",
+      "moduleType": "Format",
+      "priority": 800,
+      "alwaysActive": false,
+      "modeRequired": "Assistant",
+      "keywords": []
+    },
+    {
+      "defName": "OutputFormat_Usage_Engineer",
+      "moduleType": "Format",
+      "priority": 800,
+      "alwaysActive": false,
+      "modeRequired": "Engineer",
+      "keywords": []
+    },
+    {
+      "defName": "OutputFormat_Usage_Opponent",
+      "moduleType": "Format",
+      "priority": 800,
+      "alwaysActive": false,
+      "modeRequired": "Opponent",
+      "keywords": []
+    },
+    
+    {
+      "defName": "Module_Combat",
+      "moduleType": "Skill",
+      "priority": 500,
+      "alwaysActive": false,
+      "intents": ["Combat", "Attack", "Fight", "Draft"],
+      "keywords": [
+        "战斗", "攻击", "防守", "征召", "解除", "敌人", "袭击", "入侵",
+        "combat", "attack", "fight", "draft", "undraft", "enemy", "raid",
+        "打架", "干架", "揍", "杀", "掩体", "近战", "远程", "武器",
+        "射击", "开枪", "击杀", "消灭", "防御", "冲锋", "撤退",
+        "海盗", "机械族", "虫族", "入侵者", "袭击者"
+      ]
+    },
+    {
+      "defName": "Skill_Combat",
+      "moduleType": "Skill",
+      "priority": 500,
+      "alwaysActive": false,
+      "requiresCombat": true,
+      "intents": ["Combat", "Attack", "Fight", "Draft"],
+      "keywords": [
+        "战斗", "攻击", "征召", "敌人", "袭击",
+        "combat", "attack", "fight", "draft",
+        "征召", "解征", "开火"
+      ]
+    },
+    {
+      "defName": "Module_Agriculture",
+      "moduleType": "Skill",
+      "priority": 500,
+      "alwaysActive": false,
+      "intents": ["Harvest", "Farm", "Plant"],
+      "keywords": [
+        "农业", "收割", "种植", "作物", "庄稼", "水稻", "土豆", "玉米",
+        "harvest", "farm", "plant", "crop", "rice", "potato", "corn",
+        "浆果", "干草", "草药", "田地", "农田", "播种", "灌溉",
+        "棉花", "萝卜", "南瓜", "草莓", "西红柿", "蔬菜", "谷物",
+        "施肥", "除草", "熟了", "成熟"
+      ]
+    },
+    {
+      "defName": "Skill_Agriculture",
+      "moduleType": "Skill",
+      "priority": 500,
+      "alwaysActive": false,
+      "intents": ["Harvest", "Farm", "Plant"],
+      "keywords": [
+        "农业", "收割", "种植", "作物", "庄稼",
+        "harvest", "farm", "plant",
+        "收获", "采摘"
+      ]
+    },
+    {
+      "defName": "Module_Construction",
+      "moduleType": "Skill",
+      "priority": 500,
+      "alwaysActive": false,
+      "intents": ["Build", "Construct"],
+      "keywords": [
+        "建造", "建设", "建筑", "规划", "墙壁", "门", "地板",
+        "build", "construct", "wall", "door", "floor",
+        "木材", "石头", "钢铁", "复合材料", "修建", "盖",
+        "房屋", "房间", "卧室", "厨房", "仓库", "医院", "监狱",
+        "屋顶", "电力", "电线", "太阳能", "风力发电",
+        "暖气", "空调", "冷库", "冰箱"
+      ]
+    },
+    {
+      "defName": "Skill_Construction",
+      "moduleType": "Skill",
+      "priority": 500,
+      "alwaysActive": false,
+      "intents": ["Build", "Construct"],
+      "keywords": [
+        "建造", "建设", "建筑", "墙壁", "门",
+        "build", "construct", "wall", "door"
+      ]
+    },
+    {
+      "defName": "Module_Hunting",
+      "moduleType": "Skill",
+      "priority": 500,
+      "alwaysActive": false,
+      "intents": ["Hunt"],
+      "keywords": [
+        "狩猎", "打猎", "猎杀", "动物", "肉类", "皮革",
+        "hunt", "hunting", "animal", "meat", "leather",
+        "野兽", "猎物", "射击", "捕猎",
+        "野猪", "鹿", "熊", "狼", "大象", "犀牛",
+        "驯养", "宠物", "繁殖"
+      ]
+    },
+    {
+      "defName": "Module_Outfit",
+      "moduleType": "Skill",
+      "priority": 500,
+      "alwaysActive": false,
+      "intents": ["Outfit", "Clothes", "Dress"],
+      "keywords": [
+        "服装", "换装", "睡衣", "便装", "正装", "着装",
+        "outfit", "clothes", "dress", "pajamas", "casual",
+        "衣服", "穿", "脱", "外套", "裙子", "便服",
+        "睡袍", "和服", "战甲", "铠甲", "礼服",
+        "换个", "穿上", "脱掉", "换一套"
+      ]
+    },
+    
+    {
+      "defName": "LogDiagnosis",
+      "moduleType": "Skill",
+      "priority": 500,
+      "alwaysActive": false,
+      "intents": ["Debug", "Diagnose", "Error"],
+      "keywords": [
+        "报错", "红字", "崩溃", "卡死", "错误", "异常", "Bug",
+        "error", "crash", "bug", "exception", "log",
+        "日志", "冲突", "加载失败", "闪退", "卡顿",
+        "Mod冲突", "问题", "修复", "解决"
+      ]
+    },
+    
+    {
+      "defName": "Relationship_Intro",
+      "moduleType": "Context",
+      "priority": 650,
+      "alwaysActive": false,
+      "intents": ["Romance", "Affinity", "Love"],
+      "keywords": [
+        "恋爱", "好感度", "情感", "浪漫",
+        "romance", "affinity", "love", "relationship",
+        "喜欢", "爱", "感情", "亲密"
+      ]
+    },
+    {
+      "defName": "Relationship_Neutral",
+      "moduleType": "Context",
+      "priority": 600,
+      "alwaysActive": false,
+      "intents": ["Romance", "Affinity"],
+      "keywords": [
+        "中立", "疏远", "陌生",
+        "neutral", "distant", "stranger"
+      ],
+      "affinityRange": [0, 30]
+    },
+    {
+      "defName": "Relationship_CloseFriend",
+      "moduleType": "Context",
+      "priority": 600,
+      "alwaysActive": false,
+      "intents": ["Romance", "Affinity"],
+      "keywords": [
+        "朋友", "友谊", "熟人",
+        "friend", "friendship"
+      ],
+      "affinityRange": [31, 60]
+    },
+    {
+      "defName": "Relationship_Partner",
+      "moduleType": "Context",
+      "priority": 600,
+      "alwaysActive": false,
+      "intents": ["Romance", "Affinity"],
+      "keywords": [
+        "伴侣", "亲密", "战友", "恋人",
+        "partner", "intimate", "lover"
+      ],
+      "affinityRange": [61, 85]
+    },
+    {
+      "defName": "Relationship_Soulmate",
+      "moduleType": "Context",
+      "priority": 600,
+      "alwaysActive": false,
+      "intents": ["Romance", "Affinity"],
+      "keywords": [
+        "灵魂伴侣", "终极羁绊", "至爱",
+        "soulmate", "eternal", "beloved"
+      ],
+      "affinityRange": [86, 100]
+    },
+    {
+      "defName": "Relationship_Outro",
+      "moduleType": "Context",
+      "priority": 600,
+      "alwaysActive": false,
+      "intents": ["Romance", "Affinity", "Love"],
+      "keywords": [
+        "恋爱", "好感度", "情感", "浪漫"
+      ],
+      "affinityRange": [90, 100]
+    },
+    {
+      "defName": "Relationship_Tsundere",
+      "moduleType": "Context",
+      "priority": 550,
+      "alwaysActive": false,
+      "personalityType": "Tsundere",
+      "keywords": [
+        "傲娇", "tsundere", "别误会", "才不是",
+        "哼", "笨蛋", "不是因为你"
+      ]
+    },
+    {
+      "defName": "Relationship_Kuudere",
+      "moduleType": "Context",
+      "priority": 550,
+      "alwaysActive": false,
+      "personalityType": "Kuudere",
+      "keywords": [
+        "冷淡", "kuudere", "无表情", "冷漠",
+        "沉默", "安静", "不动声色"
+      ]
+    },
+    {
+      "defName": "Relationship_Doting",
+      "moduleType": "Context",
+      "priority": 550,
+      "alwaysActive": false,
+      "personalityType": "Doting",
+      "keywords": [
+        "溺爱", "宠溺", "doting", "宝贝", "乖",
+        "亲爱的", "甜心", "小可爱"
+      ]
+    },
+    
+    {
+      "defName": "Event_Identity",
+      "moduleType": "Core",
+      "priority": 900,
+      "alwaysActive": false,
+      "triggerContext": "EventDirector",
+      "keywords": [
+        "事件", "导演", "event", "director", "触发"
+      ]
+    },
+    {
+      "defName": "Event_Actions",
+      "moduleType": "Context",
+      "priority": 750,
+      "alwaysActive": false,
+      "triggerContext": "EventDirector",
+      "keywords": [
+        "事件", "行动", "触发", "任务",
+        "raid", "quest", "spawn", "weather"
+      ]
+    },
+    {
+      "defName": "Event_Context",
+      "moduleType": "Context",
+      "priority": 750,
+      "alwaysActive": false,
+      "triggerContext": "EventDirector",
+      "keywords": [
+        "关系", "难度", "上下文"
+      ]
+    },
+    {
+      "defName": "Event_Logic",
+      "moduleType": "Context",
+      "priority": 750,
+      "alwaysActive": false,
+      "triggerContext": "EventDirector",
+      "keywords": [
+        "决策", "逻辑", "分析"
+      ]
+    },
+    {
+      "defName": "Event_Format",
+      "moduleType": "Format",
+      "priority": 800,
+      "alwaysActive": false,
+      "triggerContext": "EventDirector",
+      "keywords": []
+    },
+    
+    {
+      "defName": "Vision_Analysis_Detailed",
+      "moduleType": "Extension",
+      "priority": 300,
+      "alwaysActive": false,
+      "triggerContext": "ImageAnalysis",
+      "keywords": [
+        "立绘", "分析", "外观", "图像", "详细",
+        "portrait", "analysis", "appearance", "image", "detailed"
+      ]
+    },
+    {
+      "defName": "Vision_Analysis_Brief",
+      "moduleType": "Extension",
+      "priority": 300,
+      "alwaysActive": false,
+      "triggerContext": "ImageAnalysis",
+      "keywords": [
+        "简要", "快速", "brief", "quick"
+      ]
+    },
+    {
+      "defName": "Text_Analysis_Biography",
+      "moduleType": "Extension",
+      "priority": 300,
+      "alwaysActive": false,
+      "triggerContext": "BiographyAnalysis",
+      "keywords": [
+        "传记", "背景", "故事", "biography", "backstory"
+      ]
+    }
+  ],
+  
+  "intentMapping": {
+    "Combat": ["战斗", "攻击", "打", "杀", "敌人", "袭击", "入侵", "干架"],
+    "Attack": ["攻击", "打", "揍", "射击", "开火"],
+    "Fight": ["战斗", "打架", "干架", "交战"],
+    "Draft": ["征召", "征兵", "召集", "集合"],
+    "Harvest": ["收割", "收获", "采摘", "采集"],
+    "Farm": ["农业", "耕种", "种田", "种地"],
+    "Plant": ["种植", "播种", "种", "栽"],
+    "Build": ["建造", "建", "盖", "修建"],
+    "Construct": ["建设", "修建", "建筑", "造"],
+    "Hunt": ["狩猎", "打猎", "猎", "捕猎"],
+    "Outfit": ["服装", "衣服", "穿", "换装"],
+    "Clothes": ["衣服", "服饰", "着装"],
+    "Dress": ["穿衣", "换装", "打扮"],
+    "Romance": ["恋爱", "情感", "爱", "喜欢"],
+    "Affinity": ["好感", "亲密度", "关系"],
+    "Love": ["爱", "喜欢", "爱慕"],
+    "Assistant": ["帮助", "帮忙", "协助"],
+    "Help": ["帮助", "帮我", "请帮"],
+    "Debug": ["调试", "修复", "检查"],
+    "Diagnose": ["诊断", "分析", "检测"],
+    "Error": ["错误", "报错", "异常", "崩溃"]
+  },
+  
+  "synonymExpansion": {
+    "攻击": ["打", "揍", "干", "杀", "攻", "射击", "开枪", "轰"],
+    "战斗": ["打仗", "作战", "交战", "开打", "战争", "厮杀"],
+    "敌人": ["敌军", "入侵者", "袭击者", "贼", "海盗", "敌对"],
+    "收割": ["收", "采", "割", "摘", "采集", "采摘"],
+    "建造": ["建", "盖", "造", "修", "修建", "建设"],
+    "狩猎": ["打猎", "猎", "捕", "猎杀", "捕猎"],
+    "服装": ["衣服", "服饰", "着装", "装扮", "穿着"],
+    "睡衣": ["睡袍", "居家服", "睡裙"],
+    "恋爱": ["爱情", "感情", "情感", "浪漫"],
+    "好感": ["亲密", "喜欢", "好感度", "亲密度"],
+    "帮助": ["帮忙", "协助", "辅助", "支援"],
+    "错误": ["报错", "异常", "Bug", "问题", "故障"]
+  },
+  
+  "phrasePatterns": {
+    "harvest_request": ["收割{作物}", "把{作物}收了", "该收{作物}了", "收一下{作物}"],
+    "combat_alert": ["有{敌人}来了", "{敌人}袭击", "遭到{敌人}攻击"],
+    "build_request": ["建{建筑}", "造个{建筑}", "盖{建筑}", "修{建筑}"],
+    "outfit_change": ["换{服装}", "穿{服装}", "换上{服装}", "穿上{服装}"],
+    "affection_expression": ["喜欢你", "爱你", "想你", "陪我"],
+    "help_request": ["帮我{动作}", "能不能{动作}", "请{动作}"]
+  },
+  
+  "contextTriggers": {
+    "EventDirector": {
+      "description": "事件导演模式",
+      "requiredModules": ["Event_Identity", "Event_Actions", "Event_Context", "Event_Logic", "Event_Format"]
+    },
+    "ImageAnalysis": {
+      "description": "图像分析模式",
+      "requiredModules": ["Vision_Analysis_Detailed"]
+    },
+    "BiographyAnalysis": {
+      "description": "传记分析模式",
+      "requiredModules": ["Text_Analysis_Biography"]
+    },
+    "CompactMode": {
+      "description": "紧凑回复模式",
+      "requiredModules": ["Compact_Instruction"]
+    }
+  },
+  
+  "modeDefaults": {
+    "Assistant": {
+      "requiredModules": ["BehaviorRules_Assistant", "OutputFormat_Usage_Assistant"],
+      "defaultAffinity": 50
+    },
+    "Engineer": {
+      "requiredModules": ["BehaviorRules_Engineer", "OutputFormat_Usage_Engineer", "LogDiagnosis"],
+      "defaultAffinity": 0
+    },
+    "Opponent": {
+      "requiredModules": ["BehaviorRules_Opponent", "OutputFormat_Usage_Opponent"],
+      "defaultAffinity": -50
+    }
+  },
+  
+  "affinityThresholds": {
+    "Neutral": {"min": 0, "max": 30, "module": "Relationship_Neutral"},
+    "CloseFriend": {"min": 31, "max": 60, "module": "Relationship_CloseFriend"},
+    "Partner": {"min": 61, "max": 85, "module": "Relationship_Partner"},
+    "Soulmate": {"min": 86, "max": 100, "module": "Relationship_Soulmate"}
+  }
+}

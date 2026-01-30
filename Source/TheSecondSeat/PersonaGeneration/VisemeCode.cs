@@ -246,7 +246,9 @@ namespace TheSecondSeat.PersonaGeneration
             // 兼容旧版开合度（0.0-1.0）
             if (float.TryParse(visemeStr, out float openness))
             {
+#pragma warning disable CS0618 // 类型或成员已过时
                 return OpennessToViseme(openness);
+#pragma warning restore CS0618 // 类型或成员已过时
             }
             
             return VisemeCode.Closed;

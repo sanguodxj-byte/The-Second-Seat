@@ -18,6 +18,7 @@ Write-Host "Game Folder: $GameFolder"
 $InputDll = "$TargetDir\TheSecondSeat.dll"
 $OutputDll = "$TargetDir\TheSecondSeat.Merged.dll"
 $ScribanDll = "$TargetDir\Scriban.dll"
+$JsonDll = "$TargetDir\Newtonsoft.Json.dll"
 $ManagedDir = "$GameFolder\RimWorldWin64_Data\Managed"
 
 if (-not (Test-Path $InputDll)) {
@@ -25,8 +26,8 @@ if (-not (Test-Path $InputDll)) {
     exit 1
 }
 
-# Run ILRepack
-& $ILRepackPath /parallel /internalize /lib:$ManagedDir /lib:$TargetDir /out:$OutputDll $InputDll $ScribanDll
+# Run ILRepack (Include Newtonsoft.Json to avoid version conflicts)
+& $ILRepackPath /parallel /internalize /lib:$ManagedDir /lib:$TargetDir /out:$OutputDll $InputDll $ScribanDll $JsonDll
 
 if ($LASTEXITCODE -ne 0) {
     Write-Error "ILRepack failed with exit code $LASTEXITCODE"
@@ -45,7 +46,14 @@ if (Test-Path $OutputPdb) {
 
 # Backup Scriban DLL for user
 $ScribanBackup = "D:\rim mod\Scriban_6.5.2.dll"
-Copy-Item -Path $ScribanDll -Destination $ScribanBackup -Force
+if (Test-Path $ScribanDll) {
+    Copy-Item -Path $ScribanDll -Destination $ScribanBackup -Force
+    Remove-Item -Path $ScribanDll -Force
+}
 
-Remove-Item -Path $ScribanDll -Force
+# Remove Newtonsoft.Json.dll as it is now merged
+if (Test-Path $JsonDll) {
+    Remove-Item -Path $JsonDll -Force
+}
+
 Write-Host "Merge complete."

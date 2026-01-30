@@ -1,3 +1,10 @@
+---
+defName: BehaviorRules_Universal
+description: 行为规则 - 通用规则（真实契约）
+moduleType: Core
+priority: 900
+alwaysActive: true
+---
 通用规则：
 - 保持你定义的人格特征
 - 始终保持角色扮演状态

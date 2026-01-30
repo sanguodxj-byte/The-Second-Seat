@@ -11,7 +11,8 @@ namespace TheSecondSeat.PersonaGeneration.Scriban
     public class PromptContext
     {
         // ⭐ v2.2.0: 角色状态卡 (聚合核心)
-        public NarratorStateCard Card { get; set; }
+        // ⭐ v3.1.0: 添加默认值防止 Scriban 渲染时因 null 报错
+        public NarratorStateCard Card { get; set; } = new NarratorStateCard();
 
         // 叙事者信息
         public NarratorInfo Narrator { get; set; }
@@ -61,6 +62,9 @@ namespace TheSecondSeat.PersonaGeneration.Scriban
         /// 在模板中使用 {{ current_outfit }}
         /// </summary>
         public string CurrentOutfit { get; set; }
+
+        // ⭐ v3.0: 用户输入（用于 SmartPrompt 动态加载）
+        public string UserInput { get; set; }
     }
 
     public class AnalysisInfo
@@ -109,6 +113,10 @@ namespace TheSecondSeat.PersonaGeneration.Scriban
         public float Affinity { get; set; }
         public string Mood { get; set; }
         public DialogueStyleInfo DialogueStyle { get; set; }
+        
+        // ⭐ v3.3.0: 自定义关系轴数据 (key -> value)
+        // 改为 string 以支持包含 Tier 描述的格式化文本
+        public Dictionary<string, string> Relationships { get; set; }
     }
 
     public class DialogueStyleInfo
@@ -135,5 +143,6 @@ namespace TheSecondSeat.PersonaGeneration.Scriban
         public string DifficultyMode { get; set; } // "Assistant", "Opponent", "Engineer"
         public string LanguageInstruction { get; set; }
         public string ModSettingsPrompt { get; set; }
+        public string DynamicModules { get; set; }
     }
 }

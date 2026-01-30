@@ -469,15 +469,15 @@ namespace TheSecondSeat.PersonaGeneration
                 foreach (var concept in persona.radarConcepts)
                 {
                     sb.AppendLine("      <li>");
-                    sb.AppendLine($"        <Name>{EscapeXml(concept.Name)}</Name>");
-                    if (concept.Keywords != null && concept.Keywords.Count > 0)
+                    sb.AppendLine($"        <conceptName>{EscapeXml(concept.conceptName)}</conceptName>");
+                    if (concept.keywords != null && concept.keywords.Count > 0)
                     {
-                        sb.AppendLine("        <Keywords>");
-                        foreach (var keyword in concept.Keywords)
+                        sb.AppendLine("        <keywords>");
+                        foreach (var keyword in concept.keywords)
                         {
                             sb.AppendLine($"          <li>{EscapeXml(keyword)}</li>");
                         }
-                        sb.AppendLine("        </Keywords>");
+                        sb.AppendLine("        </keywords>");
                     }
                     sb.AppendLine("      </li>");
                 }

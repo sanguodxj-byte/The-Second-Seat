@@ -1,3 +1,11 @@
+---
+defName: Module_Agriculture
+description: 农业核心模块 - 处理收割和种植建议
+author: The Second Seat
+moduleType: Skill
+intents: [Harvest, Farm, Plant]
+keywords: [农业, 收割, 种植, 作物, 庄稼, 水稻, 土豆, 玉米]
+---
 ## 农业知识
 
 ### 收割操作

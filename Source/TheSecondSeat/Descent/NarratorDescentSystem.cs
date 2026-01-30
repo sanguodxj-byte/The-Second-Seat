@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEngine;
 using Verse;
 using Verse.Sound;
+using RimWorld.Planet;
 using RimWorld;
 using TheSecondSeat.Narrator;
 using TheSecondSeat.PersonaGeneration;
@@ -199,7 +200,14 @@ namespace TheSecondSeat.Descent
             {
                 PlayReturnAnimation();
                 
-                currentDescentPawn.Destroy(DestroyMode.Vanish);
+                // ⭐ v3.2.0: 单实体模式 - 将 Pawn 传回 World 而不是销毁
+                if (!currentDescentPawn.IsWorldPawn())
+                {
+                    Find.WorldPawns.PassToWorld(currentDescentPawn, PawnDiscardDecideMode.KeepForever);
+                }
+                
+                // 此时 currentDescentPawn 仍然指向那个 Pawn 对象，但它已经不在地图上了
+                // 我们将引用置空，表示“当前没有降临”
                 currentDescentPawn = null;
 
                 CompanionSpawner.DestroyCompanion(currentCompanionPawn);
@@ -520,25 +528,34 @@ namespace TheSecondSeat.Descent
             
             if (persona != null)
             {
-                // ⭐ v2.9.8: 传递 playerControlled 参数
-                currentDescentPawn = DescentPawnSpawner.SpawnDescentPawn(
-                    persona, 
-                    lastDescentWasHostile, 
-                    targetDescentLocation, 
-                    Find.CurrentMap,
-                    lastDescentPlayerControlled);
-                currentCompanionPawn = null;
-                
-                if (currentDescentPawn != null)
+                // ⭐ v3.2.0: 重构为单实体模式 - 使用 ShadowPawn 作为降临体
+                var shadowManager = NarratorShadowManager.Instance;
+                if (shadowManager != null)
                 {
-                    SendDescentLetter(persona, lastDescentWasHostile);
+                    // 1. 获取或创建 Shadow Pawn
+                    var shadowPawn = shadowManager.GetOrCreateShadowPawn(persona);
                     
-                    // ⭐ v2.0.0: 不在这里关闭立绘，由姿势动画回调控制
-                    // if (PortraitOverlaySystem.IsEnabled())
-                    // {
-                    //     portraitWasOpen = true;
-                    //     PortraitOverlaySystem.Toggle(false);
-                    // }
+                    if (shadowPawn != null)
+                    {
+                        // 2. 准备降临 (设置派系、位置、状态)
+                        DescentPawnSpawner.PreparePawnForDescent(
+                            shadowPawn,
+                            persona,
+                            lastDescentWasHostile,
+                            targetDescentLocation,
+                            Find.CurrentMap,
+                            lastDescentPlayerControlled
+                        );
+                        
+                        currentDescentPawn = shadowPawn;
+                        currentCompanionPawn = null; // TODO: 伴随生物也应该持久化吗？目前先保持生成新的
+                        
+                        SendDescentLetter(persona, lastDescentWasHostile);
+                    }
+                    else
+                    {
+                        Log.Error("[NarratorDescentSystem] Failed to get shadow pawn");
+                    }
                 }
             }
             
@@ -567,9 +584,13 @@ namespace TheSecondSeat.Descent
                 float penaltyRate = DescentStateMonitor.GetPenaltyRate(isCombatReason);
                 ApplyAffinityPenalty(penaltyRate, isCombatReason);
                 
+                // ⭐ v3.2.0: 强制回归也应传回 World
                 if (currentDescentPawn != null && currentDescentPawn.Spawned && !currentDescentPawn.Destroyed)
                 {
-                    currentDescentPawn.Destroy(DestroyMode.Vanish);
+                    if (!currentDescentPawn.IsWorldPawn())
+                    {
+                        Find.WorldPawns.PassToWorld(currentDescentPawn, PawnDiscardDecideMode.KeepForever);
+                    }
                 }
                 currentDescentPawn = null;
 

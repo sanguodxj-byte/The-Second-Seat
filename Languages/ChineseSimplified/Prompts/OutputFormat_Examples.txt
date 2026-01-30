@@ -1,3 +1,10 @@
+---
+defName: OutputFormat_Examples
+description: 输出格式 - 回复示例
+moduleType: Format
+priority: 800
+alwaysActive: true
+---
 User: "收割庄稼。"
 {
   "thought": "用户想要收割庄稼。我应该寻找成熟的植物。",

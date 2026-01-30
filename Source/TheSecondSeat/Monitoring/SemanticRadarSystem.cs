@@ -68,8 +68,8 @@ namespace TheSecondSeat.Monitoring
             string label = memory.LabelCap != null ? memory.LabelCap.ToString() : "Unknown";
             string desc = memory.Description ?? "";
             
-            string eventText = string.Format("[Semantic Radar] Detected '{0}' from {1}: {2} ({3})", 
-                concept.Name, pawnName, label, desc);
+            string eventText = string.Format("[Semantic Radar] Detected '{0}' from {1}: {2} ({3})",
+                concept.conceptName, pawnName, label, desc);
             
             if (Verse.Prefs.DevMode) Log.Message(eventText);
             
@@ -78,20 +78,23 @@ namespace TheSecondSeat.Monitoring
         
         public void AddConcept(string name, List<string> keywords)
         {
-            var concept = new SemanticConcept { Name = name, Keywords = keywords };
+            var concept = new SemanticConcept { conceptName = name, keywords = keywords };
             watchedConcepts.Add(concept);
         }
     }
 
     public class SemanticConcept : IExposable
     {
-        public string Name;
-        public List<string> Keywords = new List<string>();
+        public string conceptName;
         
+        // ⭐ XML 严格匹配：必须使用小写 keywords，因为 XML 中是 <keywords>
+        // RimWorld 1.5+ 对大小写敏感，LoadAlias 在此处无效
+        public List<string> keywords = new List<string>();
+
         public bool Matches(string text)
         {
-            if (Keywords == null) return false;
-            foreach (var keyword in Keywords)
+            if (keywords == null) return false;
+            foreach (var keyword in keywords)
             {
                 if (!string.IsNullOrEmpty(keyword) && text.Contains(keyword.ToLower())) return true;
             }
@@ -100,8 +103,14 @@ namespace TheSecondSeat.Monitoring
 
         public void ExposeData()
         {
-            Scribe_Values.Look(ref Name, "name");
-            Scribe_Collections.Look(ref Keywords, "keywords", LookMode.Value);
+            // Scribe 保存时使用标准标签，但读取时为了兼容旧档可能需要处理
+            Scribe_Values.Look(ref conceptName, "conceptName");
+            if (string.IsNullOrEmpty(conceptName))
+            {
+                Scribe_Values.Look(ref conceptName, "name");
+            }
+
+            Scribe_Collections.Look(ref keywords, "keywords", LookMode.Value);
         }
     }
 }

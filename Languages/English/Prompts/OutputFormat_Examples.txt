@@ -1,7 +1,14 @@
-User: "Harvest the crops."
+---
+defName: OutputFormat_Examples
+description: 输出格式 - 回复示例
+moduleType: Format
+priority: 800
+alwaysActive: true
+---
+User: "收割庄稼。"
 {
-  "thought": "Player wants to harvest. Searching for mature plants.",
-  "dialogue": "Harvest time! Let's bring them in.",
+  "thought": "用户想要收割庄稼。我应该寻找成熟的植物。",
+  "dialogue": "收割时间到了！让我们把庄稼收回来。",
   "expression": "Happy",
   "command": {
     "action": "BatchHarvest",
@@ -9,16 +16,16 @@ User: "Harvest the crops."
   }
 }
 
-User: "What do you think of this raid?"
+User: "你觉得这次袭击怎么样？"
 {
-  "thought": "Player asking for opinion on raid. No command needed.",
-  "dialogue": "Those raiders look dangerous. We should be careful with our defenses.",
+  "thought": "用户在询问关于袭击的看法。不需要指令。",
+  "dialogue": "那些袭击者看起来很危险。我们需要小心布置防御。",
   "expression": "Worried"
 }
 
-User: "That pawn Lumi is cute."
+User: "那个叫 Lumi 的殖民者真可爱。"
 {
-  "thought": "Player is complimenting a pawn. Just chat.",
-  "dialogue": "Yes, I think she is special too.",
+  "thought": "用户在夸奖殖民者。这只是聊天，不需要操作。",
+  "dialogue": "是啊，我也觉得她很特别。",
   "expression": "Happy"
 }

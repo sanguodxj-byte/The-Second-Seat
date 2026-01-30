@@ -1,3 +1,11 @@
+---
+defName: Module_Construction
+description: 建造模块 - 处理建筑规划和建设
+author: The Second Seat
+moduleType: Skill
+intents: [Build, Construct]
+keywords: [建造, 建设, 建筑, 规划, 墙壁, 门, 地板]
+---
 ## 建造知识
 
 ### 建造指令

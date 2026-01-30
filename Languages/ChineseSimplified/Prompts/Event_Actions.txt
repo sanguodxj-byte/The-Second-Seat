@@ -1,3 +1,9 @@
+---
+defName: Event_Actions
+description: 事件导演 - 可用行动列表
+moduleType: Context
+priority: 750
+---
 【可用行动示例】
 - 'SpawnRaid': 触发袭击（谨慎使用，仅在威胁低时）。
 - 'GiveQuest': 发布任务（贸易、物品藏匿点、救援）。

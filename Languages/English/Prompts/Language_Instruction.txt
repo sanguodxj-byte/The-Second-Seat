@@ -1,1 +1,8 @@
-**Language: Respond in the language of the user's input. Actions use (), e.g. (nods).**
+---
+defName: Language_Instruction
+description: Language Instruction - Response Language Requirement
+moduleType: Core
+priority: 950
+alwaysActive: true
+---
+LANGUAGE REQUIREMENT: Respond in English.

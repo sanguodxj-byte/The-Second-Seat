@@ -894,76 +894,21 @@ namespace TheSecondSeat.PersonaGeneration
         /// <summary>
         /// ⭐ v1.14.0: 获取呼吸动画偏移量（增强版）
         /// 支持参数平滑过渡和更自然的呼吸曲线
+        /// ⭐ v3.0: 禁用呼吸动画（按用户请求）
         /// </summary>
         public static float GetBreathingOffset(string personaDefName)
         {
-            if (!breathingStates.TryGetValue(personaDefName, out var state))
-            {
-                // 初始化默认状态
-                state = new BreathingState
-                {
-                    phase = UnityEngine.Random.Range(0f, Mathf.PI * 2),
-                    speed = 2.0f,
-                    amplitude = 2.0f,
-                    swayPhase = UnityEngine.Random.Range(0f, Mathf.PI * 2),
-                    swaySpeed = 0.3f,
-                    swayAmplitude = 0.5f,
-                    targetSpeed = 2.0f,
-                    targetAmplitude = 2.0f,
-                    lastUpdateTime = (long)(Time.realtimeSinceStartup * 1000)
-                };
-                breathingStates[personaDefName] = state;
-                return 0f;
-            }
-            
-            // 计算时间差
-            float time = Time.realtimeSinceStartup;
-            float dt = Mathf.Clamp((float)(time * 1000 - state.lastUpdateTime) / 1000f, 0f, 0.1f);
-            state.lastUpdateTime = (long)(time * 1000);
-            
-            // ⭐ 平滑过渡到目标参数
-            float lerpSpeed = 2.0f * dt;
-            state.speed = Mathf.Lerp(state.speed, state.targetSpeed, lerpSpeed);
-            state.amplitude = Mathf.Lerp(state.amplitude, state.targetAmplitude, lerpSpeed);
-            
-            // 更新呼吸相位
-            state.phase += state.speed * dt;
-            if (state.phase > Mathf.PI * 2) state.phase -= Mathf.PI * 2;
-            
-            // ⭐ 使用更自然的呼吸曲线（吸气快、呼气慢）
-            // 使用 smoothstep 让呼吸更柔和
-            float rawBreath = Mathf.Sin(state.phase);
-            float breath = rawBreath * rawBreath * rawBreath; // 更柔和的呼吸曲线
-            breath = (breath + 1f) * 0.5f; // 归一化到 0-1
-            breath = breath * 2f - 1f; // 回到 -1 到 1
-            
-            return state.amplitude * breath;
+            return 0f;
         }
         
         /// <summary>
         /// ⭐ v1.14.0: 获取身体微动偏移量（X方向）
         /// 用于实现更自然的立绘效果
+        /// ⭐ v3.0: 禁用摇摆动画（按用户请求）
         /// </summary>
         public static float GetSwayOffset(string personaDefName)
         {
-            if (!breathingStates.TryGetValue(personaDefName, out var state))
-            {
-                return 0f;
-            }
-            
-            // 计算时间差
-            float time = Time.realtimeSinceStartup;
-            float dt = Mathf.Clamp((float)(time * 1000 - state.lastUpdateTime) / 1000f, 0f, 0.1f);
-            
-            // 更新摇摆相位（独立于呼吸）
-            state.swayPhase += state.swaySpeed * dt;
-            if (state.swayPhase > Mathf.PI * 2) state.swayPhase -= Mathf.PI * 2;
-            
-            // 使用两个不同频率的正弦波叠加，让摇摆更自然
-            float primarySway = Mathf.Sin(state.swayPhase);
-            float secondarySway = Mathf.Sin(state.swayPhase * 1.7f) * 0.3f; // 次级摇摆
-            
-            return state.swayAmplitude * (primarySway + secondarySway);
+            return 0f;
         }
         
         /// <summary>
@@ -975,6 +920,27 @@ namespace TheSecondSeat.PersonaGeneration
             float breathingY = GetBreathingOffset(personaDefName);
             float swayX = GetSwayOffset(personaDefName);
             return new Vector2(swayX, breathingY);
+        }
+
+        /// <summary>
+        /// ⭐ v1.14.5: 获取呼吸缩放系数
+        /// </summary>
+        public static float GetBreathingScale(string personaDefName, float intensity, float timeOffset = 0f)
+        {
+            if (!breathingStates.TryGetValue(personaDefName, out var state)) return 1f;
+            
+            // 使用呼吸相位计算缩放
+            // 引入 timeOffset 支持不同部位的呼吸滞后
+            float effectivePhase = state.phase + (timeOffset * state.speed);
+            
+            // sin(phase) 在 -1 到 1 之间
+            // 归一化到 0 到 1: (sin + 1) / 2
+            float breath = (Mathf.Sin(effectivePhase) + 1f) * 0.5f;
+            
+            // 再次平滑曲线
+            breath = breath * breath * (3f - 2f * breath);
+            
+            return 1f + (breath * intensity);
         }
 
         /// <summary>

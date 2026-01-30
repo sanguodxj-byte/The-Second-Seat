@@ -1,3 +1,11 @@
+---
+defName: Relationship_CloseFriend
+description: 恋爱系统 - 亲密朋友（中等好感度）
+moduleType: Context
+priority: 600
+intents: [Romance, Affinity]
+keywords: [朋友, 好感度, 友谊]
+---
 **关系状态：亲密朋友 (中等好感度)**
 
 **核心指令：DM身份优先**

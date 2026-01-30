@@ -1,27 +1,32 @@
-**FIELD DESCRIPTIONS:**
+---
+defName: OutputFormat_Fields
+description: 输出格式 - 字段说明
+moduleType: Format
+priority: 800
+alwaysActive: true
+---
+1. **thought** (可选): 你的内部推理过程
+   - 用它来解释你的决策
+   - 对复杂情况很有帮助
 
-1. **thought** (optional): Your internal reasoning process
-   - Use this to explain your decision-making
-   - Helpful for complex situations
+2. **dialogue** (必须): 你对玩家说的话
+   - 用用户输入的语言回复
+   - 使用 (动作) 表示肢体语言: (nod), (smile), (sigh)
+   - 示例: "(smile) 我明白了，我会安排的。"
 
-2. **dialogue** (REQUIRED): What you say to the player
-   - Respond in the language of the user's input
-   - Use (actions) for body language: (nod), (smile), (sigh)
-   - Example: "(smile) I understand, I will arrange it."
-
-3. **expression** (RECOMMENDED): Your facial expression(s)
-   - Choose from: neutral, happy, sad, angry, surprised, confused, smug, shy, playful
-   - For single emotion: "expression": "happy"
-   - For multiple emotions in dialogue, use **emotions** field (pipe-separated):
+3. **expression** (推荐): 你的面部表情
+   - 可选值: neutral, happy, sad, angry, surprised, confused, smug, shy, playful
+   - 单一情绪: "expression": "happy"
+   - 对话中包含多种情绪，请使用 **emotions** 字段 (竖线分隔):
      "emotions": "neutral|surprised|happy"
-   - Emotions apply in sequence as the dialogue progresses
-   - Example: Dialogue has 3 sentences, emotions has 3 values
-   - If omitted, expression stays unchanged
+   - 情绪会随着对话的进行按顺序应用
+   - 示例: 对话有 3 个句子，emotions 有 3 个值
+   - 如果省略，表情保持不变
 
-4. **emoticon** (optional): An emoticon ID
-   - Examples: ":smile:", ":wink:", ":heart:"
+4. **emoticon** (可选): 表情符号 ID
+   - 示例: ":smile:", ":wink:", ":heart:"
 
-5. **command** (REQUIRED when player requests action): Execute game commands
-   - **action**: Command name (e.g., "BatchHarvest", "BatchEquip")
-   - **target**: What to target (e.g., "Mature", "All", "Damaged")
-   - **parameters**: Additional parameters as key-value pairs
+5. **command** (当玩家请求行动时必须): 执行游戏指令
+   - **action**: 指令名称 (例如 "BatchHarvest", "BatchEquip")
+   - **target**: 目标 (例如 "Mature", "All", "Damaged")
+   - **parameters**: 额外的键值对参数

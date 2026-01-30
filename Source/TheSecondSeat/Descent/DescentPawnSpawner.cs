@@ -13,15 +13,62 @@ namespace TheSecondSeat.Descent
     public static class DescentPawnSpawner
     {
         /// <summary>
-        /// 生成降临实体
-        /// ⭐ v2.9.8: 添加 playerControlled 参数，区分受控援助和自主援助
+        /// ⭐ v3.2.0: 准备并投放已有的 Shadow Pawn
         /// </summary>
-        /// <param name="persona">叙事者人格定义</param>
-        /// <param name="isHostile">是否为敌对模式</param>
-        /// <param name="location">降临位置</param>
-        /// <param name="map">目标地图</param>
-        /// <param name="playerControlled">是否由玩家控制（默认 true）。仅在 isHostile=false 时有效。</param>
-        /// <returns>生成的降临实体</returns>
+        public static void PreparePawnForDescent(
+            Pawn pawn,
+            NarratorPersonaDef persona,
+            bool isHostile,
+            IntVec3 location,
+            Map map,
+            bool playerControlled = true)
+        {
+            if (pawn == null || persona == null || map == null) return;
+
+            // 1. 确定并设置派系
+            Faction faction = DetermineFaction(isHostile, playerControlled);
+            if (pawn.Faction != faction)
+            {
+                pawn.SetFaction(faction);
+            }
+
+            // 2. 投放到地图
+            if (pawn.Spawned)
+            {
+                // 如果已经在地图上（不应该发生，但防御性处理），瞬移
+                pawn.Position = location;
+                pawn.Notify_Teleported();
+            }
+            else
+            {
+                GenSpawn.Spawn(pawn, location, map);
+            }
+
+            // 3. 恢复状态（如果是从 World 回来的）
+            // 确保没有被清除的临时 Hediff
+            
+            // 4. 确保能力组件存在
+            EnsureAbilityTracker(pawn);
+
+            // 5. 应用 Persona 设定 (名字等)
+            ApplyPersonaToPawn(pawn, persona);
+
+            // 6. 重新添加 Hediff (如果丢失)
+            // 注意：不要重复添加永久性 Hediff，这里主要用于添加降临状态的 Hediff
+            AddHediffs(pawn, persona);
+
+            // 7. 赋予技能 (如果缺失)
+            GrantAbilities(pawn, persona);
+
+            // 8. 自动征召
+            AutoDraft(pawn);
+
+            Log.Message($"[DescentPawnSpawner] {pawn.Name} descended successfully");
+        }
+
+        /// <summary>
+        /// 生成降临实体 (旧方法，现在用于首次创建或兼容)
+        /// </summary>
         public static Pawn SpawnDescentPawn(
             NarratorPersonaDef persona, 
             bool isHostile, 
@@ -29,12 +76,8 @@ namespace TheSecondSeat.Descent
             Map map,
             bool playerControlled = true)
         {
-            if (persona == null || map == null || location == IntVec3.Invalid)
-            {
-                Log.Error("[DescentPawnSpawner] Invalid parameters for spawning");
-                return null;
-            }
-
+            // 此方法现在主要作为 fallback 或用于生成新的 Shadow Pawn
+            
             PawnKindDef pawnKind = DefDatabase<PawnKindDef>.GetNamedSilentFail(persona.descentPawnKind);
             if (pawnKind == null)
             {
@@ -42,62 +85,27 @@ namespace TheSecondSeat.Descent
                 return null;
             }
 
-            // 1. 确定派系
-            // ⭐ v2.9.8: 根据 isHostile 和 playerControlled 确定派系
             Faction faction = DetermineFaction(isHostile, playerControlled);
-            Log.Message($"[DescentPawnSpawner] Faction: {faction?.Name ?? "null"}, IsHostile: {isHostile}, PlayerControlled: {playerControlled}");
-
-            // 2. 生成 Pawn
-            Pawn pawn;
+            
+            PawnGenerationRequest request = new PawnGenerationRequest(
+                pawnKind,
+                faction,
+                forceGenerateNewPawn: true
+            );
+            
             try
             {
-                // 使用最简化的 PawnGenerationRequest，避免复杂参数导致的问题
-                PawnGenerationRequest request = new PawnGenerationRequest(
-                    pawnKind,
-                    faction,
-                    forceGenerateNewPawn: true
-                );
-                
-                Log.Message($"[DescentPawnSpawner] Creating pawn with PawnKind: {pawnKind.defName}, Race: {pawnKind.race?.defName ?? "null"}");
-                
-                pawn = PawnGenerator.GeneratePawn(request);
-                
-                if (pawn == null)
-                {
-                    Log.Error("[DescentPawnSpawner] PawnGenerator returned null");
-                    return null;
-                }
-                
-                Log.Message($"[DescentPawnSpawner] Generated: {pawnKind.defName}, Intelligence: {pawn.RaceProps.intelligence}");
+                Pawn pawn = PawnGenerator.GeneratePawn(request);
+                if (pawn == null) return null;
+
+                PreparePawnForDescent(pawn, persona, isHostile, location, map, playerControlled);
+                return pawn;
             }
             catch (Exception ex)
             {
-                Log.Error($"[DescentPawnSpawner] Failed to generate pawn: {ex.Message}");
-                Log.Error($"[DescentPawnSpawner] Stack: {ex.StackTrace}");
+                Log.Error($"[DescentPawnSpawner] Failed to generate pawn: {ex}");
                 return null;
             }
-
-            // 3. 应用叙事者设定
-            ApplyPersonaToPawn(pawn, persona);
-
-            // 4. 投放到地图
-            GenSpawn.Spawn(pawn, location, map);
-
-            // 5. 确保 Animal 智力的生物拥有 AbilityTracker (关键步骤)
-            // 必须在赋予技能和添加 Hediff 之前完成
-            EnsureAbilityTracker(pawn);
-
-            // 6. 添加 Hediff (可能包含 HediffCompProperties_GiveAbility)
-            AddHediffs(pawn, persona);
-
-            // 7. 赋予额外技能 (NarratorPersonaDef 中指定的)
-            GrantAbilities(pawn, persona);
-
-            // 8. 自动征召
-            AutoDraft(pawn);
-
-            Log.Message($"[DescentPawnSpawner] {persona.narratorName} spawned successfully");
-            return pawn;
         }
 
         /// <summary>
@@ -181,8 +189,12 @@ namespace TheSecondSeat.Descent
                 AbilityDef abilityDef = DefDatabase<AbilityDef>.GetNamedSilentFail(abilityDefName);
                 if (abilityDef != null)
                 {
-                    pawn.abilities.GainAbility(abilityDef);
-                    Log.Message($"[DescentPawnSpawner] Granted ability: {abilityDefName}");
+                    // 避免重复添加
+                    if (!pawn.abilities.abilities.Any(a => a.def == abilityDef))
+                    {
+                        pawn.abilities.GainAbility(abilityDef);
+                        Log.Message($"[DescentPawnSpawner] Granted ability: {abilityDefName}");
+                    }
                 }
                 else
                 {
@@ -203,9 +215,13 @@ namespace TheSecondSeat.Descent
                 HediffDef hediffDef = DefDatabase<HediffDef>.GetNamedSilentFail(hediffDefName);
                 if (hediffDef != null)
                 {
-                    Hediff hediff = HediffMaker.MakeHediff(hediffDef, pawn);
-                    pawn.health.AddHediff(hediff);
-                    Log.Message($"[DescentPawnSpawner] Added hediff: {hediffDefName}");
+                    // ⭐ 修复：避免重复添加 Hediff
+                    if (!pawn.health.hediffSet.HasHediff(hediffDef))
+                    {
+                        Hediff hediff = HediffMaker.MakeHediff(hediffDef, pawn);
+                        pawn.health.AddHediff(hediff);
+                        Log.Message($"[DescentPawnSpawner] Added hediff: {hediffDefName}");
+                    }
                 }
                 else
                 {

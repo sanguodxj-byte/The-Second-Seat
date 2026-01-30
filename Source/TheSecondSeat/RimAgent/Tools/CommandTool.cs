@@ -30,25 +30,56 @@ namespace TheSecondSeat.RimAgent.Tools
                 
                 string action = actionObj?.ToString() ?? "";
                 
-                // ⭐ v1.6.84: 修复参数传递 - 优先使用 params 内部参数，然后用顶层参数覆盖
+                // ⭐ v3.0: 修复参数传递 - 优先使用 params 内部参数，仅当 params 不存在时才使用顶层参数
                 var commandParams = new Dictionary<string, object>();
+                bool hasNestedParams = false;
 
-                // 1. 优先提取 params 内部的参数 (如果 LLM 输出的是 JSON 对象结构)
-                if (parameters.TryGetValue("params", out var paramsObj) && paramsObj is Dictionary<string, object> nestedParams)
+                // 1. 优先提取 params 内部的参数 (标准 JSON 格式)
+                // 注意：在 JSON 反序列化中，它通常被称为 "parameters" 或 "params"
+                object paramsObj = null;
+                if (parameters.TryGetValue("params", out paramsObj) || parameters.TryGetValue("parameters", out paramsObj))
                 {
-                    foreach (var kvp in nestedParams)
+                    if (paramsObj is Dictionary<string, object> nestedParams)
                     {
-                        commandParams[kvp.Key] = kvp.Value;
+                        foreach (var kvp in nestedParams)
+                        {
+                            commandParams[kvp.Key] = kvp.Value;
+                        }
+                        hasNestedParams = true;
+                        Log.Message($"[CommandTool] Using structured parameters ({commandParams.Count})");
+                    }
+                    else if (paramsObj is Newtonsoft.Json.Linq.JObject jObj)
+                    {
+                        // 处理 Json.NET JObject (如果反序列化未完全转换为字典)
+                        try
+                        {
+                            var dict = jObj.ToObject<Dictionary<string, object>>();
+                            foreach (var kvp in dict) commandParams[kvp.Key] = kvp.Value;
+                            hasNestedParams = true;
+                            Log.Message($"[CommandTool] Using structured JObject parameters ({commandParams.Count})");
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Warning($"[CommandTool] Failed to convert JObject params: {ex.Message}");
+                        }
                     }
                 }
 
-                // 2. 合并顶层参数 (ReActAgent 解析出的 kwargs)，覆盖前者
-                // 这样即使 LLM 混用了格式，也能优先保证顶层解析结果（如 target）的正确性
-                foreach (var kvp in parameters)
+                // 2. 仅当没有找到嵌套结构时，才回退到顶层参数 (ReAct / Legacy 模式)
+                // 这避免了顶层幻觉参数覆盖精确的内部参数
+                if (!hasNestedParams)
                 {
-                    if (kvp.Key != "action" && kvp.Key != "target" && kvp.Key != "params")
+                    foreach (var kvp in parameters)
                     {
-                        commandParams[kvp.Key] = kvp.Value;
+                        // 排除保留关键字
+                        if (kvp.Key != "action" && kvp.Key != "target" && kvp.Key != "params" && kvp.Key != "parameters")
+                        {
+                            commandParams[kvp.Key] = kvp.Value;
+                        }
+                    }
+                    if (commandParams.Count > 0)
+                    {
+                        Log.Message($"[CommandTool] Using top-level parameters ({commandParams.Count}) as fallback");
                     }
                 }
                 

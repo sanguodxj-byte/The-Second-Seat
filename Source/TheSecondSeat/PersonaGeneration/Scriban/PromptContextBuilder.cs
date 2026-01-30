@@ -15,6 +15,7 @@ namespace TheSecondSeat.PersonaGeneration.Scriban
     {
         /// <summary>
         /// 构建 PromptContext
+        /// ⭐ v3.1.1: 支持从设置中读取难度模式
         /// </summary>
         public static PromptContext Build(NarratorManager manager)
         {
@@ -26,8 +27,17 @@ namespace TheSecondSeat.PersonaGeneration.Scriban
             var personaDef = manager.CurrentPersona;
             var storytellerAgent = manager.StorytellerAgent;
             
+            // ⭐ v3.1.1: 从设置中获取难度模式
+            var modSettings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
+            var difficultyMode = modSettings?.difficultyMode ?? AIDifficultyMode.Assistant;
+            
             // 获取角色卡
             var card = CharacterCardSystem.GetCurrentCard();
+            // ⭐ v3.1.1: 确保 Card 永不为 null
+            if (card == null)
+            {
+                card = new NarratorStateCard();
+            }
 
             var context = new PromptContext
             {
@@ -62,13 +72,12 @@ namespace TheSecondSeat.PersonaGeneration.Scriban
                 },
                 Meta = new MetaInfo
                 {
-                    DifficultyMode = "Assistant",
+                    DifficultyMode = difficultyMode.ToString(),
                     LanguageInstruction = PromptLoader.Load("Language_Instruction", personaDef?.defName) ?? "Respond in user's preferred language."
                 }
             };
             
-            // 加载 Mod 设置
-            var modSettings = LoadedModManager.GetMod<Settings.TheSecondSeatMod>()?.GetSettings<Settings.TheSecondSeatSettings>();
+            // 加载 Mod 设置 (已在前面获取)
             if (modSettings != null && !string.IsNullOrWhiteSpace(modSettings.globalPrompt))
             {
                 context.Meta.ModSettingsPrompt = modSettings.globalPrompt.Trim();
@@ -91,10 +100,11 @@ namespace TheSecondSeat.PersonaGeneration.Scriban
             }
 
             // 准备 Snippets (生成各个 Section)
+            // ⭐ v3.1.1: 根据设置中的难度模式生成对应的 Snippets
             try
             {
                 context.Snippets["identity_section"] = PromptSections.IdentitySection.Generate(
-                    personaDef, storytellerAgent, AIDifficultyMode.Assistant);
+                    personaDef, storytellerAgent, difficultyMode);
             }
             catch (Exception ex)
             {
@@ -113,18 +123,20 @@ namespace TheSecondSeat.PersonaGeneration.Scriban
             
             try
             {
-                context.Snippets["tool_box_section"] = PromptSections.OutputFormatSection.Generate(AIDifficultyMode.Assistant);
+                context.Snippets["tool_box_section"] = PromptSections.OutputFormatSection.Generate(difficultyMode);
             }
             catch (Exception ex)
             {
                 context.Snippets["tool_box_section"] = $"[Error: {ex.Message}]";
             }
             
-            // Philosophy
-            string philosophy = PromptLoader.Load("Philosophy_Assistant", personaDef?.defName);
+            // Philosophy - 根据难度模式加载对应的哲学文件
+            string philosophyFile = $"Philosophy_{difficultyMode}";
+            string philosophy = PromptLoader.Load(philosophyFile, personaDef?.defName);
             if (string.IsNullOrEmpty(philosophy) || philosophy.StartsWith("[Error:"))
             {
-                philosophy = PromptLoader.Load("BehaviorRules_Assistant", personaDef?.defName);
+                string behaviorFile = $"BehaviorRules_{difficultyMode}";
+                philosophy = PromptLoader.Load(behaviorFile, personaDef?.defName);
             }
             context.Snippets["philosophy"] = philosophy?.StartsWith("[Error:") == true ? "" : philosophy ?? "";
             

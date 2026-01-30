@@ -1,17 +1,25 @@
-## Agriculture Knowledge
+---
+defName: Module_Agriculture
+description: 农业核心模块 - 处理收割和种植建议
+author: The Second Seat
+moduleType: Skill
+intents: [Harvest, Farm, Plant]
+keywords: [农业, 收割, 种植, 作物, 庄稼, 水稻, 土豆, 玉米]
+---
+## 农业知识
 
-### Harvesting
-Use the 'Harvest' command to harvest mature crops. You can specify the scope (all=all, zone=specific zone).
+### 收割操作
+使用 Harvest 指令收割成熟的作物。可以指定收割范围（all=全部, zone=区域）。
 
-### Crop Information
-- Rice: 6-day growth cycle, medium yield
-- Potatoes: 5.5-day growth cycle, suitable for beginners
-- Corn: 11-day growth cycle, highest yield
-- Berries: Can be eaten raw
-- Haygrass: Used for animal feed
-- Healroot: Used for medicine
+### 作物信息
+- 水稻：生长周期 6 天，产量中等
+- 土豆：生长周期 5.5 天，适合新手
+- 玉米：生长周期 11 天，产量最高
+- 浆果：可直接食用
+- 干草：用于动物饲料
+- 草药：用于医疗
 
-### Planting Tips
-- Plant intensively during warm seasons
-- Pay attention to irrigation and temperature
-- Set priority to 1 (emergency) to speed up harvesting
+### 种植建议
+- 在温暖季节集中种植
+- 注意灌溉和温度
+- 优先级设为 1（紧急）可加快收割

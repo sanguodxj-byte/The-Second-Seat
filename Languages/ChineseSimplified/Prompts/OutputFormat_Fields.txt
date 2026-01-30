@@ -1,3 +1,10 @@
+---
+defName: OutputFormat_Fields
+description: 输出格式 - 字段说明
+moduleType: Format
+priority: 800
+alwaysActive: true
+---
 1. **thought** (可选): 你的内部推理过程
    - 用它来解释你的决策
    - 对复杂情况很有帮助

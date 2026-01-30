@@ -75,8 +75,8 @@ namespace TheSecondSeat.SmartPrompt
         // ========== 构建 AC 自动机 ==========
         
         /// <summary>
-        /// 初始化并构建 AC 自动机
-        /// 应在游戏启动时调用（如 ModContentPack.PostLoadContent）
+        /// ⭐ v3.1.0: 初始化并构建 AC 自动机
+        /// 支持 PromptLoader.disabledPrompts 设置，禁用的模块不会被索引
         /// </summary>
         public void Build()
         {
@@ -92,12 +92,20 @@ namespace TheSecondSeat.SmartPrompt
             _root = new TrieNode { Depth = 0 };
             _moduleCache.Clear();
             _totalKeywords = 0;
+            int skippedModules = 0;
             
             // 遍历所有 PromptModuleDef，插入关键词
             var allModules = DefDatabase<PromptModuleDef>.AllDefsListForReading;
             
             foreach (var module in allModules)
             {
+                // ⭐ v3.1.0: 检查模块是否被禁用
+                if (TheSecondSeat.PersonaGeneration.PromptLoader.IsDisabled(module.defName))
+                {
+                    skippedModules++;
+                    continue;
+                }
+                
                 _moduleCache[module.defName] = module;
                 
                 // 为每个意图创建关键词映射
@@ -132,7 +140,8 @@ namespace TheSecondSeat.SmartPrompt
             _isBuilt = true;
             sw.Stop();
             
-            Log.Message($"[FlashMatcher] Built AC automaton: {_totalKeywords} keywords from {allModules.Count} modules in {sw.ElapsedMilliseconds}ms");
+            int activeModules = allModules.Count - skippedModules;
+            Log.Message($"[FlashMatcher] Built AC automaton: {_totalKeywords} keywords from {activeModules}/{allModules.Count} modules in {sw.ElapsedMilliseconds}ms (skipped {skippedModules} disabled)");
         }
         
         /// <summary>
@@ -387,6 +396,144 @@ namespace TheSecondSeat.SmartPrompt
         public List<string> GetAllModuleNames()
         {
             return _moduleCache.Keys.ToList();
+        }
+        
+        // ========== v3.1.1: 聊天/工具意图检测 ==========
+        
+        /// <summary>
+        /// 聊天关键词列表（匹配这些时不需要工具列表）
+        /// </summary>
+        private static readonly HashSet<string> ChatKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            // 问候
+            "你好", "早", "晚安", "早安", "嗨", "喂", "在吗", "忙吗",
+            "hi", "hello", "hey", "morning", "night", "good morning", "good night",
+            
+            // 情感表达
+            "喜欢", "爱", "讨厌", "开心", "难过", "累", "烦", "高兴", "生气", "伤心",
+            "love", "like", "hate", "happy", "sad", "tired", "bored", "angry",
+            
+            // 闲聊
+            "聊聊", "说说", "讲讲", "谈谈", "怎么看", "你觉得", "你认为", "觉得怎么样",
+            "chat", "talk", "think", "feel", "opinion", "what do you think",
+            
+            // 询问对方
+            "你呢", "你怎么样", "怎么了", "发生什么", "怎样",
+            "how are you", "are you there", "what happened", "how about you",
+            
+            // 赞美/评价
+            "好可爱", "真棒", "太厉害", "漂亮", "帅", "厉害", "聪明", "真好",
+            "cute", "great", "awesome", "beautiful", "amazing", "smart", "nice",
+            
+            // 日常
+            "吃饭", "睡觉", "休息", "无聊", "今天", "明天", "昨天", "天气",
+            "eat", "sleep", "rest", "today", "tomorrow", "yesterday", "weather",
+            
+            // 请求陪伴
+            "陪我", "跟我", "和我", "一起", "陪陪",
+            "with me", "together", "stay with me",
+            
+            // 感谢道歉
+            "谢谢", "感谢", "抱歉", "对不起", "不好意思",
+            "thank", "thanks", "sorry", "apologize"
+        };
+        
+        /// <summary>
+        /// 工具触发关键词列表（匹配这些时需要工具列表）
+        /// </summary>
+        private static readonly HashSet<string> ToolKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            // 动作指令
+            "收割", "建造", "攻击", "撤退", "征召", "取消征召", "装备", "修复",
+            "harvest", "build", "attack", "retreat", "draft", "undraft", "equip", "repair",
+            
+            // 查询指令
+            "查一下", "找找", "位置", "在哪", "哪里", "查询", "搜索",
+            "where", "find", "locate", "search", "scan",
+            
+            // 事件相关
+            "触发", "事件", "袭击", "入侵", "派遣",
+            "trigger", "event", "raid", "incident", "spawn",
+            
+            // 降临系统
+            "降临", "化身", "回来", "升天", "实体",
+            "descent", "ascend", "descend", "manifest", "physical",
+            
+            // 服装系统
+            "换衣服", "换装", "穿", "脱", "服装",
+            "outfit", "wear", "dress", "change clothes",
+            
+            // 殖民地管理
+            "殖民者", "工作", "优先级", "策略", "政策",
+            "colonist", "work", "priority", "policy"
+        };
+        
+        /// <summary>
+        /// ⭐ v3.1.1: 检测用户输入是否需要工具列表
+        ///
+        /// 策略：
+        /// 1. 如果匹配到任何工具关键词 → 需要工具
+        /// 2. 如果匹配到任何技能模块 (Skill) → 需要工具
+        /// 3. 如果只匹配到聊天关键词 → 不需要工具
+        /// 4. 默认需要工具（保守策略）
+        /// </summary>
+        /// <param name="userInput">用户输入</param>
+        /// <returns>是否需要加载工具列表</returns>
+        public bool NeedsToolBox(string userInput)
+        {
+            if (string.IsNullOrWhiteSpace(userInput))
+            {
+                return false; // 空输入不需要工具
+            }
+            
+            string normalized = userInput.ToLowerInvariant();
+            
+            // 1. 检查是否包含工具触发关键词
+            foreach (var keyword in ToolKeywords)
+            {
+                if (normalized.Contains(keyword.ToLowerInvariant()))
+                {
+                    return true; // 包含工具关键词，需要工具列表
+                }
+            }
+            
+            // 2. 检查是否匹配到任何技能模块
+            var matchedModules = GetMatchedModules(userInput, 0.5f);
+            foreach (var moduleDefName in matchedModules)
+            {
+                if (_moduleCache.TryGetValue(moduleDefName, out var module))
+                {
+                    if (module.moduleType == ModuleType.Skill)
+                    {
+                        return true; // 匹配到技能模块，需要工具列表
+                    }
+                }
+            }
+            
+            // 3. 检查是否只是聊天
+            bool isChatOnly = false;
+            foreach (var keyword in ChatKeywords)
+            {
+                if (normalized.Contains(keyword.ToLowerInvariant()))
+                {
+                    isChatOnly = true;
+                    break;
+                }
+            }
+            
+            if (isChatOnly && matchedModules.Count == 0)
+            {
+                return false; // 纯聊天，不需要工具列表
+            }
+            
+            // 4. 短输入（少于 10 个字符）且无匹配，视为聊天
+            if (userInput.Length < 10 && matchedModules.Count == 0)
+            {
+                return false;
+            }
+            
+            // 5. 默认需要工具（保守策略）
+            return true;
         }
     }
     

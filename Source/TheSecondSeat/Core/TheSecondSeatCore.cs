@@ -7,6 +7,7 @@ using TheSecondSeat.Events;
 using TheSecondSeat.Autonomous;
 using TheSecondSeat.Monitoring;
 using TheSecondSeat.PersonaGeneration;
+using TheSecondSeat.PersonaGeneration.Presets; // ⭐ v3.0.0: Presets
 using TheSecondSeat.RimAgent; // ⭐ v1.6.77: 新增 - 引入 RimAgent
 using TheSecondSeat.RimAgent.Tools; // ⭐ v1.6.77: 新增 - 引入 Tools
 using TheSecondSeat.Utils; // ⭐ v1.6.80: 新增 - 引入 Utils
@@ -51,6 +52,10 @@ namespace TheSecondSeat
 
             // ⭐ v1.6.77: 注册 RimAgent 工具
             RegisterTools();
+
+            // ⭐ v3.0.0: 初始化 Prompt Preset 管理器 (必须在 DefDatabase 加载后)
+            // StaticConstructorOnStartup 保证了 Defs 已加载
+            PromptPresetManager.Initialize();
             
             // ⭐ 新增：调试日志 - 列出所有已加载的 NarratorPersonaDef
             LogLoadedPersonaDefs();

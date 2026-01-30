@@ -29,6 +29,9 @@ namespace TheSecondSeat.PersonaGeneration
         
         // ⭐ v1.7.0: 静态缓存
         private static Dictionary<string, string> _promptCache = new Dictionary<string, string>();
+        
+        // ⭐ v3.0: 语言切换检测
+        private static LoadedLanguage _lastActiveLanguage;
 
         /// <summary>
         /// Clears the prompt cache (e.g. when language changes)
@@ -66,6 +69,17 @@ namespace TheSecondSeat.PersonaGeneration
             {
                 if (!silent) Log.Warning("[The Second Seat] LanguageDatabase.activeLanguage is null, cannot load prompt.");
                 return $"[Error: Language not initialized]";
+            }
+
+            // ⭐ v3.0: 检测语言切换并自动清理缓存
+            if (_lastActiveLanguage != LanguageDatabase.activeLanguage)
+            {
+                if (_lastActiveLanguage != null) // Only clear if it's a switch, not first init
+                {
+                    Log.Message($"[The Second Seat] Language switched from '{_lastActiveLanguage.folderName}' to '{LanguageDatabase.activeLanguage.folderName}'. Clearing prompt cache.");
+                    ClearCache();
+                }
+                _lastActiveLanguage = LanguageDatabase.activeLanguage;
             }
 
             // ⭐ v1.7.0: 检查缓存

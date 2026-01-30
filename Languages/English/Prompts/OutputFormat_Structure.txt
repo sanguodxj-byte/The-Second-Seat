@@ -1,19 +1,26 @@
-=== OUTPUT FORMAT ===
+---
+defName: OutputFormat_Structure
+description: Output Format - JSON Structure Definition
+moduleType: Format
+priority: 800
+alwaysActive: true
+---
+=== Output Format ===
 
-**CRITICAL RULES:**
-1. Your response MUST be a SINGLE valid JSON object.
-2. **DO NOT** use markdown code blocks (like ```json ... ```). Start directly with `{` and end with `}`.
-3. **DO NOT** include any thinking process, explanations, or chatter outside the JSON.
-4. Escape all newlines within strings (use `\n`).
+**Critical Rules:**
+1. Your response must be and ONLY be a valid JSON object.
+2. **DO NOT** use markdown code block tags (like ```json ... ```). Start directly with `{` and end with `}`.
+3. **DO NOT** include any thinking process, explanation, or pleasantries before or after the JSON.
+4. All newlines must be escaped (use `\n`).
 
-**JSON STRUCTURE:**
+**JSON Structure:**
 {
-  "thought": "(Required) Your internal reasoning, observations, and decision logic.",
-  "dialogue": "(Required) Your spoken response to the player (Meta channel) or colonists (IC channel).",
+  "thought": "(Required) Your internal reasoning and thinking process, including observation of current status and decision logic.",
+  "dialogue": "(Required) What you say to the player (Meta channel) or to colonists (IC channel).",
   "expression": "(Optional) Current expression code (e.g., 'Happy', 'Sad', 'Angry')",
-  "command": {  // (Optional) Include ONLY if executing a game command
-    "action": "CommandName",
-    "target": "target identifier",
+  "command": {  // (Optional) Include only when a game action needs to be executed
+    "action": "Command Name",
+    "target": "Target Identifier",
     "parameters": {"key": "value"}
   }
 }

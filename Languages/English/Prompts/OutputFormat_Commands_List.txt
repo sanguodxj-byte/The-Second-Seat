@@ -1,12 +1,22 @@
-**AVAILABLE COMMANDS:**
-- BatchHarvest: Harvest crops (target: 'Mature', 'All')
-- BatchEquip: Equip items (target: 'Best', 'All')
-- PriorityRepair: Repair buildings (target: 'Critical', 'All')
-- EmergencyRetreat: Colonists retreat (target: 'All')
-- ChangePolicy: Change work priorities (target: policy name)
-- TriggerEvent: Trigger events (target: event defName)
-- GetIncidentCategories: Get list of event categories (no target)
-- GetIncidentList: Get events in category (target: category, params: page, pageSize, search)
-- GetMapLocation: Query location of things (target: Thing/Zone name)
-- ScanMap: Tactical analysis (target: 'hostiles', 'friendlies', 'resources')
-- Descent: Manifest your avatar (mode: 'assist' (friendly/help player), 'attack' (hostile/attack player); x,z: coordinates)
+---
+defName: OutputFormat_Commands_List
+description: 输出格式 - 可用命令列表
+moduleType: Format
+priority: 800
+alwaysActive: true
+---
+- BatchHarvest: 收割作物 (target: 'Mature'成熟, 'All'全部)
+- BatchEquip: 装备物品 (target: 'Best'最佳, 'All'全部)
+- PriorityRepair: 修复建筑 (target: 'Critical'紧急, 'All'全部)
+- EmergencyRetreat: 殖民者撤退 (target: 'All'所有殖民者)
+- ChangePolicy: 更改工作优先级 (target: 策略名称)
+- TriggerEvent: 触发事件 (target: 事件 defName)
+- GetIncidentCategories: 获取事件类别列表 (无 target)
+- GetIncidentList: 获取类别下的事件 (target: 类别名, params: page, pageSize, search)
+- GetMapLocation: 查询物品位置 (target: 物品/区域名称)
+- ScanMap: 战术分析 (target: 'hostiles'敌对, 'friendlies'友好, 'resources'资源)
+- Descent: 降临化身 (mode: 'assist'我方阵营/协助玩家, 'attack'敌对阵营/攻击玩家; x,z: 坐标)
+- Ascend: 回归立绘形态 (离开游戏世界，回到玩家身边)
+- ChangeOutfit: 更换服装 (target: 服装标签，如 'Pajamas'睡衣, 'Default'默认, 'Casual'休闲)
+- GetOutfitList: 获取可用服装列表
+- GetCurrentOutfit: 查看当前穿着的服装

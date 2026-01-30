@@ -1,3 +1,9 @@
+---
+defName: OutputFormat_Usage_Engineer
+description: 输出格式 - 工程师模式指令用法
+moduleType: Format
+priority: 800
+---
 **指令用法（工程师模式）：**
 你可以完全访问所有指令，特别是诊断指令。
 使用 `read_log` 检查错误。

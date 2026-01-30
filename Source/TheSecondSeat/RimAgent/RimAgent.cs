@@ -297,6 +297,12 @@ namespace TheSecondSeat.RimAgent
                     if (!string.IsNullOrEmpty(parsed.Answer))
                     {
                         finalAnswer = parsed.Answer;
+                        // ⭐ 传递 Metadata (如好感度)
+                        if (parsed.Metadata != null && parsed.Metadata.Count > 0)
+                        {
+                            // 这需要在循环中累积或覆盖，这里简单覆盖
+                            // 实际上，我们应该把这些元数据传递给最终的 AgentResponse
+                        }
                         break;
                     }
                     
@@ -344,10 +350,20 @@ namespace TheSecondSeat.RimAgent
                 State = AgentState.Idle;
                 SuccessfulRequests++;
                 
+                // ⭐ 捕获最后一次解析的元数据
+                var metadata = new Dictionary<string, object>();
+                try
+                {
+                    var parsed = ParseLLMResponse(LastResponseContent);
+                    if (parsed.Metadata != null) metadata = parsed.Metadata;
+                }
+                catch { }
+
                 return new AgentResponse
                 {
                     Success = true,
-                    Content = finalAnswer
+                    Content = finalAnswer,
+                    Metadata = metadata
                 };
             }
             catch (Exception ex)
@@ -379,12 +395,67 @@ namespace TheSecondSeat.RimAgent
         // ========== 解析方法（内核能力） ==========
         
         /// <summary>
-        /// 解析 LLM 响应 - 增强版 (支持 JSON 和 NLP 回退)
+        /// 解析 LLM 响应 - 增强版 (优先支持 JSON，兼容 ReAct)
         /// </summary>
         private ParsedResponse ParseLLMResponse(string response)
         {
-            // 1. 尝试使用 ReAct 正则解析 (优先支持标准格式)
             var result = new ParsedResponse();
+
+            // 1. ⭐ 优先尝试解析 JSON (TSS 3.0 Standard Format)
+            try
+            {
+                // 提取 JSON 块 (如果存在 markdown 代码块)
+                string jsonString = response;
+                int jsonStart = response.IndexOf("{");
+                int jsonEnd = response.LastIndexOf("}");
+                
+                // ⭐ JSON 容错处理：如果缺失开头的 { 但看起来像 JSON 内容 (e.g. "thought": ...)
+                if (jsonStart == -1 && response.TrimStart().StartsWith("\""))
+                {
+                    Log.Warning($"[RimAgent] 检测到可能缺失 '{{' 的 JSON，尝试修复...");
+                    string fixedJson = "{" + response;
+                    if (!fixedJson.TrimEnd().EndsWith("}")) fixedJson += "}";
+                    
+                    jsonString = fixedJson;
+                    // 重新计算索引以便后续处理（虽然这里直接用 fixedJson 即可）
+                    jsonStart = 0;
+                }
+                else if (jsonStart >= 0 && jsonEnd > jsonStart)
+                {
+                    jsonString = response.Substring(jsonStart, jsonEnd - jsonStart + 1);
+                }
+
+                var payload = JsonConvert.DeserializeObject<AgentJsonPayload>(jsonString);
+                if (payload != null)
+                {
+                    result.Thought = payload.thought;
+                    result.Answer = payload.response;
+                    
+                    if (payload.action != null && !string.IsNullOrEmpty(payload.action.name))
+                    {
+                        result.ActionName = payload.action.name;
+                        result.ActionParams = payload.action.parameters ?? new Dictionary<string, object>();
+                    }
+                    
+                    // ⭐ 提取元数据
+                    if (payload.affinity_impact != null)
+                    {
+                        result.Metadata["affinity_impact"] = payload.affinity_impact;
+                    }
+                    if (!string.IsNullOrEmpty(payload.emotion))
+                    {
+                        result.Metadata["emotion"] = payload.emotion;
+                    }
+                    
+                    return result;
+                }
+            }
+            catch (Exception)
+            {
+                // JSON 解析失败，回退到其他方法
+            }
+
+            // 2. 尝试使用 ReAct 正则解析 (兼容旧格式)
             bool reactMatched = false;
             
             // 尝试解析 [THOUGHT]:
@@ -419,18 +490,18 @@ namespace TheSecondSeat.RimAgent
                 return result;
             }
 
-            // 2. 第一道防线：尝试解析结构化 JSON (针对弱模型或 JSON 模式)
+            // 3. 第一道防线：尝试解析结构化 JSON (针对弱模型或 JSON 模式 - 旧版逻辑)
             var jsonCmd = NaturalLanguageParser.ParseFromLLMResponse(response);
             if (jsonCmd != null)
             {
-                Log.Message($"[RimAgent] 解析到 JSON 命令: {jsonCmd.action}");
+                Log.Message($"[RimAgent] 解析到 JSON 命令 (Legacy): {jsonCmd.action}");
                 result.ActionName = jsonCmd.action;
                 result.ActionParams = ConvertParamsToDict(jsonCmd.parameters);
                 if (string.IsNullOrEmpty(result.Thought)) result.Thought = "Parsed from JSON";
                 return result;
             }
 
-            // 3. 第二道防线：如果 JSON 解析失败，尝试 NLP 解析 (针对自然语言指令)
+            // 4. 第二道防线：如果 JSON 解析失败，尝试 NLP 解析 (针对自然语言指令)
             var nlpCmd = NaturalLanguageParser.Parse(response);
             if (nlpCmd != null && nlpCmd.confidence > 0.6f)
             {
@@ -796,6 +867,23 @@ namespace TheSecondSeat.RimAgent
             public string ActionName { get; set; }
             public Dictionary<string, object> ActionParams { get; set; } = new Dictionary<string, object>();
             public string Answer { get; set; }
+            public Dictionary<string, object> Metadata { get; set; } = new Dictionary<string, object>();
+        }
+
+        // ⭐ v3.0: 标准 JSON Payload 定义
+        private class AgentJsonPayload
+        {
+            public string thought { get; set; }
+            public AgentActionPayload action { get; set; }
+            public string response { get; set; }
+            public string emotion { get; set; } // ⭐ v3.2: 捕获情绪标签
+            public object affinity_impact { get; set; } // ⭐ v3.1: 捕获好感度影响数据
+        }
+
+        private class AgentActionPayload
+        {
+            public string name { get; set; }
+            public Dictionary<string, object> parameters { get; set; }
         }
     }
 
@@ -830,5 +918,10 @@ namespace TheSecondSeat.RimAgent
         public bool Success { get; set; }
         public string Content { get; set; }
         public string Error { get; set; }
+        
+        /// <summary>
+        /// ⭐ v3.1: 附加元数据 (如好感度变化、意图等)
+        /// </summary>
+        public Dictionary<string, object> Metadata { get; set; } = new Dictionary<string, object>();
     }
 }

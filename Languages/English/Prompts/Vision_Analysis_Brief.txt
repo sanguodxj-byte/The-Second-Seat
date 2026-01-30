@@ -1,14 +1,20 @@
-Analyze this character portrait and provide a JSON response (no extra text):
+---
+defName: Vision_Analysis_Brief
+description: 视觉分析 - 简要立绘分析
+moduleType: Extension
+priority: 300
+---
+分析这个角色立绘并提供 JSON 响应（不要有多余文本）：
 {
   "dominantColors": [
-    {"hex": "#RRGGBB", "percentage": 0-100, "name": "color name"}
+    {"hex": "#RRGGBB", "percentage": 0-100, "name": "颜色名称"}
   ],
-  "visualElements": ["element1", "element2"],
-  "characterDescription": "Brief description (max 200 chars)",
-  "mood": "overall mood",
+  "visualElements": ["元素1", "元素2"],
+  "characterDescription": "简短描述（最多200字，中文）",
+  "mood": "整体氛围",
   "suggestedPersonality": "Benevolent/Sadistic/Chaotic/Strategic/Protective/Manipulative",
-  "styleKeywords": ["keyword1", "keyword2", "keyword3"],
-  "personalityTags": ["Tag1", "Tag2", "Tag3", ...],
+  "styleKeywords": ["关键词1", "关键词2", "关键词3"],
+  "personalityTags": ["标签1", "标签2", "标签3", ...],
   "phraseLibrary": [
     { "key": "HeadPat", "phrases": ["..."] },
     { "key": "BodyPoke", "phrases": ["..."] },
@@ -16,11 +22,11 @@ Analyze this character portrait and provide a JSON response (no extra text):
   ]
 }
 
-Focus on:
-- Top 3-4 dominant colors with percentages
-- Key visual elements (armor, weapons, creatures)
-- Brief character appearance
-- Overall mood/atmosphere
-- Personality suggestion based on visual cues
+重点关注：
+- 前3-4种主色调及其百分比
+- 关键视觉元素（盔甲、武器、生物）
+- 简短的角色外观描述（中文）
+- 整体情绪/氛围
+- 基于视觉线索的性格建议
 
-Keep characterDescription under 200 characters. Return ONLY valid JSON.
+保持 characterDescription 在 200 字以内。只返回有效的 JSON。

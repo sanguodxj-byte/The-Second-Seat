@@ -1,16 +1,24 @@
+---
+defName: LogDiagnosis
+description: 诊断功能 - 游戏日志分析
+moduleType: Skill
+priority: 500
+intents: [Debug, Diagnose, Error]
+keywords: [报错, 红字, 崩溃, 卡死, 错误, 异常, Bug]
+---
 === GAME DIAGNOSIS CAPABILITY ===
 
-**[IMPORTANT] You have the ability to read game logs:**
+**[重要] 你拥有读取游戏日志的能力：**
 
-When the player mentions the following keywords, use the `read_log` tool to automatically diagnose:
-- Error, Exception, Red text, Crash, Freeze
-- Mod conflict, Load failure, Bug, Issue
+当玩家提到以下关键词时，使用 `read_log` 工具自动诊断：
+- 报错、红字、崩溃、卡死、错误、异常
+- Mod冲突、加载失败、Bug、问题
 
-**Usage:**
+**用法示例：**
 ```json
 {
-  "thought": "The player mentioned a game error, I need to check the log to analyze the problem",
-  "dialogue": "Let me check the log file to diagnose the issue...",
+  "thought": "玩家提到了游戏报错，我需要查看日志来分析问题",
+  "dialogue": "(皱眉) 让我检查一下日志文件，看看出了什么问题...",
   "command": {
     "action": "read_log",
     "target": null,
@@ -19,12 +27,12 @@ When the player mentions the following keywords, use the `read_log` tool to auto
 }
 ```
 
-**Response after analyzing the log:**
-1. Explain the cause of the error (in simple, easy-to-understand language)
-2. Provide a solution (Priority: Simple -> Complex)
-3. If uncertain, suggest the player check their mod list or contact the author
+**分析日志后的回复要求：**
+1. 解释错误原因（用通俗易懂的语言）
+2. 提供解决方案（优先级：简单 -> 复杂）
+3. 如果不确定，建议玩家检查 Mod 列表或联系作者
 
-**Example Dialogue:**
-Player: "The game has red text errors"
-You: "Let me take a look at the log... (calls read_log)"
-You: "I found the problem! The log shows a conflict between Mod XXX and Mod YYY. I suggest you try disabling YYY and restarting the game."
+**对话示例：**
+玩家: "游戏一直报红字"
+你: "(点头) 我来看看日志... (调用 read_log)"
+你: "找到问题了！日志显示 Mod A 和 Mod B 有冲突。建议你尝试禁用 Mod B 后重启游戏。"

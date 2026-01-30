@@ -10,19 +10,6 @@ using TheSecondSeat.Storyteller;
 namespace TheSecondSeat.PersonaGeneration
 {
     /// <summary>
-    /// ⭐ v2.9.0: 添加 StaticConstructorOnStartup 以确保纹理在主线程加载
-    /// </summary>
-    [StaticConstructorOnStartup]
-    public static class PortraitLoaderStaticInit
-    {
-        static PortraitLoaderStaticInit()
-        {
-            // 预初始化占位符纹理（主线程）
-            PortraitLoader.InitializeFallbackPlaceholder();
-        }
-    }
-    
-    /// <summary>
     /// 立绘来源枚举
     /// </summary>
     public enum PortraitSource
@@ -50,8 +37,15 @@ namespace TheSecondSeat.PersonaGeneration
     /// ✅ v1.6.27: 消除未找到立绘时的报错日志
     /// ✅ v1.12.0: 添加全局空值防护和失败计数，失败3次后退回默认纹理
     /// </summary>
+    [StaticConstructorOnStartup]
     public static class PortraitLoader
     {
+        static PortraitLoader()
+        {
+            // 预初始化占位符纹理（主线程）
+            InitializeFallbackPlaceholder();
+        }
+
         // ✅ 修复内存泄漏：添加缓存条目类和大小限制
         private class CacheEntry
         {
@@ -773,6 +767,7 @@ namespace TheSecondSeat.PersonaGeneration
         /// ⭐ 获取图层纹理（用于分层立绘系统）
         /// ⭐ v1.6.74: 支持多路径查找和 portraitPath
         /// ✅ v1.12.0: 添加失败计数机制，失败3次后返回默认占位符
+        /// ⭐ v3.4.0: 优先使用 GetResourceName() 获取正确的资源路径
         /// </summary>
         /// <param name="persona">人格定义</param>
         /// <param name="layerName">图层名称（如 base_body, opened_eyes, closed_mouth）</param>
@@ -782,7 +777,12 @@ namespace TheSecondSeat.PersonaGeneration
         {
             if (persona == null || string.IsNullOrEmpty(layerName)) return GetFallbackPlaceholder();
             
-            string personaName = GetPersonaFolderName(persona);
+            // ⭐ v3.4.0: 优先使用 GetResourceName()，它会正确返回 resourceName 或从 narratorName 推断
+            string personaName = persona.GetResourceName();
+            if (string.IsNullOrEmpty(personaName))
+            {
+                personaName = GetPersonaFolderName(persona);
+            }
             
             // 缓存键：包含人格名和图层名
             string cacheKey = $"layer_{personaName}_{layerName}";
@@ -800,25 +800,33 @@ namespace TheSecondSeat.PersonaGeneration
                 return cached.Texture as Texture2D;
             }
             
-            // 多路径查找
+            // ⭐ v3.4.0: 从 portraitPath 提取基础目录（如 "Sideria/Narrators/Layered"）
+            string portraitBaseDir = null;
+            if (!string.IsNullOrEmpty(persona.portraitPath))
+            {
+                portraitBaseDir = Path.GetDirectoryName(persona.portraitPath)?.Replace("\\", "/");
+            }
+            
+            // 多路径查找（按优先级排序）
             string[] pathsToTry = new[]
             {
-                // 路径 1: Layered 文件夹（主 Mod）
-                $"UI/Narrators/9x16/Layered/{personaName}/{layerName}",
-                
-                // ⭐ 路径 2: 子 Mod 路径（Sideria 格式）
-                $"{personaName}/Narrators/Layered/{layerName}",
-                
-                // 路径 3: 子 Mod 路径（扁平结构）
-                $"Narrators/Layered/{layerName}",
-                
-                // 路径 4: 使用 portraitPath 的基础目录
-                !string.IsNullOrEmpty(persona.portraitPath)
-                    ? $"{Path.GetDirectoryName(persona.portraitPath)?.Replace("\\", "/")}/{layerName}"
+                // ⭐ 路径 1 (最高优先级): 使用 portraitPath 的基础目录
+                // 例如：portraitPath = "Sideria/Narrators/Layered/base_body"
+                //       -> 基础目录 = "Sideria/Narrators/Layered"
+                //       -> 图层路径 = "Sideria/Narrators/Layered/base_body"
+                !string.IsNullOrEmpty(portraitBaseDir)
+                    ? $"{portraitBaseDir}/{layerName}"
                     : null,
                 
-                // 路径 5: 通用回退
-                $"UI/Narrators/Layered/{personaName}/{layerName}"
+                // ⭐ 路径 2: 子 Mod 路径（基于 resourceName）
+                // 例如：resourceName = "Sideria" -> "Sideria/Narrators/Layered/base_body"
+                $"{personaName}/Narrators/Layered/{layerName}",
+                
+                // 路径 3: 主 Mod Layered 文件夹（统一路径）
+                $"UI/Narrators/Layered/{personaName}/{layerName}",
+                
+                // 路径 4: 子 Mod 路径（扁平结构）
+                $"Narrators/Layered/{layerName}"
             };
             
             foreach (var path in pathsToTry)

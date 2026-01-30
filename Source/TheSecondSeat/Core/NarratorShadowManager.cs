@@ -53,6 +53,10 @@ namespace TheSecondSeat.Core
                     UpdateShadowPawnIdentity(shadowPawn, personaDef);
                     activePersonaDefName = personaDef.defName;
                 }
+                
+                // ⭐ 修复：检查并动态添加缺失的 CompNarratorMemory (针对旧存档)
+                EnsureMemoryComp(shadowPawn);
+                
                 return shadowPawn;
             }
 
@@ -97,9 +101,8 @@ namespace TheSecondSeat.Core
             // 设置名字
             UpdateShadowPawnIdentity(pawn, personaDef);
 
-            // 挂载自定义组件逻辑 (如果需要)
-            // 注意：RimWorld 的 Comp 需要在 Def 中定义，或者动态添加（较难）。
-            // 建议在 ThingDef 中添加 CompNarratorMemory，或者使用 WorldComponent 存储额外数据。
+            // 确保 Comp 存在
+            EnsureMemoryComp(pawn);
             
             // 将 Pawn 放入 WorldPawns 保持其存活但不出现在地图上
             if (!pawn.IsWorldPawn())
@@ -116,6 +119,23 @@ namespace TheSecondSeat.Core
         {
             pawn.Name = new NameTriple("", personaDef.narratorName, "");
             // 这里可以进一步定制外观、发型等以匹配 Persona
+        }
+        
+        /// <summary>
+        /// 确保 Pawn 拥有 CompNarratorMemory 组件
+        /// </summary>
+        private void EnsureMemoryComp(Pawn pawn)
+        {
+            if (pawn == null) return;
+            
+            var comp = pawn.GetComp<TheSecondSeat.Comps.CompNarratorMemory>();
+            if (comp == null)
+            {
+                comp = new TheSecondSeat.Comps.CompNarratorMemory();
+                comp.parent = pawn;
+                pawn.AllComps.Add(comp);
+                Log.Warning($"[TSS] Dynamically added CompNarratorMemory to shadow pawn {pawn.Name}");
+            }
         }
         
         // 静态访问器

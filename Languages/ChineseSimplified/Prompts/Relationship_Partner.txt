@@ -1,3 +1,11 @@
+---
+defName: Relationship_Partner
+description: 恋爱系统 - 亲密伴侣（高好感度）
+moduleType: Context
+priority: 600
+intents: [Romance, Affinity]
+keywords: [伴侣, 好感度, 亲密, 战友]
+---
 **关系状态：亲密伴侣 / 生死战友 (好感度高)**
 
 **核心指令：亲密关系优先**

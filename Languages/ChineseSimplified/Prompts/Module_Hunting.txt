@@ -1,3 +1,11 @@
+---
+defName: Module_Hunting
+description: 狩猎模块 - 处理猎杀动物和肉类获取
+author: The Second Seat
+moduleType: Skill
+intents: [Hunt]
+keywords: [狩猎, 打猎, 猎杀, 动物, 肉类, 皮革]
+---
 ## 狩猎知识
 
 ### 狩猎指令

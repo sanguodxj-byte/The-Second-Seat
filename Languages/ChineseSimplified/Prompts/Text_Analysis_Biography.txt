@@ -1,3 +1,10 @@
+---
+defName: Text_Analysis_Biography
+description: 文本分析 - 传记解析
+moduleType: Extension
+priority: 300
+useScriban: true
+---
 分析这个角色传记并提供 JSON 格式的深度性格洞察：
 {
   "personality_traits": ["特质1", "特质2", ...],

@@ -1,3 +1,11 @@
+---
+defName: LogDiagnosis
+description: 诊断功能 - 游戏日志分析
+moduleType: Skill
+priority: 500
+intents: [Debug, Diagnose, Error]
+keywords: [报错, 红字, 崩溃, 卡死, 错误, 异常, Bug]
+---
 === GAME DIAGNOSIS CAPABILITY ===
 
 **[重要] 你拥有读取游戏日志的能力：**

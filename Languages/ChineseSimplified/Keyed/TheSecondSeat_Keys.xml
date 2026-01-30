@@ -628,4 +628,21 @@
   <TSS_RenderTree_Tab_LipSync>口型同步</TSS_RenderTree_Tab_LipSync>
   <TSS_RenderTree_Tab_Outfits>服装</TSS_RenderTree_Tab_Outfits>
   <TSS_RenderTree_LipSync_LoadFailed>口型配置读取失败</TSS_RenderTree_LipSync_LoadFailed>
+  
+  <!-- ⭐ v3.3.0: 关系轴配置 -->
+  <TSS_PersonaEditor_RelationshipAxes>关系轴配置 (Relationship Axes)</TSS_PersonaEditor_RelationshipAxes>
+  <TSS_PersonaEditor_RelationshipAxesHelp>关系轴允许定义除好感度外的其他数值维度（如信任度、依赖度等）。\n这些轴可在 Prompt 中通过 {{ context.custom_relationships }} 变量引用。</TSS_PersonaEditor_RelationshipAxesHelp>
+  <!-- ⭐ v3.0: Prompt Presets -->
+  <TSS_PromptPresetsManager_Title>提示词预设管理器</TSS_PromptPresetsManager_Title>
+  <TSS_Button_New>新建</TSS_Button_New>
+  <TSS_Button_Copy>复制</TSS_Button_Copy>
+  <TSS_Button_Activate>激活</TSS_Button_Activate>
+  <TSS_Button_AddEntry>添加条目</TSS_Button_AddEntry>
+  <TSS_Label_EntryName>条目名称:</TSS_Label_EntryName>
+  <TSS_Button_Import>导入...</TSS_Button_Import>
+  <TSS_Import_Reference>引用 (Include)</TSS_Import_Reference>
+  <TSS_Import_Copy>复制内容</TSS_Import_Copy>
+  <TSS_Import_NoFiles>未找到提示词文件</TSS_Import_NoFiles>
+  <TSS_PromptManager_Title>提示词管理器</TSS_PromptManager_Title>
+  <TSS_PersonaEditor_AddAxis>添加关系轴</TSS_PersonaEditor_AddAxis>
 </LanguageData>

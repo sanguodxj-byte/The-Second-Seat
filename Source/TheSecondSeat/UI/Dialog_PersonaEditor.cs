@@ -28,6 +28,8 @@ namespace TheSecondSeat.UI
         
         private string newVisualTag = ""; // ⭐ 新增：新外观标签输入框
         private string newConceptName = ""; // ⭐ 新增：新雷达概念输入框
+        private string newAxisKey = ""; // ⭐ v3.3.0: 新关系轴键名输入
+        private string newAxisLabel = ""; // ⭐ v3.3.0: 新关系轴标签输入
         
         private const float WINDOW_WIDTH = 900f;
         private const float WINDOW_HEIGHT = 700f;
@@ -107,6 +109,16 @@ namespace TheSecondSeat.UI
             dynamicHeight += INPUT_HEIGHT; // Prompt label
             dynamicHeight += 310f; // Prompt text area
             
+            // 关系轴配置 v3.3.0
+            dynamicHeight += 35f + 10f; // Section Header
+            dynamicHeight += Text.CalcHeight("TSS_PersonaEditor_RelationshipAxesHelp".Translate(), viewRect.width) + 10f;
+            if (persona.relationshipAxes != null)
+            {
+                dynamicHeight += persona.relationshipAxes.Count * (INPUT_HEIGHT * 2 + 15f);
+            }
+            dynamicHeight += INPUT_HEIGHT * 2 + 20f; // Add row
+            dynamicHeight += 20f;
+
             // 语义雷达
             dynamicHeight += 35f + 10f; // Section Header
             if (persona.radarConcepts != null)
@@ -206,6 +218,105 @@ namespace TheSecondSeat.UI
             
             curY += 20f;
 
+            // ===== 关系轴配置 v3.3.0 =====
+            DrawSectionHeader(viewRect.width, ref curY, "TSS_PersonaEditor_RelationshipAxes".Translate());
+            
+            // 说明文字
+            GUI.color = Color.yellow;
+            string axesHelp = "TSS_PersonaEditor_RelationshipAxesHelp".Translate();
+            float axesHelpHeight = Text.CalcHeight(axesHelp, viewRect.width);
+            Widgets.Label(new Rect(0f, curY, viewRect.width, axesHelpHeight), axesHelp);
+            GUI.color = Color.white;
+            curY += axesHelpHeight + 10f;
+            
+            // 绘制现有关系轴
+            if (persona.relationshipAxes != null)
+            {
+                int axisToRemove = -1;
+                for (int i = 0; i < persona.relationshipAxes.Count; i++)
+                {
+                    var axis = persona.relationshipAxes[i];
+                    
+                    // 第一行：Key 和 Label
+                    Widgets.Label(new Rect(0f, curY, 60f, INPUT_HEIGHT), "Key:");
+                    Rect keyRect = new Rect(60f, curY, 150f, INPUT_HEIGHT);
+                    axis.key = Widgets.TextField(keyRect, axis.key ?? "");
+                    
+                    Widgets.Label(new Rect(220f, curY, 60f, INPUT_HEIGHT), "Label:");
+                    Rect labelRect = new Rect(280f, curY, 150f, INPUT_HEIGHT);
+                    axis.label = Widgets.TextField(labelRect, axis.label ?? "");
+                    
+                    // 删除按钮
+                    if (Widgets.ButtonImage(new Rect(viewRect.width - 30f, curY, 24f, 24f), TexButton.CloseXSmall))
+                    {
+                        axisToRemove = i;
+                    }
+                    
+                    curY += INPUT_HEIGHT + 5f;
+                    
+                    // 第二行：Min, Max, Initial
+                    Widgets.Label(new Rect(0f, curY, 40f, INPUT_HEIGHT), "Min:");
+                    Rect minRect = new Rect(40f, curY, 60f, INPUT_HEIGHT);
+                    string minStr = axis.min.ToString("F0");
+                    minStr = Widgets.TextField(minRect, minStr);
+                    float.TryParse(minStr, out axis.min);
+                    
+                    Widgets.Label(new Rect(110f, curY, 40f, INPUT_HEIGHT), "Max:");
+                    Rect maxRect = new Rect(150f, curY, 60f, INPUT_HEIGHT);
+                    string maxStr = axis.max.ToString("F0");
+                    maxStr = Widgets.TextField(maxRect, maxStr);
+                    float.TryParse(maxStr, out axis.max);
+                    
+                    Widgets.Label(new Rect(220f, curY, 50f, INPUT_HEIGHT), "Initial:");
+                    Rect initRect = new Rect(270f, curY, 60f, INPUT_HEIGHT);
+                    string initStr = axis.initial.ToString("F0");
+                    initStr = Widgets.TextField(initRect, initStr);
+                    float.TryParse(initStr, out axis.initial);
+                    
+                    curY += INPUT_HEIGHT + 10f;
+                }
+                
+                if (axisToRemove >= 0)
+                {
+                    persona.relationshipAxes.RemoveAt(axisToRemove);
+                }
+            }
+            
+            // 添加新关系轴
+            Widgets.Label(new Rect(0f, curY, 60f, INPUT_HEIGHT), "Key:");
+            Rect newKeyRect = new Rect(60f, curY, 150f, INPUT_HEIGHT);
+            newAxisKey = Widgets.TextField(newKeyRect, newAxisKey);
+            
+            Widgets.Label(new Rect(220f, curY, 60f, INPUT_HEIGHT), "Label:");
+            Rect newLabelRect = new Rect(280f, curY, 150f, INPUT_HEIGHT);
+            newAxisLabel = Widgets.TextField(newLabelRect, newAxisLabel);
+            
+            curY += INPUT_HEIGHT + 5f;
+            
+            Rect addAxisRect = new Rect(0f, curY, 150f, INPUT_HEIGHT);
+            if (Widgets.ButtonText(addAxisRect, "TSS_PersonaEditor_AddAxis".Translate()))
+            {
+                if (!string.IsNullOrWhiteSpace(newAxisKey))
+                {
+                    if (persona.relationshipAxes == null)
+                    {
+                        persona.relationshipAxes = new List<RelationshipAxisConfig>();
+                    }
+                    persona.relationshipAxes.Add(new RelationshipAxisConfig
+                    {
+                        key = newAxisKey.Trim(),
+                        label = string.IsNullOrWhiteSpace(newAxisLabel) ? newAxisKey.Trim() : newAxisLabel.Trim(),
+                        min = 0f,
+                        max = 100f,
+                        initial = 50f
+                    });
+                    newAxisKey = "";
+                    newAxisLabel = "";
+                }
+            }
+            
+            curY += INPUT_HEIGHT + 20f;
+
             // ===== 语义雷达 (感知系统) =====
             DrawSectionHeader(viewRect.width, ref curY, "TSS_PersonaEditor_SemanticRadar".Translate());
             
@@ -223,11 +334,11 @@ namespace TheSecondSeat.UI
                     Rect rowRect = new Rect(0f, curY, viewRect.width, INPUT_HEIGHT);
                     
                     // Name
-                    Widgets.Label(new Rect(0f, curY, 150f, INPUT_HEIGHT), concept.Name);
+                    Widgets.Label(new Rect(0f, curY, 150f, INPUT_HEIGHT), concept.conceptName);
                     
                     // Keywords preview
-                    string keywordsStr = string.Join(", ", concept.Keywords.Take(5));
-                    if (concept.Keywords.Count > 5) keywordsStr += "...";
+                    string keywordsStr = string.Join(", ", concept.keywords.Take(5));
+                    if (concept.keywords.Count > 5) keywordsStr += "...";
                     Widgets.Label(new Rect(160f, curY, viewRect.width - 200f, INPUT_HEIGHT), keywordsStr);
                     
                     // Delete
@@ -804,8 +915,8 @@ namespace TheSecondSeat.UI
                     {
                         var newConcept = new TheSecondSeat.Monitoring.SemanticConcept
                         {
-                            Name = conceptName,
-                            Keywords = keywords
+                            conceptName = conceptName,
+                            keywords = keywords
                         };
                         
                         if (persona.radarConcepts == null) persona.radarConcepts = new List<TheSecondSeat.Monitoring.SemanticConcept>();

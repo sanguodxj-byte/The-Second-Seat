@@ -5,6 +5,7 @@ using Scriban;
 using Scriban.Runtime;
 using RimWorld;
 using Verse;
+using TheSecondSeat.SmartPrompt; // ⭐ v3.0
 
 namespace TheSecondSeat.PersonaGeneration.Scriban
 {
@@ -63,6 +64,34 @@ namespace TheSecondSeat.PersonaGeneration.Scriban
                 ? (float)_cacheHits / (_cacheHits + _cacheMisses) * 100f 
                 : 0f;
             return $"Templates: {_templateCache.Count}, Hits: {_cacheHits}, Misses: {_cacheMisses}, Hit Rate: {hitRate:F1}%";
+        }
+
+        /// <summary>
+        /// 渲染内联模板字符串
+        /// </summary>
+        public static string RenderInline(string templateContent, PromptContext context)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(templateContent)) return "";
+
+                // 使用内容哈希作为缓存键
+                string cacheKey = $"Inline_{templateContent.GetHashCode()}";
+                
+                Template template = GetOrCompileTemplate(cacheKey, templateContent);
+                if (template == null)
+                {
+                    return $"Error: Inline template has syntax errors.";
+                }
+
+                var templateContext = CreateTemplateContext(context);
+                return template.Render(templateContext);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[The Second Seat] Inline Render Error: {ex}");
+                return $"Error: Inline render failed. {ex.Message}";
+            }
         }
 
         /// <summary>
@@ -163,13 +192,15 @@ namespace TheSecondSeat.PersonaGeneration.Scriban
         
         /// <summary>
         /// ⭐ v2.0.0: 创建渲染上下文，包含自定义函数
+        /// ⭐ v3.1.1: 配置 MemberRenamer 保留 PascalCase 以匹配模板
         /// </summary>
         private static TemplateContext CreateTemplateContext(PromptContext context)
         {
             var scriptObject = new ScriptObject();
             
-            // 导入 PromptContext 数据
-            scriptObject.Import(context);
+            // ⭐ v3.1.1: 使用自定义 MemberRenamer 保留 PascalCase
+            // 这样模板中可以使用 {{ card.Identity.PersonalityType }} 而非 snake_case
+            scriptObject.Import(context, renamer: member => member.Name);
             
             // ⭐ v2.7.0: 手动映射 snake_case 变量（兼容现有模板）
             // 使用索引器赋值以避免 "key already added" 异常
@@ -177,7 +208,7 @@ namespace TheSecondSeat.PersonaGeneration.Scriban
             scriptObject["current_outfit"] = context.CurrentOutfit;
 
             // ⭐ 注入自定义 Scriban 函数（允许模板直接访问游戏数据）
-            RegisterCustomFunctions(scriptObject);
+            RegisterCustomFunctions(scriptObject, context);
             
             var templateContext = new TemplateContext();
             templateContext.TemplateLoader = _loader;
@@ -190,7 +221,7 @@ namespace TheSecondSeat.PersonaGeneration.Scriban
         /// ⭐ v2.0.0: 注册自定义 Scriban 函数
         /// 模板中可以使用 {{ get_weather() }}、{{ get_colonist_count() }} 等
         /// </summary>
-        private static void RegisterCustomFunctions(ScriptObject scriptObject)
+        private static void RegisterCustomFunctions(ScriptObject scriptObject, PromptContext context)
         {
             // 获取当前天气
             scriptObject.Import("get_weather", new Func<string>(() =>
@@ -312,6 +343,24 @@ namespace TheSecondSeat.PersonaGeneration.Scriban
                     if (map == null) return "";
                     var names = map.mapPawns.FreeColonists.Select(p => p.Name?.ToStringShort ?? "Unknown");
                     return string.Join(", ", names);
+                }
+                catch { return ""; }
+            }));
+
+            // ⭐ v3.0: SmartPrompt 智能模块加载
+            scriptObject.Import("load_smart_modules", new Func<string, string>((input) =>
+            {
+                if (string.IsNullOrEmpty(input)) return "";
+                try
+                {
+                    // ⭐ 传递 Context 以支持模块内的 Scriban 渲染
+                    // ⭐ 排除 Core 类型，因为它们已在 Preset 中固定加载
+                    var result = SmartPromptBuilder.Instance.Build(input, context, excludeType: ModuleType.Core);
+                    if (!string.IsNullOrEmpty(result.Prompt))
+                    {
+                        return $"\n\n[Relevant Knowledge ({result.ModuleCount})]\n{result.Prompt}";
+                    }
+                    return "";
                 }
                 catch { return ""; }
             }));

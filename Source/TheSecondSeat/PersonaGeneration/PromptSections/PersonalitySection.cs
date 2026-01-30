@@ -24,8 +24,10 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             sb.AppendLine(IsChinese ? "(这是你在上述基础意识框架中的具体体现。)" : "(This is YOUR manifestation within the base consciousness framework above.)");
             sb.AppendLine();
             
-            // 使用分析得出的人格
-            if (analysis.SuggestedPersonality != null)
+            // 使用分析得出的人格 (如果 analysis 不为 null)
+            bool hasAnalysis = analysis != null;
+            
+            if (hasAnalysis && analysis.SuggestedPersonality != null)
             {
                 if (IsChinese)
                 {
@@ -62,7 +64,7 @@ namespace TheSecondSeat.PersonaGeneration.PromptSections
             }
             
             // 添加从分析中得出的标签
-            if (analysis.ToneTags.Count > 0)
+            if (hasAnalysis && analysis.ToneTags != null && analysis.ToneTags.Count > 0)
             {
                 sb.AppendLine();
                 if (IsChinese)

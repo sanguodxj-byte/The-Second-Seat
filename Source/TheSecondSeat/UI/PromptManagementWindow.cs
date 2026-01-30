@@ -6,6 +6,7 @@ using Verse;
 using RimWorld;
 using TheSecondSeat.PersonaGeneration;
 using TheSecondSeat.Settings;
+using TheSecondSeat.SmartPrompt;
 
 namespace TheSecondSeat.UI
 {
@@ -21,11 +22,14 @@ namespace TheSecondSeat.UI
         
         // ⭐ v3.0: 支持 Persona 专属 Prompt
         private string _personaName;
+        
+        // ⭐ v3.2.0: 缓存提示词描述
+        private Dictionary<string, string> _promptDescriptions = new Dictionary<string, string>();
 
         // UI Constants
-        private const float LeftPanelWidth = 250f;
+        private const float LeftPanelWidth = 320f;  // ⭐ v3.2.0: 增加宽度以显示描述
         private const float ToolbarHeight = 30f;
-        private const float Margin = 10f;
+        private const float WindowMargin = 10f;
 
         public override Vector2 InitialSize => new Vector2(1000f, 700f);
 
@@ -55,6 +59,9 @@ namespace TheSecondSeat.UI
         {
             _promptFiles = PromptLoader.GetAllPromptNames(_personaName).OrderBy(x => x).ToList();
             
+            // ⭐ v3.2.0: 刷新描述缓存
+            RefreshDescriptions();
+            
             // Auto-select first if nothing selected
             if (string.IsNullOrEmpty(_selectedPromptId) && _promptFiles.Count > 0)
             {
@@ -66,6 +73,28 @@ namespace TheSecondSeat.UI
                 _selectedPromptId = null;
                 _currentEditBuffer = null;
                 _isDirty = false;
+            }
+        }
+        
+        /// <summary>
+        /// ⭐ v3.2.0: 刷新描述缓存
+        /// </summary>
+        private void RefreshDescriptions()
+        {
+            _promptDescriptions.Clear();
+            
+            foreach (var promptId in _promptFiles)
+            {
+                // 尝试从 PromptModuleDef 获取描述
+                var def = DefDatabase<PromptModuleDef>.GetNamedSilentFail(promptId);
+                if (def != null)
+                {
+                    string desc = def.GetDisplayDescription();
+                    if (!string.IsNullOrEmpty(desc))
+                    {
+                        _promptDescriptions[promptId] = desc;
+                    }
+                }
             }
         }
 
@@ -120,7 +149,7 @@ namespace TheSecondSeat.UI
 
             // Split into Left (List) and Right (Editor)
             Rect leftRect = new Rect(contentRect.x, contentRect.y, LeftPanelWidth, contentRect.height);
-            Rect rightRect = new Rect(contentRect.x + LeftPanelWidth + Margin, contentRect.y, contentRect.width - LeftPanelWidth - Margin, contentRect.height);
+            Rect rightRect = new Rect(contentRect.x + LeftPanelWidth + WindowMargin, contentRect.y, contentRect.width - LeftPanelWidth - WindowMargin, contentRect.height);
 
             // Draw Backgrounds
             Widgets.DrawMenuSection(leftRect);
@@ -138,13 +167,15 @@ namespace TheSecondSeat.UI
 
         private void DrawLeftPanel(Rect rect)
         {
-            Rect viewRect = new Rect(0, 0, rect.width - 16f, _promptFiles.Count * 30f);
+            // ⭐ v3.2.0: 增加行高以容纳描述
+            float rowHeight = 40f;
+            Rect viewRect = new Rect(0, 0, rect.width - 16f, _promptFiles.Count * rowHeight);
             Widgets.BeginScrollView(rect, ref _scrollPositionLeft, viewRect);
 
             float curY = 0f;
             foreach (var promptId in _promptFiles)
             {
-                Rect rowRect = new Rect(0, curY, viewRect.width, 30f);
+                Rect rowRect = new Rect(0, curY, viewRect.width, rowHeight);
                 
                 // Highlight selected
                 if (promptId == _selectedPromptId)
@@ -161,7 +192,7 @@ namespace TheSecondSeat.UI
                 bool isEnabled = !isDisabled;
                 bool newEnabled = isEnabled;
                 
-                Rect checkRect = new Rect(rowRect.x + 5f, rowRect.y + 3f, 24f, 24f);
+                Rect checkRect = new Rect(rowRect.x + 5f, rowRect.y + 8f, 24f, 24f);
                 Widgets.Checkbox(checkRect.x, checkRect.y, ref newEnabled);
 
                 if (newEnabled != isEnabled)
@@ -170,30 +201,42 @@ namespace TheSecondSeat.UI
                         TheSecondSeatMod.Settings.disabledPrompts.Remove(promptId);
                     else
                         TheSecondSeatMod.Settings.disabledPrompts.Add(promptId);
+                    
+                    // ⭐ v3.1.0: 通知 SmartPrompt 系统重建，使禁用/启用立即生效
+                    SmartPromptInitializer.RebuildSystem();
                 }
 
-                // Label (Click to select)
+                // Label Area (Click to select)
                 Rect labelRect = new Rect(rowRect.x + 35f, rowRect.y, rowRect.width - 35f, rowRect.height);
                 
-                // Status Indicator (Color)
-                Color labelColor = Color.white;
-                // We don't easily know if it's an override without checking file existence again, 
-                // but we can infer it if we want to be fancy. For now, just white.
-                // Or maybe grey if disabled.
-                if (isDisabled) labelColor = Color.gray;
-                
-                GUI.color = labelColor;
                 if (Widgets.ButtonInvisible(labelRect))
                 {
                     SelectPrompt(promptId);
                 }
                 
-                Text.Anchor = TextAnchor.MiddleLeft;
-                Widgets.Label(labelRect, promptId);
+                // ⭐ v3.2.0: 绘制文件名（第一行）
+                Color labelColor = isDisabled ? Color.gray : Color.white;
+                GUI.color = labelColor;
+                Text.Anchor = TextAnchor.UpperLeft;
+                Text.Font = GameFont.Small;
+                Rect nameRect = new Rect(labelRect.x, labelRect.y + 2f, labelRect.width, 18f);
+                Widgets.Label(nameRect, promptId);
+                
+                // ⭐ v3.2.0: 绘制描述（第二行，灰色小字）
+                if (_promptDescriptions.TryGetValue(promptId, out string description))
+                {
+                    GUI.color = new Color(0.7f, 0.7f, 0.7f);
+                    Text.Font = GameFont.Tiny;
+                    Rect descRect = new Rect(labelRect.x, labelRect.y + 20f, labelRect.width, 16f);
+                    string truncatedDesc = description.Length > 35 ? description.Substring(0, 32) + "..." : description;
+                    Widgets.Label(descRect, truncatedDesc);
+                }
+                
+                Text.Font = GameFont.Small;
                 Text.Anchor = TextAnchor.UpperLeft;
                 GUI.color = Color.white;
 
-                curY += 30f;
+                curY += rowHeight;
             }
 
             Widgets.EndScrollView();
@@ -293,26 +336,52 @@ namespace TheSecondSeat.UI
                 {
                     SelectPrompt(_selectedPromptId);
                 }
+                
+                // ⭐ v3.1.0: 同时重建 SmartPrompt 系统
+                SmartPrompt.SmartPromptInitializer.RebuildSystem();
+                Messages.Message("TSS_Prompt_Reloaded".Translate(), MessageTypeDefOf.PositiveEvent, false);
             }
             
             x += buttonWidth + 10f;
 
-            // Initialize Button (only if personaName is set, or maybe always useful)
-            // But specific requirement was for Persona.
-            if (!string.IsNullOrEmpty(_personaName))
+            // Initialize Button (Enhanced: Support Global and Persona selection)
+            if (Widgets.ButtonText(new Rect(x, y, buttonWidth, buttonHeight), "TSS_Prompt_Initialize".Translate()))
             {
-                if (Widgets.ButtonText(new Rect(x, y, buttonWidth, buttonHeight), "TSS_Prompt_Initialize".Translate()))
+                var options = new List<FloatMenuOption>();
+                
+                // Option 1: Initialize Current/Global
+                string label = string.IsNullOrEmpty(_personaName) ? "Global" : _personaName;
+                options.Add(new FloatMenuOption($"Initialize {label}", () =>
                 {
-                     Action initAction = () =>
+                    Action initAction = () =>
                     {
                         PromptLoader.InitializeUserPrompts(_personaName);
                         PromptLoader.ClearCache();
                         RefreshFileList();
-                        Messages.Message("TSS_Prompt_InitializedFor".Translate(_personaName), MessageTypeDefOf.PositiveEvent, false);
+                        Messages.Message("TSS_Prompt_InitializedFor".Translate(label), MessageTypeDefOf.PositiveEvent, false);
                     };
+                    Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("TSS_Prompt_InitializeConfirm".Translate(label), initAction, destructive: true));
+                }));
 
-                    Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("TSS_Prompt_InitializeConfirm".Translate(_personaName), initAction, destructive: true));
+                // Option 2: Initialize Specific Persona (if in Global mode)
+                if (string.IsNullOrEmpty(_personaName))
+                {
+                    foreach (var persona in DefDatabase<NarratorPersonaDef>.AllDefs)
+                    {
+                        options.Add(new FloatMenuOption($"Initialize {persona.narratorName} ({persona.defName})", () =>
+                        {
+                            Action initAction = () =>
+                            {
+                                PromptLoader.InitializeUserPrompts(persona.defName);
+                                PromptLoader.ClearCache();
+                                Messages.Message("TSS_Prompt_InitializedFor".Translate(persona.narratorName), MessageTypeDefOf.PositiveEvent, false);
+                            };
+                            Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("TSS_Prompt_InitializeConfirm".Translate(persona.narratorName), initAction, destructive: true));
+                        }));
+                    }
                 }
+
+                Find.WindowStack.Add(new FloatMenu(options));
             }
 
             // Close button at far right

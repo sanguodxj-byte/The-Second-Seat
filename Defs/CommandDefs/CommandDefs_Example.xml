@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+    <!--
+    ⭐ XML Command Bridge 示例
+    
+    Modder 可以通过 XML 定义 AI 指令，无需编写 C# 代码！
+    
+    支持三种执行方式:
+    1. delegateToCommand - 委托给现有的 C# 指令
+    2. simpleAction - 使用预定义的简单操作
+    3. debugActionClass + debugActionMethod - 调用 RimWorld 的 DebugAction
+    -->
+
+    <!-- 示例1: 使用简单操作治疗殖民者 -->
+    <TheSecondSeat.Commands.CommandDef>
+        <defName>Command_QuickHeal</defName>
+        <actionName>QuickHeal</actionName>
+        <label>快速治疗</label>
+        <commandDescription>立即治疗目标殖民者的所有伤口</commandDescription>
+        <tags>
+            <li>Medical</li>
+            <li>Pawn</li>
+        </tags>
+        <requiresTarget>true</requiresTarget>
+        <targetType>Colonist</targetType>
+        <simpleAction>HealPawn</simpleAction>
+        <successMessage>已治疗 {0} 的所有伤口</successMessage>
+        <failureMessage>无法治疗 {0}</failureMessage>
+        <minAffinity>20</minAffinity>
+        <affinityCost>5</affinityCost>
+        <cooldownTicks>2500</cooldownTicks>
+    </TheSecondSeat.Commands.CommandDef>
+
+    <!-- 示例2: 生成白银 -->
+    <TheSecondSeat.Commands.CommandDef>
+        <defName>Command_GiftSilver</defName>
+        <actionName>GiftSilver</actionName>
+        <label>赠送白银</label>
+        <commandDescription>在殖民地生成一些白银作为礼物</commandDescription>
+        <tags>
+            <li>Resource</li>
+            <li>Gift</li>
+        </tags>
+        <simpleAction>AddSilver</simpleAction>
+        <parameters>
+            <li>
+                <name>amount</name>
+                <type>int</type>
+                <required>false</required>
+                <defaultValue>100</defaultValue>
+                <description>生成的白银数量</description>
+            </li>
+        </parameters>
+        <successMessage>赠送了 {1} 白银</successMessage>
+        <minAffinity>50</minAffinity>
+        <affinityCost>10</affinityCost>
+        <dailyLimit>3</dailyLimit>
+    </TheSecondSeat.Commands.CommandDef>
+
+    <!-- 示例3: 征召殖民者 -->
+    <TheSecondSeat.Commands.CommandDef>
+        <defName>Command_DraftColonist</defName>
+        <actionName>Draft</actionName>
+        <label>征召</label>
+        <commandDescription>征召指定殖民者进入战斗状态</commandDescription>
+        <tags>
+            <li>Combat</li>
+            <li>Pawn</li>
+        </tags>
+        <requiresTarget>true</requiresTarget>
+        <targetType>Colonist</targetType>
+        <simpleAction>DraftPawn</simpleAction>
+        <successMessage>已征召 {0}</successMessage>
+    </TheSecondSeat.Commands.CommandDef>
+
+    <!-- 示例4: 解除征召 -->
+    <TheSecondSeat.Commands.CommandDef>
+        <defName>Command_UndraftColonist</defName>
+        <actionName>Undraft</actionName>
+        <label>解除征召</label>
+        <commandDescription>解除指定殖民者的战斗状态</commandDescription>
+        <tags>
+            <li>Combat</li>
+            <li>Pawn</li>
+        </tags>
+        <requiresTarget>true</requiresTarget>
+        <targetType>Colonist</targetType>
+        <simpleAction>UndraftPawn</simpleAction>
+        <successMessage>已解除 {0} 的征召</successMessage>
+    </TheSecondSeat.Commands.CommandDef>
+
+    <!-- 示例5: 委托给现有指令 -->
+    <TheSecondSeat.Commands.CommandDef>
+        <defName>Command_SmartWorkAssign</defName>
+        <actionName>SmartWork</actionName>
+        <label>智能分配工作</label>
+        <commandDescription>根据殖民者的技能和热情自动分配工作优先级</commandDescription>
+        <tags>
+            <li>Work</li>
+            <li>Automation</li>
+        </tags>
+        <delegateToCommand>AutoAssignWork</delegateToCommand>
+        <requiresTarget>false</requiresTarget>
+        <successMessage>已为所有殖民者智能分配工作</successMessage>
+    </TheSecondSeat.Commands.CommandDef>
+
+    <!-- 示例6: 改善派系关系 -->
+    <TheSecondSeat.Commands.CommandDef>
+        <defName>Command_ImproveFactionRelation</defName>
+        <actionName>ImproveDiplomacy</actionName>
+        <label>改善外交</label>
+        <commandDescription>改善与指定派系的关系</commandDescription>
+        <tags>
+            <li>Diplomacy</li>
+            <li>Faction</li>
+        </tags>
+        <requiresTarget>true</requiresTarget>
+        <targetType>Faction</targetType>
+        <simpleAction>ImproveRelation</simpleAction>
+        <parameters>
+            <li>
+                <name>amount</name>
+                <type>int</type>
+                <required>false</required>
+                <defaultValue>15</defaultValue>
+                <description>改善的好感度数值</description>
+            </li>
+        </parameters>
+        <successMessage>与 {0} 的关系改善了</successMessage>
+        <minAffinity>60</minAffinity>
+        <affinityCost>15</affinityCost>
+        <cooldownTicks>60000</cooldownTicks>
+    </TheSecondSeat.Commands.CommandDef>
+
+    <!-- 示例7: 生成物品（通用） -->
+    <TheSecondSeat.Commands.CommandDef>
+        <defName>Command_SpawnItem</defName>
+        <actionName>SpawnItem</actionName>
+        <label>生成物品</label>
+        <commandDescription>在殖民地生成指定物品</commandDescription>
+        <tags>
+            <li>Resource</li>
+            <li>Spawn</li>
+        </tags>
+        <simpleAction>SpawnThing</simpleAction>
+        <parameters>
+            <li>
+                <name>thingDef</name>
+                <type>ThingDef</type>
+                <required>true</required>
+                <description>要生成的物品定义名称</description>
+            </li>
+            <li>
+                <name>count</name>
+                <type>int</type>
+                <required>false</required>
+                <defaultValue>1</defaultValue>
+                <description>生成数量</description>
+            </li>
+        </parameters>
+        <successMessage>生成了 {1}</successMessage>
+        <requiresDevMode>true</requiresDevMode>
+    </TheSecondSeat.Commands.CommandDef>
+
+    <!-- 示例8: 触发事件 -->
+    <TheSecondSeat.Commands.CommandDef>
+        <defName>Command_TriggerEvent</defName>
+        <actionName>TriggerEvent</actionName>
+        <label>触发事件</label>
+        <commandDescription>触发指定的游戏事件</commandDescription>
+        <tags>
+            <li>Event</li>
+            <li>Storyteller</li>
+        </tags>
+        <simpleAction>TriggerIncident</simpleAction>
+        <parameters>
+            <li>
+                <name>incidentDef</name>
+                <type>string</type>
+                <required>true</required>
+                <description>事件定义名称 (如: RaidEnemy, TraderCaravanArrival)</description>
+            </li>
+        </parameters>
+        <successMessage>触发了事件: {1}</successMessage>
+        <minAffinity>-50</minAffinity>
+        <cooldownTicks>30000</cooldownTicks>
+    </TheSecondSeat.Commands.CommandDef>
+
+</Defs>

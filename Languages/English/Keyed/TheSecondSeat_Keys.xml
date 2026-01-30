@@ -493,7 +493,24 @@ Click to talk with the AI Narrator</TSS_NarratorButton_Tooltip>
   <TSS_Prompt_Override_User_Lang>User Override (Language)</TSS_Prompt_Override_User_Lang>
   <TSS_Prompt_Override_User_Global>User Override (Global)</TSS_Prompt_Override_User_Global>
   <TSS_CmdList_OpenButton_Desc>Show all available AI commands</TSS_CmdList_OpenButton_Desc>
-</LanguageData>
-
+  
+  <!-- ⭐ v3.3.0: Relationship Axes Configuration -->
+  <TSS_PersonaEditor_RelationshipAxes>Relationship Axes</TSS_PersonaEditor_RelationshipAxes>
+  <TSS_PersonaEditor_RelationshipAxesHelp>Define additional numerical dimensions beyond affinity (e.g., Trust, Dependency).\nThese axes can be referenced in Prompts via {{ context.custom_relationships }}.</TSS_PersonaEditor_RelationshipAxesHelp>
+  <TSS_PersonaEditor_AddAxis>Add Axis</TSS_PersonaEditor_AddAxis>
+  
   <TSS_RenderTree_Tab_LipSync>Lip Sync</TSS_RenderTree_Tab_LipSync>
+  <!-- ⭐ v3.0: Prompt Presets -->
+  <TSS_PromptPresetsManager_Title>Prompt Presets Manager</TSS_PromptPresetsManager_Title>
+  <TSS_Button_New>New</TSS_Button_New>
+  <TSS_Button_Copy>Copy</TSS_Button_Copy>
+  <TSS_Button_Activate>Activate</TSS_Button_Activate>
+  <TSS_Button_AddEntry>Add Entry</TSS_Button_AddEntry>
+  <TSS_Label_EntryName>Entry Name:</TSS_Label_EntryName>
+  <TSS_Button_Import>Import...</TSS_Button_Import>
+  <TSS_Import_Reference>Reference (Include)</TSS_Import_Reference>
+  <TSS_Import_Copy>Copy Content</TSS_Import_Copy>
+  <TSS_Import_NoFiles>No prompt files found</TSS_Import_NoFiles>
+  <TSS_PromptManager_Title>Prompt Manager</TSS_PromptManager_Title>
   <TSS_RenderTree_Tab_Outfits>Outfits</TSS_RenderTree_Tab_Outfits>
+</LanguageData>

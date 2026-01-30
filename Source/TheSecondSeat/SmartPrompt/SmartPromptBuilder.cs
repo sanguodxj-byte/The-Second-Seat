@@ -78,7 +78,7 @@ namespace TheSecondSeat.SmartPrompt
         /// <param name="userInput">用户输入文本</param>
         /// <param name="context">Scriban 渲染上下文（可选）</param>
         /// <returns>构建结果</returns>
-        public BuildResult Build(string userInput, PromptContext context = null)
+        public BuildResult Build(string userInput, PromptContext context = null, ModuleType? excludeType = null)
         {
             var sw = System.Diagnostics.Stopwatch.StartNew();
             var result = new BuildResult();
@@ -97,7 +97,7 @@ namespace TheSecondSeat.SmartPrompt
                 }
                 
                 // 2. 构建 Prompt
-                result.Prompt = BuildFromModules(routeResult.Modules, context);
+                result.Prompt = BuildFromModules(routeResult.Modules, context, excludeType);
                 result.Success = true;
                 
                 // 统计
@@ -124,7 +124,7 @@ namespace TheSecondSeat.SmartPrompt
         /// <param name="modules">模块列表</param>
         /// <param name="context">Scriban 渲染上下文（可选）</param>
         /// <returns>组装后的 Prompt 字符串</returns>
-        public string BuildFromModules(List<PromptModuleDef> modules, PromptContext context = null)
+        public string BuildFromModules(List<PromptModuleDef> modules, PromptContext context = null, ModuleType? excludeType = null)
         {
             if (modules == null || modules.Count == 0)
             {
@@ -135,6 +135,7 @@ namespace TheSecondSeat.SmartPrompt
             
             // 按模块类型分组
             var grouped = modules
+                .Where(m => excludeType == null || m.moduleType != excludeType.Value) // ⭐ 过滤排除类型
                 .OrderByDescending(m => m.priority)
                 .GroupBy(m => m.moduleType)
                 .OrderBy(g => GetTypeOrder(g.Key));
@@ -513,6 +514,77 @@ namespace TheSecondSeat.SmartPrompt
         public static List<string> AnalyzeIntents(string userInput, float minScore = 0.5f)
         {
             return FlashMatcher.Instance.GetMatchedIntents(userInput, minScore);
+        }
+        
+        /// <summary>
+        /// ⭐ v2.4.0: 生成原始模块内容（不渲染 Scriban）
+        /// 用于"Scriban 容器 + SmartPrompt 内容"模式
+        ///
+        /// 工作流程：
+        /// 1. 根据用户输入识别意图
+        /// 2. 路由到相关模块
+        /// 3. 拼接原始文本（带有 {{...}} 占位符）
+        /// 4. 返回未渲染的字符串
+        ///
+        /// 调用方应该：
+        /// 1. 将此结果赋值给 context.Meta.DynamicModules
+        /// 2. 使用 PromptRenderer 渲染 Master 模板
+        /// </summary>
+        /// <param name="userInput">用户输入文本</param>
+        /// <param name="context">Prompt 上下文（用于后续渲染）</param>
+        /// <returns>原始模块内容（未渲染）</returns>
+        public static string GenerateRawModules(string userInput, PromptContext context = null)
+        {
+            try
+            {
+                // 1. 路由模块
+                var routeResult = IntentRouter.Instance.Route(userInput);
+                
+                if (!routeResult.Success || routeResult.Modules.Count == 0)
+                {
+                    return "";
+                }
+                
+                // 2. 过滤出动态模块（非 Core 类型）
+                var dynamicModules = routeResult.Modules
+                    .Where(m => m.moduleType != ModuleType.Core)
+                    .OrderByDescending(m => m.priority)
+                    .ToList();
+                
+                if (dynamicModules.Count == 0)
+                {
+                    return "";
+                }
+                
+                // 3. 拼接原始内容（使用 PromptLoader 确保用户覆盖生效）
+                var sb = new StringBuilder();
+                
+                foreach (var module in dynamicModules)
+                {
+                    // GetContent() 内部已经使用 PromptLoader.Load()
+                    string content = module.GetContent();
+                    
+                    if (!string.IsNullOrWhiteSpace(content))
+                    {
+                        sb.AppendLine($"### {module.label ?? module.defName}");
+                        sb.AppendLine(content);
+                        sb.AppendLine();
+                    }
+                }
+                
+                if (Prefs.DevMode)
+                {
+                    Log.Message($"[SmartPrompt] GenerateRawModules: {dynamicModules.Count} modules, " +
+                               $"{sb.Length} chars (intents: {string.Join(", ", routeResult.SelectedIntents)})");
+                }
+                
+                return sb.ToString().TrimEnd();
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[SmartPrompt] GenerateRawModules failed: {ex.Message}");
+                return "";
+            }
         }
         
         /// <summary>

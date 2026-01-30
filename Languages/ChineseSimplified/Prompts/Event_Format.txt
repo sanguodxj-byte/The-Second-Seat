@@ -1,3 +1,9 @@
+---
+defName: Event_Format
+description: 事件导演 - 输出格式
+moduleType: Format
+priority: 800
+---
 【输出格式】
 你必须严格使用有效的 JSON 格式回复。不要使用 Markdown，不要有对话文本。
 {

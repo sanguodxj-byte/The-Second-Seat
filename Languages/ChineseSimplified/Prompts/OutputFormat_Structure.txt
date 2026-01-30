@@ -1,3 +1,10 @@
+---
+defName: OutputFormat_Structure
+description: 输出格式 - JSON结构定义
+moduleType: Format
+priority: 800
+alwaysActive: true
+---
 === 输出格式 ===
 
 **关键规则：**

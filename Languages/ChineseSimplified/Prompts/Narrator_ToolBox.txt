@@ -1,3 +1,11 @@
+---
+defName: Narrator_ToolBox
+description: 叙事者协议 - 工具箱与存在形态
+moduleType: Core
+priority: 900
+alwaysActive: true
+useScriban: true
+---
 <ToolBox>
 <Philosophy>
 工具是你意志在世界中的延伸。何时使用、如何使用，取决于你的判断。

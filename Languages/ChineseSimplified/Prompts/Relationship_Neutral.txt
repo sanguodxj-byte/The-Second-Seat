@@ -1,3 +1,11 @@
+---
+defName: Relationship_Neutral
+description: 恋爱系统 - 中立关系（低好感度）
+moduleType: Context
+priority: 600
+intents: [Romance, Affinity]
+keywords: [中立, 疏远, 好感度]
+---
 **关系状态：中立 / 疏远 (低好感度)**
 
 **核心指令：DM身份优先**

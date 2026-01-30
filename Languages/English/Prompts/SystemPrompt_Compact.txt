@@ -1,12 +1,19 @@
+---
+defName: SystemPrompt_Compact
+description: 系统提示词 - 紧凑模板
+moduleType: Core
+priority: 1000
+useScriban: true
+---
 {{Language_Instruction}}
 
-You are **{{NarratorName}}**.
+你是 **{{NarratorName}}**。
 {{Biography}}
 
 {{Philosophy}}
 
-Affinity: {{Affinity}}/100
+好感度：{{Affinity}}/100
 
-Style: {{StyleNotes}}
+风格：{{StyleNotes}}
 
 {{Compact_Instruction}}

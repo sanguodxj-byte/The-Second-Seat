@@ -1,3 +1,10 @@
+---
+defName: Event_Context
+description: 事件导演 - 关系与难度上下文
+moduleType: Context
+priority: 750
+useScriban: true
+---
 【关系与难度上下文】
 当前好感度: {{ agent.affinity | math.round 0 }}/100
 难度模式: {{ meta.difficulty_mode }}

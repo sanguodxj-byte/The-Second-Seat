@@ -174,8 +174,24 @@ namespace TheSecondSeat.Narrator
                     .GetSettings<Settings.TheSecondSeatSettings>();
                 var difficultyMode = modSettings?.difficultyMode ?? AIDifficultyMode.Assistant;
 
+                // ⭐ 修复：安全获取 PersonaDef，防止 Cassandra_Classic 缺失导致崩溃
+                var targetPersona = currentPersonaDef
+                    ?? DefDatabase<NarratorPersonaDef>.GetNamedSilentFail("Cassandra_Classic")
+                    ?? DefDatabase<NarratorPersonaDef>.AllDefsListForReading.FirstOrDefault();
+
+                if (targetPersona == null)
+                {
+                    // 如果没有任何 PersonaDef，创建一个临时的
+                    targetPersona = new NarratorPersonaDef
+                    {
+                        defName = "Fallback_Narrator",
+                        narratorName = "Narrator",
+                        label = "Narrator"
+                    };
+                }
+
                 string eventPrompt = SystemPromptGenerator.GenerateEventDirectorPrompt(
-                    currentPersonaDef ?? DefDatabase<NarratorPersonaDef>.GetNamed("Cassandra_Classic"),
+                    targetPersona,
                     currentAnalysis ?? new PersonaAnalysisResult(),
                     storytellerAgent,
                     difficultyMode

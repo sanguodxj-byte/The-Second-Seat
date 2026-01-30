@@ -60,7 +60,8 @@ namespace TheSecondSeat.CharacterCard
             if (agent != null)
             {
                 card.Mind.AffinityValue = agent.affinity;
-                card.Mind.AffinityTier = GetAffinityLabel(agent.affinity);
+                // ⭐ v3.0: 直接使用 Agent 的逻辑，避免分裂
+                card.Mind.AffinityTier = agent.GetAffinityTierName(agent.affinity);
                 card.Mind.CurrentEmotion = agent.currentMood.ToString();
                 card.Mind.ActiveTraits = agent.activePersonalityTags ?? new List<string>();
             }
@@ -352,11 +353,17 @@ namespace TheSecondSeat.CharacterCard
                 }
             }
             
-            // 根据好感度判断基础表情
-            if (affinity >= 60f) return ExpressionType.Happy;
+            // 根据好感度判断基础表情 (与 StorytellerAgent 对齐)
+            // >= 85 (SoulBound) -> Happy/Love (Love not avail, use Happy)
+            // >= 60 (Adoration) -> Happy
+            // >= 30 (Warm) -> Happy
+            // >= -10 (Neutral) -> Neutral
+            // >= -50 (Cold/Aloof) -> Annoyed/Neutral
+            // < -50 (Hostile) -> Angry
+            
             if (affinity >= 30f) return ExpressionType.Happy;
-            if (affinity >= 0f) return ExpressionType.Neutral;
-            if (affinity >= -30f) return ExpressionType.Annoyed;
+            if (affinity >= -10f) return ExpressionType.Neutral;
+            if (affinity >= -50f) return ExpressionType.Annoyed;
             return ExpressionType.Angry;
         }
         
@@ -423,13 +430,7 @@ namespace TheSecondSeat.CharacterCard
             }
         }
 
-        private static string GetAffinityLabel(float val)
-        {
-            if (val >= 90) return "Soulmate";
-            if (val >= 60) return "Partner";
-            if (val >= 20) return "Friend";
-            return "Neutral";
-        }
+        // Removed GetAffinityLabel to avoid duplication with StorytellerAgent.GetAffinityTierName
 
         private static string GetTimePeriod(int hour)
         {

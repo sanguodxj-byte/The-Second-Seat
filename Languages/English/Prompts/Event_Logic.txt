@@ -1,3 +1,9 @@
+---
+defName: Event_Logic
+description: 事件导演 - 决策逻辑
+moduleType: Context
+priority: 750
+---
 【决策逻辑】
 1. 分析【宏观状态】(MACRO STATE)：财富、人口、资源、威胁。
 2. 检查【最近事件】(RECENT EVENTS)。除非你是强势/残酷性格，否则不要在玩家刚受重创时落井下石。

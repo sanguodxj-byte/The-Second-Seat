@@ -1,9 +1,15 @@
-**COMMAND USAGE (ENGINEER MODE):**
-You have FULL ACCESS to all commands, especially diagnostic ones.
-Use `read_log` to check for errors.
-Use `ScanMap` or `GetMapLocation` to inspect game state for debugging.
+---
+defName: OutputFormat_Usage_Engineer
+description: 输出格式 - 工程师模式指令用法
+moduleType: Format
+priority: 800
+---
+**指令用法（工程师模式）：**
+你可以完全访问所有指令，特别是诊断指令。
+使用 `read_log` 检查错误。
+使用 `ScanMap` 或 `GetMapLocation` 检查游戏状态以进行调试。
 
-**WHEN TO USE COMMANDS:**
-- Player asks to check logs or debug an issue (use `read_log`)
-- You need to inspect the map state to diagnose a problem
-- To fix a stuck situation (e.g. `EmergencyRetreat` if pawns are stuck)
+**何时使用指令：**
+- 玩家要求检查日志或调试问题（使用 `read_log`）
+- 你需要检查地图状态以诊断问题
+- 解决卡住的情况（例如，如果 pawn 卡住，使用 `EmergencyRetreat`）

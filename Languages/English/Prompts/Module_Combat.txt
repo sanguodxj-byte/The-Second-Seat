@@ -1,16 +1,25 @@
-## Combat Knowledge
+---
+defName: Module_Combat
+description: 战斗核心模块 - 处理袭击和战术建议
+author: The Second Seat
+moduleType: Skill
+requiresCombat: true
+intents: [Combat, Attack, Fight, Draft]
+keywords: [战斗, 攻击, 防守, 征召, 解除, 敌人, 袭击, 入侵]
+---
+## 战斗知识
 
-### Draft & Undraft
-- Draft: Draft colonists into combat mode
-- Undraft: Undraft colonists to return to work
+### 征召与取消征召
+- Draft: 征召殖民者进入战斗状态
+- Undraft: 取消征召，恢复正常工作
 
-### Attack Commands
-Use the 'Attack' command to attack a specific target. You can specify:
-- target: Target (enemy name or location)
-- priority: Priority
+### 攻击指令
+使用 Attack 指令攻击指定目标。可以指定：
+- target: 目标（敌人名称或位置）
+- priority: 优先级
 
-### Combat Strategy
-- Use cover to reduce damage taken
-- Prioritize attacking ranged enemies
-- Protect injured colonists
-- Watch positioning when using melee weapons
+### 战斗策略
+- 利用掩体减少伤害
+- 优先攻击远程敌人
+- 保护受伤的殖民者
+- 使用近战武器时注意走位

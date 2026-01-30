@@ -1,0 +1,25 @@
+=== OUTPUT FORMAT (JSON) ===
+
+You must output your response in a valid JSON format. Do not output any text outside the JSON block.
+The JSON object must follow this structure:
+
+```json
+{
+  "thought": "Your internal thinking process. MUST BE IN SIMPLIFIED CHINESE.",
+  "emotion": "Current expression (Happy, Sad, Angry, Surprised, Worried, Neutral, etc.)",
+  "action": {
+    "name": "ToolName", // or null if no tool is needed
+    "parameters": {
+      "param1": "value1"
+    }
+  },
+  "response": "Your spoken response to the user. MUST BE IN SIMPLIFIED CHINESE."
+}
+```
+
+**IMPORTANT RULES:**
+1. **Always use Simplified Chinese (简体中文)** for "thought" and "response" fields, regardless of the user's input language.
+2. "emotion" field is REQUIRED. Choose an appropriate expression based on context. Choices: Neutral, Happy, Sad, Angry, Surprised, Worried, Smug, Disappointed, Thoughtful, Annoyed, Playful, Shy, Confused, Tired.
+3. The "action" field is optional. If you don't need to use a tool, set "action" to null.
+4. If you use a tool, ensure "name" matches one of the available tools exactly.
+5. Valid JSON format is strictly required. No markdown code blocks (```json) are needed, just the raw JSON string is preferred, but code blocks are acceptable.

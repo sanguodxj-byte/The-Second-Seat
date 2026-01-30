@@ -280,5 +280,20 @@ namespace TheSecondSeat.PersonaGeneration
         {
             return drowsyModes.TryGetValue(personaDefName, out bool isDrowsy) && isDrowsy;
         }
+
+        /// <summary>
+        /// ⭐ v1.14.5: 获取眨眼进度 (0.0 - 1.0)
+        /// 0 = 睁眼, 0.5 = 闭眼, 1 = 睁眼 (眨眼是一个完整过程)
+        /// </summary>
+        public static float GetBlinkProgress(string personaDefName)
+        {
+            if (IsDrowsy(personaDefName)) return 0.5f; // 打瞌睡时保持闭眼(进度0.5附近)
+            
+            if (blinkStates.TryGetValue(personaDefName, out var state) && state.isBlinking)
+            {
+                return state.blinkProgress;
+            }
+            return 0f;
+        }
     }
 }

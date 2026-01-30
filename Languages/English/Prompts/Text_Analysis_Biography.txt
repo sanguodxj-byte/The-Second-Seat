@@ -1,6 +1,13 @@
-Analyze this character biography and provide deep personality insights in JSON format:
+---
+defName: Text_Analysis_Biography
+description: 文本分析 - 传记解析
+moduleType: Extension
+priority: 300
+useScriban: true
+---
+分析这个角色传记并提供 JSON 格式的深度性格洞察：
 {
-  "personality_traits": ["trait1", "trait2", ...],
+  "personality_traits": ["特质1", "特质2", ...],
   "dialogue_style": {
     "formality": 0.0-1.0,
     "emotional_expression": 0.0-1.0,
@@ -8,15 +15,15 @@ Analyze this character biography and provide deep personality insights in JSON f
     "humor": 0.0-1.0,
     "sarcasm": 0.0-1.0
   },
-  "tone_tags": ["tag1", "tag2", ...],
+  "tone_tags": ["标签1", "标签2", ...],
   "event_preferences": {
     "positive_bias": -1.0 to 1.0,
     "negative_bias": -1.0 to 1.0,
     "chaos_level": 0.0-1.0,
     "intervention_frequency": 0.0-1.0
   },
-  "forbidden_words": ["word1", "word2", ...]
+  "forbidden_words": ["词1", "词2", ...]
 }
 
-Biography:
+传记：
 {{ snippets.biography_text }}

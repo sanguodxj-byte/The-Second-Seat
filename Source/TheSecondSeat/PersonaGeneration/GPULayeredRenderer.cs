@@ -15,7 +15,7 @@ namespace TheSecondSeat.PersonaGeneration
     /// 
     /// 性能对比：
     /// - 旧方案：每次表情切换 50-200ms CPU 耗时 + 数 MB GC
-    /// - 新方案：每次表情切换 &lt; 1ms GPU 耗时 + 0 GC
+    /// - 新方案：每次表情切换 < 1ms GPU 耗时 + 0 GC
     /// </summary>
     [StaticConstructorOnStartup]
     public static class GPULayeredRenderer
@@ -402,6 +402,92 @@ namespace TheSecondSeat.PersonaGeneration
                 );
                 
                 GUI.DrawTexture(drawRect, layer.Texture, ScaleMode.ScaleToFit, true);
+            }
+        }
+
+        /// <summary>
+        /// ⭐ 带偏移的动态立绘渲染：支持整体透明度控制
+        /// 解决直接叠加导致的 alpha 混合异常问题
+        /// </summary>
+        public static void DrawDynamicPortraitWithOffsets(Rect baseRect, List<LayerDrawInfo> layers, float alpha)
+        {
+            if (layers == null || layers.Count == 0) return;
+            
+            // 优化：如果不透明，直接绘制（避免 RT 开销）
+            if (alpha >= 0.99f)
+            {
+                DrawLayersWithOffsetsOnGUI(baseRect, layers);
+                return;
+            }
+
+            // 1. 准备 RenderTexture
+            // ⭐ 修复：使用与 baseRect 比例一致的 RT，避免变扁
+            // 如果 baseRect 是 300x600 (1:2)，RT 应该是 512x1024
+            // 或者简单地使用 baseRect.width/height，如果需要更高分辨率可以乘倍数
+            // 为了保证清晰度，我们使用 baseRect 的尺寸乘一个倍数（比如 1.5），或者至少保证最小边长
+            
+            int width = Mathf.CeilToInt(baseRect.width);
+            int height = Mathf.CeilToInt(baseRect.height);
+            
+            // 确保尺寸有效且不过小 (比如最小 256)
+            if (width < 256 || height < 256)
+            {
+                float scale = 256f / Mathf.Min(width, height);
+                width = Mathf.CeilToInt(width * scale);
+                height = Mathf.CeilToInt(height * scale);
+            }
+            
+            RenderTexture tempRT = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.ARGB32);
+            RenderTexture previousRT = RenderTexture.active;
+            
+            try 
+            {
+                // 2. 合成阶段 (100% 不透明)
+                RenderTexture.active = tempRT;
+                GL.Clear(true, true, Color.clear);
+                
+                GL.PushMatrix();
+                GL.LoadPixelMatrix(0, width, height, 0);
+                
+                foreach (var layer in layers)
+                {
+                    if (layer.Texture != null)
+                    {
+                        // 计算在 RT 上的绘制区域
+                        // 注意：GL 坐标系原点在左下角，但 LoadPixelMatrix(0, width, height, 0) 将原点设为左上角
+                        Rect drawRect = new Rect(
+                            layer.OffsetX * width,
+                            layer.OffsetY * height,
+                            width * layer.ScaleX,
+                            height * layer.ScaleY
+                        );
+                        
+                        Graphics.DrawTexture(drawRect, layer.Texture);
+                    }
+                }
+                
+                GL.PopMatrix();
+                
+                // 3. 输出阶段 (应用透明度)
+                RenderTexture.active = previousRT;
+                
+                Color originalColor = GUI.color;
+                GUI.color = new Color(originalColor.r, originalColor.g, originalColor.b, originalColor.a * alpha);
+                
+                GUI.DrawTexture(baseRect, tempRT, ScaleMode.ScaleToFit, true);
+                
+                GUI.color = originalColor;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[GPULayeredRenderer] DrawDynamicPortraitWithOffsets failed: {ex}");
+                RenderTexture.active = previousRT;
+                DrawLayersWithOffsetsOnGUI(baseRect, layers); // 降级
+            }
+            finally
+            {
+                RenderTexture.active = previousRT;
+                RenderTexture.ReleaseTemporary(tempRT);
             }
         }
         

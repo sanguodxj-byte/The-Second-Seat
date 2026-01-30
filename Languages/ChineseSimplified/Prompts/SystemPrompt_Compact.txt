@@ -1,3 +1,10 @@
+---
+defName: SystemPrompt_Compact
+description: 系统提示词 - 紧凑模板
+moduleType: Core
+priority: 1000
+useScriban: true
+---
 {{Language_Instruction}}
 
 你是 **{{NarratorName}}**。

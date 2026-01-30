@@ -95,7 +95,7 @@ namespace TheSecondSeat.Narrator
             
             RegisterTools();
             
-            Log.Message($"[NarratorAgent] 初始化完��: {agentId} (MaxIterations=3, Tools={coreAgent.GetDebugInfo()})");
+            Log.Message($"[NarratorAgent] 初始化完成: {agentId} (MaxIterations=3, Tools={coreAgent.GetDebugInfo()})");
         }
         
         /// <summary>
@@ -257,36 +257,94 @@ namespace TheSecondSeat.Narrator
                 // 1. 缓存游戏状态（Pull 模式）
                 GameStateTool.CachedSnapshot = snapshot;
 
-                // 2. 构建 System Prompt（使用 SmartPrompt）
-                var systemPrompt = BuildSystemPrompt(userMessage, isGreeting, shadowPawn);
+                // ⭐ v3.0: 获取基础输入文本（用于 SmartPrompt 意图匹配）
+                // 即使是系统触发的事件，也需要一个描述性的文本来匹配关键词
+                string baseInput = GetBaseInput(userMessage, isGreeting);
+
+                // 2. 构建 System Prompt（使用 SmartPrompt，传入 baseInput）
+                // 此时 SmartPrompt 会分析 baseInput 中的关键词（如 "加载", "袭击"）来加载对应模块
+                var systemPrompt = BuildSystemPrompt(baseInput, isGreeting, shadowPawn);
 
                 // 3. 确保 Agent 存在
                 if (coreAgent == null)
                     Initialize();
                 coreAgent.SystemPrompt = systemPrompt;
 
-                // 4. 联网搜索（如果需要）
-                string searchContext = await PerformWebSearchIfNeeded(userMessage);
+                // 4. 联网搜索（如果需要，仅针对玩家显式输入）
+                string searchContext = "";
+                if (!string.IsNullOrEmpty(userMessage))
+                {
+                    searchContext = await PerformWebSearchIfNeeded(userMessage);
+                }
 
-                // 5. 构建用户消息
+                // 5. 构建最终发给 LLM 的用户消息
                 string enhancedUserMessage = BuildUserMessage(userMessage, selectionContext, searchContext, isGreeting);
 
-                // 6. 执行 ReAct 循环
-                var agentResponse = await coreAgent.ExecuteAsync(enhancedUserMessage, temperature: 0.7f, maxTokens: 800);
+                // 6. 使用 RimAgent 核心执行 (自动处理 ReAct 循环和 JSON 解析)
+                var agentResponse = await coreAgent.ExecuteAsync(enhancedUserMessage);
 
-                if (!agentResponse.Success || string.IsNullOrEmpty(agentResponse.Content))
+                if (!agentResponse.Success)
                 {
-                    lastError = $"LLM API 调用失败: {agentResponse.Error ?? "无响应"}";
-                    Log.Error($"[NarratorAgent] {lastError}");
-                    LongEventHandler.ExecuteWhenFinished(() => Messages.Message("TSS_APICallFailed".Translate(), MessageTypeDefOf.NegativeEvent));
+                    Log.Error($"[NarratorAgent] Agent execution failed: {agentResponse.Error}");
+                    LongEventHandler.ExecuteWhenFinished(() => Messages.Message($"AI 错误: {agentResponse.Error}", MessageTypeDefOf.NegativeEvent));
                     return;
                 }
 
-                // 7. 解析响应
-                LLMResponse response = llmProvider.LastFullResponse ?? ParseAgentResponse(agentResponse.Content);
+                string contentToShow = agentResponse.Content;
+                if (string.IsNullOrEmpty(contentToShow))
+                {
+                    contentToShow = "[无回应]";
+                }
 
-                // 8. 在主线程处理
-                LongEventHandler.ExecuteWhenFinished(() => ProcessResponse(response, userMessage));
+                // 7. 处理好感度 (从 Metadata 中提取)
+                if (agentResponse.Metadata != null && agentResponse.Metadata.TryGetValue("affinity_impact", out var impactObj))
+                {
+                    try
+                    {
+                        var impactJson = Newtonsoft.Json.JsonConvert.SerializeObject(impactObj);
+                        var impact = Newtonsoft.Json.JsonConvert.DeserializeObject<AffinityImpact>(impactJson);
+                        
+                        if (impact != null && !string.IsNullOrEmpty(impact.change))
+                        {
+                            if (float.TryParse(impact.change.Replace("+", ""), out float delta))
+                            {
+                                if (narratorManager != null)
+                                {
+                                    narratorManager.ModifyFavorability(delta, impact.reason ?? "Interaction");
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning($"[NarratorAgent] Failed to parse affinity impact: {ex.Message}");
+                    }
+                }
+
+                // 8. 处理表情 (从 Metadata 中提取并构建 LLMResponse 代理)
+                var fakeLLMResponse = new LLMResponse();
+                if (agentResponse.Metadata != null && agentResponse.Metadata.TryGetValue("emotion", out var emotionObj))
+                {
+                    // 支持 "Happy" 或 "Happy|Sad" (多段情绪)
+                    fakeLLMResponse.emotion = emotionObj?.ToString();
+                }
+
+                // 9. 显示结果 & 应用表情 & TTS
+                string capturedEmoticon = fakeLLMResponse.emoticon ?? fakeLLMResponse.emotion ?? "";
+                LongEventHandler.ExecuteWhenFinished(() => {
+                    Messages.Message("AI Responded", MessageTypeDefOf.TaskCompletion);
+                    
+                    // 应用表情 (通过 Controller 复用高级逻辑：多段情绪、字数估算等)
+                    string defName = narratorManager?.GetCurrentPersona()?.defName ?? "Cassandra_Classic";
+                    try
+                    {
+                        expressionController.ApplyExpressionFromResponse(fakeLLMResponse, defName, contentToShow);
+                    }
+                    catch (Exception ex) { Log.Warning($"[NarratorAgent] 更新表情失败: {ex.Message}"); }
+                    
+                    // ⭐ v3.1.0: 调用 TTS 播放（修复：之前漏掉了这一步）
+                    ttsHandler.AutoPlayTTS(contentToShow, capturedEmoticon);
+                });
             }
             catch (Exception ex)
             {
@@ -300,32 +358,47 @@ namespace TheSecondSeat.Narrator
             }
         }
         
-        private string BuildSystemPrompt(string userMessage, bool isGreeting, Pawn shadowPawn)
+        private string BuildSystemPrompt(string baseInput, bool isGreeting, Pawn shadowPawn)
         {
-            var basePrompt = narratorManager?.GetDynamicSystemPrompt() ?? GetDefaultSystemPrompt();
+            // ⭐ v3.0: 传递 baseInput 给 Generator，由 Preset 中的 {{ load_smart_modules }} 处理
+            // baseInput 包含了玩家输入或系统事件描述
             
-            // SmartPrompt 动态加载
-            string smartPromptSection = "";
-            if (!isGreeting && !string.IsNullOrEmpty(userMessage))
+            string systemPrompt = "";
+            if (narratorManager != null)
             {
-                try
+                var persona = narratorManager.GetCurrentPersona();
+                var agent = narratorManager.StorytellerAgent;
+                
+                if (persona != null && agent != null)
                 {
-                    var smartResult = SmartPromptBuilder.Instance.Build(userMessage);
-                    if (!string.IsNullOrEmpty(smartResult.Prompt))
+                    AIDifficultyMode difficultyMode = AIDifficultyMode.Assistant;
+                    try
                     {
-                        smartPromptSection = $"\n\n[相关知识模块 ({smartResult.ModuleCount} 个)]\n{smartResult.Prompt}";
-                        Log.Message($"[NarratorAgent] SmartPrompt 激活: {smartResult.ModuleCount} 个模块");
+                        difficultyMode = (AIDifficultyMode)Enum.Parse(typeof(AIDifficultyMode), narratorManager.CurrentNarratorMode.ToString());
                     }
+                    catch { }
+
+                    // ⭐ 关键修改：直接传入 baseInput，不再判断 isGreeting
+                    // 这样即使是 Greeting 或系统事件，只要 baseInput 中有关键词，也能触发 SmartPrompt
+                    systemPrompt = SystemPromptGenerator.GenerateSystemPrompt(
+                        persona, 
+                        null, 
+                        agent, 
+                        difficultyMode,
+                        baseInput 
+                    );
                 }
-                catch (Exception ex)
+                else
                 {
-                    Log.Warning($"[NarratorAgent] SmartPrompt 加载失败: {ex.Message}");
+                    systemPrompt = GetDefaultSystemPrompt();
                 }
             }
+            else
+            {
+                systemPrompt = GetDefaultSystemPrompt();
+            }
             
-            var systemPrompt = basePrompt + smartPromptSection;
-            
-            // 注入记忆
+            // 注入记忆 (保持兼容性)
             systemPrompt = SimpleRimTalkIntegration.GetMemoryPrompt(
                 basePrompt: systemPrompt,
                 pawn: shadowPawn,
@@ -357,6 +430,25 @@ namespace TheSecondSeat.Narrator
             return "";
         }
         
+        /// <summary>
+        /// ⭐ v3.0: 获取基础输入文本（用于 SmartPrompt 匹配）
+        /// </summary>
+        private string GetBaseInput(string userMessage, bool isGreeting)
+        {
+            if (!string.IsNullOrEmpty(userMessage)) return userMessage;
+
+            if (isGreeting)
+            {
+                return "[系统事件: 游戏加载] 玩家进入游戏，需要问候。";
+            }
+
+            // TODO: 处理其他系统事件（如 Raid）
+            // 如果 userMessage 为空且不是 Greeting，可能是其他自动触发的事件
+            // 目前 TriggerUpdate 主要用于 Greeting 和 玩家对话
+            // 未来扩展时需在此处添加更多逻辑
+            return "[系统事件: 自动触发]";
+        }
+
         private string BuildUserMessage(string userMessage, string selectionContext, string searchContext, bool isGreeting)
         {
             if (isGreeting || string.IsNullOrEmpty(userMessage))
@@ -377,107 +469,13 @@ namespace TheSecondSeat.Narrator
             return searchContext + selectionContext + userMessage;
         }
         
-        private LLMResponse ParseAgentResponse(string content)
-        {
-            var parsed = LLMResponseParser.Parse(content);
-            if (parsed != null) return parsed;
-            
-            return new LLMResponse
-            {
-                dialogue = content,
-                expression = "neutral",
-                affinityDelta = 0f
-            };
-        }
-        
         private string GetDefaultSystemPrompt()
         {
             return "你是一个 RimWorld 的 AI 叙事者。你的任务是观察游戏状态，与玩家互动，并根据需要执行操作。";
         }
 
-        private void ProcessResponse(LLMResponse response, string userMessage)
-        {
-            try
-            {
-                NarratorIdleSystem.RecordActivity("AI响应");
-                
-                var interactionMonitor = Current.Game?.GetComponent<PlayerInteractionMonitor>();
-                interactionMonitor?.RecordConversation(!string.IsNullOrEmpty(userMessage));
-
-                string narratorDefName = "Cassandra_Classic";
-                string narratorName = "卡桑德拉";
-                if (narratorManager != null)
-                {
-                    var persona = narratorManager.GetCurrentPersona();
-                    if (persona != null)
-                    {
-                        narratorDefName = persona.defName;
-                        narratorName = !string.IsNullOrEmpty(persona.label) ? persona.label : persona.narratorName;
-                    }
-                }
-
-                // 记录对话
-                if (!string.IsNullOrEmpty(userMessage))
-                {
-                    MemoryContextBuilder.RecordConversation("Player", userMessage, false);
-                    RimTalkMemoryIntegration.RecordConversation(narratorDefName, narratorName, "Player", userMessage, importance: 0.8f, tags: new List<string> { "玩家对话" });
-                }
-
-                string displayText = response.dialogue;
-                if (string.IsNullOrEmpty(displayText))
-                    displayText = "[AI 正在思考...]";
-                
-                lastDialogue = displayText;
-                
-                // 表情
-                try { expressionController.ApplyExpressionFromResponse(response, narratorDefName, displayText); }
-                catch (Exception ex) { Log.Warning($"[NarratorAgent] 更新表情失败: {ex.Message}"); }
-                
-                // 记录 AI 回复
-                MemoryContextBuilder.RecordConversation("Cassandra", displayText, false);
-                RimTalkMemoryIntegration.RecordConversation(narratorDefName, narratorName, "Narrator", displayText, importance: 0.7f, tags: new List<string> { "AI回复" });
-                
-                // 好感度
-                if (response.affinityDelta != 0f && narratorManager != null)
-                {
-                    float clampedDelta = UnityEngine.Mathf.Clamp(response.affinityDelta, -10f, 10f);
-                    narratorManager.ModifyFavorability(clampedDelta, "对话互动");
-                }
-
-                // 角色卡更新
-                if (response.updateCard != null)
-                {
-                    var bio = Current.Game?.GetComponent<NarratorBioRhythm>();
-                    if (bio != null && !string.IsNullOrEmpty(response.updateCard.energy))
-                    {
-                        float newEnergy = response.updateCard.energy.ToLower() switch
-                        {
-                            "energetic" => 90f,
-                            "active" => 70f,
-                            "normal" => 50f,
-                            "tired" => 30f,
-                            "exhausted" => 10f,
-                            _ => -1f
-                        };
-                        if (newEnergy >= 0) bio.SetEnergy(newEnergy);
-                    }
-                }
-                
-                Log.Message($"[NarratorAgent] 输出: {displayText}");
-
-                // TTS
-                string emoticonId = response.emoticon ?? "";
-                ttsHandler.AutoPlayTTS(displayText, emoticonId);
-
-                // 命令
-                if (response.command != null)
-                    ExecuteCommand(response.command);
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[NarratorAgent] 处理响应失败: {ex.Message}\n{ex.StackTrace}");
-            }
-        }
+        // ⭐ v3.1.0: 已删除未使用的 ProcessResponse 方法（旧架构遗留代码）
+        // 新流程: ProcessUpdateAsync -> RimAgent.ExecuteAsync -> ttsHandler.AutoPlayTTS
         
         private void ExecuteCommand(LLMCommand llmCommand)
         {
@@ -522,6 +520,13 @@ namespace TheSecondSeat.Narrator
             }
         }
         
+        // Helper class for affinity parsing
+        private class AffinityImpact
+        {
+            public string change { get; set; }
+            public string reason { get; set; }
+        }
+
         public void Dispose()
         {
             coreAgent?.Dispose();

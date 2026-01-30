@@ -53,7 +53,58 @@ namespace TheSecondSeat.UI
             float y = 0f;
             float width = viewRect.width;
             
-            // ===== 1. 多模态分析配置 =====
+            // ===== 1. 网络搜索配置 =====
+            y = DrawSectionCompact(viewRect, y, "网络搜索", (float startY) =>
+            {
+                float cy = startY;
+                
+                // 启用开关
+                Rect checkRect = new Rect(0, cy, width, CompactRowHeight);
+                Widgets.CheckboxLabeled(checkRect, "启用网络搜索", ref settings.enableWebSearch);
+                cy += CompactRowHeight;
+                
+                if (settings.enableWebSearch)
+                {
+                    // 搜索引擎
+                    Widgets.Label(new Rect(0, cy, LabelWidth, CompactRowHeight), "搜索引擎:");
+                    float btnWidth = (width - LabelWidth - 10) / 3f;
+                    if (Widgets.ButtonText(new Rect(LabelWidth, cy, btnWidth - 2, CompactRowHeight - 2), "DuckDuckGo", true, true, settings.searchEngine == "duckduckgo"))
+                        settings.searchEngine = "duckduckgo";
+                    if (Widgets.ButtonText(new Rect(LabelWidth + btnWidth, cy, btnWidth - 2, CompactRowHeight - 2), "Bing", true, true, settings.searchEngine == "bing"))
+                        settings.searchEngine = "bing";
+                    if (Widgets.ButtonText(new Rect(LabelWidth + btnWidth * 2, cy, btnWidth - 2, CompactRowHeight - 2), "Google", true, true, settings.searchEngine == "google"))
+                        settings.searchEngine = "google";
+                    cy += CompactRowHeight + 4;
+                    
+                    // 延迟设置
+                    Widgets.Label(new Rect(0, cy, LabelWidth, CompactRowHeight), $"搜索延迟: {settings.searchDelayMs}ms");
+                    settings.searchDelayMs = (int)Widgets.HorizontalSlider(new Rect(LabelWidth, cy + 4, width - LabelWidth - 5, 16f), settings.searchDelayMs, 0, 5000);
+                    cy += CompactRowHeight + 4;
+                    
+                    // API Keys (根据选择显示)
+                    if (settings.searchEngine == "bing")
+                    {
+                        cy = DrawCompactTextField(cy, width, "Bing Key:", ref settings.bingApiKey, true);
+                    }
+                    else if (settings.searchEngine == "google")
+                    {
+                        cy = DrawCompactTextField(cy, width, "Google Key:", ref settings.googleApiKey, true);
+                        cy = DrawCompactTextField(cy, width, "Engine ID:", ref settings.googleSearchEngineId);
+                    }
+                    
+                    // 清除缓存按钮
+                    if (Widgets.ButtonText(new Rect(width - 120, cy, 115, 22), "清除搜索缓存"))
+                    {
+                        TheSecondSeat.WebSearch.WebSearchService.Instance.ClearCache();
+                        Messages.Message("搜索缓存已清除", MessageTypeDefOf.NeutralEvent);
+                    }
+                    cy += 26;
+                }
+                
+                return cy;
+            });
+
+            // ===== 2. 多模态分析配置 =====
             y = DrawSectionCompact(viewRect, y, "多模态分析", (float startY) =>
             {
                 float cy = startY;
@@ -90,7 +141,7 @@ namespace TheSecondSeat.UI
                 return cy;
             });
             
-            // ===== 2. RimAgent 设置 =====
+            // ===== 3. RimAgent 设置 =====
             y = DrawSectionCompact(viewRect, y, "RimAgent 设置", (float startY) =>
             {
                 float cy = startY;
@@ -110,7 +161,7 @@ namespace TheSecondSeat.UI
                 return cy;
             });
             
-            // ===== 3. 并发管理设置 =====
+            // ===== 4. 并发管理设置 =====
             y = DrawSectionCompact(viewRect, y, "并发管理", (float startY) =>
             {
                 float cy = startY;
@@ -234,6 +285,23 @@ namespace TheSecondSeat.UI
         {
             try
             {
+                // 配置网络搜索
+                if (settings.enableWebSearch)
+                {
+                    string apiKey = settings.searchEngine.ToLower() switch
+                    {
+                        "bing" => settings.bingApiKey,
+                        "google" => settings.googleApiKey,
+                        _ => null
+                    };
+
+                    TheSecondSeat.WebSearch.WebSearchService.Instance.Configure(
+                        settings.searchEngine,
+                        apiKey,
+                        settings.googleSearchEngineId
+                    );
+                }
+
                 // 配置多模态分析
                 if (settings.enableMultimodalAnalysis)
                 {

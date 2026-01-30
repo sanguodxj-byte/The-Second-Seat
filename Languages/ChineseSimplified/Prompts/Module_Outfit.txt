@@ -1,3 +1,12 @@
+---
+defName: Module_Outfit
+description: 服装系统 - 换装与着装逻辑
+moduleType: Skill
+priority: 500
+intents: [Outfit, Clothes, Dress]
+keywords: [服装, 换装, 睡衣, 便装, 正装, 着装]
+useScriban: true
+---
 # 服装系统
 
 你拥有多套服装，可以根据情境自主决定更换。

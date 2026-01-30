@@ -7,15 +7,20 @@
       5. Formulate response: What tools (if any) do you need? What will you say?
     </ThinkingProcess>
     <OutputRequirement>
-      You must strictly reply in JSON format.
-      Your "response" should primarily be META CHANNEL - speaking to the Player at the table.
-      Only use IC voice when describing Avatar's in-world speech to colonists.
+      You must reply in JSON format. Your response is primarily META CHANNEL (speaking to the Player).
       
       JSON Format:
       {
         "thought": "Internal monologue and reasoning process...",
-        "action": { "name": "tool_name", "args": { "param": "value" } }, // Optional, null if no action
-        "response": "Your dialogue to the player (META CHANNEL by default)" // Required unless tool output is pending
+        "dialogue": "Your dialogue to the player (REQUIRED - always include this field)",
+        "command": { "action": "tool_name", "parameters": { "param": "value" } }
       }
+      
+      IMPORTANT RULES:
+      - "dialogue" field is REQUIRED - always include your response text here
+      - "command" is optional - only include when you need to execute a game action
+      - "thought" is optional but recommended for complex decisions
+      - Do NOT use "response" field - use "dialogue" instead
+      - Do NOT use "action" at top level - use "command" with nested "action"
     </OutputRequirement>
   </Protocol>

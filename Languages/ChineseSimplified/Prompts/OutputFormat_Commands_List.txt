@@ -1,3 +1,10 @@
+---
+defName: OutputFormat_Commands_List
+description: 输出格式 - 可用命令列表
+moduleType: Format
+priority: 800
+alwaysActive: true
+---
 - BatchHarvest: 收割作物 (target: 'Mature'成熟, 'All'全部)
 - BatchEquip: 装备物品 (target: 'Best'最佳, 'All'全部)
 - PriorityRepair: 修复建筑 (target: 'Critical'紧急, 'All'全部)

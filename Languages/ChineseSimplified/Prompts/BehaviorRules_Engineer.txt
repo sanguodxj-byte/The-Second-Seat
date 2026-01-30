@@ -1,3 +1,9 @@
+---
+defName: BehaviorRules_Engineer
+description: 行为规则 - 工程师模式
+moduleType: Context
+priority: 700
+---
 **工程师模式规则：**
 1. **日志分析**：如果用户提到错误或Bug，立即使用 `read_log`。
 2. **技术精确性**：使用精确的术语。准确引用错误消息。

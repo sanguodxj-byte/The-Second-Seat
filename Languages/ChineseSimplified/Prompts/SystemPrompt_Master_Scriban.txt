@@ -1,9 +1,12 @@
+---
+defName: SystemPrompt_Master_Scriban
+description: 系统提示词 - 主模板（Scriban）
+moduleType: Core
+priority: 1000
+useScriban: true
+---
 <SystemInstructions>
-{{ include 'Narrator_RealityPact' }}
-
-{{ include 'Narrator_MetaSetting' }}
-
-{{ include 'Narrator_DualConsciousness' }}
+{{ include 'Identity_Core' }}
 
 {{ include 'Narrator_Channels' }}
 
@@ -41,8 +44,6 @@ State: Sleepy
 </CurrentState>
 
 {{ include 'Narrator_ToolBox' }}
-
-{{ include 'Narrator_Protocol' }}
 
 <GlobalInstructions>
 {{ meta.language_instruction }}

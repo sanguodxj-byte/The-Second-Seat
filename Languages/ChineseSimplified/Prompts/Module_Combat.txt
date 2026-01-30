@@ -1,3 +1,12 @@
+---
+defName: Module_Combat
+description: 战斗核心模块 - 处理袭击和战术建议
+author: The Second Seat
+moduleType: Skill
+requiresCombat: true
+intents: [Combat, Attack, Fight, Draft]
+keywords: [战斗, 攻击, 防守, 征召, 解除, 敌人, 袭击, 入侵]
+---
 ## 战斗知识
 
 ### 征召与取消征召

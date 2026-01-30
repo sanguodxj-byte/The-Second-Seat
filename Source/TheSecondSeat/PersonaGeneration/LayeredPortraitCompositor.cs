@@ -32,7 +32,7 @@ namespace TheSecondSeat.PersonaGeneration
         private const int MaxLayerFailureCount = 3; // 失败阈值
         
         // 基础纹理路径
-        private const string LAYERED_BASE_PATH = "UI/Narrators/9x16/Layered/";
+        private const string LAYERED_BASE_PATH = "UI/Narrators/Layered/";
 
         /// <summary>
         /// 合成分层立绘（异步版本）
@@ -435,35 +435,40 @@ namespace TheSecondSeat.PersonaGeneration
         /// 加载单个图层纹理
         /// ⭐ v1.6.74: 支持多路径回退（主 Mod 和子 Mod 路径）
         /// ✅ v1.7.1: 优先使用 PortraitLoader.GetLayerTexture 以支持 portraitPath
+        /// ⭐ v3.4.0: 优化路径查找顺序，优先使用 portraitPath 推导的目录
         /// ? v1.6.27: 完全静默，不输出任何日志
         /// </summary>
         private static Texture2D LoadLayerTexture(LayeredPortraitConfig config, string layerName)
         {
-            // 1. 尝试通过 Def 获取（支持 portraitPath）
+            // 1. 尝试通过 Def 获取（支持 portraitPath）- 这是首选方法
             if (!string.IsNullOrEmpty(config.PersonaDefName))
             {
                 var def = DefDatabase<NarratorPersonaDef>.GetNamedSilentFail(config.PersonaDefName);
                 if (def != null)
                 {
-                    // 使用 PortraitLoader 的高级路径查找逻辑
-                    return PortraitLoader.GetLayerTexture(def, layerName);
+                    // 使用 PortraitLoader 的高级路径查找逻辑（已优化）
+                    var texture = PortraitLoader.GetLayerTexture(def, layerName);
+                    if (texture != null)
+                    {
+                        return texture;
+                    }
                 }
             }
 
             // 2. 回退到基于名称的查找（旧逻辑）
             string personaName = config.PersonaName;
             
-            // ⭐ v1.6.74: 尝试多个路径（按优先级）
+            // ⭐ v3.4.0: 优化路径查找顺序
             string[] pathsToTry = new[]
             {
-                // 路径 1: 主 Mod 路径（UI/Narrators/9x16/Layered/PersonaName/）
+                // ⭐ 路径 1 (最高优先级): Sideria 风格路径 ({ResourceName}/Narrators/Layered/)
+                $"{personaName}/Narrators/Layered/{layerName}",
+                
+                // 路径 2: 主 Mod 路径（UI/Narrators/Layered/PersonaName/）
                 $"{LAYERED_BASE_PATH}{personaName}/{layerName}",
                 
-                // 路径 2: 子 Mod 路径（Narrators/Layered/）- 适配扁平结构
-                $"Narrators/Layered/{layerName}",
-                
-                // 路径 3: 旧版路径（向后兼容）
-                $"UI/Narrators/Layered/{personaName}/{layerName}"
+                // 路径 3: 子 Mod 路径（Narrators/Layered/）- 适配扁平结构
+                $"Narrators/Layered/{layerName}"
             };
             
             foreach (var texturePath in pathsToTry)

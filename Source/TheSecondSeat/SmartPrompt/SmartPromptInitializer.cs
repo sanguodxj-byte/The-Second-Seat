@@ -77,13 +77,37 @@ namespace TheSecondSeat.SmartPrompt
         }
         
         /// <summary>
-        /// 手动重建系统（用于开发调试）
+        /// ⭐ v3.1.0: 手动重建系统（支持运行时热重载）
+        /// 当用户在 PromptManagementWindow 中禁用/启用提示词时调用
         /// </summary>
         public static void RebuildSystem()
         {
             Log.Message("[SmartPrompt] Manual rebuild triggered...");
-            SmartPrompt.Rebuild();
-            Log.Message("[SmartPrompt] Rebuild complete.");
+            
+            try
+            {
+                // 1. 清除 DefDatabase 中的动态加载模块（保留 XML 定义的模块）
+                // 注意：由于 RimWorld 不支持从 DefDatabase 移除 Def，
+                // 我们只能重新加载内容，但禁用的模块会被 FlashMatcher 忽略
+                
+                // 2. 清除 PromptLoader 缓存（确保读取最新文件）
+                PersonaGeneration.PromptLoader.ClearCache();
+                
+                // 3. 重新加载模块内容（刷新被编辑的内容）
+                foreach (var module in DefDatabase<PromptModuleDef>.AllDefsListForReading)
+                {
+                    module.ReloadContent();
+                }
+                
+                // 4. 重建 FlashMatcher AC 自动机
+                SmartPrompt.Rebuild();
+                
+                Log.Message("[SmartPrompt] Rebuild complete. Modules reloaded.");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[SmartPrompt] Rebuild failed: {ex.Message}");
+            }
         }
     }
     
